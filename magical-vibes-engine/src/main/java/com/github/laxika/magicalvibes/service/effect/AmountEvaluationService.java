@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -162,6 +163,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -265,6 +267,9 @@ public class AmountEvaluationService {
                             ? evaluate(gameData, d.amount(), ctx) : 0;
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case PermanentsSacrificedThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.sacrificedPermanentCountThisTurn.getOrDefault(ctx.controllerId(), 0);
             case PermanentCounterSum s ->
                     sumPermanentCounters(gameData, s, ctx);
             case DistinctPermanentNamesCount c ->
@@ -340,8 +345,8 @@ public class AmountEvaluationService {
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
-            case ColorsAmongControlledPermanents ignored ->
-                    countColorsAmongControlledPermanents(gameData, ctx);
+            case ColorsAmongControlledPermanents count ->
+                    countColorsAmongControlledPermanents(gameData, count, ctx);
             case ColorManaSymbolsInGraveyard c ->
                     countColorManaSymbolsInGraveyard(gameData, c, ctx);
             case ColorManaSymbolsInHand c ->
@@ -1495,16 +1500,39 @@ public class AmountEvaluationService {
         return total;
     }
 
-    private int countColorsAmongControlledPermanents(GameData gameData, AmountContext ctx) {
+    private int countColorsAmongControlledPermanents(
+            GameData gameData, ColorsAmongControlledPermanents count, AmountContext ctx) {
         if (gameData == null || ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
-        return (int) battlefield.stream()
-                .flatMap(permanent -> (GameQueryService.isStaticEvaluationActive()
-                        ? gameQueryService.colorsForStaticEvaluation(permanent)
-                        : gameQueryService.getEffectiveColors(gameData, permanent)).stream())
-                .distinct()
-                .count();
+
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        boolean filterNeedsBoard = staticEvaluation
+                && count.filter() != null
+                && predicateEvaluationService.requiresGameDataForStaticFilter(count.filter());
+        FilterContext filterContext = staticEvaluation && !filterNeedsBoard
+                ? FilterContext.empty()
+                : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
+        }
+
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        for (Permanent permanent : battlefield) {
+            if (count.filter() != null) {
+                boolean matches = filterNeedsBoard
+                        ? predicateEvaluationService.matchesStaticFilter(permanent, count.filter(), filterContext)
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext);
+                if (!matches) continue;
+            }
+            colors.addAll(staticEvaluation
+                    ? gameQueryService.colorsForStaticEvaluation(permanent)
+                    : gameQueryService.getEffectiveColors(gameData, permanent));
+        }
+        return colors.size();
     }
 
     private int countCreaturesEnteredBattlefieldThisTurn(

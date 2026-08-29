@@ -58,9 +58,18 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (request.fromExileCardId() != null) {
-            gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
-                    listOrEmpty(request.convokeCreatureIds()));
+            if (request.waterbendPaid() != null
+                    || request.additionalCostSacrificePermanentIds() != null
+                    && !request.additionalCostSacrificePermanentIds().isEmpty()) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()), waterbendPaid(request));
+            } else {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()));
+            }
             return;
         }
         if (Boolean.TRUE.equals(request.alternateCost())) {
@@ -119,7 +128,7 @@ public class PlayCardRequestDispatchService {
                     Boolean.TRUE.equals(request.buyback()),
                     request.beholdPermanentId(), request.beholdHandCardIndex(),
                     listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
-                    chosenBeholdType);
+                    chosenBeholdType, null, waterbendPaid(request), request.payLifeForAdditionalCost());
             return;
         }
         gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
@@ -133,7 +142,7 @@ public class PlayCardRequestDispatchService {
                 request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
                 Boolean.TRUE.equals(request.buyback()), request.beholdPermanentId(), request.beholdHandCardIndex(),
                 listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
-                chosenBeholdType, chosenCreatureType);
+                chosenBeholdType, chosenCreatureType, waterbendPaid(request), request.payLifeForAdditionalCost());
     }
 
     private static <T> List<T> listOrEmpty(List<T> list) {
@@ -142,6 +151,13 @@ public class PlayCardRequestDispatchService {
 
     private static <T> List<T> nullIfEmpty(List<T> list) {
         return list == null || list.isEmpty() ? null : list;
+    }
+
+    private static boolean waterbendPaid(PlayCardRequest request) {
+        return Boolean.TRUE.equals(request.waterbendPaid())
+                || (request.waterbendPaid() == null
+                && request.additionalCostSacrificePermanentIds() != null
+                && !request.additionalCostSacrificePermanentIds().isEmpty());
     }
 
     private static boolean isPlotAlternateCast(GameData gameData, Player player, PlayCardRequest request) {

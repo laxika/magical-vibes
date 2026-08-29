@@ -1157,9 +1157,11 @@ public class GraveyardChoiceHandlerService {
                 || gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume) {
             boolean createZombieTokenCopy =
                     gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume;
+            UUID sourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimeExileResume = false;
             gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume = false;
+            gameData.graveyardTargetOperation.sourcePermanentId = null;
             if (cardIds.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + " chooses not to exile a card from a graveyard."));
@@ -1167,7 +1169,17 @@ public class GraveyardChoiceHandlerService {
                 for (UUID cardId : cardIds) {
                     Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                     if (card != null) {
-                        graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+                        if (sourcePermanentId != null) {
+                            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                            if (ownerId != null) {
+                                permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
+                                exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
+                            } else {
+                                graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+                            }
+                        } else {
+                            graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+                        }
                         gameLogService.append(gameData, GameLog.textCardText(
                                 player.getUsername() + " exiles ", card, " from a graveyard."));
                         if (createZombieTokenCopy && gameData.pendingEffectResolutionEntry != null) {
@@ -1249,10 +1261,12 @@ public class GraveyardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             if (pileSeparation.disposition() == CardPileDisposition.PLAY_FROM_EXILE) {
                 brilliantUltimatumSupport.completePileSeparationStep1(gameData, cardIds);
-            } else if (pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN) {
-                // Gifts Ungiven completes in one step: the chosen cards go to the controller's
-                // graveyard and the rest to their hand, so the spell's resolution resumes here.
-                graveyardReturnSupport.completeGiftsUngivenChoice(gameData, cardIds);
+            } else if (pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN
+                    || pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED) {
+                // Gifts-style effects complete in one step: the chosen cards go to the controller's
+                // graveyard and the remaining cards go to their configured destination.
+                graveyardReturnSupport.completeGiftsUngivenChoice(gameData, cardIds,
+                        pileSeparation.disposition() == CardPileDisposition.GIFTS_UNGIVEN_BATTLEFIELD_TAPPED);
                 if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
                     effectResolutionService.resolveEffectsFrom(gameData,
                             gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);

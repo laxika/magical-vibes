@@ -175,6 +175,8 @@ public class Permanent {
      * sacrificed for "add one mana of any type that land could produce").
      */
     @Setter private Card chosenCard;
+    /** The creature card exiled with this permanent most recently chosen for ability copying. */
+    @Setter private Card lastChosenExiledCard;
     /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
     @Setter private Permanent chosenSacrificedPermanentSnapshot;
     @Setter private boolean cantBeBlocked;
@@ -711,6 +713,7 @@ public class Permanent {
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
+        this.lastChosenExiledCard = source.lastChosenExiledCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.cantBeBlocked = source.cantBeBlocked;
@@ -1339,6 +1342,7 @@ public class Permanent {
         CounterType keywordCounter = switch (keyword) {
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
+            case DOUBLE_STRIKE -> CounterType.DOUBLE_STRIKE;
             case DEATHTOUCH -> CounterType.DEATHTOUCH;
             case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;

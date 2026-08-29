@@ -307,6 +307,17 @@
       </div>
     }
 
+    @if (choice.targeting.choosingAdditionalCost) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Cast {{ choice.targeting.additionalCostCardName }} &mdash; choose how to pay:</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.choosePayLifeForAdditionalCost()">Pay {{ choice.targeting.additionalCostLifePayment }} Life</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.choosePayManaForAdditionalCost()">Pay {{ choice.targeting.additionalCostManaCost }}</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelAdditionalCost()">Cancel</button>
+        </div>
+      </div>
+    }
+
     @if (choice.targeting.selectingExileCounterCost) {
       <div class="side-prompt prompt-targeting">
         <span class="side-prompt-text">Remove {{ choice.targeting.exileCounterCostRequired }} counters from creatures to cast {{ choice.targeting.exileCounterCostCardName }} ({{ choice.targeting.exileCounterCostSelectedIds().length }}/{{ choice.targeting.exileCounterCostRequired }})</span>

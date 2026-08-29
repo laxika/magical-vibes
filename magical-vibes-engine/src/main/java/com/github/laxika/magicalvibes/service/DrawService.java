@@ -1225,6 +1225,8 @@ public class DrawService {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
             checkControllerDrawTriggerSlot(
                     gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, drawn);
+            checkGraveyardControllerDrawTriggerSlot(
+                    gameData, drawingPlayerId, EffectSlot.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD);
         }
 
         // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
@@ -1346,6 +1348,31 @@ public class DrawService {
             }
         }
 
+    }
+
+    private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
+                                                         EffectSlot slot) {
+        List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
+        if (graveyard == null) return;
+
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        for (Card card : new ArrayList<>(graveyard)) {
+            for (CardEffect effect : card.getEffects(slot)) {
+                if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
+
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        drawingPlayerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} graveyard ability triggers on second card draw",
+                        gameData.id, card.getName());
+            }
+        }
     }
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {

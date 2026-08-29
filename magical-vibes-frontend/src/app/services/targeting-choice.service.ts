@@ -176,6 +176,12 @@ export class TargetingChoiceService {
     this.alternateCostSelectedGraveyardIndices.set([]);
     this.pendingAlternateExileGraveyardIndices = [];
     this.alternateCostSelectedIds.set([]);
+    this.choosingAdditionalCost = false;
+    this.additionalCostCardIndex = -1;
+    this.additionalCostCardName = '';
+    this.additionalCostLifePayment = 0;
+    this.additionalCostManaCost = '';
+    this.pendingPayLifeForAdditionalCost = null;
     this.choosingBehold = false;
     this.selectingBeholdPermanent = false;
     this.selectingBeholdHandCard = false;
@@ -422,6 +428,13 @@ export class TargetingChoiceService {
   private pendingAlternateExileHandIndices: number[] = [];
   private pendingAlternateExileGraveyardIndices: number[] = [];
 
+  choosingAdditionalCost = false;
+  additionalCostCardIndex = -1;
+  additionalCostCardName = '';
+  additionalCostLifePayment = 0;
+  additionalCostManaCost = '';
+  private pendingPayLifeForAdditionalCost: boolean | null = null;
+
   choosingBehold = false;
   selectingBeholdPermanent = false;
   selectingBeholdHandCard = false;
@@ -625,6 +638,15 @@ export class TargetingChoiceService {
       }
 
       // Check for Phyrexian mana — show chooser before anything else
+      if ((card.additionalCostLifePayment ?? 0) > 0 && card.additionalCostManaCost) {
+        this.choosingAdditionalCost = true;
+        this.additionalCostCardIndex = index;
+        this.additionalCostCardName = card.name;
+        this.additionalCostLifePayment = card.additionalCostLifePayment ?? 0;
+        this.additionalCostManaCost = card.additionalCostManaCost;
+        return;
+      }
+
       if (card.hasPhyrexianMana && card.phyrexianManaCount > 0) {
         this.choosingPhyrexianPayment = true;
         this.phyrexianCardIndex = index;
@@ -1526,6 +1548,10 @@ export class TargetingChoiceService {
     }
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
+    }
+    if (this.pendingPayLifeForAdditionalCost != null) {
+      msg.payLifeForAdditionalCost = this.pendingPayLifeForAdditionalCost;
+      this.pendingPayLifeForAdditionalCost = null;
     }
     if (this.pendingFlashback) {
       msg.flashback = true;
@@ -2606,6 +2632,35 @@ export class TargetingChoiceService {
     this.continuePlayCard(savedIndex);
   }
 
+  choosePayLifeForAdditionalCost(): void {
+    if (!this.choosingAdditionalCost) return;
+    const savedIndex = this.additionalCostCardIndex;
+    this.pendingPayLifeForAdditionalCost = true;
+    this.resetAdditionalCostState();
+    this.continuePlayCard(savedIndex);
+  }
+
+  choosePayManaForAdditionalCost(): void {
+    if (!this.choosingAdditionalCost) return;
+    const savedIndex = this.additionalCostCardIndex;
+    this.pendingPayLifeForAdditionalCost = false;
+    this.resetAdditionalCostState();
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelAdditionalCost(): void {
+    this.resetAdditionalCostState();
+    this.pendingPayLifeForAdditionalCost = null;
+  }
+
+  private resetAdditionalCostState(): void {
+    this.choosingAdditionalCost = false;
+    this.additionalCostCardIndex = -1;
+    this.additionalCostCardName = '';
+    this.additionalCostLifePayment = 0;
+    this.additionalCostManaCost = '';
+  }
+
   choosePayAlternateCost(): void {
     this.choosingAlternateCost = false;
     if (this.alternateCostCollectEvidence) {
@@ -2969,8 +3024,14 @@ export class TargetingChoiceService {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
-    if (ability.requiresXValue && !ability.xValueFromCardsInHandColor
-      && this.availableXValue(perm, ability) < 1) return false;
+    if (ability.requiresXValue) {
+      const available = ability.xValueFromWaterbendCost
+        ? this.availableWaterbendXValue(perm, ability)
+        : this.availableXValue(perm, ability);
+      const minimum = ability.xValueMin
+        ?? (ability.xValueFromCardsInHandColor ? 0 : 1);
+      if (available < minimum) return false;
+    }
     if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
@@ -2991,6 +3052,15 @@ export class TargetingChoiceService {
         card.colors?.includes(ability.xValueFromCardsInHandColor!)).length ?? 0;
     }
     return this.availableXCounters(perm, ability);
+  }
+
+  private availableWaterbendXValue(perm: Permanent, ability: ActivatedAbilityView): number {
+    const eligiblePermanents = this.myBattlefieldFn().filter(permanent =>
+      !permanent.tapped
+      && (!ability.requiresTap || permanent.id !== perm.id)
+      && (isPermanentArtifact(permanent) || isPermanentCreature(permanent))
+    ).length;
+    return this.totalManaFn() + eligiblePermanents;
   }
 
   /** MTGO-style: an ability whose cost exceeds the floating pool is still activatable when
@@ -3059,8 +3129,10 @@ export class TargetingChoiceService {
       this.choosingXValue = true;
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
-      this.xValueInput = ability.xValueFromCardsInHandColor ? 0 : 1;
-      this.xValueMaximum = this.availableXValue(perm, ability);
+      this.xValueInput = ability.xValueFromCardsInHandColor ? 0 : (ability.xValueMin ?? 1);
+      this.xValueMaximum = ability.xValueFromWaterbendCost
+        ? this.availableWaterbendXValue(perm, ability)
+        : this.availableXValue(perm, ability);
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;

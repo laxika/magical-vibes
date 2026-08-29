@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mathemagics;
 import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
+import com.github.laxika.magicalvibes.cards.m.MasumaroFirstToLive;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
@@ -98,6 +99,7 @@ import com.github.laxika.magicalvibes.cards.t.TilonallisSummoner;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
+import com.github.laxika.magicalvibes.cards.t.TheSkullsporeNexus;
 import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
 import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
@@ -135,6 +137,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void paysForDynamicReductionAfterSpellLeavesHand() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Card uncastableCard = new Card();
+        uncastableCard.setName("Uncastable test card");
+        uncastableCard.setType(CardType.CREATURE);
+
+        harness.addToBattlefield(aiPlayer, new MasumaroFirstToLive());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(aiPlayer, new Forest());
+            harness.addToBattlefield(aiPlayer, new Mountain());
+        }
+        TheSkullsporeNexus nexus = new TheSkullsporeNexus();
+        harness.setHand(aiPlayer, List.of(nexus, uncastableCard));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getCard()).isSameAs(nexus));
+            assertThat(gameData.playerBattlefields.get(aiPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .hasSize(6)
+                    .allMatch(Permanent::isTapped);
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void castsSpellUsingManaColorReplacedForItsLandsThisTurn() {

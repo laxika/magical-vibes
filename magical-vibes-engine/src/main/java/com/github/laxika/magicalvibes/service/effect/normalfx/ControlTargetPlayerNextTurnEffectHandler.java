@@ -33,6 +33,7 @@ public class ControlTargetPlayerNextTurnEffectHandler implements NormalEffectHan
         }
 
         UUID controllerId = entry.getControllerId();
+        gameData.pendingCombatControl.remove(targetPlayerId);
         gameData.pendingTurnControl.put(targetPlayerId, controllerId);
         if (e.grantExtraTurnAfter()) {
             gameData.pendingTurnControlExtraTurn.add(targetPlayerId);

@@ -43,6 +43,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> promotedArtifactSpellOrAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
     private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
+    /** Mana that remains in the pool through combat steps until the current combat ends. */
+    private final EnumMap<ManaColor, Integer> combatMana = new EnumMap<>(ManaColor.class);
     /**
      * Mana carrying the rider "if that mana is spent on a creature spell, it gains haste until end of
      * turn" (Generator Servant). Like {@link #creatureMana} this is a tag on a subset of the regular
@@ -195,6 +197,7 @@ public class ManaPool {
             artifactSpellOrAbilityOnlyMana.put(color, 0);
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
             persistentMana.put(color, 0);
+            combatMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
@@ -235,6 +238,7 @@ public class ManaPool {
         artifactSpellOrAbilityOnlyMana.putAll(source.artifactSpellOrAbilityOnlyMana);
         promotedArtifactSpellOrAbilityOnlyMana.putAll(source.promotedArtifactSpellOrAbilityOnlyMana);
         persistentMana.putAll(source.persistentMana);
+        combatMana.putAll(source.combatMana);
         hasteGrantingMana.putAll(source.hasteGrantingMana);
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
@@ -490,6 +494,7 @@ public class ManaPool {
             artifactSpellOrAbilityOnlyMana.put(color, 0);
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
+            combatMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
@@ -577,7 +582,7 @@ public class ManaPool {
      * Used to snapshot mana before/after spell payment to compute mana spent.
      */
     public int getTotalAllMana() {
-        // NOTE: creatureMana and persistentMana are tags on a subset of the regular pool, not
+        // NOTE: creatureMana, persistentMana, and combatMana are tags on a subset of the regular pool, not
         // separate buckets, so they are already counted by getTotal() and must not be added again.
         int total = getTotal();
         total += getAbilityOnlyManaTotal();
@@ -767,6 +772,10 @@ public class ManaPool {
 
     public void remove(ManaColor color) {
         pool.merge(color, -1, Integer::sum);
+        int combat = combatMana.getOrDefault(color, 0);
+        if (combat > 0) {
+            combatMana.put(color, combat - 1);
+        }
         int snow = snowMana.getOrDefault(color, 0);
         if (snow > 0) {
             snowMana.put(color, snow - 1);
@@ -2477,6 +2486,12 @@ public class ManaPool {
         persistentMana.merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana that survives step and phase transitions until the current combat ends. */
+    public void addManaUntilEndOfCombat(ManaColor color, int amount) {
+        pool.merge(color, amount, Integer::sum);
+        combatMana.merge(color, amount, Integer::sum);
+    }
+
     /**
      * Changes the mana that would drain at the next step or phase boundary to colorless mana.
      * Persistent mana remains in its original color until it would actually drain.
@@ -2484,7 +2499,8 @@ public class ManaPool {
     public void convertNonPersistentManaToColorless() {
         for (ManaColor color : ManaColor.COLORS) {
             int current = pool.getOrDefault(color, 0);
-            int persistent = persistentMana.getOrDefault(color, 0);
+            int persistent = persistentMana.getOrDefault(color, 0)
+                    + combatMana.getOrDefault(color, 0);
             int amount = Math.max(0, current - persistent);
             if (amount == 0) {
                 continue;
@@ -2550,7 +2566,8 @@ public class ManaPool {
                 continue;
             }
             int current = pool.getOrDefault(color, 0);
-            int persistent = persistentMana.getOrDefault(color, 0);
+            int persistent = persistentMana.getOrDefault(color, 0)
+                    + combatMana.getOrDefault(color, 0);
             int amount = Math.max(0, current - persistent);
             if (amount == 0) {
                 continue;
@@ -2732,14 +2749,19 @@ public class ManaPool {
     public boolean drainNonPersistent(Set<ManaColor> protectedColors) {
         int totalBefore = getTotalAllMana();
         for (ManaColor color : ManaColor.values()) {
-            int persistent = persistentMana.getOrDefault(color, 0);
+            int persistent = persistentMana.getOrDefault(color, 0)
+                    + combatMana.getOrDefault(color, 0);
             int current = pool.getOrDefault(color, 0);
             if (!protectedColors.contains(color)) {
                 // Keep the lesser of current pool and persistent amount
                 pool.put(color, Math.min(current, persistent));
             }
-            // Clamp persistent to not exceed what's in the pool
-            persistentMana.put(color, Math.min(current, persistent));
+            // Clamp duration trackers to not exceed what's in the pool.
+            int retained = protectedColors.contains(color) ? current : Math.min(current, persistent);
+            int persistentAmount = Math.min(current, persistentMana.getOrDefault(color, 0));
+            persistentMana.put(color, persistentAmount);
+            combatMana.put(color, Math.min(combatMana.getOrDefault(color, 0),
+                    Math.max(0, retained - persistentAmount)));
         }
 
         clampColorTag(creatureMana, protectedColors);
@@ -2846,6 +2868,13 @@ public class ManaPool {
             persistentMana.put(color, 0);
         }
         persistentPowerstoneOnlyColorless = 0;
+    }
+
+    /** Clears the tracking for mana whose duration ends with the current combat. */
+    public void clearCombatMana() {
+        for (ManaColor color : ManaColor.values()) {
+            combatMana.put(color, 0);
+        }
     }
 
     public int getPersistentMana(ManaColor color) {

@@ -43,9 +43,19 @@ public sealed interface ChoiceContext {
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)
             implements ChoiceContext {}
 
-    record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) implements ChoiceContext {
+    record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes,
+                                boolean anyColorCombination) implements ChoiceContext {
         public ManaColorSpellChoice {
             subtypes = Set.copyOf(subtypes);
+        }
+
+        public ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) {
+            this(playerId, amount, subtypes, false);
+        }
+
+        public static ManaColorSpellChoice anyColorCombination(UUID playerId, int amount,
+                                                                Set<CardSubtype> subtypes) {
+            return new ManaColorSpellChoice(playerId, amount, subtypes, true);
         }
     }
 
@@ -1329,7 +1339,7 @@ public sealed interface ChoiceContext {
     }
 
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                UUID sourcePermanentId, boolean modesResetEachTurn,
+                                UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
                                 List<ChooseOneEffect.ChooseOneOption> chosenModes,
                                 UUID triggeringCardId) implements ChoiceContext {
 
@@ -1339,13 +1349,28 @@ public sealed interface ChoiceContext {
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, List.of(), null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, List.of(), null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, List.of(), null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, List.of(), null);
         }
+
+        public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                    UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
+                                    List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
+                    chosenModes, null);
+        }
+
+        public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                    UUID sourcePermanentId, boolean modesResetEachTurn,
+                                    List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false,
+                    chosenModes, triggeringCardId);
+        }
+
     }
 
     record RedistributePlayerLifeTotalsChoice(Map<String, Map<UUID, Integer>> choices) implements ChoiceContext {

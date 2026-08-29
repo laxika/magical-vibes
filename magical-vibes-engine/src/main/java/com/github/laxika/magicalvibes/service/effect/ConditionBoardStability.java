@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 
 import java.util.List;
 
@@ -40,6 +41,8 @@ public final class ConditionBoardStability {
             // type, and the static branch counts through StaticEffectSupport
             // .isArtifactForStaticFilter, which reads the in-flight layer-4 state (CR 613.1d).
             case Metalcraft ignored -> true;
+            // Counter quantities are part of the structural board fingerprint.
+            case SourceCounterThreshold ignored -> true;
             // Devotion reads the mana costs of battlefield permanents, whose identities and
             // current mana-cost strings are included in the board fingerprint.
             case DevotionToColorAtLeast ignored -> true;

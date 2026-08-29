@@ -110,6 +110,8 @@ public enum Keyword {
     DOUBLE,
     PLOT,
     AMASS,
+    WATERBEND,
+    FIREBENDING,
     BLOW_UP,
     DISGUISE;
 

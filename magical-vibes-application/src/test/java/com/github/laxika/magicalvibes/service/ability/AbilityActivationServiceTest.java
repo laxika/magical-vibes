@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -486,6 +487,29 @@ class AbilityActivationServiceTest {
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("summoning sickness");
+        }
+
+        @Test
+        @DisplayName("Tap ability waterbend cannot use its source to pay the waterbend cost")
+        void tapAbilityWaterbendExcludesSource() {
+            Card creature = createCreatureCard("Waterbending Tap Creature", 2, 2);
+            creature.addActivatedAbility(new ActivatedAbility(
+                    true,
+                    null,
+                    List.of(new WaterbendCost(1), new BoostSelfEffect(1, 1)),
+                    "Waterbend {1}, {T}: Get bigger."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, creature);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("waterbend");
+            assertThat(perm.isTapped()).isFalse();
         }
 
         @Test
@@ -1745,6 +1769,24 @@ class AbilityActivationServiceTest {
 
             assertThat(service.canActivateAbility(gameData, player1Id, perm, 99,
                     gameData.playerManaPools.get(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Uses the ability minimum X for the dry-run legality query")
+        void usesMinimumXForDryRun() {
+            Card card = createCreatureCard("X Ability Creature", 2, 2);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    null,
+                    List.of(),
+                    "X: Do nothing."
+            ).withXValue().withMinimumXValue(1));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isTrue();
         }
 
         @Test

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -92,6 +93,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
@@ -574,7 +576,15 @@ public class DeathTriggerCollectorService {
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(may))
             ));
         } else {
-            match.gameData().queueMayAbility(sd.dyingCard(), sd.controllerId(), may);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sd.dyingCard(),
+                    sd.controllerId(),
+                    sd.dyingCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(may))
+            );
+            entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
+            match.gameData().stack.add(entry);
         }
         return true;
     }
@@ -714,6 +724,7 @@ public class DeathTriggerCollectorService {
                     sourcePermanentId
             );
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
             entry.setEventValue(sd.dyingPower());
             match.gameData().stack.add(entry);
         }
@@ -1190,6 +1201,9 @@ public class DeathTriggerCollectorService {
         if (effect instanceof SequenceEffect sequence) {
             return sequence.steps().stream().anyMatch(this::effectReferencesEventValue);
         }
+        if (effect.referencesEventValue()) {
+            return true;
+        }
         if (effect instanceof LookAtTopCardsEffect lookAtTopCards) {
             return amountEvaluationService.referencesEventValue(lookAtTopCards.lookCount());
         }
@@ -1275,6 +1289,16 @@ public class DeathTriggerCollectorService {
                         epl.leavingControllerId())))
         ));
         logEnchantedPermanentLTB(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleModalSelfLeavesTrigger(TriggerMatchContext match,
+            ChooseOneAtTriggerTimeEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                match.permanent().getCard(), sl.controllerId(), effect.choice(), match.permanent().getId()));
+        logSelfLeaves(match);
         return true;
     }
 
@@ -2548,6 +2572,21 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ANY_NONTOKEN_CREATURE_DIES ──────────────────────────────────
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
+    boolean handleAnyNontokenCreatureDeathMay(TriggerMatchContext match,
+            MayEffect may, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        MayEffect resolvedMay = may;
+        if (may.wrapped() instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
+            resolvedMay = new MayEffect(aware.boundToDyingCard(cd.dyingCard().getId()),
+                    may.prompt(), may.elseEffect());
+        }
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
+                resolvedMay, null, match.permanent().getId());
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
     @CollectsTrigger(value = ImprintDyingCreatureEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
     boolean handleImprintDyingCreature(TriggerMatchContext match,
             ImprintDyingCreatureEffect effect, TriggerContext ctx) {
@@ -3100,6 +3139,25 @@ public class DeathTriggerCollectorService {
         int count = match.permanent().getCounterCount(effect.counterType());
         CardEffect baked = new PutCounterOnTargetForEachLeavingSourceCounterEffect(
                 effect.counterType(), count, effect.targetPredicate());
+        return handleSelfLeavesDefault(match, baked, ctx);
+    }
+
+    @CollectsTrigger(value = PutCountersOnTargetForEachLeavingSourceCountersEffect.class,
+            slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handlePutCountersOnTargetForEachLeavingSourceCounters(TriggerMatchContext match,
+            PutCountersOnTargetForEachLeavingSourceCountersEffect effect, TriggerContext ctx) {
+        Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+        for (CounterType counterType : CounterType.values()) {
+            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+                continue;
+            }
+            int count = match.permanent().getCounterCount(counterType);
+            if (count > 0) {
+                counters.put(counterType, count);
+            }
+        }
+        CardEffect baked = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
+                counters, effect.targetPredicate());
         return handleSelfLeavesDefault(match, baked, ctx);
     }
 

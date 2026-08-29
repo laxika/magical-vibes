@@ -1,0 +1,33 @@
+package com.github.laxika.magicalvibes.cards.f;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+
+import java.util.List;
+
+@CardRegistration(set = "TLA", collectorNumber = "221")
+public class FireLordZuko extends Card {
+
+    public FireLordZuko() {
+        addEffect(EffectSlot.ON_ATTACK,
+                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, new SourcePower()));
+
+        PutCounterOnEachControlledPermanentEffect counterEffect =
+                new PutCounterOnEachControlledPermanentEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+                new SpellCastTriggerEffect(null, List.of(counterEffect),
+                        new StackEntryCastFromZonePredicate(Zone.EXILE)));
+        addEffect(EffectSlot.ON_PERMANENT_ENTERS_FROM_EXILE, counterEffect);
+    }
+}

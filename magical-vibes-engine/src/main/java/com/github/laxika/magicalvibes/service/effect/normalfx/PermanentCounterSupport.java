@@ -189,7 +189,7 @@ public class PermanentCounterSupport {
                     case HOUR -> perm.setCounterCount(CounterType.HOUR, perm.getCounterCount(CounterType.HOUR) + placed);
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
-                    case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
+                    case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
                          REACH, TRAMPLE -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
@@ -442,7 +442,7 @@ public class PermanentCounterSupport {
             case TRAINING -> { target.setCounterCount(CounterType.TRAINING, target.getCounterCount(CounterType.TRAINING) + count); yield "training"; }
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
             case TIDE -> { target.setCounterCount(CounterType.TIDE, target.getCounterCount(CounterType.TIDE) + count); yield "tide"; }
-            case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
+            case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, DOUBLE_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
                  REACH, TRAMPLE -> {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
                 if (count > 0) {
@@ -1184,17 +1184,42 @@ public class PermanentCounterSupport {
                 continue;
             }
             Card card = source.getCard();
+            List<CardEffect> effectsToResolve = new ArrayList<>();
+            boolean markOnAcceptance = false;
+            boolean markImmediately = false;
+            for (CardEffect effect : effects) {
+                if (effect instanceof OncePerTurnTriggerEffect oncePerTurnTrigger) {
+                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId())) {
+                        continue;
+                    }
+                    if (oncePerTurnTrigger.markOnAcceptance()) {
+                        markOnAcceptance = true;
+                    } else {
+                        markImmediately = true;
+                    }
+                    effectsToResolve.add(oncePerTurnTrigger.wrapped());
+                } else {
+                    effectsToResolve.add(effect);
+                }
+            }
+            if (effectsToResolve.isEmpty()) {
+                continue;
+            }
             StackEntry triggerEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     controllerId,
                     card.getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
+                    effectsToResolve,
                     null,
                     source.getId()
             );
             triggerEntry.setEventValue(count);
+            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
             gameData.stack.add(triggerEntry);
+            if (markImmediately) {
+                gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
+            }
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
             log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
                     card.getName());

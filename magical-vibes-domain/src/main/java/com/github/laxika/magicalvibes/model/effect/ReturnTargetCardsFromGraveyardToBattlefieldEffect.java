@@ -69,6 +69,14 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false);
     }
 
+    /** Creates an any-number form that can return selected cards from any graveyard. */
+    public static ReturnTargetCardsFromGraveyardToBattlefieldEffect withinTotalManaValueFromAllGraveyards(
+            CardPredicate filter, int maxTotalManaValue) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                filter, 0, false, false, null, maxTotalManaValue, null, null, null, 0,
+                GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false);
+    }
+
     /** Creates a fixed-cap form that also permanently grants a color and subtype. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
                                                               boolean fromBattlefieldThisTurn,

@@ -148,17 +148,20 @@ class SpecializedInteractionAiStrategiesTest {
 
     @Test
     void activatedAbilityGraveyardExileCostChoosesMaximumX() throws Exception {
-        Card first = card("First", "{1}");
-        Card second = card("Second", "{2}");
+        Card expensive = card("Expensive", "{5}");
+        Card firstCheap = card("First cheap", "{1}");
+        Card secondCheap = card("Second cheap", "{2}");
 
         new ActivatedAbilityGraveyardExileCostChoiceAiStrategy().answer(
                 new PendingInteraction.ActivatedAbilityGraveyardExileCostChoice(
                         aiPlayerId, UUID.randomUUID(), 0, UUID.randomUUID(), null,
-                        List.of(first, second), "Choose cards to exile.", 0, 2, false),
+                        List.of(expensive, firstCheap, secondCheap),
+                        "Choose cards to exile.", 0, 2, false),
                 context);
 
         assertThat(capturedAnswer())
-                .isEqualTo(new InteractionAnswer.CardsChosen(List.of(first.getId(), second.getId())));
+                .isEqualTo(new InteractionAnswer.CardsChosen(
+                        List.of(firstCheap.getId(), secondCheap.getId())));
     }
 
     @Test

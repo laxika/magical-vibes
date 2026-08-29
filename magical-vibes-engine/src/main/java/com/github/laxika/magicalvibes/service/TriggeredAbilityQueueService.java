@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -89,6 +90,7 @@ public class TriggeredAbilityQueueService {
             sagaChapterCounterDistributionSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
+    @Lazy private final ETBTokenTargetService etbTokenTargetService;
 
     @Autowired
     void setReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler(
@@ -156,6 +158,21 @@ public class TriggeredAbilityQueueService {
             }
 
             var dyingCard = pending.dyingCard();
+            if (hasMultiTargetDeathTrigger(dyingCard, pending.effects())) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        dyingCard,
+                        pending.controllerId(),
+                        pending.effects(),
+                        pending.sourcePermanentSnapshot() == null
+                                ? null : pending.sourcePermanentSnapshot().getId(),
+                        List.of(),
+                        0,
+                        0));
+                etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+                return;
+            }
+
             TargetFilter deathFilter = pending.targetFilter() != null
                     ? pending.targetFilter() : targetFilterForTriggeredEffects(dyingCard, pending.effects());
             // The card-level target filter belongs to whichever ability declared it via
@@ -174,7 +191,9 @@ public class TriggeredAbilityQueueService {
                     deathFilter,
                     pending.controllerId(),
                     dyingCard,
-                    TriggerTargetCollector.Options.DEATH);
+                    pending.creaturesOnly()
+                            ? TriggerTargetCollector.Options.DEATH
+                            : TriggerTargetCollector.Options.DELAYED_DEATH);
 
             boolean optionalTarget = hasOptionalSingleTarget(dyingCard, pending.effects());
             if (result.validTargets().isEmpty()) {
@@ -244,7 +263,7 @@ public class TriggeredAbilityQueueService {
                     : (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
-                            : "target creature";
+                            : pending.creaturesOnly() ? "target creature" : "target permanent";
             if (optionalTarget) {
                 playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), result.validTargets(),
                         List.of(pending.controllerId()),
@@ -733,9 +752,10 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.TriggeredModalTrigger pending =
                     gameData.pollPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
             ChooseOneEffect effect = pending.effect();
-            if (pending.modesResetEachTurn()) {
+            if (pending.consumeModes() || pending.modesResetEachTurn()) {
                 Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-                Set<String> alreadyChosen = source == null ? Set.of() : source.getChosenModeLabelsThisTurn();
+                Set<String> alreadyChosen = source == null ? Set.of()
+                        : pending.consumeModes() ? source.getChosenModeLabels() : source.getChosenModeLabelsThisTurn();
                 List<ChooseOneEffect.ChooseOneOption> remaining = effect.options().stream()
                         .filter(option -> !alreadyChosen.contains(option.label()))
                         .toList();
@@ -746,14 +766,57 @@ public class TriggeredAbilityQueueService {
                 }
                 effect = new ChooseOneEffect(remaining);
             }
+            List<ChooseOneEffect.ChooseOneOption> legalOptions = effect.options().stream()
+                    .filter(option -> hasLegalTriggeredModeTarget(gameData, pending, option))
+                    .toList();
+            if (legalOptions.isEmpty()) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s triggered ability has no legal modes."));
+                continue;
+            }
+            if (legalOptions.size() != effect.options().size()) {
+                effect = new ChooseOneEffect(legalOptions, effect.optional(), effect.choicesRequired(),
+                        effect.choicesMax(), effect.allModesWhenOptionalCostPaid(), effect.additionalModesCondition());
+            }
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
-                    effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), List.of(),
-                    pending.triggeringCardId());
+                    effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
+                    List.of(), pending.triggeringCardId());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
             return;
         }
+    }
+
+    private boolean hasMultiTargetDeathTrigger(Card card, List<CardEffect> effects) {
+        return card.getSpellTargets().stream()
+                .anyMatch(group -> group.getMaxTargets() > 1
+                        && effects.stream().anyMatch(effect ->
+                        card.getEffectTargetIndex(effect) == group.getIndex()));
+    }
+
+    private boolean hasLegalTriggeredModeTarget(GameData gameData,
+            PermanentChoiceContext.TriggeredModalTrigger pending,
+            ChooseOneEffect.ChooseOneOption option) {
+        boolean requiresTarget = option.minTargets() > 0 && option.effects().stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        if (!requiresTarget) {
+            return true;
+        }
+
+        Permanent source = pending.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                option.effects(),
+                option.targetFilter(),
+                pending.controllerId(),
+                pending.sourceCard(),
+                TriggerTargetCollector.Options.ATTACK,
+                source);
+        return !result.validTargets().isEmpty();
     }
 
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
@@ -768,6 +831,9 @@ public class TriggeredAbilityQueueService {
 
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId) {
+        if (chosenModes.isEmpty()) {
+            return;
+        }
         List<CardEffect> effects = chosenModes.stream()
                 .flatMap(option -> option.effects().stream())
                 .toList();
@@ -1738,7 +1804,8 @@ public class TriggeredAbilityQueueService {
                         continue;
                     }
                     if (filter == null || predicateEvaluationService.matchesCardPredicate(
-                            graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId)) {
+                            graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId,
+                            null, pending.sourcePowerAtTrigger())) {
                         matchingCards.add(graveyardCard);
                     }
                 }
@@ -1749,8 +1816,24 @@ public class TriggeredAbilityQueueService {
             int describedMinTargets = describedTarget == null ? 0 : describedTarget.minTargets();
             int minTargets = Math.max(pending.minCount(), describedMinTargets);
             if (matchingCards.isEmpty() || matchingCards.size() < minTargets) {
-                log.info("Game {} - {} spell-cast graveyard-target trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName());
+                if (matchingCards.isEmpty() && minTargets == 0) {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            pending.sourceCard(),
+                            pending.controllerId(),
+                            pending.sourceCard().getName() + "'s ability",
+                            new ArrayList<>(pending.effects()),
+                            pending.xValue());
+                    entry.setNonTargeting(true);
+                    gameData.stack.add(entry);
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s ability triggers with no graveyard targets."));
+                    log.info("Game {} - {} graveyard-target trigger pushed with 0 targets",
+                            gameData.id, pending.sourceCard().getName());
+                } else {
+                    log.info("Game {} - {} spell-cast graveyard-target trigger skipped (no valid targets)",
+                            gameData.id, pending.sourceCard().getName());
+                }
                 continue;
             }
 
@@ -1759,6 +1842,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
+            gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
+                    pending.sourcePowerAtTrigger();
             // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
             List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());
             if (bf != null) {

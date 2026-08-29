@@ -116,6 +116,8 @@ public class GameData {
     public final Set<UUID> playersWhoInvestigatedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts permanents sacrificed by subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> sacrificedPermanentSubtypeCountThisTurn = new ConcurrentHashMap<>();
+    /** Counts permanents sacrificed by controller this turn. */
+    public final Map<UUID, Integer> sacrificedPermanentCountThisTurn = new ConcurrentHashMap<>();
     /** Players who surveilled at least once this turn. */
     public final Set<UUID> playersWhoSurveilledThisTurn = ConcurrentHashMap.newKeySet();
     /**
@@ -644,7 +646,7 @@ public class GameData {
      *  permanent id, so a permanent that leaves and re-enters the battlefield is a new object and may
      *  activate again (CR 400.7). Never cleared at turn cleanup — only by Karn's game restart. */
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisGame = new ConcurrentHashMap<>();
-    /** Per-permanent count of how many times its resolution-counting ability has resolved
+     /** Per-permanent count of how many times its resolution-counting ability has resolved
      *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim or
      *  Nissa, Resurgent Animist).
      *  Keyed by source permanent id; reset at the start of each turn. */
@@ -694,6 +696,8 @@ public class GameData {
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
     public int additionalCombatPhasesOnly;
+    /** Whether only land creatures may attack during the current additional combat phase. */
+    public boolean onlyLandCreaturesCanAttackThisCombat;
     /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
     public int additionalCombatPhasesAfterMain;
     /** The normal phase to resume after {@link #additionalCombatPhasesAfterMain} is exhausted. */
@@ -997,6 +1001,10 @@ public class GameData {
 
     /** Players who can't cast noncreature spells until the key player's next turn. */
     public final Map<UUID, Set<UUID>> playersCantCastNoncreatureSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Players who can't cast spells from outside their hands until the key player's next turn. */
+    public final Map<UUID, Set<UUID>> playersCantCastSpellsFromOutsideHandUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
     /** Players who can't play cards from their hand until the key player's next turn. */
@@ -1777,6 +1785,8 @@ public class GameData {
      *  other. Cleared at start of new turn. */
     public final Set<UUID> onceEachTurnAttackTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
+    public final Map<UUID, Set<BendingType>> bendingTypesCompletedThisTurn = new ConcurrentHashMap<>();
+
     /**
      * Creatures dying together in the current simultaneous-death event (CR 700.1 / destroy batch /
      * SBA lethal pass). Maps permanent id → permanent (last-known) and controller id. Used so
@@ -1861,10 +1871,14 @@ public class GameData {
      * turn (Emrakul, the Promised End). Consumed with {@link #pendingTurnControl} when that turn begins.
      */
     public final Set<UUID> pendingTurnControlExtraTurn = ConcurrentHashMap.newKeySet();
+    /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's next combat begins. */
+    public final Map<UUID, UUID> pendingCombatControl = new ConcurrentHashMap<>();
     /** Non-null when a player is being controlled this turn (the controlled player's ID). */
     public UUID mindControlledPlayerId;
     /** Non-null when a player is being controlled this turn (the controlling player's ID). */
     public UUID mindControllerPlayerId;
+    /** Whether the active mind control ends when the current combat phase ends. */
+    public boolean mindControlUntilEndOfCombat;
 
     // Taunt — "creatures that player controls attack you if able" during their next turn
     /** Delayed effect: affectedPlayerId -> controllerId to attack, consumed when the affected player's turn begins. */
@@ -2602,6 +2616,19 @@ public class GameData {
         return drained;
     }
 
+    /** Removes and returns the first queued delayed action of the given kind, if one exists. */
+    public <T extends DelayedAction> T drainFirstDelayedAction(Class<T> type) {
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (type.isInstance(action)) {
+                it.remove();
+                return type.cast(action);
+            }
+        }
+        return null;
+    }
+
     /**
      * Removes and returns the queued delayed actions of the given kind that match {@code filter},
      * preserving insertion order and leaving non-matching entries in place (used by the per-step
@@ -2800,6 +2827,8 @@ public class GameData {
     /** Records a permanent sacrificed by the given player this turn. */
     public void recordSacrificedPermanent(UUID playerId, Card card) {
         if (playerId == null || card == null) return;
+        playersWhoSacrificedPermanentsThisTurn.add(playerId);
+        sacrificedPermanentCountThisTurn.merge(playerId, 1, Integer::sum);
         if (card.hasType(CardType.ARTIFACT)) {
             playersWhoSacrificedArtifactsThisTurn.add(playerId);
         }
@@ -2966,6 +2995,17 @@ public class GameData {
 
     public void clearSpellCastManaSpent(UUID spellCardId) {
         spellCastManaSpent.remove(spellCardId);
+    }
+
+    public void recordBending(UUID playerId, BendingType type) {
+        bendingTypesCompletedThisTurn
+                .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(type);
+    }
+
+    public boolean completedAllBendingTypes(UUID playerId) {
+        Set<BendingType> completed = bendingTypesCompletedThisTurn.get(playerId);
+        return completed != null && completed.containsAll(java.util.EnumSet.allOf(BendingType.class));
     }
 
     public void addSpellCastManaSource(UUID spellCardId, UUID sourcePermanentId) {
@@ -3928,6 +3968,7 @@ public class GameData {
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
+        copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
@@ -4120,6 +4161,7 @@ public class GameData {
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
                 .addAll(this.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn);
         copy.playersWhoSacrificedPermanentsThisTurn.addAll(this.playersWhoSacrificedPermanentsThisTurn);
+        copy.sacrificedPermanentCountThisTurn.putAll(this.sacrificedPermanentCountThisTurn);
         copy.playersWhoSacrificedArtifactsThisTurn.addAll(this.playersWhoSacrificedArtifactsThisTurn);
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
         this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
@@ -4206,6 +4248,8 @@ public class GameData {
             copy.firstResolutionTriggerKeysThisTurn.put(k, keys);
         });
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
+        this.bendingTypesCompletedThisTurn.forEach((k, v) ->
+                copy.bendingTypesCompletedThisTurn.put(k, new java.util.HashSet<>(v)));
         copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);
         copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
@@ -4594,6 +4638,8 @@ public class GameData {
                 copy.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.forEach((k, v) ->
+                copy.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantPlayCardsFromHandUntilControllerNextTurn.forEach((k, v) ->
                 copy.playersCantPlayCardsFromHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
@@ -4692,8 +4738,10 @@ public class GameData {
         // --- Mindslaver turn control ---
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
         copy.pendingTurnControlExtraTurn.addAll(this.pendingTurnControlExtraTurn);
+        copy.pendingCombatControl.putAll(this.pendingCombatControl);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
+        copy.mindControlUntilEndOfCombat = this.mindControlUntilEndOfCombat;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);

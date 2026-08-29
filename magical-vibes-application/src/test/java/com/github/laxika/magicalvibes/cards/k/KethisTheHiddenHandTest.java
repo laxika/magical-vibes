@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.cards.s.ShizoDeathsStorehouse;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KethisTheHiddenHand.class, Forest.class, GrizzlyBears.class, KarnScionOfUrza.class,
+        MoxAmber.class, ShizoDeathsStorehouse.class})
 class KethisTheHiddenHandTest extends BaseCardTest {
 
     @Test
@@ -57,10 +62,15 @@ class KethisTheHiddenHandTest extends BaseCardTest {
         prepareMainPhase();
 
         harness.activateAbility(player1, 0, null, null);
+        PendingInteraction.ActivatedAbilityGraveyardExileCostChoice choice =
+                gd.interaction.activeInteraction(
+                        PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId(), playable.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId(), playable.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .containsExactlyInAnyOrder(first, second);
+                .containsExactlyInAnyOrder(second, playable);
         harness.assertInGraveyard(player1, "Forest");
 
         harness.castFromGraveyard(player1, 1);
@@ -81,6 +91,9 @@ class KethisTheHiddenHandTest extends BaseCardTest {
         prepareMainPhase();
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, List.of(
+                gd.playerGraveyards.get(player1.getId()).get(0).getId(),
+                gd.playerGraveyards.get(player1.getId()).get(2).getId()));
         harness.passBothPriorities();
 
         harness.playGraveyardLand(player1, 0);
@@ -97,6 +110,10 @@ class KethisTheHiddenHandTest extends BaseCardTest {
         prepareMainPhase();
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .limit(2)
+                .map(Card::getId)
+                .toList());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -105,6 +122,27 @@ class KethisTheHiddenHandTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The activation rejects nonlegendary cards as payment")
+    void rejectsNonlegendaryCardsAsPayment() {
+        Forest forest = new Forest();
+        MoxAmber first = new MoxAmber();
+        MoxAmber second = new MoxAmber();
+        MoxAmber third = new MoxAmber();
+        harness.addToBattlefield(player1, new KethisTheHiddenHand());
+        harness.setGraveyard(player1, List.of(forest, first, second, third));
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(forest.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(forest, first, second, third);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private void prepareMainPhase() {

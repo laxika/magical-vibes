@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -130,6 +132,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentToHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
@@ -151,6 +154,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -215,6 +219,7 @@ public class SpellCastingService {
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     private final AdditionalSpellCostService additionalSpellCostService;
+    private final WaterbendPaymentService waterbendPaymentService;
     private final GameMutationCoordinator mutationCoordinator;
     private final StateBasedActionService stateBasedActionService;
     private final LifeSupport lifeSupport;
@@ -1286,6 +1291,48 @@ public class SpellCastingService {
                          boolean buyback, UUID beholdPermanentId, Integer beholdHandCardIndex,
                          List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                          CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                kicked, discardHandCardIndex, discardHandCardIndices, modalXValue,
+                imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts,
+                buyback, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                beholdChosenSubtype, chosenCreatureType,
+                additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty());
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                         Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                         List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                         Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                         Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                         boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                         Integer modalXValue, List<UUID> imposedSacrificePermanentIds,
+                         List<UUID> additionalCostSacrificePermanentIds, List<String> repeatedAdditionalCosts,
+                         boolean buyback, UUID beholdPermanentId, Integer beholdHandCardIndex,
+                  List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                  CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                  boolean waterbendPaid) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex,
+                discardHandCardIndices, modalXValue, imposedSacrificePermanentIds,
+                additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, beholdPermanentId,
+                beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype,
+                chosenCreatureType, waterbendPaid, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                  Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                  boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                  Integer modalXValue, List<UUID> imposedSacrificePermanentIds,
+                  List<UUID> additionalCostSacrificePermanentIds, List<String> repeatedAdditionalCosts,
+                  boolean buyback, UUID beholdPermanentId, Integer beholdHandCardIndex,
+                  List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                  CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                  boolean waterbendPaid, Boolean payLifeForAdditionalCost) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
@@ -1299,9 +1346,9 @@ public class SpellCastingService {
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
                     discardHandCardIndex, discardHandCardIndices, false, List.of(), modalXValue,
                     List.of(), imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
-                     repeatedAdditionalCosts, buyback, false, List.of(), null,
-                     beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
-                     beholdChosenSubtype, chosenCreatureType, false);
+                    repeatedAdditionalCosts, buyback, false, List.of(), null,
+                    beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                    beholdChosenSubtype, chosenCreatureType, waterbendPaid, payLifeForAdditionalCost, false);
         } catch (IllegalArgumentException | IllegalStateException e) {
             restoreAttemptedCardAfterFailedCast(gameData, hand, attempted, cardIndex);
             throw e;
@@ -1906,7 +1953,7 @@ public class SpellCastingService {
                 modalXValue, spliceHandCardIndices, imposedSacrificePermanentIds,
                 additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, overloaded,
                 spliceCostPermanentIds, sharedColorDiscardHandCardIndex, null, null, List.of(), List.of(), null,
-                null, false);
+                null, false, null, false);
     }
 
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
@@ -1927,7 +1974,7 @@ public class SpellCastingService {
                 modalXValue, spliceHandCardIndices, imposedSacrificePermanentIds,
                 additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, overloaded,
                 spliceCostPermanentIds, sharedColorDiscardHandCardIndex, null, null, List.of(), List.of(), null,
-                null, adventure);
+                null, false, null, adventure);
     }
 
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
@@ -1941,7 +1988,8 @@ public class SpellCastingService {
                   List<UUID> spliceCostPermanentIds, Integer sharedColorDiscardHandCardIndex,
                   UUID beholdPermanentId, Integer beholdHandCardIndex,
                   List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
-                  CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType, boolean adventure) {
+                  CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                  boolean waterbendPaid, Boolean payLifeForAdditionalCost, boolean adventure) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (repeatedAdditionalCosts == null) repeatedAdditionalCosts = List.of();
         if (additionalCostSacrificePermanentIds == null) additionalCostSacrificePermanentIds = List.of();
@@ -2228,7 +2276,8 @@ public class SpellCastingService {
                 sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
                 discardHandCardIndex, discardHandCardIndices, escalateModeCount, cardIndex,
                 additionalCostSacrificePermanentIds, beholdPermanentId, beholdHandCardIndex,
-                beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype);
+                beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype,
+                payLifeForAdditionalCost);
         boolean collectEvidenceCostPaid = usingCollectEvidenceAlternativeCost
                 || isCollectEvidenceCostPaid(additionalCosts, costSelection);
         if (usingCollectEvidenceAlternativeCost) {
@@ -2991,8 +3040,12 @@ public class SpellCastingService {
         }
 
         // Validate graveyard targets for spells that target creature cards in graveyard
-        boolean needsGraveyardCreatureTargeting = card.getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(e -> e instanceof ExileCreaturesFromGraveyardAndCreateTokensEffect);
+        ExileCreaturesFromGraveyardAndCreateTokensEffect graveyardCreatureTargetingEffect =
+                card.getEffects(EffectSlot.SPELL).stream()
+                        .filter(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance)
+                        .map(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::cast)
+                        .findFirst().orElse(null);
+        boolean needsGraveyardCreatureTargeting = graveyardCreatureTargetingEffect != null;
         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnToBattlefieldEffect =
                 filteredSpellEffects.stream()
                         .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
@@ -3004,7 +3057,9 @@ public class SpellCastingService {
                         .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
                         .findFirst().orElse(null);
         if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
-            long creatureCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+            long creatureCount = graveyardCreatureTargetingEffect.graveyardScope()
+                    .graveyardOwners(gameData.orderedPlayerIds, playerId).stream()
+                    .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .count();
             if (effectiveXValue > creatureCount) {
@@ -3142,6 +3197,23 @@ public class SpellCastingService {
             StackEntryType permanentEntryType = castingFaceDown
                     ? StackEntryType.CREATURE_SPELL
                     : cardTypeToStackEntryType(castCharacteristics.getType());
+            List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
+                    : (targetId != null ? List.of(targetId) : List.of());
+            int targetSubtypeCostReduction = castingCostService.computeTargetBasedCostReduction(
+                    gameData, playerId, card, costReductionTargetIds);
+
+            // Validate the chosen target when playability was admitted because another legal
+            // target could use the reduction.
+            if (targetSubtypeCostReduction == 0 && !usingAlternateCost
+                    && castingCostService.hasTargetBasedCastCostReduction(card)) {
+                ManaCost validationCost = castingCostService.applyColoredManaCostReductions(
+                        gameData, playerId, card, new ManaCost(card.getManaCost()));
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int costModifier = castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue);
+                if (!validationCost.canPay(pool, costModifier)) {
+                    throw new IllegalStateException("Not enough mana — target does not qualify for cost reduction");
+                }
+            }
 
             // CR 601.2h: a cast either completes or leaves the game state untouched — reject an
             // unpayable non-mana additional cost up front, before any cost is consumed. A throw
@@ -3151,9 +3223,10 @@ public class SpellCastingService {
                     .resolveCollectEvidenceMinimumManaValue(
                             gameData, additionalCosts.collectEvidenceCost(), targetId, targetIds);
             validateCardFlashAdditionalCost(gameData, player, card, additionalCosts, costSelection);
+            boolean waterbendCostPaid = isWaterbendCostPaid(additionalCosts, waterbendPaid);
             additionalSpellCostService.validateAll(gameData, player, card, additionalCosts, costSelection,
                     additionalCosts.tieredManaCost() != null ? modeEncoding : effectiveXValue,
-                    collectEvidenceMinimumManaValue);
+                    waterbendCostPaid, collectEvidenceMinimumManaValue);
             validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasLifeCost()) {
                 additionalSpellCostService.validatePayLifeCost(gameData, player, card, kickerEffect.lifeCost());
@@ -3180,6 +3253,12 @@ public class SpellCastingService {
                         additionalCostSacrificePermanentIds);
             }
 
+            int waterbendAdditionalGenericCost = waterbendCostPaid
+                    ? additionalCosts.waterbendCost().effectiveAmount(effectiveXValue) : 0;
+            convokeContributions = appendManaContributions(convokeContributions,
+                    applyWaterbendCost(gameData, player, card, additionalCosts.waterbendCost(),
+                            costSelection.sacrificePermanentIds(), effectiveXValue, waterbendCostPaid));
+
             int sacrificeCostReduction = 0;
             if (hasSacrificeForCostReduction) {
                 sacrificeCostReduction = paySacrificeCreaturesForCostReduction(
@@ -3189,7 +3268,7 @@ public class SpellCastingService {
                     gameData, playerId, card, manaCostX,
                     castingCostService.getCastCostModifier(
                             gameData, playerId, card, effectiveXValue, null, collectEvidenceCostPaid)
-                            - sacrificeCostReduction + targetingTax);
+                            - sacrificeCostReduction - targetSubtypeCostReduction + targetingTax);
             if (additionalCosts.delveCost() != null) {
                 additionalSpellCostService.validateDelveCost(gameData, player, card, additionalCosts.delveCost(),
                         costSelection.exileGraveyardCardIndices(), maximumDelveReduction);
@@ -3199,6 +3278,8 @@ public class SpellCastingService {
 
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
                     || (buyback && buybackEffect != null)
+                    || (additionalCosts.payLifeOrPayManaCost() != null
+                    && !Boolean.TRUE.equals(payLifeForAdditionalCost))
                     || (additionalCosts.sacrificePermanentOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.putCountersOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
@@ -3245,8 +3326,8 @@ public class SpellCastingService {
             } else {
                 phyrexianManaPaidWithLife = paySpellManaCost(gameData, playerId, castCharacteristics, manaCostX, convokeContributions, phyrexianLifeCount, kicked,
                         sacrificeCostReduction + delveReduction, targetingTax,
-                        hasXCost ? 0 : perTargetCost, perTargetManaCost, escalateManaSuffix,
-                        collectEvidenceCostPaid);
+                        (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
+                        perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid);
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
@@ -3366,6 +3447,7 @@ public class SpellCastingService {
                     usingCollectEvidenceAlternativeCost
                             || isCollectEvidenceCostPaid(additionalCosts, paymentCostSelection));
             entry.setBeholdCostPaid(isBeholdCostPaid(additionalCosts, paymentCostSelection));
+            entry.setWaterbendCostPaid(waterbendCostPaid);
             if (!repeatedAdditionalCosts.isEmpty()) {
                 entry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
             }
@@ -3433,10 +3515,11 @@ public class SpellCastingService {
                     .resolveCollectEvidenceMinimumManaValue(
                             gameData, additionalCosts.collectEvidenceCost(), targetId, targetIds);
             validateCardFlashAdditionalCost(gameData, player, card, additionalCosts, costSelection);
-            additionalSpellCostService.validateAll(
+            boolean waterbendCostPaid = isWaterbendCostPaid(additionalCosts, waterbendPaid);
+              additionalSpellCostService.validateAll(
                     gameData, player, card, additionalCosts, costSelection,
                     additionalCosts.tieredManaCost() != null ? modeEncoding : effectiveXValue,
-                    collectEvidenceMinimumManaValue);
+                    waterbendCostPaid, collectEvidenceMinimumManaValue);
             int maximumDelveReduction = castingCostService.maximumDelveReduction(
                     gameData, playerId, card, resolvedXValue + perTargetCost,
                     castingCostService.getCastCostModifier(
@@ -3482,6 +3565,12 @@ public class SpellCastingService {
                         additionalCostSacrificePermanentIds);
             }
 
+            int waterbendAdditionalGenericCost = waterbendCostPaid
+                    ? additionalCosts.waterbendCost().effectiveAmount(resolvedXValue) : 0;
+            convokeContributions = appendManaContributions(convokeContributions,
+                    applyWaterbendCost(gameData, player, card, additionalCosts.waterbendCost(),
+                            paymentCostSelection.sacrificePermanentIds(), resolvedXValue, waterbendCostPaid));
+
             int sacrificeCostReduction = 0;
             if (hasSacrificeForCostReduction) {
                 sacrificeCostReduction = paySacrificeCreaturesForCostReduction(
@@ -3490,6 +3579,8 @@ public class SpellCastingService {
             ManaPool preManaPaymentPool = (kicked && kickerEffect != null && kickerEffect.hasManaCost())
                     || (buyback && buybackEffect != null)
                     || !pendingSpliceCosts.isEmpty()
+                    || (additionalCosts.payLifeOrPayManaCost() != null
+                    && !Boolean.TRUE.equals(payLifeForAdditionalCost))
                     || (additionalCosts.sacrificePermanentOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.putCountersOrPayManaCost() != null && sacrificePermanentId == null)
                     || (additionalCosts.discardCardOrPayManaCost() != null && discardHandCardIndex == null)
@@ -3521,8 +3612,8 @@ public class SpellCastingService {
                         resolvedXValue + (hasXCost ? perTargetCost : 0), convokeContributions,
                         phyrexianLifeCount, kicked,
                         targetSubtypeCostReduction + sacrificeCostReduction + delveReduction, targetingTax,
-                        hasXCost ? 0 : perTargetCost, perTargetManaCost, escalateManaSuffix,
-                        collectEvidenceCostPaid);
+                        (hasXCost ? 0 : perTargetCost) + waterbendAdditionalGenericCost,
+                        perTargetManaCost, escalateManaSuffix, collectEvidenceCostPaid);
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
@@ -3954,7 +4045,8 @@ public class SpellCastingService {
             } else if (needsGraveyardCreatureTargeting && resolvedXValue > 0) {
                 // Prompt player to choose graveyard targets before putting spell on stack
                 graveyardTargetingService.handleGraveyardSpellTargeting(gameData, playerId, card,
-                        entryType, resolvedXValue);
+                        entryType, resolvedXValue, filteredSpellEffects,
+                        graveyardCreatureTargetingEffect.graveyardScope());
                 return; // finishSpellCast handled in graveyard targeting callback
             } else if (needsGraveyardCreatureTargeting) {
                 // X=0: no targets needed, put spell on stack directly (resolves doing nothing)
@@ -4408,6 +4500,7 @@ public class SpellCastingService {
                                 || isCollectEvidenceCostPaid(additionalCosts, paymentCostSelection));
                 gameData.stack.getLast().setBeholdCostPaid(
                         isBeholdCostPaid(additionalCosts, paymentCostSelection));
+                gameData.stack.getLast().setWaterbendCostPaid(waterbendCostPaid);
             }
             if (!repeatedAdditionalCosts.isEmpty() && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -4525,7 +4618,10 @@ public class SpellCastingService {
         return new AdditionalSpellCostService.CostSelection(
                 selection.sacrificePermanentId(), selection.exileGraveyardCardIndex(),
                 selection.exileGraveyardCardIndices(), discardHandCardIndex, discardHandCardIndices,
-                selection.escalateModeCount(), selection.spellCardIndex(), selection.sacrificePermanentIds());
+                selection.escalateModeCount(), selection.spellCardIndex(), selection.sacrificePermanentIds(),
+                selection.beholdPermanentId(), selection.beholdHandCardIndex(), selection.beholdPermanentIds(),
+                selection.beholdHandCardIndices(), selection.beholdChosenSubtype(),
+                selection.payLifeForAdditionalCost());
     }
 
     private Integer adjustAfterHandRemoval(Integer handCardIndex, int removedHandCardIndex) {
@@ -4559,6 +4655,12 @@ public class SpellCastingService {
         }
         return (selection.beholdPermanentIds() != null && !selection.beholdPermanentIds().isEmpty())
                 || (selection.beholdHandCardIndices() != null && !selection.beholdHandCardIndices().isEmpty());
+    }
+
+    private boolean isWaterbendCostPaid(AdditionalSpellCostService.ExtractedCosts costs,
+                                        boolean waterbendPaid) {
+        return costs.waterbendCost() != null
+                && (!costs.waterbendCost().optional() || waterbendPaid);
     }
 
     private void validateCardFlashAdditionalCost(GameData gameData, Player player, Card card,
@@ -4614,6 +4716,8 @@ public class SpellCastingService {
         if (costs.payLifeCost() != null) {
             payLifeCost(gameData, player, card, costs.payLifeCost());
         }
+        payLifeOrPayManaCost(gameData, player, card, costs.payLifeOrPayManaCost(),
+                selection.payLifeForAdditionalCost(), preManaPaymentPool);
         if (costs.payLifeOrSacrificePermanentCost() != null) {
             PayLifeOrSacrificePermanentCost cost = costs.payLifeOrSacrificePermanentCost();
             if (selection.sacrificePermanentId() == null) {
@@ -4800,6 +4904,38 @@ public class SpellCastingService {
         gameData.lifeLostThisTurn.merge(playerId, lifeLoss, Integer::sum);
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " pays " + lifeLoss + " life to cast " + card.getName() + "."));
+    }
+
+    private void payLifeOrPayManaCost(GameData gameData, Player player, Card card,
+                                      PayLifeOrPayManaCost cost, Boolean payLife,
+                                      ManaPool preManaPaymentPool) {
+        if (cost == null) {
+            return;
+        }
+        if (Boolean.TRUE.equals(payLife)) {
+            payLifeCost(gameData, player, card, new PayLifeCost(cost.lifeAmount()));
+            return;
+        }
+        try {
+            ManaCost extra = new ManaCost(cost.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(player.getId());
+            int before = pool.getTotalAllMana();
+            if (!extra.canPay(pool)) {
+                throw new IllegalStateException("Not enough mana to pay " + cost.manaCost() + " for " + card.getName());
+            }
+            extra.pay(pool);
+            gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " pays " + cost.manaCost() + " for ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        } catch (IllegalStateException e) {
+            if (preManaPaymentPool != null) {
+                gameData.playerManaPools.put(player.getId(), preManaPaymentPool);
+            }
+            throw e;
+        }
     }
 
     /**
@@ -5081,6 +5217,39 @@ public class SpellCastingService {
         } finally {
             triggerCollectionService.endPermanentTapTriggerBatch(gameData);
         }
+    }
+
+    /** Applies the selected artifact/creature contributions to a spell's Waterbend cost. */
+    private List<ManaColor> applyWaterbendCost(GameData gameData, Player player, Card card,
+                                                WaterbendCost cost, List<UUID> waterbendPermanentIds,
+                                                int announcedXValue, boolean waterbendPaid) {
+        if (cost == null || !waterbendPaid) {
+            return List.of();
+        }
+        List<Permanent> toTap = additionalSpellCostService.validateWaterbendCost(
+                gameData, player, card, cost, waterbendPermanentIds, announcedXValue);
+        for (Permanent permanent : toTap) {
+            permanent.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(player.getUsername() + " taps ")
+                    .card(permanent.getCard())
+                    .text(" as a waterbend cost for ")
+                    .card(card)
+                    .text(".")
+                    .build());
+        }
+        triggerCollectionService.checkBendingTriggers(gameData, player.getId(), BendingType.WATERBEND);
+        return java.util.Collections.nCopies(toTap.size(), null);
+    }
+
+    private List<ManaColor> appendManaContributions(List<ManaColor> existing, List<ManaColor> additions) {
+        if (additions.isEmpty()) {
+            return existing;
+        }
+        List<ManaColor> combined = new ArrayList<>(existing);
+        combined.addAll(additions);
+        return java.util.Collections.unmodifiableList(combined);
     }
 
     /**
@@ -5996,6 +6165,9 @@ public class SpellCastingService {
         }
         var harmonizeOpt = card.getCastingOption(HarmonizeCast.class);
         boolean isDisturb = disturbOpt.isPresent() && flashbackOpt.isEmpty();
+        Optional<FlashbackCast> grantedFlashbackOption = flashbackOpt.isEmpty() && !isDisturb
+                ? castingPermissionService.findGrantedFlashback(gameData, playerId, card)
+                : Optional.empty();
         boolean grantedHarmonize = harmonizeOpt.isEmpty() && flashbackOpt.isEmpty() && !isDisturb
                 && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
         boolean isHarmonize = (harmonizeOpt.isPresent() && flashbackOpt.isEmpty() && !isDisturb) || grantedHarmonize;
@@ -6010,7 +6182,7 @@ public class SpellCastingService {
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
         boolean emblemFlashback = flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback
                 && !isHarmonize
-                && castingPermissionService.hasGrantedFlashback(gameData, playerId, card);
+                && grantedFlashbackOption.isPresent();
         boolean grantedGraveyardCardCast = flashbackOpt.isEmpty()
                 && !isDisturb
                 && !isHarmonize
@@ -6145,7 +6317,8 @@ public class SpellCastingService {
                 || additionalCosts.escalateSacrificeCost() != null
                 || additionalCosts.tieredManaCost() != null
                 || additionalCosts.delveCost() != null
-                || additionalCosts.chooseCreatureTypeCost() != null;
+                || additionalCosts.chooseCreatureTypeCost() != null
+                || additionalCosts.waterbendCost() != null;
         if (hasUnsupportedAdditionalCost) {
             throw new IllegalStateException("Cannot cast " + castHalf.getName()
                     + " from the graveyard — paying its additional cast cost is not supported from this zone");
@@ -6260,7 +6433,8 @@ public class SpellCastingService {
             validateGraveyardCastAdditionalCosts(gameData, playerId, filteredGraveyardAdditionalCosts,
                     retraceDiscardHandCardIndex);
         }
-        effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, harmonizeOpt,
+        effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
+                grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedGraveyardCardCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
                 isGraveyardCast, isHarmonize, isRetrace, isJumpStart, isDisturb, isGrantedCyclingGraveyardCast, isMayCastTopInstantOrSorcery,
@@ -6867,7 +7041,7 @@ public class SpellCastingService {
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), List.of(), false, true, false, false);
+                List.of(), List.of(), List.of(), false, List.of(), false, true, false, false);
     }
 
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
@@ -6879,60 +7053,70 @@ public class SpellCastingService {
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                   UUID targetId, List<UUID> exileCounterCostPermanentIds,
                                   List<UUID> convokeCreatureIds) {
+        playCardFromExile(gameData, player, exileCardId, xValue, targetId,
+                exileCounterCostPermanentIds, convokeCreatureIds, List.of(), false);
+    }
+
+    public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                  UUID targetId, List<UUID> exileCounterCostPermanentIds,
+                                  List<UUID> convokeCreatureIds, List<UUID> waterbendPermanentIds,
+                                  boolean waterbendPaid) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                exileCounterCostPermanentIds, convokeCreatureIds, List.of(),
-                false, true, false, false);
+                exileCounterCostPermanentIds, convokeCreatureIds, waterbendPermanentIds, waterbendPaid,
+                List.of(), false, true, false, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, UUID targetId) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), List.of(), true, false, false, false);
+                List.of(), List.of(), List.of(), false, List.of(), true, false, false, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, UUID targetId, boolean copy,
                                                   boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), List.of(), true, false, copy,
+                List.of(), List.of(), List.of(), false, List.of(), true, false, copy,
                 putOnBottomOfOwnersLibraryInsteadOfGraveyard);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, UUID targetId, boolean copy) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, targetId,
-                List.of(), List.of(), List.of(), true, false, copy, false);
+                List.of(), List.of(), List.of(), false, List.of(), true, false, copy, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, List<UUID> targetIds) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
-                List.of(), List.of(), targetIds, true, false, false, false);
+                List.of(), List.of(), List.of(), false, targetIds, true, false, false, false);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, List<UUID> targetIds, boolean copy,
                                                   boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
-                List.of(), List.of(), targetIds, true, false, copy,
+                List.of(), List.of(), List.of(), false, targetIds, true, false, copy,
                 putOnBottomOfOwnersLibraryInsteadOfGraveyard);
     }
 
     public void playCardFromExileAsResolutionCast(GameData gameData, Player player, UUID exileCardId,
                                                   Integer xValue, List<UUID> targetIds, boolean copy) {
         playCardFromExileInternal(gameData, player, exileCardId, xValue, null,
-                List.of(), List.of(), targetIds, true, false, copy, false);
+                List.of(), List.of(), List.of(), false, targetIds, true, false, copy, false);
     }
 
     private void playCardFromExileInternal(GameData gameData, Player player, UUID exileCardId, Integer xValue,
                                            UUID targetId, List<UUID> exileCounterCostPermanentIds,
-                                           List<UUID> convokeCreatureIds, List<UUID> targetIds,
+                                           List<UUID> convokeCreatureIds, List<UUID> waterbendPermanentIds,
+                                           boolean waterbendPaid, List<UUID> targetIds,
                                            boolean resolutionCast, boolean autoPass,
                                            boolean copy,
                                            boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (exileCounterCostPermanentIds == null) exileCounterCostPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
+        if (waterbendPermanentIds == null) waterbendPermanentIds = List.of();
         if (targetIds == null) targetIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -6951,7 +7135,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card cannot be cast from exile");
         }
         if (!resolutionCast && !card.hasType(CardType.LAND)
-                && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) {
+                && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) {
             throw new IllegalStateException("Card can't be cast from exile");
         }
         UUID permittedPlayer = gameData.exilePlayPermissions.get(exileCardId);
@@ -6960,6 +7144,9 @@ public class SpellCastingService {
         boolean sourceFreeCast = castingPermissionService.hasFreeCastFromExiledWithSource(
                 gameData, playerId, exileCardId);
         boolean sourceCastPermission = castingPermissionService.hasCastFromExiledWithSourcePermission(
+                gameData, playerId, exileCardId);
+        boolean waterbendCast = !resolutionCast && waterbendPaid
+                && castingPermissionService.hasWaterbendCastFromExiledWithSourcePermission(
                 gameData, playerId, exileCardId);
         Optional<CounterType> sourceEntryCounterType = castingPermissionService
                 .findEntryCounterTypeFromExiledWithSource(gameData, playerId, exileCardId);
@@ -6974,6 +7161,7 @@ public class SpellCastingService {
                 || (permittedPlayer != null && permittedPlayer.equals(playerId))
                 || sourceCounterCost.isPresent()
                 || sourceCastPermission
+                || waterbendCast
                 || castForForetell;
         boolean anyManaType = castingPermissionService.hasAnyManaTypePermission(
                 gameData, playerId, exileCardId);
@@ -7037,8 +7225,8 @@ public class SpellCastingService {
         // Keep the card and its cast permissions in exile until the cast has passed every
         // validation and payment. A failed cast (for example, one that cannot pay its mana cost)
         // does not move the card out of exile.
-        boolean playWithoutPaying = gameData.exilePlayWithoutPayingManaCost.contains(exileCardId)
-                || sourceFreeCast;
+        boolean playWithoutPaying = !waterbendCast
+                && (gameData.exilePlayWithoutPayingManaCost.contains(exileCardId) || sourceFreeCast);
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
         boolean putOnBottomOfOwnersLibrary =
                 castingPermissionService.putsExileCastOnBottomOfOwnersLibrary(
@@ -7053,6 +7241,7 @@ public class SpellCastingService {
             }
             Permanent permanent = new Permanent(card);
             permanent.setCard(landFace);
+            permanent.setEnteredFromExile(true);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
             gameLogService.append(gameData,
                     GameLog.playerPlays(player.getUsername(), landFace, " from exile."));
@@ -7072,7 +7261,7 @@ public class SpellCastingService {
 
         // Pay mana cost — unless this card was granted a free play (e.g. Oracle's Vault), in which
         // case it is cast without paying its mana cost. If anyManaType, any mana can pay for any color.
-        List<ManaColor> convokeContributions = applyConvokeOrImprovise(
+        List<ManaColor> convokeContributions = waterbendCast ? List.of() : applyConvokeOrImprovise(
                 gameData, playerId, card, convokeCreatureIds, Zone.EXILE);
         int phyrexianManaPaidWithLife = 0;
         ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -7083,7 +7272,9 @@ public class SpellCastingService {
             promotedPool.put(color, pool.get(color));
         }
         try {
-            if (playWithoutPaying) {
+            if (waterbendCast) {
+                waterbendPaymentService.pay(gameData, playerId, card.getManaValue(), card, waterbendPermanentIds);
+            } else if (playWithoutPaying) {
                 payFreeExileCastCostIncrease(gameData, playerId, card, effectiveXValue);
                 // Cast without paying its mana cost — no payment.
             } else if (castForForetell) {
@@ -7203,7 +7394,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Spell requires a target");
         }
 
-        commitExileCast(gameData, playerId, exileCardId, sourceFreeCast, copy);
+        commitExileCast(gameData, playerId, exileCardId, sourceFreeCast && !waterbendCast, copy);
 
         if (sourceEntryCounterType.isPresent() && card.hasType(CardType.CREATURE)) {
             gameData.spellEntryCounters
@@ -7493,7 +7684,7 @@ public class SpellCastingService {
         if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
             throw new IllegalStateException("Spells can't be cast from libraries");
         }
-        if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.LIBRARY)) {
+        if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.LIBRARY, playerId)) {
             throw new IllegalStateException("Card can't be cast from the library");
         }
 
@@ -7626,6 +7817,9 @@ public class SpellCastingService {
         }
         if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
             throw new IllegalStateException("Spells cannot be cast from libraries");
+        }
+        if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.LIBRARY, playerId)) {
+            throw new IllegalStateException("Card can't be cast from the library");
         }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
@@ -9329,6 +9523,7 @@ public class SpellCastingService {
 
     private int payFlashbackOrGraveyardCastCost(GameData gameData, Player player, Card card,
                                                 Optional<FlashbackCast> flashbackOpt,
+                                                Optional<FlashbackCast> grantedFlashbackOpt,
                                                 Optional<HarmonizeCast> harmonizeOpt,
                                                 Optional<DisturbCast> disturbOpt,
                                                 Optional<GraveyardCast> graveyardCastOpt,
@@ -9433,9 +9628,13 @@ public class SpellCastingService {
 
         if (usesNormalManaCost) {
             boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
+            String grantedFlashbackManaCost = emblemFlashback
+                    ? grantedFlashbackOpt.flatMap(flashback -> flashback.getCost(ManaCastingCost.class)
+                    .map(ManaCastingCost::manaCost)).orElse(card.getManaCost())
+                    : card.getManaCost();
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card,
-                    new ManaCost(withoutPayingManaCost ? "" : card.getManaCost()), cardHasFlashback);
+                    new ManaCost(withoutPayingManaCost ? "" : grantedFlashbackManaCost), cardHasFlashback);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             boolean anyManaType = grantedGraveyardCardCast

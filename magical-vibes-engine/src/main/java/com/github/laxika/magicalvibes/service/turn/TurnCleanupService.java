@@ -511,14 +511,27 @@ public class TurnCleanupService {
     private Set<ManaColor> protectedManaColors(GameData gameData, UUID playerId) {
         EnumSet<ManaColor> protectedColors = EnumSet.noneOf(ManaColor.class);
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return protectedColors;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PreventManaDrainEffect prevent
+                            && prevent.color() != null) {
+                        protectedColors.add(prevent.color());
+                    }
+                }
+            }
         }
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PreventManaDrainEffect prevent
-                        && prevent.color() != null) {
-                    protectedColors.add(prevent.color());
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!playerId.equals(floating.affectedPlayerId())) {
+                    continue;
+                }
+                if (floating.effect() instanceof PreventManaDrainEffect prevent) {
+                    if (prevent.color() == null) {
+                        protectedColors.addAll(Set.of(ManaColor.values()));
+                    } else {
+                        protectedColors.add(prevent.color());
+                    }
                 }
             }
         }

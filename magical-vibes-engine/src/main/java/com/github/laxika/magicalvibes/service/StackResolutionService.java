@@ -1090,14 +1090,6 @@ public class StackResolutionService {
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only
      * here (not on async resume) so each resolution counts exactly once.
-     * entry is an activated or triggered ability whose effects branch on
-     * {@code NthAbilityResolutionThisTurn} ("if this is the Nth time this ability has resolved this
-     * turn", e.g. Ashling the Pilgrim, Nissa, Resurgent Animist, and Vito, Fanatic of Aclazotz).
-     * Counted at resolution, so
-     * copies of the ability count but abilities countered on the stack do not; fizzled abilities
-     * never reach this point. Incremented before effect dispatch so the condition sees the count
-     * including the current resolution, and only here (not on async resume) so each resolution
-     * counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
         if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY

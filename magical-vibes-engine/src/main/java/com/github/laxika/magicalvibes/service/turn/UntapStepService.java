@@ -297,7 +297,45 @@ public class UntapStepService {
             }
         });
 
+        untapSelfPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
         untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
+    }
+
+    private void untapSelfPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) return;
+
+            for (Permanent permanent : playerBattlefield) {
+                if (!permanent.isTapped() || !hasSelfCrossPlayerUntap(gameData, permanent, playerId, TurnStep.UNTAP)) {
+                    continue;
+                }
+
+                tapUntapSupport.untapPermanent(gameData, permanent);
+                String logLine = gameData.playerIdToName.get(playerId) + " untaps " + permanent.getCard().getName()
+                        + " during another player's untap step.";
+                gameLogService.append(gameData, GameLog.text(logLine));
+                log.info("Game {} - {} untaps self-scoped permanent {} during another player's untap step",
+                        gameData.id, playerId, permanent.getCard().getName());
+            }
+        });
+    }
+
+    private boolean hasSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId, TurnStep step) {
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, effect));
+    }
+
+    private boolean isActiveSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId,
+                                                 TurnStep step, CardEffect effect) {
+        if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                && configuredEffect.step() == step
+                && configuredEffect.scope() == TapUntapScope.SELF) {
+            return true;
+        }
+        return effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, controllerId))
+                && isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, conditional.wrapped());
     }
 
     /** Queues the batched untap-step triggers after all untap choices are complete. */

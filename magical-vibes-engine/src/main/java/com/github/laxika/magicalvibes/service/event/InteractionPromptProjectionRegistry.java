@@ -77,6 +77,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
         register(PendingInteraction.LudevicCopyChoice.class, this::projectLudevicCopyChoice);
+        register(PendingInteraction.KohExiledCreatureChoice.class,
+                this::projectKohExiledCreatureChoice);
         register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
                 this::projectExileInstantOrSorcerySpellCostChoice);
         register(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class,
@@ -400,6 +402,15 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 1,
                 "Choose a creature card exiled with Ludevic to copy.");
+    }
+
+    private InteractionPromptMessage projectKohExiledCreatureChoice(
+            GameData gameData, PendingInteraction.KohExiledCreatureChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a creature card exiled with Koh to copy.");
     }
 
     private InteractionPromptMessage projectExileInstantOrSorcerySpellCostChoice(
@@ -968,7 +979,8 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectActivatedAbilityGraveyardExileCostChoice(
             GameData gameData, PendingInteraction.ActivatedAbilityGraveyardExileCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
-                interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.minimumCards(),
+                interaction.maximumCards(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectCraftMaterialChoice(

@@ -312,9 +312,22 @@ public class EtbTriggerService {
 
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
             for (ChooseOneAtTriggerTimeEffect triggerTimeChoice : triggerTimeChoices) {
+                ChooseOneEffect choice = triggerTimeChoice.choice();
+                if (triggerTimeChoice.maximumChoices() != null) {
+                    int maximumChoices = Math.min(
+                            choice.options().size(),
+                            Math.max(0, amountEvaluationService.evaluate(gameData,
+                                    triggerTimeChoice.maximumChoices(),
+                                    new AmountContext(controllerId, enteringPermanent, null, 0, 0))));
+                    if (maximumChoices == 0) {
+                        continue;
+                    }
+                    choice = new ChooseOneEffect(choice.options(), choice.optional(), 0, maximumChoices,
+                            choice.allModesWhenOptionalCostPaid(), choice.additionalModesCondition());
+                }
                 for (int i = 0; i < 1 + extraTriggerCopies; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            card, controllerId, triggerTimeChoice.choice(), triggerSourcePermanentId));
+                            card, controllerId, choice, triggerSourcePermanentId));
                 }
             }
 
@@ -411,6 +424,7 @@ public class EtbTriggerService {
         triggerCollectionService.checkEnchantedPlayerCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkPermanentEntersFromExileTriggers(gameData, controllerId, card);
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (!faceDown && card.hasType(CardType.LAND)) {
@@ -543,6 +557,7 @@ public class EtbTriggerService {
                 .toList();
         List<CardEffect> otherEffects = graveyardExileEffects.isEmpty()
                 ? mandatoryEffects.stream()
+                        .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
                         .filter(e -> !graveyardCastEffects.contains(e))
                         .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
                         .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
@@ -554,11 +569,13 @@ public class EtbTriggerService {
                         .filter(e -> !graveyardTargetReturnEffects.contains(e))
                         .filter(e -> !graveyardCardsExileEffects.contains(e))
                         .filter(e -> !mixedZoneChoiceEffects.contains(e))
-                        .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList()
+                        .filter(e -> !EffectResolution.targetsSpellOnStack(e)
+                                || isMixedPermanentAndSpellTarget(e)).toList()
                 : List.of();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
-                .filter(EffectResolution::targetsSpellOnStack).toList();
+                .filter(EffectResolution::targetsSpellOnStack)
+                .filter(e -> !isMixedPermanentAndSpellTarget(e)).toList();
 
         List<Permanent> sourceBattlefield = gameData.playerBattlefields.get(controllerId);
         boolean sourceWasCastForSpectacle = sourceBattlefield != null
@@ -848,7 +865,8 @@ public class EtbTriggerService {
         // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
         int minimumGraveyardTargets = graveyardTargetReturnEffects.stream()
                 .anyMatch(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                        || !returnEffect.upTo()) ? 1 : 0;
+                        ? !effect.hasOptionalTarget()
+                        : !returnEffect.upTo()) ? 1 : 0;
         for (CardEffect effect : graveyardTargetReturnEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -893,6 +911,12 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private static boolean isMixedPermanentAndSpellTarget(CardEffect effect) {
+        TargetSpec targetSpec = effect.targetSpec();
+        return targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                && targetSpec.admits(TargetPredicate.Kind.SPELL);
     }
 
     private void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {

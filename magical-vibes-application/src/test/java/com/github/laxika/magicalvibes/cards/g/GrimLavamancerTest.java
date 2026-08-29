@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,6 +26,10 @@ class GrimLavamancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleMultipleCardsChosen(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .limit(2)
+                .map(Card::getId)
+                .toList());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

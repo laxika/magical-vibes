@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -71,6 +72,9 @@ public class ScryTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setEventValue(scry.bottomedCardCount());
+            if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+                entry.setMarkSourceOncePerTurnOnAcceptance(true);
+            }
             match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

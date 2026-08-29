@@ -18,4 +18,9 @@ public record SacrificeXPermanentsCost(PermanentPredicate filter, boolean requir
     public SacrificeXPermanentsCost(PermanentPredicate filter) {
         this(filter, false);
     }
+
+    @Override
+    public boolean sacrificesChosenPermanent() {
+        return true;
+    }
 }

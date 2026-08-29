@@ -719,6 +719,8 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
+        h = mix(h, p.getLastChosenExiledCard() == null
+                ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));
 
         for (Map.Entry<CounterType, Integer> counter : p.getCounters().entrySet()) {
             h = mix(h, counter.getKey().ordinal());
@@ -1488,7 +1490,7 @@ public class LayerSystemService {
             }
             case GrantCardTypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, grant.cardType(), null));
@@ -1995,6 +1997,15 @@ public class LayerSystemService {
             case ALL_PERMANENTS -> {
                 for (PermanentSlot slot : slots) {
                     if (slot.permanent() != source.permanent()
+                            && matchesL4Filter(slot, filter, board, gameData,
+                            source.permanent(), source.controllerId())) {
+                        targets.add(slot);
+                    }
+                }
+            }
+            case OWN_PERMANENTS -> {
+                for (PermanentSlot slot : slots) {
+                    if (slot.controllerId().equals(source.controllerId())
                             && matchesL4Filter(slot, filter, board, gameData,
                             source.permanent(), source.controllerId())) {
                         targets.add(slot);

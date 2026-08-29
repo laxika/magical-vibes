@@ -174,6 +174,7 @@ public enum CardSubtype {
     THOPTER("Thopter"),
     THRULL("Thrull"),
     EQUIPMENT("Equipment"),
+    LEMUR("Lemur"),
     LIZARD("Lizard"),
     LLAMA("Llama"),
     LHURGOYF("Lhurgoyf"),

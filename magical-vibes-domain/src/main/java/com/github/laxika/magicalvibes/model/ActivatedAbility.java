@@ -171,7 +171,6 @@ public class ActivatedAbility {
     private boolean sourceStaysInHand;
     /** Whether this ability can be activated only while its source card is in exile. */
     private boolean exileOnly;
-
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
     }

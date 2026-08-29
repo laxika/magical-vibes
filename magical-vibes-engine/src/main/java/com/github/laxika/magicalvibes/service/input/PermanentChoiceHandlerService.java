@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCardFromGraveyardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
@@ -48,6 +49,7 @@ public class PermanentChoiceHandlerService {
     private final MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final InputCompletionService inputCompletionService;
+    private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
     private final ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler
@@ -146,6 +148,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesCreatureYouGainControl(gameData, permanentId, richesChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentForSelfFlicker chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentForSelfFlicker(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentSacrifice chooseOpponent) {
             battlefieldHandler.handleChooseOpponentForPermanentSacrifice(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesPermanentToSacrifice sacrificeChoice) {
@@ -275,6 +279,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReflectDamageToSourceControllerChoice(gameData, permanentId, reflectDamage);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
+        } else if (context instanceof PermanentChoiceContext.EarthbendThenFightTarget earthbendFight) {
+            earthbendThenFightHandler.handleTargetChoice(gameData, permanentId, earthbendFight);
         } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
         } else if (context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource msfc) {

@@ -142,6 +142,8 @@ export interface ActivatedAbilityView {
   requiresXValue?: boolean;
   xValueFromControlledCreatureCounters?: boolean;
   xValueFromCardsInHandColor?: string | null;
+  xValueFromWaterbendCost?: boolean;
+  xValueMin?: number;
   modalChoicesRequired?: number;
   modalChoicesMax?: number;
   modalOptions?: ModalOptionView[] | null;
@@ -218,6 +220,8 @@ export interface Card {
   /** A mandatory creature-type choice made as an additional cast cost. */
   additionalChooseCreatureType?: boolean;
   additionalCreatureTypeChoices?: string[];
+  additionalCostLifePayment?: number;
+  additionalCostManaCost?: string | null;
   alternateCostCollectEvidence?: boolean;
   alternateCostCollectEvidenceAmount?: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other

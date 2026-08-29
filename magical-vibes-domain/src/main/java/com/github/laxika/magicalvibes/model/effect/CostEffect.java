@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -79,6 +78,15 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * True when paying this cost sacrifices a battlefield permanent chosen by the payer.
+     * Creature-specific sacrifice costs inherit this from {@link #sacrificesChosenCreature()};
+     * broader sacrifice costs override it directly.
+     */
+    default boolean sacrificesChosenPermanent() {
+        return sacrificesChosenCreature();
+    }
+
+    /**
      * True when paying this cost sacrifices a creature the payer chooses from among the
      * creatures they control (the plain "Sacrifice a creature" shape), which the AI values by
      * the cheapest creature it could give up. Any-permanent / artifact-only sacrifices report
@@ -94,14 +102,6 @@ public interface CostEffect extends CardEffect {
      * snapshot on the activated ability's stack entry.
      */
     default boolean tracksSacrificedCard() {
-        return false;
-    }
-
-    /**
-     * True when paying this cost must preserve the sacrificed permanent's last-known
-     * characteristics for a later effect in the same ability.
-     */
-    default boolean recordsSacrificedPermanentSnapshot() {
         return false;
     }
 
@@ -138,11 +138,4 @@ public interface CostEffect extends CardEffect {
         return null;
     }
 
-    /**
-     * An additional predicate the graveyard cards consumed by this cost must match, or
-     * {@code null} when the type facet is sufficient.
-     */
-    default CardPredicate consumedGraveyardCardPredicate() {
-        return null;
-    }
 }

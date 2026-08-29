@@ -310,6 +310,17 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    public void flickerSelfUnderControl(GameData gameData, StackEntry entry, UUID returnControllerId) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        FlickerEffect effect = FlickerEffect.flickerSelfUnderYourControl();
+        FlickeredPermanent flickered = exileForImmediateReturn(gameData, entry, effect, source, returnControllerId);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        returnAfterImmediateExile(gameData, entry, effect, flickered);
+    }
+
     public void flickerPermanentsUnderOwnersControl(
             GameData gameData, StackEntry entry, List<UUID> permanentIds) {
         List<FlickeredPermanent> exiled = new ArrayList<>();
@@ -382,9 +393,17 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
     private FlickeredPermanent exileForImmediateReturn(
             GameData gameData, StackEntry entry, FlickerEffect e, Permanent target) {
+        return exileForImmediateReturn(gameData, entry, e, target, null);
+    }
+
+    private FlickeredPermanent exileForImmediateReturn(
+            GameData gameData, StackEntry entry, FlickerEffect e, Permanent target,
+            UUID returnControllerOverride) {
         UUID previousControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), previousControllerId);
-        UUID returnControllerId = e.returnUnderController() ? entry.getControllerId() : ownerId;
+        UUID returnControllerId = returnControllerOverride != null
+                ? returnControllerOverride
+                : e.returnUnderController() ? entry.getControllerId() : ownerId;
 
         Card card = target.getOriginalCard();
         boolean hadBonusSubtype = e.bonusSubtype() != null
@@ -404,6 +423,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         // Immediately return from exile as a new permanent
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
+        returned.setEnteredFromExile(true);
         boolean applyReturnCounters = e.plusOnePlusOneCountersOnReturn() > 0
                 && (e.bonusSubtype() == null || hadBonusSubtype);
         if (applyReturnCounters

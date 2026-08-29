@@ -347,6 +347,52 @@ public class CastingCostService {
                                     CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
                                     boolean plottingFromHand, Zone sourceZone, boolean castFaceDown,
                                     boolean collectEvidenceCostPaid) {
+        synchronized (gameData) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            int handIndex = plottingFromHand || (sourceZone != null && sourceZone != Zone.HAND)
+                    ? -1 : findPhysicalHandCardIndex(hand, card);
+            Object layeredBoardCache = gameData.layeredBoardCache;
+            Card physicalCard = handIndex >= 0 ? hand.remove(handIndex) : null;
+            try {
+                if (physicalCard != null) {
+                    // A proposed spell has left its hand before its total cost is determined.
+                    // Preview that state so hand-dependent layered values cannot over-reduce it.
+                    return gameQueryService.withFreshQueryScope(gameData,
+                            () -> getCastCostModifierFromCurrentState(
+                                    gameData, playerId, card, snapshot, flashbackCost, xValue,
+                                    plottingFromHand, sourceZone, castFaceDown, collectEvidenceCostPaid));
+                }
+                return getCastCostModifierFromCurrentState(gameData, playerId, card, snapshot,
+                        flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
+                        collectEvidenceCostPaid);
+            } finally {
+                if (physicalCard != null) {
+                    hand.add(handIndex, physicalCard);
+                    gameData.layeredBoardCache = layeredBoardCache;
+                }
+            }
+        }
+    }
+
+    private int findPhysicalHandCardIndex(List<Card> hand, Card spell) {
+        if (hand == null) {
+            return -1;
+        }
+        for (int i = 0; i < hand.size(); i++) {
+            Card physicalCard = hand.get(i);
+            if (physicalCard.getId().equals(spell.getId())
+                    || (physicalCard.getBackFaceCard() != null
+                    && physicalCard.getBackFaceCard().getId().equals(spell.getId()))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int getCastCostModifierFromCurrentState(
+            GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot,
+            boolean flashbackCost, int xValue, boolean plottingFromHand, Zone sourceZone,
+            boolean castFaceDown, boolean collectEvidenceCostPaid) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
                 flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
                 collectEvidenceCostPaid);
