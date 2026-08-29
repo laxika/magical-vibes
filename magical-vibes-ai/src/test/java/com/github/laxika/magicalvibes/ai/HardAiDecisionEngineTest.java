@@ -1766,6 +1766,41 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @DisplayName("Hard AI reassigns an existing blocker to a Lure attacker")
+    void reassignsExistingBlockerToLureAttacker() {
+        Permanent lureAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        lureAttacker.setSummoningSick(false);
+        lureAttacker.setAttacking(true);
+        Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
+        lure.setAttachedTo(lureAttacker.getId());
+        Permanent otherAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        otherAttacker.setSummoningSick(false);
+        otherAttacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        blocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int otherAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(
+                    List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Hard AI caps Lure blocks to an aura-granted maximum")
     void capsLureBlocksToAuraGrantedMaximum() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new KjeldoranRoyalGuard());

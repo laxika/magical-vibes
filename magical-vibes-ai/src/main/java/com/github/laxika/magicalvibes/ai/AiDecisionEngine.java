@@ -1800,6 +1800,13 @@ public abstract class AiDecisionEngine {
                         .findFirst()
                         .orElse(-1);
                 if (blockerIdx < 0) {
+                    blockerIdx = lureBlockers.stream()
+                            .filter(candidate -> !hasAssignmentToAny(
+                                    assignments, candidate, List.of(attackerIdx)))
+                            .findFirst()
+                            .orElse(-1);
+                }
+                if (blockerIdx < 0) {
                     return;
                 }
                 int previousCount = countLureBlocks(assignments, attackerIdx, lureBlockers);

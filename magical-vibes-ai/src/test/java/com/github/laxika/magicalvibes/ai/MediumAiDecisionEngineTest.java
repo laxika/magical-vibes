@@ -1052,6 +1052,40 @@ class MediumAiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("Medium AI reassigns an existing blocker to a Lure attacker")
+    void reassignsExistingBlockerToLureAttacker() {
+        Permanent lureAttacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        lureAttacker.setSummoningSick(false);
+        lureAttacker.setAttacking(true);
+        Permanent lure = harness.addToBattlefieldAndReturn(human, new Lure());
+        lure.setAttachedTo(lureAttacker.getId());
+        Permanent otherAttacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        otherAttacker.setSummoningSick(false);
+        otherAttacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        blocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int otherAttackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(otherAttacker);
+        int blockerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(blocker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(
+                    List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Medium AI caps Lure blocks to an aura-granted maximum")
     void capsLureBlocksToAuraGrantedMaximum() {
         Permanent attacker = harness.addToBattlefieldAndReturn(human, new KjeldoranRoyalGuard());
