@@ -1595,7 +1595,9 @@ public class PredicateEvaluationService {
                 if (sourcePermanent == null) {
                     yield false;
                 }
-                yield effectiveName(permanent, filterContext).equals(effectiveName(sourcePermanent, filterContext));
+                yield namesMatch(
+                        effectiveName(permanent, filterContext),
+                        effectiveName(sourcePermanent, filterContext));
             }
             case PermanentSharesNameWithAnotherPermanentPredicate ignored -> {
                 if (gameData == null) {
@@ -1607,7 +1609,7 @@ public class PredicateEvaluationService {
                     if (foundOther[0]) return;
                     for (Permanent other : battlefield) {
                         if (!other.getId().equals(permanent.getId())
-                                && name.equals(effectiveName(other, filterContext))) {
+                                && namesMatch(name, effectiveName(other, filterContext))) {
                             foundOther[0] = true;
                             return;
                         }
@@ -1646,9 +1648,11 @@ public class PredicateEvaluationService {
                                 new PermanentColorInPredicate(Set.of(chosenColor)), filterContext);
             }
             case PermanentNamedPredicate namedPredicate ->
-                    effectiveName(permanent, filterContext).equals(namedPredicate.cardName());
-            case PermanentNameInPredicate nameInPredicate ->
-                    nameInPredicate.cardNames().contains(effectiveName(permanent, filterContext));
+                    namesMatch(effectiveName(permanent, filterContext), namedPredicate.cardName());
+            case PermanentNameInPredicate nameInPredicate -> {
+                String name = effectiveName(permanent, filterContext);
+                yield name != null && nameInPredicate.cardNames().contains(name);
+            }
             case PermanentHasCountersPredicate hasCountersPredicate -> {
                 if (hasCountersPredicate.counterType() == CounterType.ANY) {
                     boolean any = false;
@@ -2214,6 +2218,10 @@ public class PredicateEvaluationService {
                 : gameQueryService.getEffectiveName(gameData, permanent);
     }
 
+    private static boolean namesMatch(String firstName, String secondName) {
+        return firstName != null && firstName.equals(secondName);
+    }
+
     private Set<CardColor> recursionSafeColors(Permanent permanent) {
         CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
         if (layered != null) {
@@ -2476,9 +2484,9 @@ public class PredicateEvaluationService {
             case PermanentHasKeywordPredicate p ->
                     state.hasKeyword(p.keyword());
             case PermanentNamedPredicate p ->
-                    state.getName().equals(p.cardName());
+                    namesMatch(state.getName(), p.cardName());
             case PermanentNameInPredicate p ->
-                    p.cardNames().contains(state.getName());
+                    state.getName() != null && p.cardNames().contains(state.getName());
             case PermanentHasProtectionFromColorPredicate p ->
                     state.hasProtectionColor(p.color())
                             || permanent.getProtectionFromColorsUntilEndOfTurn().contains(p.color());
