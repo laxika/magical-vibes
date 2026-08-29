@@ -79,6 +79,15 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * True when paying this cost sacrifices a battlefield permanent chosen by the payer.
+     * Creature-specific sacrifice costs inherit this from {@link #sacrificesChosenCreature()};
+     * broader sacrifice costs override it directly.
+     */
+    default boolean sacrificesChosenPermanent() {
+        return sacrificesChosenCreature();
+    }
+
+    /**
      * True when paying this cost sacrifices a creature the payer chooses from among the
      * creatures they control (the plain "Sacrifice a creature" shape), which the AI values by
      * the cheapest creature it could give up. Any-permanent / artifact-only sacrifices report

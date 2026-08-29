@@ -73,6 +73,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -145,7 +146,7 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Life-gain once-per-turn triggers fire only for the first life-gain event")
     void lifeGainOncePerTurnTriggerFiresOnlyOnce() {
-        when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class))).thenReturn(EMPTY_BONUS);
+        when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class), isNull())).thenReturn(EMPTY_BONUS);
         CardEffect inner = new GainLifeEffect(1);
         OncePerTurnTriggerEffect effect = new OncePerTurnTriggerEffect(inner);
         addAllyCreatureTrigger(EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect);

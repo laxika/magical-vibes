@@ -40,4 +40,9 @@ public record SacrificePermanentCost(PermanentPredicate filter, String descripti
     public PermanentPredicate consumedPermanentFilter() {
         return filter;
     }
+
+    @Override
+    public boolean sacrificesChosenPermanent() {
+        return true;
+    }
 }
