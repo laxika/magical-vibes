@@ -166,6 +166,20 @@ class MultiPermanentChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("Exact-count untap choice fills mandatory slots across both battlefields")
+    void fillsExactCountUntapChoiceAcrossBothBattlefields() throws Exception {
+        Permanent own = creature("Own", 1);
+        Permanent opponent = creature("Opponent", 5);
+        gameData.playerBattlefields.get(aiPlayerId).add(own);
+        gameData.playerBattlefields.get(opponentId).add(opponent);
+
+        strategy.answer(untapExactChoice(
+                List.of(own.getId(), opponent.getId()), 2), context());
+
+        assertChosen(List.of(opponent.getId(), own.getId()));
+    }
+
+    @Test
     @DisplayName("Power-limited keep choice does not exceed the effective power limit")
     void powerLimitedKeepChoiceStaysWithinLimit() throws Exception {
         Permanent strongestLegal = creature("Strongest legal", 4);
@@ -234,6 +248,14 @@ class MultiPermanentChoiceAiStrategyTest {
                 playerId, validIds, validPlayerIds, maxCount,
                 new MultiPermanentChoiceContext.ExileDamagedPlayerControls(),
                 "Choose permanents.");
+    }
+
+    private PendingInteraction.MultiPermanentChoice untapExactChoice(List<UUID> validIds, int requiredCount) {
+        return new PendingInteraction.MultiPermanentChoice(
+                aiPlayerId, validIds, List.of(), requiredCount,
+                new MultiPermanentChoiceContext.UntapPermanentsForAmount(
+                        "Exact-count source", requiredCount),
+                "Choose permanents to untap.");
     }
 
     private PendingInteraction.MultiPermanentChoice powerLimitedChoice(List<UUID> validIds, int maxPower) {

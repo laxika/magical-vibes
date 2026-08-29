@@ -15,8 +15,9 @@ import java.util.UUID;
 /**
  * Answers multi-permanent-or-player selections: the AI prefers the opponent's strongest
  * permanents (by effective power), falling back to the first valid targets when none are the
- * opponent's permanents. Power-limited keep choices use the permanents' effective power and
- * never submit a selection above the limit.
+ * opponent's permanents. Exact-count untap choices fill any remaining mandatory slots from the
+ * valid permanents. Power-limited keep choices use the permanents' effective power and never
+ * submit a selection above the limit.
  */
 @Slf4j
 class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.MultiPermanentChoice> {
@@ -54,6 +55,10 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                     .limit(interaction.maxCount())
                     .map(Permanent::getId)
                     .toList();
+            if (interaction.context()
+                    instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount exactChoice) {
+                chosen = fillRequiredPermanents(chosen, validPermanentIds, exactChoice.requiredCount());
+            }
             if (chosen.isEmpty()) {
                 List<UUID> validTargets = new ArrayList<>();
                 if (validPermanentIds != null) {
@@ -68,6 +73,23 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
 
         log.info("AI: Choosing {} permanents or players in game {}", chosen.size(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.PermanentsChosen(chosen));
+    }
+
+    private List<UUID> fillRequiredPermanents(List<UUID> preferred, List<UUID> validIds, int requiredCount) {
+        if (preferred.size() >= requiredCount || validIds == null) {
+            return preferred;
+        }
+
+        List<UUID> chosen = new ArrayList<>(preferred);
+        for (UUID validId : validIds) {
+            if (chosen.size() == requiredCount) {
+                break;
+            }
+            if (!chosen.contains(validId)) {
+                chosen.add(validId);
+            }
+        }
+        return List.copyOf(chosen);
     }
 
     private List<UUID> chooseCreaturesWithinPowerLimit(PendingInteraction.MultiPermanentChoice interaction,
