@@ -287,7 +287,7 @@ public class PotentialManaService {
             return card.getEffects(EffectSlot.ON_TAP).stream()
                     .anyMatch(PotentialManaService::manaEffectOpensChoice);
         }
-        return wouldManaAbilityTriggerChoice(card);
+        return wouldManaAbilityTriggerChoice(activatedAbilitiesFor(gameData, permanent, card));
     }
 
     private static boolean hasAttachedManaChoiceTrigger(GameData gameData, Permanent manaSource) {
@@ -638,7 +638,11 @@ public class PotentialManaService {
      * Cards with ON_TAP effects are always safe — they produce mana without choices.
      */
     public static boolean wouldManaAbilityTriggerChoice(Card card) {
-        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+        return wouldManaAbilityTriggerChoice(card.getActivatedAbilities());
+    }
+
+    private static boolean wouldManaAbilityTriggerChoice(List<ActivatedAbility> abilities) {
+        for (ActivatedAbility ability : abilities) {
             if (!isFreeTapManaAbility(ability)) {
                 continue;
             }

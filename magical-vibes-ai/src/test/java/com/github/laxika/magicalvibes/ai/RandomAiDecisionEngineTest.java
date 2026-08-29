@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.b.BalmOfRestoration;
+import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ChokingVines;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MultanisHarmony;
 import com.github.laxika.magicalvibes.cards.n.NahirisWarcrafting;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
@@ -1612,6 +1614,44 @@ class RandomAiDecisionEngineTest {
         assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
                 .isNull();
+    }
+
+    @Test
+    void preservesAttackerPromptWhenGrantedManaAbilityRequiresColorChoice() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new BairdStewardOfArgive());
+        Card batCard = new Card();
+        batCard.setName("Bat");
+        batCard.setType(CardType.CREATURE);
+        batCard.setPower(1);
+        batCard.setToughness(1);
+        Permanent bat = harness.addToBattlefieldAndReturn(aiPlayer, batCard);
+        bat.setSummoningSick(false);
+        Permanent harmony = harness.addToBattlefieldAndReturn(aiPlayer, new MultanisHarmony());
+        harmony.setAttachedTo(bat.getId());
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(bat.isTapped()).isFalse();
+        assertThat(gameData.interaction.activeInteraction()).isNull();
     }
 
     @Test

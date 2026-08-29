@@ -254,6 +254,18 @@ class AiManaManagerTest {
         return perm;
     }
 
+    private Permanent addUntappedCreatureWithGrantedAnyColorManaAbility(String name) {
+        Permanent permanent = addUntappedCreature(name);
+        ActivatedAbility grantedAbility = new ActivatedAbility(
+                true, null, List.of(new AwardAnyColorManaEffect()),
+                "{T}: Add one mana of any color.");
+        lenient().when(gameQueryService.canActivateManaAbility(gd, permanent)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, permanent)).thenReturn(List.of());
+        lenient().when(abilityActivationService.getEffectiveActivatedAbilities(gd, permanent))
+                .thenReturn(List.of(grantedAbility));
+        return permanent;
+    }
+
     private Permanent addUntappedTapAnotherCreatureManaSource(String name) {
         Card card = createCreature(name, 1, 2, CardColor.GREEN);
         card.addActivatedAbility(new ActivatedAbility(
@@ -1120,6 +1132,14 @@ class AiManaManagerTest {
 
             assertThat(manager.buildSafeVirtualManaPool(gd, player1Id).getTotal()).isZero();
         }
+
+        @Test
+        @DisplayName("excludes a creature whose granted mana ability would prompt for a color")
+        void excludesCreatureWithGrantedManaChoiceAbility() {
+            addUntappedCreatureWithGrantedAnyColorManaAbility("Bat");
+
+            assertThat(manager.buildSafeVirtualManaPool(gd, player1Id).getTotal()).isZero();
+        }
     }
 
     // ── isFreeTapManaAbility ────────────────────────────────────────
@@ -1800,6 +1820,25 @@ class AiManaManagerTest {
             manager.tapLandsForCost(gd, player1Id, "{1}", 0, action, true);
 
             assertThat(tappedIndices).containsExactly(2);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
+        }
+
+        @Test
+        @DisplayName("skips a granted choice mana ability during attack tax payment")
+        void skipsGrantedManaChoiceAbilityDuringAttackTaxPayment() {
+            addUntappedCreatureWithGrantedAnyColorManaAbility("Bat");
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1Id));
+            List<Integer> tappedIndices = new ArrayList<>();
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                tappedIndices.add(permanentIndex);
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED);
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action, true);
+
+            assertThat(tappedIndices).containsExactly(1);
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
         }
 
