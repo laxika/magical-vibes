@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -73,12 +74,32 @@ public class ExileCastTargetSupport {
         Set<UUID> candidates = new LinkedHashSet<>(flatSingleTargetCandidates(gameData, card, controllerId));
         candidates.addAll(gameData.orderedPlayerIds);
         gameData.forEachPermanent((ignored, permanent) -> candidates.add(permanent.getId()));
+        Set<TargetType> preparedTargetTypes = EffectResolution.computeAllowedTargets(
+                spellEffects, List.of(), card.isAura(), card.isEnchantPlayer());
+        if (preparedTargetTypes.contains(TargetType.GRAVEYARD)) {
+            gameData.playerGraveyards.values().forEach(graveyard ->
+                    graveyard.forEach(graveyardCard -> candidates.add(graveyardCard.getId())));
+        }
 
         List<UUID> legal = new ArrayList<>();
         for (UUID candidate : candidates) {
             try {
-                targetLegalityService.validateSpellTargeting(
-                        gameData, card, spellEffects, candidate, null, controllerId, true, 0);
+                if (gameQueryService.findCardInGraveyardById(gameData, candidate) != null) {
+                    if (!preparedTargetTypes.contains(TargetType.GRAVEYARD)) {
+                        continue;
+                    }
+                    targetLegalityService.validateEffectTargetInZone(
+                            gameData, card, spellEffects, candidate, Zone.GRAVEYARD, 0, controllerId);
+                } else if (gameQueryService.findCardInExileById(gameData, candidate) != null) {
+                    if (!preparedTargetTypes.contains(TargetType.EXILE)) {
+                        continue;
+                    }
+                    targetLegalityService.validateEffectTargetInZone(
+                            gameData, card, spellEffects, candidate, Zone.EXILE, 0, controllerId);
+                } else {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData, card, spellEffects, candidate, null, controllerId, true, 0);
+                }
                 legal.add(candidate);
             } catch (IllegalStateException ignored) {
                 // This candidate does not satisfy the selected mode's target declaration.
