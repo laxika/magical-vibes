@@ -41,7 +41,9 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
 
         List<Card> candidates = new ArrayList<>();
         addNonlands(candidates, gameData.playerHands.getOrDefault(targetPlayerId, List.of()));
-        addNonlands(candidates, gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()));
+        if (!exileEffect.handOnly()) {
+            addNonlands(candidates, gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()));
+        }
         if (candidates.isEmpty()) {
             return;
         }
@@ -50,7 +52,7 @@ public class ExileNonlandCardFromTargetHandOrGraveyardEffectHandler
                 new PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice(
                         entry.getControllerId(), targetPlayerId,
                         candidates.stream().map(Card::getId).toList(),
-                        exileEffect.grantPlayPermission()));
+                        exileEffect.grantPlayPermission(), exileEffect.handOnly()));
     }
 
     private static void addNonlands(List<Card> candidates, List<Card> cards) {

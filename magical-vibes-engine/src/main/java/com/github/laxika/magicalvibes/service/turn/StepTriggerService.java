@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPe
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
+import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
@@ -151,6 +152,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
@@ -2936,6 +2939,10 @@ public class StepTriggerService {
                     perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
                 }
             }
+            if (pending.counterTypeOnReturn() != null && pending.counterAmountOnReturn() > 0) {
+                perm.setCounterCount(pending.counterTypeOnReturn(),
+                        perm.getCounterCount(pending.counterTypeOnReturn()) + pending.counterAmountOnReturn());
+            }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
                 perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
@@ -3103,6 +3110,33 @@ public class StepTriggerService {
                         "'s delayed ability triggers — draw " + pending.count() + " card(s)."));
                 log.info("Game {} - {} delayed draw trigger pushed onto stack for {} card(s)",
                         gameData.id, pending.sourceCard().getName(), pending.count());
+            }
+        }
+
+        if (gameData.hasDelayedAction(DamageForCardsStillExiledAtNextEndStep.class)) {
+            List<DamageForCardsStillExiledAtNextEndStep> pendingDamage =
+                    gameData.drainDelayedActions(DamageForCardsStillExiledAtNextEndStep.class,
+                            action -> action.controllerId().equals(gameData.activePlayerId));
+            for (DamageForCardsStillExiledAtNextEndStep action : pendingDamage) {
+                long stillExiled = action.cardIds().stream()
+                        .filter(cardId -> gameData.findExiledCard(cardId) != null)
+                        .count();
+                int damage = Math.toIntExact(stillExiled * action.damagePerCard());
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(new DealDamageToPlayersEffect(
+                                damage, DamageRecipient.EACH_OPPONENT))),
+                        null,
+                        action.sourcePermanentId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed trigger deals " + damage + " damage to each opponent."));
+                log.info("Game {} - {} delayed trigger deals {} damage to each opponent",
+                        gameData.id, action.sourceCard().getName(), damage);
             }
         }
 

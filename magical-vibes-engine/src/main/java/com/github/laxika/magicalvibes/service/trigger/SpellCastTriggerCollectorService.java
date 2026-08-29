@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
@@ -731,8 +732,15 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+        UUID sourceCardId = match.permanent().getOriginalCard().getId();
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), sourceCardId,
                 match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+
+        if (!trigger.firstSpellFilters().isEmpty()
+                && trigger.firstSpellFilters().stream().noneMatch(filter ->
+                isFirstMatchingSpell(match.gameData(), sc, filter, sourceCardId))) {
             return false;
         }
 
@@ -760,6 +768,9 @@ public class SpellCastTriggerCollectorService {
         CardEffect copyEffect =
                 new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId(), trigger.grantedKeywords(),
                         trigger.additionalTypes(), trigger.tokenCopy(), trigger.mayChooseNewTargets());
+        if (trigger.beforeCopyEffect() != null) {
+            copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
+        }
         if (trigger.intervening() != null) {
             copyEffect = new ConditionalEffect(trigger.intervening(), copyEffect);
         }
@@ -767,14 +778,28 @@ public class SpellCastTriggerCollectorService {
         // "you may copy that spell" with no cost (Swarm Intelligence) — offer an immediate optional
         // prompt; accepting puts the copy-creating ability on the stack.
         if (trigger.tapCost() == null && trigger.manaCost() == null && match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    new ArrayList<>(List.of(copyEffect)),
-                    match.permanent().getCard().getName() + " — " + may.prompt(),
-                    null,
-                    null,
-                    match.permanent().getId()));
+            if (trigger.beforeCopyEffect() != null) {
+                TargetSpec targetSpec = copyEffect.targetSpec();
+                boolean playerTargetOnly = targetSpec.admits(TargetPredicate.Kind.PLAYER)
+                        && !targetSpec.admits(TargetPredicate.Kind.PERMANENT);
+                match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        match.permanent().getCard(),
+                        match.controllerId(),
+                        new ArrayList<>(List.of(new MayEffect(copyEffect, may.prompt()))),
+                        playerTargetOnly,
+                        match.permanent().getCard().getTargetFilter(),
+                        0,
+                        match.permanent().getId()));
+            } else {
+                match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+                        match.permanent().getCard(),
+                        match.controllerId(),
+                        new ArrayList<>(List.of(copyEffect)),
+                        match.permanent().getCard().getName() + " — " + may.prompt(),
+                        null,
+                        null,
+                        match.permanent().getId()));
+            }
             return true;
         }
 
@@ -804,6 +829,19 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getId()
         ));
         return true;
+    }
+
+    private boolean isFirstMatchingSpell(GameData gameData, TriggerContext.SpellCast spellCast,
+                                         CardPredicate filter, UUID sourceCardId) {
+        if (!predicateEvaluationService.matchesCardPredicate(spellCast.spellCard(), filter, sourceCardId,
+                gameData, spellCast.castingPlayerId())) {
+            return false;
+        }
+        long matchingSpells = gameData.getSpellsCastThisTurn(spellCast.castingPlayerId()).stream()
+                .filter(spell -> predicateEvaluationService.matchesCardPredicate(
+                        spell, filter, sourceCardId, gameData, spellCast.castingPlayerId()))
+                .count();
+        return matchingSpells == 1;
     }
 
     @CollectsTrigger(value = CopySpellForEachPriorInstantOrSorceryEffect.class,
@@ -1636,6 +1674,15 @@ public class SpellCastTriggerCollectorService {
 
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId) {
+        if (trigger.expendThreshold() > 0) {
+            int totalManaSpent = match.gameData().getManaSpentToCastSpellsThisTurn(castingPlayerId);
+            int manaSpentOnThisSpell = match.gameData().getSpellCastManaSpent(spellCard.getId());
+            if (totalManaSpent < trigger.expendThreshold()
+                    || totalManaSpent - manaSpentOnThisSpell >= trigger.expendThreshold()) {
+                return false;
+            }
+        }
+
         // "Whenever you cast a spell during an opponent's turn" — the source's controller must not be
         // the active player when the spell is cast (Glen Elendra Pranksters).
         if (trigger.onlyDuringOpponentTurn()
@@ -1792,9 +1839,11 @@ public class SpellCastTriggerCollectorService {
             } else {
                 entry = spellManaSpentX > 0
                         ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX)
+                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,
+                            match.permanent().getId())
                         : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                            match.permanent().getCard().getName() + "'s ability", resolved);
+                            match.permanent().getCard().getName() + "'s ability", resolved,
+                            castingPlayerId, match.permanent().getId());
                 // Contextual "that player" = the caster (Leshrac's Sigil may-pay look-at-hand).
                 // Non-targeting: oracle does not use the word "target".
                 entry.setTargetId(castingPlayerId);

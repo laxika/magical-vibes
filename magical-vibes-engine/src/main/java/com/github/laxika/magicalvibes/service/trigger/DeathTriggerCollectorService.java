@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToP
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -115,6 +116,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1455,6 +1457,45 @@ public class DeathTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (controller's permanent put into graveyard from battlefield)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAnyPermanentGraveyardPermanentConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
+        Permanent dyingPermanent = apg.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        FilterContext filterContext = FilterContext.of(match.gameData())
+                .withSourceCardId(match.permanent().getCard().getId())
+                .withSourceControllerId(match.controllerId())
+                .withSourcePermanentSnapshot(match.permanent());
+        if (!predicateEvaluationService.matchesPermanentPredicate(
+                dyingPermanent, conditional.predicate(), filterContext)) {
+            return false;
+        }
+        return handleAnyPermanentGraveyardDefault(match, conditional.wrapped(), ctx);
+    }
+
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAnyPermanentGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (permanent put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
@@ -856,10 +858,58 @@ public class CastingPermissionService {
                             || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     continue;
                 }
+                if (permission.onlyDuringControllerTurn() && !playerId.equals(gameData.activePlayerId)) {
+                    continue;
+                }
                 return Optional.of(perm.getId());
             }
         }
         return Optional.empty();
+    }
+
+    /** Returns the additional costs attached to a matching static graveyard-cast permission. */
+    public List<CastingCost> findFilteredGraveyardPermissionAdditionalCosts(
+            GameData gameData, UUID playerId, Card card, UUID permanentId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+        for (Permanent perm : battlefield) {
+            if (!perm.getId().equals(permanentId)) {
+                continue;
+            }
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof CastSpellsFromGraveyardPermission permission)
+                        || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                    continue;
+                }
+                if (permission.onlyDuringControllerTurn() && !playerId.equals(gameData.activePlayerId)) {
+                    continue;
+                }
+                return permission.additionalCosts();
+            }
+        }
+        return List.of();
+    }
+
+    /** Checks whether a matching static permission's additional costs can currently be paid. */
+    public boolean canPayFilteredGraveyardPermissionAdditionalCosts(
+            GameData gameData, UUID playerId, Card card) {
+        var sourceId = findFilteredGraveyardPermissionSource(gameData, playerId, card);
+        if (sourceId.isEmpty()) {
+            return true;
+        }
+        int lifeCost = 0;
+        for (CastingCost cost : findFilteredGraveyardPermissionAdditionalCosts(
+                gameData, playerId, card, sourceId.get())) {
+            if (cost instanceof LifeCastingCost lifeCastingCost) {
+                lifeCost += lifeCastingCost.amount();
+            } else {
+                return false;
+            }
+        }
+        return gameData.getLife(playerId) >= lifeCost
+                && (lifeCost == 0 || gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData));
     }
 
     /**
@@ -930,17 +980,24 @@ public class CastingPermissionService {
         return hasGraveyardCastFilterPermission(gameData, card, playerId);
     }
 
+    public Optional<GameData.GraveyardCastFilterPermission> findGraveyardCastFilterPermission(
+            GameData gameData, Card card, UUID playerId) {
+        if (!isCastableSpellCard(card)) {
+            return Optional.empty();
+        }
+        return gameData.graveyardCastFilterPermissionsThisTurn.stream()
+                .filter(permission -> permission.playerId().equals(playerId))
+                .filter(permission -> predicateEvaluationService.matchesCardPredicate(
+                        card, permission.filter(), null))
+                .findFirst();
+    }
+
     /**
      * True if a turn-scoped blanket grant (Liliana, Untouched by Death's −3) lets this player cast
      * {@code card} from their graveyard. Lands are not spells, so they never qualify.
      */
     private boolean hasGraveyardCastFilterPermission(GameData gameData, Card card, UUID playerId) {
-        if (!isCastableSpellCard(card)) {
-            return false;
-        }
-        return gameData.graveyardCastFilterPermissionsThisTurn.stream()
-                .anyMatch(permission -> permission.playerId().equals(playerId)
-                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null));
+        return findGraveyardCastFilterPermission(gameData, card, playerId).isPresent();
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {

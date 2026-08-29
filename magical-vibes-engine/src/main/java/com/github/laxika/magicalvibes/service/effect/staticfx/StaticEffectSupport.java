@@ -80,6 +80,7 @@ public class StaticEffectSupport {
             CardSubtype.LOCUS,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
+            CardSubtype.FOOD,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
             CardSubtype.BOLAS

@@ -675,6 +675,62 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleLifeChangeBoostSelf(TriggerMatchContext match,
+            BoostSelfEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        if (!match.controllerId().equals(gameData.activePlayerId)) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on life change during its controller's turn",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleLifeChangeSequence(TriggerMatchContext match,
+            SequenceEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        if (!match.controllerId().equals(gameData.activePlayerId)) {
+            return false;
+        }
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        if (ctx instanceof TriggerContext.LifeGain lifeGain) {
+            entry.setEventValue(lifeGain.lifeGainedAmount());
+        } else if (ctx instanceof TriggerContext.LifeLoss lifeLoss) {
+            entry.setEventValue(lifeLoss.lifeLostAmount());
+        }
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on life change during its controller's turn",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GETS_ENERGY)
     private boolean handleEnergyGainBoostSelf(TriggerMatchContext match,
             BoostSelfEffect effect, TriggerContext ctx) {
@@ -1469,6 +1525,31 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life loss ({} life) — sacrifice/discard per life lost",
                 gameData.id, cardName, amount);
+        return true;
+    }
+
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_CONTROLLER_GIVES_GIFT)
+    private boolean handleGiftGivenDrawCard(TriggerMatchContext match,
+            DrawCardEffect effect, TriggerContext ctx) {
+        TriggerContext.GiftGiven giftGiven = (TriggerContext.GiftGiven) ctx;
+        if (!match.controllerId().equals(giftGiven.giverId())) {
+            return false;
+        }
+
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on giving a Gift (draw a card)", gameData.id, cardName);
         return true;
     }
 

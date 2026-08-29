@@ -53,16 +53,28 @@ public class CloneService {
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue) {
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, xValue);
+    }
+
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 int xValue, int manaSpentToCast) {
         CopyPermanentOnEnterEffect copyEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof CopyPermanentOnEnterEffect)
                 .map(e -> (CopyPermanentOnEnterEffect) e)
                 .findFirst().orElse(null);
         if (copyEffect == null) return false;
 
-        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceControllerId(controllerId);
+        int filterXValue = 0;
+        if (copyEffect.manaValueLimitUsesManaSpentToCast()) {
+            filterXValue = manaSpentToCast;
+            filterContext = filterContext.withXValue(filterXValue);
+        }
+        final FilterContext resolvedFilterContext = filterContext;
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((pid, p) -> {
-            if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), resolvedFilterContext)) {
                 validIds.add(p.getId());
             }
         });
@@ -86,6 +98,7 @@ public class CloneService {
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
         gameData.cloneOperation.xValue = xValue;
+        gameData.cloneOperation.copyFilterXValue = filterXValue;
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CloneCopy());
 
         gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -134,6 +147,7 @@ public class CloneService {
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
         gameData.cloneOperation.xValue = 0;
+        gameData.cloneOperation.copyFilterXValue = 0;
 
         Permanent perm = new Permanent(card);
 

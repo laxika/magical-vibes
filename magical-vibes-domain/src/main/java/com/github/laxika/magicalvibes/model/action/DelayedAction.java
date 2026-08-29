@@ -38,6 +38,7 @@ public sealed interface DelayedAction permits
         DestroyPermanentIfDidNotAttackAtEndStep,
         DelayedDestroyAllPermanents,
         DelayedChooseOpponentGainsControlOfSource,
+        DamageForCardsStillExiledAtNextEndStep,
         ExileToOwnerGraveyardAtNextEndStep,
         LoseGameAtEndStep,
         DelayedPlusOneCounters,

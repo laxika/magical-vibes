@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,14 +46,15 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
                     if (gameQueryService.isCreature(gameData, permanent)) {
-                        applyEffect(gameData, entry, e, permanent);
-                        count++;
+                        if (applyEffect(gameData, entry, e, permanent)) {
+                            count++;
+                        }
                     }
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" sets the base power and toughness of " + count + " creature(s) to "
-                            + e.power() + "/" + e.toughness() + " until end of turn.").build());
+                            + e.power() + "/" + e.toughness() + " " + durationLabel(e.duration()) + ".").build());
             return;
         }
 
@@ -63,19 +66,26 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        applyEffect(gameData, entry, e, target);
+        if (!applyEffect(gameData, entry, e, target)) {
+            return;
+        }
 
         String description = e.power() == null
-                ? " has base toughness " + e.toughness() + " until end of turn."
+                ? " has base toughness " + e.toughness() + " " + durationLabel(e.duration()) + "."
                 : e.toughness() == null
-                ? " has base power " + e.power() + " until end of turn."
-                : " has base power and toughness " + e.power() + "/" + e.toughness() + " until end of turn.";
+                ? " has base power " + e.power() + " " + durationLabel(e.duration()) + "."
+                : " has base power and toughness " + e.power() + "/" + e.toughness() + " " + durationLabel(e.duration()) + ".";
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
 
         log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
     }
 
-    private void applyEffect(GameData gameData, StackEntry entry, SetBasePowerToughnessEffect e, Permanent target) {
+    private boolean applyEffect(GameData gameData, StackEntry entry, SetBasePowerToughnessEffect e, Permanent target) {
+        if (e.condition() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.condition())) {
+            return false;
+        }
+
         // CR 613 layer engine: a one-shot base-P/T setter is a floating layer-7b effect with
         // its own timestamp — of all applicable 7b setters (auras, animations, other one-shots)
         // the latest timestamp wins in the layered pass. The legacy fields are still written
@@ -84,13 +94,24 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         // The legacy UEOT fields are an all-or-nothing pair, so a partial setter
         // ("has base toughness 1") skips them entirely and rides on the floating 7b entry alone,
         // which carries per-component nulls.
-        if (e.power() != null && e.toughness() != null) {
+        if (e.duration() == EffectDuration.UNTIL_END_OF_TURN
+                && e.power() != null && e.toughness() != null) {
             target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
             target.setBasePowerOverride(e.power());
             target.setBaseToughnessOverride(e.toughness());
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                e, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                e, target.getId(), null, null, e.duration(), 0));
+        return true;
+    }
+
+    private String durationLabel(EffectDuration duration) {
+        return switch (duration) {
+            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case PERMANENT -> "indefinitely";
+            case CONTINUOUS -> "continuously";
+            default -> "until end of turn";
+        };
     }
 }

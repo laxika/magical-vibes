@@ -78,6 +78,7 @@ class CostEffectClassificationTest {
             "SacrificeSourceEquipmentCost",
             "SacrificeXPermanentsCost",
             "TapCreatureCost",
+            "TapCreaturesForManaCost",
             "TapEnchantedPermanentCost",
             "TapGrantingEquipmentCost",
             "TapTwoCreaturesSharingTypeCost",

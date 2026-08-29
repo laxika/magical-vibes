@@ -199,6 +199,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
+        gameData.playersWithHexproofThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
@@ -312,6 +313,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.turnNumber = 1;
         gameData.turnsTakenByPlayer.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
+        gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.cardsLeftGraveyardCountThisTurn.clear();
 
         // Step 4: Each player draws 7 cards (CR 726 — pregame procedure)
         for (UUID playerId : gameData.orderedPlayerIds) {

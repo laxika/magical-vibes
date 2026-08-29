@@ -110,6 +110,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> creatureSpellOrAbilityMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with mana value 4 or greater. */
     private final EnumMap<ManaColor, Integer> manaValueAtLeastFourOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent on qualifying creature spells (Helga, Skittish Seer). */
+    private final EnumMap<ManaColor, Integer> creatureSpellManaValueAtLeastFourOrXOnlyMana = new EnumMap<>(ManaColor.class);
     /**
      * Per-exiled-card, per-color mana that may only be spent to cast that one exiled card (Ice
      * Cauldron — "spend this mana only to cast the last card exiled with this artifact"). Keyed by
@@ -155,6 +157,8 @@ public class ManaPool {
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
+            manaValueAtLeastFourOnlyMana.put(color, 0);
+            creatureSpellManaValueAtLeastFourOrXOnlyMana.put(color, 0);
             artifactOnlyMana.put(color, 0);
             partySpellOrAbilityMana.put(color, 0);
         }
@@ -210,6 +214,7 @@ public class ManaPool {
         creatureSpellOnlyMana.putAll(source.creatureSpellOnlyMana);
         creatureSpellOrAbilityMana.putAll(source.creatureSpellOrAbilityMana);
         manaValueAtLeastFourOnlyMana.putAll(source.manaValueAtLeastFourOnlyMana);
+        creatureSpellManaValueAtLeastFourOrXOnlyMana.putAll(source.creatureSpellManaValueAtLeastFourOrXOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.exiledCardOnlyMana.entrySet()) {
             exiledCardOnlyMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -297,6 +302,7 @@ public class ManaPool {
             creatureSpellOnlyMana.put(color, 0);
             creatureSpellOrAbilityMana.put(color, 0);
             manaValueAtLeastFourOnlyMana.put(color, 0);
+            creatureSpellManaValueAtLeastFourOrXOnlyMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
         uncounterableSubtypeCreatureMana.clear();
@@ -388,6 +394,7 @@ public class ManaPool {
         total += getCreatureSpellOnlyManaTotal();
         total += getCreatureSpellOrAbilityManaTotal();
         total += getManaValueAtLeastFourOnlyManaTotal();
+        total += getCreatureSpellManaValueAtLeastFourOrXOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
             for (int value : colorMap.values()) {
                 total += value;
@@ -1331,6 +1338,28 @@ public class ManaPool {
         manaValueAtLeastFourOnlyMana.put(color, Math.max(0, current - amount));
     }
 
+    /** Adds mana spendable only to cast a creature spell with mana value 4 or greater or with {X} in its mana cost. */
+    public void addCreatureSpellManaValueAtLeastFourOrXOnlyMana(ManaColor color, int amount) {
+        creatureSpellManaValueAtLeastFourOrXOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getCreatureSpellManaValueAtLeastFourOrXOnlyMana(ManaColor color) {
+        return creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getCreatureSpellManaValueAtLeastFourOrXOnlyManaTotal() {
+        int total = 0;
+        for (int value : creatureSpellManaValueAtLeastFourOrXOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void removeCreatureSpellManaValueAtLeastFourOrXOnlyMana(ManaColor color, int amount) {
+        int current = creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
+        creatureSpellManaValueAtLeastFourOrXOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
     /**
      * Adds mana that persists through step/phase transitions until end of turn.
      * The mana is added to both the regular pool and the persistent tracker.
@@ -1379,6 +1408,7 @@ public class ManaPool {
         moveColoredManaToColorless(partySpellOrAbilityMana);
         moveColoredManaToColorless(creatureSpellOnlyMana);
         moveColoredManaToColorless(manaValueAtLeastFourOnlyMana);
+        moveColoredManaToColorless(creatureSpellManaValueAtLeastFourOrXOnlyMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : exiledCardOnlyMana.entrySet()) {
             moveColoredManaToColorless(entry.getValue());
         }
@@ -1458,6 +1488,7 @@ public class ManaPool {
         drainColorBucket(creatureSpellOnlyMana, protectedColors);
         drainColorBucket(creatureSpellOrAbilityMana, protectedColors);
         drainColorBucket(manaValueAtLeastFourOnlyMana, protectedColors);
+        drainColorBucket(creatureSpellManaValueAtLeastFourOrXOnlyMana, protectedColors);
 
         drainColorMap(subtypeCreatureMana, protectedColors);
         drainColorMap(uncounterableSubtypeCreatureMana, protectedColors);
@@ -1566,6 +1597,7 @@ public class ManaPool {
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
+            amount += creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
             map.put(color.getCode(), amount);
         }
         return map;
@@ -1610,6 +1642,7 @@ public class ManaPool {
             amount += creatureSpellOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
+            amount += creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }

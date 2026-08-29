@@ -82,6 +82,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     MANA_VALUE_AT_LEAST_FOUR,
 
+    /** Spendable only to cast creature spells with mana value 4 or greater or with {X} in their mana costs (Helga, Skittish Seer). */
+    CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
+
     /**
      * Spendable only to cast Cleric, Rogue, Warrior, or Wizard spells or activate abilities of those
      * subtypes (Base Camp).

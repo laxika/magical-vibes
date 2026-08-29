@@ -12,6 +12,8 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever one or more other creatures you control enter the battlefield." */
+    ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
     /** "Whenever this creature or another creature you control enters, …" — like
      *  {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the source's own entry also triggers it.
      *  Scanned in the same pass ({@code TriggerCollectionService.checkAllyCreatureEntersTriggers})
@@ -49,6 +51,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     OPPONENT_UPKEEP_TRIGGERED,
     ON_ANY_PLAYER_CASTS_SPELL,
     ON_CONTROLLER_CASTS_SPELL,
+    /** Triggers when the controller gives a promised Gift to an opponent. */
+    ON_CONTROLLER_GIVES_GIFT,
     ON_CONTROLLER_COUNTERS_SPELL,
     /** "Whenever a spell you've cast is countered, ..." */
     ON_CONTROLLER_SPELL_COUNTERED,
@@ -129,6 +133,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
     ON_OPPONENT_DISCARDS,
+    /** Triggers whenever this permanent's controller forages. */
+    ON_CONTROLLER_FORAGES,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
      *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
     ON_CONTROLLER_DISCARDS,
@@ -610,6 +616,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers. Used by Luminous
      *  Phantom ("you gain 1 life"). */
     ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
+    /** Triggers once when one or more other creatures the controller controls leave the battlefield without dying. */
+    ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
+    /** Triggers once when this creature or one or more creatures its controller controls leave the
+     *  battlefield without dying. Checked in PermanentRemovalService through the non-dying leave
+     *  batch pipeline. */
+    ON_SELF_OR_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */
@@ -660,11 +672,17 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers once when this permanent's level counter total first reaches two. */
+    ON_SELF_REACHES_LEVEL_TWO,
+    /** Triggers once when this permanent's level counter total first reaches three. */
+    ON_SELF_REACHES_LEVEL_THREE,
     /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
      *  controller controls. Fired once per counter-placement event. */
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
     /** Triggers whenever one or more +1/+1 counters are put on a permanent the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
+    /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
     /** Triggers whenever this permanent evolves — i.e. its evolve trigger resolves and actually puts
      *  a +1/+1 counter on it. Fired from {@code EvolveTriggerEffectHandler} only when the counter
      *  lands (no counter, no trigger). Used by Renegade Krasis. */

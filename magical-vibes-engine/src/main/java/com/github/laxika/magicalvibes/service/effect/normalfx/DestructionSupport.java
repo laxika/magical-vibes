@@ -236,7 +236,10 @@ public class DestructionSupport {
             if (!gameQueryService.isCreature(gameData, perm)) continue;
             UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
             if (controllerId == null) continue;
-            gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
+            Permanent dyingPermanentSnapshot = new Permanent(perm);
+            dyingPermanentSnapshot.getGrantedSubtypes().addAll(
+                    gameQueryService.computeStaticBonus(gameData, perm).grantedSubtypes());
+            gameData.simultaneousDyingCreatures.put(perm.getId(), dyingPermanentSnapshot);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
         }
     }

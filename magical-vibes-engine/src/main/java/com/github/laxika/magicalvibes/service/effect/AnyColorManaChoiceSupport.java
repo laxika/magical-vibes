@@ -168,6 +168,8 @@ public final class AnyColorManaChoiceSupport {
                     ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, amount, effect.subtype());
             case MANA_VALUE_AT_LEAST_FOUR ->
                     ChoiceContext.ManaColorChoice.manaValueAtLeastFour(playerId, amount);
+            case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X ->
+                    ChoiceContext.ManaColorChoice.creatureSpellManaValueAtLeastFourOrXOnly(playerId, amount);
             case PARTY_SPELL_OR_ABILITY ->
                     ChoiceContext.ManaColorChoice.partySpellOrAbility(playerId, amount);
         };
@@ -197,6 +199,7 @@ public final class AnyColorManaChoiceSupport {
             case CREATURE_SPELLS_OR_ABILITIES -> "Choose a color of mana to add (creature spells or creature abilities only).";
             case FLASHBACK_ONLY -> "Choose a color of mana to add (flashback only).";
             case MANA_VALUE_AT_LEAST_FOUR -> "Choose a color of mana to add (spells with mana value 4 or greater only).";
+            case CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X -> "Choose a color of mana to add (qualifying creature spells only).";
             default -> "Choose a color of mana to add.";
         };
     }

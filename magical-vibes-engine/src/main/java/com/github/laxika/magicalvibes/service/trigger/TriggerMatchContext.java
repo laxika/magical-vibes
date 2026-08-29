@@ -12,7 +12,8 @@ import java.util.UUID;
  * @param gameData     the current game state
  * @param permanent    the permanent whose effect slot produced the trigger
  * @param controllerId the controller of that permanent
- * @param rawEffect    the original effect from the slot (may be {@code MayEffect}-wrapped)
+ * @param rawEffect    the effect presented to the collector (some dispatch paths remove an outer
+ *                     once-per-turn wrapper); it may be {@code MayEffect}-wrapped
  */
 public record TriggerMatchContext(
         GameData gameData,

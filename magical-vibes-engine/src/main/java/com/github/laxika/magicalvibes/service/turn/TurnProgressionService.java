@@ -45,7 +45,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -482,6 +484,7 @@ public class TurnProgressionService {
         gameData.creatureDeathCountThisTurn.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
+        gameData.creatureExileCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
         gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
@@ -605,6 +608,16 @@ public class TurnProgressionService {
         // effect overwrites {@code copyUntilNextTurnControllerId}, so an older effect expiring
         // first must not revert the card out from under the still-active newer one.
         for (FloatingContinuousEffect expired : gameData.expireFloatingEffectsAtTurnStart(nextActive)) {
+            if (expired.effect() instanceof LosesAllAbilitiesEffect
+                    && expired.affectedPermanentId() != null) {
+                Permanent target = findPermanent(gameData, expired.affectedPermanentId());
+                if (target != null && gameData.floatingEffects.stream().noneMatch(remaining ->
+                        expired.affectedPermanentId().equals(remaining.affectedPermanentId())
+                                && remaining.effect() instanceof LosesAllAbilitiesEffect
+                                && remaining.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN)) {
+                    target.setLosesAllAbilitiesUntilNextTurn(false);
+                }
+            }
             if (expired.effect() instanceof MakeTargetCopyOfTargetCreatureUntilNextTurnEffect
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());

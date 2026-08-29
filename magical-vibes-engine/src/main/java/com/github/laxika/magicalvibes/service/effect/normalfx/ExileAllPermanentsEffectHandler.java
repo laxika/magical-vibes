@@ -48,11 +48,16 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
             }
         });
 
-        for (Permanent perm : toExile) {
-            permanentRemovalService.removePermanentToExile(gameData, perm);
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
-            log.info("Game {} - {} is exiled by {}",
-                    gameData.id, perm.getCard().getName(), entry.getCard().getName());
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent perm : toExile) {
+                permanentRemovalService.removePermanentToExile(gameData, perm);
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));
+                log.info("Game {} - {} is exiled by {}",
+                        gameData.id, perm.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

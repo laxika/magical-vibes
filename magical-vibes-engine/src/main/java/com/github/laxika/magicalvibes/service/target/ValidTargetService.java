@@ -112,7 +112,6 @@ public class ValidTargetService {
     }
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
-        boolean isMultiTarget = card.getMaxTargets() > 1;
         int effectiveXValue = resolveCastTimeXValue(gameData, card, controllerId, xValue);
 
         // For modal spells (and modal ETB creatures) the request's xValue carries the encoded
@@ -123,6 +122,10 @@ public class ValidTargetService {
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
         TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter() : null;
+        List<TargetFilter> modeTargetFilters = chosenMode != null ? chosenMode.targetFilters() : null;
+        boolean hasModeTargetFilters = modeTargetFilters != null && !modeTargetFilters.isEmpty();
+        boolean isMultiTarget = card.getMaxTargets() > 1
+                || modeTargetFilters != null && modeTargetFilters.size() > 1;
         Set<TargetType> allowedTargets;
         if (kicked != null || modeSelection != null) {
             spellEffects = EffectResolution.resolveEffects(spellEffects, kicked, modeSelection);
@@ -138,14 +141,17 @@ public class ValidTargetService {
         List<UUID> validPermanentIds = new ArrayList<>();
         List<UUID> validPlayerIds = new ArrayList<>();
         List<UUID> validGraveyardCardIds = new ArrayList<>();
-        Set<UUID> excludeIds = alreadySelectedIds != null ? Set.copyOf(alreadySelectedIds) : Set.of();
+        Set<UUID> excludeIds = alreadySelectedIds != null && !card.isAllowSharedTargets()
+                ? Set.copyOf(alreadySelectedIds) : Set.of();
 
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
 
         if (allowedTargets.contains(TargetType.PERMANENT)) {
             // Determine per-position filter for multi-target spells; a chosen mode's
             // filter override plays the same role for modal spells.
-            TargetFilter positionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
+            TargetFilter positionFilter = hasModeTargetFilters && positionIndex < modeTargetFilters.size()
+                    ? modeTargetFilters.get(positionIndex)
+                    : isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
                     ? card.getMultiTargetFilters().get(positionIndex)
                     : modeFilter;
 
@@ -235,7 +241,9 @@ public class ValidTargetService {
             if (positionAllowsPlayers && !gameQueryService.isPeaceTalksActive(gameData)) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, modeFilter != null ? modeFilter : card.getTargetFilter(),
+                    TargetFilter positionFilter = hasModeTargetFilters && positionIndex < modeTargetFilters.size()
+                            ? modeTargetFilters.get(positionIndex) : modeFilter;
+                    if (isValidPlayerTarget(gameData, positionFilter != null ? positionFilter : card.getTargetFilter(),
                             playerId, controllerId, null, card)) {
                         validPlayerIds.add(playerId);
                     }
@@ -247,7 +255,9 @@ public class ValidTargetService {
             // A graveyard target group declares its own scope + card filter, so per-position
             // enumeration honours the group being filled (Spelltwine: own graveyard, then an
             // opponent's). Groups that declare no graveyard filter keep the card-wide enumeration.
-            TargetFilter graveyardPositionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
+            TargetFilter graveyardPositionFilter = hasModeTargetFilters && positionIndex < modeTargetFilters.size()
+                    ? modeTargetFilters.get(positionIndex)
+                    : isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
                     ? card.getMultiTargetFilters().get(positionIndex)
                     : null;
             if (graveyardPositionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
@@ -264,9 +274,13 @@ public class ValidTargetService {
         }
 
         boolean isKicked = Boolean.TRUE.equals(kicked);
-        int responseMinTargets = card.getEffectiveMinTargets(effectiveXValue, isKicked);
+        int responseMinTargets = hasModeTargetFilters
+                ? modeTargetFilters.size()
+                : card.getEffectiveMinTargets(effectiveXValue, isKicked);
         int effectiveX = xValue != null ? xValue : 0;
-        int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
+        int responseMaxTargets = hasModeTargetFilters
+                ? modeTargetFilters.size()
+                : targetLegalityService.getEffectiveMaxTargets(
                 gameData, card, controllerId, effectiveX, isKicked);
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
     }

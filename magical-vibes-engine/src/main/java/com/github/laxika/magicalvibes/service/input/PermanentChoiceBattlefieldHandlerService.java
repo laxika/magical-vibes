@@ -128,6 +128,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseControlledArtifactOrCreatureTokenCopyEffectHandler chooseControlledArtifactOrCreatureTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
 
@@ -543,6 +544,29 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleExileChosenPermanent(GameData gameData, UUID permanentId,
+                                            PermanentChoiceContext.ExileChosenPermanent context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        Card exiledCard = target.getCard();
+        permanentRemovalService.removePermanentToExile(gameData, target);
+        gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
+        log.info("Game {} - {} exiles {}", gameData.id, context.sourceCardName(), exiledCard.getName());
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Season of Weaving: the controller chose the artifact or creature to copy. */
+    public void handleChooseControlledArtifactOrCreatureToCopy(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ChooseControlledArtifactOrCreatureToCopy context) {
+        chooseControlledArtifactOrCreatureTokenCopyEffectHandler.completeChoice(gameData, permanentId, context);
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleOpponentMayGainControlOfCreatureYouControl(GameData gameData, UUID permanentId,
             PermanentChoiceContext.OpponentMayGainControlOfCreatureYouControl context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -691,6 +715,35 @@ public class PermanentChoiceBattlefieldHandlerService {
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
             log.info("Game {} - {} returned to owner's hand by bounce effect", gameData.id, target.getCard().getName());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleReturnPermanentAndPutCounterOnSource(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ReturnPermanentAndPutCounterOnSource context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+            log.info("Game {} - {} returned to owner's hand for {}", gameData.id,
+                    target.getCard().getName(), context.sourceCard().getName());
+
+            Permanent source = context.sourcePermanentId() == null
+                    ? gameData.playerBattlefields.getOrDefault(context.controllerId(), List.of()).stream()
+                    .filter(permanent -> permanent.getCard() == context.sourceCard())
+                    .findFirst()
+                    .orElse(null)
+                    : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+            if (source != null) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -1411,7 +1464,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                 .findFirst()
                 .orElse(null);
 
+        Card sacrificedCard = toSacrifice.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                gameData, ctx.controllerId(), sacrificedCard);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , toSacrifice.getCard(), "."));

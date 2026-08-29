@@ -766,6 +766,9 @@ public class GraveyardReturnSupport {
         if (effect.grantSourceHasteIfSubtype() != null) {
             choice.grantSourceHasteIfSubtype(effect.grantSourceHasteIfSubtype(), entry.getSourcePermanentId());
         }
+        if (effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0) {
+            choice.enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount());
+        }
 
         if (effect.attachToSource()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -824,6 +827,9 @@ public class GraveyardReturnSupport {
         }
         if (effect.grantSubtype() != null) {
             choice.grantSubtype(effect.grantSubtype());
+        }
+        if (effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0) {
+            choice.enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount());
         }
         interactionHandlerRegistry.begin(gameData, choice.build());
     }
@@ -975,14 +981,20 @@ public class GraveyardReturnSupport {
         Permanent permanent = new Permanent(card);
         initializePlaneswalkerLoyalty(permanent, card);
         applyPermanentGrants(permanent, grantColor, grantSubtype, grantIndestructible);
-        if (enterWithCounter != null) {
+        if (enterWithCounter != null && enterWithCounter != CounterType.FINALITY
+                && !gameQueryService.cantHaveCounters(gameData, permanent)) {
             permanent.setCounterCount(enterWithCounter, 1);
         }
         if (enterTapped) {
             permanent.tap();
         }
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        if (enterWithCounter == CounterType.FINALITY) {
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, controllerId, permanent, 0, false, 1);
+        } else {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        }
         if (enterAttacking) {
             permanent.setAttacking(true);
         }

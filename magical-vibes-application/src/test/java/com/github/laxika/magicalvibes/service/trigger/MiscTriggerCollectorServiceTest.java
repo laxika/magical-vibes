@@ -157,6 +157,24 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("life-change sequence trigger fires only during the controller's turn")
+    void lifeChangeSequenceTriggerChecksActivePlayer() {
+        Permanent perm = createPermanent("Moonstone Harbinger");
+        var effect = SequenceEffect.of(new BoostSelfEffect(1, 0), new BoostSelfEffect(1, 0));
+        var ctx = new TriggerContext.LifeGain(player1Id, 1);
+
+        gd.activePlayerId = player1Id;
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx)).isTrue();
+
+        gd.stack.clear();
+        gd.activePlayerId = player2Id;
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("life-gain may-pay trigger keeps the optional payment on the stack")
     void lifeGainMayPayTriggerKeepsOptionalPayment() {
         Permanent perm = createPermanent("Dawn of Hope");

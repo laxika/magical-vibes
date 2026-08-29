@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -10,5 +11,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@link CastSpellsFromGraveyardPermission}, which is a static ability of a permanent on the
  * battlefield, this is a one-shot grant recorded on {@code GameData} and dropped at turn cleanup.
  */
-public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(CardPredicate filter) implements CardEffect {
+public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
+        CardPredicate filter,
+        ForageOrPayManaCost additionalCost,
+        CounterType enterWithCounter,
+        int enterWithCounterCount
+) implements CardEffect {
+
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect(CardPredicate filter) {
+        this(filter, null, null, 0);
+    }
 }

@@ -1061,6 +1061,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(
                     gameData, findExileNGraveyardCost(card));
         }
+        if (sacrificePermanentId != null && hasAlternativePermanentAndGraveyardCost(card)) {
+            exileGraveyardCardIndices = null;
+        }
 
         BeholdSelection beholdSelection = selectBeholdCost(gameData, card);
         if (beholdSelection == null) {

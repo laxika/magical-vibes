@@ -267,7 +267,11 @@ public class StateBasedActionService {
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
                     UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
-                        gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
+                        Permanent dyingPermanentSnapshot = new Permanent(entry.permanent());
+                        dyingPermanentSnapshot.getGrantedSubtypes().addAll(
+                                gameQueryService.computeStaticBonus(gameData, entry.permanent()).grantedSubtypes());
+                        gameData.simultaneousDyingCreatures.put(
+                                entry.permanent().getId(), dyingPermanentSnapshot);
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                     }
                 }

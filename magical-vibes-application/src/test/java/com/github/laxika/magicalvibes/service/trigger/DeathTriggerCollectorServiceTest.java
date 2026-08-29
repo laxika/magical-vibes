@@ -53,8 +53,10 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToP
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -74,6 +76,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -997,6 +1000,33 @@ class DeathTriggerCollectorServiceTest {
             assertThat(svc.handleArtifactGraveyardControllerConditional(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
             assertThat(gd.pendingInteractions).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Permanent conditional graveyard handlers")
+    class PermanentConditionalGraveyardHandlers {
+
+        @Test
+        @DisplayName("Matches the triggering permanent's last-known information")
+        void matchesLastKnownPermanent() {
+            Card watcher = createCreature("Ygra", 6, 6);
+            Card dying = createCreature("Dying Creature", 2, 2);
+            Permanent watcherPermanent = new Permanent(watcher);
+            Permanent dyingPermanent = new Permanent(dying);
+            var effect = new TriggeringPermanentConditionalEffect(
+                    new PermanentHasSubtypePredicate(CardSubtype.FOOD),
+                    new PutCountersOnSourceEffect(1, 1, 2));
+            var ctx = new TriggerContext.AnyPermanentGraveyard(
+                    dying, PLAYER1_ID, PLAYER1_ID, dyingPermanent);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    eq(dyingPermanent), eq(effect.predicate()), any())).thenReturn(true);
+
+            assertThat(svc.handleAnyPermanentGraveyardPermanentConditional(
+                    match(watcherPermanent, PLAYER1_ID, effect), effect, ctx)).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve())
+                    .containsExactly(effect.wrapped());
         }
     }
 

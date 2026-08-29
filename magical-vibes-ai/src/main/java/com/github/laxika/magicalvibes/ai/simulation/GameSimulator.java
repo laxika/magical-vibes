@@ -1177,13 +1177,23 @@ public class GameSimulator {
     private List<Integer> computeExileNGraveyardIndices(GameData gd, UUID playerId, Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof CostEffect cost && cost.consumedGraveyardCardCount() > 0) {
+                PermanentPredicate permanentFilter = cost.consumedPermanentFilter();
+                if (permanentFilter != null
+                        && gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
+                                gd, p, permanentFilter))) {
+                    return null;
+                }
                 int count = cost.consumedGraveyardCardCount();
                 CardType requiredType = cost.consumedGraveyardCardType();
                 List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
                 List<Integer> matchingIndices = new ArrayList<>();
                 for (int i = 0; i < graveyard.size(); i++) {
                     Card c = graveyard.get(i);
-                    if (requiredType == null || c.hasType(requiredType)) {
+                    if ((requiredType == null || c.hasType(requiredType))
+                            && (cost.consumedGraveyardCardPredicate() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            c, cost.consumedGraveyardCardPredicate(), null))) {
                         matchingIndices.add(i);
                     }
                 }

@@ -373,6 +373,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    /** Casts a creature while explicitly choosing whether to promise its Gift. */
+    public void castCreatureWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, giftPromised);
+    }
+
     public void castCreatureTappingPermanents(Player player, int cardIndex, List<UUID> tapPermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false,
@@ -713,6 +721,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
+    /** Casts an artifact while explicitly choosing whether to promise its Gift. */
+    public void castArtifactWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, giftPromised);
+    }
+
     public void playGraveyardLand(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), true);
@@ -955,6 +971,39 @@ public class GameTestHarness {
     public void castInstant(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
+    }
+
+    /** Casts a targeted instant while explicitly choosing whether to promise its Gift. */
+    public void castInstantWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, giftPromised);
+    }
+
+    /** Casts a mixed-target instant while explicitly choosing whether to promise its Gift. */
+    public void castInstantWithGift(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                                    boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, targetIds, List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, giftPromised);
+    }
+
+    /** Casts a multi-target sorcery while explicitly choosing whether to promise its Gift. */
+    public void castSorceryWithGift(Player player, int cardIndex, List<UUID> targetIds, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, giftPromised);
+    }
+
+    /** Casts a sorcery with one primary target while explicitly choosing whether to promise its Gift. */
+    public void castSorceryWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, giftPromised);
     }
 
     public void castInstantWithRepeatedCosts(Player player, int cardIndex, UUID targetId,

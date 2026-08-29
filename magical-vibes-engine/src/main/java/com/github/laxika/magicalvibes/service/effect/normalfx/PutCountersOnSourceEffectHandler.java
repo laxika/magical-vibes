@@ -51,6 +51,8 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
             amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE, amount);
             if (amount <= 0) return;
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + amount);
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, source, entry.getControllerId());
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source);
         } else if (plusZeroPlusOne) {
             amount = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ZERO_PLUS_ONE, amount);

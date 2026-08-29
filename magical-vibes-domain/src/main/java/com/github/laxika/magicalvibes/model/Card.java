@@ -465,6 +465,18 @@ public class Card {
     }
 
     /**
+     * Declares a target group whose minimum changes when this spell's Gift was promised.
+     */
+    public SpellTarget targetWhenGiftPromised(TargetFilter filter, int minTargets, int maxTargets,
+                                              int giftPromisedMinTargets) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets, minTargets, maxTargets,
+                spellTargets.size(), false, null, null, giftPromisedMinTargets);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
      * Declares a target group whose bounds change when the spell is kicked.
      * The ordinary bounds apply when the spell is not kicked; the kicker bounds apply when it is.
      */
@@ -472,7 +484,7 @@ public class Card {
                                         int kickedMinTargets, int kickedMaxTargets) {
         assertMutable();
         SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets,
-                kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null, null);
+                kickedMinTargets, kickedMaxTargets, spellTargets.size(), false, null, null, minTargets);
         spellTargets.add(st);
         return st;
     }
@@ -593,7 +605,8 @@ public class Card {
                     targetIndexOffset + sourceTarget.getIndex(),
                     sourceTarget.isXScaled(),
                     sourceTarget.getDynamicMinTargets(),
-                    sourceTarget.getDynamicMaxTargets());
+                    sourceTarget.getDynamicMaxTargets(),
+                    sourceTarget.getGiftPromisedMinTargets());
             spellTargets.add(target);
         }
         source.effectTargetIndexMap.forEach((effect, targetIndex) ->
@@ -686,9 +699,16 @@ public class Card {
 
     /** Returns the minimum total number of targets for the given X value and kicker state. */
     public int getEffectiveMinTargets(int xValue, boolean kicked) {
+        return getEffectiveMinTargets(xValue, kicked, false);
+    }
+
+    /** Returns the minimum total number of targets for the given cast choices. */
+    public int getEffectiveMinTargets(int xValue, boolean kicked, boolean giftPromised) {
         return spellTargets.stream()
                 .mapToInt(st -> {
-                    int min = kicked ? st.getKickedMinTargets() : st.getMinTargets();
+                    int min = giftPromised
+                            ? st.getGiftPromisedMinTargets()
+                            : kicked ? st.getKickedMinTargets() : st.getMinTargets();
                     return st.isXScaled() ? Math.min(xValue, min) : min;
                 })
                 .sum();
@@ -772,7 +792,8 @@ public class Card {
         for (SpellTarget st : original.spellTargets) {
             spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(),
                     st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
-                    st.getDynamicMinTargets(), st.getDynamicMaxTargets()));
+                    st.getDynamicMinTargets(), st.getDynamicMaxTargets(),
+                    st.getGiftPromisedMinTargets()));
         }
         effectTargetIndexMap.putAll(original.effectTargetIndexMap);
         castTimeTargetFilter = original.castTimeTargetFilter;

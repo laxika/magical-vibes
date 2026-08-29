@@ -199,6 +199,7 @@ public class DamageSupport {
                 ? entry == null ? null : entry.getEffectiveDamageSourceCard()
                 : sourcePermanentForBonus.getCard();
         if (rawDamage > 0) {
+            rawDamage += gameQueryService.getSubtypeSourceDamageBonus(gameData, sourcePermanentForBonus);
             rawDamage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, bonusSourceControllerId, sourceCardForBonus, sourcePermanentForBonus, targetControllerId);
         }
@@ -497,6 +498,7 @@ public class DamageSupport {
                 ? entry.getControllerId()
                 : gameQueryService.findPermanentController(gameData, sourcePermanent.getId());
         if (damage > 0) {
+            damage += gameQueryService.getSubtypeSourceDamageBonus(gameData, sourcePermanent);
             damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                     gameData, sourceControllerId,
                     sourcePermanent == null ? entry.getEffectiveDamageSourceCard() : sourcePermanent.getCard(),
@@ -720,6 +722,7 @@ public class DamageSupport {
                 if (sourceControllerId == null) {
                     sourceControllerId = entry.getControllerId();
                 }
+                rawDamage += gameQueryService.getSubtypeSourceDamageBonus(gameData, damageSourcePermanent);
                 rawDamage *= gameQueryService.getDamageToRecipientMultiplier(
                         gameData, gameQueryService.findPermanentController(gameData, targetPermanent.getId()), sourceControllerId);
                 if (gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)) {
@@ -895,6 +898,7 @@ public class DamageSupport {
         // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
         rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId, sourceControllerId);
         if (rawDamage > 0) {
+            rawDamage += gameQueryService.getSubtypeSourceDamageBonus(gameData, sourcePermanent);
             rawDamage += gameQueryService.getControllerDamageToOpponentBonus(
                     gameData, sourceControllerId, playerId);
         }

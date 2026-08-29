@@ -112,6 +112,8 @@ public class MultiPermanentChoiceHandlerService {
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsThenEffectHandler
+            sacrificePermanentsThenEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .RaidingPartyEffectHandler raidingPartyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler bendOrBreakEffectHandler;
@@ -389,6 +391,13 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed) {
             handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsThen ctx) {
+            if (permanentIds.size() != ctx.requiredCount()) {
+                throw new IllegalStateException("Must select exactly " + ctx.requiredCount()
+                        + " permanents to sacrifice");
+            }
+            sacrificePermanentsThenEffectHandler.resolveAfterChoice(gameData, permanentIds, ctx);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsAddManaPerSacrificed ctx) {
             handleSacrificePermanentsAddManaPerSacrificed(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount ctx) {

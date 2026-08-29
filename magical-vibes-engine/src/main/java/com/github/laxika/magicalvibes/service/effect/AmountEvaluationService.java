@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyar
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTur
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesExiledThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockedBySource;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
@@ -63,6 +65,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTot
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetPlayerControlsMoreLands;
+import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
@@ -91,6 +94,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
@@ -210,6 +214,8 @@ public class AmountEvaluationService {
                     countPermanents(gameData, c, ctx);
             case PermanentManaValueSum s ->
                     sumPermanentManaValues(gameData, s, ctx);
+            case PlayersWithCardsInHandAtMost a ->
+                    countPlayersWithCardsInHandAtMost(gameData, a, ctx);
             case AttachedPermanentColorCount ignored ->
                     attachedPermanentColorCount(gameData, ctx);
             case BasicLandTypesAmongControlledLands domainAmount ->
@@ -286,6 +292,8 @@ public class AmountEvaluationService {
                     greatestPowerAmongControlled(gameData, a, ctx);
             case GreatestPowerAmongCardsInGraveyard a ->
                     greatestPowerAmongCardsInGraveyard(gameData, a, ctx);
+            case GreatestManaValueAmongCardsInGraveyard a ->
+                    greatestManaValueAmongCardsInGraveyard(gameData, a, ctx);
             case GreatestManaValueAmongControlled a ->
                     greatestManaValueAmongControlled(gameData, a, ctx);
             case GreatestToughnessAmongControlled ignored ->
@@ -306,6 +314,8 @@ public class AmountEvaluationService {
                     countNontokenCreatureDeathsThisTurn(gameData, c, ctx);
             case CreatureSubtypeDeathsThisTurn c ->
                     countCreatureSubtypeDeathsThisTurn(gameData, c, ctx);
+            case CreaturesExiledThisTurn c ->
+                    countCreaturesExiledThisTurn(gameData, c, ctx);
             case CreaturesEnteredBattlefieldThisTurn c ->
                     countCreaturesEnteredBattlefieldThisTurn(gameData, c, ctx);
             case PermanentsEnteredBattlefieldThisTurn c ->
@@ -314,6 +324,8 @@ public class AmountEvaluationService {
                     countLifeGainedThisTurn(gameData, c, ctx);
             case LifeLostThisTurn c ->
                     countLifeLostThisTurn(gameData, c, ctx);
+            case OpponentsWhoLostLifeThisTurn ignored ->
+                    countOpponentsWhoLostLifeThisTurn(gameData, ctx);
             case SpellsCastThisTurn c ->
                     countSpellsCastThisTurn(gameData, c, ctx);
             case TargetPlayerPoisonCounters ignored ->
@@ -802,6 +814,24 @@ public class AmountEvaluationService {
         return greatestPower;
     }
 
+    private int greatestManaValueAmongCardsInGraveyard(
+            GameData gameData, GreatestManaValueAmongCardsInGraveyard amount, AmountContext ctx) {
+        int greatestManaValue = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.isToken()
+                        || !predicateEvaluationService.matchesCardPredicate(card, amount.filter(), null)) {
+                    continue;
+                }
+                greatestManaValue = Math.max(greatestManaValue, card.getManaValue());
+            }
+        }
+        return greatestManaValue;
+    }
+
     private int countExileCards(GameData gameData, CardsInExile count, AmountContext ctx) {
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -842,6 +872,19 @@ public class AmountEvaluationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand != null) {
                 total += hand.size();
+            }
+        }
+        return total;
+    }
+
+    private int countPlayersWithCardsInHandAtMost(GameData gameData,
+            PlayersWithCardsInHandAtMost count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand != null && hand.size() <= count.threshold()) {
+                total++;
             }
         }
         return total;
@@ -1112,6 +1155,17 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int countCreaturesExiledThisTurn(GameData gameData,
+                                             CreaturesExiledThisTurn count,
+                                             AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += gameData.creatureExileCountThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
     private int countColorsAmongControlledPermanents(GameData gameData, AmountContext ctx) {
         if (gameData == null || ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
@@ -1158,6 +1212,18 @@ public class AmountEvaluationService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += gameData.lifeLostThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
+    }
+
+    private int countOpponentsWhoLostLifeThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.lifeLostThisTurn.getOrDefault(playerId, 0) > 0) {
+                total++;
+            }
         }
         return total;
     }

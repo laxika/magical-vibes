@@ -145,6 +145,9 @@ public class GameActionAvailabilityService {
                         soaCtx, false, artifactCtx, false, false, Set.of(), creatureSourceSoaCtx,
                         powerstoneCtx)) {
                     payable.add(i);
+                } else if (ability.getEffects().stream().anyMatch(TapCreaturesForManaCost.class::isInstance)
+                        && canCoverWithUntappedCreatures(gameData, playerId, perm, ability, abilityManaCost, pool)) {
+                    payable.add(i);
                 }
             }
             if (!payable.isEmpty()) {
@@ -152,6 +155,17 @@ public class GameActionAvailabilityService {
             }
         }
         return result;
+    }
+
+    private boolean canCoverWithUntappedCreatures(GameData gameData, UUID playerId, Permanent source,
+                                                   ActivatedAbility ability, String abilityManaCost, ManaPool pool) {
+        int untappedCreatureCount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> !ability.isRequiresTap() || !permanent.getId().equals(source.getId()))
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .mapToInt(ignored -> 1)
+                .sum();
+        return pool.getTotal() + untappedCreatureCount >= new ManaCost(abilityManaCost).getManaValue();
     }
 
     private String effectiveAbilityManaCost(GameData gameData, UUID playerId, Permanent source,
@@ -643,7 +657,7 @@ public class GameActionAvailabilityService {
             int creatureCount = 0;
             if (ctx.battlefield() != null) {
                 for (Permanent perm : ctx.battlefield()) {
-                    if (gameQueryService.isCreature(gameData, perm)) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, perm, sacReduce.filter())) {
                         creatureCount++;
                     }
                 }
@@ -884,6 +898,11 @@ public class GameActionAvailabilityService {
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
                     && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+            if (isGrantedCyclingGraveyardCast
+                    && !castingPermissionService.canPayFilteredGraveyardPermissionAdditionalCosts(
+                    gameData, playerId, card)) {
+                continue;
+            }
 
             boolean isJumpStart = card.getCastingOption(JumpStartCast.class).isPresent()
                     && flashback.isEmpty()
@@ -1005,6 +1024,15 @@ public class GameActionAvailabilityService {
             // sacrifice a creature) on the cast half, not the parent split card.
             if (!castingCostService.canPayAdditionalSpellCostsFromGraveyard(gameData, playerId, castHalf)) {
                 continue;
+            }
+            if (!playerId.equals(gameData.graveyardPlayPermissions.get(card.getId()))) {
+                var graveyardFilterPermission = castingPermissionService.findGraveyardCastFilterPermission(
+                        gameData, card, playerId);
+                if (graveyardFilterPermission.isPresent()
+                        && !castingCostService.canPayGraveyardCastFilterAdditionalCost(
+                        gameData, playerId, card, graveyardFilterPermission.get().additionalCost())) {
+                    continue;
+                }
             }
 
             playable.add(i);

@@ -59,6 +59,9 @@ public class MayCopyHandlerService {
             // Collect valid targets (the copying permanent is NOT on the battlefield yet)
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceControllerId(ability.controllerId());
+            if (copyEffect.manaValueLimitUsesManaSpentToCast()) {
+                filterContext = filterContext.withXValue(gameData.cloneOperation.copyFilterXValue);
+            }
             List<UUID> validIds = new ArrayList<>();
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);

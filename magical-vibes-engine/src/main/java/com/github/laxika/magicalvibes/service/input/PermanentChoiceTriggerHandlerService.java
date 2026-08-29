@@ -802,10 +802,18 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     ett.sourcePermanentId()
             );
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, ett.sourcePermanentId());
+            if (sourcePermanent != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            }
             if (!declined) {
                 entry.setTargetId(permanentId);
             }
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
+            if (ett.targetSourcePermanentId() != null) {
+                entry.setSourcePermanentSnapshot(
+                        gameQueryService.findPermanentById(gameData, ett.targetSourcePermanentId()));
+            }
             boolean targetsRelativeToEnteringPermanent = ett.effects().stream()
                     .anyMatch(effect -> effect instanceof ExchangeControlOfTargetPermanentsEffect exchange
                             && exchange.triggeringPermanentIsFirstTarget());

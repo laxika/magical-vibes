@@ -48,50 +48,51 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                          Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
                                          boolean copyPowerToughnessFromSource,
                                          String nameOverride,
-                                         Set<CardSupertype> additionalSupertypesOverride) implements ReplacementEffect {
+                                         Set<CardSupertype> additionalSupertypesOverride,
+                                         boolean manaValueLimitUsesManaSpentToCast) implements ReplacementEffect {
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel) {
         this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null, Set.of(), Map.of(), false,
-                null, Set.of());
+                null, Set.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       DynamicAmount additionalPlusOnePlusOneCounters) {
         this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false,
-                additionalPlusOnePlusOneCounters, Set.of(), Map.of(), false, null, Set.of());
+                additionalPlusOnePlusOneCounters, Set.of(), Map.of(), false, null, Set.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                       Integer toughnessOverride) {
         this(filter, typeLabel, powerOverride, toughnessOverride, Set.of(), List.of(), null, null, false, null,
-                Set.of(), Map.of(), false, null, Set.of());
+                Set.of(), Map.of(), false, null, Set.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                       Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
         this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride, List.of(), null, null,
-                false, null, Set.of(), Map.of(), false, null, Set.of());
+                false, null, Set.of(), Map.of(), false, null, Set.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       Set<CardType> additionalTypesOverride,
                                       boolean copyPowerToughnessFromSource) {
         this(filter, typeLabel, null, null, additionalTypesOverride, List.of(), null, null,
-                false, null, Set.of(), Map.of(), copyPowerToughnessFromSource, null, Set.of());
+                false, null, Set.of(), Map.of(), copyPowerToughnessFromSource, null, Set.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel, Integer powerOverride,
                                       Integer toughnessOverride, Set<CardType> additionalTypesOverride,
                                       List<ActivatedAbility> additionalActivatedAbilities) {
         this(filter, typeLabel, powerOverride, toughnessOverride, additionalTypesOverride,
-                additionalActivatedAbilities, null, null, false, null, Set.of(), Map.of(), false, null, Set.of());
+                additionalActivatedAbilities, null, null, false, null, Set.of(), Map.of(), false, null, Set.of(), false);
     }
 
     public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
                                       String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
                                       List<ActivatedAbility> additionalActivatedAbilities) {
         this(filter, typeLabel, null, null, Set.of(), additionalActivatedAbilities, null, null, false, null,
-                Set.of(), Map.of(), false, nameOverride, additionalSupertypesOverride);
+                Set.of(), Map.of(), false, nameOverride, additionalSupertypesOverride, false);
     }
 
     /** Clone with the embalm exception (Vizier of Many Faces): copy a creature, but an embalm token
@@ -101,7 +102,7 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                       boolean embalmRemoveManaCost) {
         this(filter, typeLabel, null, null, Set.of(), List.of(),
                 embalmColorOverride, embalmAddedSubtype, embalmRemoveManaCost, null, Set.of(), Map.of(), false,
-                null, Set.of());
+                null, Set.of(), false);
     }
 
     /** Clone that also gains creature types and triggered/static abilities of its own (Phantasmal Image). */
@@ -109,6 +110,16 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
                                       Set<CardSubtype> additionalSubtypesOverride,
                                       Map<EffectSlot, List<CardEffect>> additionalSlotEffects) {
         this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null,
-                additionalSubtypesOverride, additionalSlotEffects, false, null, Set.of());
+                additionalSubtypesOverride, additionalSlotEffects, false, null, Set.of(), false);
+    }
+
+    /** Clone with a mana-value limit based on the total mana actually spent to cast the entering card. */
+    public CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeLabel,
+                                      Set<CardSubtype> additionalSubtypesOverride,
+                                      Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+                                      boolean manaValueLimitUsesManaSpentToCast) {
+        this(filter, typeLabel, null, null, Set.of(), List.of(), null, null, false, null,
+                additionalSubtypesOverride, additionalSlotEffects, false, null, Set.of(),
+                manaValueLimitUsesManaSpentToCast);
     }
 }

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -145,11 +146,17 @@ public class TargetLegalityService {
 
     public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter,
                                                     UUID controllerId, Permanent source, Integer xValue, Boolean kicked) {
+        return checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, source, xValue, kicked, null);
+    }
+
+    public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter,
+                                                    UUID controllerId, Permanent source, Integer xValue, Boolean kicked,
+                                                    Boolean giftPromised) {
         if (targetId == null) {
             return Optional.of("Must target a spell on the stack");
         }
 
-        boolean includeAbilities = filterAdmitsAbilityTarget(targetFilter, kicked);
+        boolean includeAbilities = filterAdmitsAbilityTarget(targetFilter, kicked, giftPromised);
         StackEntry targetSpell = includeAbilities
                 ? findAnyEntryOnStack(gameData, targetId)
                 : findSpellOnStack(gameData, targetId);
@@ -160,9 +167,10 @@ public class TargetLegalityService {
         }
 
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter
-                && !matchesStackEntryPredicate(gameData, targetSpell, filter.predicateFor(Boolean.TRUE.equals(kicked)),
+                && !matchesStackEntryPredicate(gameData, targetSpell,
+                filter.predicateFor(Boolean.TRUE.equals(kicked), Boolean.TRUE.equals(giftPromised)),
                 controllerId, source, xValue)) {
-            return Optional.of(filter.errorMessage());
+            return Optional.of(filter.errorMessageFor(Boolean.TRUE.equals(giftPromised)));
         }
 
         return Optional.empty();
@@ -194,6 +202,12 @@ public class TargetLegalityService {
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
+    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter,
+                                           UUID controllerId, int xValue, boolean kicked, boolean giftPromised) {
+        checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, null, xValue, kicked, giftPromised)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
     /**
      * Validates a spell that targets multiple distinct spells on the stack, each with its own
      * per-position filter (e.g. Choreographed Sparks' "both" mode: one instant/sorcery spell and
@@ -210,9 +224,14 @@ public class TargetLegalityService {
 
     public void validateMultiSpellTargetsOnStack(GameData gameData, Card card, List<UUID> targetIds,
                                                  UUID controllerId, boolean kicked) {
+        validateMultiSpellTargetsOnStack(gameData, card, targetIds, controllerId, kicked, false);
+    }
+
+    public void validateMultiSpellTargetsOnStack(GameData gameData, Card card, List<UUID> targetIds,
+                                                 UUID controllerId, boolean kicked, boolean giftPromised) {
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
-        int maxTargets = perPositionFilters.size();
-        int minTargets = card.getEffectiveMinTargets(0, kicked);
+        int maxTargets = applyGiftTargetLimit(card, perPositionFilters.size(), giftPromised);
+        int minTargets = card.getEffectiveMinTargets(0, kicked, giftPromised);
         if (targetIds == null || targetIds.size() < minTargets || targetIds.size() > maxTargets) {
             throw new IllegalStateException(minTargets == maxTargets
                     ? "Must choose " + maxTargets + " target spells"
@@ -227,7 +246,7 @@ public class TargetLegalityService {
         }
         for (int i = 0; i < targetIds.size(); i++) {
             validateSpellTargetOnStack(gameData, targetIds.get(i), perPositionFilters.get(i), controllerId,
-                    0, kicked);
+                    0, kicked, giftPromised);
         }
     }
 
@@ -863,9 +882,26 @@ public class TargetLegalityService {
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
+    public void validateSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                       UUID targetId, Zone targetZone, UUID controllerId,
+                                       boolean needsTarget, int xValue, boolean kicked,
+                                       boolean giftPromised) {
+        checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
+                needsTarget, xValue, kicked, false, giftPromised)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
     public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
                                        UUID controllerId, boolean needsTarget, int xValue, boolean kicked) {
         checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget, xValue, kicked)
+                .ifPresent(reason -> { throw new IllegalStateException(reason); });
+    }
+
+    public void validateSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
+                                       UUID controllerId, boolean needsTarget, int xValue, boolean kicked,
+                                       boolean giftPromised) {
+        checkSpellTargeting(gameData, card, targetId, targetZone, controllerId, needsTarget, xValue,
+                kicked, false, giftPromised)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
@@ -874,6 +910,14 @@ public class TargetLegalityService {
                                                 boolean kicked, boolean castForMadnessCost) {
         return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
                 controllerId, needsTarget, xValue, kicked, castForMadnessCost);
+    }
+
+    public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone,
+                                                UUID controllerId, boolean needsTarget, int xValue,
+                                                boolean kicked, boolean castForMadnessCost,
+                                                boolean giftPromised) {
+        return checkSpellTargeting(gameData, card, card.getEffects(EffectSlot.SPELL), targetId, targetZone,
+                controllerId, needsTarget, xValue, kicked, castForMadnessCost, giftPromised);
     }
 
     public Optional<String> checkSpellTargeting(GameData gameData, Card card, UUID targetId, Zone targetZone, UUID controllerId) {
@@ -913,12 +957,20 @@ public class TargetLegalityService {
                                                  UUID targetId, Zone targetZone, UUID controllerId,
                                                  boolean needsTarget, int xValue, boolean kicked,
                                                  boolean castForMadnessCost) {
+        return checkSpellTargeting(gameData, card, spellEffects, targetId, targetZone, controllerId,
+                needsTarget, xValue, kicked, castForMadnessCost, false);
+    }
+
+    private Optional<String> checkSpellTargeting(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                                 UUID targetId, Zone targetZone, UUID controllerId,
+                                                 boolean needsTarget, int xValue, boolean kicked,
+                                                 boolean castForMadnessCost, boolean giftPromised) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && !gameData.playerIds.contains(targetId)) {
             return Optional.of("Invalid target");
         }
 
-        TargetFilter effectiveTargetFilter = targetFilterForKickedCast(card.getTargetFilter(), kicked);
+        TargetFilter effectiveTargetFilter = targetFilterForCast(card.getTargetFilter(), kicked, giftPromised);
 
         if (target != null && effectiveTargetFilter instanceof PlayerPredicateTargetFilter) {
             return Optional.of("This spell can only target players");
@@ -1057,7 +1109,13 @@ public class TargetLegalityService {
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                           UUID controllerId, int xValue, boolean kicked) {
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, 0);
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, false, 0);
+    }
+
+    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                          UUID controllerId, int xValue, boolean kicked,
+                                          boolean giftPromised) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked, giftPromised, 0);
     }
 
     /**
@@ -1065,30 +1123,39 @@ public class TargetLegalityService {
      */
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
                                                        UUID controllerId, int xValue) {
+        validateMixedSpellAndPermanentTargets(gameData, card, targetIds, controllerId, xValue, false);
+    }
+
+    public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                                       UUID controllerId, int xValue, boolean giftPromised) {
         if (card.getSpellTargets().size() <= 1) {
             for (UUID targetId : targetIds) {
                 validateSpellTargeting(gameData, card, targetId, null, controllerId, true, xValue);
             }
             return;
         }
-        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, 1);
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false, giftPromised, 1);
     }
 
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
-                                           UUID controllerId, int xValue, boolean kicked, int firstGroupIndex) {
+                                           UUID controllerId, int xValue, boolean kicked,
+                                           boolean giftPromised, int firstGroupIndex) {
         List<SpellTarget> targetGroups = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .toList();
         int minTargets = targetGroups.stream()
                 .mapToInt(group -> {
-                    int min = kicked ? group.getKickedMinTargets() : group.getMinTargets();
+                    int min = giftPromised
+                            ? group.getGiftPromisedMinTargets()
+                            : kicked ? group.getKickedMinTargets() : group.getMinTargets();
                     return group.isXScaled() ? Math.min(xValue, min) : min;
                 })
                 .sum();
         int maxTargets = targetGroups.stream()
                 .mapToInt(group -> effectiveGroupMaxTargets(
-                        gameData, controllerId, null, group, xValue, kicked))
+                        gameData, controllerId, null, group, xValue, kicked, giftPromised))
                 .sum();
+        maxTargets = applyGiftTargetLimit(card, maxTargets, giftPromised);
         validateMultiTargetCount(targetIds, minTargets, maxTargets, targetGroups, card.isAllowSharedTargets());
 
         if (card.getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_COLOR) {
@@ -1167,10 +1234,10 @@ public class TargetLegalityService {
             // restricts.
             TargetFilter positionFilter = slotFilter;
             if (positionFilter != null) {
-                predicateEvaluationService.validateTargetFilter(targetFilterForKickedCast(positionFilter, kicked), target,
+                predicateEvaluationService.validateTargetFilter(targetFilterForCast(positionFilter, kicked, giftPromised), target,
                         filterContext(gameData, card.getId(), controllerId));
             } else if (card.getTargetFilter() != null) {
-                predicateEvaluationService.validateTargetFilter(targetFilterForKickedCast(card.getTargetFilter(), kicked), target,
+                predicateEvaluationService.validateTargetFilter(targetFilterForCast(card.getTargetFilter(), kicked, giftPromised), target,
                         filterContext(gameData, card.getId(), controllerId));
             } else if (declaredRestriction != null) {
                 if (!predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
@@ -1206,20 +1273,40 @@ public class TargetLegalityService {
     }
 
     public int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
+                                      int xValue, boolean kicked, boolean giftPromised) {
+        return getEffectiveMaxTargets(gameData, card, controllerId, null, xValue, kicked, giftPromised);
+    }
+
+    public int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
                                       Permanent sourcePermanent) {
         return getEffectiveMaxTargets(gameData, card, controllerId, sourcePermanent, 0, false);
     }
 
     public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
                                               Permanent sourcePermanent, SpellTarget group) {
-        return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, 0);
+        return getEffectiveMaxTargetsForGroup(gameData, card, controllerId, sourcePermanent, group, false);
+    }
+
+    public int getEffectiveMaxTargetsForGroup(GameData gameData, Card card, UUID controllerId,
+                                              Permanent sourcePermanent, SpellTarget group,
+                                              boolean giftPromised) {
+        return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, 0, false,
+                giftPromised);
     }
 
     private int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
                                        Permanent sourcePermanent, int xValue, boolean kicked) {
-        return card.getSpellTargets().stream()
-                .mapToInt(group -> effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, xValue, kicked))
+        return getEffectiveMaxTargets(gameData, card, controllerId, sourcePermanent, xValue, kicked, false);
+    }
+
+    private int getEffectiveMaxTargets(GameData gameData, Card card, UUID controllerId,
+                                       Permanent sourcePermanent, int xValue, boolean kicked,
+                                       boolean giftPromised) {
+        int maxTargets = card.getSpellTargets().stream()
+                .mapToInt(group -> effectiveGroupMaxTargets(
+                        gameData, controllerId, sourcePermanent, group, xValue, kicked, giftPromised))
                 .sum();
+        return applyGiftTargetLimit(card, maxTargets, giftPromised);
     }
 
     private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
@@ -1229,14 +1316,41 @@ public class TargetLegalityService {
 
     private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
                                          SpellTarget group, int xValue, boolean kicked) {
+        return effectiveGroupMaxTargets(gameData, controllerId, sourcePermanent, group, xValue, kicked, false);
+    }
+
+    private int effectiveGroupMaxTargets(GameData gameData, UUID controllerId, Permanent sourcePermanent,
+                                         SpellTarget group, int xValue, boolean kicked, boolean giftPromised) {
         int declaredMax = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
         int max = group.isXScaled() ? Math.min(xValue, declaredMax) : declaredMax;
+        if (!giftPromised) {
+            int giftMax = group.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(GiftEffect.class::isInstance)
+                    .map(GiftEffect.class::cast)
+                    .mapToInt(GiftEffect::maxTargetsWithoutGift)
+                    .min()
+                    .orElse(Integer.MAX_VALUE);
+            max = Math.min(max, giftMax);
+        }
         if (group.getDynamicMaxTargets() == null) {
             return max;
         }
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
                 new AmountContext(controllerId, sourcePermanent, null, xValue, 0));
         return Math.min(max, Math.max(0, dynamicMax));
+    }
+
+    private int applyGiftTargetLimit(Card card, int maxTargets, boolean giftPromised) {
+        if (giftPromised) {
+            return maxTargets;
+        }
+        int giftMax = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(GiftEffect.class::isInstance)
+                .map(GiftEffect.class::cast)
+                .mapToInt(GiftEffect::maxTargetsWithoutGift)
+                .min()
+                .orElse(Integer.MAX_VALUE);
+        return Math.min(maxTargets, giftMax);
     }
 
     /**
@@ -1584,7 +1698,8 @@ public class TargetLegalityService {
                     }
                 } else if (secondaryTargetsAreOnStack) {
                     legal = checkSpellTargetOnStack(gameData, targetId, targetFilter, entry.getControllerId(),
-                            entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked()).isEmpty();
+                            entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked(),
+                            entry.isGiftPromised()).isEmpty();
                 } else {
                     legal = isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter);
                 }
@@ -1711,7 +1826,8 @@ public class TargetLegalityService {
                         // own effect targets any creature. Cast spells / activated abilities are
                         // unaffected — their effects are always bound to their target group.
                         TargetFilter effectiveTargetFilter = primaryTargetFilter(entry);
-                        effectiveTargetFilter = targetFilterForKickedCast(effectiveTargetFilter, entry.isKicked());
+                        effectiveTargetFilter = targetFilterForCast(effectiveTargetFilter, entry.isKicked(),
+                                entry.isGiftPromised());
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
@@ -1826,14 +1942,15 @@ public class TargetLegalityService {
         }
         if (entry.getTargetZone() == Zone.STACK) {
             return checkSpellTargetOnStack(gameData, targetId, primaryTargetFilter(entry), entry.getControllerId(),
-                    entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked()).isEmpty();
+                    entry.getSourcePermanentSnapshot(), entry.getXValue(), entry.isKicked(),
+                    entry.isGiftPromised()).isEmpty();
         }
         return isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, primaryTargetFilter(entry));
     }
 
     private boolean isBattlefieldTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
                                                           TargetFilter targetFilter) {
-        targetFilter = targetFilterForKickedCast(targetFilter, entry.isKicked());
+        targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised());
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             if (!gameData.playerIds.contains(targetId)) {
@@ -1908,9 +2025,12 @@ public class TargetLegalityService {
         return true;
     }
 
-    private TargetFilter targetFilterForKickedCast(TargetFilter targetFilter, boolean kicked) {
+    private TargetFilter targetFilterForCast(TargetFilter targetFilter, boolean kicked, boolean giftPromised) {
         if (targetFilter instanceof PermanentPredicateTargetFilter filter) {
-            return new PermanentPredicateTargetFilter(filter.predicateFor(kicked), filter.errorMessage());
+            return filter.forCast(kicked, giftPromised);
+        }
+        if (targetFilter instanceof StackEntryPredicateTargetFilter filter) {
+            return filter.forCast(kicked, giftPromised);
         }
         return targetFilter;
     }
@@ -2486,11 +2606,12 @@ public class TargetLegalityService {
      * e.g. Siren Stormtamer) or a {@link StackEntryTypeInPredicate} naming an ability type ("counter
      * target activated or triggered ability", Nimble Obstructionist).
      */
-    private boolean filterAdmitsAbilityTarget(TargetFilter targetFilter, Boolean kicked) {
+    private boolean filterAdmitsAbilityTarget(TargetFilter targetFilter, Boolean kicked, Boolean giftPromised) {
         if (!(targetFilter instanceof StackEntryPredicateTargetFilter filter)) {
             return false;
         }
-        return predicateAdmitsAbilityTarget(filter.predicateFor(Boolean.TRUE.equals(kicked)));
+        return predicateAdmitsAbilityTarget(filter.predicateFor(Boolean.TRUE.equals(kicked),
+                Boolean.TRUE.equals(giftPromised)));
     }
 
     private boolean predicateAdmitsAbilityTarget(StackEntryPredicate predicate) {

@@ -71,7 +71,8 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
-                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, p);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, p, entry.getControllerId());
                 plusOneTargets.add(p);
             } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && placed > 0) {
                 minusOneTargets.put(p, placed);

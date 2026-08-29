@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
@@ -98,7 +99,7 @@ public class EtbEffectResolver {
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false,
                     sourceZone, 0, null, null, false, false, null, null, null,
-                    ctx.repeatedAdditionalCosts());
+                    ctx.repeatedAdditionalCosts(), ctx.giftPromised());
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
@@ -123,6 +124,7 @@ public class EtbEffectResolver {
                         ctx.sourcePermanent() != null
                                 ? (ctx.sourcePermanent().isCast() ? conditional.wrapped() : null)
                                 : (ctx.wasCastFromHand() ? conditional.wrapped() : null);
+                case GiftPromised ignored -> ctx.giftPromised() ? effect : null;
                 // Intervening-if gates (CR 603.4) — Metalcraft, Morbid, Raid, ControlsAnother: keep
                 // the conditional effect when met (re-checked at stack resolution), drop it when not.
                 case Condition gate when gate.isEtbTriggerGate() ->

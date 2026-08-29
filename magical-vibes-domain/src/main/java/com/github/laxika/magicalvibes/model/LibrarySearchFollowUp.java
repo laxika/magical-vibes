@@ -299,11 +299,16 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** Begins the next one-card pick for each remaining card type, with random bottoming at the end. */
     public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types) {
+        return forCardTypeBoundedPick(types, true);
+    }
+
+    /** Begins a bounded one-card-per-type flow with caller-selected remainder ordering. */
+    public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types, boolean randomRest) {
         if (types.isEmpty()) {
-            return forBoundedPick(SecondBoundedPick.terminal(true));
+            return forBoundedPick(SecondBoundedPick.terminal(randomRest));
         }
         return forBoundedPick(SecondBoundedPick.cardType(
-                types.getFirst(), types.subList(1, types.size()), true));
+                types.getFirst(), types.subList(1, types.size()), randomRest));
     }
 
     /** Begins a bounded subtype-pick flow, optionally randomizing the cards left on the bottom. */

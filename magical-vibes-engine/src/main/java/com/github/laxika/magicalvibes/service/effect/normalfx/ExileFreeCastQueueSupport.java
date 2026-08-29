@@ -102,6 +102,21 @@ public class ExileFreeCastQueueSupport {
         }
     }
 
+    /** Moves every still-exiled Portent of Calamity remainder into its owner's hand. */
+    public void putRemainderIntoOwnersHands(GameData gameData) {
+        List<UUID> remainder = new ArrayList<>(gameData.pendingExileFreeCastRemainderToHand);
+        gameData.pendingExileFreeCastRemainderToHand.clear();
+        for (UUID cardId : remainder) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry == null) {
+                continue;
+            }
+            gameData.removeFromExile(cardId);
+            gameData.addCardToHand(entry.ownerId(), entry.card());
+            gameLogService.append(gameData, GameLog.cardThen(entry.card(), " is put into its owner's hand."));
+        }
+    }
+
 
     /**
      * Casts the next queued exiled spell. When a spell requires a target this pauses for a target
@@ -148,8 +163,10 @@ public class ExileFreeCastQueueSupport {
                     gameData.removeFromExile(cardId);
                 }
                 boolean willGoToGraveyard = gameData.pendingExileFreeCastRemainderToGraveyard.contains(cardId);
+                boolean willGoToHand = gameData.pendingExileFreeCastRemainderToHand.contains(cardId);
                 gameLogService.append(gameData, GameLog.cardThen(card, willGoToGraveyard
                         ? " has no valid targets and will be put into the graveyard."
+                        : willGoToHand ? " has no valid targets and will be put into its owner's hand."
                         : asCopy ? " has no valid targets."
                         : " has no valid targets and stays exiled."));
                 castNextFromQueue(gameData, playerId);
@@ -198,6 +215,7 @@ public class ExileFreeCastQueueSupport {
      * active frame completes the resolution itself, so skip the epilogue while one is running.
      */
     private void finishFreeCastProcess(GameData gameData) {
+        putRemainderIntoOwnersHands(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
             return;

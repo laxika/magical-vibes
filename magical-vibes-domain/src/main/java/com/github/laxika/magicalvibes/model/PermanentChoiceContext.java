@@ -46,6 +46,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}
 
+    /** Return a chosen permanent, then put a +1/+1 counter on the source permanent. */
+    record ReturnPermanentAndPutCounterOnSource(UUID controllerId, Card sourceCard,
+                                                UUID sourcePermanentId) implements PermanentChoiceContext {}
+
     record SpellRetarget(UUID spellCardId) implements PermanentChoiceContext {}
 
     record PsychicBattleRetarget(UUID spellCardId, UUID controllerId, Card sourceCard, int targetIndex)
@@ -62,6 +66,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(choosingPlayerId, sourceCardName, false);
         }
     }
+
+    /** The choosing player selected a matching permanent to exile during a resolving effect. */
+    record ExileChosenPermanent(UUID choosingPlayerId, String sourceCardName, String permanentLabel)
+            implements PermanentChoiceContext {}
 
     /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
     record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}
@@ -103,6 +111,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID copyControllerId,
             Card sourceCard
     ) implements PermanentChoiceContext {}
+
+    /** Season of Weaving: the controller chooses an artifact or creature they control to copy. */
+    record ChooseControlledArtifactOrCreatureToCopy(Card sourceCard, UUID controllerId)
+            implements PermanentChoiceContext {}
 
     /**
      * Opponent accepted Infernal Denizen's upkeep may and is picking which creature of

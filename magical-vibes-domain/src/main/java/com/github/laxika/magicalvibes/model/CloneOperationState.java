@@ -30,4 +30,6 @@ public class CloneOperationState {
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
     public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
     public int xValue;
+    /** X value used while enumerating copy targets, which may be total mana spent rather than chosen X. */
+    public int copyFilterXValue;
 }

@@ -12,11 +12,26 @@ package com.github.laxika.magicalvibes.model.effect;
  * activated abilities, which declare targets via a flat multi-target filter list instead, the
  * indices address flat target positions. The default groups are 0 and 1.</p>
  */
-public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int victimTargetGroup) implements CardEffect {
+public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int victimTargetGroup,
+                                                   int powerMultiplier) implements CardEffect {
+
+    public TargetDealsPowerDamageToTargetEffect {
+        if (powerMultiplier < 1) {
+            throw new IllegalArgumentException("Power multiplier must be positive");
+        }
+    }
 
     /** "Target creature deals damage equal to its power to another target" — groups 0 and 1. */
     public TargetDealsPowerDamageToTargetEffect() {
-        this(0, 1);
+        this(0, 1, 1);
+    }
+
+    public TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int victimTargetGroup) {
+        this(sourceTargetGroup, victimTargetGroup, 1);
+    }
+
+    public static TargetDealsPowerDamageToTargetEffect withPowerMultiplier(int powerMultiplier) {
+        return new TargetDealsPowerDamageToTargetEffect(0, 1, powerMultiplier);
     }
 
     @Override

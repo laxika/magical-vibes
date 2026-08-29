@@ -110,7 +110,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             List<Card> cards = group.getValue();
             gameData.queueDelayedAction(new PendingExileReturn(
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size())));
+                    e.plusOnePlusOneCountersOnReturn(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                    cards.subList(1, cards.size())));
         }
     }
 
@@ -121,7 +122,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
 
         exileSupport.exileAndScheduleReturn(gameData, entry, source, entry.getControllerId(), e.returnTapped(), e.returnStep(),
-                e.plusOnePlusOneCountersOnReturn());
+                e.plusOnePlusOneCountersOnReturn(), e.counterTypeOnReturn(), e.counterAmountOnReturn());
     }
 
     private void resolvePlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {
@@ -144,7 +145,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), controllerId);
             exileSupport.exileAndScheduleReturn(
                     gameData, entry, permanent, ownerId, e.returnTapped(), e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn());
+                    e.plusOnePlusOneCountersOnReturn(), e.counterTypeOnReturn(), e.counterAmountOnReturn());
         }
     }
 
@@ -183,7 +184,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             List<Card> cards = group.getValue();
             gameData.queueDelayedAction(new PendingExileReturn(
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()), false, e.grantHaste()));
+                    e.plusOnePlusOneCountersOnReturn(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                    cards.subList(1, cards.size()), false, e.grantHaste()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
@@ -238,8 +240,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         UUID returnControllerId = e.returnUnderController() ? entry.getControllerId() : ownerId;
 
         Card card = target.getOriginalCard();
-        boolean hadBonusSubtype = e.bonusSubtype() != null
-                && card.getSubtypes().contains(e.bonusSubtype());
+        boolean hadBonusSubtype = e.bonusSubtypes() != null
+                && card.getSubtypes().stream().anyMatch(e.bonusSubtypes()::contains);
 
         permanentRemovalService.removePermanentToExile(gameData, target);
         return new FlickeredPermanent(card, ownerId, returnControllerId, hadBonusSubtype);
@@ -256,7 +258,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
         boolean applyReturnCounters = e.plusOnePlusOneCountersOnReturn() > 0
-                && (e.bonusSubtype() == null || hadBonusSubtype);
+                && (e.bonusSubtypes() == null || hadBonusSubtype);
         if (applyReturnCounters
                 && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, returned, returnControllerId)) {
             int returnCounters = gameQueryService.doublePlusOnePlusOneCounters(
@@ -264,6 +266,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             if (returnCounters > 0) {
                 returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, returnCounters);
             }
+        }
+        if (e.counterTypeOnReturn() != null && e.counterAmountOnReturn() > 0) {
+            returned.setCounterCount(e.counterTypeOnReturn(),
+                    returned.getCounterCount(e.counterTypeOnReturn()) + e.counterAmountOnReturn());
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, returned);
         if (e.returnUnderController() && !returnControllerId.equals(ownerId)) {
@@ -282,7 +288,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             for (int i = 0; i < drawAmount; i++) {
                 drawService.resolveDrawCard(gameData, entry.getControllerId());
             }
-            gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + e.bonusSubtype().getDisplayName() + ").").build());
+            gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" matched the bonus subtype condition).").build());
         }
     }
 }

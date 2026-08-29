@@ -40,6 +40,8 @@ public enum Keyword {
     AFTERMATH,
     TRANSFORM,
     KICKER,
+    OFFSPRING,
+    VALIANT,
     CREW,
     EXPLORE,
     EXPLOIT,

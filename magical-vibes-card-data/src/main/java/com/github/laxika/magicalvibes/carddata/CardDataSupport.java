@@ -73,6 +73,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
+        KEYWORD_MAP.put("Offspring", Keyword.OFFSPRING);
+        KEYWORD_MAP.put("Valiant", Keyword.VALIANT);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
         KEYWORD_MAP.put("Persist", Keyword.PERSIST);

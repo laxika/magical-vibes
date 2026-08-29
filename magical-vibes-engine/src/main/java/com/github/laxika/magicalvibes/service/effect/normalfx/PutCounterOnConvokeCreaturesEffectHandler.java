@@ -45,7 +45,8 @@ public class PutCounterOnConvokeCreaturesEffectHandler implements NormalEffectHa
                 if (placed > 0) {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
                             permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                            gameData, permanent, entry.getControllerId());
                     targets.add(permanent);
                 }
             }

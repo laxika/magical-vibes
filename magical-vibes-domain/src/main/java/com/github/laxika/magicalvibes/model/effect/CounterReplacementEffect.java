@@ -9,6 +9,15 @@ public interface CounterReplacementEffect extends CardEffect {
 
     int replace(CounterType counterType, int count);
 
+    /**
+     * Whether this replacement applies to counters put on permanents regardless of who controls
+     * the affected permanent. The default preserves the controller-scoped behavior of existing
+     * replacement effects such as Doubling Season.
+     */
+    default boolean appliesToAllPermanents() {
+        return false;
+    }
+
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature) {
         return true;
     }

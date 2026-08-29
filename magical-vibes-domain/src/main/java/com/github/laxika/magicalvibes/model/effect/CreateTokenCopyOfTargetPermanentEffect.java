@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
 import java.util.Map;
@@ -28,16 +30,22 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean sacrificeAtEndStep,
         boolean tappedAndAttacking,
         boolean trackWithSource,
-        boolean createForTargetController
+        boolean createForTargetController,
+        DynamicAmount amount
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect() {
-        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false, false, false);
+        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false, false, false, new Fixed(1));
+    }
+
+    /** Creates the evaluated number of token copies of the targeted permanent. */
+    public CreateTokenCopyOfTargetPermanentEffect(DynamicAmount amount) {
+        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false, false, false, amount);
     }
 
     /** "except it has haste and 'At the beginning of the end step, exile this token.'" (Heat Shimmer). */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
-        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false, false, false);
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false, false, false, new Fixed(1));
     }
 
     /**
@@ -47,14 +55,14 @@ public record CreateTokenCopyOfTargetPermanentEffect(
      */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep, boolean sacrificeAtEndStep) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep, false,
-                false, false);
+                false, false, new Fixed(1));
     }
 
     /** "Create a tapped and attacking token that's a copy of the target permanent." */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep,
                                                   boolean sacrificeAtEndStep, boolean tappedAndAttacking) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
-                sacrificeAtEndStep, tappedAndAttacking, false, false);
+                sacrificeAtEndStep, tappedAndAttacking, false, false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -64,7 +72,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Integer toughnessOverride,
             Map<CounterType, Integer> initialCounters) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
-                false, false, false, false, false, false);
+                false, false, false, false, false, false, new Fixed(1));
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -78,13 +86,13 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             boolean sacrificeAtEndStep,
             boolean tappedAndAttacking) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
-                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, false, false);
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, false, false, new Fixed(1));
     }
 
     /** Used by global enter triggers that create a tracked copy for the entering creature's controller. */
     public static CreateTokenCopyOfTargetPermanentEffect trackedForTargetController() {
         return new CreateTokenCopyOfTargetPermanentEffect(
-                List.of(), Set.of(), null, null, Map.of(), false, false, false, false, true, true);
+                List.of(), Set.of(), null, null, Map.of(), false, false, false, false, true, true, new Fixed(1));
     }
 
     @Override

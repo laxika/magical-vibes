@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.TapCreaturesForManaCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
@@ -314,6 +315,7 @@ public class CardViewFactory {
                 ability.isXValueFromControlledCreatureCounters(),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
-                modalOptions);
+                modalOptions,
+                ability.getEffects().stream().anyMatch(TapCreaturesForManaCost.class::isInstance));
     }
 }

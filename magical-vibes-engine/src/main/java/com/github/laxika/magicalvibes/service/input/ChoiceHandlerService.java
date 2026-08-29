@@ -656,6 +656,14 @@ public class ChoiceHandlerService {
                 inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
+        } else if (ctx.creatureSpellManaValueAtLeastFourOrXOnly()) {
+            manaPool.addCreatureSpellManaValueAtLeastFourOrXOnlyMana(manaColor, amount);
+
+            String logEntry = player.getUsername() + " adds " + (amount == 1 ? "one" : String.valueOf(amount))
+                    + " " + colorName.toLowerCase() + " mana (qualifying creature spells only).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds {} {} mana (qualifying creature spells only)",
+                    gameData.id, player.getUsername(), amount, colorName.toLowerCase());
         } else if (ctx.manaValueAtLeastFour()) {
             manaPool.addManaValueAtLeastFourOnlyMana(manaColor, amount);
 

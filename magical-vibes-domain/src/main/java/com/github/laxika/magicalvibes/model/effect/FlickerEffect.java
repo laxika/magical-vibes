@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+import java.util.Set;
 
 /**
  * Exile permanent(s) and return them to the battlefield under their owner's control (CR 610.3) as
@@ -17,11 +20,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * permanent(s) leave and the {@link ReturnTiming} selects whether they come back immediately or via
  * a delayed trigger at the beginning of the next {@code returnStep}.
  *
- * <p>The bonus fields ({@code bonusSubtype}/{@code bonusEffect}/{@code plusOnePlusOneCountersOnReturn})
+ * <p>The bonus fields ({@code bonusSubtypes}/{@code bonusEffect}/{@code plusOnePlusOneCountersOnReturn})
  * apply when the permanent returns. The counter field is supported for both immediate and delayed
- * returns. When {@code bonusSubtype} is set with
- * {@code plusOnePlusOneCountersOnReturn}, counters apply only if the exiled permanent had that
- * subtype. {@code returnUnderController} is only meaningful for {@link ReturnTiming#IMMEDIATE}
+ * returns. When {@code bonusSubtypes} is set with {@code plusOnePlusOneCountersOnReturn}, counters
+ * apply only if the exiled permanent had one of those subtypes. {@code returnUnderController} is
+ * only meaningful for {@link ReturnTiming#IMMEDIATE}
  * TARGET flickers. {@code grantHaste} gives each returning permanent haste and is only meaningful
  * for {@link ReturnTiming#AT_STEP}.
  */
@@ -31,11 +34,33 @@ public record FlickerEffect(
         ReturnTiming timing,
         TurnStep returnStep,
         boolean returnTapped,
-        CardSubtype bonusSubtype,
+        Set<CardSubtype> bonusSubtypes,
         CardEffect bonusEffect,
         int plusOnePlusOneCountersOnReturn,
+        CounterType counterTypeOnReturn,
+        int counterAmountOnReturn,
         boolean returnUnderController,
         boolean grantHaste) implements CardEffect {
+
+    public FlickerEffect(
+            FlickerScope scope,
+            PermanentPredicate filter,
+            ReturnTiming timing,
+            TurnStep returnStep,
+            boolean returnTapped,
+            CardSubtype bonusSubtype,
+            CardEffect bonusEffect,
+            int plusOnePlusOneCountersOnReturn,
+            boolean returnUnderController,
+            boolean grantHaste) {
+        this(scope, filter, timing, returnStep, returnTapped,
+                bonusSubtype == null ? null : Set.of(bonusSubtype), bonusEffect,
+                plusOnePlusOneCountersOnReturn, null, 0, returnUnderController, grantHaste);
+    }
+
+    public FlickerEffect {
+        bonusSubtypes = bonusSubtypes == null ? null : Set.copyOf(bonusSubtypes);
+    }
 
     /** Exile target permanent, return it at the beginning of the next end step (Glimmerpoint Stag). */
     public static FlickerEffect exileTargetReturnAtEndStep() {
@@ -52,6 +77,12 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStepWithCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false);
+    }
+
+    /** Exile target permanent, return it at the beginning of the next end step with a counter. */
+    public static FlickerEffect exileTargetReturnAtEndStepWithCounter(CounterType counterType) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, counterType, 1, false, false);
     }
 
     /** Exile this permanent, return it under your control at the beginning of the next end step (Argent Sphinx). */
@@ -112,6 +143,12 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetWithBonus(CardSubtype bonusSubtype, CardEffect bonusEffect) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, bonusSubtype, bonusEffect, 0, false, false);
+    }
+
+    /** Immediate flicker that applies {@code bonusEffect} if the exiled permanent had any listed subtype. */
+    public static FlickerEffect flickerTargetWithBonus(Set<CardSubtype> bonusSubtypes, CardEffect bonusEffect) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, bonusSubtypes, bonusEffect, 0, null, 0, false, false);
     }
 
     /**

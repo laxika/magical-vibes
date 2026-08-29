@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -154,6 +155,8 @@ public class GraveyardChoiceHandlerService {
         UUID trackWithSourcePermanentId = graveyardChoice.trackWithSourcePermanentId();
         CardSubtype grantSourceHasteIfSubtype = graveyardChoice.grantSourceHasteIfSubtype();
         UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
+        CounterType enterWithCounter = graveyardChoice.enterWithCounter();
+        int enterWithCounterCount = graveyardChoice.enterWithCounterCount();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -270,6 +273,10 @@ public class GraveyardChoiceHandlerService {
                     }
                     if (grantSubtype != null && !perm.getGrantedSubtypes().contains(grantSubtype)) {
                         perm.getGrantedSubtypes().add(grantSubtype);
+                    }
+                    if (enterWithCounter != null && enterWithCounterCount > 0) {
+                        perm.setCounterCount(enterWithCounter,
+                                perm.getCounterCount(enterWithCounter) + enterWithCounterCount);
                     }
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
 
@@ -700,6 +707,7 @@ public class GraveyardChoiceHandlerService {
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
         UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
         List<UUID> pendingPermanentTargetIds = gameData.graveyardTargetOperation.permanentTargetIds;
+        boolean pendingGiftPromised = gameData.graveyardTargetOperation.giftPromised;
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
@@ -709,6 +717,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.entryType = null;
         gameData.graveyardTargetOperation.xValue = 0;
         gameData.graveyardTargetOperation.anyNumber = false;
+        gameData.graveyardTargetOperation.giftPromised = false;
         gameData.graveyardTargetOperation.singleGraveyard = false;
         gameData.graveyardTargetOperation.targetPlayerId = null;
         gameData.graveyardTargetOperation.flashback = false;
@@ -745,6 +754,7 @@ public class GraveyardChoiceHandlerService {
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);
             }
+            spellEntry.setGiftPromised(pendingGiftPromised);
             spellEntry.setSourceZone(pendingFlashback ? Zone.GRAVEYARD : Zone.HAND);
             gameData.stack.add(spellEntry);
 

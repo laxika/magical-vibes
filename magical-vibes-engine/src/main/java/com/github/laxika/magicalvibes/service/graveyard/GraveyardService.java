@@ -967,7 +967,7 @@ public class GraveyardService {
         return false;
     }
 
-    private boolean shouldExileOwnCardInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card) {
+    public boolean shouldExileOwnCardInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card) {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) {
             return false;
@@ -1240,9 +1240,14 @@ public class GraveyardService {
      * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
      */
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        notifyCardsLeftGraveyard(gameData, ownerId, 1);
+    }
+
+    private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
+        gameData.cardsLeftGraveyardCountThisTurn.merge(ownerId, count, Integer::sum);
         // Krovikan Vampire: a card that leaves the graveyard is no longer returnable even if it
         // re-enters the graveyard later this turn (loses track).
         pruneDamagedCreatureDiedTrackingNotInGraveyard(gameData);
@@ -1254,7 +1259,7 @@ public class GraveyardService {
     }
 
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, Card leavingCard) {
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, 1);
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId);
         }
@@ -1267,7 +1272,7 @@ public class GraveyardService {
         if (leavingCards == null || leavingCards.isEmpty()) {
             return;
         }
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());
         if (leavingCards.stream().anyMatch(card -> !card.isToken() && card.hasType(CardType.CREATURE))) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId);
         }

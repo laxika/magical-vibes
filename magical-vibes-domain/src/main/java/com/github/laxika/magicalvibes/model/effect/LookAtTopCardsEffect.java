@@ -69,6 +69,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                           chosen card
  * @param chooseManaValueAtMost when non-null, only cards with mana value at most this
  *                              resolution-time amount are eligible for selection
+ * @param selectedCardMayGoToHandIfBattlefieldDeclined when true, a selected card is first
+ *                                                      offered for the battlefield and otherwise
+ *                                                      goes to its controller's hand
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -79,7 +82,8 @@ public record LookAtTopCardsEffect(
         LibrarySearchDestination chosenDestination,
         boolean optional,
         boolean gainLifeEqualToChosenCardManaValue,
-        DynamicAmount chooseManaValueAtMost
+        DynamicAmount chooseManaValueAtMost,
+        boolean selectedCardMayGoToHandIfBattlefieldDeclined
 ) implements CardEffect {
 
     /** Mandatory choose-to-hand shape (the original 5-field form). */
@@ -104,6 +108,16 @@ public record LookAtTopCardsEffect(
             boolean gainLifeEqualToChosenCardManaValue) {
         this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
                 chosenDestination, optional, gainLifeEqualToChosenCardManaValue, null);
+    }
+
+    /** Canonical form without the battlefield-to-hand fallback. */
+    public LookAtTopCardsEffect(DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal,
+                chosenDestination, optional, gainLifeEqualToChosenCardManaValue,
+                chooseManaValueAtMost, false);
     }
 
     /** One card to hand, the rest on the bottom of the library. */
@@ -225,7 +239,15 @@ public record LookAtTopCardsEffect(
             int lookCount, CardPredicate choosePredicate, DynamicAmount chooseManaValueAtMost) {
         return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
-                LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost);
+                LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost, false);
+    }
+
+    /** You may reveal one matching card, put it onto the battlefield if it's your turn, or into your hand otherwise. */
+    public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldElseToHandRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, DynamicAmount chooseManaValueAtMost) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost, true);
     }
 
     /** You may put one matching card onto the battlefield tapped; the rest go to the bottom randomly. */

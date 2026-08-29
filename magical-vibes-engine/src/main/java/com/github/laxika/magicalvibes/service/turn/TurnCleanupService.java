@@ -263,7 +263,10 @@ public class TurnCleanupService {
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
-        gameData.temporaryGlobalTriggeredAbilities.clear();
+        gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
+                !watcher.untilEndOfNextTurn()
+                        || (gameData.activePlayerId.equals(watcher.controllerId())
+                        && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.drawStepFirstDrawTaken.clear();
@@ -274,6 +277,7 @@ public class TurnCleanupService {
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playersSpellsCantBeCounteredThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
+        gameData.playersWithHexproofThisTurn.clear();
         gameData.playerHexproofFromColorsThisTurn.clear();
         gameData.permanentHexproofFromColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
@@ -326,6 +330,7 @@ public class TurnCleanupService {
         gameData.graveyardLeaveNotificationPendingCreatureOwners.clear();
         gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.cardsLeftGraveyardCountThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {

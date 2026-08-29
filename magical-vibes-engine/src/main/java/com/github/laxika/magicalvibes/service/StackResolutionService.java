@@ -45,6 +45,8 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
@@ -283,10 +285,12 @@ public class StackResolutionService {
                                                      Permanent permanent, StackEntry entry) {
         if (entry.getRepeatedAdditionalCosts().isEmpty()) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked());
+                    gameData, controllerId, permanent, entry.getXValue(), entry.isKicked(),
+                    entry.getGrantedFinalityCounters());
         } else {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
-                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts());
+                    entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
+                    entry.getGrantedFinalityCounters());
         }
     }
 
@@ -294,15 +298,16 @@ public class StackResolutionService {
                                             UUID targetId, int etbMode, StackEntry entry) {
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
-                    targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+                    targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                    List.of(), List.of(), entry.isGiftPromised());
         } else if (entry.getRepeatedAdditionalCosts().isEmpty()) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
                     targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    List.of(), entry.getConvokeCreatureIds());
+                    List.of(), entry.getConvokeCreatureIds(), entry.isGiftPromised());
         } else {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
                     targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
+                    entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds(), entry.isGiftPromised());
         }
     }
 
@@ -310,15 +315,16 @@ public class StackResolutionService {
                                              UUID targetId, StackEntry entry) {
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
-                    true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds());
+                    true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                    List.of(), List.of(), entry.isGiftPromised());
         } else if (entry.getRepeatedAdditionalCosts().isEmpty()) {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
                     true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    List.of(), entry.getConvokeCreatureIds());
+                    List.of(), entry.getConvokeCreatureIds(), entry.isGiftPromised());
         } else {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
                     true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
-                    entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
+                    entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds(), entry.isGiftPromised());
         }
     }
 
@@ -373,7 +379,7 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
-                entry.getXValue())) {
+                entry.getXValue(), entry.getManaSpentToCast())) {
             return;
         }
 
@@ -722,7 +728,7 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         if (cloneService.prepareCloneReplacementEffect(gameData, controllerId, card, entry.getTargetId(),
-                entry.getXValue())) {
+                entry.getXValue(), entry.getManaSpentToCast())) {
             return;
         }
 
@@ -944,7 +950,7 @@ public class StackResolutionService {
     public void completeDeferredAuraResolution(GameData gameData, StackEntry entry) {
         Card characteristics = disturbCharacteristics(entry, entry.getCard());
         battlefieldEntryService.processCreatureETBEffects(gameData, entry.getControllerId(), characteristics,
-                entry.getTargetId(), true, entry.getTargetIds());
+                entry.getTargetId(), true, entry.getTargetIds(), entry.isGiftPromised());
         handleSpellDisposition(gameData, entry);
     }
 
@@ -955,23 +961,38 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated ability whose effects branch on {@code NthAbilityResolutionThisTurn}
-     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
-     * Counted at resolution (not activation), so copies of the ability count but activations
-     * countered on the stack do not; fizzled abilities never reach this point. Incremented before
+     * entry is an activated or triggered ability whose effects branch on
+     * {@code NthAbilityResolutionThisTurn} ("if this is the Nth time this ability has resolved this
+     * turn", e.g. Ashling the Pilgrim and Harvestrite Host). Counted at resolution (not activation),
+     * so copies of the ability count but abilities countered or fizzled on the stack do not. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only
      * here (not on async resume) so each resolution counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
-        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY || entry.getSourcePermanentId() == null) {
+        if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
+                || entry.getSourcePermanentId() == null) {
             return;
         }
         boolean countsResolutions = entry.getEffectsToResolve().stream()
-                .anyMatch(e -> e instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof NthAbilityResolutionThisTurn);
+                .anyMatch(this::containsResolutionCountCondition);
         if (countsResolutions) {
             gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
         }
+    }
+
+    private boolean containsResolutionCountCondition(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditional.condition() instanceof NthAbilityResolutionThisTurn
+                    || containsResolutionCountCondition(conditional.wrapped());
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(this::containsResolutionCountCondition);
+        }
+        if (effect instanceof TriggeringCardConditionalEffect conditional) {
+            return containsResolutionCountCondition(conditional.wrapped());
+        }
+        return false;
     }
 
     /**

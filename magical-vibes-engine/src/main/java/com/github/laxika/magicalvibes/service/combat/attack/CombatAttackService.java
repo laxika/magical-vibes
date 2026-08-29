@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeast
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
@@ -1059,6 +1060,14 @@ public class CombatAttackService {
                         continue;
                     }
                     filteredEffects.add(ce.wrapped());
+                } else if (effect instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && ce.condition() instanceof SourceCounterThreshold) {
+                    if (!conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
+                    filteredEffects.add(ce.wrapped());
                 } else {
                     filteredEffects.add(effect);
                 }
@@ -1194,6 +1203,27 @@ public class CombatAttackService {
 
                 for (CardEffect effect : gyAttackEffects) {
                     CardEffect innerEffect = effect;
+
+                    // "Whenever you attack with one or more [subtype]s" is an event condition:
+                    // check it when attackers are declared and remove the wrapper from the stack
+                    // entry so the trigger remains valid if the attackers leave before resolution.
+                    if (innerEffect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
+                        if (!conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forCard(card, playerId))) {
+                            continue;
+                        }
+                        innerEffect = ce.wrapped();
+                    }
+
+                    // Intervening-if conditions still need their normal resolution-time wrapper,
+                    // but they must also prevent the trigger from being offered when false here.
+                    if (innerEffect instanceof ConditionalEffect ce
+                            && ce.interveningIf()
+                            && ce.condition() instanceof GraveyardCardThreshold
+                            && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forCard(card, playerId))) {
+                        continue;
+                    }
 
                     // Unwrap minimum-attackers conditionals — check minimum before offering the trigger
                     if (innerEffect instanceof ConditionalEffect ce

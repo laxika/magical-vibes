@@ -143,6 +143,7 @@ export interface ActivatedAbilityView {
   modalChoicesRequired?: number;
   modalChoicesMax?: number;
   modalOptions?: ModalOptionView[] | null;
+  allowsCreatureTapForMana?: boolean;
 }
 
 export interface Card {

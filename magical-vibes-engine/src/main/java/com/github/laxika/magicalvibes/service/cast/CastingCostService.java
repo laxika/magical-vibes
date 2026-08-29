@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSym
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.CyclingCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalAttackCostEffect;
@@ -1356,6 +1357,11 @@ public class CastingCostService {
                 .map(RemoveCountersFromControlledCreaturesCastingCost.class::cast)
                 .allMatch(cost -> totalMatchingCounters(gameData, playerId, cost) >= cost.count());
         return canPayCounterCosts && canPayGraveyardCastAdditionalCosts(gameData, playerId, card);
+    }
+
+    public boolean canPayGraveyardCastFilterAdditionalCost(GameData gameData, UUID playerId, Card card,
+                                                            ForageOrPayManaCost cost) {
+        return cost == null || additionalSpellCostService.canPayForageOrPayManaCost(gameData, playerId, card, cost);
     }
 
     private int totalMatchingCounters(GameData gameData, UUID playerId,

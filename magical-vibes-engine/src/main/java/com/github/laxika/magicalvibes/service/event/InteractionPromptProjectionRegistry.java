@@ -99,6 +99,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class,
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
+        register(PendingInteraction.PutCardFromHandOrGraveyardOntoBattlefieldChoice.class,
+                this::projectPutCardFromHandOrGraveyardOntoBattlefieldChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
@@ -268,8 +270,10 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 interaction.maxCount(),
-                "You may cast any number of spells from among the exiled cards without paying "
-                        + "their mana costs.");
+                interaction.maxCount() == 1
+                        ? "You may cast a spell from among the exiled cards without paying its mana cost."
+                        : "You may cast any number of spells from among the exiled cards without paying "
+                                + "their mana costs.");
     }
 
     private InteractionPromptMessage projectExiledSpellCopyChoice(
@@ -591,6 +595,19 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "Choose a nonland card from that player's hand or graveyard to exile.");
+    }
+
+    private InteractionPromptMessage projectPutCardFromHandOrGraveyardOntoBattlefieldChoice(
+            GameData gameData, PendingInteraction.PutCardFromHandOrGraveyardOntoBattlefieldChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "Choose a " + interaction.label() + " card from your hand or graveyard to put onto the battlefield.");
     }
 
     private InteractionPromptMessage projectExilePermanentsOrHandCardsChoice(

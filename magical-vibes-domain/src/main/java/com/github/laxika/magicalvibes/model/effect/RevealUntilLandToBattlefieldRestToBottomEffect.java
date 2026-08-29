@@ -7,6 +7,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * all revealed cards are put on the bottom in any order.
  * <p>
  * Used by Recross the Paths (as the pre-clash body of a {@link ClashEffect}).
+ *
+ * @param entersTapped whether the land enters the battlefield tapped
  */
-public record RevealUntilLandToBattlefieldRestToBottomEffect() implements CardEffect {
+public record RevealUntilLandToBattlefieldRestToBottomEffect(boolean entersTapped) implements CardEffect {
+
+    /** The untapped form used by Recross the Paths. */
+    public RevealUntilLandToBattlefieldRestToBottomEffect() {
+        this(false);
+    }
 }

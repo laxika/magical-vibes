@@ -7,4 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public interface ControllerOpponentDamageBonusEffect extends CardEffect {
 
     int amount();
+
+    default boolean appliesToCombatDamage() {
+        return true;
+    }
 }

@@ -49,7 +49,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
-| activated ability, tap ability, sacrifice ability | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| activated ability, tap ability, sacrifice ability, ability cost paid with creatures | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | mana ability, mana dork | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |

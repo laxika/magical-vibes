@@ -2296,7 +2296,8 @@ public class LayerSystemService {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false, (target, harvested) -> {
                             if (harvested.isBasePTOverridden()) {
                                 entries.add(new BasePtEntry(target.permanent().getId(),
-                                        harvested.getBasePowerOverride(), harvested.getBaseToughnessOverride(),
+                                        harvested.hasBasePowerOverride() ? harvested.getBasePowerOverride() : null,
+                                        harvested.hasBaseToughnessOverride() ? harvested.getBaseToughnessOverride() : null,
                                         instance.timestamp(), instance.position(),
                                         provenanceSourceName(instance)));
                             }

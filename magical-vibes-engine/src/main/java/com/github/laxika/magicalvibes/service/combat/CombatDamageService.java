@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -1549,6 +1550,16 @@ public class CombatDamageService {
                     if (trigger.oncePerDamageStep() && !firedBatchedAllyTriggerSources.add(perm.getId())) {
                         continue;
                     }
+                    CardEffect triggerEffect = trigger.effect();
+                    if (triggerEffect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && conditional.condition() instanceof SourceCounterThreshold) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, attackerId))) {
+                            continue;
+                        }
+                        triggerEffect = conditional.wrapped();
+                    }
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
                     // against them (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(
@@ -1556,7 +1567,7 @@ public class CombatDamageService {
                             perm.getCard(),
                             attackerId,
                             perm.getCard().getName() + "'s triggered ability",
-                            List.of(trigger.effect()),
+                            List.of(triggerEffect),
                             defenderId,
                             trigger.bindSourceToDealer() ? creature.getId() : perm.getId()
                     );
@@ -1932,7 +1943,7 @@ public class CombatDamageService {
                         watch.sourceCard().getName() + "'s delayed trigger",
                         new ArrayList<>(watch.effects()),
                         (UUID) null,
-                        (UUID) null);
+                        entry.getKey().getId());
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
@@ -2553,7 +2564,7 @@ public class CombatDamageService {
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, pwControllerId);
                 damage += gameQueryService.getControllerDamageToOpponentBonus(
-                        gameData, sourceControllerId, pwControllerId);
+                        gameData, sourceControllerId, pwControllerId, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
@@ -2627,7 +2638,7 @@ public class CombatDamageService {
                 damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
                         gameData, sourceControllerId, atk.getCard(), atk, defenderId);
                 damage += gameQueryService.getControllerDamageToOpponentBonus(
-                        gameData, sourceControllerId, defenderId);
+                        gameData, sourceControllerId, defenderId, true);
             }
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             // Mirror Strike: redirect the chosen attacker's combat damage to its controller.

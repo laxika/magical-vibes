@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "246")
+@CardRegistration(set = "BLB", collectorNumber = "252")
 public class FabledPassage extends Card {
 
     public FabledPassage() {

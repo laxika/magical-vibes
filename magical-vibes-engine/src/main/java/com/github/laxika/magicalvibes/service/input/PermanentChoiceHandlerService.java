@@ -93,6 +93,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
+        } else if (context instanceof PermanentChoiceContext.ExileChosenPermanent exileChosenPermanent) {
+            battlefieldHandler.handleExileChosenPermanent(gameData, permanentId, exileChosenPermanent);
         } else if (context instanceof PermanentChoiceContext.ExileCombatOpponent exileCombatOpponent) {
             battlefieldHandler.handleExileCombatOpponent(gameData, permanentId, exileCombatOpponent);
         } else if (context instanceof PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock chooseBlocker) {
@@ -105,6 +107,8 @@ public class PermanentChoiceHandlerService {
             murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy echoChamberChoice) {
             battlefieldHandler.handleOpponentChoosesCreatureTheyControlToCopy(gameData, permanentId, echoChamberChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseControlledArtifactOrCreatureToCopy chooseCopy) {
+            battlefieldHandler.handleChooseControlledArtifactOrCreatureToCopy(gameData, permanentId, chooseCopy);
         } else if (context instanceof PermanentChoiceContext.OpponentMayGainControlOfCreatureYouControl opponentSteal) {
             battlefieldHandler.handleOpponentMayGainControlOfCreatureYouControl(gameData, permanentId, opponentSteal);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilityCostChoice costChoice) {
@@ -117,6 +121,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
         } else if (context instanceof PermanentChoiceContext.BounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.ReturnPermanentAndPutCounterOnSource returnAndCounter) {
+            battlefieldHandler.handleReturnPermanentAndPutCounterOnSource(gameData, permanentId, returnAndCounter);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf) {
             battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.SacrificeOwnPermanentOrSacrificeSelf) {

@@ -4,6 +4,7 @@ import java.util.UUID;
 import java.util.List;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 
 /**
@@ -22,6 +23,8 @@ public record PendingExileReturn(
         boolean returnToHand,
         TurnStep returnStep,
         int plusOnePlusOneCounters,
+        CounterType counterTypeOnReturn,
+        int counterAmountOnReturn,
         List<Card> additionalCards,
         boolean onlyOnControllersTurn,
         boolean grantHaste,
@@ -35,7 +38,14 @@ public record PendingExileReturn(
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, false, false, false, false);
+                null, 0, additionalCards, false, false, false, false);
+    }
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, CounterType counterTypeOnReturn,
+                              int counterAmountOnReturn, List<Card> additionalCards) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                counterTypeOnReturn, counterAmountOnReturn, additionalCards, false, false, false, false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId) {
@@ -64,18 +74,27 @@ public record PendingExileReturn(
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
                               boolean onlyOnControllersTurn, boolean grantHaste) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, onlyOnControllersTurn, grantHaste, false, false);
+                null, 0, additionalCards, onlyOnControllersTurn, grantHaste, false, false);
+    }
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, CounterType counterTypeOnReturn,
+                              int counterAmountOnReturn, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                counterTypeOnReturn, counterAmountOnReturn, additionalCards, onlyOnControllersTurn,
+                grantHaste, false, false);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
                               boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking) {
         this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
-                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, false);
+                null, 0, additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking, false);
     }
 
     public static PendingExileReturn toGraveyard(Card card, UUID ownerId) {
-        return new PendingExileReturn(card, ownerId, false, false, TurnStep.END_STEP, 0, List.of(),
-                false, false, false, true);
+        return new PendingExileReturn(card, ownerId, false, false, TurnStep.END_STEP, 0,
+                null, 0, List.of(), false, false, false, true);
     }
 }

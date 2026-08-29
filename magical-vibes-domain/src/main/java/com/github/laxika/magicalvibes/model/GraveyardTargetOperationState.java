@@ -14,6 +14,8 @@ public class GraveyardTargetOperationState {
     public StackEntryType entryType;
     public int xValue;
     public boolean anyNumber;
+    /** Whether the spell entering the stack promised its Gift while awaiting graveyard targets. */
+    public boolean giftPromised;
     /**
      * Whether all chosen targets must come from one graveyard ("... from a single graveyard",
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.

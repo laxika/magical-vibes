@@ -67,12 +67,17 @@ public class BounceSupport {
                                 gameData, permanent, filter)))
                         .toList()));
 
-        for (Permanent permanent : toReturn) {
-            permanentRemovalService.removePermanentToHand(gameData, permanent);
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent permanent : toReturn) {
+                permanentRemovalService.removePermanentToHand(gameData, permanent);
 
-            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to owner's hand by {}",
-                    gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                log.info("Game {} - {} returned to owner's hand by {}",
+                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         if (!toReturn.isEmpty()) {

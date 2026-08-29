@@ -54,6 +54,34 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
     }
 
     @Test
+    @DisplayName("Source creature deals a power multiplier as damage to target")
+    void sourceDealsTwiceItsPowerAsDamageToTarget() {
+        Card polliwallop = createCard("Polliwallop");
+        polliwallop.setColor(CardColor.GREEN);
+        Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+        Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 5, 5));
+        StackEntry entry = createMultiTargetEntry(polliwallop, player1Id, List.of(bears.getId(), angel.getId()));
+
+        stubDamagePreventable();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(angel, 4);
+        stubCreatureSourceRedirects();
+        when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+        when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+        when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
+        when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
+        when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
+        when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+        stubNoKeywordsOnSourceWithDamageSource(entry, bears);
+
+        targetDealsPowerDamageToTargetHandler.resolve(
+                gd, entry, TargetDealsPowerDamageToTargetEffect.withPowerMultiplier(2));
+
+        assertThat(angel.getMarkedDamage()).isEqualTo(4);
+        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 4, player1Id);
+    }
+
+    @Test
     @DisplayName("Marks lethal damage when source power >= target toughness")
     void killsTargetWhenPowerIsLethal() {
         Card wingCard = createCard("Wing Puncture");

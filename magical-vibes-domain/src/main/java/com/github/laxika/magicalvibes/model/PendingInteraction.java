@@ -33,6 +33,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.PortentOfCalamityState,
         PendingInteraction.ExiledSpellCopyChoice,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
@@ -46,6 +47,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice,
         PendingInteraction.PutLandsFromHandChoice,
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice,
+        PendingInteraction.PutCardFromHandOrGraveyardOntoBattlefieldChoice,
         PendingInteraction.EachPlayerMayPutCardFromHandChoice,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
@@ -307,6 +309,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /**
+     * State carried while Portent of Calamity offers one optional exile for each card type.
+     * {@code revealedCardIds} identifies the cards exiled or put into the graveyard by this
+     * resolution so its later free-cast choice cannot see unrelated exiled cards.
+     */
+    record PortentOfCalamityState(UUID playerId, java.util.List<UUID> revealedCardIds)
+            implements PendingInteraction {
+
+        public PortentOfCalamityState {
+            revealedCardIds = java.util.List.copyOf(revealedCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
         }
     }
 
@@ -652,6 +677,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses one matching card from the controller's hand or graveyard to put onto the battlefield. */
+    record PutCardFromHandOrGraveyardOntoBattlefieldChoice(
+            UUID playerId, java.util.List<UUID> validCardIds, CardPredicate predicate,
+            String label, UUID sourceCardId, CounterType enterWithCounter)
+            implements PendingInteraction {
+
+        public PutCardFromHandOrGraveyardOntoBattlefieldChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
     /**
      * One player may put one matching card from their hand onto the battlefield. The selected cards
      * are held in {@code chosenCardIds} until every player has chosen, then enter simultaneously.
@@ -963,12 +1009,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Choose one nonland card from a target player's hand or graveyard to exile. */
     record ExileNonlandCardFromTargetHandOrGraveyardChoice(
             UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds,
-            boolean grantPlayPermission)
+            boolean grantPlayPermission, boolean handOnly)
             implements PendingInteraction {
 
         public ExileNonlandCardFromTargetHandOrGraveyardChoice(
+                UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds,
+                boolean grantPlayPermission) {
+            this(playerId, targetPlayerId, validCardIds, grantPlayPermission, false);
+        }
+
+        public ExileNonlandCardFromTargetHandOrGraveyardChoice(
                 UUID playerId, UUID targetPlayerId, java.util.List<UUID> validCardIds) {
-            this(playerId, targetPlayerId, validCardIds, true);
+            this(playerId, targetPlayerId, validCardIds, true, false);
         }
 
         @Override
@@ -1394,6 +1446,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
                            UUID mayAbilitySourcePermanentId,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
+                           CounterType enterWithCounter, int enterWithCounterCount,
                            boolean mandatory, String prompt)
             implements PendingInteraction {
 
@@ -1438,6 +1491,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private UUID mayAbilitySourcePermanentId;
             private CardSubtype grantSourceHasteIfSubtype;
             private UUID grantSourceHasteSourcePermanentId;
+            private CounterType enterWithCounter;
+            private int enterWithCounterCount;
             private boolean mandatory;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -1504,6 +1559,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder enterWithCounter(CounterType counterType, int count) {
+                this.enterWithCounter = counterType;
+                this.enterWithCounterCount = count;
+                return this;
+            }
+
             public Builder mandatory(boolean mandatory) {
                 this.mandatory = mandatory;
                 return this;
@@ -1515,7 +1576,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
-                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, mandatory, prompt);
+                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
+                        enterWithCounter, enterWithCounterCount, mandatory, prompt);
             }
         }
     }
@@ -2151,7 +2213,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                int lifeCostPerSelection,
                                UUID beneficiaryPlayerId, int maxCount, String prompt,
                                boolean selectedToBattlefieldTapped, int minCount,
-                               boolean gainLifeEqualToSelectedCardManaValue)
+                               boolean gainLifeEqualToSelectedCardManaValue,
+                               boolean deferSelectedToBattlefieldChoice)
             implements PendingInteraction {
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -2162,7 +2225,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    String prompt) {
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
-                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false, 0, false);
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false, 0, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -2174,7 +2237,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    selectedToBattlefieldTapped, 0, false);
+                    selectedToBattlefieldTapped, 0, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -2186,7 +2249,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    false, minCount, gainLifeEqualToSelectedCardManaValue);
+                    false, minCount, gainLifeEqualToSelectedCardManaValue, false);
         }
 
         @Override

@@ -44,9 +44,11 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -402,6 +404,10 @@ public class LibraryChoiceHandlerService {
                     }
                     gameLogService.append(gameData, graveyardLog.build());
                 }
+                if (isPortentSearch(gameData)) {
+                    finishPortentSearch(gameData, deckOwnerId);
+                    return;
+                }
                 finishSearchAndResume(gameData);
                 return;
             }
@@ -434,6 +440,17 @@ public class LibraryChoiceHandlerService {
         if (cardIndex == -1) {
             if (!canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
+            }
+            if (isPortentSearch(gameData)) {
+                if (followUp.secondBoundedPick() != null
+                        && startSecondBoundedPick(gameData, deckOwnerId, sourceCards, followUp.secondBoundedPick())) {
+                    return;
+                }
+                for (Card card : sourceCards) {
+                    graveyardService.addCardToGraveyard(gameData, deckOwnerId, card, Zone.LIBRARY);
+                }
+                finishPortentSearch(gameData, deckOwnerId);
+                return;
             }
             // Gifts Ungiven stopped short of four cards: the pool found so far still goes to the
             // opponent for the two-card disposal choice.
@@ -1525,14 +1542,16 @@ public class LibraryChoiceHandlerService {
         String category = spec.subtype() != null
                 ? spec.subtype().getDisplayName().toLowerCase()
                 : spec.type().getDisplayName().toLowerCase();
-        String prompt = "You may reveal a " + category
-                + " card from among them and put it into your hand.";
+        boolean portentSearch = isPortentSearch(gameData);
+        String prompt = portentSearch
+                ? "You may reveal a " + category + " card from among them and exile it."
+                : "You may reveal a " + category + " card from among them and put it into your hand.";
         LibrarySearchFollowUp nextFollowUp;
         if (spec.subtype() != null) {
             nextFollowUp = LibrarySearchFollowUp.forSubtypeBoundedPick(
                     spec.remainingSubtypes(), spec.randomRest());
         } else if (!spec.remainingTypes().isEmpty()) {
-            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(spec.remainingTypes());
+            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(spec.remainingTypes(), spec.randomRest());
         } else if (spec.randomRest()) {
             nextFollowUp = LibrarySearchFollowUp.forBoundedPick(
                     LibrarySearchFollowUp.SecondBoundedPick.terminal(true));
@@ -1542,15 +1561,62 @@ public class LibraryChoiceHandlerService {
         LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))
                 .reveals(true)
                 .canFailToFind(true)
-                .destination(LibrarySearchDestination.HAND)
+                .destination(portentSearch ? LibrarySearchDestination.EXILE : LibrarySearchDestination.HAND)
                 .sourceCards(new ArrayList<>(lookedAtCards))
-                .reorderRemainingToBottom(!spec.restToGraveyard())
-                .restToGraveyard(spec.restToGraveyard())
+                .reorderRemainingToBottom(!(portentSearch || spec.restToGraveyard()))
+                .restToGraveyard(portentSearch || spec.restToGraveyard())
                 .shuffleAfterSelection(false)
                 .followUp(nextFollowUp)
                 .build();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
+    }
+
+    private boolean isPortentSearch(GameData gameData) {
+        return gameData.peekPendingInteraction(PendingInteraction.PortentOfCalamityState.class) != null;
+    }
+
+    private void finishPortentSearch(GameData gameData, UUID ownerId) {
+        PendingInteraction.PortentOfCalamityState state =
+                gameData.pollPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
+        if (state == null) {
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        List<UUID> exiledCardIds = state.revealedCardIds().stream()
+                .filter(cardId -> gameData.findExiledCard(cardId) != null)
+                .toList();
+        List<UUID> castableSpellIds = exiledCardIds.stream()
+                .filter(cardId -> {
+                    var exiled = gameData.findExiledCard(cardId);
+                    return exiled != null && !exiled.card().hasType(CardType.LAND);
+                })
+                .toList();
+
+        if (exiledCardIds.size() < 4 || castableSpellIds.isEmpty()) {
+            putPortentRemainderIntoHands(gameData, exiledCardIds);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        gameData.pendingExileFreeCastRemainderToHand.clear();
+        gameData.pendingExileFreeCastRemainderToHand.addAll(exiledCardIds);
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.ImprovisationCapstoneCastChoice(ownerId, castableSpellIds, 1));
+    }
+
+    private void putPortentRemainderIntoHands(GameData gameData, List<UUID> cardIds) {
+        for (UUID cardId : cardIds) {
+            var exiled = gameData.findExiledCard(cardId);
+            if (exiled == null) {
+                continue;
+            }
+            gameData.removeFromExile(cardId);
+            gameData.addCardToHand(exiled.ownerId(), exiled.card());
+            gameLogService.append(gameData,
+                    GameLog.cardThen(exiled.card(), " is put into its owner's hand."));
+        }
     }
 
     /**
@@ -1770,6 +1836,12 @@ public class LibraryChoiceHandlerService {
             }
         }
 
+        if (libraryRevealChoice.deferSelectedToBattlefieldChoice()) {
+            deferSelectedCardToBattlefieldChoice(gameData, controllerId, playerName,
+                    selectedCards, remainingCards);
+            return;
+        }
+
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
@@ -1887,6 +1959,39 @@ public class LibraryChoiceHandlerService {
         }
 
         finishSearchAndResume(gameData);
+    }
+
+    private void deferSelectedCardToBattlefieldChoice(GameData gameData, UUID controllerId,
+                                                       String playerName, List<Card> selectedCards,
+                                                       List<Card> remainingCards) {
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        Collections.shuffle(remainingCards);
+        deck.addAll(remainingCards);
+
+        if (selectedCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " does not reveal a card. The rest are put on the bottom of their library in a random order."));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        Card selectedCard = selectedCards.getFirst();
+        deck.addFirst(selectedCard);
+        gameLogService.append(gameData, GameLog.textCardText(
+                playerName + " reveals ", selectedCard, "."));
+
+        StackEntry pending = gameData.pendingEffectResolutionEntry;
+        if (pending == null || pending.getCard() == null) {
+            throw new IllegalStateException("A deferred battlefield choice requires a pending source card");
+        }
+
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                pending.getCard(), controllerId,
+                List.of(new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
+                        new CardTruePredicate(), false)),
+                pending.getCard().getName() + " — Put " + selectedCard.getName()
+                        + " onto the battlefield?"));
+        playerInputService.processNextMayAbility(gameData);
     }
 
     private void handleDubiousChallengeInitialChoice(

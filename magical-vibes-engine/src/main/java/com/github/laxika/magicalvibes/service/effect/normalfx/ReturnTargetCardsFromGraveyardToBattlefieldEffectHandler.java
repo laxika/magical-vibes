@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -49,7 +51,9 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                                      UUID graveyardOwnerId) {
         var e = (ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect;
         List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-        if (graveyard == null || graveyard.isEmpty() || entry.getTargetCardIds().isEmpty()) {
+        List<UUID> targetCardIds = entry.getTargetCardIds().isEmpty()
+                ? entry.targetsForEffect(e) : entry.getTargetCardIds();
+        if (graveyard == null || graveyard.isEmpty() || targetCardIds.isEmpty()) {
             return;
         }
 
@@ -57,8 +61,23 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(graveyardOwnerId, Set.of())
                 : null;
         List<Card> cardsToReturn = new ArrayList<>();
+        int maxTargets = e.maxTargets();
+        if (!entry.isGiftPromised()) {
+            int giftMax = entry.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(GiftEffect.class::isInstance)
+                    .map(GiftEffect.class::cast)
+                    .mapToInt(GiftEffect::maxTargetsWithoutGift)
+                    .min()
+                    .orElse(Integer.MAX_VALUE);
+            if (maxTargets > 0) {
+                maxTargets = Math.min(maxTargets, giftMax);
+            }
+        }
         int totalManaValue = 0;
-        for (UUID targetCardId : entry.getTargetCardIds()) {
+        for (UUID targetCardId : targetCardIds) {
+            if (maxTargets > 0 && cardsToReturn.size() >= maxTargets) {
+                break;
+            }
             Card card = graveyard.stream()
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
                     .findFirst().orElse(null);

@@ -22,6 +22,7 @@ Reach for one before writing out a filter:
 | `TargetFilters.nonlandPermanent()` | nonland permanent | "Target must be a nonland permanent" (Soul Tithe) |
 | `TargetFilters.nonlandPermanentAnOpponentControls()` | nonland permanent an opponent controls | "Target must be a nonland permanent an opponent controls" (Archon of the Triumvirate) |
 | `TargetFilters.noncreaturePermanentAnOpponentControls()` | noncreature permanent an opponent controls | "Target must be a noncreature permanent an opponent controls" (Sylvan Primordial) |
+| `TargetFilters.withGift(withoutGift, withGift)` | `PermanentPredicateTargetFilter` | uses the first filter without Gift and the second when Gift was promised |
 
 The message is shown to a player who picks an illegal target, so it is part of the card's
 behaviour. If the card needs different wording — "First target must be a creature", "Second
@@ -55,6 +56,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
+| `PermanentIsEquippedPredicate` | `()` | permanents that have at least one Equipment attached (i.e. are equipped) — needs game data. Used by Blacksmith's Talent (level 3) |
 | `PermanentIsHostOfSourceAuraPredicate` | `()` | the permanent the **source Aura or Equipment** is currently attached to (the enchanted/equipped permanent) — needs game data + `sourceCardId`, or `FilterContext.sourcePermanentSnapshot` / static `StaticEffectContext.source` when GameData is unavailable. Wrap in `PermanentNotPredicate` for "other than enchanted creature" (Kjeldoran Pride reattach; Vampirism's other-creature count/`OWN_CREATURES` filter) |
 | `PermanentSharesColorWithEquippedCreaturePredicate` | `()` | permanents sharing at least one color with the creature the **source Equipment** is attached to — needs game data + `sourceCardId` / `FilterContext.sourcePermanentSnapshot`. Never matches while unattached, and never matches when either side is colorless. Konda's Banner ("Creatures that share a color with equipped creature get +1/+1") |
 | `PermanentSharesCreatureTypeWithEquippedCreaturePredicate` | `()` | permanents sharing at least one creature type with the creature the **source Equipment** is attached to; Changeling counts as every creature type. Same context needs as the color form; never matches while unattached. Konda's Banner |
@@ -111,6 +113,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentMaxManaValuePredicate` | `(int maxManaValue)` | permanents with mana value <= N (e.g. Witherbloom Charm) |
 | `PermanentManaValueAtMostOwnCountersPredicate` | `(CounterType)` | permanents whose mana value ≤ the number of that counter type on them (Corrosion rust destroy) |
 | `PermanentManaValueEqualsSourceCountersPredicate` | `(CounterType)` | permanents whose mana value **equals** the number of that counter type on the evaluating **source** permanent ("destroy each creature with mana value equal to the number of age counters on this enchantment" — Wave of Terror). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone (CR 608.2b) |
+| `PermanentManaValueLessThanSourceManaValuePredicate` | `()` | permanents whose mana value is strictly less than the mana value of the evaluating source permanent (Clement, the Worrywort). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone | `gameData` + `sourceCardId` |
 | `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
 | `PermanentToughnessAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | permanents with toughness <= the number of permanents with that subtype controlled by the source's controller (Scourge of Fleets) |

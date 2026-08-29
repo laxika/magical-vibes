@@ -195,19 +195,26 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
 
         int maxCount = Math.min(chooseCount, matchingCards.size());
+        boolean battlefieldChoiceFallsBackToHand = e.selectedCardMayGoToHandIfBattlefieldDeclined();
+        boolean controllerHasBattlefieldChoice = battlefieldChoiceFallsBackToHand
+                && controllerId.equals(gameData.activePlayerId);
         String prompt = remainingToExile
                 ? "Choose any number of eligible cards to put onto the battlefield. Exile the rest."
                 : restToGraveyard
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go into your graveyard."
+                : battlefieldChoiceFallsBackToHand
+                ? "You may reveal a creature card with mana value 3 or less from among them."
                 : randomBottom
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library.";
         List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, topCards, cardIds, restToGraveyard, false,
+                controllerId, topCards, cardIds, restToGraveyard,
+                battlefieldChoiceFallsBackToHand && !controllerHasBattlefieldChoice,
                 !restToGraveyard && !randomBottom && !remainingToExile,
                 randomBottom, remainingToExile, 0, null,
-                maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED));
+                maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
+                0, false, controllerHasBattlefieldChoice));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

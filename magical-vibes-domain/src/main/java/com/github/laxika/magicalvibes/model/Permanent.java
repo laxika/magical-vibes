@@ -455,6 +455,8 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** When true, this permanent has lost all abilities until the beginning of the effect controller's next turn. */
+    @Setter private boolean losesAllAbilitiesUntilNextTurn;
     /** Concrete printed static effect types suppressed on this permanent until end of turn. */
     private final Set<Class<? extends CardEffect>> suppressedStaticEffectsUntilEndOfTurn = new HashSet<>();
     /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
@@ -561,6 +563,10 @@ public class Permanent {
     @Setter private Card untilNextTurnPreCopyCard;
     /** The player whose next turn ends an "until your next turn" copy (the ability's controller). */
     @Setter private UUID copyUntilNextTurnControllerId;
+    /** Identifies the simultaneous battlefield-entry event for this permanent. */
+    @Setter private UUID simultaneousEntryBatchId;
+    /** Batch identifiers for which this permanent has already fired its batch creature-entry triggers. */
+    private final Set<UUID> creatureEntryBatchTriggerIds = new HashSet<>();
     /** CR 613.7 timestamp: stamped from {@link GameData#nextTimestamp()} when this permanent
      *  enters a battlefield, and re-stamped each time it becomes attached (CR 613.7e — Auras and
      *  Equipment). Control changes do NOT re-stamp (CR 613.7c). Stays 0 for permanents added to
@@ -739,6 +745,7 @@ public class Permanent {
         this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.losesAllAbilitiesUntilNextTurn = source.losesAllAbilitiesUntilNextTurn;
         this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
         this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
@@ -771,6 +778,8 @@ public class Permanent {
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
+        this.simultaneousEntryBatchId = source.simultaneousEntryBatchId;
+        this.creatureEntryBatchTriggerIds.addAll(source.creatureEntryBatchTriggerIds);
         this.timestamp = source.timestamp;
     }
 
@@ -1196,7 +1205,7 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        if (losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently) return false;
+        if (losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesUntilNextTurn || losesAllAbilitiesPermanently) return false;
         // Changeling grants all creature types; losing all creature types nullifies that grant.
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
@@ -1286,7 +1295,7 @@ public class Permanent {
     }
 
     public boolean isLosesAllAbilitiesUntilEndOfTurn() {
-        return losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently;
+        return losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesUntilNextTurn || losesAllAbilitiesPermanently;
     }
 
     public void recordTappedPermanentForAbility(UUID permanentId) {
@@ -1443,6 +1452,7 @@ public class Permanent {
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
         this.untilNextTurnLandTypeOverride = null;
+        this.losesAllAbilitiesUntilNextTurn = false;
     }
 
     /**

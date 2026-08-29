@@ -27,7 +27,8 @@ public sealed interface ChoiceContext {
                            Set<CardSubtype> restrictedToSpellOrAbilitySubtypes,
                            boolean abilityOnly,
                            UUID recipientPlayerId,
-                           boolean grantsAdditionalPlusOneCounter) implements ChoiceContext {
+                           boolean grantsAdditionalPlusOneCounter,
+                           boolean creatureSpellManaValueAtLeastFourOrXOnly) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
                                boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
@@ -38,7 +39,7 @@ public sealed interface ChoiceContext {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
                     spellOrAbilitySubtype, false, fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly,
                     grantsUncounterable, manaValueAtLeastFour, false, sourcePermanentId,
-                    restrictedToSpellOrAbilitySubtypes, abilityOnly, null, false);
+                    restrictedToSpellOrAbilitySubtypes, abilityOnly, null, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -50,7 +51,7 @@ public sealed interface ChoiceContext {
             this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly,
                     spellOrAbilitySubtype, false, fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly,
                     grantsUncounterable, manaValueAtLeastFour, false, sourcePermanentId,
-                    restrictedToSpellOrAbilitySubtypes, false, null, false);
+                    restrictedToSpellOrAbilitySubtypes, false, null, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount,
@@ -67,7 +68,7 @@ public sealed interface ChoiceContext {
                     fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly,
                     grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly,
                     sourcePermanentId, restrictedToSpellOrAbilitySubtypes, false, null,
-                    grantsAdditionalPlusOneCounter);
+                    grantsAdditionalPlusOneCounter, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount,
@@ -84,7 +85,7 @@ public sealed interface ChoiceContext {
                     fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly,
                     grantsUncounterable, manaValueAtLeastFour, creatureSpellOrAbilityOnly,
                     sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly,
-                    recipientPlayerId, false);
+                    recipientPlayerId, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
@@ -120,7 +121,7 @@ public sealed interface ChoiceContext {
                     creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable,
                     manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId,
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
-                    grantsAdditionalPlusOneCounter);
+                    grantsAdditionalPlusOneCounter, creatureSpellManaValueAtLeastFourOrXOnly);
         }
 
         public ManaColorChoice withAdditionalPlusOneCounter() {
@@ -128,7 +129,8 @@ public sealed interface ChoiceContext {
                     flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, creatureSourceSpellOrAbility,
                     fixedColorOptions, creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable,
                     manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId,
-                    restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, true);
+                    restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId, true,
+                    creatureSpellManaValueAtLeastFourOrXOnly);
         }
 
         public ManaColorChoice withRecipientPlayerId(UUID recipientPlayerId) {
@@ -138,7 +140,7 @@ public sealed interface ChoiceContext {
                     creatureSpellOnly, artifactSpellOrAbilityOnly, grantsUncounterable,
                     manaValueAtLeastFour, creatureSpellOrAbilityOnly, sourcePermanentId,
                     restrictedToSpellOrAbilitySubtypes, abilityOnly, recipientPlayerId,
-                    grantsAdditionalPlusOneCounter);
+                    grantsAdditionalPlusOneCounter, creatureSpellManaValueAtLeastFourOrXOnly);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
@@ -246,6 +248,13 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(
                     playerId, false, amount, null, false, false, false, false, null,
                     false, false, false, true, false, null, null, false);
+        }
+
+        /** "Add N mana of any one color, spendable only to cast creature spells with mana value 4 or greater or creature spells with {X} in their mana costs." */
+        public static ManaColorChoice creatureSpellManaValueAtLeastFourOrXOnly(UUID playerId, int amount) {
+            return new ManaColorChoice(
+                    playerId, false, amount, null, false, false, false, false, null,
+                    false, false, false, false, false, null, null, false, null, false, true);
         }
     }
 

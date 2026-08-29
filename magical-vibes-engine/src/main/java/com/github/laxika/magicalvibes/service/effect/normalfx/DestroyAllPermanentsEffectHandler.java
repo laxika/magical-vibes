@@ -98,6 +98,9 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
         List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
+        entry.setEventCardIds(destroyed.stream()
+                .map(permanent -> permanent.getCard().getId())
+                .toList());
 
         if (e.thenEffect() == null) {
             return;

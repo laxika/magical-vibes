@@ -39,19 +39,19 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             return;
         }
 
-        // Find the source permanent on the battlefield by card reference
-        UUID sourcePermanentId = null;
-        Permanent sourcePermanent = null;
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.getCard() == entry.getCard()) {
-                    sourcePermanentId = p.getId();
-                    sourcePermanent = p;
-                    break;
-                }
-            }
+        // The stack entry identifies the source object that created the ability. If that object
+        // has already left the battlefield, this effect does nothing: the "until this leaves"
+        // duration has already ended. The card-reference fallback is retained for older callers
+        // that do not stamp a source permanent id.
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? findSourceByCardReference(gameData, entry.getControllerId(), entry.getCard())
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanentId != null && sourcePermanent == null) {
+            return;
+        }
+        if (sourcePermanentId == null && sourcePermanent != null) {
+            sourcePermanentId = sourcePermanent.getId();
         }
 
         if (sourcePermanentId == null) {
@@ -88,5 +88,16 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    private Permanent findSourceByCardReference(GameData gameData, UUID controllerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return null;
+        }
+        return battlefield.stream()
+                .filter(permanent -> permanent.getCard() == card)
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeSourceDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToOpponentsFromRedOrArtifactSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
@@ -227,6 +228,7 @@ public class GameQueryService {
             CardSubtype.SWAMP,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
+            CardSubtype.FOOD,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
             CardSubtype.BOLAS
@@ -453,6 +455,33 @@ public class GameQueryService {
             return true;
         }
         return !losesSupertypeFromGlobalStaticEffect(gameData, permanent, supertype);
+    }
+
+    /** Returns whether a permanent has a subtype after continuous effects are applied. */
+    public boolean hasEffectiveSubtype(GameData gameData, Permanent permanent, CardSubtype subtype) {
+        if (gameData == null) {
+            return permanent.getCard().getSubtypes().contains(subtype)
+                    || permanent.getTransientSubtypes().contains(subtype)
+                    || permanent.getGrantedSubtypes().contains(subtype);
+        }
+        LayerSystemService.Pass active = layerSystemService.activePass(gameData);
+        if (active != null && active.board() != null) {
+            CharacteristicState state = active.board().states().get(permanent.getId());
+            if (state != null) {
+                return state.hasSubtype(subtype);
+            }
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = pass.board().states().get(permanent.getId());
+            return state != null
+                    ? state.hasSubtype(subtype)
+                    : permanent.getCard().getSubtypes().contains(subtype)
+                    || permanent.getTransientSubtypes().contains(subtype)
+                    || permanent.getGrantedSubtypes().contains(subtype);
+        } finally {
+            layerSystemService.endPass(pass);
+        }
     }
 
     private boolean losesSupertypeFromGlobalStaticEffect(
@@ -1966,17 +1995,23 @@ public class GameQueryService {
         if (count <= 0 || controllerId == null) {
             return count;
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return count;
-        }
         int result = count;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CounterReplacementEffect replacement
-                        && replacement.appliesTo(counterType, affectedPermanentIsCreature,
-                        affectedPermanentIsArtifact)) {
-                    result = replacement.replace(counterType, result);
+        for (UUID sourceControllerId : counterReplacementSourceControllers(gameData, controllerId)) {
+            boolean affectsAllPermanents = sourceControllerId.equals(controllerId);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect activeEffect = activeCounterReplacementEffect(
+                            gameData, source, sourceControllerId, effect);
+                    if (activeEffect instanceof CounterReplacementEffect replacement
+                            && (affectsAllPermanents || replacement.appliesToAllPermanents())
+                            && replacement.appliesTo(counterType, affectedPermanentIsCreature,
+                            affectedPermanentIsArtifact)) {
+                        result = replacement.replace(counterType, result);
+                    }
                 }
             }
         }
@@ -1991,19 +2026,25 @@ public class GameQueryService {
         if (count <= 0 || controllerId == null) {
             return count;
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return count;
-        }
         int result = count;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
-                        && replacement.appliesToNonCreatureVehicles()) {
-                    result = replacement.replace(result);
-                } else if (effect instanceof CounterReplacementEffect replacement
-                        && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true)) {
-                    result = replacement.replace(CounterType.PLUS_ONE_PLUS_ONE, result);
+        for (UUID sourceControllerId : counterReplacementSourceControllers(gameData, controllerId)) {
+            boolean affectsAllPermanents = sourceControllerId.equals(controllerId);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect activeEffect = activeCounterReplacementEffect(
+                            gameData, source, sourceControllerId, effect);
+                    if (activeEffect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
+                            && affectsAllPermanents && replacement.appliesToNonCreatureVehicles()) {
+                        result = replacement.replace(result);
+                    } else if (activeEffect instanceof CounterReplacementEffect replacement
+                            && (affectsAllPermanents || replacement.appliesToAllPermanents())
+                            && replacement.appliesTo(CounterType.PLUS_ONE_PLUS_ONE, false, true)) {
+                        result = replacement.replace(CounterType.PLUS_ONE_PLUS_ONE, result);
+                    }
                 }
             }
         }
@@ -2048,19 +2089,57 @@ public class GameQueryService {
         if (count <= 0 || playerId == null) {
             return count;
         }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return count;
-        }
         int result = count;
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PlayerCounterReplacementEffect replacement) {
-                    result = replacement.replace(result);
+        for (UUID sourceControllerId : counterReplacementSourceControllers(gameData, playerId)) {
+            boolean affectsAllPlayers = sourceControllerId.equals(playerId);
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect activeEffect = activeCounterReplacementEffect(
+                            gameData, source, sourceControllerId, effect);
+                    if (activeEffect instanceof PlayerCounterReplacementEffect replacement
+                            && (affectsAllPlayers || replacement.appliesToAllPlayers())) {
+                        result = replacement.replace(result);
+                    }
                 }
             }
         }
         return result;
+    }
+
+    private List<UUID> counterReplacementSourceControllers(GameData gameData, UUID affectedControllerId) {
+        List<UUID> sourceControllers = new ArrayList<>();
+        if (affectedControllerId != null) {
+            sourceControllers.add(affectedControllerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!sourceControllers.contains(playerId)) {
+                sourceControllers.add(playerId);
+            }
+        }
+        for (UUID playerId : gameData.playerBattlefields.keySet()) {
+            if (!sourceControllers.contains(playerId)) {
+                sourceControllers.add(playerId);
+            }
+        }
+        return sourceControllers;
+    }
+
+    private CardEffect activeCounterReplacementEffect(
+            GameData gameData, Permanent source, UUID sourceControllerId, CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional
+                && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, sourceControllerId))) {
+            return null;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return activeCounterReplacementEffect(
+                    gameData, source, sourceControllerId, conditional.wrapped());
+        }
+        return effect;
     }
 
     /**
@@ -2693,12 +2772,15 @@ public class GameQueryService {
      */
     private record AccumulatorSnapshot(int power, int toughness, Set<Keyword> keywords,
                                        Set<Keyword> removedKeywords, boolean losesAllAbilities,
-                                       boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride,
+                                       boolean basePTOverridden, boolean basePowerOverrideSet,
+                                       boolean baseToughnessOverrideSet, int basePowerOverride,
+                                       int baseToughnessOverride,
                                        int grantedEffectCount) {
         static AccumulatorSnapshot of(StaticBonusAccumulator accumulator) {
             return new AccumulatorSnapshot(accumulator.getPower(), accumulator.getToughness(),
                     Set.copyOf(accumulator.getKeywords()), Set.copyOf(accumulator.getRemovedKeywords()),
                     accumulator.isLosesAllAbilities(), accumulator.isBasePTOverridden(),
+                    accumulator.hasBasePowerOverride(), accumulator.hasBaseToughnessOverride(),
                     accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
                     accumulator.getGrantedEffects().size());
         }
@@ -2710,12 +2792,16 @@ public class GameQueryService {
             removed.removeAll(removedKeywords);
             boolean baseChanged = includeBase && accumulator.isBasePTOverridden()
                     && (!basePTOverridden
-                        || accumulator.getBasePowerOverride() != basePowerOverride
-                        || accumulator.getBaseToughnessOverride() != baseToughnessOverride);
+                        || accumulator.hasBasePowerOverride() != basePowerOverrideSet
+                        || accumulator.hasBaseToughnessOverride() != baseToughnessOverrideSet
+                        || accumulator.hasBasePowerOverride()
+                                && accumulator.getBasePowerOverride() != basePowerOverride
+                        || accumulator.hasBaseToughnessOverride()
+                                && accumulator.getBaseToughnessOverride() != baseToughnessOverride);
             return new ModifierLine(source,
                     accumulator.getPower() - power, accumulator.getToughness() - toughness,
-                    baseChanged ? accumulator.getBasePowerOverride() : null,
-                    baseChanged ? accumulator.getBaseToughnessOverride() : null,
+                    baseChanged && accumulator.hasBasePowerOverride() ? accumulator.getBasePowerOverride() : null,
+                    baseChanged && accumulator.hasBaseToughnessOverride() ? accumulator.getBaseToughnessOverride() : null,
                     gained, removed,
                     !losesAllAbilities && accumulator.isLosesAllAbilities(), false);
         }
@@ -3067,10 +3153,10 @@ public class GameQueryService {
         LayerSystemService.BasePt basePt7b = board.basePt7b().get(target.getId());
         if (basePt7b != null) {
             int basePower = basePt7b.power() != null ? basePt7b.power()
-                    : accumulator.isBasePTOverridden() ? accumulator.getBasePowerOverride()
+                    : accumulator.hasBasePowerOverride() ? accumulator.getBasePowerOverride()
                     : target.getBasePower();
             int baseToughness = basePt7b.toughness() != null ? basePt7b.toughness()
-                    : accumulator.isBasePTOverridden() ? accumulator.getBaseToughnessOverride()
+                    : accumulator.hasBaseToughnessOverride() ? accumulator.getBaseToughnessOverride()
                     : target.getBaseToughness();
             accumulator.setBasePTOverride(basePower, baseToughness);
         }
@@ -4297,7 +4383,8 @@ public class GameQueryService {
      * a {@link GrantControllerKeywordEffect} for {@link Keyword#HEXPROOF}.
      */
     public boolean playerHasHexproof(GameData gameData, UUID playerId) {
-        return playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
+        return gameData.playersWithHexproofThisTurn.contains(playerId)
+                || playerBattlefieldGrantsControllerKeyword(gameData, playerId, Keyword.HEXPROOF);
     }
 
     /**
@@ -5427,6 +5514,17 @@ public class GameQueryService {
      */
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId) {
+        return getControllerDamageToOpponentBonus(gameData, sourceControllerId, recipientPlayerId, false);
+    }
+
+    /**
+     * Returns the additive damage bonus from static effects controlled by {@code sourceControllerId}
+     * when that controller's source would deal damage to {@code recipientPlayerId}.
+     *
+     * @param combatDamage whether the damage event is combat damage
+     */
+    public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
+                                                   UUID recipientPlayerId, boolean combatDamage) {
         if (sourceControllerId == null || recipientPlayerId == null
                 || sourceControllerId.equals(recipientPlayerId)) {
             return 0;
@@ -5436,21 +5534,25 @@ public class GameQueryService {
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                bonus[0] += getControllerDamageToOpponentBonus(gameData, effect, permanent, controllerId);
+                bonus[0] += getControllerDamageToOpponentBonus(
+                        gameData, effect, permanent, controllerId, combatDamage);
             }
         });
         return bonus[0];
     }
 
     private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
-                                                     Permanent source, UUID controllerId) {
-        if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus) {
+                                                     Permanent source, UUID controllerId,
+                                                     boolean combatDamage) {
+        if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus
+                && (!combatDamage || damageBonus.appliesToCombatDamage())) {
             return damageBonus.amount();
         }
         if (effect instanceof ConditionalEffect conditional
                 && conditionEvaluationService.isMet(gameData, conditional.condition(),
                 ConditionContext.forStaticEffect(source, controllerId))) {
-            return getControllerDamageToOpponentBonus(gameData, conditional.wrapped(), source, controllerId);
+            return getControllerDamageToOpponentBonus(
+                    gameData, conditional.wrapped(), source, controllerId, combatDamage);
         }
         return 0;
     }
@@ -5819,7 +5921,8 @@ public class GameQueryService {
             if (controllerId != null) {
                 bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
                         + getColorSourcePermanentDamageBonus(gameData, controllerId,
-                                source.getCard().getColors(), source.getId());
+                                source.getCard().getColors(), source.getId())
+                        + getSubtypeSourceDamageBonus(gameData, source);
                 if (target != null) {
                     UUID targetControllerId = findPermanentController(gameData, target.getId());
                     bonus += getAdditionalDamageToOpponentsBonus(
@@ -5829,7 +5932,7 @@ public class GameQueryService {
         }
         if (target != null) {
             bonus += getControllerDamageToOpponentBonus(gameData, controllerId,
-                    findPermanentController(gameData, target.getId()));
+                    findPermanentController(gameData, target.getId()), true);
         }
         int result = (damage + bonus) * getDamageMultiplier(gameData);
         result *= getControllerDamageMultiplier(gameData, controllerId, null, true);
@@ -5892,6 +5995,43 @@ public class GameQueryService {
             }
         });
         return bonus[0];
+    }
+
+    /**
+     * Returns the additive damage bonus from static subtype-source effects controlled by the
+     * damage source's controller when a matching creature would deal damage.
+     */
+    public int getSubtypeSourceDamageBonus(GameData gameData, Permanent damageSource) {
+        if (damageSource == null || !isCreature(gameData, damageSource)) return 0;
+        UUID sourceControllerId = findPermanentController(gameData, damageSource.getId());
+        if (sourceControllerId == null) return 0;
+
+        int[] bonus = {0};
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!sourceControllerId.equals(controllerId)) return;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                bonus[0] += getSubtypeSourceDamageBonus(
+                        gameData, damageSource, effect, permanent, controllerId);
+            }
+        });
+        return bonus[0];
+    }
+
+    private int getSubtypeSourceDamageBonus(GameData gameData, Permanent damageSource,
+                                            CardEffect effect, Permanent staticSource,
+                                            UUID controllerId) {
+        if (effect instanceof SubtypeSourceDamageBonusEffect damageBonus
+                && damageBonus.subtypes().stream()
+                .anyMatch(subtype -> hasEffectiveSubtype(gameData, damageSource, subtype))) {
+            return damageBonus.amount();
+        }
+        if (effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(staticSource, controllerId))) {
+            return getSubtypeSourceDamageBonus(
+                    gameData, damageSource, conditional.wrapped(), staticSource, controllerId);
+        }
+        return 0;
     }
 
     /**

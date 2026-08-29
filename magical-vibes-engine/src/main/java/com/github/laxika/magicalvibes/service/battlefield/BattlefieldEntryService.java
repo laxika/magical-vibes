@@ -209,7 +209,22 @@ public class BattlefieldEntryService {
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                              int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
         putPermanentOntoBattlefield(gameData, controllerId, permanent, snapshotEnterTappedTypes(gameData),
-                List.of(), xValue, kicked, repeatedAdditionalCosts);
+                List.of(), xValue, kicked, repeatedAdditionalCosts, 0);
+    }
+
+    /** Entry point for resolving permanent spells with counters granted by a cast permission. */
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                             int xValue, boolean kicked, int grantedFinalityCounters) {
+        putPermanentOntoBattlefield(gameData, controllerId, permanent, snapshotEnterTappedTypes(gameData),
+                List.of(), xValue, kicked, List.of(), grantedFinalityCounters);
+    }
+
+    /** Entry point for resolving permanent spells with repeatable costs and granted counters. */
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                             int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                                             int grantedFinalityCounters) {
+        putPermanentOntoBattlefield(gameData, controllerId, permanent, snapshotEnterTappedTypes(gameData),
+                List.of(), xValue, kicked, repeatedAdditionalCosts, grantedFinalityCounters);
     }
 
     /**
@@ -226,13 +241,25 @@ public class BattlefieldEntryService {
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked) {
         putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
-                xValue, kicked, List.of());
+                xValue, kicked, List.of(), 0);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+        putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                xValue, kicked, repeatedAdditionalCosts, 0);
+    }
+
+    public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                             Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
+                                             int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
+                                             int grantedFinalityCounters) {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
+        UUID batchId = simultaneouslyEntered.isEmpty()
+                ? UUID.randomUUID()
+                : simultaneouslyEntered.getFirst().getSimultaneousEntryBatchId();
+        permanent.setSimultaneousEntryBatchId(batchId != null ? batchId : UUID.randomUUID());
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
@@ -260,6 +287,7 @@ public class BattlefieldEntryService {
             applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
+            applyGrantedFinalityCounters(gameData, controllerId, permanent, grantedFinalityCounters);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
@@ -924,6 +952,22 @@ public class BattlefieldEntryService {
         applySpellGrantedHaste(gameData, permanent);
     }
 
+    private void applyGrantedFinalityCounters(GameData gameData, UUID controllerId, Permanent permanent,
+                                              int count) {
+        if (count <= 0 || !gameQueryService.isCreature(gameData, permanent)
+                || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return;
+        }
+        int placed = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                CounterType.FINALITY, count);
+        if (placed > 0) {
+            permanent.setCounterCount(CounterType.FINALITY,
+                    permanent.getCounterCount(CounterType.FINALITY) + placed);
+            log.info("Game {} - {} enters with {} finality counter(s)",
+                    gameData.id, permanent.getCard().getName(), placed);
+        }
+    }
+
     /**
      * Applies entry counters whose amount depends on the subtype chosen for the entering permanent.
      * The permanent is already on the battlefield when the choice is answered, but this runs before
@@ -1185,7 +1229,7 @@ public class BattlefieldEntryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count) {}
+        record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count, boolean allCreatures) {}
         List<SourcedCounters> effects = battlefield.stream()
                 .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(ControlledCreaturesEnterWithAdditionalCountersEffect.class::isInstance)
@@ -1193,14 +1237,15 @@ public class BattlefieldEntryService {
                         .map(effect -> new SourcedCounters(
                                 source,
                                 effect.subtype() != null ? effect.subtype() : source.getChosenSubtype(),
-                                effect.count())))
-                .filter(sourced -> sourced.subtype() != null)
+                                effect.count(),
+                                effect.allCreatures())))
+                .filter(sourced -> sourced.allCreatures() || sourced.subtype() != null)
                 .toList();
         if (effects.isEmpty()) return;
 
         EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
         int additionalCounters = effects.stream()
-                .filter(sourced -> hasSubtype(resolved, sourced.subtype()))
+                .filter(sourced -> sourced.allCreatures() || hasSubtype(resolved, sourced.subtype()))
                 .mapToInt(sourced -> amountEvaluationService.evaluate(gameData, sourced.count(),
                         new AmountContext(controllerId, sourced.source(), null, 0, 0)))
                 .sum();
@@ -1348,6 +1393,15 @@ public class BattlefieldEntryService {
                                                  boolean kicked, List<UUID> targetIds,
                                                  List<String> repeatedAdditionalCosts,
                                                  List<UUID> convokeCreatureIds) {
+        handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand,
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds, false);
+    }
+
+    public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 boolean wasCastFromHand, int etbMode, int xValue,
+                                                 boolean kicked, List<UUID> targetIds,
+                                                 List<String> repeatedAdditionalCosts,
+                                                 List<UUID> convokeCreatureIds, boolean giftPromised) {
         // Track kicked status on the permanent for "if wasn't kicked" end-step triggers (e.g. Skizzik)
         if (kicked) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1589,7 +1643,7 @@ public class BattlefieldEntryService {
         }
 
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand,
-                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds);
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds, giftPromised);
     }
 
     public void applyAsEntersExileCounters(GameData gameData, UUID controllerId, UUID enteringPermanentId,
@@ -1615,6 +1669,12 @@ public class BattlefieldEntryService {
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, List<UUID> targetIds) {
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, targetIds);
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                          boolean wasCastFromHand, List<UUID> targetIds, boolean giftPromised) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand,
+                0, 0, false, targetIds, List.of(), List.of(), giftPromised);
     }
 
     public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand, int etbMode) {
@@ -1685,6 +1745,15 @@ public class BattlefieldEntryService {
                                           boolean kicked, List<UUID> targetIds,
                                           List<String> repeatedAdditionalCosts,
                                           List<UUID> convokeCreatureIds) {
+        processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand,
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds, false);
+    }
+
+    public void processCreatureETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                          boolean wasCastFromHand, int etbMode, int xValue,
+                                          boolean kicked, List<UUID> targetIds,
+                                          List<String> repeatedAdditionalCosts,
+                                          List<UUID> convokeCreatureIds, boolean giftPromised) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
         ChooseSubtypeOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -1755,7 +1824,7 @@ public class BattlefieldEntryService {
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
-                    kicked, evoked, prowl, enteringPermanent, repeatedAdditionalCosts);
+                    kicked, evoked, prowl, giftPromised, enteringPermanent, repeatedAdditionalCosts);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
@@ -1787,7 +1856,7 @@ public class BattlefieldEntryService {
                         || mayTargetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                             List.of(may), modeTargetFilter, extraTriggerCopies, etbMode, xValue,
-                            repeatedAdditionalCosts, convokeCreatureIds);
+                            repeatedAdditionalCosts, convokeCreatureIds, giftPromised);
                     continue;
                 }
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -1807,7 +1876,7 @@ public class BattlefieldEntryService {
             if (!mandatoryEffects.isEmpty()) {
                 queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
                         mandatoryEffects, modeTargetFilter, extraTriggerCopies, etbMode, xValue,
-                        repeatedAdditionalCosts, convokeCreatureIds);
+                        repeatedAdditionalCosts, convokeCreatureIds, giftPromised);
             }
         }
 
@@ -1817,6 +1886,7 @@ public class BattlefieldEntryService {
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
                                                int extraEtbTriggers, boolean faceDown) {
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
+        triggerCollectionService.checkAllyCreatureBatchEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
         if (!faceDown) {
             triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
@@ -1899,7 +1969,7 @@ public class BattlefieldEntryService {
                                           TargetFilter modeTargetFilter, int extraTriggerCopies,
                                           int etbMode, int xValue,
                                           List<String> repeatedAdditionalCosts,
-                                          List<UUID> convokeCreatureIds) {
+                                          List<UUID> convokeCreatureIds, boolean giftPromised) {
         // Separate graveyard exile effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
@@ -2100,6 +2170,7 @@ public class BattlefieldEntryService {
                 if (modeTargetFilter != null) {
                     etbEntry.setTargetFilter(modeTargetFilter);
                 }
+                etbEntry.setGiftPromised(giftPromised);
                 gameData.stack.add(etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
@@ -2126,6 +2197,7 @@ public class BattlefieldEntryService {
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
+                    extraEtbEntry.setGiftPromised(giftPromised);
                     gameData.stack.add(extraEtbEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());

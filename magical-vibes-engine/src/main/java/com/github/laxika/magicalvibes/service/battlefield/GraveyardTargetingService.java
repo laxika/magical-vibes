@@ -802,6 +802,16 @@ public class GraveyardTargetingService {
                 returnEffect.requireSharedCreatureType(), false);
     }
 
+    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    StackEntryType entryType,
+                                                    ReturnTargetCardsFromGraveyardToHandEffect returnEffect,
+                                                    int maxTargetsCap, List<CardEffect> spellEffects,
+                                                    int minTargets) {
+        handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType, returnEffect.filter(),
+                maxTargetsCap, spellEffects, minTargets,
+                returnEffect.requireSharedCreatureType(), false);
+    }
+
     /**
      * Targets the union of several independently optional graveyard target groups. The answer
      * handler validates that the selected cards can be assigned one-to-one to the effect's filters.

@@ -1,0 +1,21 @@
+package com.github.laxika.magicalvibes.cards.h;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+@CardRegistration(set = "BLB", collectorNumber = "174")
+public class HazardrootHerbalist extends Card {
+
+    public HazardrootHerbalist() {
+        target(TargetFilters.creatureYouControl())
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new BoostTargetCreatureEffect(1, 0))
+                .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                        GrantKeywordEffect.toTargetIf(Keyword.DEATHTOUCH, new PermanentIsTokenPredicate()));
+    }
+}

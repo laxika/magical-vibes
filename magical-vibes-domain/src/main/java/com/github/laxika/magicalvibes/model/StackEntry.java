@@ -27,6 +27,8 @@ public class StackEntry {
     private final String description;
     private List<CardEffect> effectsToResolve;
     private final int xValue;
+    /** Total mana actually spent to cast this spell, when it was cast. */
+    @Setter private int manaSpentToCast;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
     @Setter private UUID targetId;
@@ -70,6 +72,8 @@ public class StackEntry {
      */
     @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
+    /** Whether this spell's optional Gift was promised while casting it. */
+    @Setter private boolean giftPromised;
 
     /** Whether this spell paid a kicker or multikicker cost. */
     public boolean wasKicked() {
@@ -153,6 +157,8 @@ public class StackEntry {
      * a per-permanent value instead of the aggregate {@link #eventValue} count (Seeds of Innocence).
      */
     @Setter private List<Integer> eventManaValues = List.of();
+    /** Card ids actually put into graveyards by the current resolving effect. */
+    @Setter private List<UUID> eventCardIds = List.of();
     /**
      * Last-known snapshot of the source permanent, set at activation time. Used to evaluate
      * source-relative amounts (e.g. counters on the source) per CR 608.2h last-known
@@ -245,8 +251,10 @@ public class StackEntry {
      * "it gains bloodthirst 3"). Per CR 702.54c each instance of bloodthirst applies separately, so
      * repeated grants accumulate. Stamped onto the entering {@code Permanent.grantedBloodthirst} by
      * {@code StackResolutionService} and turned into +1/+1 counters by the as-enters replacement.
-     */
+    */
     @Setter private int grantedBloodthirst;
+    /** Finality counters granted to a creature spell before it enters. */
+    @Setter private int grantedFinalityCounters;
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
     /**
@@ -525,6 +533,7 @@ public class StackEntry {
         this.eventValue = source.eventValue;
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
+        this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
@@ -551,6 +560,7 @@ public class StackEntry {
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.grantedBloodthirst = source.grantedBloodthirst;
+        this.grantedFinalityCounters = source.grantedFinalityCounters;
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
     }

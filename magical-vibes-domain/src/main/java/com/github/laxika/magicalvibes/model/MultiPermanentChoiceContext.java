@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import java.util.List;
 import java.util.Map;
@@ -405,6 +406,11 @@ public sealed interface MultiPermanentChoiceContext {
      * sacrificed (Reprocess). The draw count equals the number of permanents sacrificed.
      */
     record SacrificePermanentsDrawPerSacrificed() implements MultiPermanentChoiceContext {
+    }
+
+    /** Sacrifice exactly the chosen permanents, then resolve the follow-up effect if all succeeded. */
+    record SacrificePermanentsThen(UUID controllerId, Card sourceCard, int requiredCount,
+                                   CardEffect thenEffect) implements MultiPermanentChoiceContext {
     }
 
     /**

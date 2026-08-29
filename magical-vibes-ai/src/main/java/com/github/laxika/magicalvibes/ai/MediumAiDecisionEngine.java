@@ -204,6 +204,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
         }
+        if (sacrificePermanentId != null && hasAlternativePermanentAndGraveyardCost(card)) {
+            exileGraveyardCardIndices = null;
+        }
 
         // Calculate X value (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
@@ -447,6 +450,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
+        }
+        if (sacrificePermanentId != null && hasAlternativePermanentAndGraveyardCost(card)) {
+            exileGraveyardCardIndices = null;
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());

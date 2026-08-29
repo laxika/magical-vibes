@@ -50,7 +50,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" makes " + count + " creature(s) lose all abilities until end of turn.").build());
+                    .text(" makes " + count + " creature(s) lose all abilities "
+                            + durationLabel(e.duration()) + ".").build());
             return;
         }
 
@@ -66,7 +67,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" makes " + count + " creature(s) lose all abilities until end of turn.").build());
+                    .text(" makes " + count + " creature(s) lose all abilities "
+                            + durationLabel(e.duration()) + ".").build());
             return;
         }
 
@@ -86,8 +88,10 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
 
         applyEffect(gameData, entry, e, target);
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities until end of turn."));
-        log.info("Game {} - {} loses all abilities until end of turn", gameData.id, target.getCard().getName());
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities "
+                + durationLabel(e.duration()) + "."));
+        log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(),
+                durationLabel(e.duration()));
     }
 
     private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
@@ -96,9 +100,24 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
         // direct Permanent.hasKeyword/flag readers; the layered pass treats the flag as a
         // seed-time removal and then replays this effect at its real timestamp.
-        target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        switch (e.duration()) {
+            case UNTIL_END_OF_TURN -> target.setLosesAllAbilitiesUntilEndOfTurn(true);
+            case UNTIL_YOUR_NEXT_TURN -> target.setLosesAllAbilitiesUntilNextTurn(true);
+            case PERMANENT -> target.setLosesAllAbilitiesPermanently(true);
+            default -> {
+            }
+        }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), e,
-                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                target.getId(), null, null, e.duration(), 0));
+    }
+
+    private String durationLabel(EffectDuration duration) {
+        return switch (duration) {
+            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case PERMANENT -> "indefinitely";
+            case CONTINUOUS -> "continuously";
+            default -> "until end of turn";
+        };
     }
 }

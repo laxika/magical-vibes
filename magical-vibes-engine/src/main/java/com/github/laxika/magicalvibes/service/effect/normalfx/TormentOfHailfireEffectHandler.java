@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TormentState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -23,8 +26,9 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link TormentOfHailfireEffect}: "Repeat the following process N times. Each opponent
  * loses lifeLoss life unless that player sacrifices a nonland permanent of their choice or discards a
- * card." {@code N} is {@link TormentOfHailfireEffect#fixedIterations()} when non-null, otherwise the
- * stack entry's {@code xValue}.
+ * card." {@code N} is the dynamic iteration amount when present, then
+ * {@link TormentOfHailfireEffect#fixedIterations()} when non-null, otherwise the stack entry's
+ * {@code xValue}.
  *
  * <p>The flow is driven one opponent at a time and re-runs on every choice completion (kept alive via
  * {@link GameData#rerunCurrentEffectAfterInteraction}), mirroring
@@ -46,6 +50,8 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,9 +69,17 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             // Fresh entry: seed the iteration counter and start processing.
             state.reset();
             state.active = true;
-            int iterations = torment.fixedIterations() != null
-                    ? torment.fixedIterations()
-                    : entry.getXValue();
+            int iterations;
+            if (torment.dynamicIterations() != null) {
+                var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                iterations = source == null ? 0
+                        : amountEvaluationService.evaluate(gameData, torment.dynamicIterations(),
+                                AmountContext.forStackEntry(entry, source));
+            } else {
+                iterations = torment.fixedIterations() != null
+                        ? torment.fixedIterations()
+                        : entry.getXValue();
+            }
             state.remainingIterations = Math.max(0, iterations);
             advance(gameData, entry, sourceName, lifeLoss);
             return;

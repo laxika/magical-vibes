@@ -34,6 +34,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for a Gift actually being given to an opponent. */
+    record GiftGiven(UUID giverId) implements TriggerContext {}
+
     /** Context for "whenever a spell or ability you control counters a spell" triggers. */
     record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
 
@@ -66,6 +69,9 @@ public sealed interface TriggerContext {
 
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
+
+    /** Context for controller-forage triggers. */
+    record Forage(UUID foragingPlayerId) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -328,9 +334,14 @@ public sealed interface TriggerContext {
      * @param dyingCard          the permanent's card, now in {@code graveyardOwnerId}'s graveyard
      * @param dyingControllerId  the player who controlled the permanent on the battlefield
      * @param graveyardOwnerId   the owner of the graveyard the card was put into
+     * @param dyingPermanent      last-known battlefield information for the permanent
      */
     record AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
-                                 UUID graveyardOwnerId) implements TriggerContext {}
+                                 UUID graveyardOwnerId, Permanent dyingPermanent) implements TriggerContext {
+        public AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId, UUID graveyardOwnerId) {
+            this(dyingCard, dyingControllerId, graveyardOwnerId, null);
+        }
+    }
 
     /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).

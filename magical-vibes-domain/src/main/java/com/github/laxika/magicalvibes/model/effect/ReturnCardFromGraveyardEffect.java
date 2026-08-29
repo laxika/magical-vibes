@@ -9,10 +9,13 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.Builder;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -267,7 +270,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean shuffleGraveyardBeforeRandomSelection,
         DynamicAmount dynamicMaxManaValue,
         boolean unearth
-) implements CardEffect {
+) implements CardEffect, DyingCreatureManaValueAwareEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -287,5 +290,17 @@ public record ReturnCardFromGraveyardEffect(
         // one place the own/opponent/all narrowing lives, so the kept validator and every
         // enumeration path read the same value.
         return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
+    }
+
+    @Override
+    public CardEffect snapshotDyingCreatureManaValue(int dyingCreatureManaValue) {
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(dyingCreatureManaValue - 1);
+        CardPredicate snapshotFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder()
+                .filter(snapshotFilter)
+                .dynamicMaxManaValue(null)
+                .build();
     }
 }

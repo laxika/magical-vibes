@@ -186,6 +186,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast creature spells. */
+    record CreatureSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells only";
+        }
+    }
+
     /** Mana spendable only to cast spells with {@code spellSubtype} or planeswalker spells of {@code planeswalkerSubtype}. */
     record SubtypeOrPlaneswalkerSpells(CardSubtype spellSubtype, CardSubtype planeswalkerSubtype) implements ManaRestriction {
         @Override

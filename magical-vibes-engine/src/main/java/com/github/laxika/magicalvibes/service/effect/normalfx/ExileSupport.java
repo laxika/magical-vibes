@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
@@ -119,6 +120,14 @@ public class ExileSupport {
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped,
                                         TurnStep returnStep, int plusOnePlusOneCounters) {
+        exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, returnStep,
+                plusOnePlusOneCounters, null, 0);
+    }
+
+    public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
+                                        Permanent permanent, UUID ownerId, boolean returnTapped,
+                                        TurnStep returnStep, int plusOnePlusOneCounters,
+                                        CounterType counterTypeOnReturn, int counterAmountOnReturn) {
         List<Card> cards = permanent.cardsLeavingBattlefield();
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -130,6 +139,7 @@ public class ExileSupport {
 
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, ownerId, returnTapped, false, returnStep, plusOnePlusOneCounters,
+                counterTypeOnReturn, counterAmountOnReturn,
                 cards.size() == 1 ? List.of() : cards.subList(1, cards.size())));
 
         permanentRemovalService.removeOrphanedAuras(gameData);

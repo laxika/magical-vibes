@@ -2738,16 +2738,28 @@ public abstract class AiDecisionEngine {
         return null;
     }
 
-    /**
-     * Finds an ExileNCardsFromGraveyardCost in the card's SPELL effects, if any.
-     */
+    /** Finds a fixed-count graveyard-exile cost in the card's SPELL effects, if any. */
     protected ExileNCardsFromGraveyardCost findExileNGraveyardCost(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof ExileNCardsFromGraveyardCost cost) {
                 return cost;
             }
+            if (effect instanceof CostEffect cost && cost.consumedGraveyardCardCount() > 0) {
+                return new ExileNCardsFromGraveyardCost(
+                        cost.consumedGraveyardCardCount(), cost.consumedGraveyardCardType(),
+                        cost.consumedGraveyardCardPredicate());
+            }
         }
         return null;
+    }
+
+    /** True when a cost can consume either a chosen permanent or fixed-count graveyard cards. */
+    protected boolean hasAlternativePermanentAndGraveyardCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CostEffect.class::isInstance)
+                .map(CostEffect.class::cast)
+                .anyMatch(cost -> cost.consumedPermanentFilter() != null
+                        && cost.consumedGraveyardCardCount() > 0);
     }
 
     /**

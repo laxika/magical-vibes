@@ -296,6 +296,8 @@ export class TargetingChoiceService {
   convokeSelectedCreatureIds = signal<string[]>([]);
   private pendingMultiTargetIds: string[] = [];
   private pendingConvokeCard: Card | null = null;
+  private pendingCreatureManaAbility = false;
+  private pendingCreatureManaAbilityIndex = -1;
 
   // --- Kicker state ---
   choosingKicker = false;
@@ -1479,7 +1481,10 @@ export class TargetingChoiceService {
     if (!perm || !ability?.manaCost) return false;
     const hasX = ability.manaCost.includes('{X}');
     const xGeneric = hasX && typeof msg.xValue === 'number' && msg.xValue > 0 ? msg.xValue : 0;
-    if (this.canPayManaCost(ability.manaCost, xGeneric)) return false;
+    const creatureTapCount = ability.allowsCreatureTapForMana === true
+      ? (Array.isArray(msg.targetIds) ? msg.targetIds.length : 0)
+      : 0;
+    if (this.canPayManaCost(ability.manaCost, xGeneric - creatureTapCount)) return false;
 
     this.payingForAbility = true;
     this.pendingActivationSourceName = perm.card.name;
@@ -1499,8 +1504,15 @@ export class TargetingChoiceService {
       this.clearAbilityPayment();
       return;
     }
+    const pendingAbility = this.myBattlefieldFn()[index]?.card.activatedAbilities?.[
+      this.pendingActivationMessage?.abilityIndex ?? -1];
+    const creatureTapCount = pendingAbility?.allowsCreatureTapForMana === true
+      ? (Array.isArray(this.pendingActivationMessage?.targetIds)
+        ? this.pendingActivationMessage.targetIds.length : 0)
+      : 0;
     if (this.pendingActivationManaCost != null
-        && this.canPayManaCost(this.pendingActivationManaCost, this.pendingActivationXValue)) {
+        && this.canPayManaCost(this.pendingActivationManaCost,
+          this.pendingActivationXValue - creatureTapCount)) {
       const msg = this.pendingActivationMessage;
       msg.permanentIndex = index; // battlefield order may have changed while paying
       this.clearAbilityPayment();
@@ -2041,11 +2053,24 @@ export class TargetingChoiceService {
     this.convokeCardIndex = cardIndex;
     this.convokeCardName = card.name;
     this.pendingConvokeCard = card;
+    this.pendingCreatureManaAbility = false;
+    this.pendingCreatureManaAbilityIndex = -1;
+    this.convokeSelectedCreatureIds.set([]);
+  }
+
+  private enterCreatureManaAbilityMode(permanentIndex: number, abilityIndex: number, perm: Permanent): void {
+    this.convoking = true;
+    this.convokeCardIndex = permanentIndex;
+    this.convokeCardName = perm.card.name;
+    this.pendingConvokeCard = null;
+    this.pendingCreatureManaAbility = true;
+    this.pendingCreatureManaAbilityIndex = abilityIndex;
     this.convokeSelectedCreatureIds.set([]);
   }
 
   canSelectCastingAssistance(permanent: Permanent): boolean {
     if (!this.convoking || !permanent || permanent.tapped) return false;
+    if (this.pendingCreatureManaAbility) return isPermanentCreature(permanent);
     const card = this.pendingConvokeCard;
     const canConvoke = card?.keywords.includes('CONVOKE') ?? false;
     const canImprovise = card?.keywords.includes('IMPROVISE') ?? false;
@@ -2054,11 +2079,26 @@ export class TargetingChoiceService {
   }
 
   castingAssistancePermanentLabel(): string {
+    if (this.pendingCreatureManaAbility) return 'creatures';
     const card = this.pendingConvokeCard;
     const canConvoke = card?.keywords.includes('CONVOKE') ?? false;
     const canImprovise = card?.keywords.includes('IMPROVISE') ?? false;
     return canConvoke && canImprovise ? 'creatures or artifacts'
       : canImprovise ? 'artifacts' : 'creatures';
+  }
+
+  castingAssistancePrompt(): string {
+    return this.pendingCreatureManaAbility
+      ? `Tap creatures to help pay ${this.convokeCardName}'s ability cost`
+      : `Tap ${this.castingAssistancePermanentLabel()} to help cast ${this.convokeCardName}`;
+  }
+
+  castingAssistanceConfirmLabel(): string {
+    return this.pendingCreatureManaAbility ? 'Activate' : 'Cast';
+  }
+
+  castingAssistanceSkipLabel(): string {
+    return this.pendingCreatureManaAbility ? 'Skip creature tapping' : 'Skip Convoke';
   }
 
   toggleConvokeCreature(permanentId: string): void {
@@ -2077,6 +2117,17 @@ export class TargetingChoiceService {
 
   confirmConvoke(): void {
     if (!this.convoking) return;
+    if (this.pendingCreatureManaAbility) {
+      const msg: any = {
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.convokeCardIndex,
+        abilityIndex: this.pendingCreatureManaAbilityIndex,
+        targetIds: this.convokeSelectedCreatureIds()
+      };
+      this.sendActivateAbilityMessage(msg);
+      this.cancelConvoke();
+      return;
+    }
     const msg: any = {
       type: MessageType.PLAY_CARD,
       cardIndex: this.convokeCardIndex,
@@ -2095,6 +2146,15 @@ export class TargetingChoiceService {
 
   skipConvoke(): void {
     if (!this.convoking) return;
+    if (this.pendingCreatureManaAbility) {
+      this.sendActivateAbilityMessage({
+        type: MessageType.ACTIVATE_ABILITY,
+        permanentIndex: this.convokeCardIndex,
+        abilityIndex: this.pendingCreatureManaAbilityIndex
+      });
+      this.cancelConvoke();
+      return;
+    }
     const msg: any = {
       type: MessageType.PLAY_CARD,
       cardIndex: this.convokeCardIndex
@@ -2161,6 +2221,8 @@ export class TargetingChoiceService {
     this.convokeCardIndex = -1;
     this.convokeCardName = '';
     this.convokeSelectedCreatureIds.set([]);
+    this.pendingCreatureManaAbility = false;
+    this.pendingCreatureManaAbilityIndex = -1;
     this.pendingPhyrexianLifeCount = null;
   }
 
@@ -2618,7 +2680,10 @@ export class TargetingChoiceService {
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
     if (ability.requiresXValue && this.availableXCounters(perm, ability) < 1) return false;
+    const canHelpWithCreatureTaps = ability.allowsCreatureTapForMana === true
+      && this.myBattlefieldFn().some(p => !p.tapped && isPermanentCreature(p));
     if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
+        && !canHelpWithCreatureTaps
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
   }
@@ -2776,6 +2841,10 @@ export class TargetingChoiceService {
     }
 
     // No target or X needed — send immediately (or enter payment mode if unaffordable)
+    if (ability.allowsCreatureTapForMana === true) {
+      this.enterCreatureManaAbilityMode(permanentIndex, abilityIndex, perm);
+      return;
+    }
     this.sendActivateAbilityMessage({
       type: MessageType.ACTIVATE_ABILITY,
       permanentIndex,
