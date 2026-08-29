@@ -31,6 +31,7 @@ class SukiCourageousRescuerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 2, 0, null, null);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
@@ -49,10 +50,12 @@ class SukiCourageousRescuerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.addToBattlefield(player1, new Forest());
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1);
@@ -63,6 +66,7 @@ class SukiCourageousRescuerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())

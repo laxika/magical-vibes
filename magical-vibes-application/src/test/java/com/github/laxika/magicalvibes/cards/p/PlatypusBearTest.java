@@ -52,10 +52,11 @@ class PlatypusBearTest extends BaseCardTest {
     void canAttackWithLesson() {
         harness.setGraveyard(player1, List.of(new AirbendingLesson()));
         Permanent bear = addReadyPlatypusBear();
+        int lifeBefore = gd.getLife(player2.getId());
 
         declareAttackers(List.of(battlefieldIndex(bear)));
 
-        assertThat(bear.isAttacking()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
     @Test

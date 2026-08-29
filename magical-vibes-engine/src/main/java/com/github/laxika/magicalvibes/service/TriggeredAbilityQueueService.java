@@ -1891,6 +1891,9 @@ public class TriggeredAbilityQueueService {
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
             return returnEffect;
         }
+        if (effect instanceof MayEffect may) {
+            return targetedReturnEffect(may.wrapped());
+        }
         if (effect instanceof ConditionalEffect conditional) {
             return targetedReturnEffect(conditional.wrapped());
         }

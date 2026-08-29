@@ -37,8 +37,8 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
 
-        assertThat(wrestlers.getEffectivePower()).isEqualTo(4);
-        assertThat(wrestlers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -69,8 +69,8 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(village.getEffectivePower()).isEqualTo(3);
-        assertThat(wrestlers.getEffectivePower()).isEqualTo(4);
-        assertThat(wrestlers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isTrue();
     }
 

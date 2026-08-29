@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentThenEffect;
@@ -54,6 +55,14 @@ public class TargetPlayerGainsControlOfTargetPermanentThenEffectHandler implemen
         }
 
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        if (effectIndex < 0 && gameData.pendingEffectResolutionEntry == entry) {
+            int pendingIndex = gameData.pendingEffectResolutionIndex;
+            if (pendingIndex >= 0 && pendingIndex < entry.getEffectsToResolve().size()
+                    && entry.getEffectsToResolve().get(pendingIndex) instanceof MayEffect may
+                    && may.wrapped().equals(effect)) {
+                effectIndex = pendingIndex;
+            }
+        }
         if (effectIndex < 0) {
             throw new IllegalStateException(
                     "TargetPlayerGainsControlOfTargetPermanentThenEffect is not part of the resolving entry");

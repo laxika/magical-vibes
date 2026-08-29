@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AvenShrine;
 import com.github.laxika.magicalvibes.cards.f.FirebendingLesson;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TheRiseOfSozin;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GuruPathik.class, AvenShrine.class, FirebendingLesson.class, HillGiant.class,
+@CardUsed({GuruPathik.class, HondenOfSeeingWinds.class, FirebendingLesson.class, HillGiant.class,
         Shock.class, TheRiseOfSozin.class})
 class GuruPathikTest extends BaseCardTest {
 
@@ -29,7 +29,7 @@ class GuruPathikTest extends BaseCardTest {
     void etbOffersLessonSagaAndShrine() {
         Card lesson = new FirebendingLesson();
         Card saga = new TheRiseOfSozin();
-        Card shrine = new AvenShrine();
+        Card shrine = new HondenOfSeeingWinds();
         Card shock = new Shock();
         Card forest = new Forest();
         setLibrary(List.of(lesson, saga, shrine, shock, forest));

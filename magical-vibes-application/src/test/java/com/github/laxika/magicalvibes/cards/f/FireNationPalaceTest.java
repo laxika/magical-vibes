@@ -40,7 +40,7 @@ class FireNationPalaceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         Permanent palace = harness.addToBattlefieldAndReturn(player1, new FireNationPalace());
 
-        gs.tapPermanent(gd, player1, 1);
+        harness.activateAbility(player1, 1, 0, null, null);
 
         assertThat(palace.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);

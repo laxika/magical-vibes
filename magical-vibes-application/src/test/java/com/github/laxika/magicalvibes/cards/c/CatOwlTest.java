@@ -55,7 +55,7 @@ class CatOwlTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact or creature");
+                .hasMessageContaining("Invalid permanent");
     }
 
     private Permanent addReadyCatOwl() {

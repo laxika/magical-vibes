@@ -1748,6 +1748,18 @@ public class DeathTriggerCollectorService {
             resolved = ((OncePerTurnTriggerEffect) resolved).wrapped();
         }
 
+        if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(),
+                    new ArrayList<>(List.of(resolved))));
+            if (oncePerTurn) {
+                match.gameData().oncePerTurnTriggersFiredThisTurn.add(match.permanent().getId());
+            }
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            return true;
+        }
+
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -2572,15 +2584,16 @@ public class DeathTriggerCollectorService {
 
     // ── ON_ANY_NONTOKEN_CREATURE_DIES ──────────────────────────────────
 
-    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
-    boolean handleAnyNontokenCreatureDeathMay(TriggerMatchContext match,
-            MayEffect may, TriggerContext ctx) {
+    @CollectsTrigger(value = ExileTriggeringCreatureAndTrackWithSourceEffect.class,
+            slot = EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)
+    boolean handleAnyNontokenCreatureDeathExileAndTrack(TriggerMatchContext match,
+            ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        MayEffect resolvedMay = may;
-        if (may.wrapped() instanceof DyingCreatureCardAwareEffect aware && cd.dyingCard() != null) {
-            resolvedMay = new MayEffect(aware.boundToDyingCard(cd.dyingCard().getId()),
-                    may.prompt(), may.elseEffect());
-        }
+        MayEffect rawMay = (MayEffect) match.rawEffect();
+        CardEffect bound = cd.dyingCard() == null
+                ? effect
+                : effect.boundToDyingCard(cd.dyingCard().getId());
+        MayEffect resolvedMay = new MayEffect(bound, rawMay.prompt(), rawMay.elseEffect());
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
                 resolvedMay, null, match.permanent().getId());
         logAnyCreatureDeath(match);

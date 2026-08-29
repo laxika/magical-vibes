@@ -27,6 +27,7 @@ class KyoshiBattleFanTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent fan = findPermanent(player1, "Kyoshi Battle Fan");
         Permanent ally = findPermanent(player1, "Ally");

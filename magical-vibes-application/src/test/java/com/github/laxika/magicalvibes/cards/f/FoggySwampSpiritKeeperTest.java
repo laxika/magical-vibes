@@ -52,7 +52,7 @@ class FoggySwampSpiritKeeperTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, token)))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't be blocked");
+                .hasMessageContaining("cannot block");
     }
 
     @Test
