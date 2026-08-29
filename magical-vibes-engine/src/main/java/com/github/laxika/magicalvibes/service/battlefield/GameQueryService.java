@@ -3296,6 +3296,14 @@ public class GameQueryService {
         return computeStaticBonusForController(gameData, target, null);
     }
 
+    /**
+     * Controller-aware form for a permanent whose controller cannot be discovered from current
+     * battlefield membership, such as a last-known-information snapshot.
+     */
+    public StaticBonus computeStaticBonus(GameData gameData, Permanent target, UUID targetControllerId) {
+        return computeStaticBonusForController(gameData, target, targetControllerId);
+    }
+
     private StaticBonus computeStaticBonusForController(
             GameData gameData, Permanent target, UUID targetControllerId) {
         // One layered pass per external query: the layer-4 board state is computed once and

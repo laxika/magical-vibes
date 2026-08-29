@@ -4019,7 +4019,8 @@ public class TriggerCollectionService {
         effects.addAll(watcher.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         if (watcher.getId().equals(damageSource.getId())) {
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                    gameData, watcher, EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
+                    gameData, watcher, damageSourceControllerId,
+                    EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
         }
 
         TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
