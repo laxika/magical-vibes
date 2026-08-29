@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "126")
+@CardRegistration(set = "BNG", collectorNumber = "86")
 public class WeightOfTheUnderworld extends Card {
 
     public WeightOfTheUnderworld() {

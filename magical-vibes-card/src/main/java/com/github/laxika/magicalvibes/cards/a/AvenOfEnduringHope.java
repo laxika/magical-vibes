@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "HOU", collectorNumber = "5")
+@CardRegistration(set = "AKR", collectorNumber = "6")
 public class AvenOfEnduringHope extends Card {
 
     public AvenOfEnduringHope() {

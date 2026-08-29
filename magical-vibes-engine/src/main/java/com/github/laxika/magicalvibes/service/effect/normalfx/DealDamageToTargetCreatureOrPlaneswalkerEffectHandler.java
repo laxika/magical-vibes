@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -41,9 +42,12 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
         int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
 
         // Multi-target / optional "up to N" ETB path: targets land on targetIds with targetId null.
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
-                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
-            for (UUID targetId : entry.getTargetIds()) {
+        // When this effect is bound to a target group, narrow the flat list to that group so a
+        // modal spell does not apply the same effect to targets belonging to another effect.
+        List<UUID> effectTargets = entry.targetsForEffect(e);
+        if (effectTargets != null && !effectTargets.isEmpty()
+                && (effectTargets.size() > 1 || entry.getTargetId() == null)) {
+            for (UUID targetId : effectTargets) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
                 markForExileInsteadOfDying(gameData, target, e);
@@ -63,7 +67,9 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
 
     private void markForExileInsteadOfDying(GameData gameData, Permanent target,
                                             DealDamageToTargetCreatureOrPlaneswalkerEffect effect) {
-        if (effect.exileInsteadOfDie() && gameQueryService.isCreature(gameData, target)) {
+        if (effect.exileInsteadOfDie()
+                && (gameQueryService.isCreature(gameData, target)
+                || gameQueryService.isPlaneswalker(gameData, target))) {
             target.setExileInsteadOfDieThisTurn(true);
         }
     }

@@ -11,7 +11,7 @@ Input is a **set code + one or more collector numbers** from that set (e.g. `DKA
 
 This is a **read-only review of implementation**. Do **not** edit card classes, effects, predicates, or docs unless the user explicitly asks you to fix findings afterward. Do not commit.
 
-**Tests are the exception:** you **should** add new focused tests when coverage is incomplete or you spot plausible edge cases (see Step 4). Do not rewrite or delete existing tests unless they are clearly wrong (wrong oracle expectation); prefer adding cases. New tests follow CLAUDE.md conventions (harness/`gs`/`gd` behavior only — no Scryfall metadata or white-box wiring assertions).
+**Tests are the exception:** you **should** add new focused tests when coverage is incomplete or you spot plausible edge cases (see Step 4). Do not rewrite or delete existing behavioral tests unless they are clearly wrong (wrong oracle expectation); prefer adding cases. Remove all unused code from the test class, including unused imports, variables, setup, helpers, and dead test code. New tests follow CLAUDE.md conventions (harness/`gs`/`gd` behavior only — no Scryfall metadata or white-box wiring assertions).
 
 The hard rules in `CLAUDE.md` (rules accuracy, reuse over creation, testing conventions) are the review criteria.
 
@@ -39,7 +39,7 @@ Using oracle text from Step 1, verify:
 2. **Reuse over creation** — effects/predicates composed from existing building blocks; no unnecessary new effect/predicate classes.
 3. **Slots, targeting, costs** — correct `EffectSlot`s, target filters/`TargetSpec`, triggered/activated ability wiring. Grep `agent-docs/` when unsure (never read those docs in full): `CARD_PATTERN_INDEX.md`, `ORACLE_TEXT_EFFECT_MAP.md`, `EFFECTS_QUICK_REFERENCE.md`, `TRIGGER_SLOT_TARGETING.md`, `ACTIVATED_ABILITY_GUIDE.md`, `PREDICATES_REFERENCE.md`.
 4. **Constructor hygiene** — constructor is engine logic only; no manual metadata setters.
-5. **Tests** — present when required (not basic land / vanilla); exercise behavior through the harness (`harness`/`gs`/`gd`), not Scryfall metadata or white-box wiring (`getEffects`, `EffectSlot`, reflection). Skip running the full suite; optionally run the focused test via `scripts/run-card-test.ps1` only if needed to confirm a suspected bug.
+5. **Tests** — present when required (not basic land / vanilla); exercise behavior through the harness (`harness`/`gs`/`gd`), not Scryfall metadata or white-box wiring (`getEffects`, `EffectSlot`, reflection); contain no unused imports, variables, setup, helpers, or dead test code. Remove every unused piece you find. Skip running the full suite; optionally run the focused test via `scripts/run-card-test.ps1` only if needed to confirm a suspected bug.
 
 ## Step 4 — Improve test coverage (encouraged)
 
@@ -58,6 +58,7 @@ Do **not** add tests for:
 If you add tests:
 - Put them in the card’s existing test class (create the test file only if missing and tests are required).
 - Match nearby `BaseCardTest` patterns; keep cases focused and named for the behavior.
+- Make sure that only one set's cards are used in the test, preferably the set where the tested card is from. If that is not possible, other sets may be used, but keep the number of sets as limited as practical.
 - Optionally run only that card’s tests via `scripts/run-card-test.ps1`. If a new test fails and confirms a real bug, that is a **FAIL** finding (implementation still wrong) — leave the failing test in place unless it is flaky/invalid; note it in the result file. If the new test passes, that strengthens coverage; it alone does not create a FAIL.
 
 Still do **not** change production card/effect code in this step.

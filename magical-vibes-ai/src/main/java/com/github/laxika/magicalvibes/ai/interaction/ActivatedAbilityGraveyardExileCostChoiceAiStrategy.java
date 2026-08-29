@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import lombok.extern.slf4j.Slf4j;
 
-/** Pays the maximum available X for an activated ability's variable graveyard-exile cost. */
+import java.util.List;
+import java.util.UUID;
+
+/** Pays an activated ability's graveyard-exile cost with a legal maximum selection. */
 @Slf4j
 class ActivatedAbilityGraveyardExileCostChoiceAiStrategy
         implements AiInteractionStrategy<PendingInteraction.ActivatedAbilityGraveyardExileCostChoice> {
@@ -21,8 +24,10 @@ class ActivatedAbilityGraveyardExileCostChoiceAiStrategy
             return;
         }
 
+        List<UUID> selectedCardIds = interaction.validCardIds().subList(
+                0, Math.min(interaction.maximumCards(), interaction.validCardIds().size()));
         log.info("AI: Exiling {} graveyard cards for an activated ability in game {}",
-                interaction.validCardIds().size(), ctx.gameId());
-        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(interaction.validCardIds()));
+                selectedCardIds.size(), ctx.gameId());
+        ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(selectedCardIds));
     }
 }

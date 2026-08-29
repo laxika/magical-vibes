@@ -6,14 +6,20 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,12 +31,32 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
+    private final PredicateEvaluationService predicateEvaluationService;
+
+    @Autowired
+    public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
+                                              GameLogService gameLogService,
+                                              AmountEvaluationService amountEvaluationService,
+                                              ExileService exileService,
+                                              PredicateEvaluationService predicateEvaluationService) {
+        this.gameQueryService = gameQueryService;
+        this.gameLogService = gameLogService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.exileService = exileService;
+        this.predicateEvaluationService = predicateEvaluationService;
+    }
+
+    public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
+                                              GameLogService gameLogService,
+                                              ExileService exileService) {
+        this(gameQueryService, gameLogService, null, exileService, null);
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,18 +85,36 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             }
         }
 
-        if (sourcePermanent == null) {
+        Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
+        List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard
+                .getEffects(EffectSlot.STATIC).stream()
+                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
+                .toList();
+        if (sourcePermanent == null && persistentPermissions.isEmpty()) {
             log.info("Game {} - Source permanent no longer on battlefield, exile-top-cards fizzles", gameData.id);
             return;
         }
 
-        if (e.toGraveyardOnControlLoss()) {
+        if (e.toGraveyardOnControlLoss() && sourcePermanent != null) {
             gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId, controllerId);
         }
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {
-            exileTopCards(gameData, e, playerId, sourcePermanent, sourcePermanentId);
+            exileTopCards(gameData, e, playerId, sourceCard, sourcePermanentId,
+                    effectiveCount(gameData, entry, sourcePermanent, e), persistentPermissions,
+                    controllerId);
         }
+    }
+
+    private int effectiveCount(GameData gameData, StackEntry entry, Permanent sourcePermanent,
+                               ExileTopCardsToSourceEffect effect) {
+        if (effect.dynamicCount() == null) {
+            return effect.count();
+        }
+        return Math.max(0, amountEvaluationService.evaluate(gameData, effect.dynamicCount(),
+                AmountContext.forStackEntry(entry, sourcePermanent)));
     }
 
     /** The players who exile, in the order they do so. */
@@ -78,36 +122,66 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                                       UUID controllerId) {
         return switch (scope) {
             case CONTROLLER -> List.of(controllerId);
+            case TARGET_PLAYER -> entry.getTargetId() != null
+                    && gameData.orderedPlayerIds.contains(entry.getTargetId())
+                    ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             case TARGET_OPPONENT -> {
-                // A combat-damage trigger binds the damaged player as the target; otherwise
-                // (Grimoire Thief) the single opponent is the only legal target in a two-player game.
+                // Combat-damage triggers bind the damaged player as the target, while attack
+                // triggers retain the attacked player or planeswalker in attackedTargetId.
                 UUID opponentId = entry.getTargetId() != null
                         && gameData.orderedPlayerIds.contains(entry.getTargetId())
                         && !entry.getTargetId().equals(controllerId)
                         ? entry.getTargetId()
-                        : gameData.orderedPlayerIds.stream()
-                                .filter(id -> !id.equals(controllerId))
-                                .findFirst().orElse(null);
+                        : defendingPlayerId(gameData, entry.getAttackedTargetId(), controllerId);
                 yield opponentId == null ? List.of() : List.of(opponentId);
             }
         };
     }
 
+    private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId, UUID controllerId) {
+        if (attackedTargetId != null) {
+            if (gameData.playerIds.contains(attackedTargetId)) {
+                return attackedTargetId;
+            }
+            UUID planeswalkerControllerId = gameQueryService.findPermanentController(gameData, attackedTargetId);
+            if (planeswalkerControllerId != null) {
+                return planeswalkerControllerId;
+            }
+        }
+        return gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst().orElse(null);
+    }
+
     private void exileTopCards(GameData gameData, ExileTopCardsToSourceEffect e, UUID playerId,
-                               Permanent sourcePermanent, UUID sourcePermanentId) {
+                               Card sourceCard, UUID sourcePermanentId, int count,
+                               List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions,
+                               UUID sourceControllerId) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null) {
             return;
         }
 
-        int toExile = Math.min(e.count(), deck.size());
+        int toExile = Math.min(count, deck.size());
         for (int i = 0; i < toExile; i++) {
             Card card = deck.removeFirst();
             if (e.faceDown()) {
                 exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
             } else {
                 exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+            }
+            for (AllowCastFromCardsExiledWithSourceEffect permission : persistentPermissions) {
+                if (permission.filter() == null || (predicateEvaluationService != null
+                        && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))) {
+                    UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
+                            ? playerId : sourceControllerId;
+                    gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+                    if (permission.anyManaType()) {
+                        gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                    }
+                    break;
+                }
             }
         }
 
@@ -119,9 +193,9 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             gameLogService.append(gameData, GameLog.builder()
                     .text(playerName + " exiles the top " + toExile + " card"
                             + (toExile != 1 ? "s" : "") + " of their library" + visibility + " (")
-                    .card(sourcePermanent.getCard()).text(").").build());
+                    .card(sourceCard).text(").").build());
             log.info("Game {} - {} exiles {} cards from library to {}",
-                    gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
+                    gameData.id, playerName, toExile, sourceCard.getName());
         }
     }
 }

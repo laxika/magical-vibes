@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
  * Back half (Riches) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "222")
+@CardRegistration(set = "AKR", collectorNumber = "252")
 public class RagsRiches extends Card {
 
     public RagsRiches() {

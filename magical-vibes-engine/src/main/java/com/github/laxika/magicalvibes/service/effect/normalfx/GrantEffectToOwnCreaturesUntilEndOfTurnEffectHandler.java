@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -39,8 +40,10 @@ public class GrantEffectToOwnCreaturesUntilEndOfTurnEffectHandler implements Nor
                 if (!gameQueryService.isCreature(gameData, permanent)) {
                     continue;
                 }
-                if (e.filter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter())) {
+                if (e.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                        permanent,
+                        e.filter(),
+                        FilterContext.of(gameData).withSourcePermanentId(entry.getSourcePermanentId()))) {
                     continue;
                 }
                 permanent.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());

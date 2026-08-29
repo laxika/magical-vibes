@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "86")
+@CardRegistration(set = "EMN", collectorNumber = "74")
 public class SpontaneousMutation extends Card {
 
     public SpontaneousMutation() {

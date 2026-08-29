@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,11 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link RevealTopCardsAndSeparateEffect}: reveal the top {@code count} cards of the
- * controller's library, then hand the pile split to the appropriate player. Reuses the shared card-pile
+ * Resolves {@link RevealTopCardsAndSeparateEffect}: takes the top {@code count} cards of the
+ * controller's library, then hands the pile split to the appropriate player. Reuses the shared card-pile
  * separation flow ({@link PendingPileSeparation} with {@link CardPileDisposition#HAND}); the
  * pile separator and chooser depend on the effect variant, while the chosen pile goes to hand
- * and the other to the graveyard. (Unesh, Criosphinx Sovereign; Steam Augury.)
+ * and the other to the graveyard. (Unesh, Criosphinx Sovereign; Steam Augury; Fortune's Favor.)
  */
 @Slf4j
 @Component
@@ -33,6 +36,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -47,10 +51,12 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
+        int count = Math.max(0, amountEvaluationService.evaluate(
+                gameData, e.count(), AmountContext.forStackEntry(entry, null)));
 
         List<Card> revealedCards = new ArrayList<>();
         Map<UUID, UUID> cardOwners = new HashMap<>();
-        for (int i = 0; i < e.count() && deck != null && !deck.isEmpty(); i++) {
+        for (int i = 0; i < count && deck != null && !deck.isEmpty(); i++) {
             Card card = deck.removeFirst();
             revealedCards.add(card);
             cardOwners.put(card.getId(), controllerId);
@@ -61,14 +67,21 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
             return;
         }
 
-        String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + "."));
+        if (e.faceDownPile()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " looks at the top "
+                    + revealedCards.size() + " cards of their library."));
+        } else {
+            String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
+            gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + "."));
+        }
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(controllerId))
-                .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
+                .toList();
+        UUID opponentId = e.targetedSeparator()
+                ? entry.getTargetId()
+                : opponentIds.size() == 1 ? opponentIds.getFirst() : null;
+        if (opponentIds.isEmpty() || e.targetedSeparator() && opponentId == null) {
             // No opponent to separate the piles — put the revealed cards into the controller's hand.
             for (Card card : revealedCards) {
                 gameData.addCardToHand(controllerId, card);
@@ -80,8 +93,22 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
                 List.of(), revealedCards, cardOwners, List.of(), List.of(), e.disposition(),
                 !e.controllerSeparates()));
 
+        if (!e.targetedSeparator() && e.controllerSeparates() && e.faceDownPile() && opponentIds.size() > 1) {
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CuratorOpponentChoice());
+            playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponentIds,
+                    "Choose an opponent to choose a pile for Curator of Destinies.");
+            return;
+        }
+
         UUID separatorId = e.controllerSeparates() ? controllerId : opponentId;
-        playerInputService.beginMultiGraveyardChoice(gameData, separatorId, revealedCards, revealedCards.size(),
-                "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
+        String prompt;
+        if (e.faceDownPile()) {
+            prompt = e.controllerSeparates()
+                    ? "Look at the cards and select cards for the face-up pile (unselected cards form the face-down pile)."
+                    : "Separate the cards into a face-down pile and a face-up pile. Select cards for the face-down pile (unselected form the face-up pile).";
+        } else {
+            prompt = "Separate the revealed cards into two piles. Select cards for Pile 1 (unselected form Pile 2).";
+        }
+        playerInputService.beginMultiGraveyardChoice(gameData, separatorId, revealedCards, revealedCards.size(), prompt);
     }
 }

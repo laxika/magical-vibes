@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "MIR", collectorNumber = "118")
 @CardRegistration(set = "5ED", collectorNumber = "156")
 @CardRegistration(set = "4ED", collectorNumber = "132")
+@CardRegistration(set = "BTD", collectorNumber = "24")
+@CardRegistration(set = "SUM", collectorNumber = "106")
 public class DrainLife extends Card {
 
     public DrainLife() {

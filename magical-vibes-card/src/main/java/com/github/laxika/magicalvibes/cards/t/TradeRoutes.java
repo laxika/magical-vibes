@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "108")
 @CardRegistration(set = "8ED", collectorNumber = "109")
+@CardRegistration(set = "MMQ", collectorNumber = "112")
 public class TradeRoutes extends Card {
 
     public TradeRoutes() {

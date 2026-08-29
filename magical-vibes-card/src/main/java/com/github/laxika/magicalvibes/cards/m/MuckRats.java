@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "102")
 @CardRegistration(set = "P02", collectorNumber = "80")
+@CardRegistration(set = "S99", collectorNumber = "84")
 public class MuckRats extends Card {
 }

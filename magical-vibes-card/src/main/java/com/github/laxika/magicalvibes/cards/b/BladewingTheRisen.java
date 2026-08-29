@@ -23,6 +23,7 @@ public class BladewingTheRisen extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardSubtypePredicate(CardSubtype.DRAGON))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
 
         // {B}{R}: Dragon creatures get +1/+1 until end of turn.

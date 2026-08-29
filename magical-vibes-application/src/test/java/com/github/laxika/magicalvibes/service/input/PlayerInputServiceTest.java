@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -14,6 +16,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -35,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -331,6 +336,45 @@ class PlayerInputServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Counter assignment choices")
+    class CounterAssignmentChoices {
+
+        @Test
+        @DisplayName("Saga distribution requires every remaining counter on the final target")
+        void sagaDistributionRequiresEveryRemainingCounterOnFinalTarget() {
+            UUID firstTargetId = UUID.randomUUID();
+            UUID finalTargetId = UUID.randomUUID();
+            ChoiceContext.SagaChapterCounterAssignment context =
+                    new ChoiceContext.SagaChapterCounterAssignment(
+                            createCard("Saga", CardType.ENCHANTMENT), PLAYER1_ID, List.of(),
+                            UUID.randomUUID(), "II", CounterType.PLUS_ONE_PLUS_ONE,
+                            List.of(firstTargetId, finalTargetId), Map.of(firstTargetId, 1), 7, 1);
+
+            svc.beginSagaChapterCounterAssignmentChoice(gd, PLAYER1_ID, context);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                    .containsExactly("6");
+        }
+
+        @Test
+        @DisplayName("Triggered distribution requires every remaining counter on the final target")
+        void triggeredDistributionRequiresEveryRemainingCounterOnFinalTarget() {
+            UUID firstTargetId = UUID.randomUUID();
+            UUID finalTargetId = UUID.randomUUID();
+            ChoiceContext.CounterDistributionAssignment context =
+                    new ChoiceContext.CounterDistributionAssignment(
+                            createCreature("Source"), PLAYER1_ID, List.of(), UUID.randomUUID(),
+                            CounterType.PLUS_ONE_PLUS_ONE, List.of(firstTargetId, finalTargetId),
+                            Map.of(firstTargetId, 2), 7, 1);
+
+            svc.beginCounterDistributionAssignmentChoice(gd, PLAYER1_ID, context);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                    .containsExactly("5");
+        }
+    }
+
     // ========================================================================
     // beginMultiGraveyardChoice
     // ========================================================================
@@ -561,6 +605,34 @@ class PlayerInputServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("beginSpellCardTypeChoice")
+    class BeginSpellCardTypeChoice {
+
+        @Test
+        @DisplayName("Sends every card type option")
+        void sendsCardTypes() {
+            svc.beginSpellCardTypeChoice(gd, PLAYER1_ID);
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).containsExactly(
+                    "LAND", "CREATURE", "ENCHANTMENT", "SORCERY", "INSTANT", "ARTIFACT",
+                    "PLANESWALKER", "BATTLE", "KINDRED");
+            assertThat(msg.prompt()).isEqualTo("Choose a card type.");
+        }
+
+        @Test
+        @DisplayName("Stores SpellCardTypeChoice context")
+        void storesContext() {
+            svc.beginSpellCardTypeChoice(gd, PLAYER1_ID);
+
+            PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice.context()).isInstanceOf(ChoiceContext.SpellCardTypeChoice.class);
+            assertThat(((ChoiceContext.SpellCardTypeChoice) choice.context()).controllerId())
+                    .isEqualTo(PLAYER1_ID);
+        }
+    }
+
     // ========================================================================
     // beginBasicLandTypeChoice
     // ========================================================================
@@ -607,6 +679,24 @@ class PlayerInputServiceTest {
             ChoiceContext.BasicLandTypeChoice ctx =
                     (ChoiceContext.BasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.allowedTypes()).containsExactly(CardSubtype.ISLAND, CardSubtype.SWAMP);
+        }
+
+        @Test
+        @DisplayName("Offers only the allowed types for a target land choice")
+        void sendsOnlyAllowedTargetLandTypes() {
+            UUID targetLandId = UUID.randomUUID();
+
+            svc.beginAddBasicLandTypeChoice(gd, PLAYER1_ID, targetLandId,
+                    EffectDuration.UNTIL_END_OF_TURN,
+                    true, List.of(CardSubtype.PLAINS, CardSubtype.ISLAND));
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).containsExactly("PLAINS", "ISLAND");
+
+            ChoiceContext.AddBasicLandTypeChoice ctx =
+                    (ChoiceContext.AddBasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.allowedTypes()).containsExactly(CardSubtype.PLAINS, CardSubtype.ISLAND);
+            assertThat(ctx.replacing()).isTrue();
         }
     }
 
@@ -759,6 +849,17 @@ class PlayerInputServiceTest {
         }
 
         @Test
+        @DisplayName("Stores a finite exile cap and hand-exile draw rider")
+        void storesFiniteExileOptions() {
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null, 4, true);
+
+            ChoiceContext.ExileByNameChoice ctx =
+                    (ChoiceContext.ExileByNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.maxCount()).isEqualTo(4);
+            assertThat(ctx.drawForEachHandCardExiled()).isTrue();
+        }
+
+        @Test
         @DisplayName("A required type offers only names of cards with that type")
         void requiredTypeOffersOnlyMatchingNames() {
             Card artifact = createCard("Sol Ring", CardType.ARTIFACT);
@@ -771,6 +872,29 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Sol Ring");
             assertThat(msg.options()).doesNotContain("Bear");
+        }
+
+        @Test
+        @DisplayName("Excludes basic land names while retaining nonbasic land names")
+        void excludesBasicLandNames() {
+            Card basicLand = createCard("Plains", CardType.LAND);
+            basicLand.setSupertypes(Set.of(CardSupertype.BASIC));
+            Card nonbasicLand = createCard("Bojuka Bog", CardType.LAND);
+            Card creature = createCreature("Bear");
+            gd.playerHands.get(PLAYER2_ID).addAll(List.of(basicLand, nonbasicLand, creature));
+            CreateTokenEffect tokenTemplate = CreateTokenEffect.blackZombie(1);
+
+            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null,
+                    Integer.MAX_VALUE, false, true, tokenTemplate, "M21");
+
+            InteractionPromptMessage msg = projectedPrompt();
+            assertThat(msg.options()).contains("Bojuka Bog", "Bear");
+            assertThat(msg.options()).doesNotContain("Plains");
+            assertThat(msg.prompt()).isEqualTo("Choose a card name other than a basic land card name.");
+            ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice)
+                    gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+            assertThat(ctx.tokenTemplate()).isEqualTo(tokenTemplate);
+            assertThat(ctx.sourceSetCode()).isEqualTo("M21");
         }
     }
 

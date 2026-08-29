@@ -59,7 +59,7 @@ class ContagionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Contagion(), new BogImp()));
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castInstantWithAlternateExileFromHand(player1, 0, giant.getId(), 1);
+        harness.castInstantWithAlternateExileFromHand(player1, 0, List.of(giant.getId()), 1);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);

@@ -8,12 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "KLD", collectorNumber = "23")
 @CardRegistration(set = "FRF", collectorNumber = "21")
 public class PressurePoint extends Card {
 
     public PressurePoint() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+                .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

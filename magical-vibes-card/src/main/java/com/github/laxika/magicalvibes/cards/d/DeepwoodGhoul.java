@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "127")
+@CardRegistration(set = "MMQ", collectorNumber = "131")
 public class DeepwoodGhoul extends Card {
 
     public DeepwoodGhoul() {

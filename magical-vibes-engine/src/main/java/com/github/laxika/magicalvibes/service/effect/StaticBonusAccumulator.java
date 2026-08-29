@@ -19,6 +19,7 @@ import java.util.Set;
 
 public class StaticBonusAccumulator {
 
+    private String name;
     private int power;
     private int toughness;
     private final Set<Keyword> keywords = new HashSet<>();
@@ -37,9 +38,11 @@ public class StaticBonusAccumulator {
     private boolean landSubtypeOverriding;
     private boolean cardTypeOverriding;
     private boolean basePTOverridden;
-    private int basePowerOverride;
-    private int baseToughnessOverride;
+    private Integer basePowerOverride;
+    private Integer baseToughnessOverride;
     private boolean losesAllAbilities;
+    private boolean losesAllNonManaAbilities;
+    private int devotionBonus;
     /**
      * While {@code true}, layer 5/6 outputs (colors, keywords, keyword removals, ability loss,
      * protection, granted abilities/effects) are discarded: the CR 613 layered pass already
@@ -61,6 +64,14 @@ public class StaticBonusAccumulator {
         toughness += amount;
     }
 
+    public void addDevotionBonus(int amount) {
+        devotionBonus += amount;
+    }
+
+    public int getDevotionBonus() {
+        return devotionBonus;
+    }
+
     public void addKeyword(Keyword keyword) {
         if (layeredOutputsSuppressed) return;
         keywords.add(keyword);
@@ -77,6 +88,14 @@ public class StaticBonusAccumulator {
 
     public int getPower() {
         return power;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int getToughness() {
@@ -212,15 +231,19 @@ public class StaticBonusAccumulator {
         return basePTOverridden;
     }
 
-    public int getBasePowerOverride() {
+    public Integer getBasePowerOverride() {
         return basePowerOverride;
     }
 
-    public int getBaseToughnessOverride() {
+    public Integer getBaseToughnessOverride() {
         return baseToughnessOverride;
     }
 
     public void setBasePTOverride(int power, int toughness) {
+        setBasePTOverride(Integer.valueOf(power), Integer.valueOf(toughness));
+    }
+
+    public void setBasePTOverride(Integer power, Integer toughness) {
         this.basePTOverridden = true;
         this.basePowerOverride = power;
         this.baseToughnessOverride = toughness;
@@ -235,6 +258,15 @@ public class StaticBonusAccumulator {
         this.losesAllAbilities = losesAllAbilities;
     }
 
+    public boolean isLosesAllNonManaAbilities() {
+        return losesAllNonManaAbilities;
+    }
+
+    public void setLosesAllNonManaAbilities(boolean losesAllNonManaAbilities) {
+        if (layeredOutputsSuppressed) return;
+        this.losesAllNonManaAbilities = losesAllNonManaAbilities;
+    }
+
     /**
      * Builds a {@link StaticBonus} from this accumulator's state.
      *
@@ -244,12 +276,13 @@ public class StaticBonusAccumulator {
      */
     public StaticBonus toStaticBonus(int finalPower, int finalToughness, boolean animated) {
         return new StaticBonus(
-                finalPower, finalToughness, keywords, protectionColors,
+                finalPower, finalToughness, keywords, protectionColors, Set.of(),
                 animated, grantedActivatedAbilities, grantedEffects,
                 grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, removedKeywords,
-                basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities,
-                false);
+                basePTOverridden, basePowerOverride != null ? basePowerOverride : 0,
+                baseToughnessOverride != null ? baseToughnessOverride : 0, losesAllAbilities,
+                losesAllNonManaAbilities, false, name);
     }
 }
 

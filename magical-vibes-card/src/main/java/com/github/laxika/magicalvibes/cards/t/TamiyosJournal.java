@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "272")
+@CardRegistration(set = "SOI", collectorNumber = "265")
 public class TamiyosJournal extends Card {
 
     public TamiyosJournal() {

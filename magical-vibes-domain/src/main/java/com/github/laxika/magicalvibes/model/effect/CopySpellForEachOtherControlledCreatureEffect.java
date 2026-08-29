@@ -7,8 +7,9 @@ import java.util.UUID;
 /**
  * Trigger descriptor for {@code ON_ANY_PLAYER_CASTS_SPELL}: whenever a player casts an
  * instant or sorcery spell that targets only the source creature, that player copies the
- * spell for each other creature they control that the spell could target. Each copy
- * targets a different one of those creatures.
+ * spell for each other creature they control that the spell could target. Each copy targets a
+ * different one of those creatures. The {@code chooseOne} form instead lets the caster choose one
+ * eligible creature and creates one copy targeting it.
  * <p>
  * Card-definition form uses the no-arg constructor ({@code spellSnapshot == null}).
  * At trigger time, {@code checkSpellCastTriggers} populates the snapshot fields and
@@ -19,11 +20,24 @@ import java.util.UUID;
 public record CopySpellForEachOtherControlledCreatureEffect(
         StackEntry spellSnapshot,
         UUID castingPlayerId,
-        UUID originalTargetId
+        UUID originalTargetId,
+        boolean chooseOne
 ) implements CardEffect {
 
     /** Card definition constructor — trigger marker only. */
     public CopySpellForEachOtherControlledCreatureEffect() {
-        this(null, null, null);
+        this(null, null, null, false);
+    }
+
+    /** Card definition constructor for the single-copy choice form used by Beamsplitter Mage. */
+    public CopySpellForEachOtherControlledCreatureEffect(boolean chooseOne) {
+        this(null, null, null, chooseOne);
+    }
+
+    /** Mirrorwing Dragon's resolution form. */
+    public CopySpellForEachOtherControlledCreatureEffect(StackEntry spellSnapshot,
+                                                         UUID castingPlayerId,
+                                                         UUID originalTargetId) {
+        this(spellSnapshot, castingPlayerId, originalTargetId, false);
     }
 }

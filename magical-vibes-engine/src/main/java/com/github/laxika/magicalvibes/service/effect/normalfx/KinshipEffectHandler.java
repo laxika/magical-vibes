@@ -78,7 +78,7 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
         boolean sourceChangeling = source.hasKeyword(Keyword.CHANGELING);
 
         List<CardSubtype> topTypes = topCard.getSubtypes();
-        boolean topChangeling = topCard.getKeywords().contains(Keyword.CHANGELING);
+        boolean topChangeling = topCard.hasKeyword(Keyword.CHANGELING);
 
         return (sourceChangeling && (topChangeling || !topTypes.isEmpty()))
                 || (topChangeling && !sourceTypes.isEmpty())

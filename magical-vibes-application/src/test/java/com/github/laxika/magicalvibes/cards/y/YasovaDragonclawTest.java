@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({YasovaDragonclaw.class, GrizzlyBears.class, HillGiant.class})
 class YasovaDragonclawTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
@@ -39,13 +43,13 @@ class YasovaDragonclawTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         findPermanent(player2, bearsId).tap();
-        harness.addMana(player1, ManaColor.BLUE, 3);
 
         advanceToCombat(player1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -78,20 +82,18 @@ class YasovaDragonclawTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YasovaDragonclaw());
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.addMana(player1, ManaColor.RED, 3);
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, bearsId).hasKeyword(Keyword.HASTE)).isTrue();
 
-        gd.interaction.clearAwaitingInput();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
+                .applyCleanupResets(gd));
 
         assertThat(findPermanent(player2, bearsId).hasKeyword(Keyword.HASTE)).isFalse();
     }

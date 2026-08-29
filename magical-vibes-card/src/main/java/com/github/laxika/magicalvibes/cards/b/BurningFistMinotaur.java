@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "85")
+@CardRegistration(set = "AKR", collectorNumber = "143")
 public class BurningFistMinotaur extends Card {
 
     public BurningFistMinotaur() {

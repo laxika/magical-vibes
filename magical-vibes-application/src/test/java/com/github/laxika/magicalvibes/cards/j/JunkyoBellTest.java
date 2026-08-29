@@ -49,6 +49,7 @@ class JunkyoBellTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -68,8 +69,6 @@ class JunkyoBellTest extends BaseCardTest {
         Permanent theirs = addCreatureReady(player2, new LlanowarElves());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(mine.getId())
@@ -84,9 +83,9 @@ class JunkyoBellTest extends BaseCardTest {
 
     private void acceptTargeting(Permanent target) {
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
     }
 
     private void passToEndStep() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "170")
+@CardRegistration(set = "RAV", collectorNumber = "163")
 public class Farseek extends Card {
 
     public Farseek() {

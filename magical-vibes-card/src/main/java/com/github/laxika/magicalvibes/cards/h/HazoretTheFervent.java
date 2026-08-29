@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "136")
+@CardRegistration(set = "AKR", collectorNumber = "159")
 public class HazoretTheFervent extends Card {
 
     public HazoretTheFervent() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "11")
+@CardRegistration(set = "AKR", collectorNumber = "15")
 public class DjerusResolve extends Card {
 
     public DjerusResolve() {

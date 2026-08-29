@@ -60,16 +60,15 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         }
         CounterType type = cost.counterType();
         int count = cost.count();
-        if (type == CounterType.PLUS_ONE_PLUS_ONE) {
-            count = gameQueryService.doublePlusOnePlusOneCounters(gameData, chosen, count);
-        } else if (type == CounterType.MINUS_ONE_MINUS_ONE) {
-            count = gameQueryService.reduceMinusOneMinusOneCounters(gameData, chosen, count);
-        }
+        count = gameQueryService.replaceCounters(gameData, chosen, type, count, player.getId());
         if (count <= 0) {
             return;
         }
         chosen.setCounterCount(type, chosen.getCounterCount(type) + count);
         gameData.playersWhoPutCountersOnCreaturesThisTurn.add(player.getId());
+        if (type == CounterType.PLUS_ONE_PLUS_ONE) {
+            gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(player.getId());
+        }
 
         String counterWord = count == 1
                 ? "a " + counterLabel() + " counter"

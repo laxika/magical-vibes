@@ -41,6 +41,11 @@ public record LockTargetPermanentEffect(
     }
 
     @Override
+    public boolean endsWhenSourceControllerChanges() {
+        return duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         return TargetSpec.harmful(declaredTarget != null ? declaredTarget : TargetPredicates.creature());
     }

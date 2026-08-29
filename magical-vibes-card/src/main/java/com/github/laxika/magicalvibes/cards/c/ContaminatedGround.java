@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "59")
+@CardRegistration(set = "ROE", collectorNumber = "102")
 public class ContaminatedGround extends Card {
 
     public ContaminatedGround() {

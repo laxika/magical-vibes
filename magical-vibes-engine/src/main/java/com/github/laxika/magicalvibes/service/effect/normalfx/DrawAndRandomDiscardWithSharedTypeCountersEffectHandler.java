@@ -32,6 +32,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
     private final GraveyardService graveyardService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +55,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
         List<Card> discardedCards = new ArrayList<>();
         gameData.discardCausedByOpponent = false;
 
+        triggerCollectionService.beginDiscardEvent(gameData, controllerId);
         for (int i = 0; i < e.discardAmount(); i++) {
             if (hand == null || hand.isEmpty()) break;
             int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
@@ -65,6 +67,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         // Process any pending self-discard triggers
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
@@ -80,6 +83,10 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                     int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, e.counterAmount());
                     if (placed > 0) {
                         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                        triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
+                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                        permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                                gameData, source, placed, controllerId);
                         gameLogService.append(gameData, GameLog.builder()
                                 .card(source.getCard())
                                 .text(" gets " + placed

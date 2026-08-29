@@ -25,8 +25,7 @@ class BoundingKrasisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // creature resolves -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
     }
 
     @Test
@@ -35,9 +34,9 @@ class BoundingKrasisTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Bounding Krasis");
@@ -50,9 +49,9 @@ class BoundingKrasisTest extends BaseCardTest {
         bears.tap();
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isTapped()).isFalse();
     }
@@ -63,6 +62,8 @@ class BoundingKrasisTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         cast();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(bears.isTapped()).isFalse();
@@ -77,7 +78,6 @@ class BoundingKrasisTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bears.getId())
@@ -90,7 +90,6 @@ class BoundingKrasisTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
 
         cast();
-        harness.handleMayAbilityChosen(player1, true);
 
         var krasisId = harness.getPermanentId(player1, "Bounding Krasis");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -98,6 +97,7 @@ class BoundingKrasisTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, krasisId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(krasisId))

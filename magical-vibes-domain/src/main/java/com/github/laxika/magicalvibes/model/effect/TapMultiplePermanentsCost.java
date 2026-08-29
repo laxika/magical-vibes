@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Activated-ability cost that taps {@code count} untapped permanents matching {@code filter}
- * ("Tap five untapped Myr you control"). The count is evaluated when the cost handler is built, so
- * an {@link XValue} amount expresses "Tap X untapped Knights you control" (Aryel, Knight of
- * Windgrace) with the X the player announced at activation.
+ * Cost that taps {@code count} untapped permanents matching {@code filter} ("Tap five untapped
+ * Myr you control"). In an activated ability, the count is evaluated when the cost handler is
+ * built, so an {@link XValue} amount expresses "Tap X untapped Knights you control" (Aryel,
+ * Knight of Windgrace) with the X the player announced at activation. Spell-slot uses require a
+ * fixed count and carry their selected permanents in the cast request's multi-permanent field.
  *
  * <p>Replaces the former {@code TapXPermanentsCost}.
  *
@@ -27,5 +28,20 @@ public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate 
 
     public TapMultiplePermanentsCost(int count, PermanentPredicate filter, boolean excludeSource) {
         this(new Fixed(count), filter, excludeSource);
+    }
+
+    @Override
+    public PermanentPredicate consumedPermanentFilter() {
+        return filter;
+    }
+
+    @Override
+    public DynamicAmount tappedPermanentCount() {
+        return count;
+    }
+
+    @Override
+    public boolean excludesSourceFromConsumedPermanents() {
+        return excludeSource;
     }
 }

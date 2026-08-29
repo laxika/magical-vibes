@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "32")
+@CardRegistration(set = "AKR", collectorNumber = "56")
 public class CountervailingWinds extends Card {
 
     public CountervailingWinds() {

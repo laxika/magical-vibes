@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "149")
+@CardRegistration(set = "AKR", collectorNumber = "176")
 public class SwelteringSuns extends Card {
 
     public SwelteringSuns() {

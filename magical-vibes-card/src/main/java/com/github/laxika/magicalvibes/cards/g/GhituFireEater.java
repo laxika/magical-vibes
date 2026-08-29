@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "184")
+@CardRegistration(set = "ULG", collectorNumber = "76")
 public class GhituFireEater extends Card {
 
     public GhituFireEater() {

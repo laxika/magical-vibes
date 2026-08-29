@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "94")
+@CardRegistration(set = "AKR", collectorNumber = "155")
 public class GildedCerodon extends Card {
 
     public GildedCerodon() {

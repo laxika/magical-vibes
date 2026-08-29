@@ -41,9 +41,12 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
 
         UUID controllerId = entry.getControllerId();
         boolean targetLibrary = e.owner() == LibraryOwner.TARGET_PLAYER;
-        UUID libraryOwnerId = e.owner() == LibraryOwner.TARGET_PLAYER && entry.getTargetId() != null
-                ? entry.getTargetId()
-                : controllerId;
+        UUID libraryOwnerId = switch (e.owner()) {
+            case TARGET_PLAYER -> entry.getTargetId() != null ? entry.getTargetId() : controllerId;
+            case OPPONENT -> gameQueryService.getOpponentId(gameData, controllerId);
+            default -> controllerId;
+        };
+        UUID scryingPlayerId = e.owner() == LibraryOwner.OPPONENT ? libraryOwnerId : controllerId;
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
 
         Permanent source = entry.getSourcePermanentId() != null
@@ -68,11 +71,11 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                     ? gameData.playerIdToName.get(controllerId) + " looks at the top " + scryAmount
                             + " cards of " + libraryName(gameData, controllerId, libraryOwnerId)
                             + ", but it is empty."
-                    : gameData.playerIdToName.get(controllerId) + " scries " + scryAmount
+                    : gameData.playerIdToName.get(scryingPlayerId) + " scries " + scryAmount
                             + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             if (!targetLibrary) {
-                triggerCollectionService.checkScryTriggers(gameData, controllerId);
+                triggerCollectionService.checkScryTriggers(gameData, scryingPlayerId, 0);
             }
             return;
         }
@@ -80,24 +83,20 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
 
-        if (!targetLibrary) {
-            triggerCollectionService.checkScryTriggers(gameData, controllerId);
-        }
-
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.Scry(controllerId, topCards, false, libraryOwnerId));
+                new PendingInteraction.Scry(scryingPlayerId, topCards, false, libraryOwnerId));
 
         String logMsg = targetLibrary
                 ? gameData.playerIdToName.get(controllerId) + " looks at the top " + count
                         + " cards of " + libraryName(gameData, controllerId, libraryOwnerId) + "."
-                : gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
+                : gameData.playerIdToName.get(scryingPlayerId) + " scries " + count + ".";
         gameLogService.append(gameData, GameLog.text(logMsg));
         if (targetLibrary) {
             log.info("Game {} - {} looks at {} cards of {}", gameData.id,
                     gameData.playerIdToName.get(controllerId), count,
                     libraryName(gameData, controllerId, libraryOwnerId));
         } else {
-            log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
+            log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(scryingPlayerId), count);
         }
     }
 

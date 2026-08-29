@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -249,7 +250,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
                 when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
                 when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenMultiplier(gd, player2Id)).thenReturn(1);
+                when(gameQueryService.getTokenMultiplier(gd, player2Id, true)).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
@@ -257,5 +258,50 @@ class DestroyTargetPermanentEffectHandlerTest {
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), any());
                 verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2Id), any(Card.class), eq(null), eq(false));
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Player2 creates a 3/3 green Beast creature token.")));
+            }
+
+            @Test
+            @DisplayName("Preserves tapped state when creating a tapped token for the target's controller")
+            void preservesTappedTokenState() {
+                Permanent bears = addCreature(player2Id, "Grizzly Bears");
+
+                Card cityscapeLevelerCard = createCard("Cityscape Leveler");
+                StackEntry entry = instantEntry(cityscapeLevelerCard, player1Id, bears.getId());
+                DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect(false,
+                        CreateTokenEffect.ofPowerstoneToken(new Fixed(1)));
+
+                when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+                when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+                when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
+                when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+                when(gameQueryService.getTokenMultiplier(gd, player2Id, false)).thenReturn(1);
+
+                destroyTargetPermanentHandler.resolve(gd, entry, effect);
+
+                verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                        eq(gd), eq(player2Id), argThat(Permanent::isTapped), any());
+            }
+
+            @Test
+            @DisplayName("Creates the conditional token only when the source controller controlled the target")
+            void createsConditionalTokenOnlyForSourceController() {
+                Permanent bears = addCreature(player1Id, "Grizzly Bears");
+
+                Card demolitionCard = createCard("Gleeful Demolition");
+                StackEntry entry = sorceryEntry(demolitionCard, player1Id, bears.getId());
+                CreateTokenEffect token = new CreateTokenEffect(
+                        "Phyrexian Goblin", 1, 1, CardColor.RED,
+                        List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN), Set.of(), Set.of());
+                DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect(false, token, true);
+
+                when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+                when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+                when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
+
+                destroyTargetPermanentHandler.resolve(gd, entry, effect);
+
+                verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
+                verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                        any(), any(), any(), any());
             }
 }

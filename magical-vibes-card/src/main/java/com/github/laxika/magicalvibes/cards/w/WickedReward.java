@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VIS", collectorNumber = "75")
+@CardRegistration(set = "MGB", collectorNumber = "7")
 public class WickedReward extends Card {
 
     public WickedReward() {

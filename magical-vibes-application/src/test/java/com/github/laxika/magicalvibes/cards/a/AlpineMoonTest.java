@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,14 +14,15 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AlpineMoonTest extends BaseCardTest {
 
     @Test
     @DisplayName("As it enters, Alpine Moon offers only nonbasic land names")
     void choosesNonbasicLandName() {
-        harness.addToBattlefield(player2, new Glimmerpost());
         harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new AlpineMoon()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -27,7 +30,11 @@ class AlpineMoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).contains("Glimmerpost").doesNotContain("Forest");
+        assertThat(choice.options()).contains("Glimmerpost").doesNotContain("Forest", "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Forest"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid nonbasic land card name");
 
         harness.handleListChoice(player1, "Glimmerpost");
 
@@ -61,5 +68,22 @@ class AlpineMoonTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(opponentLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An existing Alpine Moon does not prevent a basic land from entering")
+    void basicLandCanEnterWhileAlpineMoonIsOnBattlefield() {
+        Permanent alpineMoon = new Permanent(new AlpineMoon());
+        alpineMoon.setChosenName("Glimmerpost");
+        gd.playerBattlefields.get(player2.getId()).add(alpineMoon);
+
+        Island island = new Island();
+        harness.setHand(player1, List.of(island));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .map(Permanent::getOriginalCard))
+                .contains(island);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(island);
     }
 }

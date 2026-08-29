@@ -48,6 +48,7 @@ class ReclusiveArtificerTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castArtificer();
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities(); // resolve the ETB trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
@@ -57,9 +58,9 @@ class ReclusiveArtificerTest extends BaseCardTest {
 
     private void castAndAcceptMay(UUID targetId) {
         castArtificer();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities(); // resolve the ETB trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, targetId);
     }
 
     private void castArtificer() {

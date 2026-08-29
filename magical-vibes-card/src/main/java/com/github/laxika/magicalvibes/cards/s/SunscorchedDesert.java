@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 
 @CardRegistration(set = "AKH", collectorNumber = "249")
+@CardRegistration(set = "AKR", collectorNumber = "331")
 public class SunscorchedDesert extends Card {
 
     public SunscorchedDesert() {

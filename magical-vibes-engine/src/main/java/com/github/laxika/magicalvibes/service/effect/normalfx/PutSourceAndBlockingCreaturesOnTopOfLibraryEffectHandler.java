@@ -35,6 +35,8 @@ public class PutSourceAndBlockingCreaturesOnTopOfLibraryEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        PutSourceAndBlockingCreaturesOnTopOfLibraryEffect tuckEffect =
+                (PutSourceAndBlockingCreaturesOnTopOfLibraryEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             return;
@@ -44,6 +46,13 @@ public class PutSourceAndBlockingCreaturesOnTopOfLibraryEffectHandler implements
         Set<UUID> permanentIds = new LinkedHashSet<>();
         permanentIds.add(source.getId());
         permanentIds.addAll(source.getBlockingTargetIds());
+        if (tuckEffect.includeCreaturesBlockingSource()) {
+            gameData.forEachPermanent((ignored, permanent) -> {
+                if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(source.getId())) {
+                    permanentIds.add(permanent.getId());
+                }
+            });
+        }
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && (permanent == source || gameQueryService.isCreature(gameData, permanent))) {

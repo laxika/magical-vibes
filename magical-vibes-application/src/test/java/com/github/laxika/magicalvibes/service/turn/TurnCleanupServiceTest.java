@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
@@ -21,10 +22,12 @@ import com.github.laxika.magicalvibes.model.effect.PlayersHaveNoMaximumHandSizeE
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeToSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,6 +49,9 @@ class TurnCleanupServiceTest {
 
     @Mock
     private CreatureControlService creatureControlService;
+
+    @Mock
+    private PermanentRemovalService permanentRemovalService;
 
     @InjectMocks
     private TurnCleanupService sut;
@@ -95,6 +101,15 @@ class TurnCleanupServiceTest {
 
             assertThat(perm.getPowerModifier()).isZero();
             verify(creatureControlService).reconcileControl(gd);
+        }
+
+        @Test
+        @DisplayName("Processes permanents scheduled for exile at cleanup")
+        void processesExilesScheduledForCleanup() {
+            sut.applyCleanupResets(gd);
+
+            verify(permanentRemovalService).processDelayedPermanentActions(
+                    gd, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
         }
 
         @Test
@@ -505,6 +520,28 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears allDamagePreventionPredicatesByController")
+        void clearsAllDamagePreventionPredicatesByController() {
+            gd.allDamagePreventionPredicatesByController.put(player1Id,
+                    java.util.Set.of(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.allDamagePreventionPredicatesByController).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Clears combatDamagePreventionPredicatesByController")
+        void clearsCombatDamagePreventionPredicatesByController() {
+            gd.combatDamagePreventionPredicatesByController.put(player1Id,
+                    java.util.Set.of(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.combatDamagePreventionPredicatesByController).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears playerColorDamagePreventionCount")
         void clearsPlayerColorDamagePreventionCount() {
             gd.playerColorDamagePreventionCount.put(player1Id,
@@ -557,6 +594,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears playersWithAllCreatureDamagePrevented")
+        void clearsPlayersWithAllCreatureDamagePrevented() {
+            gd.playersWithAllCreatureDamagePrevented.add(player1Id);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playersWithAllCreatureDamagePrevented).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears drawReplacementTargetToController")
         void clearsDrawReplacementTargetToController() {
             gd.drawReplacementTargetToController.put(player1Id, player2Id);
@@ -577,6 +624,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears playersCreatureSpellsCantBeCounteredThisTurn")
+        void clearsCreatureSpellCounterProtection() {
+            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playersCreatureSpellsCantBeCounteredThisTurn).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears playerCreaturesCantBeTargetedByColorsThisTurn")
         void clearsCreaturesCantBeTargeted() {
             gd.playerCreaturesCantBeTargetedByColorsThisTurn.put(player1Id, Set.of(CardColor.BLACK));
@@ -594,6 +651,16 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.playersSilencedThisTurn).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Clears the global creature attack restriction")
+        void clearsCreaturesCantAttackThisTurn() {
+            gd.creaturesCantAttackThisTurn = true;
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.creaturesCantAttackThisTurn).isFalse();
         }
 
         @Test
@@ -690,6 +757,23 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Preserves only the controller's protected color")
+        void preservesControllerScopedColor() {
+            gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 3);
+            gd.playerManaPools.get(player1Id).add(ManaColor.RED, 2);
+            gd.playerManaPools.get(player2Id).add(ManaColor.GREEN, 4);
+            Card card = createCardWithName("Omnath, Locus of Mana");
+            card.addEffect(EffectSlot.STATIC, new PreventManaDrainEffect(ManaColor.GREEN));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.drainManaPools(gd);
+
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(3);
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isZero();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
+        }
+
+        @Test
         @DisplayName("Does nothing when mana pools are already empty")
         void doesNothingWhenAlreadyEmpty() {
             sut.drainManaPools(gd);
@@ -750,6 +834,22 @@ class TurnCleanupServiceTest {
 
             assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(2);
             assertThat(sut.getMaxHandSize(gd, player2Id)).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("Sets own hand size to the source permanent's current counter count")
+        void setByControllerSourceCounterEffect() {
+            Card card = createCardWithName("Midnight Oil");
+            card.addEffect(EffectSlot.STATIC,
+                    new SetControllerMaximumHandSizeToSourceCountersEffect(CounterType.HOUR));
+            Permanent permanent = new Permanent(card);
+            permanent.setCounterCount(CounterType.HOUR, 3);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isEqualTo(3);
+
+            permanent.setCounterCount(CounterType.HOUR, 0);
+            assertThat(sut.getMaxHandSize(gd, player1Id)).isZero();
         }
 
         @Test

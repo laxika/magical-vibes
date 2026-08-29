@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "96")
+@CardRegistration(set = "TPR", collectorNumber = "156")
 public class SeethingAnger extends Card {
 
     public SeethingAnger() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "60")
+@CardRegistration(set = "AKR", collectorNumber = "67")
 public class LabyrinthGuardian extends Card {
 
     public LabyrinthGuardian() {

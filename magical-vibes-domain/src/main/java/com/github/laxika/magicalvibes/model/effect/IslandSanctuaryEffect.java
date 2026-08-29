@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.DrawReplacementKind;
+
 /**
  * Marker effect placed in the {@code MAY_SKIP_DRAW_STEP_DRAW} slot. Its presence lets the
  * controller skip their turn-based draw-step draw; when they do, they gain a temporary
@@ -8,5 +10,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * floating effect). Never resolved directly — detected by slot presence in
  * {@code StepTriggerService.handleDrawStep}. Used by Island Sanctuary.
  */
-public record IslandSanctuaryEffect() implements CardEffect {
+public record IslandSanctuaryEffect() implements MaySkipDrawReplacementEffect {
+
+    @Override
+    public DrawReplacementKind replacementKind() {
+        return DrawReplacementKind.ISLAND_SANCTUARY;
+    }
 }

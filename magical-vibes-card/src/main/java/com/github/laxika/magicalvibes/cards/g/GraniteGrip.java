@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "7ED", collectorNumber = "195")
+@CardRegistration(set = "ULG", collectorNumber = "81")
 public class GraniteGrip extends Card {
 
     public GraniteGrip() {

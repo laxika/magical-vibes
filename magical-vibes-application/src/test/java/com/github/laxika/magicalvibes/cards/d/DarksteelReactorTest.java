@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,9 +56,12 @@ class DarksteelReactorTest extends BaseCardTest {
     @DisplayName("Winning state trigger is not limited to the controller's upkeep")
     void winsDuringOpponentsUpkeep() {
         Permanent reactor = harness.addToBattlefieldAndReturn(player1, new DarksteelReactor());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
         reactor.setCounterCount(CounterType.CHARGE, 20);
 
-        advanceToUpkeep(player2);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 

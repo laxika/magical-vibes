@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "67")
 @CardRegistration(set = "INR", collectorNumber = "458")
+@CardRegistration(set = "EMN", collectorNumber = "63")
 public class GrizzledAngler extends Card {
 
     public GrizzledAngler() {

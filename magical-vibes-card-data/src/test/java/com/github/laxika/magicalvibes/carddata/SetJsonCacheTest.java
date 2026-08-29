@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,15 +71,35 @@ class SetJsonCacheTest {
     /** A failed fetch must not leave a file behind, or the failure would be cached forever. */
     @Test
     void aFailedFetchCachesNothing() {
+        List<String> fetched = new ArrayList<>();
         SetJsonCache cache = cache(setCode -> {
+            fetched.add(setCode);
             throw new java.io.IOException("upstream is down");
         });
 
         assertThatThrownBy(() -> cache.get("ISD")).hasMessageContaining("upstream is down");
+        assertThat(fetched).containsExactly("ISD", "ISD", "ISD");
         assertThat(cache.fileFor("ISD")).doesNotExist();
     }
 
+    @Test
+    void aTransientFetchFailureIsRetriedAndCached() throws Exception {
+        List<String> fetched = new ArrayList<>();
+        SetJsonCache cache = cache(setCode -> {
+            fetched.add(setCode);
+            if (fetched.size() < 3) {
+                throw new java.io.IOException("response stream ended early");
+            }
+            return "recovered";
+        });
+
+        assertThat(cache.get("ISD")).isEqualTo("recovered");
+        assertThat(fetched).containsExactly("ISD", "ISD", "ISD");
+        assertThat(cache.fileFor("ISD")).exists().hasContent("recovered");
+    }
+
     private SetJsonCache cache(SetJsonCache.Fetcher fetcher) {
-        return new SetJsonCache(cacheDir.toString(), "test-", "TestSource", fetcher);
+        return new SetJsonCache(
+                cacheDir.toString(), "test-", "TestSource", fetcher, 3, Duration.ZERO);
     }
 }

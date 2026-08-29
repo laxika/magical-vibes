@@ -8,11 +8,17 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinsCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatesTokensCost;
+import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.PutCardsFromSingleGraveyardOnBottomOfLibraryCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnOpponentCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -64,7 +70,9 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
         unpaid.addAll(snapshotAgeRelativeAmounts(gameData, entry, self, e.unpaidEffects()));
 
         ForcedCostOrElseEffect payOrSacrifice;
-        if (e.isSacrificeCost()) {
+        if (e.flipCoinPerAge()) {
+            payOrSacrifice = new ForcedCostOrElseEffect(new FlipCoinsCost(ageCounters), unpaid, true);
+        } else if (e.isSacrificeCost()) {
             payOrSacrifice = new ForcedCostOrElseEffect(
                     new SacrificeMultiplePermanentsCost(ageCounters, e.sacrificeFilter()), unpaid, true);
         } else if (e.opponentTokenPerAge() != null) {
@@ -73,16 +81,35 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
         } else if (e.counterTypePerAge() != null) {
             payOrSacrifice = new ForcedCostOrElseEffect(
                     new PutTypedCounterOnSourceCost(e.counterTypePerAge(), ageCounters), unpaid, true);
+        } else if (e.opponentCreatureCounterTypePerAge() != null) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new PutCounterOnOpponentCreatureCost(e.opponentCreatureCounterTypePerAge(), ageCounters),
+                    unpaid, true);
         } else if (e.drawCardsPerAge()) {
             payOrSacrifice = new ForcedCostOrElseEffect(new DrawCardsCost(ageCounters), unpaid, true);
+        } else if (e.discardCardsPerAge()) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new DiscardCardTypeCost(null, null, ageCounters), unpaid, true);
         } else if (e.exileTopCardsPerAge()) {
             payOrSacrifice = new ForcedCostOrElseEffect(
                     new ExileTopCardOfLibraryCost(ageCounters), unpaid, true);
+        } else if (e.putCardsFromSingleGraveyardPerAge() > 0) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new PutCardsFromSingleGraveyardOnBottomOfLibraryCost(
+                            e.putCardsFromSingleGraveyardPerAge(), ageCounters), unpaid, true);
+        } else if (e.opponentLifeGainPerAge() > 0) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new OpponentGainsLifeCost(e.opponentLifeGainPerAge() * ageCounters), unpaid, true);
+        } else if (e.gainControlFilter() != null) {
+            payOrSacrifice = new ForcedCostOrElseEffect(
+                    new GainControlOfPermanentsCost(ageCounters, e.gainControlFilter()), unpaid, true);
         } else {
             String totalCost = e.costPerAge().repeat(ageCounters);
             int totalLife = e.lifePerAge() * ageCounters;
-            payOrSacrifice = new ForcedCostOrElseEffect(
-                    new PayManaCost(totalCost, null, true, totalLife), unpaid, true);
+            payOrSacrifice = e.paidEffects().isEmpty()
+                    ? new ForcedCostOrElseEffect(new PayManaCost(totalCost, null, true, totalLife), unpaid, true)
+                    : new ForcedCostOrElseEffect(new PayManaCost(totalCost, null, true, totalLife), unpaid, true,
+                            e.paidEffects());
         }
         forcedCostOrElseEffectHandler.resolve(gameData, entry, payOrSacrifice);
     }

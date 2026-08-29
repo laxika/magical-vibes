@@ -9,21 +9,40 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.Divided;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
+import com.github.laxika.magicalvibes.model.amount.Max;
+import com.github.laxika.magicalvibes.model.amount.Min;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -62,6 +81,32 @@ public final class EffectResolution {
      */
     public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked, Integer modeIndex) {
         return resolveEffects(rawEffects, kicked, null, modeIndex);
+    }
+
+    /**
+     * Expands conditional branches when locating effects that contribute specialized cast-time
+     * targeting behavior. The actual condition is still evaluated only during resolution.
+     */
+    public static List<CardEffect> expandConditionalTargetingEffects(List<CardEffect> rawEffects) {
+        List<CardEffect> expanded = new ArrayList<>();
+        for (CardEffect effect : rawEffects) {
+            collectConditionalTargetingEffects(effect, expanded);
+        }
+        return List.copyOf(expanded);
+    }
+
+    private static void collectConditionalTargetingEffects(CardEffect effect, List<CardEffect> expanded) {
+        if (effect == null) {
+            return;
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            collectConditionalTargetingEffects(replacement.baseEffect(), expanded);
+            collectConditionalTargetingEffects(replacement.upgradedEffect(), expanded);
+        } else if (effect instanceof ConditionalEffect conditional) {
+            collectConditionalTargetingEffects(conditional.wrapped(), expanded);
+        } else {
+            expanded.add(effect);
+        }
     }
 
     /**
@@ -133,6 +178,7 @@ public final class EffectResolution {
             }
         }
         for (CardEffect e : spellEffects) {
+            if (e instanceof CostEffect) continue;
             collectTargetTypes(e, result);
         }
         for (CardEffect e : etbEffects) {
@@ -253,6 +299,11 @@ public final class EffectResolution {
     public static Optional<PermanentPredicate> declaredPermanentRestriction(List<CardEffect> effects) {
         List<PermanentPredicate> declared = new ArrayList<>();
         for (CardEffect e : effects) {
+            if (e instanceof PutCounterOnTargetPermanentEffect putCounter
+                    && putCounter.targetPredicate() != null) {
+                declared.add(putCounter.targetPredicate());
+                continue;
+            }
             TargetPredicate predicate = e.targetSpec().targetPredicate();
             if (predicate == null) {
                 continue;
@@ -283,7 +334,11 @@ public final class EffectResolution {
      * Returns true if the given effects require damage distribution (divided damage spells).
      */
     public static boolean needsDamageDistribution(List<CardEffect> effects) {
-        return effects.stream().anyMatch(EffectResolution::distributesAmountsAmongTargets);
+        return effects.stream().anyMatch(effect ->
+                distributesAmountsAmongTargets(effect)
+                        || effect instanceof ConditionalReplacementEffect conditional
+                        && distributesAmountsAmongTargets(conditional.baseEffect())
+                        && distributesAmountsAmongTargets(conditional.upgradedEffect()));
     }
 
     /**
@@ -301,7 +356,9 @@ public final class EffectResolution {
     public static boolean distributesAmountsAmongTargets(CardEffect e) {
         return isChosenDivision(e)
                 || e instanceof PreventDividedDamageEffect
-                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN);
+                || (e instanceof DistributeCountersAmongTargetsEffect d && d.mode() == DivisionMode.CHOSEN)
+                || (e instanceof ConditionalEffect conditional
+                && distributesAmountsAmongTargets(conditional.wrapped()));
     }
 
     private static boolean isChosenDivision(CardEffect e) {
@@ -362,15 +419,43 @@ public final class EffectResolution {
      * Returns true if any of the given effects use the Converge mechanic.
      */
     public static boolean hasConvergeEffect(List<CardEffect> effects) {
-        return effects.stream().anyMatch(TargetPlayerDiscardsByConvergeEffect.class::isInstance);
+        if (effects.stream().anyMatch(TargetPlayerDiscardsByConvergeEffect.class::isInstance)) {
+            return true;
+        }
+        boolean dealsConvergeDamage = effects.stream()
+                .filter(DealDamageToTargetCreatureEffect.class::isInstance)
+                .map(DealDamageToTargetCreatureEffect.class::cast)
+                .anyMatch(effect -> effect.damage() instanceof XValue);
+        boolean usesExcessDamage = effects.stream()
+                .filter(ExileTopCardsMayPlayUntilNextTurnEffect.class::isInstance)
+                .map(ExileTopCardsMayPlayUntilNextTurnEffect.class::cast)
+                .anyMatch(effect -> effect.count() instanceof EventValue);
+        return dealsConvergeDamage && usesExcessDamage;
     }
 
     /**
-     * Returns true if the card uses the Converge mechanic (keyword or converge-scaling spell effect).
+     * Returns true if the card uses Converge or Sunburst (keyword or converge-scaling spell effect).
      */
     public static boolean hasConvergeEffect(Card card) {
-        return card.getKeywords().contains(Keyword.CONVERGE)
+        return (card.getKeywords().contains(Keyword.CONVERGE)
+                || card.getKeywords().contains(Keyword.SUNBURST))
                 || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
+    }
+
+    /**
+     * Returns true when an enter-with-counters effect gets its X value from distinct colors spent
+     * to cast the permanent.
+     */
+    public static boolean hasColorsSpentCounterEffect(Card card) {
+        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(effect -> {
+                    if (effect instanceof EnterWithCountersEffect enterWith) {
+                        return enterWith.countColorsSpent();
+                    }
+                    return effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof EnterWithCountersEffect wrapped
+                            && wrapped.countColorsSpent();
+                });
     }
 
     /**
@@ -382,8 +467,76 @@ public final class EffectResolution {
     public static boolean hasColorSpentCondition(Card card) {
         return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
                 .flatMap(slot -> card.getEffects(slot).stream())
-                .anyMatch(e -> e instanceof ConditionalEffect c
-                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.ColorSpentToCast);
+                .anyMatch(EffectResolution::effectUsesColorSpentMana);
+    }
+
+    private static boolean effectUsesColorSpentMana(CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            return conditionUsesColorSpentMana(conditional.condition());
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return conditionUsesColorSpentMana(replacement.condition());
+        }
+        return effect instanceof ReturnCardFromGraveyardEffect graveyardReturn
+                && graveyardReturn.plusOneCountersIfCondition() != null
+                && conditionUsesColorSpentMana(graveyardReturn.plusOneCountersIfCondition());
+    }
+
+    private static boolean conditionUsesColorSpentMana(Condition condition) {
+        return switch (condition) {
+            case ColorSpentToCast ignored -> true;
+            case AllConditions c -> c.conditions().stream().anyMatch(EffectResolution::conditionUsesColorSpentMana);
+            case AnyOf c -> c.conditions().stream().anyMatch(EffectResolution::conditionUsesColorSpentMana);
+            case NotCondition c -> conditionUsesColorSpentMana(c.inner());
+            default -> false;
+        };
+    }
+
+    /**
+     * Returns true if a spell or its battlefield-entry effect reads the number of complete pairs of
+     * one color spent to cast it. The cast path must retain the per-color payment snapshot until
+     * the permanent's entry replacements and entry triggers have resolved.
+     */
+    public static boolean hasColorManaPairsSpentToCastAmount(Card card) {
+        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
+                .flatMap(slot -> card.getEffects(slot).stream())
+                .anyMatch(EffectResolution::effectUsesColorManaPairsSpentToCast);
+    }
+
+    private static boolean effectUsesColorManaPairsSpentToCast(CardEffect effect) {
+        if (effect instanceof EnterWithCountersEffect enter) {
+            return amountUsesColorManaPairsSpentToCast(enter.count());
+        }
+        if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {
+            return amountUsesColorManaPairsSpentToCast(putCounter.amount());
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return effectUsesColorManaPairsSpentToCast(conditional.wrapped());
+        }
+        return false;
+    }
+
+    private static boolean amountUsesColorManaPairsSpentToCast(DynamicAmount amount) {
+        if (amount instanceof ColorManaPairsSpentToCast) return true;
+        if (amount instanceof Scaled scaled) {
+            return amountUsesColorManaPairsSpentToCast(scaled.amount());
+        }
+        if (amount instanceof Divided divided) {
+            return amountUsesColorManaPairsSpentToCast(divided.amount());
+        }
+        if (amount instanceof HalvedRoundedUp halved) {
+            return amountUsesColorManaPairsSpentToCast(halved.amount());
+        }
+        if (amount instanceof Sum sum) {
+            return sum.amounts().stream().anyMatch(EffectResolution::amountUsesColorManaPairsSpentToCast);
+        }
+        if (amount instanceof Min min) {
+            return min.amounts().stream().anyMatch(EffectResolution::amountUsesColorManaPairsSpentToCast);
+        }
+        if (amount instanceof Max max) {
+            return max.amounts().stream().anyMatch(EffectResolution::amountUsesColorManaPairsSpentToCast);
+        }
+        return false;
     }
 
     public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {

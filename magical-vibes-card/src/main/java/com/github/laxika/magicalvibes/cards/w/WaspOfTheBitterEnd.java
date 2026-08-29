@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "206")
+@CardRegistration(set = "AKR", collectorNumber = "134")
 public class WaspOfTheBitterEnd extends Card {
 
     public WaspOfTheBitterEnd() {

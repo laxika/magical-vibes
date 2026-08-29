@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "184")
+@CardRegistration(set = "TPR", collectorNumber = "137")
 public class Kindle extends Card {
 
     public Kindle() {

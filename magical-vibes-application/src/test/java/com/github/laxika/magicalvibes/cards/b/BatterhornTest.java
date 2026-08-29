@@ -23,10 +23,10 @@ class BatterhornTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, artifactId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     @Test
@@ -35,8 +35,6 @@ class BatterhornTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         UUID artifactId = harness.getPermanentId(player2, "Leonin Scimitar");
         castAndAcceptMay(artifactId);
-
-        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
@@ -55,6 +53,7 @@ class BatterhornTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -79,8 +78,8 @@ class BatterhornTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the may ability prompts for an artifact target")
-    void acceptingMayPromptsForTarget() {
+    @DisplayName("Resolving the targeted ETB prompts for the may choice")
+    void resolvingTargetedEtbPromptsForMay() {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -89,10 +88,10 @@ class BatterhornTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -101,8 +100,6 @@ class BatterhornTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         UUID artifactId = harness.getPermanentId(player1, "Leonin Scimitar");
         castAndAcceptMay(artifactId);
-
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Leonin Scimitar");
     }

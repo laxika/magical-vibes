@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "49")
+@CardRegistration(set = "AKR", collectorNumber = "83")
 public class SupremeWill extends Card {
 
     public SupremeWill() {

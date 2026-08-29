@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesCreatureExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link TargetPlayerChoosesCreatureExileEffect}: the targeted player chooses a creature
- * they control and it is exiled (Doomfall). Unlike the destroy edict, exile ignores regeneration
- * and indestructible and fires no "dies" triggers. With 0 creatures nothing happens; with exactly
- * 1 it is exiled automatically; with 2+ the target player picks which to lose.
+ * Resolves {@link TargetPlayerChoosesCreatureExileEffect}: the targeted player chooses an eligible
+ * permanent they control and it is exiled (Doomfall). Unlike the destroy edict, exile ignores
+ * regeneration and indestructible and fires no "dies" triggers. With 0 eligible permanents
+ * nothing happens; with exactly 1 it is exiled automatically; with 2+ the target player picks
+ * which to lose.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
     private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -40,15 +44,23 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        TargetPlayerChoosesCreatureExileEffect exileEffect = (TargetPlayerChoosesCreatureExileEffect) effect;
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
 
         String cardName = entry.getCard().getName();
-        List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId, p -> true);
+        List<UUID> eligibleIds = exileEffect.permanentFilter() == null
+                ? destructionSupport.collectCreatureIds(gameData, targetPlayerId, p -> true)
+                : destructionSupport.collectPermanentIds(gameData, targetPlayerId,
+                permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, exileEffect.permanentFilter()));
+        if (exileEffect.greatestPowerOnly()) {
+            eligibleIds = creaturesWithGreatestPower(gameData, eligibleIds);
+        }
 
-        if (creatureIds.isEmpty()) {
+        if (eligibleIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
             String logEntry = playerName + " has no creatures to exile.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -56,18 +68,41 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
             return;
         }
 
-        if (creatureIds.size() == 1) {
-            Permanent creature = gameQueryService.findPermanentById(gameData, creatureIds.getFirst());
-            if (creature != null) {
-                exileSupport.exilePermanentAndLog(gameData, creature, cardName);
+        if (eligibleIds.size() == 1) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, eligibleIds.getFirst());
+            if (permanent != null) {
+                exileSupport.exilePermanentAndLog(gameData, permanent, cardName);
             }
             return;
         }
 
         // Multiple creatures — prompt the target player to choose which one to exile.
+        UUID choosingPlayerId = exileEffect.greatestPowerOnly() ? entry.getControllerId() : targetPlayerId;
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.DestroyChosenCreature(targetPlayerId, cardName, true));
-        playerInputService.beginPermanentChoice(gameData, targetPlayerId, creatureIds,
-                "Choose a creature to exile.");
+                new PermanentChoiceContext.DestroyChosenCreature(choosingPlayerId, cardName, true));
+        playerInputService.beginPermanentChoice(gameData, choosingPlayerId, eligibleIds,
+                exileEffect.greatestPowerOnly()
+                        ? "Choose a creature with greatest power to exile."
+                        : exileEffect.permanentFilter() == null
+                        ? "Choose a creature to exile."
+                        : "Choose a matching permanent to exile.");
+    }
+
+    private List<UUID> creaturesWithGreatestPower(GameData gameData, List<UUID> creatureIds) {
+        int greatestPower = creatureIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .max()
+                .orElse(Integer.MIN_VALUE);
+
+        List<UUID> greatestCreatures = new ArrayList<>();
+        for (UUID creatureId : creatureIds) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            if (creature != null && gameQueryService.getEffectivePower(gameData, creature) == greatestPower) {
+                greatestCreatures.add(creatureId);
+            }
+        }
+        return greatestCreatures;
     }
 }

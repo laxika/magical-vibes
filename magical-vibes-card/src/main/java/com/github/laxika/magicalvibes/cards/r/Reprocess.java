@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "159")
+@CardRegistration(set = "USG", collectorNumber = "154")
 public class Reprocess extends Card {
 
     public Reprocess() {

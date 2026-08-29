@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Exiles target creature and all permanents attached to it that match {@code attachedFilter}.
- * Matching attachments are exiled before the creature so they are not left on the battlefield
- * when the creature leaves.
+ * Exiles target creature(s) and all permanents attached to them that match {@code attachedFilter}.
+ * Matching attachments are exiled before the creatures so they are not left on the battlefield
+ * when the creatures leave.
  *
  * @param attachedFilter predicate over attached permanents
  */

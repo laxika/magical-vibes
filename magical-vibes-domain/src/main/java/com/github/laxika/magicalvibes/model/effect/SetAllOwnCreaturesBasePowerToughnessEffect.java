@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Sets the base power and toughness of every creature the controller controls to the given
@@ -12,11 +13,21 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  */
 public record SetAllOwnCreaturesBasePowerToughnessEffect(
         DynamicAmount power,
-        DynamicAmount toughness
+        DynamicAmount toughness,
+        PermanentPredicate filter
 ) implements CardEffect {
+
+    public SetAllOwnCreaturesBasePowerToughnessEffect(DynamicAmount power, DynamicAmount toughness) {
+        this(power, toughness, null);
+    }
 
     /** Convenience for a plain fixed base P/T. */
     public SetAllOwnCreaturesBasePowerToughnessEffect(int power, int toughness) {
-        this(new Fixed(power), new Fixed(toughness));
+        this(new Fixed(power), new Fixed(toughness), null);
+    }
+
+    /** Convenience for a plain fixed base P/T restricted by a filter. */
+    public SetAllOwnCreaturesBasePowerToughnessEffect(int power, int toughness, PermanentPredicate filter) {
+        this(new Fixed(power), new Fixed(toughness), filter);
     }
 }

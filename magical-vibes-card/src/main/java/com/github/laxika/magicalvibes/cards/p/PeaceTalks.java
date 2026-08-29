@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PeaceTalksEffect;
 
 @CardRegistration(set = "VIS", collectorNumber = "15")
+@CardRegistration(set = "MGB", collectorNumber = "1")
 public class PeaceTalks extends Card {
 
     public PeaceTalks() {

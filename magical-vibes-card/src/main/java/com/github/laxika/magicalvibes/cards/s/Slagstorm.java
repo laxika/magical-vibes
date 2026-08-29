@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "75")
+@CardRegistration(set = "FDN", collectorNumber = "207")
 public class Slagstorm extends Card {
 
     public Slagstorm() {

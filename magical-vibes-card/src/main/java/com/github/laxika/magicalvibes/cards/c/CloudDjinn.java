@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "WTH", collectorNumber = "36")
+@CardRegistration(set = "BTD", collectorNumber = "4")
 public class CloudDjinn extends Card {
 
     public CloudDjinn() {

@@ -55,6 +55,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         // Resolve ETB trigger → may prompt
         harness.passBothPriorities();
 
@@ -71,6 +72,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         // Resolve ETB trigger → may prompt
         harness.passBothPriorities();
 
@@ -103,6 +105,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         // Resolve ETB trigger → may prompt
         harness.passBothPriorities();
         // Decline the may ability
@@ -234,6 +237,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
         // Resolve creature spell
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         // Resolve ETB trigger → may prompt
         harness.passBothPriorities();
 

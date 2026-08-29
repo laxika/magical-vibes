@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 /**
  * The controller looks at the top {@code count} cards of the selected library, puts any number on
  * the bottom in any order, and puts the rest on top in any order. Amount may be fixed ("scry 2") or
- * dynamic ("scry X, where X is the number of Zombies you control").
+ * dynamic ("scry X, where X is the number of Zombies you control"). The optional library owner
+ * can also be the resolving controller's opponent; that opponent makes the scry choices and is
+ * not a target.
  */
 public record ScryEffect(DynamicAmount count, LibraryOwner owner) implements CardEffect {
 

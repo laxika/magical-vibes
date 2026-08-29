@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -43,12 +46,7 @@ public class TargetValidationService {
 
     public Optional<String> checkEffectTargets(List<CardEffect> effects, TargetValidationContext context) {
         for (CardEffect effect : effects) {
-            CardEffect effectToValidate = effect;
-            // Unwrap replacement conditional effects to validate the inner effects.
-            // Both paths share the same targeting, so validate the base effect.
-            if (effect instanceof ConditionalReplacementEffect replacement) {
-                effectToValidate = replacement.baseEffect();
-            }
+            CardEffect effectToValidate = unwrapTargetingEffect(effect);
             // The declarative TargetSpec interpreter runs FIRST for every context (it lives in the
             // service, not as a scanned @ValidatesTarget bean, so contexts that build the registry
             // outside Spring still get it). A registered class validator, when present, runs after
@@ -72,6 +70,24 @@ public class TargetValidationService {
     }
 
     /**
+     * Conditional wrappers preserve the wrapped effect's target specification, but cast-time
+     * rules such as an optional graveyard target also need the concrete effect's extra targeting
+     * flags (for example {@code ReturnCardFromGraveyardEffect.upTo()}).
+     */
+    private static CardEffect unwrapTargetingEffect(CardEffect effect) {
+        CardEffect unwrapped = effect;
+        while (true) {
+            if (unwrapped instanceof ConditionalEffect conditional) {
+                unwrapped = conditional.wrapped();
+            } else if (unwrapped instanceof ConditionalReplacementEffect replacement) {
+                unwrapped = replacement.baseEffect();
+            } else {
+                return unwrapped;
+            }
+        }
+    }
+
+    /**
      * Interprets a declarative {@link TargetSpec} into the same structural target checks the
      * hand-written {@code @ValidatesTarget} validators perform. Called only when the spec targets
      * something. Semantics mirror the corresponding validators exactly (see
@@ -92,9 +108,31 @@ public class TargetValidationService {
     private void validateSpec(TargetValidationContext ctx, TargetSpec spec, CardEffect effect) {
         TargetPredicate predicate = spec.targetPredicate();
 
-        if (predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+        boolean graveyardTarget = predicate.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && ctx.targetZone() == Zone.GRAVEYARD;
+        boolean omittedOptionalGraveyardTarget = ctx.targetId() == null
+                && effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                && returnEffect.upTo();
+        if (omittedOptionalGraveyardTarget) {
+            return;
+        }
+        if (graveyardTarget
                 && !gameQueryService.canGraveyardCardsBeTargeted(ctx.gameData())) {
             throw new IllegalStateException("Cards in graveyards can't be the targets of spells or abilities");
+        }
+        if (graveyardTarget) {
+            validateGraveyardTarget(ctx, predicate);
+            return;
+        }
+
+        boolean exiledCardTarget = predicate.admits(TargetPredicate.Kind.EXILED_CARD)
+                && ctx.targetZone() == Zone.EXILE;
+        if (exiledCardTarget) {
+            requireTarget(ctx);
+            if (gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetId()) == null) {
+                throw new IllegalStateException("Target card not found in exile");
+            }
+            return;
         }
 
         PermanentPredicate restriction = predicate.permanentRestriction().orElse(null);
@@ -121,6 +159,39 @@ public class TargetValidationService {
         }
         if (spec.harmful()) {
             checkProtection(ctx, target);
+        }
+    }
+
+    private void validateGraveyardTarget(TargetValidationContext ctx, TargetPredicate predicate) {
+        requireTarget(ctx);
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Ability requires a graveyard target");
+        }
+        Card target = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (target == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        UUID controllerId = ctx.sourceControllerId() != null
+                ? ctx.sourceControllerId() : findSourcePermanentController(ctx);
+        if (gameQueryService.isLandCardTargetRestricted(ctx.gameData(), target, controllerId)) {
+            throw new IllegalStateException(
+                    "Land cards in graveyards can't be the targets of spells or abilities opponents control");
+        }
+
+        TargetPredicate.GraveyardCards restriction = (TargetPredicate.GraveyardCards)
+                predicate.leaf(TargetPredicate.Kind.GRAVEYARD_CARD).orElseThrow();
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(
+                ctx.gameData(), ctx.targetId());
+        if (controllerId != null && graveyardOwnerId != null
+                && !restriction.scope().graveyardOwners(
+                        ctx.gameData().orderedPlayerIds, controllerId).contains(graveyardOwnerId)) {
+            throw new IllegalStateException("Target card is not in an allowed graveyard");
+        }
+        UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+        if (!predicateEvaluationService.matchesCardPredicate(
+                target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+            throw new IllegalStateException("Target card does not match the required predicate");
         }
     }
 
@@ -227,6 +298,9 @@ public class TargetValidationService {
             if (ctx.sourcePermanentSnapshot() != null) {
                 filterContext = filterContext.withSourcePermanentSnapshot(ctx.sourcePermanentSnapshot());
             }
+        }
+        if (ctx.defendingPlayerId() != null) {
+            filterContext = filterContext.withDefendingPlayerId(ctx.defendingPlayerId());
         }
         return filterContext;
     }

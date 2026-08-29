@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "198")
 @CardRegistration(set = "M19", collectorNumber = "216")
+@CardRegistration(set = "AKR", collectorNumber = "234")
 public class EnigmaDrake extends Card {
 
     public EnigmaDrake() {

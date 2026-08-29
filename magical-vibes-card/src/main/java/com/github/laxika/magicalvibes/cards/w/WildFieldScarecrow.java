@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "274")
 @CardRegistration(set = "INR", collectorNumber = "447")
+@CardRegistration(set = "SOI", collectorNumber = "269")
 public class WildFieldScarecrow extends Card {
 
     public WildFieldScarecrow() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "123")
+@CardRegistration(set = "BRB", collectorNumber = "72")
 public class SkyshroudElite extends Card {
 
     public SkyshroudElite() {

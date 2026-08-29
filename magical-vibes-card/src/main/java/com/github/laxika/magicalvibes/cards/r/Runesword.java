@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "106")
+@CardRegistration(set = "DRK", collectorNumber = "107")
 public class Runesword extends Card {
 
     public Runesword() {

@@ -19,6 +19,7 @@ import java.util.List;
  * All Slivers have "{2}, Sacrifice this permanent: Draw a card."
  */
 @CardRegistration(set = "TMP", collectorNumber = "77")
+@CardRegistration(set = "TPR", collectorNumber = "62")
 public class MnemonicSliver extends Card {
 
     public MnemonicSliver() {

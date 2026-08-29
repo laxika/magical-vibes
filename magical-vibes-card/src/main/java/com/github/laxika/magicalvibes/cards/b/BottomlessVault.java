@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "411")
+@CardRegistration(set = "FEM", collectorNumber = "92")
+@CardRegistration(set = "FEM", collectorNumber = "177")
 public class BottomlessVault extends Card {
 
     public BottomlessVault() {

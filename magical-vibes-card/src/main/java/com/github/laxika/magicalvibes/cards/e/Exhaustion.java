@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "POR", collectorNumber = "54")
 @CardRegistration(set = "P02", collectorNumber = "37")
 @CardRegistration(set = "PTK", collectorNumber = "42")
+@CardRegistration(set = "USG", collectorNumber = "74")
+@CardRegistration(set = "S99", collectorNumber = "36")
 public class Exhaustion extends Card {
 
     public Exhaustion() {

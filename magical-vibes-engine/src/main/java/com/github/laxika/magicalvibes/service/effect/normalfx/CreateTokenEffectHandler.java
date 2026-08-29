@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -14,21 +15,34 @@ import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefield
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
+    private final TriggerCollectionService triggerCollectionService;
+
+    public CreateTokenEffectHandler(PermanentControlSupport permanentControlSupport,
+                                    GameQueryService gameQueryService,
+                                    AmountEvaluationService amountEvaluationService,
+                                    CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler,
+                                    @Lazy TriggerCollectionService triggerCollectionService) {
+        this.permanentControlSupport = permanentControlSupport;
+        this.gameQueryService = gameQueryService;
+        this.amountEvaluationService = amountEvaluationService;
+        this.tokenCopyHandler = tokenCopyHandler;
+        this.triggerCollectionService = triggerCollectionService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +51,11 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (CreateTokenEffect) effect;
+        resolveForController(gameData, entry, (CreateTokenEffect) effect, entry.getControllerId());
+    }
+
+    public void resolveForController(GameData gameData, StackEntry entry, CreateTokenEffect e,
+                                     UUID controllerId) {
         // Source-relative amounts use the live source permanent when it is still on the
         // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
         Permanent source = entry.getSourcePermanentId() != null
@@ -46,10 +64,13 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        AmountContext context = AmountContext.forStackEntry(entry, source);
+        AmountContext context = AmountContext.forStackEntry(entry, source).withControllerId(controllerId);
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), context);
         if (amount <= 0) {
             return;
+        }
+        if (e.subtypes().contains(CardSubtype.CLUE)) {
+            triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
         }
         int power = amountEvaluationService.evaluate(gameData, e.power(), context);
         int toughness = amountEvaluationService.evaluate(gameData, e.toughness(), context);
@@ -71,7 +92,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 toughness = pending.toughness();
             }
         } else {
-            Permanent crown = availableMirrormindCrown(gameData, entry.getControllerId());
+            Permanent crown = availableMirrormindCrown(gameData, controllerId);
             if (crown != null) {
                 gameData.tokenCreationReplacementUsedThisTurn.add(crown.getId());
                 gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
@@ -79,7 +100,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 gameData.resolvingMayEffectFromStack = true;
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         crown.getCard(),
-                        entry.getControllerId(),
+                        controllerId,
                         List.of(new CreateTokenCopyOfEquippedCreatureEffect(
                                 amount, false, false, crown.getId())),
                         crown.getCard().getName()
@@ -89,7 +110,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         }
 
         entry.getCreatedPermanentIds().addAll(
-                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), bindDeathReturn(e, entry), amount,
+                permanentControlSupport.applyCreateToken(gameData, controllerId, bindDeathReturn(e, entry), amount,
                         entry.getCard().getSetCode(), power, toughness));
     }
 

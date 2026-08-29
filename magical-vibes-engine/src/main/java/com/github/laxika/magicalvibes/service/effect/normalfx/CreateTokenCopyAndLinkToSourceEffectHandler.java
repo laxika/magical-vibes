@@ -57,6 +57,8 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
                 sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
         tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE));
+        tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                gameData, entry.getControllerId(), tokenCard);
 
         Permanent tokenPermanent = new Permanent(tokenCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);

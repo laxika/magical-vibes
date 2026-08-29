@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "76")
+@CardRegistration(set = "FDN", collectorNumber = "164")
 public class SpectralSailor extends Card {
 
     public SpectralSailor() {

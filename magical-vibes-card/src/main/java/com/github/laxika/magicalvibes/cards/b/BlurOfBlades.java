@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOU", collectorNumber = "84")
+@CardRegistration(set = "AKR", collectorNumber = "141")
 public class BlurOfBlades extends Card {
 
     public BlurOfBlades() {

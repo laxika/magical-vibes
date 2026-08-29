@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
  * Back half (Rubble) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "216")
+@CardRegistration(set = "AKR", collectorNumber = "254")
 public class ReduceRubble extends Card {
 
     public ReduceRubble() {

@@ -554,6 +554,31 @@ class LookAtTopCardsEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Dynamic mana-value cap filters battlefield candidates")
+        void dynamicManaValueCapFiltersCandidates() {
+            stubCardViewFactory();
+            Card eligible = createCard("Grizzly Bears");
+            eligible.setManaCost("{2}");
+            Card tooExpensive = createCard("Hill Giant");
+            tooExpensive.setManaCost("{3}");
+            gd.playerDecks.get(player1Id).add(eligible);
+            gd.playerDecks.get(player1Id).add(tooExpensive);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenReturn(true);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(
+                    2, new CardTypePredicate(CardType.CREATURE), new Fixed(2));
+            handler.resolve(gd, entryFor("Loot, Exuberant Explorer", effect), effect);
+
+            PendingInteraction.LibraryRevealChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+            assertThat(choice.maxCount()).isEqualTo(1);
+            assertThat(choice.randomRemainingToBottom()).isTrue();
+        }
+
+        @Test
         @DisplayName("Any-number battlefield choice can exile the remaining revealed cards")
         void anyNumberBattlefieldChoiceExilesRemainingCards() {
             stubCardViewFactory();
@@ -640,6 +665,71 @@ class LookAtTopCardsEffectHandlerTest {
                     gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
             assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
             assertThat(search.params().reorderRemainingToBottom()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Optional top-card pick can send the rest to the graveyard")
+        void optionalTopPickRestToGraveyard() {
+            stubCardViewFactory();
+            Card first = createCard("Forest");
+            Card second = createCard("Shock");
+            Card third = createCard("Llanowar Elves");
+            gd.playerDecks.get(player1Id).addAll(List.of(first, second, third));
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutOneOnTopRestToGraveyard(3);
+            handler.resolve(gd, entryFor("Gutless Plunderer", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search).isNotNull();
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+            assertThat(search.params().canFailToFind()).isTrue();
+            assertThat(search.params().restToGraveyard()).isTrue();
+            assertThat(search.params().reorderRemainingToBottom()).isFalse();
+            assertThat(search.params().sourceCards()).containsExactly(first, second, third);
+        }
+
+        @Test
+        @DisplayName("Optional filtered top pick offers only matching cards and randomizes the rest")
+        void optionalFilteredTopPickRandomizesRest() {
+            stubCardViewFactory();
+            Card land = createCard("Forest");
+            Card spell = createCard("Shock");
+            Card creature = createCard("Llanowar Elves");
+            gd.playerDecks.get(player1Id).addAll(List.of(land, spell, creature));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == land);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOnTopRestOnBottomRandom(
+                    3, new CardTypePredicate(CardType.LAND));
+            handler.resolve(gd, entryFor("Silhana Wayfinder", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search).isNotNull();
+            assertThat(search.params().cards()).containsExactly(land);
+            assertThat(search.params().sourceCards()).containsExactly(land, spell, creature);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+            assertThat(search.params().canFailToFind()).isTrue();
+            assertThat(search.params().reveals()).isTrue();
+            assertThat(search.params().followUp().secondBoundedPick().randomRest()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Optional filtered top pick bottoms all cards randomly when nothing matches")
+        void optionalFilteredTopPickNoMatchBottomsAllRandomly() {
+            Card first = createCard("Shock");
+            Card second = createCard("Giant Growth");
+            gd.playerDecks.get(player1Id).addAll(List.of(first, second));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenReturn(false);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOnTopRestOnBottomRandom(
+                    2, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Silhana Wayfinder", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerDecks.get(player1Id)).containsExactlyInAnyOrder(first, second);
         }
     }
 }

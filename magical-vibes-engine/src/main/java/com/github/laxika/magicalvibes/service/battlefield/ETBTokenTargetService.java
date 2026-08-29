@@ -9,17 +9,21 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,6 +45,7 @@ public class ETBTokenTargetService {
     private final TargetLegalityService targetLegalityService;
     private final AmountEvaluationService amountEvaluationService;
     private final GraveyardTargetingService graveyardTargetingService;
+    private final TriggerTargetCollector triggerTargetCollector;
 
     @Autowired
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -49,7 +54,8 @@ public class ETBTokenTargetService {
                                  PlayerInputService playerInputService,
                                  TargetLegalityService targetLegalityService,
                                  AmountEvaluationService amountEvaluationService,
-                                 GraveyardTargetingService graveyardTargetingService) {
+                                 GraveyardTargetingService graveyardTargetingService,
+                                 TriggerTargetCollector triggerTargetCollector) {
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
@@ -57,6 +63,7 @@ public class ETBTokenTargetService {
         this.targetLegalityService = targetLegalityService;
         this.amountEvaluationService = amountEvaluationService;
         this.graveyardTargetingService = graveyardTargetingService;
+        this.triggerTargetCollector = triggerTargetCollector;
     }
 
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -65,7 +72,8 @@ public class ETBTokenTargetService {
                                  PlayerInputService playerInputService,
                                  TargetLegalityService targetLegalityService) {
         this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
-                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService), null);
+                targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService), null,
+                new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService));
     }
 
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -76,7 +84,8 @@ public class ETBTokenTargetService {
                                  GraveyardTargetingService graveyardTargetingService) {
         this(gameQueryService, predicateEvaluationService, gameLogService, playerInputService,
                 targetLegalityService, new AmountEvaluationService(predicateEvaluationService, gameQueryService),
-                graveyardTargetingService);
+                graveyardTargetingService,
+                new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService));
     }
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {
@@ -88,7 +97,8 @@ public class ETBTokenTargetService {
                 StackEntryType type = se.getEntryType();
                 boolean isSpell = type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
                         || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
-                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL;
+                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL
+                        || type == StackEntryType.BATTLE_SPELL;
                 boolean isAbility = type == StackEntryType.ACTIVATED_ABILITY
                         || type == StackEntryType.TRIGGERED_ABILITY;
                 if (!isSpell && !(pending.includeAbilities() && isAbility)) {
@@ -124,32 +134,18 @@ public class ETBTokenTargetService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
 
-            boolean canTargetPlayer = pending.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            boolean canTargetPermanent = pending.effects().stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-
-            List<UUID> validPlayerTargets = new ArrayList<>();
-            if (canTargetPlayer) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, pending.targetFilter())) {
-                        validPlayerTargets.add(pid);
-                    }
-                }
-            }
-
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            if (canTargetPermanent) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(),
-                                pending.controllerId(), pending.sourceCard())) {
-                            validPermanentTargets.add(p.getId());
-                        }
-                    }
-                }
-            }
-
+            TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
+                    gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
+                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
+                    pending.sourcePermanentId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+            List<UUID> validPlayerTargets = targets.validTargets().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            List<UUID> validPermanentTargets = targets.validTargets().stream()
+                    .filter(id -> !gameData.playerIds.contains(id))
+                    .toList();
             if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
@@ -177,7 +173,8 @@ public class ETBTokenTargetService {
     public boolean handleETBTokenTargetChosen(GameData gameData, UUID targetId,
             PermanentChoiceContext.ETBTokenTargetTrigger pending) {
         GraveyardCardChoosingEffect choosingEffect = pending.effects().stream()
-                .filter(e -> e instanceof GraveyardCardChoosingEffect
+                .filter(e -> e instanceof GraveyardCardChoosingEffect candidate
+                        && candidate.choosesGraveyardCards()
                         && e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
                 .map(GraveyardCardChoosingEffect.class::cast)
                 .findFirst()
@@ -209,6 +206,7 @@ public class ETBTokenTargetService {
             }
 
             SpellTarget group = groups.get(idx);
+            int effectiveMinTargets = effectiveMinTargets(gameData, pending, group);
             int effectiveMaxTargets = effectiveMaxTargets(gameData, pending, group);
 
             if (chosenInGroup >= effectiveMaxTargets) {
@@ -217,7 +215,8 @@ public class ETBTokenTargetService {
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
-                        pending.resumePendingMayResolution()));
+                        pending.repeatedAdditionalCosts(),
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -233,17 +232,25 @@ public class ETBTokenTargetService {
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
-                        pending.resumePendingMayResolution()));
+                        pending.repeatedAdditionalCosts(),
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
-            boolean canTargetPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            boolean canTargetPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+            TargetFilter groupFilter = group.getFilter();
+            boolean canTargetPlayer = groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                    || groupFilter instanceof PlayerPredicateTargetFilter;
+            boolean canTargetPermanent = groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                    || groupFilter instanceof PermanentPredicateTargetFilter
+                    || groupFilter instanceof ControlledPermanentPredicateTargetFilter
+                    || groupFilter instanceof OwnedPermanentPredicateTargetFilter;
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (pending.chosenTargetsSoFar().contains(pid)) continue;
+                    if (targetAlreadyChosen(pending, pid)) continue;
                     if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, group.getFilter())) {
                         validPlayerTargets.add(pid);
                     }
@@ -256,13 +263,26 @@ public class ETBTokenTargetService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
+                        if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card)) {
+                                pending.controllerId(), card, pending.sourcePermanentId())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }
                 }
+            }
+
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE
+                    && !pending.chosenTargetsSoFar().isEmpty()) {
+                List<Permanent> selected = pending.chosenTargetsSoFar().stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentTargets.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate != null && selected.stream()
+                            .noneMatch(first -> gameQueryService.sharesCardType(first, candidate));
+                });
             }
 
             if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
@@ -278,7 +298,7 @@ public class ETBTokenTargetService {
             boolean noLegalTargets = validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty();
 
             if (noLegalTargets) {
-                if (chosenInGroup < group.getMinTargets()) {
+                if (chosenInGroup < effectiveMinTargets) {
                     gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability has no valid targets."));
                     log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
@@ -290,11 +310,12 @@ public class ETBTokenTargetService {
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
-                        pending.resumePendingMayResolution()));
+                        pending.repeatedAdditionalCosts(),
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
-            boolean minMet = chosenInGroup >= group.getMinTargets();
+            boolean minMet = chosenInGroup >= effectiveMinTargets;
             boolean mustChooseRemainingController =
                     card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
             if (minMet && !mustChooseRemainingController
@@ -317,6 +338,18 @@ public class ETBTokenTargetService {
         }
     }
 
+    private boolean targetAlreadyChosen(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                        UUID candidateId) {
+        List<UUID> chosenTargets = pending.chosenTargetsSoFar();
+        int currentGroupStart = pending.groupSizes().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        boolean chosenInCurrentGroup = chosenTargets.subList(currentGroupStart, chosenTargets.size())
+                .contains(candidateId);
+        return chosenInCurrentGroup
+                || (!pending.sourceCard().isAllowSharedTargets() && chosenTargets.contains(candidateId));
+    }
+
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
         return constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
@@ -332,8 +365,33 @@ public class ETBTokenTargetService {
                 ? null
                 : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         int dynamicMax = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
-                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0));
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
+                        null, pending.repeatedAdditionalCosts(), null));
         return Math.min(group.getMaxTargets(), Math.max(0, dynamicMax));
+    }
+
+    public int effectiveMinTargets(GameData gameData,
+                                   PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        SpellTarget group = pending.sourceCard().getSpellTargets().get(pending.currentGroupIndex());
+        return effectiveMinTargets(gameData, pending, group);
+    }
+
+    private int effectiveMinTargets(GameData gameData,
+                                    PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                    SpellTarget group) {
+        int staticMin = group.isXScaled()
+                ? Math.min(pending.xValue(), group.getMinTargets())
+                : group.getMinTargets();
+        if (group.getDynamicMinTargets() == null) {
+            return staticMin;
+        }
+        Permanent source = pending.sourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+        int dynamicMin = amountEvaluationService.evaluate(gameData, group.getDynamicMinTargets(),
+                new AmountContext(pending.controllerId(), source, null, pending.xValue(), 0, false,
+                        null, pending.repeatedAdditionalCosts(), null));
+        return Math.max(staticMin, Math.max(0, dynamicMin));
     }
 
     private void pushMultiTargetETBStackEntry(GameData gameData,
@@ -364,6 +422,18 @@ public class ETBTokenTargetService {
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setTriggeringCardId(pending.triggeringCardId());
+        if (pending.sourcePermanentId() != null) {
+            etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, pending.sourcePermanentId());
+            if (sourcePermanent != null) {
+                etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            }
+        }
+        if (!pending.repeatedAdditionalCosts().isEmpty()) {
+            etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));
+        }
         gameData.stack.add(etbEntry);
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
         log.info("Game {} - {} multi-target ability pushed onto stack ({} targets)",
@@ -408,7 +478,8 @@ public class ETBTokenTargetService {
      */
     public boolean needsSlotBySlotTargetSelection(Card card) {
         return card.getSpellTargets().stream()
-                .anyMatch(g -> g.getMaxTargets() > 1 || g.getMinTargets() == 0);
+                .anyMatch(g -> g.getMaxTargets() > 1 || g.getMinTargets() == 0
+                        || g.getDynamicMinTargets() != null);
     }
 
     private List<CardEffect> effectsForTargetGroup(Card card, List<CardEffect> effects, int groupIndex) {
@@ -439,7 +510,8 @@ public class ETBTokenTargetService {
 
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
                                                   TargetFilter targetFilter,
-                                                  UUID controllerId, Card sourceCard) {
+                                                  UUID controllerId, Card sourceCard,
+                                                  UUID sourcePermanentId) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
@@ -447,7 +519,7 @@ public class ETBTokenTargetService {
             return false;
         }
         FilterContext filterContext = new FilterContext(
-                gameData, sourceCard.getId(), controllerId, null, null);
+                gameData, sourceCard.getId(), controllerId, null, null, sourcePermanentId);
         return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

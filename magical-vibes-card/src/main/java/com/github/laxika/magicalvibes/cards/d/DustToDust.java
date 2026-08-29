@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "5ED", collectorNumber = "29")
+@CardRegistration(set = "DRK", collectorNumber = "5")
 public class DustToDust extends Card {
 
     public DustToDust() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "10")
+@CardRegistration(set = "M21", collectorNumber = "19")
 public class FeatOfResistance extends Card {
 
     public FeatOfResistance() {

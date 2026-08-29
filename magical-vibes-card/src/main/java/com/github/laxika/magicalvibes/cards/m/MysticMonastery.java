@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "236")
+@CardRegistration(set = "TDM", collectorNumber = "262")
 public class MysticMonastery extends Card {
 
     public MysticMonastery() {

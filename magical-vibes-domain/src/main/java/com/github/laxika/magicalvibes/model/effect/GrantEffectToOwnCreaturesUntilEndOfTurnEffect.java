@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param slot          the trigger slot to grant (e.g. {@link EffectSlot#ON_COMBAT_DAMAGE_TO_PLAYER})
  * @param grantedEffect the effect to fire when the trigger condition is met
- * @param filter        optional additional filter for the creatures receiving the ability
+ * @param filter        optional filter limiting the snapshot of creatures receiving the trigger
  */
 public record GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
         EffectSlot slot,

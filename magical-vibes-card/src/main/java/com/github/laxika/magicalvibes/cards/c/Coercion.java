@@ -12,12 +12,15 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "118")
+@CardRegistration(set = "S99", collectorNumber = "69")
+@CardRegistration(set = "TPR", collectorNumber = "86")
 @CardRegistration(set = "P02", collectorNumber = "66")
 @CardRegistration(set = "PTK", collectorNumber = "70")
 @CardRegistration(set = "8ED", collectorNumber = "122")
 @CardRegistration(set = "6ED", collectorNumber = "119")
 @CardRegistration(set = "VIS", collectorNumber = "54")
 @CardRegistration(set = "TMP", collectorNumber = "113")
+@CardRegistration(set = "BTD", collectorNumber = "20")
 public class Coercion extends Card {
 
     public Coercion() {

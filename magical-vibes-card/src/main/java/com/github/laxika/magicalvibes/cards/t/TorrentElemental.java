@@ -19,11 +19,11 @@ public class TorrentElemental extends Card {
         addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentControlledByDefendingPlayerPredicate()));
-        addExileActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B/G}{B/G}",
                 List.of(new ReturnSourceCardFromExileToBattlefieldEffect(true)),
                 "{3}{B/G}{B/G}: Put this card from exile onto the battlefield tapped. Activate only as a sorcery.",
-                ActivationTimingRestriction.SORCERY_SPEED));
+                ActivationTimingRestriction.SORCERY_SPEED).withExileOnly());
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "STH", collectorNumber = "80")
+@CardRegistration(set = "TPR", collectorNumber = "130")
 public class FanningTheFlames extends Card {
 
     public FanningTheFlames() {

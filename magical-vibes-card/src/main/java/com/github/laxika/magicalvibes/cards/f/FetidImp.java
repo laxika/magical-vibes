@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "97")
+@CardRegistration(set = "M21", collectorNumber = "98")
 public class FetidImp extends Card {
 
     public FetidImp() {

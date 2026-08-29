@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.UUID;
 
 /**
  * Gives poison counters to one or more players. A single record covers the whole give-poison
  * family: the {@link PoisonRecipient} routes who gets poisoned (controller / target player /
- * each player / the enchanted permanent's controller).
+ * each player / each opponent / the targeted permanent's controller / the enchanted permanent's
+ * controller).
  *
  * <p>When {@code recipient == TARGET_PLAYER} and {@code spellFilter} is non-null, this doubles as a
  * trigger descriptor for {@code ON_CONTROLLER_CASTS_SPELL}: the trigger fires only when the
@@ -23,17 +26,21 @@ import java.util.UUID;
  * @param spellFilter      trigger-descriptor filter (target-player spell-cast triggers only)
  * @param affectedPlayerId enchanted permanent's controller, baked in at trigger time
  */
-public record GivePoisonCountersEffect(int amount, PoisonRecipient recipient,
+public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient,
         CardPredicate spellFilter, UUID affectedPlayerId)
-        implements CardEffect, CombatDamageTriggerContextEffect {
+        implements CardEffect, CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient) {
+        this(new Fixed(amount), recipient, null, null);
+    }
+
+    public GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient) {
         this(amount, recipient, null, null);
     }
 
     /** Target-player trigger-descriptor constructor. */
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient, CardPredicate spellFilter) {
-        this(amount, recipient, spellFilter, null);
+        this(new Fixed(amount), recipient, spellFilter, null);
     }
 
     @Override
@@ -48,5 +55,10 @@ public record GivePoisonCountersEffect(int amount, PoisonRecipient recipient,
         // On an ON_COMBAT_DAMAGE_TO_PLAYER trigger (Pit Scorpion) the TARGET_PLAYER recipient must
         // bind to the damaged player so the poison counter lands on them.
         return recipient == PoisonRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return amount;
     }
 }

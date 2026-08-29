@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "31")
+@CardRegistration(set = "S99", collectorNumber = "27")
 public class Steadfastness extends Card {
 
     public Steadfastness() {

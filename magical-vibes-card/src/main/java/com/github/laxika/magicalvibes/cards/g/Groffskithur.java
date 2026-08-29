@@ -15,6 +15,7 @@ public class Groffskithur extends Card {
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardNamedPredicate("Groffskithur"))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

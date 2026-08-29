@@ -22,6 +22,8 @@ import java.util.Set;
 public class ReignOfChaos extends Card {
 
     public ReignOfChaos() {
+        setAllowSharedTargets(true);
+
         TargetFilter plains = new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.PLAINS),
                 "Target must be a Plains."
@@ -45,7 +47,6 @@ public class ReignOfChaos extends Card {
                 "Target must be a blue creature."
         );
 
-        // Each mode destroys two distinct targets, so both modes declare one target filter per effect.
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target Plains and target white creature",

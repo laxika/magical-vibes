@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.*;
@@ -43,6 +45,12 @@ class CombatDamageState {
     final Map<Integer, Integer> unpreventableAtkDamageTaken = new HashMap<>();
     final Map<Integer, Integer> unpreventableDefDamageTaken = new HashMap<>();
 
+    // Per-target snapshots used to calculate excess combat damage after prevention is applied.
+    final Map<UUID, Integer> damageDealtToPermanentsBeforeStep = new HashMap<>();
+    final Map<UUID, Integer> markedDamageBeforeStep = new HashMap<>();
+    final Map<UUID, Integer> toughnessBeforeStep = new HashMap<>();
+    final Map<UUID, Integer> loyaltyBeforeStep = new HashMap<>();
+
     // Deathtouch tracking
     final Set<Integer> deathtouchDamagedAttackerIndices = new HashSet<>();
     final Set<Integer> deathtouchDamagedDefenderIndices = new HashSet<>();
@@ -54,11 +62,21 @@ class CombatDamageState {
     final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
     final Map<Permanent, Integer> combatDamageDealtToPlaneswalker = new HashMap<>();
+    final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToBattles = new HashMap<>();
+    final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToPlaneswalkers = new HashMap<>();
+    final Map<Permanent, Set<UUID>> combatDamageRecipientControllers = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     final Set<UUID> combatDamageToBlockingCreatureSources = new HashSet<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
+    final Map<Permanent, List<CardEffect>> selfDealsDamageEffects = new HashMap<>();
     final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
+    final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();
+    final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
+    final List<DelayedCombatDamageLookAtHandAndDrawQualification>
+            delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();
 
     // Per-source damage amounts to each target creature (for ON_DEALT_DAMAGE triggers needing damage amount)
     // Key: source permanent, Value: map of target creature ID -> damage amount
@@ -69,7 +87,19 @@ class CombatDamageState {
     // creature ID, Value: its controller ID at damage time.
     final Map<UUID, UUID> combatDamageTargetControllers = new HashMap<>();
 
+    final Map<UUID, Permanent> pendingDralnuReplacementTargets = new LinkedHashMap<>();
+    final Map<UUID, Integer> pendingDralnuReplacementDamage = new LinkedHashMap<>();
+
     // CR 510.1 — Snapshot of whether defender's damage should be dealt as infect (Phyrexian Unlife),
     // captured before lifelink is processed so simultaneous combat damage uses pre-damage life total.
     boolean defenderDamageAsInfect;
+
+    record DelayedCombatDamageDrawQualification(DelayedCombatDamageDraw delayedAction, Set<UUID> sourceIds) {
+    }
+
+    record DelayedCombatDamageLookAtHandAndDrawQualification(
+            DelayedCombatDamageLookAtHandAndDraw delayedAction,
+            UUID damagedPlayerId
+    ) {
+    }
 }

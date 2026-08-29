@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "M20", collectorNumber = "319")
+@CardRegistration(set = "GRN", collectorNumber = "62")
 public class BartizanBats extends Card {
 
     public BartizanBats() {

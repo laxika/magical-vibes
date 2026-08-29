@@ -47,6 +47,7 @@ public class TargetPlayerMayExileCardFromGraveyardEffectHandler implements Norma
                 null,
                 null,
                 null,
-                controllerId));
+                controllerId,
+                null));
     }
 }

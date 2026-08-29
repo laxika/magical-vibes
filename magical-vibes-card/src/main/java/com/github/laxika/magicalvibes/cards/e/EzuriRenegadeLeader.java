@@ -42,7 +42,8 @@ public class EzuriRenegadeLeader extends Card {
                 "{2}{G}{G}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 3, new PermanentHasSubtypePredicate(CardSubtype.ELF)),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.ELF))
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES,
+                                new PermanentHasSubtypePredicate(CardSubtype.ELF))
                 ),
                 "{2}{G}{G}{G}: Elf creatures you control get +3/+3 and gain trample until end of turn."
         ));

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "172")
 @CardRegistration(set = "INV", collectorNumber = "122")
+@CardRegistration(set = "RIX", collectorNumber = "84")
 public class Recover extends Card {
 
     public Recover() {

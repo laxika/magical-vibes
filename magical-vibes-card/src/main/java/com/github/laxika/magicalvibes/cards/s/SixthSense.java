@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "187")
+@CardRegistration(set = "AKR", collectorNumber = "220")
 public class SixthSense extends Card {
 
     public SixthSense() {

@@ -45,14 +45,17 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
 
         for (int i = 0; i < e.copies(); i++) {
             Card copyCard = copySupport.createCopyCard(spellCard);
+            if (e.tokenCopy()) {
+                copyCard.setToken(true);
+            }
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 
-            gameData.stack.add(copyEntry);
+            copySupport.addCopyToStack(gameData, copyEntry);
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
 
-            if (copyEntry.getTargetId() != null) {
+            if (!e.tokenCopy() && copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(
                         entry.getCard(),
                         castingPlayerId,
@@ -64,7 +67,7 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        log.info("Game {} - Storm creates {} copies of {} for {}",
+        log.info("Game {} - spell-copy effect creates {} copies of {} for {}",
                 gameData.id, e.copies(), spellCard.getName(), castingPlayerId);
     }
 }

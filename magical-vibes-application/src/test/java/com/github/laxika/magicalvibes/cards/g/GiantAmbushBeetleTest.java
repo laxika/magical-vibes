@@ -16,9 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GiantAmbushBeetleTest extends BaseCardTest {
 
-    // ===== Helpers =====
-
-    /** Casts the beetle and resolves it onto the battlefield; the ETB "may" trigger is left on the stack. */
     private Permanent castBeetle() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -27,7 +24,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB may on stack
+        harness.passBothPriorities();
 
         return findPermanent(player1, "Giant Ambush Beetle");
     }
@@ -36,17 +33,15 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 
-    // ===== ETB may ability =====
-
     @Test
     @DisplayName("Accepting the ETB and choosing a creature makes it block the beetle")
     void acceptingSetsMustBlock() {
         Permanent target = addCreature(player2);
         Permanent beetle = castBeetle();
 
-        harness.passBothPriorities();              // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> target choice
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.getMustBlockIds()).contains(beetle.getId());
         assertThat(gd.stack).isEmpty();
@@ -58,8 +53,9 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         Permanent target = addCreature(player2);
         castBeetle();
 
-        harness.passBothPriorities();               // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.getMustBlockIds()).isEmpty();
         assertThat(gd.stack).isEmpty();
@@ -71,14 +67,12 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         Permanent ownCreature = addCreature(player1);
         Permanent beetle = castBeetle();
 
+        harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, ownCreature.getId());
 
         assertThat(ownCreature.getMustBlockIds()).contains(beetle.getId());
     }
-
-    // ===== Combat enforcement =====
 
     @Test
     @DisplayName("Chosen creature must be declared as a blocker when the beetle attacks")
@@ -86,9 +80,9 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         Permanent target = addCreature(player2);
         Permanent beetle = castBeetle();
 
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         beetle.setAttacking(true);
         harness.forceActivePlayer(player1);
@@ -107,9 +101,9 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         Permanent target = addCreature(player2);
         Permanent beetle = castBeetle();
 
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         beetle.setAttacking(true);
         harness.forceActivePlayer(player1);

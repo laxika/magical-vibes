@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "3")
 @CardRegistration(set = "6ED", collectorNumber = "3")
 @CardRegistration(set = "WTH", collectorNumber = "5")
+@CardRegistration(set = "S99", collectorNumber = "5")
 public class ArdentMilitia extends Card {
 }

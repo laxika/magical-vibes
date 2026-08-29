@@ -39,7 +39,11 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardCreateTokenIfCreatureEffect) effect;
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
+            targetCardId = entry.getTargetCardIds().getFirst();
+        }
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData,
                     GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
@@ -64,11 +68,11 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
                 GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
         if (targetCard.hasType(CardType.CREATURE)) {
-            CreateTokenEffect zombie = CreateTokenEffect.blackZombie(1);
+            CreateTokenEffect token = e.tokenTemplate().withAmount(1);
             entry.getCreatedPermanentIds().addAll(
-                    permanentControlSupport.applyCreateToken(gameData, controllerId, zombie, 1,
-                            entry.getCard().getSetCode(), 2, 2));
-            log.info("Game {} - {} creates a Zombie token from exiled creature card",
+                    permanentControlSupport.applyCreateToken(gameData, controllerId, token, 1,
+                            entry.getCard().getSetCode(), token.tokenPower(), token.tokenToughness()));
+            log.info("Game {} - {} creates a token from exiled creature card",
                     gameData.id, playerName);
         }
     }

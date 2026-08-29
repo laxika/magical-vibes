@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "102")
 @CardRegistration(set = "M19", collectorNumber = "103")
+@CardRegistration(set = "M21", collectorNumber = "105")
 public class InfernalScarring extends Card {
 
     public InfernalScarring() {

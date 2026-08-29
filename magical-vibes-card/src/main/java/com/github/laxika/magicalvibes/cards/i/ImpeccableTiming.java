@@ -18,6 +18,8 @@ import java.util.List;
  * Deals 3 damage to target attacking or blocking creature.
  */
 @CardRegistration(set = "AKH", collectorNumber = "18")
+@CardRegistration(set = "KLD", collectorNumber = "19")
+@CardRegistration(set = "AKR", collectorNumber = "24")
 public class ImpeccableTiming extends Card {
 
     public ImpeccableTiming() {

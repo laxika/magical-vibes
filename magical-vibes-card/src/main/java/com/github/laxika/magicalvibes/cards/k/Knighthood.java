@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "7ED", collectorNumber = "25")
+@CardRegistration(set = "ULG", collectorNumber = "12")
 public class Knighthood extends Card {
 
     public Knighthood() {

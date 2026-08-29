@@ -44,9 +44,12 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
             if (accepted) {
                 List<Card> hand = gameData.playerHands.get(ability.controllerId());
                 Card revealed = hand == null ? null : hand.stream()
-                        .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
+                        .filter(c -> c.getSubtypes().stream().anyMatch(revealOrTapped.subtypes()::contains))
                         .findFirst().orElse(null);
-                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
+                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtypes().stream()
+                        .map(subtype -> subtype.getDisplayName())
+                        .findFirst()
+                        .orElse("matching");
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals " + revealedName + " — ", ability.sourceCard(), " enters untapped."));
                 log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
                         player.getUsername(), revealedName, ability.sourceCard().getName());

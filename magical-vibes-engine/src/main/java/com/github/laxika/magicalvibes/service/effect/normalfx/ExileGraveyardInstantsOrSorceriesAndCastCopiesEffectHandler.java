@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect;
@@ -44,9 +45,15 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect copyEffect =
+                (ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect) effect;
 
         List<UUID> copyIds = new ArrayList<>();
-        for (UUID targetCardId : entry.targetsForEffect(effect)) {
+        List<UUID> targetCardIds = entry.targetsForEffect(effect);
+        if (targetCardIds.isEmpty()) {
+            targetCardIds = entry.getTargetCardIds();
+        }
+        for (UUID targetCardId : targetCardIds) {
             Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
             if (targetCard == null) {
                 continue;
@@ -68,7 +75,21 @@ public class ExileGraveyardInstantsOrSorceriesAndCastCopiesEffectHandler impleme
             copyIds.add(copy.getId());
         }
 
-        if (!copyIds.isEmpty()) {
+        if (copyEffect.mayCastCopies()) {
+            for (int i = copyIds.size() - 1; i >= 0; i--) {
+                UUID copyId = copyIds.get(i);
+                Card copy = gameQueryService.findCardInExileById(gameData, copyId);
+                if (copy != null) {
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            copy,
+                            controllerId,
+                            List.of(copyEffect),
+                            "Cast the copy of " + copy.getName() + " without paying its mana cost?",
+                            copyId
+                    ));
+                }
+            }
+        } else if (!copyIds.isEmpty()) {
             exileFreeCastQueueSupport.queueCopiesForFreeCast(gameData, controllerId, copyIds);
         }
     }

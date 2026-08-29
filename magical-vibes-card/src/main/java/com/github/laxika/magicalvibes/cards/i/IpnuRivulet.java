@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "180")
+@CardRegistration(set = "AKR", collectorNumber = "303")
 public class IpnuRivulet extends Card {
 
     public IpnuRivulet() {

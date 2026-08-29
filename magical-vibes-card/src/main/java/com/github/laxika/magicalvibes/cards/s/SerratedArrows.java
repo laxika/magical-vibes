@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "110")
+@CardRegistration(set = "ATH", collectorNumber = "70")
+@CardRegistration(set = "TSB", collectorNumber = "114")
 public class SerratedArrows extends Card {
 
     public SerratedArrows() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "23")
 @CardRegistration(set = "8ED", collectorNumber = "27")
+@CardRegistration(set = "MMQ", collectorNumber = "24")
 public class IvoryMask extends Card {
 
     public IvoryMask() {

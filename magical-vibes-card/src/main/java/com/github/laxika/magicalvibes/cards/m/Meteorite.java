@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "221")
 @CardRegistration(set = "ORI", collectorNumber = "233")
+@CardRegistration(set = "M21", collectorNumber = "233")
 public class Meteorite extends Card {
 
     public Meteorite() {

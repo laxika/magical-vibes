@@ -29,9 +29,9 @@ class ConclaveNaturalistsTest extends BaseCardTest {
 
     private void castAndAcceptMay(UUID targetId) {
         cast();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, targetId);
     }
 
     @Test
@@ -63,6 +63,7 @@ class ConclaveNaturalistsTest extends BaseCardTest {
     void decliningMaySkipsDestruction() {
         harness.addToBattlefield(player2, new RuleOfLaw());
         cast();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Rule of Law"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -87,13 +88,16 @@ class ConclaveNaturalistsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the may ability prompts for a target")
-    void acceptingMayPromptsForTarget() {
+    @DisplayName("Chooses the trigger target before the may decision")
+    void choosesTargetBeforeMayDecision() {
         harness.addToBattlefield(player2, new LeoninScimitar());
         cast();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }

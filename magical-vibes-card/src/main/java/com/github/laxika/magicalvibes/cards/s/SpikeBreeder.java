@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "STH", collectorNumber = "116")
+@CardRegistration(set = "TPR", collectorNumber = "194")
 public class SpikeBreeder extends Card {
 
     public SpikeBreeder() {

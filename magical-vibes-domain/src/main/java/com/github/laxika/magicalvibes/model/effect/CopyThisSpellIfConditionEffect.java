@@ -10,7 +10,12 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * and queues a triggered ability wrapping a {@link CopyControllerCastSpellEffect} in a
  * {@link ConditionalEffect} keyed on {@code condition}, so the copy is created (with an optional
  * choose-new-targets prompt) only when the condition holds at resolution. Used by the SOS Infusion
- * copy cycle (e.g. Lumaret's Favor).
+ * copy cycle (e.g. Lumaret's Favor). When {@code tokenCopy} is true, the copied permanent spell
+ * enters as a token.
  */
-public record CopyThisSpellIfConditionEffect(Condition condition) implements CardEffect {
+public record CopyThisSpellIfConditionEffect(Condition condition, boolean tokenCopy) implements CardEffect {
+
+    public CopyThisSpellIfConditionEffect(Condition condition) {
+        this(condition, false);
+    }
 }

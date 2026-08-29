@@ -1,33 +1,65 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.DelveCost;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
+import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
+import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreaturesCastingCost;
+import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
+import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -36,8 +68,12 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -50,6 +86,8 @@ import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
+import com.github.laxika.magicalvibes.service.combat.CombatHelper;
+import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -63,6 +101,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -207,6 +246,33 @@ public abstract class AiDecisionEngine {
         return aiPlayer.getId();
     }
 
+    /**
+     * Uses the legal attacker snapshot that opened the pending combat prompt. The game is paused
+     * while that prompt is active, so recomputing the same legality query only adds work and can
+     * make a delayed AI decision look stuck. Hand-built test prompts may omit the snapshot; those
+     * still fall back to the live combat service.
+     */
+    protected List<Integer> getAttackableIndicesForDecision(GameData gameData, UUID playerId) {
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null && playerId.equals(declaration.activePlayerId())
+                && !declaration.attackerIndices().isEmpty()) {
+            return declaration.attackerIndices();
+        }
+        return combatAttackService.getAttackableCreatureIndices(gameData, playerId);
+    }
+
+    protected List<Integer> getMustAttackIndicesForDecision(
+            GameData gameData, UUID playerId, List<Integer> attackableIndices) {
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null && playerId.equals(declaration.activePlayerId())
+                && declaration.attackerIndices().equals(attackableIndices)) {
+            return declaration.mustAttackIndices();
+        }
+        return combatAttackService.getMustAttackIndices(gameData, playerId, attackableIndices);
+    }
+
     private boolean isAuthorizedFor(GameData gameData, PendingInteraction interaction) {
         return AiUtils.isRespondingFor(gameData, aiPlayer.getId(), interaction.decidingPlayerId());
     }
@@ -256,6 +322,21 @@ public abstract class AiDecisionEngine {
     protected void handleAlternateCastXValueChoice(GameData gameData) {
         PendingInteraction.AlternateCastXValueChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.AlternateCastXValueChoice.class);
+        if (choice != null && aiPlayer.getId().equals(choice.playerId())) {
+            ManaCost cost = new ManaCost(choice.manaCost());
+            int maxX = cost.calculateMaxX(gameData.playerManaPools.get(aiPlayer.getId()));
+            if (maxX < choice.maxValue()) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(), choice.manaCost(),
+                        choice.maxValue(), manaTapAction(), true);
+            }
+        }
+        choiceHandler.handleActiveInteraction(gameData);
+    }
+
+    /** Floats the full variable face-up cost before the strategy chooses a payable X. */
+    protected void handleTurnFaceUpXValueChoice(GameData gameData) {
+        PendingInteraction.TurnFaceUpXValueChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.TurnFaceUpXValueChoice.class);
         if (choice != null && aiPlayer.getId().equals(choice.playerId())) {
             ManaCost cost = new ManaCost(choice.manaCost());
             int maxX = cost.calculateMaxX(gameData.playerManaPools.get(aiPlayer.getId()));
@@ -364,6 +445,8 @@ public abstract class AiDecisionEngine {
             case PendingInteraction.XValueChoice ignored -> handleXValueChoice(gameData);
             case PendingInteraction.AlternateCastXValueChoice ignored ->
                     handleAlternateCastXValueChoice(gameData);
+            case PendingInteraction.TurnFaceUpXValueChoice ignored ->
+                    handleTurnFaceUpXValueChoice(gameData);
             case PendingInteraction.Scry ignored -> handleScry(gameData);
             case null -> { }
             default -> choiceHandler.handleActiveInteraction(gameData);
@@ -494,8 +577,12 @@ public abstract class AiDecisionEngine {
                 gameData, activeDecisionPlayerId(gameData))) {
             return attackerIndices;
         }
+        List<Integer> legalAvailableIndices = removeUnmetAttackRestrictions(gameData, availableIndices);
+        if (legalAvailableIndices.isEmpty()) {
+            return attackerIndices;
+        }
         List<Integer> forced = new ArrayList<>(attackerIndices);
-        forced.add(availableIndices.getFirst());
+        forced.add(legalAvailableIndices.getFirst());
         return forced;
     }
 
@@ -593,6 +680,8 @@ public abstract class AiDecisionEngine {
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
         attackerIndices = enforceCanOnlyAttackAlone(gameData, actingPlayerId, attackerIndices);
+        attackerIndices = removeUnmetAttackRestrictions(gameData, attackerIndices);
+        attackerIndices = capAttackersToCombatMaximum(gameData, attackerIndices);
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, actingPlayerId);
         List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(
                 gameData, actingPlayerId);
@@ -631,6 +720,11 @@ public abstract class AiDecisionEngine {
                 totalGenericTax = candidateGenericTax;
             }
         }
+        capped = removeUnmetAttackRestrictions(gameData, capped);
+        totalGenericTax = capped.stream()
+                .mapToLong(index -> (long) taxPerCreature
+                        + gameQueryService.getCreatureAttackTax(gameData, battlefield.get(index)))
+                .sum();
         if (capped.isEmpty()) {
             return List.of();
         }
@@ -657,7 +751,7 @@ public abstract class AiDecisionEngine {
         capped = capped.stream()
                 .filter(idx -> idx < battlefield.size() && !battlefield.get(idx).isTapped())
                 .toList();
-        return dropLoneCantAttackAlone(gameData, capped);
+        return removeUnmetAttackRestrictions(gameData, capped);
     }
 
     /**
@@ -744,6 +838,11 @@ public abstract class AiDecisionEngine {
                 || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
             return assignments;
         }
+        assignments = dropIncompleteAllDefendingCreatureBlocks(
+                gameData, defenderBattlefield, attackerBattlefield, assignments);
+        if (assignments.isEmpty()) {
+            return assignments;
+        }
         BlockTax tax = new BlockTax(gameData, defenderBattlefield, attackerBattlefield);
         if (tax.mana(assignments) == 0 && tax.life(assignments) == 0) {
             return assignments;
@@ -776,7 +875,10 @@ public abstract class AiDecisionEngine {
             log.info("AI: Dropping {} of {} blocks in game {} whose block cost can't be paid",
                     assignments.size() - affordable.size(), assignments.size(), gameId);
         }
-        return dropBlocksLeftUnderfilled(gameData, defenderBattlefield, attackerBattlefield, affordable);
+        List<BlockerAssignment> legal = dropBlocksLeftUnderfilled(
+                gameData, defenderBattlefield, attackerBattlefield, affordable);
+        return dropIncompleteAllDefendingCreatureBlocks(
+                gameData, defenderBattlefield, attackerBattlefield, legal);
     }
 
     private boolean indicesInRange(List<BlockerAssignment> assignments, List<Permanent> defenderBattlefield,
@@ -811,6 +913,51 @@ public abstract class AiDecisionEngine {
         return kept;
     }
 
+    private List<BlockerAssignment> dropIncompleteAllDefendingCreatureBlocks(
+            GameData gameData, List<Permanent> defenderBattlefield, List<Permanent> attackerBattlefield,
+            List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty()) {
+            return assignments;
+        }
+        BlockLegalityContext blockContext =
+                blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+        Set<Integer> incompleteAttackers = assignments.stream()
+                .map(BlockerAssignment::attackerIndex)
+                .filter(attackerIdx -> isIndexInRange(attackerIdx, attackerBattlefield))
+                .filter(attackerIdx -> blockLegalityService.requiresAllDefendingCreaturesToBlock(
+                        blockContext, attackerBattlefield.get(attackerIdx)))
+                .filter(attackerIdx -> !hasCompleteAllDefendingCreatureBlock(
+                        gameData, blockContext, defenderBattlefield, attackerBattlefield, assignments, attackerIdx))
+                .collect(Collectors.toSet());
+        if (incompleteAttackers.isEmpty()) {
+            return assignments;
+        }
+        return assignments.stream()
+                .filter(assignment -> !incompleteAttackers.contains(assignment.attackerIndex()))
+                .toList();
+    }
+
+    private boolean hasCompleteAllDefendingCreatureBlock(
+            GameData gameData, BlockLegalityContext blockContext, List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield, List<BlockerAssignment> assignments, int attackerIdx) {
+        Permanent attacker = attackerBattlefield.get(attackerIdx);
+        List<Integer> defendingCreatureIndices = defendingCreatureIndices(gameData, defenderBattlefield);
+        if (!canAllDefendingCreaturesBlock(
+                gameData, blockContext, defenderBattlefield, attackerBattlefield, attacker,
+                defendingCreatureIndices)) {
+            return false;
+        }
+        Set<Integer> assignedBlockers = assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx)
+                .map(BlockerAssignment::blockerIndex)
+                .collect(Collectors.toSet());
+        long assignedBlockCount = assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx)
+                .count();
+        return assignedBlockCount == defendingCreatureIndices.size()
+                && assignedBlockers.equals(new HashSet<>(defendingCreatureIndices));
+    }
+
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
@@ -818,8 +965,9 @@ public abstract class AiDecisionEngine {
 
     /**
      * The additional cost of a set of declared blocks, computed the way
-     * {@code CombatBlockService.declareBlockers} computes it: mana summed per blocker-attacker
-     * pair, life charged once per blocker at its highest rate (CR 509.1d — one locked-in total).
+     * {@code CombatBlockService.declareBlockers} computes it: pair-specific mana is summed per
+     * blocker-attacker pair, while board-wide mana and life are charged once per blocker; life
+     * uses the highest applicable rate (CR 509.1d — one locked-in total).
      */
     private final class BlockTax {
 
@@ -835,11 +983,32 @@ public abstract class AiDecisionEngine {
         }
 
         private int mana(List<BlockerAssignment> assignments) {
-            return assignments.stream().mapToInt(this::mana).sum();
+            return mana(assignments, Map.of());
         }
 
-        private int mana(BlockerAssignment assignment) {
+        private int mana(List<BlockerAssignment> assignments, Map<UUID, Integer> alreadyCharged) {
+            int pairTax = assignments.stream().mapToInt(this::pairMana).sum();
+            Map<UUID, Integer> charged = globalManaByBlocker(assignments, alreadyCharged);
+            int globalTax = charged.entrySet().stream()
+                    .mapToInt(entry -> entry.getValue() - alreadyCharged.getOrDefault(entry.getKey(), 0))
+                    .sum();
+            return pairTax + globalTax;
+        }
+
+        private int pairMana(BlockerAssignment assignment) {
             return gameQueryService.getBlockManaTax(gameData, blocker(assignment), attacker(assignment));
+        }
+
+        private Map<UUID, Integer> globalManaByBlocker(List<BlockerAssignment> assignments,
+                                                        Map<UUID, Integer> alreadyCharged) {
+            Map<UUID, Integer> charged = new HashMap<>(alreadyCharged);
+            for (BlockerAssignment assignment : assignments) {
+                int manaTax = gameQueryService.getGlobalBlockManaTax(gameData, blocker(assignment));
+                if (manaTax > 0) {
+                    charged.merge(blocker(assignment).getId(), manaTax, Math::max);
+                }
+            }
+            return charged;
         }
 
         private int life(List<BlockerAssignment> assignments) {
@@ -877,15 +1046,17 @@ public abstract class AiDecisionEngine {
 
             Set<BlockerAssignment> kept = new LinkedHashSet<>();
             Map<UUID, Integer> lifeCharged = new HashMap<>();
+            Map<UUID, Integer> manaCharged = new HashMap<>();
             int manaSpent = 0;
             for (List<BlockerAssignment> group : ranked) {
                 List<BlockerAssignment> fitted = fitToBudget(
-                        group, manaBudget - manaSpent, lifeBudget, lifeCharged);
+                        group, manaBudget - manaSpent, lifeBudget, lifeCharged, manaCharged);
                 if (fitted.isEmpty()) {
                     continue;
                 }
-                manaSpent += mana(fitted);
+                manaSpent += mana(fitted, manaCharged);
                 lifeCharged = lifeByBlocker(fitted, lifeCharged);
+                manaCharged = globalManaByBlocker(fitted, manaCharged);
                 kept.addAll(fitted);
             }
             return assignments.stream().filter(kept::contains).toList();
@@ -897,26 +1068,44 @@ public abstract class AiDecisionEngine {
          * an underfilled block is an illegal declaration rather than a cheaper one.
          */
         private List<BlockerAssignment> fitToBudget(List<BlockerAssignment> group, int manaLeft,
-                                                    int lifeBudget, Map<UUID, Integer> lifeCharged) {
+                                                    int lifeBudget, Map<UUID, Integer> lifeCharged,
+                                                    Map<UUID, Integer> manaCharged) {
+            Permanent groupAttacker = attacker(group.getFirst());
+            if (requiresAllDefendingCreaturesToBlock(groupAttacker)) {
+                int groupMana = mana(group, manaCharged);
+                int groupLife = lifeByBlocker(group, lifeCharged).values().stream()
+                        .mapToInt(Integer::intValue)
+                        .sum();
+                return groupMana <= manaLeft && groupLife <= lifeBudget ? group : List.of();
+            }
+
             List<BlockerAssignment> fitted = new ArrayList<>();
             Map<UUID, Integer> life = lifeCharged;
+            Map<UUID, Integer> globalMana = new HashMap<>(manaCharged);
             int manaSpent = 0;
             for (BlockerAssignment assignment : group.stream()
-                    .sorted(Comparator.comparingInt(this::mana))
+                    .sorted(Comparator.comparingInt(this::pairMana))
                     .toList()) {
-                int manaTax = mana(assignment);
+                int manaTax = mana(List.of(assignment), globalMana);
                 Map<UUID, Integer> withAssignment = lifeByBlocker(List.of(assignment), life);
                 int lifeSpent = withAssignment.values().stream().mapToInt(Integer::intValue).sum();
                 if (manaSpent + manaTax > manaLeft || lifeSpent > lifeBudget) {
                     continue;
                 }
                 manaSpent += manaTax;
+                globalMana = globalManaByBlocker(List.of(assignment), globalMana);
                 life = withAssignment;
                 fitted.add(assignment);
             }
             int minimumBlockers = AiUtils.minimumBlockersRequiredToBlock(
-                    gameData, gameQueryService, attacker(group.getFirst()));
+                    gameData, gameQueryService, groupAttacker);
             return fitted.size() >= minimumBlockers ? fitted : List.of();
+        }
+
+        private boolean requiresAllDefendingCreaturesToBlock(Permanent attacker) {
+            BlockLegalityContext context =
+                    blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+            return blockLegalityService.requiresAllDefendingCreaturesToBlock(context, attacker);
         }
 
         private double damagePreventedPerMana(List<BlockerAssignment> group) {
@@ -949,10 +1138,11 @@ public abstract class AiDecisionEngine {
      */
     protected void sendAttackerDeclaration(DeclareAttackersRequest request) {
         GameData gameData = gameRegistry.get(gameId);
-        DeclareAttackersRequest targetLegalRequest = gameData == null
+        DeclareAttackersRequest combatLimitLegalRequest = gameData == null
                 ? request
-                : removeAttackersThatCannotAttackDefaultTarget(gameData, request);
-        String rejection = attemptAttackerDeclaration(targetLegalRequest);
+                : gameQueryService.withQueryScope(
+                        gameData, () -> normalizeAttackerDeclaration(gameData, request));
+        String rejection = attemptAttackerDeclaration(combatLimitLegalRequest);
         if (rejection == null) {
             return;
         }
@@ -969,15 +1159,10 @@ public abstract class AiDecisionEngine {
         if (gameData == null) {
             return;
         }
-        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
-        UUID defaultTarget = AiUtils.getOpponentId(gameData, attackingPlayerId);
-        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndicesForTarget(
-                gameData, attackingPlayerId, defaultTarget);
-        if (allAttackable == null) {
-            allAttackable = combatAttackService.getAttackableCreatureIndices(gameData, attackingPlayerId);
-        }
-        if (!allAttackable.isEmpty()) {
-            rejection = attemptAttackerDeclaration(new DeclareAttackersRequest(allAttackable, null));
+        DeclareAttackersRequest fallback = gameQueryService.withQueryScope(
+                gameData, () -> findLegalFallbackAttackerDeclaration(gameData));
+        if (!fallback.attackerIndices().isEmpty()) {
+            rejection = attemptAttackerDeclaration(fallback);
             if (rejection == null) {
                 return;
             }
@@ -985,13 +1170,150 @@ public abstract class AiDecisionEngine {
         log.error("AI: No legal attacker declaration found in game {}; last rejection: {}", gameId, rejection);
     }
 
+    private DeclareAttackersRequest normalizeAttackerDeclaration(
+            GameData gameData, DeclareAttackersRequest request) {
+        DeclareAttackersRequest requirementLegalRequest =
+                enforceAttackerDeclarationRequirements(gameData, request);
+        requirementLegalRequest = enforceConditionalAttackRequirements(gameData, requirementLegalRequest);
+        DeclareAttackersRequest targetLegalRequest =
+                removeAttackersThatCannotAttackDefaultTarget(gameData, requirementLegalRequest);
+        DeclareAttackersRequest restrictionLegalRequest =
+                removeUnmetAttackRestrictions(gameData, targetLegalRequest);
+        DeclareAttackersRequest combatLimitLegalRequest =
+                capAttackersToCombatMaximum(gameData, restrictionLegalRequest);
+        combatLimitLegalRequest = removeUnmetAttackRestrictions(gameData, combatLimitLegalRequest);
+        combatLimitLegalRequest = fitAttackersToTapCosts(gameData, combatLimitLegalRequest);
+        if (combatLimitLegalRequest.attackerIndices().isEmpty()
+                && combatAttackService.isOpponentForcedToAttack(
+                        gameData, activeDecisionPlayerId(gameData))) {
+            DeclareAttackersRequest forcedFallback = findLegalFallbackAttackerDeclaration(gameData);
+            if (!forcedFallback.attackerIndices().isEmpty()) {
+                combatLimitLegalRequest = forcedFallback;
+            }
+        }
+        return combatLimitLegalRequest;
+    }
+
+    private DeclareAttackersRequest findLegalFallbackAttackerDeclaration(GameData gameData) {
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Integer> allAttackable = combatAttackService.getAttackableCreatureIndices(gameData, attackingPlayerId);
+        if (allAttackable == null || allAttackable.isEmpty()) {
+            return new DeclareAttackersRequest(List.of(), null);
+        }
+
+        DeclareAttackersRequest fallback = new DeclareAttackersRequest(allAttackable, null);
+        fallback = enforceAttackerDeclarationRequirements(gameData, fallback);
+        fallback = enforceConditionalAttackRequirements(gameData, fallback);
+        fallback = removeAttackersThatCannotAttackDefaultTarget(gameData, fallback);
+        fallback = removeUnmetAttackRestrictions(gameData, fallback);
+        fallback = capAttackersToCombatMaximum(gameData, fallback);
+        fallback = removeUnmetAttackRestrictions(gameData, fallback);
+        fallback = fitAttackersToTapCosts(gameData, fallback);
+        return fallback;
+    }
+
+    /**
+     * Keeps an ordered subset whose declaration-wide creature-tap costs can be paid.
+     * Required attackers are considered first so an optional attacker cannot consume the creature
+     * needed to pay a required attacker's cost.
+     */
+    private DeclareAttackersRequest fitAttackersToTapCosts(
+            GameData gameData, DeclareAttackersRequest request) {
+        if (request.attackerIndices().isEmpty()) {
+            return request;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(attackingPlayerId);
+        if (battlefield == null || request.attackerIndices().stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .map(battlefield::get)
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .noneMatch(CombatTapCostEffect.class::isInstance)) {
+            return request;
+        }
+
+        Set<Integer> requested = new HashSet<>(request.attackerIndices());
+        LinkedHashSet<Integer> ordered = new LinkedHashSet<>();
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            declaration.mustAttackIndices().stream()
+                    .filter(requested::contains)
+                    .forEach(ordered::add);
+        }
+        ordered.addAll(request.attackerIndices());
+
+        List<Integer> fitted = new ArrayList<>(ordered.size());
+        for (int attackerIndex : ordered) {
+            List<Integer> candidate = new ArrayList<>(fitted);
+            candidate.add(attackerIndex);
+            if (combatAttackService.canPayAttackTapCosts(gameData, attackingPlayerId, candidate)) {
+                fitted.add(attackerIndex);
+            }
+        }
+        if (fitted.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(fitted, request.attackTargets(), request.bands());
+    }
+
+    private DeclareAttackersRequest enforceAttackerDeclarationRequirements(
+            GameData gameData, DeclareAttackersRequest request) {
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration == null || declaration.mustAttackIndices().isEmpty()
+                || request.attackerIndices().containsAll(declaration.mustAttackIndices())) {
+            return request;
+        }
+
+        LinkedHashSet<Integer> mergedIndices = new LinkedHashSet<>(request.attackerIndices());
+        mergedIndices.addAll(declaration.mustAttackIndices());
+        return new DeclareAttackersRequest(new ArrayList<>(mergedIndices),
+                request.attackTargets(), request.bands());
+    }
+
+    /**
+     * Adds conditional "also attacks if able" requirements for the candidate declaration before
+     * the request reaches the engine. These requirements cannot be represented by the ordinary
+     * must-attack list because whether they apply depends on the other attackers selected.
+     */
+    private DeclareAttackersRequest enforceConditionalAttackRequirements(
+            GameData gameData, DeclareAttackersRequest request) {
+        if (request.attackerIndices().isEmpty()) {
+            return request;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Integer> attackableIndices = combatAttackService.getAttackableCreatureIndices(
+                gameData, attackingPlayerId);
+        List<Integer> requiredIndices = combatAttackService.getMustAttackAlongsideIndices(
+                gameData, attackingPlayerId, attackableIndices, request.attackerIndices());
+        if (requiredIndices.isEmpty()) {
+            return request;
+        }
+
+        LinkedHashSet<Integer> mergedIndices = new LinkedHashSet<>(request.attackerIndices());
+        mergedIndices.addAll(requiredIndices);
+        return removeAttackersThatCannotAttackDefaultTarget(gameData,
+                new DeclareAttackersRequest(new ArrayList<>(mergedIndices),
+                        request.attackTargets(), request.bands()),
+                new HashSet<>(requiredIndices));
+    }
+
     /**
      * The combat service exposes target-independent attackers for the declaration prompt, while
-     * the AI's default request attacks the opponent. Remove creatures barred by a defender-scoped
-     * restriction before sending that request so a legal attack is never rejected by the engine.
+     * the AI's default request attacks the opponent. Remove optional creatures barred by a
+     * defender-scoped restriction, while assigning a required creature to another legal target
+     * when the defending player is unavailable.
      */
     private DeclareAttackersRequest removeAttackersThatCannotAttackDefaultTarget(
             GameData gameData, DeclareAttackersRequest request) {
+        return removeAttackersThatCannotAttackDefaultTarget(gameData, request, Set.of());
+    }
+
+    private DeclareAttackersRequest removeAttackersThatCannotAttackDefaultTarget(
+            GameData gameData, DeclareAttackersRequest request, Set<Integer> additionalRequiredIndices) {
         if (request.attackerIndices().isEmpty()
                 || (request.attackTargets() != null && !request.attackTargets().isEmpty())) {
             return request;
@@ -1004,14 +1326,195 @@ public abstract class AiDecisionEngine {
         if (targetLegal == null) {
             return request;
         }
-        if (request.attackerIndices().stream().allMatch(targetLegal::contains)) {
-            return request;
+
+        Set<Integer> requiredIndices = new HashSet<>(additionalRequiredIndices);
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            requiredIndices.addAll(declaration.mustAttackIndices());
         }
 
-        List<Integer> filtered = request.attackerIndices().stream()
-                .filter(targetLegal::contains)
-                .toList();
-        return new DeclareAttackersRequest(filtered, request.attackTargets(), request.bands());
+        List<CombatAttackTarget> availableTargets = declaration == null
+                ? List.of()
+                : declaration.availableTargets();
+        List<Integer> filtered = new ArrayList<>();
+        Map<Integer, String> redirectedTargets = new LinkedHashMap<>();
+        for (int attackerIndex : request.attackerIndices()) {
+            if (targetLegal.contains(attackerIndex)) {
+                filtered.add(attackerIndex);
+                continue;
+            }
+
+            if (!requiredIndices.contains(attackerIndex)) {
+                continue;
+            }
+
+            UUID alternateTarget = findAlternateAttackTarget(
+                    gameData, attackingPlayerId, defaultTarget, attackerIndex, availableTargets);
+            if (alternateTarget != null) {
+                filtered.add(attackerIndex);
+                redirectedTargets.put(attackerIndex, alternateTarget.toString());
+            }
+        }
+
+        if (filtered.equals(request.attackerIndices()) && redirectedTargets.isEmpty()) {
+            return request;
+        }
+        return new DeclareAttackersRequest(filtered,
+                redirectedTargets.isEmpty() ? null : redirectedTargets, request.bands());
+    }
+
+    private UUID findAlternateAttackTarget(GameData gameData, UUID attackingPlayerId,
+                                            UUID defaultTarget, int attackerIndex,
+                                            List<CombatAttackTarget> availableTargets) {
+        for (CombatAttackTarget target : availableTargets) {
+            if (target.id() == null || target.id().equals(defaultTarget)) {
+                continue;
+            }
+            List<Integer> targetLegal = combatAttackService.getAttackableCreatureIndicesForTarget(
+                    gameData, attackingPlayerId, target.id());
+            if (targetLegal != null && targetLegal.contains(attackerIndex)) {
+                return target.id();
+            }
+        }
+        return null;
+    }
+
+    private List<Integer> removeUnmetAttackRestrictions(GameData gameData, List<Integer> attackerIndices) {
+        if (attackerIndices.isEmpty()) {
+            return attackerIndices;
+        }
+
+        UUID attackingPlayerId = activeDecisionPlayerId(gameData);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(attackingPlayerId);
+        if (battlefield == null) {
+            return attackerIndices;
+        }
+
+        List<Integer> legalAttackers = new ArrayList<>(attackerIndices);
+        boolean changed;
+        do {
+            Set<Integer> invalid = new HashSet<>();
+            for (int attackerIndex : legalAttackers) {
+                if (attackerIndex < 0 || attackerIndex >= battlefield.size()
+                        || hasUnmetAttackRestriction(gameData, battlefield, legalAttackers, attackerIndex)) {
+                    invalid.add(attackerIndex);
+                }
+            }
+            changed = legalAttackers.removeIf(invalid::contains);
+        } while (changed);
+        return legalAttackers;
+    }
+
+    private DeclareAttackersRequest removeUnmetAttackRestrictions(
+            GameData gameData, DeclareAttackersRequest request) {
+        List<Integer> legalAttackers = removeUnmetAttackRestrictions(gameData, request.attackerIndices());
+        if (legalAttackers.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(legalAttackers, request.attackTargets(), request.bands());
+    }
+
+    /**
+     * Applies battlefield-wide limits on the number of attackers before an AI declaration is
+     * submitted. If the limit forces a choice, keep required attackers from the active combat
+     * prompt ahead of optional attackers.
+     */
+    private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices) {
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, activeDecisionPlayerId(gameData));
+        return capAttackersToCombatMaximum(gameData, attackerIndices, Map.of(), defaultTarget);
+    }
+
+    private List<Integer> capAttackersToCombatMaximum(GameData gameData, List<Integer> attackerIndices,
+                                                       Map<Integer, UUID> attackTargets, UUID defaultTarget) {
+        if (attackerIndices.isEmpty()) {
+            return attackerIndices;
+        }
+
+        Set<Integer> requested = new HashSet<>(attackerIndices);
+        LinkedHashSet<Integer> ordered = new LinkedHashSet<>();
+        PendingInteraction.AttackerDeclaration declaration =
+                gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class);
+        if (declaration != null) {
+            for (int requiredIndex : declaration.mustAttackIndices()) {
+                if (requested.contains(requiredIndex)) {
+                    ordered.add(requiredIndex);
+                }
+            }
+        }
+        ordered.addAll(attackerIndices);
+
+        List<Integer> capped = new ArrayList<>(attackerIndices.size());
+        for (int attackerIndex : ordered) {
+            List<Integer> candidate = new ArrayList<>(capped);
+            candidate.add(attackerIndex);
+            Map<Integer, UUID> candidateTargets = new HashMap<>();
+            for (int index : candidate) {
+                candidateTargets.put(index, attackTargets.getOrDefault(index, defaultTarget));
+            }
+            try {
+                CombatHelper.validateMaximumAttackers(gameData, candidate, candidateTargets);
+                capped.add(attackerIndex);
+            } catch (IllegalStateException ignored) {
+                // Keep the largest declaration found so far that satisfies every combat limit.
+            }
+        }
+        return capped;
+    }
+
+    private DeclareAttackersRequest capAttackersToCombatMaximum(
+            GameData gameData, DeclareAttackersRequest request) {
+        UUID defaultTarget = AiUtils.getOpponentId(gameData, activeDecisionPlayerId(gameData));
+        Map<Integer, UUID> attackTargets = new HashMap<>();
+        if (request.attackTargets() != null) {
+            request.attackTargets().forEach((index, targetId) ->
+                    attackTargets.put(index, UUID.fromString(targetId)));
+        }
+        List<Integer> capped = capAttackersToCombatMaximum(
+                gameData, request.attackerIndices(), attackTargets, defaultTarget);
+        if (capped.equals(request.attackerIndices())) {
+            return request;
+        }
+        return new DeclareAttackersRequest(capped, request.attackTargets(), request.bands());
+    }
+
+    private boolean hasUnmetAttackRestriction(GameData gameData, List<Permanent> battlefield,
+                                              List<Integer> attackerIndices, int attackerIndex) {
+        Permanent attacker = battlefield.get(attackerIndex);
+        if (attackerIndices.size() == 1 && hasCantAttackOrBlockAlone(attacker)) {
+            return true;
+        }
+        if (attackerIndices.size() > 1 && combatAttackService.canOnlyAttackAlone(gameData, attacker)) {
+            return true;
+        }
+
+        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && attackerIndices.size() - 1 < restriction.otherCount()) {
+                return true;
+            }
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
+                int power = gameQueryService.getEffectivePower(gameData, attacker);
+                boolean hasGreaterPowerAttacker = attackerIndices.stream()
+                        .filter(other -> other != attackerIndex)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
+                if (!hasGreaterPowerAttacker) {
+                    return true;
+                }
+            }
+            if (effect instanceof MatchingAttackerRestrictionEffect restriction) {
+                boolean hasMatchingAttacker = attackerIndices.stream()
+                        .filter(other -> other != attackerIndex)
+                        .map(battlefield::get)
+                        .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, other, restriction.matchingAttackerPredicate()));
+                if (!hasMatchingAttacker) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Returns the rejection reason, or null when the declaration was accepted or the game is over. */
@@ -1029,43 +1532,579 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Sends a blocker declaration with automatic fallback to empty blockers
-     * if the original declaration fails server-side validation. Blocks the defending player
-     * can't pay the additional cost for are dropped, and their mana floated, before sending.
+     * Sends a blocker declaration with automatic fallback to a legal declaration if the original
+     * declaration fails server-side validation. Blocks the defending player can't pay the
+     * additional cost for are dropped, and their mana floated, before sending.
      */
     protected void sendBlockerDeclaration(DeclareBlockersRequest request) {
         GameData gameData = gameRegistry.get(gameId);
-        DeclareBlockersRequest affordable = gameData == null
+        DeclareBlockersRequest requirementLegal = gameData == null
                 ? request
-                : new DeclareBlockersRequest(prepareBlockersForTax(gameData, request.blockerAssignments()));
+                : new DeclareBlockersRequest(enforceBlockRequirements(gameData, request.blockerAssignments()));
+        if (gameData != null) {
+            requirementLegal = new DeclareBlockersRequest(
+                    capBlockersToLegalMaximum(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    fitBlockersToTapCosts(gameData, requirementLegal.blockerAssignments()));
+            requirementLegal = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, requirementLegal.blockerAssignments()));
+        }
+        DeclareBlockersRequest affordable = gameData == null
+                ? requirementLegal
+                : new DeclareBlockersRequest(prepareBlockersForTax(gameData, requirementLegal.blockerAssignments()));
+        if (gameData != null) {
+            affordable = new DeclareBlockersRequest(
+                    fitBlockersToTapCosts(gameData, affordable.blockerAssignments()));
+            affordable = new DeclareBlockersRequest(
+                    normalizeBlockerAssignments(gameData, affordable.blockerAssignments()));
+        }
 
         String rejection;
         try {
             rejection = gameActions.handleDeclareBlockers(affordable);
         } catch (Exception e) {
-            log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
-            sendEmptyBlockerFallback();
+            log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to a legal declaration.",
+                    gameId, e.getMessage(), e);
+            sendBlockerFallback();
             return;
         }
 
         // The engine validates the whole declaration and rejects it as a unit, so a rejection
-        // leaves the game still awaiting blockers — fall back to empty so it doesn't get stuck.
+        // leaves the game still awaiting blockers — fall back to a repaired declaration.
         if (rejection != null && !affordable.blockerAssignments().isEmpty()) {
-            log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to no blockers.",
+            log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to a legal declaration.",
                     gameId, rejection);
-            sendEmptyBlockerFallback();
+            sendBlockerFallback();
         }
     }
 
-    private void sendEmptyBlockerFallback() {
+    private void sendBlockerFallback() {
+        GameData gameData = gameRegistry.get(gameId);
+        List<BlockerAssignment> fallbackAssignments = gameData == null
+                ? List.of()
+                : enforceBlockRequirements(gameData, List.of());
+        if (gameData != null) {
+            fallbackAssignments = capBlockersToLegalMaximum(gameData, fallbackAssignments);
+            fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
+            fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
+            fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
+            fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
+            fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
+        }
         try {
-            String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(List.of()));
+            String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(fallbackAssignments));
             if (rejection != null) {
-                log.error("AI: Empty blocker declaration rejected in game {}: {}", gameId, rejection);
+                log.error("AI: Fallback blocker declaration rejected in game {}: {}", gameId, rejection);
             }
         } catch (Exception e) {
-            log.error("AI: Empty blocker declaration also failed in game {}", gameId, e);
+            log.error("AI: Fallback blocker declaration also failed in game {}", gameId, e);
         }
+    }
+
+    private List<BlockerAssignment> capBlockersToLegalMaximum(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null
+                || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
+            return assignments;
+        }
+
+        Map<Integer, List<BlockerAssignment>> assignmentsByAttacker = assignments.stream()
+                .collect(Collectors.groupingBy(BlockerAssignment::attackerIndex,
+                        LinkedHashMap::new, Collectors.toList()));
+        Set<BlockerAssignment> kept = new LinkedHashSet<>();
+        for (Map.Entry<Integer, List<BlockerAssignment>> entry : assignmentsByAttacker.entrySet()) {
+            int attackerIdx = entry.getKey();
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            int maximumBlockers = maximumLegalBlockersForAttacker(gameData, attacker, attackerBattlefield);
+            List<BlockerAssignment> group = entry.getValue();
+            if (group.size() <= maximumBlockers) {
+                kept.addAll(group);
+                continue;
+            }
+
+            List<BlockerAssignment> lureBlocks = group.stream()
+                    .filter(assignment -> gameQueryService.isRequiredToBlockByLure(
+                            gameData, attacker, defenderBattlefield.get(assignment.blockerIndex())))
+                    .toList();
+            lureBlocks.stream().limit(maximumBlockers).forEach(kept::add);
+            if (kept.stream().filter(group::contains).count() < maximumBlockers) {
+                group.stream()
+                        .filter(assignment -> !kept.contains(assignment))
+                        .limit(maximumBlockers - kept.stream().filter(group::contains).count())
+                        .forEach(kept::add);
+            }
+        }
+        return assignments.stream().filter(kept::contains).toList();
+    }
+
+    /**
+     * Keeps an ordered subset of blocker groups whose declaration-wide creature-tap costs can be
+     * paid. Every assignment for one blocker is considered together because a creature that can
+     * block multiple attackers pays its combat cost only once.
+     */
+    private List<BlockerAssignment> fitBlockersToTapCosts(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        PendingInteraction.BlockerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        UUID defenderId = pending == null
+                ? gameQueryService.getOpponentId(gameData, gameData.activePlayerId)
+                : pending.defenderId();
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        if (defenderBattlefield == null || assignments.stream().anyMatch(assignment ->
+                !isIndexInRange(assignment.blockerIndex(), defenderBattlefield))) {
+            return assignments;
+        }
+
+        LinkedHashSet<Integer> blockerIndices = assignments.stream()
+                .map(BlockerAssignment::blockerIndex)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        boolean hasTapCost = blockerIndices.stream()
+                .map(defenderBattlefield::get)
+                .flatMap(blocker -> blocker.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(CombatTapCostEffect.class::isInstance);
+        if (!hasTapCost) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> fitted = new ArrayList<>();
+        for (int blockerIndex : blockerIndices) {
+            List<BlockerAssignment> candidate = new ArrayList<>(fitted);
+            assignments.stream()
+                    .filter(assignment -> assignment.blockerIndex() == blockerIndex)
+                    .forEach(candidate::add);
+            List<Permanent> candidateBlockers = candidate.stream()
+                    .map(BlockerAssignment::blockerIndex)
+                    .distinct()
+                    .map(defenderBattlefield::get)
+                    .toList();
+            if (blockLegalityService.canPayBlockTapCosts(gameData, defenderId, candidateBlockers)) {
+                fitted = candidate;
+            }
+        }
+        return fitted;
+    }
+
+    private int maximumLegalBlockersForAttacker(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
+        return Math.min(
+                Math.min(gameQueryService.getMaxBlockersAllowed(gameData, attacker),
+                        maximumBlockersForTeam(gameData, attacker, attackerBattlefield)),
+                CombatHelper.getMaximumBlockers(gameData));
+    }
+
+    /**
+     * Removes blockers whose own "also blocks" restriction became unsatisfied after another
+     * blocker was removed by a later legality or affordability pass. Repeats the dependent
+     * cleanup because removing one blocker can invalidate another block or its minimum size.
+     */
+    private List<BlockerAssignment> normalizeBlockerAssignments(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        if (assignments.isEmpty() || gameData.activePlayerId == null) {
+            return assignments;
+        }
+        UUID defenderId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null
+                || !indicesInRange(assignments, defenderBattlefield, attackerBattlefield)) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> normalized = new ArrayList<>(assignments);
+        boolean changed;
+        do {
+            List<BlockerAssignment> previous = new ArrayList<>(normalized);
+            Set<Integer> selectedBlockers = normalized.stream()
+                    .map(BlockerAssignment::blockerIndex)
+                    .collect(Collectors.toSet());
+            Set<Integer> invalidRestrictedBlockers = selectedBlockers.stream()
+                    .filter(blockerIdx -> hasUnmetBlockPartnerRequirement(
+                            gameData, defenderBattlefield, selectedBlockers, blockerIdx))
+                    .collect(Collectors.toSet());
+            normalized.removeIf(assignment -> invalidRestrictedBlockers.contains(assignment.blockerIndex()));
+            normalized = new ArrayList<>(dropBlocksLeftUnderfilled(
+                    gameData, defenderBattlefield, attackerBattlefield, normalized));
+            normalized = new ArrayList<>(dropIncompleteAllDefendingCreatureBlocks(
+                    gameData, defenderBattlefield, attackerBattlefield, normalized));
+            changed = !normalized.equals(previous);
+        } while (changed);
+        return normalized;
+    }
+
+    private boolean hasUnmetBlockPartnerRequirement(
+            GameData gameData, List<Permanent> battlefield, Set<Integer> selectedBlockers, int blockerIdx) {
+        Permanent blocker = battlefield.get(blockerIdx);
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
+                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+                boolean hasGreaterPowerPartner = selectedBlockers.stream()
+                        .filter(otherIdx -> otherIdx != blockerIdx)
+                        .map(battlefield::get)
+                        .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > blockerPower);
+                if (!hasGreaterPowerPartner) {
+                    return true;
+                }
+            }
+            if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
+                    && selectedBlockers.size() - 1 < restriction.otherCount()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Repairs a declaration that omitted a blocker-side requirement. The combat strategies choose
+     * among profitable blocks, but a declaration must also obey requirements attached to the
+     * defending creature itself, such as a one-shot "blocks if able" effect or a targeted
+     * "must block that creature" effect.
+     *
+     * <p>The repair is deliberately done at the shared send boundary so every AI strategy,
+     * including random and simulation-backed strategies, gets the same legality safeguard. A
+     * required blocker is assigned only to a pair the engine's block-legality service accepts,
+     * and menace/minimum-blocker requirements are completed before the repaired declaration is
+     * returned.
+     */
+    private List<BlockerAssignment> enforceBlockRequirements(
+            GameData gameData, List<BlockerAssignment> assignments) {
+        PendingInteraction.BlockerDeclaration pending =
+                gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        if (pending == null || gameData.activePlayerId == null) {
+            return assignments;
+        }
+
+        UUID defenderId = pending.defenderId();
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
+        if (defenderBattlefield == null || attackerBattlefield == null) {
+            return assignments;
+        }
+
+        List<Integer> attackerIndices = pending.attackerIndices().isEmpty()
+                ? attackingCreatureIndices(attackerBattlefield)
+                : pending.attackerIndices();
+        List<Integer> blockerIndices = pending.blockerIndices().isEmpty()
+                ? availableBlockerIndices(gameData, defenderBattlefield)
+                : pending.blockerIndices();
+        if (attackerIndices.isEmpty() || blockerIndices.isEmpty()) {
+            return assignments;
+        }
+
+        List<BlockerAssignment> repaired = new ArrayList<>(assignments);
+        for (int blockerIdx : blockerIndices) {
+            if (!isIndexInRange(blockerIdx, defenderBattlefield)) {
+                continue;
+            }
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            List<Integer> targetedRequirements = requiredAttackerIndices(
+                    pending, blockerIdx, blocker, attackerIndices, attackerBattlefield, gameData, defenderBattlefield);
+            if (!targetedRequirements.isEmpty()
+                    && !hasAssignmentToAny(repaired, blockerIdx, targetedRequirements)) {
+                addRequiredBlock(gameData, repaired, blockerIdx, targetedRequirements,
+                        blockerIndices, defenderBattlefield, attackerBattlefield);
+            }
+
+            if (hasMustBlockIfAbleRequirement(gameData, blocker)
+                    && !hasAssignmentForBlocker(repaired, blockerIdx)) {
+                List<Integer> legalAttackers = attackerIndices.stream()
+                        .filter(attackerIdx -> isIndexInRange(attackerIdx, attackerBattlefield))
+                        .filter(attackerIdx -> canBlockPair(gameData, blocker,
+                                attackerBattlefield.get(attackerIdx), defenderBattlefield))
+                        .toList();
+                addRequiredBlock(gameData, repaired, blockerIdx, legalAttackers,
+                        blockerIndices, defenderBattlefield, attackerBattlefield);
+            }
+        }
+        enforceLureRequirements(gameData, repaired, attackerIndices, blockerIndices,
+                defenderBattlefield, attackerBattlefield);
+        return repaired;
+    }
+
+    private void enforceLureRequirements(
+            GameData gameData,
+            List<BlockerAssignment> assignments,
+            List<Integer> attackerIndices,
+            List<Integer> blockerIndices,
+            List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield) {
+        for (int attackerIdx : attackerIndices) {
+            if (!isIndexInRange(attackerIdx, attackerBattlefield)
+                    || !attackerBattlefield.get(attackerIdx).isAttacking()) {
+                continue;
+            }
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            List<Integer> lureBlockers = blockerIndices.stream()
+                    .filter(blockerIdx -> isIndexInRange(blockerIdx, defenderBattlefield))
+                    .filter(blockerIdx -> canBlockPair(gameData, defenderBattlefield.get(blockerIdx), attacker,
+                            defenderBattlefield))
+                    .filter(blockerIdx -> gameQueryService.isRequiredToBlockByLure(
+                            gameData, attacker, defenderBattlefield.get(blockerIdx)))
+                    .toList();
+            int target = Math.min(lureBlockers.size(),
+                    maximumLegalBlockersForAttacker(gameData, attacker, attackerBattlefield));
+            while (countLureBlocks(assignments, attackerIdx, lureBlockers) < target) {
+                int blockerIdx = lureBlockers.stream()
+                        .filter(candidate -> !hasAssignmentForBlocker(assignments, candidate))
+                        .findFirst()
+                        .orElse(-1);
+                if (blockerIdx < 0) {
+                    blockerIdx = lureBlockers.stream()
+                            .filter(candidate -> !hasAssignmentToAny(
+                                    assignments, candidate, List.of(attackerIdx)))
+                            .findFirst()
+                            .orElse(-1);
+                }
+                if (blockerIdx < 0) {
+                    return;
+                }
+                int previousCount = countLureBlocks(assignments, attackerIdx, lureBlockers);
+                addRequiredBlock(gameData, assignments, blockerIdx, List.of(attackerIdx), blockerIndices,
+                        defenderBattlefield, attackerBattlefield);
+                if (countLureBlocks(assignments, attackerIdx, lureBlockers) == previousCount) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private int countLureBlocks(
+            List<BlockerAssignment> assignments, int attackerIdx, List<Integer> lureBlockers) {
+        return (int) assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx
+                        && lureBlockers.contains(assignment.blockerIndex()))
+                .count();
+    }
+
+    private List<Integer> defendingCreatureIndices(GameData gameData, List<Permanent> defenderBattlefield) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < defenderBattlefield.size(); i++) {
+            if (gameQueryService.isCreature(gameData, defenderBattlefield.get(i))) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private boolean canAllDefendingCreaturesBlock(
+            GameData gameData, BlockLegalityContext blockContext, List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield, Permanent attacker, List<Integer> defenderIndices) {
+        if (defenderIndices.isEmpty()
+                || !blockLegalityService.canBeBlockedByAllDefendingCreatures(blockContext, attacker)) {
+            return false;
+        }
+        int maximumBlockers = Math.min(
+                gameQueryService.getMaxBlockersAllowed(gameData, attacker),
+                CombatHelper.getMaximumBlockers(gameData));
+        maximumBlockers = Math.min(maximumBlockers,
+                maximumBlockersForTeam(gameData, attacker, attackerBattlefield));
+        if (defenderIndices.size() > maximumBlockers
+                || defenderIndices.size() < AiUtils.minimumBlockersRequiredToBlock(
+                        gameData, gameQueryService, attacker)) {
+            return false;
+        }
+        return defenderIndices.stream().allMatch(blockerIdx -> {
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            return blockLegalityService.canBlock(blockContext, blocker)
+                    && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker);
+        });
+    }
+
+    private int maximumBlockersForTeam(
+            GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
+        int maximumBlockers = Integer.MAX_VALUE;
+        for (Permanent permanent : attackerBattlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && (restriction.affectedCreatureFilter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, restriction.affectedCreatureFilter()))) {
+                    maximumBlockers = Math.min(maximumBlockers, restriction.maxBlockers());
+                }
+            }
+        }
+        return maximumBlockers;
+    }
+
+    private List<Integer> attackingCreatureIndices(List<Permanent> battlefield) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (battlefield.get(i).isAttacking()) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private List<Integer> availableBlockerIndices(GameData gameData, List<Permanent> battlefield) {
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (blockLegalityService.canBlock(gameData, battlefield.get(i))) {
+                indices.add(i);
+            }
+        }
+        return indices;
+    }
+
+    private List<Integer> requiredAttackerIndices(
+            PendingInteraction.BlockerDeclaration pending,
+            int blockerIdx,
+            Permanent blocker,
+            List<Integer> attackerIndices,
+            List<Permanent> attackerBattlefield,
+            GameData gameData,
+            List<Permanent> defenderBattlefield) {
+        Set<Integer> required = new LinkedHashSet<>();
+        List<Integer> promptedRequirements = pending.mustBlockRequirements().getOrDefault(
+                blockerIdx, List.of());
+        required.addAll(promptedRequirements);
+        for (UUID mustBlockId : blocker.getMustBlockIds()) {
+            for (int attackerIdx : attackerIndices) {
+                if (isIndexInRange(attackerIdx, attackerBattlefield)
+                        && attackerBattlefield.get(attackerIdx).getId().equals(mustBlockId)
+                        && canBlockPair(gameData, blocker, attackerBattlefield.get(attackerIdx), defenderBattlefield)) {
+                    required.add(attackerIdx);
+                }
+            }
+        }
+        return required.stream()
+                .filter(attackerIndices::contains)
+                .filter(attackerIdx -> isIndexInRange(attackerIdx, attackerBattlefield))
+                .filter(attackerIdx -> canBlockPair(
+                        gameData, blocker, attackerBattlefield.get(attackerIdx), defenderBattlefield))
+                .toList();
+    }
+
+    private boolean hasMustBlockIfAbleRequirement(GameData gameData, Permanent blocker) {
+        if (blocker.isMustBlockThisTurnIfAble()) {
+            return true;
+        }
+        if (blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(MustBlockEachCombatEffect.class::isInstance)
+                || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)) {
+            return true;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield.stream()
+                    .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                    .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addRequiredBlock(
+            GameData gameData,
+            List<BlockerAssignment> assignments,
+            int blockerIdx,
+            List<Integer> candidateAttackerIndices,
+            List<Integer> blockerIndices,
+            List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield) {
+        if (candidateAttackerIndices.isEmpty()) {
+            return;
+        }
+
+        List<BlockerAssignment> original = new ArrayList<>(assignments);
+        assignments.removeIf(assignment -> assignment.blockerIndex() == blockerIdx);
+        for (int attackerIdx : candidateAttackerIndices) {
+            if (!isIndexInRange(attackerIdx, attackerBattlefield)) {
+                continue;
+            }
+            Permanent attacker = attackerBattlefield.get(attackerIdx);
+            Permanent blocker = defenderBattlefield.get(blockerIdx);
+            if (!canBlockPair(gameData, blocker, attacker, defenderBattlefield)
+                    || !hasBlockCapacity(gameData, assignments, attackerIdx, blockerIdx, attacker)) {
+                continue;
+            }
+
+            assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
+            if (completeMinimumBlockers(gameData, assignments, blockerIndices,
+                    attackerIdx, defenderBattlefield, attackerBattlefield)) {
+                return;
+            }
+            assignments.clear();
+            assignments.addAll(original);
+        }
+        assignments.clear();
+        assignments.addAll(original);
+    }
+
+    private boolean completeMinimumBlockers(
+            GameData gameData,
+            List<BlockerAssignment> assignments,
+            List<Integer> blockerIndices,
+            int attackerIdx,
+            List<Permanent> defenderBattlefield,
+            List<Permanent> attackerBattlefield) {
+        Permanent attacker = attackerBattlefield.get(attackerIdx);
+        int minimum = AiUtils.minimumBlockersRequiredToBlock(gameData, gameQueryService, attacker);
+        while (countBlocksForAttacker(assignments, attackerIdx) < minimum) {
+            int additionalBlockerIdx = blockerIndices.stream()
+                    .filter(candidate -> isIndexInRange(candidate, defenderBattlefield))
+                    .filter(candidate -> !hasAssignmentForBlocker(assignments, candidate))
+                    .filter(candidate -> blockLegalityService.canBlock(gameData, defenderBattlefield.get(candidate)))
+                    .filter(candidate -> canBlockPair(gameData, defenderBattlefield.get(candidate), attacker,
+                            defenderBattlefield))
+                    .filter(candidate -> hasBlockCapacity(gameData, assignments, attackerIdx, candidate, attacker))
+                    .findFirst()
+                    .orElse(-1);
+            if (additionalBlockerIdx < 0) {
+                return false;
+            }
+            assignments.add(new BlockerAssignment(additionalBlockerIdx, attackerIdx));
+        }
+        return true;
+    }
+
+    private boolean hasBlockCapacity(GameData gameData, List<BlockerAssignment> assignments,
+                                     int attackerIdx, int blockerIdx, Permanent attacker) {
+        int maxBlockers = gameQueryService.getMaxBlockersAllowed(gameData, attacker);
+        if (maxBlockers <= 0) {
+            return false;
+        }
+        long current = assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx
+                        && assignment.blockerIndex() != blockerIdx)
+                .count();
+        return current < maxBlockers;
+    }
+
+    private boolean canBlockPair(GameData gameData, Permanent blocker, Permanent attacker,
+                                 List<Permanent> defenderBattlefield) {
+        return blockLegalityService.canBlock(gameData, blocker)
+                && blockLegalityService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
+    }
+
+    private boolean hasAssignmentForBlocker(List<BlockerAssignment> assignments, int blockerIdx) {
+        return assignments.stream().anyMatch(assignment -> assignment.blockerIndex() == blockerIdx);
+    }
+
+    private boolean hasAssignmentToAny(List<BlockerAssignment> assignments, int blockerIdx,
+                                       List<Integer> attackerIndices) {
+        return assignments.stream().anyMatch(assignment -> assignment.blockerIndex() == blockerIdx
+                && attackerIndices.contains(assignment.attackerIndex()));
+    }
+
+    private int countBlocksForAttacker(List<BlockerAssignment> assignments, int attackerIdx) {
+        return (int) assignments.stream()
+                .filter(assignment -> assignment.attackerIndex() == attackerIdx)
+                .count();
+    }
+
+    private boolean isIndexInRange(int index, List<?> values) {
+        return index >= 0 && index < values.size();
     }
 
     /**
@@ -1079,6 +2118,12 @@ public abstract class AiDecisionEngine {
      */
     protected boolean isSpellCastable(GameData gameData, Card card, ManaPool virtualPool) {
         if (!canAffordSpell(gameData, card, virtualPool)) {
+            return false;
+        }
+        if (isUnsupportedAlternateHandOnlyRoute(gameData, card, virtualPool)) {
+            return false;
+        }
+        if (isUnsupportedSharedColorDiscardRoute(gameData, card, virtualPool)) {
             return false;
         }
         // Non-mana additional costs (sacrifice / graveyard-exile) — the engine's single
@@ -1125,25 +2170,460 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Computes the targeting tax for a spell based on the chosen target(s).
-     * Effects like Kopala, Warden of Waves increase the cost of spells that
-     * target permanents with certain subtypes; Kaervek's Torch taxes spells that
-     * target it while it is on the stack.
+     * Returns true when the engine found only an alternate hand cast that this AI cannot encode in
+     * a regular play-card request. The AI supports alternate costs that select one card from hand;
+     * unsupported routes are filtered out instead of being sent as ordinary mana casts.
      */
-    protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds)
+    private boolean isUnsupportedAlternateHandOnlyRoute(GameData gameData, Card card,
+                                                         ManaPool virtualPool) {
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (alternate == null
+                || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
+                || canPayPrintedManaCost(gameData, card, virtualPool, null, 0)) {
+            return false;
+        }
+        return !isAlternateHandCastSupportedByAi(alternate);
+    }
+
+    /**
+     * The engine playability query includes Dream Halls' shared-color discard alternative, but
+     * the AI's regular spell request does not select the discarded card. Treat that route as
+     * unavailable unless the printed cost or another AI-supported route is payable.
+     */
+    private boolean isUnsupportedSharedColorDiscardRoute(GameData gameData, Card card,
+                                                          ManaPool virtualPool) {
+        if (!castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(
+                gameData, aiPlayer.getId(), card)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
+                || canPayPrintedManaCost(gameData, card, virtualPool, null, 0)) {
+            return false;
+        }
+
+        AlternateHandCast alternateHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        return alternateHandCast == null
+                || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)
+                || !isAlternateHandCastSupportedByAi(alternateHandCast);
+    }
+
+    /**
+     * Checks the printed or selected modal mana cost against the AI's virtual pool. This is kept
+     * separate from the engine playability query because that query also includes alternate costs.
+     */
+    private boolean canPayPrintedManaCost(GameData gameData, Card card, ManaPool virtualPool,
+                                          Integer xValue, int targetingTax) {
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) {
+            return false;
+        }
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
+        int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 1) : 0;
+        int costModifier = xValue == null
+                ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+        costModifier += targetingTax;
+        return canPayManaCostWithDelve(gameData, card, cost, virtualPool,
+                cost.hasX() ? effectiveXValue : null, costModifier);
+    }
+
+    protected boolean hasDelveCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream().anyMatch(DelveCost.class::isInstance);
+    }
+
+    private boolean canPayManaCostWithDelve(GameData gameData, Card card, ManaCost cost,
+                                            ManaPool pool, Integer xValue, int costModifier) {
+        int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 0) : 0;
+        int maximumDelveReduction = hasDelveCost(card)
+                ? castingCostService.maximumDelveReduction(
+                        gameData, aiPlayer.getId(), card, effectiveXValue, costModifier)
+                : 0;
+        for (int delveReduction = 0; delveReduction <= maximumDelveReduction; delveReduction++) {
+            if (canPayManaCostWithDelveReduction(
+                    card, cost, pool, effectiveXValue, costModifier, delveReduction)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean canPayManaCostWithDelveReduction(Card card, ManaCost cost, ManaPool pool,
+                                                      int xValue, int costModifier,
+                                                      int delveReduction) {
+        boolean canPay = cost.hasX()
+                ? cost.canPayWithAdditionalGenericCost(pool, xValue, costModifier - delveReduction)
+                : cost.canPay(pool, costModifier - delveReduction);
+        return canPay && (!card.isRequiresCreatureMana()
+                || cost.canPayCreatureOnly(pool, costModifier - delveReduction));
+    }
+
+    /**
+     * Returns whether an alternate hand cost should replace the printed mana cost for this cast.
+     * The current request format carries the selected hand card in its discard index field.
+     */
+    protected boolean shouldUseAlternateHandCast(GameData gameData, Card card, Integer xValue,
+                                                 int targetingTax) {
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (alternate == null
+                || !isAlternateHandCastSupportedByAi(alternate)
+                || castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)
+                || !castingCostService.canPayAlternateHandCast(gameData, aiPlayer.getId(), card)) {
+            return false;
+        }
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        return !canPayPrintedManaCost(gameData, card, virtualPool, xValue, targetingTax);
+    }
+
+    private boolean isAlternateHandCastSupportedByAi(AlternateHandCast alternate) {
+        ExileCardsFromHandCastingCost exileCost = alternate.getCost(ExileCardsFromHandCastingCost.class).orElse(null);
+        RevealCardsFromHandCastingCost revealCost = alternate.getCost(RevealCardsFromHandCastingCost.class).orElse(null);
+        if (exileCost == null && revealCost == null) {
+            return false;
+        }
+        if (exileCost != null && (exileCost.count() != 1 || exileCost.manaValueEqualsX())) {
+            return false;
+        }
+        return alternate.getCost(SacrificePermanentsCost.class).isEmpty()
+                && alternate.getCost(TapUntappedPermanentsCost.class).isEmpty()
+                && alternate.getCost(ReturnPermanentsCost.class).isEmpty()
+                && alternate.getCost(RemoveCountersFromControlledCreaturesCastingCost.class).isEmpty();
+    }
+
+    /**
+     * Checks the selected target against target-dependent costs after the AI has chosen its
+     * target. The general playability check can only establish that some legal target enables a
+     * cost reduction, so this closes the gap before mana or life is paid for the actual target.
+     */
+    protected boolean canAffordSelectedSpellTarget(GameData gameData, Card card, ManaPool virtualPool,
+                                                    UUID targetId, List<UUID> targetIds,
+                                                    int targetingTax, Integer xValue) {
+        List<UUID> costReductionTargetIds = targetIds != null && !targetIds.isEmpty()
+                ? targetIds
+                : targetId != null ? List.of(targetId) : List.of();
+        long additionalLifeCost = (long) card.getAdditionalLifeCostPerTarget()
+                * costReductionTargetIds.size();
+        if (additionalLifeCost > gameData.getLife(aiPlayer.getId())) {
+            return false;
+        }
+
+        String selectedModeManaCost = selectedModalManaCost(card, xValue);
+        if (card.getManaCost() == null && selectedModeManaCost == null) {
+            return true;
+        }
+
+        if (selectedModeManaCost != null) {
+            if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, aiPlayer.getId(), card)) {
+                return true;
+            }
+            int targetReduction = castingCostService.computeTargetBasedCostReduction(
+                    gameData, aiPlayer.getId(), card, costReductionTargetIds);
+            ManaCost validationCost = effectiveManaCost(gameData, card, selectedModeManaCost);
+            int costModifier = xValue == null
+                    ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                    : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+            costModifier += targetingTax - targetReduction;
+            return canPayManaCostWithDelve(
+                    gameData, card, validationCost, virtualPool, xValue, costModifier);
+        }
+
+        boolean hasTargetBasedCostReduction = castingCostService.hasTargetBasedCastCostReduction(card);
+        boolean hasTargetBasedCostIncrease = castingCostService.hasTargetBasedCostIncrease(card);
+        if (card.getManaCost() == null
+                || !hasTargetBasedCostReduction && !hasTargetBasedCostIncrease) {
+            return true;
+        }
+
+        int targetReduction = castingCostService.computeTargetBasedCostReduction(
+                gameData, aiPlayer.getId(), card, costReductionTargetIds);
+        if (!hasTargetBasedCostIncrease && targetReduction > 0) {
+            return true;
+        }
+
+        ManaCost validationCost = effectiveManaCost(gameData, card, card.getManaCost());
+        int costModifier = xValue == null
+                ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+        return canPayManaCostWithDelve(
+                gameData, card, validationCost, virtualPool, xValue,
+                costModifier + targetingTax - targetReduction);
+    }
+
+    /**
+     * Computes the net target-dependent cost modifier for a spell's chosen target(s).
+     * This includes battlefield taxes and reductions, costs carried by the spell itself,
+     * and costs carried by a targeted spell on the stack.
+     */
+    protected int computeTargetingTax(GameData gameData, Card card, UUID targetId,
+                                      List<UUID> multiTargetIds) {
+        return castingCostService.getTargetingSpellCostModifier(
+                gameData, aiPlayer.getId(), card, targetId, multiTargetIds)
                 + castingCostService.getTargetingStackEntryTax(gameData, targetId, multiTargetIds);
     }
 
     /**
-     * Chooses a hand card to pay a spell's "discard a card" additional cast cost (e.g. Seize
-     * the Spoils), or null when the spell has no such cost. Legal by construction — indices come
-     * from the engine's own {@code CastingCostService.validDiscardCostIndices}. Also returns null
-     * when the cost is unpayable; {@link #isSpellCastable} filters such spells out beforehand.
+     * Chooses a hand card for a spell's discard additional cost or a supported alternate hand
+     * casting cost. Legal by construction — indices come from the engine's own cost predicates.
+     * Returns null when neither route is available.
      */
-    protected Integer chooseDiscardCostIndex(GameData gameData, Card card) {
+    protected Integer chooseDiscardCostIndex(GameData gameData, Card card, int spellCardIndex,
+                                             Integer xValue, int targetingTax) {
+        DiscardCardTypeCost fixedCost = findDiscardCardTypeCost(card);
+        if (fixedCost != null && fixedCost.count() > 1) {
+            return null;
+        }
         List<Integer> valid = castingCostService.validDiscardCostIndices(gameData, aiPlayer.getId(), card);
-        return valid == null || valid.isEmpty() ? null : valid.get(0);
+        if (valid != null) {
+            return valid.isEmpty() ? null : valid.get(0);
+        }
+        if (!shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return null;
+        }
+        return findAlternateHandCastCardIndex(gameData, card, spellCardIndex);
+    }
+
+    private Integer findAlternateHandCastCardIndex(GameData gameData, Card card, int spellCardIndex) {
+        AlternateHandCast alternate = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (alternate == null) {
+            return null;
+        }
+        ExileCardsFromHandCastingCost exileCost = alternate.getCost(ExileCardsFromHandCastingCost.class).orElse(null);
+        RevealCardsFromHandCastingCost revealCost = alternate.getCost(RevealCardsFromHandCastingCost.class).orElse(null);
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (int i = 0; i < hand.size(); i++) {
+            Card candidate = hand.get(i);
+            if (i == spellCardIndex || candidate.getId().equals(card.getId())) {
+                continue;
+            }
+            if (exileCost != null
+                    && (exileCost.predicate() == null
+                    || !predicateEvaluationService.matchesCardPredicate(candidate, exileCost.predicate(), candidate.getId()))) {
+                continue;
+            }
+            if (revealCost != null
+                    && (revealCost.predicate() == null
+                    || !predicateEvaluationService.matchesCardPredicate(candidate, revealCost.predicate(), candidate.getId()))) {
+                continue;
+            }
+            return i;
+        }
+        return null;
+    }
+
+    /**
+     * Selects the object to exile for a single {@link BeholdAndExileCost}. Returns an empty
+     * selection when the card has no such cost, or null when the cost cannot be paid.
+     */
+    protected BeholdSelection selectBeholdCost(GameData gameData, Card card) {
+        BeholdAndExileCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(BeholdAndExileCost.class::isInstance)
+                .map(BeholdAndExileCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null) {
+            return new BeholdSelection(null, null);
+        }
+
+        PermanentPredicate permanentFilter = new PermanentHasSubtypePredicate(cost.subtype());
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, permanentFilter)) {
+                return new BeholdSelection(permanent.getId(), null);
+            }
+        }
+
+        CardSubtypePredicate cardFilter = new CardSubtypePredicate(cost.subtype());
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (int i = 0; i < hand.size(); i++) {
+            Card candidate = hand.get(i);
+            if (!candidate.getId().equals(card.getId())
+                    && predicateEvaluationService.matchesCardPredicate(candidate, cardFilter, candidate.getId())) {
+                return new BeholdSelection(null, i);
+            }
+        }
+        return null;
+    }
+
+    /** The single-object selection fields carried by a regular spell cast request. */
+    protected record BeholdSelection(UUID permanentId, Integer handCardIndex) {
+    }
+
+    /** The optional creatures and generic reduction selected for a spell's alternate cost. */
+    protected record CostReductionPlan(List<UUID> permanentIds, int reduction) {
+        protected CostReductionPlan {
+            permanentIds = permanentIds == null ? List.of() : List.copyOf(permanentIds);
+        }
+
+        protected static CostReductionPlan none() {
+            return new CostReductionPlan(List.of(), 0);
+        }
+    }
+
+    private record CollectEvidenceCastPlan(UUID targetId, List<UUID> targetIds,
+                                           List<Integer> graveyardCardIndices) {
+    }
+
+    private CollectEvidenceCastPlan planCollectEvidenceCast(GameData gameData, Card card,
+                                                            UUID targetId, List<UUID> targetIds,
+                                                            List<Integer> existingGraveyardCardIndices) {
+        CollectEvidenceCost cost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CollectEvidenceCost.class::isInstance)
+                .map(CollectEvidenceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (cost == null || cost.optional()) {
+            return new CollectEvidenceCastPlan(targetId, targetIds, existingGraveyardCardIndices);
+        }
+
+        List<UUID> plannedTargetIds = targetIds == null ? null : new ArrayList<>(targetIds);
+        UUID plannedTargetId = targetId;
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
+        int availableManaValue = graveyard.stream().mapToInt(Card::getManaValue).sum();
+        int requiredManaValue = castingCostService.resolveCollectEvidenceMinimumManaValue(
+                gameData, cost, plannedTargetId, plannedTargetIds);
+        boolean mayChooseFewerTargets = card.getMinTargets() == 0 && !card.isAura();
+
+        while (cost.usesTargetManaValue() && requiredManaValue > availableManaValue
+                && mayChooseFewerTargets) {
+            if (plannedTargetIds != null && !plannedTargetIds.isEmpty()) {
+                plannedTargetIds.removeLast();
+            } else if (plannedTargetId != null) {
+                plannedTargetId = null;
+            } else {
+                break;
+            }
+            requiredManaValue = castingCostService.resolveCollectEvidenceMinimumManaValue(
+                    gameData, cost, plannedTargetId, plannedTargetIds);
+        }
+
+        List<Integer> evidenceIndices = selectCollectEvidenceIndices(graveyard, requiredManaValue);
+        return new CollectEvidenceCastPlan(
+                plannedTargetId, plannedTargetIds,
+                evidenceIndices != null ? evidenceIndices : List.of());
+    }
+
+    private List<Integer> selectCollectEvidenceIndices(List<Card> graveyard, int requiredManaValue) {
+        if (requiredManaValue == 0) {
+            return List.of();
+        }
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < graveyard.size(); i++) {
+            candidates.add(i);
+        }
+        candidates.sort(Comparator.comparingInt(
+                (Integer index) -> graveyard.get(index).getManaValue()).reversed());
+
+        List<Integer> selected = new ArrayList<>();
+        int selectedManaValue = 0;
+        for (int index : candidates) {
+            selected.add(index);
+            selectedManaValue += graveyard.get(index).getManaValue();
+            if (selectedManaValue >= requiredManaValue) {
+                return selected;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Builds the common spell cast request, including the selected object for any behold cost.
+     * The other additional-cost fields mirror the request shape used by all AI spell paths.
+     */
+    protected PlayCardRequest buildSpellPlayCardRequest(
+            GameData gameData,
+            Card card,
+            int cardIndex,
+            Integer xValue,
+            UUID targetId,
+            Map<UUID, Integer> damageAssignments,
+            List<UUID> targetIds,
+            List<UUID> convokeCreatureIds,
+            List<UUID> alternateCostSacrificePermanentIds,
+            UUID sacrificePermanentId,
+            Integer exileGraveyardCardIndex,
+            List<Integer> exileGraveyardCardIndices,
+            Integer discardHandCardIndex,
+            List<Integer> discardHandCardIndices,
+            List<UUID> imposedSacrificePermanentIds,
+            List<UUID> additionalCostSacrificePermanentIds,
+            BeholdSelection beholdSelection) {
+        BeholdSelection selection = beholdSelection != null
+                ? beholdSelection
+                : new BeholdSelection(null, null);
+        Integer effectiveXValue = xValue;
+        if (card.hasXScaledTargets()
+                && card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(RepeatableAdditionalManaCost.class::isInstance)) {
+            // This request does not submit repeatable payments, so use the base target count.
+            effectiveXValue = 1;
+        }
+        CardSubtype chosenAdditionalCostCreatureType = chooseAdditionalCostCreatureType(card);
+        CollectEvidenceCastPlan collectEvidencePlan = planCollectEvidenceCast(
+                gameData, card, targetId, targetIds, exileGraveyardCardIndices);
+        CardSubtype chosenCreatureType = chooseCastTimeCreatureType(
+                gameData, card, collectEvidencePlan.targetId(), collectEvidencePlan.targetIds());
+        return new PlayCardRequest(
+                cardIndex, effectiveXValue, collectEvidencePlan.targetId(), damageAssignments,
+                collectEvidencePlan.targetIds(), convokeCreatureIds,
+                null, sacrificePermanentId, null, null, alternateCostSacrificePermanentIds, null,
+                exileGraveyardCardIndex,
+                collectEvidencePlan.graveyardCardIndices(), null, null, null, discardHandCardIndex,
+                discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
+                List.of(), null,
+                null, selection.permanentId(), selection.handCardIndex(), null, null, null,
+                chosenAdditionalCostCreatureType == null ? null : chosenAdditionalCostCreatureType.name(), null,
+                chosenCreatureType == null ? null : chosenCreatureType.name());
+    }
+
+    /**
+     * Returns whether a hand cast either moved the card out of hand or opened the cast-time
+     * opponent-choice prompt that must finish before the spell can move to the stack.
+     */
+    protected boolean spellCastStarted(GameData gameData, List<Card> hand, Card card) {
+        if (!hand.contains(card)) {
+            return true;
+        }
+        return gameData.interaction.permanentChoiceContext()
+                instanceof PermanentChoiceContext.OpponentChosenSpellTarget pending
+                && pending.cardToCast().getId().equals(card.getId());
+    }
+
+    private CardSubtype chooseAdditionalCostCreatureType(Card card) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(ChooseCreatureTypeCost.class::isInstance);
+        return requiresChoice ? CardSubtype.HUMAN : null;
+    }
+
+    private CardSubtype chooseCastTimeCreatureType(GameData gameData, Card card, UUID targetId,
+                                                    List<UUID> targetIds) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CastTimeCreatureTypeChoiceEffect.class::isInstance)
+                .map(CastTimeCreatureTypeChoiceEffect.class::cast)
+                .anyMatch(CastTimeCreatureTypeChoiceEffect::requiresCastTimeCreatureTypeChoice);
+        if (!requiresChoice) {
+            return null;
+        }
+
+        List<UUID> announcedTargets = targetIds != null && !targetIds.isEmpty()
+                ? targetIds
+                : targetId != null ? List.of(targetId) : List.of();
+        if (announcedTargets.isEmpty()) {
+            return CardSubtype.HUMAN;
+        }
+
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (!gameQueryService.isCreatureSubtype(subtype)) {
+                continue;
+            }
+            boolean matchesAllTargets = announcedTargets.stream().allMatch(announcedTarget -> {
+                Permanent target = gameQueryService.findPermanentById(gameData, announcedTarget);
+                return target != null
+                        && gameQueryService.isCreature(gameData, target)
+                        && (gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(subtype)
+                        || gameQueryService.hasKeyword(gameData, target, Keyword.CHANGELING));
+            });
+            if (matchesAllTargets) {
+                return subtype;
+            }
+        }
+        return null;
     }
 
 
@@ -1151,11 +2631,12 @@ public abstract class AiDecisionEngine {
      * Returns the maximum X value allowed by graveyard card requirements.
      * For cards with {@link ExileCreaturesFromGraveyardAndCreateTokensEffect},
      * X cannot exceed the number of creature cards in the caster's graveyard; for cards with
+     * {@link ExileXCardsFromGraveyardCost}, it cannot exceed the number of matching cards; for cards with
      * {@link ReturnTargetCardsFromGraveyardToBattlefieldEffect} (Return to the Ranks), it cannot
      * exceed the number of graveyard cards matching that effect's filter. The same cap applies to
-     * X-scaled return-to-hand effects. These mirror the engine's own cast-time validation in
-     * {@code SpellCastingService}, so the AI never proposes an X the server refuses. Returns
-     * {@link Integer#MAX_VALUE} if the card has no such requirement.
+     * X-scaled return-to-hand effects and exact X-card graveyard choices. These mirror the engine's
+     * own cast-time validation in {@code SpellCastingService}, so the AI never proposes an X the
+     * server refuses. Returns {@link Integer#MAX_VALUE} if the card has no such requirement.
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
@@ -1170,11 +2651,29 @@ public abstract class AiDecisionEngine {
                 .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
                 .filter(ReturnTargetCardsFromGraveyardToHandEffect::xScaled)
                 .findFirst().orElse(null);
-        if (!needsGraveyardCreatures && returnEffect == null && xScaledToHandEffect == null) {
+        ExileXCardsFromGraveyardCost exileXCost = spellEffects.stream()
+                .filter(ExileXCardsFromGraveyardCost.class::isInstance)
+                .map(ExileXCardsFromGraveyardCost.class::cast)
+                .findFirst().orElse(null);
+        GraveyardCardChoosingEffect exactXGraveyardChoice = spellEffects.stream()
+                .filter(GraveyardCardChoosingEffect.class::isInstance)
+                .map(GraveyardCardChoosingEffect.class::cast)
+                .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
+                .filter(effect -> effect.graveyardChoiceMaxTargets() == 0)
+                .filter(GraveyardCardChoosingEffect::graveyardChoiceExactTargets)
+                .findFirst().orElse(null);
+        if (!needsGraveyardCreatures && returnEffect == null
+                && xScaledToHandEffect == null && exileXCost == null && exactXGraveyardChoice == null) {
             return Integer.MAX_VALUE;
         }
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
         int maxX = Integer.MAX_VALUE;
+        if (exileXCost != null) {
+            maxX = (int) graveyard.stream()
+                    .filter(c -> exileXCost.requiredType() == null
+                            || c.hasType(exileXCost.requiredType()))
+                    .count();
+        }
         if (needsGraveyardCreatures) {
             maxX = (int) graveyard.stream()
                     .filter(c -> c.hasType(CardType.CREATURE))
@@ -1192,7 +2691,66 @@ public abstract class AiDecisionEngine {
                             c, xScaledToHandEffect.filter(), card.getId()))
                     .count());
         }
+        if (exactXGraveyardChoice != null) {
+            maxX = Math.min(maxX,
+                    getMaxXForExactGraveyardChoice(gameData, card, exactXGraveyardChoice));
+        }
         return maxX;
+    }
+
+    private int getMaxXForExactGraveyardChoice(GameData gameData, Card card,
+                                                GraveyardCardChoosingEffect effect) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return 0;
+        }
+        if (effect.singleGraveyard()) {
+            return gameData.orderedPlayerIds.stream()
+                    .mapToInt(playerId -> countLegalGraveyardChoices(gameData, card, effect, playerId))
+                    .max()
+                    .orElse(0);
+        }
+        return gameData.orderedPlayerIds.stream()
+                .mapToInt(playerId -> countLegalGraveyardChoices(gameData, card, effect, playerId))
+                .sum();
+    }
+
+    private int countLegalGraveyardChoices(GameData gameData, Card card,
+                                            GraveyardCardChoosingEffect effect, UUID playerId) {
+        return (int) gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(candidate -> effect.graveyardChoiceFilter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        candidate, effect.graveyardChoiceFilter(), card.getId()))
+                .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                        gameData, candidate, aiPlayer.getId()))
+                .count();
+    }
+
+    /**
+     * Returns the maximum X allowed by both the caster's graveyard requirements and any
+     * target-player graveyard exile requirement on the spell.
+     */
+    protected int getMaxXForGraveyardRequirements(GameData gameData, Card card, UUID targetPlayerId) {
+        return Math.min(getMaxXForGraveyardRequirements(gameData, card),
+                getMaxXForTargetPlayerGraveyardRequirement(gameData, card, targetPlayerId));
+    }
+
+    private int getMaxXForTargetPlayerGraveyardRequirement(
+            GameData gameData, Card card, UUID targetPlayerId) {
+        TargetPlayerGraveyardExileEffect effect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(TargetPlayerGraveyardExileEffect.class::isInstance)
+                .map(TargetPlayerGraveyardExileEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (effect == null || targetPlayerId == null) {
+            return Integer.MAX_VALUE;
+        }
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return 0;
+        }
+        return (int) gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
+                .filter(graveyardCard -> predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, effect.filter(), card.getId()))
+                .count();
     }
 
     private boolean hasValidRequiredGraveyardReturnTargets(GameData gameData, Card card) {
@@ -1248,12 +2806,30 @@ public abstract class AiDecisionEngine {
                 .orElse(null);
     }
 
+    private DiscardCardTypeCost findDiscardCardTypeCost(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElse(null);
+    }
+
     /**
-     * Picks {@code count} pre-removal hand indices to pay a {@link DiscardXCardsCost}, skipping the
-     * spell's own index. Returns null when the card has no such cost, so the request field stays
-     * empty for every other spell.
+     * Picks pre-removal hand indices for a fixed multi-card or X-based discard cost, skipping the
+     * spell's own index. Returns null when the card has no list-valued discard cost, so the request
+     * field stays empty for every other spell.
      */
-    protected List<Integer> chooseDiscardXCostIndices(GameData gameData, Card card, int cardIndex, int count) {
+    protected List<Integer> chooseDiscardCostIndices(GameData gameData, Card card, int cardIndex, int count) {
+        DiscardCardTypeCost fixedCost = findDiscardCardTypeCost(card);
+        if (fixedCost != null && fixedCost.count() > 1) {
+            List<Integer> valid = castingCostService.validDiscardCostIndices(
+                    gameData, aiPlayer.getId(), card);
+            if (valid == null || valid.size() < fixedCost.count()) {
+                return null;
+            }
+            return new ArrayList<>(valid.subList(0, fixedCost.count()));
+        }
+
         DiscardXCardsCost cost = findDiscardXCardsCost(card);
         if (cost == null) {
             return null;
@@ -1279,6 +2855,14 @@ public abstract class AiDecisionEngine {
     }
 
     /**
+     * Returns true when the target's mana value must be no greater than X (e.g. Dominate). See
+     * {@link AiUtils#hasManaValueAtMostXTarget}, which the MCTS simulator shares.
+     */
+    protected boolean hasPermanentManaValueAtMostXTarget(Card card) {
+        return AiUtils.hasManaValueAtMostXTarget(card);
+    }
+
+    /**
      * Selects a permanent to sacrifice for the card's sacrifice cost, if any.
      * Picks the weakest creature (lowest effective power + toughness) for creature
      * sacrifice costs, or the first matching permanent for other sacrifice types.
@@ -1290,15 +2874,22 @@ public abstract class AiDecisionEngine {
             if (!(effect instanceof CostEffect cost)) {
                 continue;
             }
+            if (declinesOptionalCostForSingleModalMode(card, cost)) {
+                continue;
+            }
             // Multi-permanent costs ride on additionalCostSacrificePermanentIds — see
             // selectMultiPermanentCostIds.
             if (effect instanceof SacrificeMultiplePermanentsCost
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
+                    || effect instanceof TapMultiplePermanentsCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
             }
             // "Sacrifice a creature" — pick the weakest (lowest effective power + toughness).
+            if (hasAvailableDiscardAlternative(gameData, card, effect)) {
+                continue;
+            }
             if (cost.sacrificesChosenCreature()) {
                 return battlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
@@ -1318,6 +2909,58 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns whether an either-or discard/sacrifice cost can be paid by discarding. The spell
+     * request must carry exactly one branch, so sacrifice selection defers to the discard choice
+     * whenever the shared cost query finds an eligible card.
+     */
+    protected boolean hasAvailableDiscardAlternative(GameData gameData, Card card, CardEffect effect) {
+        if (!(effect instanceof DiscardCardOrSacrificePermanentCost)
+                && !(effect instanceof SacrificePermanentOrDiscardCardCost)) {
+            return false;
+        }
+        List<Integer> validDiscardIndices = castingCostService.validDiscardCostIndices(
+                gameData, aiPlayer.getId(), card);
+        return validDiscardIndices != null && !validDiscardIndices.isEmpty();
+    }
+
+    /**
+     * Selects the permanents required by battlefield-imposed cast taxes such as Drought's
+     * per-black-symbol Swamp sacrifice. The selection is made after mana payment by callers so
+     * a permanent sacrificed while producing that mana cannot also pay this tax.
+     *
+     * @return the selected permanent ids, an empty list when no imposed tax applies, or null when
+     *         the tax became unpayable after mana payment
+     */
+    protected List<UUID> selectImposedSacrificePermanentIds(
+            GameData gameData, Card card, UUID singleConsumedPermanentId,
+            List<UUID> otherConsumedPermanentIds) {
+        CastingCostService.ImposedSacrificeRequirement requirement =
+                castingCostService.getImposedSacrificeRequirementForSpell(gameData, card);
+        if (requirement == null || requirement.isEmpty()) {
+            return List.of();
+        }
+
+        Set<UUID> unavailableIds = new HashSet<>();
+        if (singleConsumedPermanentId != null) {
+            unavailableIds.add(singleConsumedPermanentId);
+        }
+        if (otherConsumedPermanentIds != null) {
+            unavailableIds.addAll(otherConsumedPermanentIds);
+        }
+
+        List<UUID> selectedIds = gameData.playerBattlefields
+                .getOrDefault(aiPlayer.getId(), List.of())
+                .stream()
+                .filter(permanent -> !unavailableIds.contains(permanent.getId()))
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, requirement.filter()))
+                .limit(requirement.count())
+                .map(Permanent::getId)
+                .toList();
+        return selectedIds.size() == requirement.count() ? selectedIds : null;
     }
 
     /**
@@ -1342,6 +2985,16 @@ public abstract class AiDecisionEngine {
                         .toList();
                 return chosen.size() == cost.count() ? chosen : List.of();
             }
+            if (effect instanceof TapMultiplePermanentsCost cost
+                    && cost.count() instanceof Fixed fixed) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .limit(fixed.value())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == fixed.value() ? chosen : List.of();
+            }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
@@ -1355,6 +3008,15 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
             }
+            if (effect instanceof TapMultiplePermanentsCost cost && cost.count() instanceof Fixed fixed) {
+                List<UUID> chosen = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                        .limit(fixed.value())
+                        .map(Permanent::getId)
+                        .toList();
+                return chosen.size() == fixed.value() ? chosen : List.of();
+            }
             if (effect instanceof ReturnAnyNumberOfPermanentsToHandCost cost) {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
@@ -1363,6 +3025,21 @@ public abstract class AiDecisionEngine {
             }
         }
         return List.of();
+    }
+
+    /**
+     * Returns whether an optional permanent cost must be omitted because the modal cast plan uses
+     * only one mode and paying the cost would require every mode.
+     */
+    protected boolean declinesOptionalCostForSingleModalMode(Card card, CostEffect cost) {
+        if (!(cost instanceof PutCounterOnControlledCreatureCost putCounterCost)
+                || !putCounterCost.optional()) {
+            return false;
+        }
+        ChooseOneEffect modal = findChooseOneEffect(card);
+        return modal != null
+                && modal.allModesWhenOptionalCostPaid()
+                && modal.choicesRequired() < modal.choicesMax();
     }
 
     /**
@@ -1390,16 +3067,33 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Returns indices for all cards in the player's graveyard, for use with
-     * {@link ExileXCardsFromGraveyardCost}. Returns an empty list if the graveyard is empty.
+     * Returns indices for cards in the player's graveyard that satisfy an
+     * {@link ExileXCardsFromGraveyardCost}. Returns an empty list when no card can pay the cost.
      */
-    protected List<Integer> selectAllGraveyardIndices(GameData gameData) {
+    protected List<Integer> selectExileXGraveyardIndices(
+            GameData gameData, ExileXCardsFromGraveyardCost cost) {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            indices.add(i);
+            Card card = graveyard.get(i);
+            if (cost.requiredType() == null || card.hasType(cost.requiredType())) {
+                indices.add(i);
+            }
         }
         return indices;
+    }
+
+    /**
+     * Selects exactly the requested number of cards matching an X-card graveyard exile cost.
+     * Returns null when the graveyard does not contain enough matching cards.
+     */
+    protected List<Integer> selectExileXGraveyardIndices(
+            GameData gameData, ExileXCardsFromGraveyardCost cost, int count) {
+        List<Integer> indices = selectExileXGraveyardIndices(gameData, cost);
+        if (count < 0 || indices.size() < count) {
+            return null;
+        }
+        return new ArrayList<>(indices.subList(0, count));
     }
 
     /**
@@ -1424,20 +3118,60 @@ public abstract class AiDecisionEngine {
         return new ArrayList<>(matchingIndices.subList(0, cost.count()));
     }
 
+    /** Selects the smallest number of graveyard cards needed to pay a spell's generic cost with Delve. */
+    protected List<Integer> selectDelveGraveyardIndices(
+            GameData gameData, Card card, Integer xValue, int targetingTax) {
+        if (!hasDelveCost(card)) {
+            return List.of();
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) {
+            return null;
+        }
+
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
+        int effectiveXValue = cost.hasX() ? (xValue != null ? xValue : 0) : 0;
+        int costModifier = xValue == null
+                ? castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                : castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card, xValue);
+        costModifier += targetingTax;
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        int maximumDelveReduction = castingCostService.maximumDelveReduction(
+                gameData, aiPlayer.getId(), card, effectiveXValue, costModifier);
+
+        for (int delveReduction = 0; delveReduction <= maximumDelveReduction; delveReduction++) {
+            if (canPayManaCostWithDelveReduction(
+                    card, cost, virtualPool, effectiveXValue, costModifier, delveReduction)) {
+                List<Integer> selectedIndices = new ArrayList<>(delveReduction);
+                for (int i = 0; i < delveReduction; i++) {
+                    selectedIndices.add(i);
+                }
+                return selectedIndices;
+            }
+        }
+        return null;
+    }
+
     // ===== Modal Spell Handling (ChooseOneEffect) =====
 
     /**
      * Internal record for modal spell casting: holds the selected mode encoding
-     * (used as xValue in PlayCardRequest), the legacy single target, and any
-     * target-slot targets declared by multi-mode or variable-count modes.
+     * (used as xValue in PlayCardRequest), the legacy single target, any target-slot targets,
+     * and any amount division announced for the selected mode.
      */
-    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+    protected record ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds,
+                                   Map<UUID, Integer> damageAssignments) {
         protected ModalCastPlan {
             targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? null : Map.copyOf(damageAssignments);
+        }
+
+        protected ModalCastPlan(int modeIndex, UUID targetId, List<UUID> targetIds) {
+            this(modeIndex, targetId, targetIds, null);
         }
 
         protected ModalCastPlan(int modeIndex, UUID targetId) {
-            this(modeIndex, targetId, List.of());
+            this(modeIndex, targetId, List.of(), null);
         }
     }
 
@@ -1451,6 +3185,86 @@ public abstract class AiDecisionEngine {
             }
         }
         return null;
+    }
+
+    /** Returns a selected modal option's own total cost, or null for ordinary modals. */
+    protected String selectedModalManaCost(Card card, Integer modeEncoding) {
+        if (modeEncoding == null) {
+            return null;
+        }
+        ChooseOneEffect coe = findChooseOneEffect(card);
+        if (coe == null) {
+            return null;
+        }
+        List<Integer> selectedModes = coe.decodeModeIndices(modeEncoding);
+        if (selectedModes.size() != 1) {
+            return null;
+        }
+        return coe.options().get(selectedModes.getFirst()).manaCost();
+    }
+
+    /** Returns the full mana cost of the selected modal cast, including any spree mode costs. */
+    protected String manaCostForSpell(Card card, Integer modeEncoding) {
+        String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
+        String baseManaCost = selectedModeManaCost != null ? selectedModeManaCost : card.getManaCost();
+        String spreeManaCost = selectedSpreeManaCost(card, modeEncoding);
+        if (baseManaCost == null) {
+            return spreeManaCost.isEmpty() ? null : spreeManaCost;
+        }
+        return baseManaCost + spreeManaCost;
+    }
+
+    private ManaCost effectiveManaCost(GameData gameData, Card card, String manaCost) {
+        return castingCostService.applyColoredManaCostReductions(
+                gameData, aiPlayer.getId(), card, new ManaCost(manaCost));
+    }
+
+    private String selectedSpreeManaCost(Card card, Integer modeEncoding) {
+        if (modeEncoding == null) {
+            return "";
+        }
+        SpreeAdditionalManaCost spreeCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(SpreeAdditionalManaCost.class::isInstance)
+                .map(SpreeAdditionalManaCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (spreeCost == null) {
+            return "";
+        }
+        ChooseOneEffect modal = findChooseOneEffect(card);
+        if (modal == null) {
+            throw new IllegalStateException("Spree cost has no modal choices");
+        }
+        StringBuilder selectedCost = new StringBuilder();
+        for (int modeIndex : modal.decodeModeIndices(modeEncoding)) {
+            if (modeIndex < 0 || modeIndex >= spreeCost.modeManaCosts().size()) {
+                throw new IllegalStateException("Spree mode has no matching additional cost");
+            }
+            selectedCost.append(spreeCost.modeManaCosts().get(modeIndex));
+        }
+        return selectedCost.toString();
+    }
+
+    private boolean isModalModeAffordable(GameData gameData, Card card,
+                                          int modeEncoding,
+                                          ManaPool virtualPool) {
+        String selectedModeManaCost = selectedModalManaCost(card, modeEncoding);
+        String spreeManaCost = selectedSpreeManaCost(card, modeEncoding);
+        if (selectedModeManaCost == null && spreeManaCost.isEmpty()) {
+            return true;
+        }
+        boolean freeCast = castingCostService.hasAlternativeZeroCostFromBattlefield(
+                gameData, aiPlayer.getId(), card);
+        String manaCost = freeCast
+                ? spreeManaCost
+                : manaCostForSpell(card, modeEncoding);
+        if (manaCost == null || manaCost.isEmpty()) {
+            return true;
+        }
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+        return cost.canPay(virtualPool, costModifier)
+                && (!card.isRequiresCreatureMana() || cost.canPayCreatureOnly(virtualPool, costModifier));
     }
 
     /**
@@ -1477,6 +3291,7 @@ public abstract class AiDecisionEngine {
     protected ModalCastPlan prepareModalSpellCast(GameData gameData, Card card) {
         ChooseOneEffect coe = findChooseOneEffect(card);
         if (coe == null) return null;
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
         // Fixed choose-N (e.g. choose two): pick the first N valid modes.
         if (coe.choicesRequired() > 1 && coe.choicesRequired() == coe.choicesMax()) {
@@ -1487,18 +3302,21 @@ public abstract class AiDecisionEngine {
                 ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
                 if (isModalModeValid(gameData, card, option)) {
                     validModes.add(i);
-                    UUID modeTarget = findModalModeTarget(gameData, card, option);
-                    if (modeTarget != null) {
+                    List<UUID> modeTargets = findModalModeTargets(gameData, card, option);
+                    if (!modeTargets.isEmpty()) {
                         if (option.targetFilter() != null || option.targetFilters() != null) {
-                            targetIds.add(modeTarget);
+                            targetIds.addAll(modeTargets);
                         } else {
-                            targetId = modeTarget;
+                            targetId = modeTargets.getFirst();
                         }
                     }
                     if (validModes.size() == coe.choicesRequired()) {
                         int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
+                        int modeEncoding = coe.modesMayRepeat()
+                                ? ChooseOneEffect.encodeRepeatedModeSelection(coe.options().size(), modeIndices)
+                                : ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices);
                         return new ModalCastPlan(
-                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices),
+                                modeEncoding,
                                 targetId, targetIds);
                     }
                 }
@@ -1509,32 +3327,40 @@ public abstract class AiDecisionEngine {
         // Choose-one and "choose one or more": pick the first valid single mode (avoids escalate).
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
-            if (!isModalModeValid(gameData, card, option)) continue;
-            CardEffect effect = option.effect();
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
                     : i;
+            if (!isModalModeValid(gameData, card, option)
+                    || !isModalModeAffordable(gameData, card, encoded, virtualPool)) {
+                continue;
+            }
 
-            if (EffectResolution.targetsSpellOnStack(effect)) continue;
+            if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) continue;
 
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                UUID target = findModalPermanentTarget(gameData, card, option);
-                if (target != null) {
-                    return coe.variableModeCount()
-                            ? new ModalCastPlan(encoded, null, List.of(target))
-                            : new ModalCastPlan(encoded, target);
+            if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
+                    || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
+                List<UUID> targets = findModalModeTargets(gameData, card, option);
+                if (targets.size() < requiredModalTargetCount(option)) {
+                    continue;
+                }
+                if (EffectResolution.needsDamageDistribution(option.effects())) {
+                    Map<UUID, Integer> assignments = buildModalDamageAssignments(option, targets);
+                    if (assignments == null) {
+                        continue;
+                    }
+                    return new ModalCastPlan(encoded, null,
+                            List.copyOf(assignments.keySet()), assignments);
+                }
+                if (usesModalTargetSlots(coe, option)) {
+                    return new ModalCastPlan(encoded, null, targets);
+                }
+                if (!targets.isEmpty()) {
+                    return new ModalCastPlan(encoded, targets.getFirst());
                 }
                 continue;
             }
 
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-                return coe.variableModeCount()
-                        ? new ModalCastPlan(encoded, null, List.of(opponentId))
-                        : new ModalCastPlan(encoded, opponentId);
-            }
-
-            if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
                 List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
                 if (!targets.isEmpty()) {
                     UUID target = targets.getFirst().getId();
@@ -1551,19 +3377,37 @@ public abstract class AiDecisionEngine {
         return null;
     }
 
-    private UUID findModalModeTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
-        CardEffect effect = option.effect();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            return findModalPermanentTarget(gameData, card, option);
+    private Map<UUID, Integer> buildModalDamageAssignments(
+            ChooseOneEffect.ChooseOneOption option, List<UUID> targets) {
+        DealDividedDamageEffect dividedDamage = option.effects().stream()
+                .filter(DealDividedDamageEffect.class::isInstance)
+                .map(DealDividedDamageEffect.class::cast)
+                .filter(effect -> effect.mode() == DivisionMode.CHOSEN
+                        && !effect.etbAssignments())
+                .findFirst()
+                .orElse(null);
+        if (dividedDamage == null || !(dividedDamage.totalDamage() instanceof Fixed fixed)
+                || fixed.value() <= 0 || targets.isEmpty()) {
+            return null;
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            return AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        return Map.of(targets.getFirst(), fixed.value());
+    }
+
+    private List<UUID> findModalModeTargets(GameData gameData, Card card,
+                                             ChooseOneEffect.ChooseOneOption option) {
+        if (option.targetFilters() != null
+                && modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)) {
+            return findModalPermanentTargets(gameData, card, option);
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
+                || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
+            return findModalPlayerOrPermanentTargets(gameData, card, option);
+        }
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
             List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
-            return targets.isEmpty() ? null : targets.getFirst().getId();
+            return targets.isEmpty() ? List.of() : List.of(targets.getFirst().getId());
         }
-        return null;
+        return List.of();
     }
 
     private boolean isModalModeValid(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
@@ -1573,32 +3417,135 @@ public abstract class AiDecisionEngine {
                 return false;
             }
         }
-        CardEffect effect = option.effect();
-        if (EffectResolution.targetsSpellOnStack(effect)) return false;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) return findModalPermanentTarget(gameData, card, option) != null;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) return true;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack)) return false;
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)
+                || modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
+            return findModalModeTargets(gameData, card, option).size() >= requiredModalTargetCount(option);
+        }
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.GRAVEYARD_CARD)) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
         }
         return true;
     }
 
-    private UUID findModalPermanentTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+    private boolean modeAdmitsTarget(ChooseOneEffect.ChooseOneOption option, TargetPredicate.Kind kind) {
+        if (kind == TargetPredicate.Kind.PLAYER
+                && AiTargetSelector.targetFilterAllowsPlayer(option.targetFilter())) {
+            return true;
+        }
+        if (kind == TargetPredicate.Kind.PERMANENT
+                && AiTargetSelector.targetFilterAllowsPermanent(option.targetFilter())) {
+            return true;
+        }
+        return option.effects().stream().anyMatch(effect -> effect.targetSpec().admits(kind));
+    }
+
+    private int requiredModalTargetCount(ChooseOneEffect.ChooseOneOption option) {
+        return option.targetFilters() != null ? option.targetFilters().size() : option.minTargets();
+    }
+
+    private boolean usesModalTargetSlots(ChooseOneEffect coe, ChooseOneEffect.ChooseOneOption option) {
+        return coe.variableModeCount() || coe.choicesRequired() > 1
+                || option.targetFilters() != null
+                || option.minTargets() != 1 || option.maxTargets() != 1;
+    }
+
+    private List<UUID> findModalPermanentTargets(GameData gameData, Card card,
+                                                 ChooseOneEffect.ChooseOneOption option) {
+        if (option.targetFilters() != null) {
+            List<UUID> targets = new ArrayList<>();
+            for (TargetFilter filter : option.targetFilters()) {
+                UUID target = findModalPermanentTarget(gameData, card, filter, targets);
+                if (target == null) {
+                    return targets;
+                }
+                targets.add(target);
+            }
+            return targets;
+        }
+
+        int targetLimit = option.xScaledTargets()
+                ? Math.max(1, option.minTargets())
+                : option.maxTargets();
+        return findModalPermanentTargets(gameData, card, option.targetFilter(), targetLimit, List.of());
+    }
+
+    private List<UUID> findModalPermanentTargets(GameData gameData, Card card, TargetFilter filter,
+                                                 int targetLimit, List<UUID> alreadyChosen) {
+        if (targetLimit <= 0) {
+            return List.of();
+        }
+
+        List<UUID> targets = new ArrayList<>();
         // Evaluate the mode's targeting on an unfrozen runtime copy — the real card is frozen
         // (live cards are shared with simulation copies and must not be mutated, not even
         // temporarily with a restore).
         Card evalCard = card.createRuntimeCopy();
-        evalCard.setCastTimeTargetFilter(option.targetFilter());
+        evalCard.setCastTimeTargetFilter(filter);
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
             if (playerId == null) continue;
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!card.isAllowSharedTargets() && alreadyChosen.contains(p.getId())) {
+                    continue;
+                }
                 if (targetSelector.isValidPermanentTarget(gameData, evalCard, p, aiPlayer.getId())) {
-                    return p.getId();
+                    targets.add(p.getId());
+                    if (targets.size() == targetLimit) {
+                        return targets;
+                    }
                 }
             }
         }
-        return null;
+        return targets;
+    }
+
+    private UUID findModalPermanentTarget(GameData gameData, Card card, TargetFilter filter,
+                                          List<UUID> alreadyChosen) {
+        List<UUID> targets = findModalPermanentTargets(gameData, card, filter, 1, alreadyChosen);
+        return targets.isEmpty() ? null : targets.getFirst();
+    }
+
+    private List<UUID> findModalPlayerOrPermanentTargets(
+            GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
+        int targetLimit = option.xScaledTargets()
+                ? Math.max(1, option.minTargets())
+                : option.maxTargets();
+        if (targetLimit <= 0) {
+            return List.of();
+        }
+
+        Card evalCard = card.createRuntimeCopy();
+        evalCard.setCastTimeTargetFilter(option.targetFilter());
+        List<UUID> targets = new ArrayList<>();
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+            if (playerId == null || !modeAdmitsTarget(option, TargetPredicate.Kind.PLAYER)) {
+                continue;
+            }
+            if (targetSelector.isValidModalTarget(gameData, evalCard, option.effects(), playerId, aiPlayer.getId())) {
+                targets.add(playerId);
+                if (targets.size() == targetLimit) {
+                    return targets;
+                }
+            }
+        }
+
+        if (modeAdmitsTarget(option, TargetPredicate.Kind.PERMANENT)) {
+            for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+                if (playerId == null) continue;
+                for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                    if (targetSelector.isValidModalTarget(
+                            gameData, evalCard, option.effects(), permanent.getId(), aiPlayer.getId())) {
+                        targets.add(permanent.getId());
+                        if (targets.size() == targetLimit) {
+                            return targets;
+                        }
+                    }
+                }
+            }
+        }
+        return targets;
     }
 
     /**
@@ -1606,9 +3553,8 @@ public abstract class AiDecisionEngine {
      * before sending a PlayCardRequest. Must be called before handlePlayCard so the
      * actual mana pool satisfies the playability check in SpellCastingService.
      *
-     * @return true if the game is now awaiting input (e.g. a Treasure token triggered
-     *         a color choice), meaning the caller should abort the spell cast and let
-     *         the choice handler resolve first.
+     * @return true if the payment opened input or put a triggered ability on the stack,
+     *         meaning the caller should abort the spell cast and let the new decision resolve first.
      */
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue) {
         return tapManaForSpell(gameData, card, xValue, 0);
@@ -1678,35 +3624,214 @@ public abstract class AiDecisionEngine {
     }
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
-        if (card.getManaCost() == null) return false;
-        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
-        AiManaManager.ManaTapAction tap = manaTapAction();
-
-        if (card.isRequiresCreatureMana()) {
-            manaManager.tapCreaturesForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
-            return gameData.interaction.isAwaitingInput();
-        }
-
-        ManaCost cost = new ManaCost(card.getManaCost());
-        if (cost.hasX() && xValue != null) {
-            manaManager.tapLandsForXSpell(gameData, aiPlayer.getId(), card, xValue, costModifier, tap);
-        } else {
-            manaManager.tapLandsForCost(gameData, aiPlayer.getId(), card.getManaCost(), costModifier, tap);
-        }
-        return gameData.interaction.isAwaitingInput();
+        return tapManaForSpell(gameData, card, xValue, targetingTax, 0);
     }
 
     /**
-     * Selects the smallest prefix of the player's untapped creatures that lets the spell's
-     * remaining mana cost be paid with the current mana pool and convoke. Mana is tapped first so
-     * creatures that also produce mana cannot be announced for both costs.
+     * Selects the smallest set of controlled creatures that makes an optional creature-sacrifice
+     * cost reduction payable. Returns an empty plan for ordinary spells and null when even all
+     * available creatures cannot make the spell payable.
+     */
+    protected CostReductionPlan selectCostReductionPlan(
+            GameData gameData, Card card, Integer xValue, int targetingTax, int delveReduction,
+            ManaPool pool) {
+        SacrificeCreaturesForCostReductionEffect reductionEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
+                .map(SacrificeCreaturesForCostReductionEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (reductionEffect == null) {
+            return CostReductionPlan.none();
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null || pool == null) {
+            return null;
+        }
+
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax - delveReduction;
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
+        List<Permanent> creatures = gameData.playerBattlefields
+                .getOrDefault(aiPlayer.getId(), List.of())
+                .stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .sorted(Comparator.comparingInt(permanent ->
+                        gameQueryService.getEffectivePower(gameData, permanent)
+                                + gameQueryService.getEffectiveToughness(gameData, permanent)))
+                .toList();
+        boolean sacrificeAllowed = gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
+        int effectiveXValue = xValue != null ? xValue : 0;
+        for (int count = 0; count <= creatures.size(); count++) {
+            int reduction = count * reductionEffect.reductionPerCreature();
+            int remainingModifier = costModifier - reduction;
+            boolean canPay = cost.hasX()
+                    ? cost.canPayWithAdditionalGenericCost(pool, effectiveXValue, remainingModifier)
+                    : cost.canPay(pool, remainingModifier);
+            if (canPay && (!card.isRequiresCreatureMana()
+                    || cost.canPayCreatureOnly(pool, remainingModifier))) {
+                if (count == 0 || sacrificeAllowed) {
+                    return new CostReductionPlan(
+                            creatures.subList(0, count).stream().map(Permanent::getId).toList(), reduction);
+                }
+            }
+        }
+        return null;
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
+                                      int targetingTax, int delveReduction) {
+        if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return false;
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) return false;
+        CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                gameData, card, xValue, targetingTax, delveReduction,
+                manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+        if (costReductionPlan == null) return false;
+        return tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReductionPlan.reduction());
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
+                                      int targetingTax, int delveReduction, int costReduction) {
+        return tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
+                costReduction, Set.of());
+    }
+
+    protected Set<UUID> reservedSpellCostPermanentIds(
+            UUID sacrificePermanentId, BeholdSelection beholdSelection,
+            CostReductionPlan costReductionPlan) {
+        Set<UUID> reservedIds = new HashSet<>();
+        if (sacrificePermanentId != null) {
+            reservedIds.add(sacrificePermanentId);
+        }
+        if (beholdSelection != null && beholdSelection.permanentId() != null) {
+            reservedIds.add(beholdSelection.permanentId());
+        }
+        if (costReductionPlan != null) {
+            reservedIds.addAll(costReductionPlan.permanentIds());
+        }
+        return Set.copyOf(reservedIds);
+    }
+
+    /**
+     * Returns permanents that must remain unchanged while the AI prepares a spell cast, including
+     * announced cast-time targets and permanents selected for additional costs or cost reductions.
+     * Targets belonging only to an enter-the-battlefield ability are not reserved because tapping
+     * one for mana does not change whether the spell itself can be cast.
+     */
+    protected Set<UUID> reservedSpellPaymentPermanentIds(
+            Card card, UUID targetId, List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+            UUID sacrificePermanentId, BeholdSelection beholdSelection,
+            CostReductionPlan costReductionPlan) {
+        Set<UUID> reservedIds = new HashSet<>(reservedSpellCostPermanentIds(
+                sacrificePermanentId, beholdSelection, costReductionPlan));
+        if (EffectResolution.needsSpellCastTarget(card)) {
+            if (targetId != null) {
+                reservedIds.add(targetId);
+            }
+            if (targetIds != null) {
+                reservedIds.addAll(targetIds);
+            }
+        }
+        if (damageAssignments != null) {
+            reservedIds.addAll(damageAssignments.keySet());
+        }
+        return Set.copyOf(reservedIds);
+    }
+
+    protected boolean canPayManaForSpell(GameData gameData, Card card, Integer xValue,
+                                          int targetingTax, int delveReduction, int costReduction,
+                                          Set<UUID> excludedPermanentIds) {
+        if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return true;
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) {
+            return false;
+        }
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax - delveReduction - costReduction;
+        if (card.isRequiresCreatureMana()) {
+            return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
+                    true, excludedPermanentIds);
+        }
+        if (hasConvokeAbility(gameData, card)) {
+            Map<UUID, ManaColor> convokeContributions = new LinkedHashMap<>();
+            for (Permanent permanent : gameData.playerBattlefields
+                    .getOrDefault(aiPlayer.getId(), List.of())) {
+                if (!permanent.isTapped() && gameQueryService.isCreature(gameData, permanent)) {
+                    convokeContributions.put(permanent.getId(), convokeManaColor(gameData, permanent));
+                }
+            }
+            int additionalGenericCost = costModifier
+                    + (cost.hasX() && xValue != null ? xValue : 0);
+            return manaManager.canPayCostWithConvoke(gameData, aiPlayer.getId(), cost,
+                    additionalGenericCost, excludedPermanentIds, convokeContributions);
+        }
+        if (cost.hasX() && xValue != null) {
+            return manaManager.canPayXCost(gameData, aiPlayer.getId(), card, cost, xValue,
+                    costModifier, excludedPermanentIds);
+        }
+        return manaManager.canPayCost(gameData, aiPlayer.getId(), cost, costModifier,
+                false, excludedPermanentIds);
+    }
+
+    protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue,
+                                      int targetingTax, int delveReduction, int costReduction,
+                                      Set<UUID> excludedPermanentIds) {
+        if (shouldUseAlternateHandCast(gameData, card, xValue, targetingTax)) {
+            return false;
+        }
+        String manaCost = manaCostForSpell(card, xValue);
+        if (manaCost == null) return false;
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
+                + targetingTax - delveReduction - costReduction;
+        AiManaManager.ManaTapAction tap = manaTapAction();
+        int stackSizeBeforePayment = gameData.stack.size();
+
+        if (card.isRequiresCreatureMana()) {
+            manaManager.tapCreaturesForCostExcluding(gameData, aiPlayer.getId(), cost,
+                    costModifier, tap, excludedPermanentIds);
+            return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
+        }
+
+        if (cost.hasX() && xValue != null) {
+            manaManager.tapLandsForXSpellExcluding(gameData, aiPlayer.getId(), card, cost,
+                    xValue, costModifier, tap, excludedPermanentIds);
+        } else {
+            manaManager.tapLandsForCostExcluding(gameData, aiPlayer.getId(), cost,
+                    costModifier, tap, false, excludedPermanentIds);
+        }
+        return paymentOpenedDecisionWindow(gameData, stackSizeBeforePayment);
+    }
+
+    private boolean paymentOpenedDecisionWindow(GameData gameData, int stackSizeBeforePayment) {
+        return gameData.status != GameStatus.RUNNING
+                || gameData.interaction.isAwaitingInput()
+                || gameData.stack.size() > stackSizeBeforePayment;
+    }
+
+    /**
+     * Selects the smallest prefix of the player's untapped creatures or artifacts that lets the
+     * spell's remaining mana cost be paid with the current mana pool and convoke or improvise.
+     * Mana is tapped first so permanents that also produce mana cannot be announced for both costs.
      *
-     * @return the selected creature IDs, an empty list when no convoke is needed, or {@code null}
-     * when the current state cannot pay the cost with any legal convoke selection
+     * @return the selected permanent IDs, an empty list when no assistance is needed, or
+     * {@code null} when the current state cannot pay the cost with any legal selection
      */
     protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
-                                                  int targetingTax) {
-        if (!hasConvokeAbility(gameData, card) || card.getManaCost() == null) {
+                                                   int targetingTax) {
+        return selectConvokeCreatureIds(gameData, card, xValue, targetingTax, 0);
+    }
+
+    protected List<UUID> selectConvokeCreatureIds(GameData gameData, Card card, Integer xValue,
+                                                   int targetingTax, int delveReduction) {
+        String manaCost = manaCostForSpell(card, xValue);
+        if (!hasConvokeAbility(gameData, card) || manaCost == null) {
             return List.of();
         }
 
@@ -1717,9 +3842,9 @@ public abstract class AiDecisionEngine {
 
         int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card)
                 + targetingTax;
-        ManaCost cost = new ManaCost(card.getManaCost());
+        ManaCost cost = effectiveManaCost(gameData, card, manaCost);
         int additionalGenericCost = costModifier
-                + (cost.hasX() && xValue != null ? xValue : 0);
+                + (cost.hasX() && xValue != null ? xValue : 0) - delveReduction;
         List<ManaColor> contributions = new ArrayList<>();
         if (cost.canPayWithConvoke(pool, additionalGenericCost, contributions)) {
             return List.of();
@@ -1731,12 +3856,20 @@ public abstract class AiDecisionEngine {
         }
 
         List<UUID> selectedIds = new ArrayList<>();
+        boolean canConvoke = card.getKeywords().contains(Keyword.CONVOKE)
+                || hasGrantedConvokeAbility(gameData, card);
+        boolean canImprovise = card.getKeywords().contains(Keyword.IMPROVISE);
         for (Permanent permanent : battlefield) {
-            if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)) {
+            if (permanent.isTapped()) {
+                continue;
+            }
+            boolean isCreature = gameQueryService.isCreature(gameData, permanent);
+            boolean isArtifact = gameQueryService.isArtifact(gameData, permanent);
+            if ((!canConvoke || !isCreature) && (!canImprovise || !isArtifact)) {
                 continue;
             }
             selectedIds.add(permanent.getId());
-            contributions.add(convokeManaColor(gameData, permanent));
+            contributions.add(canConvoke && isCreature ? convokeManaColor(gameData, permanent) : null);
             if (cost.canPayWithConvoke(pool, additionalGenericCost, contributions)) {
                 return List.copyOf(selectedIds);
             }
@@ -1750,14 +3883,23 @@ public abstract class AiDecisionEngine {
         }
         return (int) gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of()).stream()
                 .filter(permanent -> !permanent.isTapped())
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> (card.getKeywords().contains(Keyword.CONVOKE)
+                        || hasGrantedConvokeAbility(gameData, card))
+                        && gameQueryService.isCreature(gameData, permanent)
+                        || card.getKeywords().contains(Keyword.IMPROVISE)
+                        && gameQueryService.isArtifact(gameData, permanent))
                 .count();
     }
 
     private boolean hasConvokeAbility(GameData gameData, Card card) {
-        if (card.getKeywords().contains(Keyword.CONVOKE)) {
+        if (card.getKeywords().contains(Keyword.CONVOKE)
+                || card.getKeywords().contains(Keyword.IMPROVISE)) {
             return true;
         }
+        return hasGrantedConvokeAbility(gameData, card);
+    }
+
+    private boolean hasGrantedConvokeAbility(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         if (battlefield == null) {
             return false;

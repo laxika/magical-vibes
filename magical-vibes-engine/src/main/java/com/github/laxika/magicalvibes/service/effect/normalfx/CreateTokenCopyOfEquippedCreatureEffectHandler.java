@@ -62,7 +62,7 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
 
                 Card sourceCard = equippedCreature.getCard();
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), true);
                 int totalCopies = e.amount() * tokenMultiplier;
                 for (int copy = 0; copy < totalCopies; copy++) {
                     // Create a token that's a copy of the equipped creature (copying all copiable values per CR 707.2)
@@ -110,6 +110,8 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                         tokenCard.addActivatedAbility(ability);
                     }
                     tokenCard.copyTargetingFrom(sourceCard);
+                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                            gameData, entry.getControllerId(), tokenCard);
 
                     Permanent tokenPermanent = new Permanent(tokenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);

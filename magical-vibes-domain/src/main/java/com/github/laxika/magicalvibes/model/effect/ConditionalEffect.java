@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 
 /**
  * A generic conditional wrapper around a {@link CardEffect} that only applies when the
@@ -20,7 +21,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * resolution, so only trigger-time behaviour differs.
  */
 public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean interveningIf)
-        implements CardEffect {
+        implements CombatDamageTriggerContextEffect {
 
     /** The common intervening-"if" form (CR 603.4); see {@link #unless} for the other template. */
     public ConditionalEffect(Condition condition, CardEffect wrapped) {
@@ -47,7 +48,20 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean
     }
 
     @Override
+    public boolean hasAbilityResolutionCondition() {
+        return condition instanceof NthAbilityResolutionThisTurn
+                || wrapped.hasAbilityResolutionCondition();
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         return wrapped.targetSpec();
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
+                ? contextEffect.combatDamageTriggerContext()
+                : null;
     }
 }

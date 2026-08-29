@@ -35,10 +35,10 @@ class AnglerDrakeTest extends BaseCardTest {
             harness.addToBattlefield(player2, new GrizzlyBears());
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
             castAnglerDrake();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve ETB may from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
             harness.handlePermanentChosen(player1, bearsId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             harness.assertInHand(player2, "Grizzly Bears");
@@ -48,9 +48,11 @@ class AnglerDrakeTest extends BaseCardTest {
         @DisplayName("Declining leaves the target creature on the battlefield")
         void decliningDoesNotBounce() {
             harness.addToBattlefield(player2, new GrizzlyBears());
+            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
             castAnglerDrake();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve ETB may from stack -> may prompt
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, bearsId);
+            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.stack).isEmpty();
@@ -64,9 +66,9 @@ class AnglerDrakeTest extends BaseCardTest {
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
             castAnglerDrake();
             harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, bearsId);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.handlePermanentChosen(player1, bearsId);
 
             harness.assertOnBattlefield(player1, "Angler Drake");
         }
@@ -82,11 +84,14 @@ class AnglerDrakeTest extends BaseCardTest {
             // "return target creature" has no 'another' clause, so the drake is a legal target for
             // its own ETB. With no other creature present it is the only choice; declining is fine.
             castAnglerDrake();
-            harness.passBothPriorities(); // resolve creature spell -> Angler Drake enters
-            harness.passBothPriorities(); // resolve ETB may -> may prompt (drake is a legal target)
+            harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction())
-                    .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+                    .isInstanceOf(PendingInteraction.PermanentChoice.class);
+            PendingInteraction.PermanentChoice choice =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            assertThat(choice.validPermanentIds())
+                    .containsExactly(harness.getPermanentId(player1, "Angler Drake"));
         }
     }
 }

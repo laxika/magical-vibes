@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "213")
+@CardRegistration(set = "FDN", collectorNumber = "250")
 public class BurnishedHart extends Card {
 
     public BurnishedHart() {

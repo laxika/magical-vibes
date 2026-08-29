@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ class CreateTokenEffectHandlerTest {
     private AmountEvaluationService amountEvaluationService;
     @Mock
     private CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
 
     private CreateTokenEffectHandler handler;
     private GameData gd;
@@ -50,7 +53,8 @@ class CreateTokenEffectHandlerTest {
         gd.playerIds.add(playerId);
         gd.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
         handler = new CreateTokenEffectHandler(
-                permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler);
+                permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
+                triggerCollectionService);
     }
 
     @Test
@@ -72,5 +76,27 @@ class CreateTokenEffectHandlerTest {
         handler.resolve(gd, entry, effect);
 
         verify(permanentControlSupport).applyCreateToken(gd, playerId, effect, 1, "M10", 1, 1);
+    }
+
+    @Test
+    @DisplayName("Checks investigate triggers when creating Clue tokens")
+    void checksInvestigateTriggersForClues() {
+        CreateTokenEffect effect = CreateTokenEffect.ofClueToken(1);
+        Card source = new Card();
+        source.setName("Investigate");
+        source.setSetCode("SOI");
+        StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, source, playerId, "Investigate",
+                List.of(effect), 0);
+
+        when(amountEvaluationService.evaluate(eq(gd), eq(effect.amount()),
+                org.mockito.ArgumentMatchers.any())).thenReturn(1);
+        when(amountEvaluationService.evaluate(eq(gd), eq(effect.power()),
+                org.mockito.ArgumentMatchers.any())).thenReturn(0);
+        when(permanentControlSupport.applyCreateToken(eq(gd), eq(playerId), eq(effect), eq(1), eq("SOI"), eq(0), eq(0)))
+                .thenReturn(List.of());
+
+        handler.resolve(gd, entry, effect);
+
+        verify(triggerCollectionService).checkInvestigateTriggers(gd, playerId);
     }
 }

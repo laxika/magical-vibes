@@ -29,10 +29,10 @@ class CartoucheOfStrengthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, myGiant.getId());
-        harness.passBothPriorities(); // resolve aura → ETB trigger on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → target selection
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, opponentBears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Enchanted 3/3 → 4/4 deals 4 to the opponent's 2/2, which dies; the 2/2 deals 2 back to the
         // 4/4, which survives with 2 marked damage. If the Aura (power 0) fought, the 2/2 would live.
@@ -56,9 +56,10 @@ class CartoucheOfStrengthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, myGiant.getId());
-        harness.passBothPriorities(); // resolve aura → ETB trigger on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentBears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(opponentBears.getId()));

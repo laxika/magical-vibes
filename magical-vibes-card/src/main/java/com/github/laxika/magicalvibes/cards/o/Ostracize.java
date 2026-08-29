@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "153")
+@CardRegistration(set = "ULG", collectorNumber = "57")
 public class Ostracize extends Card {
 
     public Ostracize() {

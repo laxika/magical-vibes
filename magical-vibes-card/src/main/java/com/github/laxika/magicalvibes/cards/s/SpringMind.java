@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
  * Back half (Mind) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "219")
+@CardRegistration(set = "AKR", collectorNumber = "263")
 public class SpringMind extends Card {
 
     public SpringMind() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @CardRegistration(set = "HOU", collectorNumber = "19")
+@CardRegistration(set = "AKR", collectorNumber = "30")
 public class OverwhelmingSplendor extends Card {
 
     public OverwhelmingSplendor() {

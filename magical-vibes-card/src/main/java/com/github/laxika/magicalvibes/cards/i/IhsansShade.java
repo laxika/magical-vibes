@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "53")
+@CardRegistration(set = "ATH", collectorNumber = "25")
 public class IhsansShade extends Card {
 
     public IhsansShade() {

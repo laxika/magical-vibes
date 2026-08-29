@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -127,7 +128,7 @@ public class BattleDefeatSupport {
                 frontCard,
                 controllerId,
                 backFace != null ? backFace.getName() : frontCard.getName(),
-                List.of());
+                backFace != null ? backFace.getEffects(EffectSlot.SPELL) : List.of());
         spell.setCastTransformed(true);
         spell.setOwnerIdOverride(ownerId.equals(controllerId) ? null : ownerId);
         gameData.stack.add(spell);
@@ -144,6 +145,12 @@ public class BattleDefeatSupport {
     }
 
     private static StackEntryType mapBackFaceSpellType(Card card) {
+        if (card.hasType(CardType.SORCERY)) {
+            return StackEntryType.SORCERY_SPELL;
+        }
+        if (card.hasType(CardType.INSTANT)) {
+            return StackEntryType.INSTANT_SPELL;
+        }
         if (card.hasType(CardType.CREATURE)) {
             return StackEntryType.CREATURE_SPELL;
         }

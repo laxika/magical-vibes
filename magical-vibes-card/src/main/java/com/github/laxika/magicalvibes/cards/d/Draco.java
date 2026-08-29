@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "3")
+@CardRegistration(set = "PLS", collectorNumber = "131")
 public class Draco extends Card {
 
     public Draco() {

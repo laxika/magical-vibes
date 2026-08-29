@@ -201,8 +201,8 @@ Off-battlefield targets (AI hypothetical scoring) have no state and fall back to
 intrinsic reconstruction. **Unmanaged L5/L6 sources stay legacy-additive outside timestamp
 order:** conditional wrappers (`ConditionalEffect`, `EnchantedPermanentConditionalEffect`) and
 emblems. Since step 14 this is ENFORCED at collection: `LayerSystemService.collectInstances`
-skips conditional wrappers, because their conditions read volatile game state — life totals,
-active player, poison, top of library — that the §10 board fingerprint deliberately does not
+skips conditional wrappers, because their conditions read volatile game state — active player,
+poison, top of library — that the §10 board fingerprint deliberately does not
 cover; the assembly evaluates the condition fresh on every query
 (`conditionalStaticGrantsToggleWithoutInvalidatingTheBoard` in `LayeredBoardCacheTest`).
 Step 17 narrowed that skip rather than removing it: `admitsConditionalWrapper` admits a
@@ -496,6 +496,12 @@ Reasoning behind the non-obvious mappings:
 - **Ability grants are L6 regardless of the granted ability's content**:
   `GrantEffectEffect`, `GrantActivatedAbilityEffect`, `GrantEquipByManaValueEffect` add an
   ability to the object; what that ability later does is the ability's business.
+- **Devotion modifiers use a special board-wide query value**: `IncreaseDevotionEffect` is
+  classified with the static-effect registry so its self handler is collected after text changes,
+  then its controller modifier is stored on `LayeredBoardState` before other characteristic
+  changes are evaluated. `GameQueryService.getDevotionToColor` and
+  `getDevotionToColors` are the only devotion reads that add this modifier; dynamic amounts and
+  devotion conditions must use those helpers.
 - **Wrappers classify by what they wrap.** `ConditionalEffect` delegates to `wrapped()`
   (passing `fromOwnStaticSlot` through); `EnchantedPermanentConditionalEffect` unions both
   branches, since which branch applies is game-state-dependent. Their declared
@@ -514,6 +520,7 @@ Reasoning behind the non-obvious mappings:
   `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `CopyPermanentOnEnterEffect`) → L1; control
   (`GainControlOfTargetEffect`, `ControlEnchantedCreatureEffect`,
   `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
+  `GainControlOfAuraAttachedPermanentEffect`,
   `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
   → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
   `SwitchPowerToughnessEffect` → 7d.
@@ -594,6 +601,11 @@ one-shot results of already-resolved spells/abilities and exist independently of
 per the engine's 613.2 modeling (§7), NOT via dependency — reading out-of-battlefield zones is
 not a same-layer dependency on anything, so the CDA prefix stays outside the dependency
 relation entirely.
+
+Graveyard static effects that modify other battlefield permanents implement
+`GraveyardStaticEffect`. The layered pass collects those effects from the controller's graveyard
+as synthetic source instances, so their ordinary static handlers can evaluate battlefield scope
+and conditions while the graveyard card remains outside the battlefield.
 
 ### Limits
 
@@ -701,8 +713,10 @@ fingerprint of every input the board computation reads and reuses the cached boa
 the fingerprint is unchanged. What is **NOT cached**: the per-target `StaticBonus` assembly
 (and the per-`Pass` `bonusMemo`) still runs on every external query — assembly reads inputs the
 fingerprint deliberately does not cover (emblems, the conditions of the conditional wrappers the
-pass did not collect, life totals, turn/step state, amount evaluation), so caching it would be
-dishonest; shrinking scope to the board only is the correctness-first trade. The wrappers the
+pass did not collect, turn/step state, amount evaluation), so caching it would be dishonest;
+shrinking scope to the board only is the correctness-first trade. Dynamic amounts used by
+layer-7b base P/T setters are evaluated during board construction, so player life totals are part
+of the board fingerprint. The wrappers the
 pass DOES collect (§5, step 17) are exactly those whose conditions read only fingerprinted state
 — that is what `ConditionBoardStability` decides, so widening it means widening
 `computeBoardFingerprint` too.
@@ -728,7 +742,7 @@ There is **no mutation counter to bump** — this is a deliberate deviation from
 writers with no funnel (bucket-only keyword grants, animation flags, ...), and tests
 (SevenLayerTest included) mutate battlefield lists and permanents directly. The honest scheme
 is to **re-derive validity from the inputs themselves on every query**: the fingerprint hashes
-battlefield composition/order, every pass-read `Permanent` field (tap state, attachments,
+battlefield composition/order, player life totals, every pass-read `Permanent` field (tap state, attachments,
 counters, chosen values, P/T modifiers/overrides, animation state, granted/removed
 keywords/colors/subtypes/types, lose-all flags, text replacements, persistent granted
 activated abilities), the current `Card` identity (L1 copy swaps) plus printed values
@@ -741,7 +755,7 @@ A stale fingerprint can only produce a false MISS (safe recompute); a false HIT 
 
 The flip side of the contract: **anything the fingerprint does not cover must not be read by
 the board computation.** Conditional wrappers are the enforced case (step 14): their
-conditions read life totals/active player/poison/top-of-library, so `collectInstances`
+conditions read active player/poison/top-of-library, so `collectInstances`
 excludes them from the pass entirely and the per-query assembly evaluates them — baking a
 condition's result into the cached board is exactly the staleness the seven step-14 card-test
 failures exposed (Serra Ascendant, Village Survivors, Viridian Betrayers, Vampire Nocturnus,
@@ -1617,3 +1631,19 @@ and any deviations from this document.
     PredicateEvaluationServiceTest, the staticfx suite, RustedRelicTest, WardenOfTheWallTest,
     TetsukoUmezawaFugitiveTest, EnsnaringBridgeTest, the metalcraft, animation, Splicer/Golem,
     divergence and Domain batches. All green.
+
+20. **Structural fingerprint empty-collection fast path (2026-08-20).** JProfiler showed layer-board
+    fingerprinting was a major part of MCTS simulation time, with enum-collection hashing as its
+    largest component. `hashEnums` now returns immediately for empty `Collection` instances, which
+    are the common case across a permanent's mutable keyword, type and color collections. The
+    full-text-copy probe likewise avoids stream allocation and exits immediately when a card has no
+    static effects. Empty fields retain an explicit hash marker, so their positions cannot disappear
+    from the structural representation. Fingerprint validation remains structural rather than
+    epoch-only, so direct field and collection mutation continues to invalidate cached boards; a new
+    `LayeredBoardCacheTest.directMutableCardFieldMutationInvalidates` case pins mutable card subtype
+    changes after cache population. In a back-to-back opt-in 24-permanent layer benchmark under the
+    same competing system load, best steady-state throughput increased from 30,247 to 38,755
+    queries/s and mutation-heavy throughput from 20,989 to 24,603 queries/s. End-to-end MCTS benchmark
+    runs were not comparable because a concurrent long-running JVM changed CPU pressure between
+    variants, so no MCTS pass-count claim is recorded here. **Verification:** `LayeredBoardCacheTest`,
+    `LayerPassBenchmarkTest`, `MCTSBenchmarkTest`, and all 74 `HardAiDecisionEngineTest` cases passed.

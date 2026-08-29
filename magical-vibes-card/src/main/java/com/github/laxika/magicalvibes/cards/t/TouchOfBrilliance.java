@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "76")
 @CardRegistration(set = "P02", collectorNumber = "58")
+@CardRegistration(set = "S99", collectorNumber = "57")
 public class TouchOfBrilliance extends Card {
 
     public TouchOfBrilliance() {

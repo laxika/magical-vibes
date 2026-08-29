@@ -57,6 +57,11 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
                 .withSourceControllerId(entry.getControllerId());
         int count = 0;
         for (Permanent permanent : battlefield) {
+            if (boost.excludeTargets()
+                    && (permanent.getId().equals(entry.getTargetId())
+                        || entry.getDeclaredTargetIds().contains(permanent.getId()))) {
+                continue;
+            }
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {

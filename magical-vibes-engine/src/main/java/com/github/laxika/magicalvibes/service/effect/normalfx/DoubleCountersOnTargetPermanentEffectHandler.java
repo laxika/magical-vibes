@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,8 +32,37 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        List<UUID> targetIds = entry.getTargetIds();
+        if (targetIds.isEmpty()) {
+            if (entry.getTargetId() == null) {
+                return;
+            }
+            targetIds = List.of(entry.getTargetId());
+        }
+        for (UUID targetId : targetIds) {
+            doubleCounters(gameData, entry, targetId, (DoubleCountersOnTargetPermanentEffect) effect);
+        }
+    }
+
+    private void doubleCounters(GameData gameData, StackEntry entry, UUID targetId,
+                                DoubleCountersOnTargetPermanentEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
+            return;
+        }
+
+        if (effect.counterType() != null) {
+            int current = target.getCounterCount(effect.counterType());
+            if (current <= 0) return;
+            int before = current;
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, entry, target, effect.counterType(), current);
+            if (target.getCounterCount(effect.counterType()) > before) {
+                gameLogService.append(gameData,
+                        GameLog.textCardText("Doubled the number of counters on ", target.getCard(), "."));
+                log.info("Game {} - doubled {} counters on {}", gameData.id,
+                        effect.counterType(), target.getCard().getName());
+            }
             return;
         }
 
@@ -40,7 +73,8 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
             }
             int current = target.getCounterCount(counterType);
             if (current > 0) {
-                target.setCounterCount(counterType, current * 2);
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, entry, target, counterType, current);
                 doubledAny = true;
             }
         }

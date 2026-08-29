@@ -85,12 +85,12 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
         // Ezuri (2/2 Elf) gets +3/+3 = 5/5
         assertThat(gqs.getEffectivePower(gd, ezuri)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, ezuri)).isEqualTo(5);
-        assertThat(ezuri.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, ezuri, Keyword.TRAMPLE)).isTrue();
 
         // Llanowar Elves (1/1 Elf) gets +3/+3 = 4/4
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(4);
-        assertThat(elf.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -106,7 +106,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
         // Grizzly Bears (2/2 non-Elf) should NOT be boosted
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -122,7 +122,7 @@ class EzuriRenegadeLeaderTest extends BaseCardTest {
         // Opponent's Llanowar Elves (1/1) should NOT be boosted
         assertThat(gqs.getEffectivePower(gd, opponentElf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentElf)).isEqualTo(1);
-        assertThat(opponentElf.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, opponentElf, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

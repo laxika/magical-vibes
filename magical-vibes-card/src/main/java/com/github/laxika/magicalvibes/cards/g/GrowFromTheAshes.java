@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "164")
+@CardRegistration(set = "FDN", collectorNumber = "225")
 public class GrowFromTheAshes extends Card {
 
     public GrowFromTheAshes() {

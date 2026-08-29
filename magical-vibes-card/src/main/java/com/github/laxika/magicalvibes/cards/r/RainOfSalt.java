@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "POR", collectorNumber = "147")
+@CardRegistration(set = "USG", collectorNumber = "206")
 public class RainOfSalt extends Card {
 
     public RainOfSalt() {

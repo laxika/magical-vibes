@@ -96,6 +96,12 @@ public class RevealTopCardMayPlayFreeEffectHandler implements NormalEffectHandle
                 gameLogService.append(gameData, GameLog.builder().card(topCard).text(" " + reason + " and is put on the bottom of the library.").build());
                 log.info("Game {} - {} bottomed ({})", gameData.id, topCard.getName(), reason);
             }
+            case HAND -> {
+                deck.removeFirst();
+                gameData.playerHands.get(controllerId).add(topCard);
+                gameLogService.append(gameData, GameLog.builder().card(topCard).text(" " + reason + " and is put into the player's hand.").build());
+                log.info("Game {} - {} put into hand ({})", gameData.id, topCard.getName(), reason);
+            }
             default -> {
                 gameLogService.append(gameData, GameLog.builder().card(topCard).text(" " + reason + " and stays on top of the library.").build());
                 log.info("Game {} - {} stays on top ({})", gameData.id, topCard.getName(), reason);

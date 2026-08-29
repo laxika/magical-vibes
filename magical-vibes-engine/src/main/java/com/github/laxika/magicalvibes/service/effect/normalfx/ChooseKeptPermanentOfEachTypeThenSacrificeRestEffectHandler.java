@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -23,11 +24,12 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect} (Tragic Arrogance).
  *
- * <p>Walks the players in APNAP order and, for each, the four card types in printed order. Each pass
- * lets the spell's controller pick one permanent of that type the player controls; a type with a
- * single candidate is auto-kept and a type with none is skipped. A permanent that has several of the
- * four types can be picked again in a later pass, so kept permanents stay in the candidate lists.
- * Once every pass is done, all nonland permanents that were not kept are sacrificed simultaneously.
+ * <p>Walks the affected players in APNAP order and, for each, the listed card types in order. Each
+ * pass lets the spell's controller or the affected player pick one permanent of that type; a type
+ * with a single candidate is auto-kept and a type with none is skipped. A permanent that has
+ * several listed types can be picked again in a later pass, so kept permanents stay in the candidate
+ * lists. Once every pass is done, the applicable permanents that were not kept are sacrificed
+ * simultaneously.
  */
 @Slf4j
 @Component
@@ -48,7 +50,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect keepEffect =
                 (ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect) effect;
-        step(gameData, entry.getControllerId(), apnapPlayers(gameData), 0, List.of(),
+        List<UUID> affectedPlayerIds = affectedPlayers(gameData, entry, keepEffect.recipient());
+        step(gameData, entry.getControllerId(), affectedPlayerIds, affectedPlayerIds, 0, List.of(),
                 keepEffect.types(), keepEffect.sacrificeAllPermanents(), keepEffect.eachPlayerChooses(),
                 entry.getCard().getName());
     }
@@ -69,7 +72,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             }
         }
 
-        step(gameData, context.controllerId(), context.remainingPlayerIds(),
+        step(gameData, context.controllerId(), context.affectedPlayerIds(), context.remainingPlayerIds(),
                 context.types().indexOf(context.typePhase()) + 1, kept, context.types(),
                 context.sacrificeAllPermanents(), context.eachPlayerChooses(), context.sourceName());
     }
@@ -78,7 +81,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
      * Run passes from {@code phaseIndex} of the first player in {@code playerIds} onwards, stopping
      * at the first pass that needs a choice; when no pass is left, apply the sacrifices.
      */
-    private void step(GameData gameData, UUID controllerId, List<UUID> playerIds, int phaseIndex,
+    private void step(GameData gameData, UUID controllerId, List<UUID> affectedPlayerIds,
+            List<UUID> playerIds, int phaseIndex,
             List<UUID> keptIds, List<CardType> types, boolean sacrificeAllPermanents,
             boolean eachPlayerChooses, String sourceName) {
         List<UUID> remaining = new ArrayList<>(playerIds);
@@ -106,7 +110,8 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
                 UUID chooserId = eachPlayerChooses ? subjectPlayerId : controllerId;
                 playerInputService.beginMultiPermanentChoice(gameData, chooserId, candidates, 1,
                         new MultiPermanentChoiceContext.KeepOneOfEachTypeChoice(controllerId,
-                                subjectPlayerId, type, List.copyOf(remaining), List.copyOf(kept), sourceName,
+                                subjectPlayerId, type, List.copyOf(affectedPlayerIds),
+                                List.copyOf(remaining), List.copyOf(kept), sourceName,
                                 List.copyOf(types), sacrificeAllPermanents, eachPlayerChooses),
                         sourceName + " — choose the " + type.name().toLowerCase() + " "
                                 + gameData.playerIdToName.get(subjectPlayerId) + " keeps.");
@@ -116,22 +121,27 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
             index = 0;
         }
 
-        sacrificeRest(gameData, kept, sacrificeAllPermanents, sourceName);
+        sacrificeRest(gameData, affectedPlayerIds, kept, sacrificeAllPermanents, sourceName);
     }
 
-    /** Every permanent that was not kept, or every nonland permanent for Tragic Arrogance, is sacrificed together. */
-    private void sacrificeRest(GameData gameData, List<UUID> keptIds, boolean sacrificeAllPermanents,
+    /** Every affected permanent that was not kept, or every affected nonland permanent for Tragic Arrogance, is sacrificed together. */
+    private void sacrificeRest(GameData gameData, List<UUID> affectedPlayerIds, List<UUID> keptIds,
+            boolean sacrificeAllPermanents,
             String sourceName) {
         Set<UUID> keptSet = new HashSet<>(keptIds);
         List<UUID> toSacrifice = new ArrayList<>();
-        gameData.forEachBattlefield((playerId, battlefield) -> {
+        for (UUID playerId : affectedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) {
+                continue;
+            }
             for (Permanent permanent : battlefield) {
                 if ((sacrificeAllPermanents || !gameQueryService.isLand(gameData, permanent))
                         && !keptSet.contains(permanent.getId())) {
                     toSacrifice.add(permanent.getId());
                 }
             }
-        });
+        }
 
         if (toSacrifice.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(sourceName + " resolves but nothing is sacrificed."));
@@ -149,6 +159,7 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
     private boolean matchesType(GameData gameData, Permanent permanent, CardType type) {
         return switch (type) {
             case ARTIFACT -> gameQueryService.isArtifact(gameData, permanent);
+            case BATTLE -> gameQueryService.isBattle(gameData, permanent);
             case CREATURE -> gameQueryService.isCreature(gameData, permanent);
             case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, permanent);
             case LAND -> gameQueryService.isLand(gameData, permanent);
@@ -167,5 +178,18 @@ public class ChooseKeptPermanentOfEachTypeThenSacrificeRestEffectHandler impleme
         List<UUID> rotated = new ArrayList<>(ordered.subList(activeIndex, ordered.size()));
         rotated.addAll(ordered.subList(0, activeIndex));
         return rotated;
+    }
+
+    private List<UUID> affectedPlayers(GameData gameData, StackEntry entry, SacrificeRecipient recipient) {
+        return switch (recipient) {
+            case EACH_PLAYER, EACH_OPPONENT -> apnapPlayers(gameData).stream()
+                    .filter(playerId -> recipient == SacrificeRecipient.EACH_PLAYER
+                            || !playerId.equals(entry.getControllerId()))
+                    .filter(playerId -> gameQueryService.canEffectCauseSacrifice(
+                            gameData, playerId, entry.getControllerId()))
+                    .toList();
+            default -> throw new IllegalArgumentException(
+                    "ChooseKeptPermanentOfEachTypeThenSacrificeRestEffect requires EACH_PLAYER or EACH_OPPONENT");
+        };
     }
 }

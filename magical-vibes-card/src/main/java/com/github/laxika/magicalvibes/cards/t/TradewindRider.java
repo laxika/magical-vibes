@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "98")
+@CardRegistration(set = "TPR", collectorNumber = "75")
 public class TradewindRider extends Card {
 
     public TradewindRider() {

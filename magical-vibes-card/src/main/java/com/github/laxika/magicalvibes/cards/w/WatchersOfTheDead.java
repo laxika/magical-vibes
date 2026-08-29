@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "238")
+@CardRegistration(set = "AKR", collectorNumber = "283")
 public class WatchersOfTheDead extends Card {
 
     public WatchersOfTheDead() {

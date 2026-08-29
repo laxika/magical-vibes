@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "65")
+@CardRegistration(set = "M21", collectorNumber = "102")
 public class GraspOfDarkness extends Card {
 
     public GraspOfDarkness() {

@@ -15,10 +15,12 @@ import com.github.laxika.magicalvibes.service.GameService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 
 @Tag("scryfall")
+@ExtendWith(CardUsedExtension.class)
 public abstract class BaseCardTest {
 
     protected GameTestHarness harness;
@@ -125,10 +127,10 @@ public abstract class BaseCardTest {
      * are reached by a single priority round-trip.
      */
     protected void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
+        harness.performUntapStep(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.UPKEEP);
     }
 
     /**

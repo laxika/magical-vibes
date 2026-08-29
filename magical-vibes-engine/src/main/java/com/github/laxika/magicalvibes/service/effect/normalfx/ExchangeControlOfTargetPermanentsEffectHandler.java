@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -37,6 +39,8 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
     private final CreatureControlService creatureControlService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,22 +69,27 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
             }
             ownTarget = resolveSourcePermanent(gameData, entry);
         } else {
-            if (targetIds == null || targetIds.size() < 2) {
+            List<UUID> exchangeTargetIds = resolveExchangeTargetIds(entry, exchange, targetIds);
+            if (exchangeTargetIds.size() < 2) {
                 return;
             }
-            opponentTargetId = targetIds.get(1);
-            ownTarget = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
+            opponentTargetId = exchangeTargetIds.get(1);
+            ownTarget = gameQueryService.findPermanentById(gameData, exchangeTargetIds.getFirst());
         }
         Permanent opponentTarget = gameQueryService.findPermanentById(gameData, opponentTargetId);
-        if (ownTarget == null || opponentTarget == null) {
-            logFizzle(gameData, entry);
+        if (ownTarget == null) {
+            logFizzle(gameData, entry, exchange, null);
+            return;
+        }
+        if (opponentTarget == null) {
+            logFizzle(gameData, entry, exchange, ownTarget);
             return;
         }
 
         UUID ownController = gameQueryService.findPermanentController(gameData, ownTarget.getId());
         UUID opponentController = gameQueryService.findPermanentController(gameData, opponentTarget.getId());
         if (ownController == null || opponentController == null) {
-            logFizzle(gameData, entry);
+            logFizzle(gameData, entry, exchange, ownTarget);
             return;
         }
 
@@ -105,16 +114,21 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 && triggeringPermanentTargetLegal
                 && (exchange.sourceIsFirstTarget()
                         || exchange.triggeringPermanentIsFirstTarget()
-                        || predicateEvaluationService.matchesPermanentPredicate(ownTarget, exchange.targetPredicate(), filterContext))
+                        || predicateEvaluationService.matchesPermanentPredicate(ownTarget,
+                        exchange.firstTargetPredicate() != null
+                                ? exchange.firstTargetPredicate() : exchange.targetPredicate(), filterContext))
                 && predicateEvaluationService.matchesPermanentPredicate(opponentTarget, exchange.targetPredicate(), filterContext)
                 && (!exchange.requireOpponentManaValueNotGreater()
                         || opponentTarget.getCard().getManaValue() <= ownTarget.getCard().getManaValue())
+                && (!exchange.requireOpponentPowerNotGreater()
+                        || gameQueryService.getEffectivePower(gameData, opponentTarget)
+                        <= gameQueryService.getEffectivePower(gameData, ownTarget))
                 && (!exchange.requireSharedArtifactOrCreatureType()
                         || gameQueryService.sharesArtifactOrCreatureType(ownTarget, opponentTarget))
                 && (!exchange.requireSharedCardType()
-                        || gameQueryService.sharesCardType(gameData, ownTarget, opponentTarget));
+                        || gameQueryService.sharesCardType(ownTarget, opponentTarget));
         if (!stillLegal) {
-            logFizzle(gameData, entry);
+            logFizzle(gameData, entry, exchange, ownTarget);
             return;
         }
 
@@ -128,6 +142,27 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(": ").card(ownTarget.getCard()).text(" and ").card(opponentTarget.getCard()).text(" exchange controllers.").build());
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
+    }
+
+    private List<UUID> resolveExchangeTargetIds(StackEntry entry,
+                                                   ExchangeControlOfTargetPermanentsEffect exchange,
+                                                   List<UUID> targetIds) {
+        int boundGroup = entry.getCard().getEffectTargetIndex(exchange);
+        if (exchange.targetPairInSingleGroup()) {
+            if (boundGroup < 0) {
+                return targetIds == null ? List.of() : targetIds;
+            }
+            return entry.targetsForGroup(boundGroup);
+        }
+        if (boundGroup > 0) {
+            List<UUID> firstTarget = entry.targetsForGroup(boundGroup - 1);
+            List<UUID> secondTarget = entry.targetsForGroup(boundGroup);
+            if (!firstTarget.isEmpty() && !secondTarget.isEmpty()) {
+                return List.of(firstTarget.getFirst(), secondTarget.getFirst());
+            }
+            return List.of();
+        }
+        return targetIds == null ? List.of() : targetIds;
     }
 
     /**
@@ -158,8 +193,18 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         return null;
     }
 
-    private void logFizzle(GameData gameData, StackEntry entry) {
+    private void logFizzle(GameData gameData, StackEntry entry,
+                           ExchangeControlOfTargetPermanentsEffect exchange, Permanent source) {
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s exchange has no effect (a target is no longer legal)."));
         log.info("Game {} - {} exchange fizzles (illegal target)", gameData.id, entry.getCard().getName());
+        if (!exchange.sacrificeSourceIfNoExchange() || source == null) {
+            return;
+        }
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, entry.getControllerId(), source.getCard());
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is sacrificed."));
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 }

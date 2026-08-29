@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "210")
 @CardRegistration(set = "MIR", collectorNumber = "196")
+@CardRegistration(set = "BTD", collectorNumber = "47")
 public class TalruumMinotaur extends Card {
 }

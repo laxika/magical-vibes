@@ -38,13 +38,12 @@ class HazoretsFavorTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         advanceToCombat(player1);
-        harness.passBothPriorities(); // resolve stack entry → may prompt
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bearsId);
 
         Permanent bears = findPermanent(player1, bearsId);
         assertThat(bears.getPowerModifier()).isEqualTo(2);
@@ -60,9 +59,9 @@ class HazoretsFavorTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bearsId);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
@@ -84,6 +83,7 @@ class HazoretsFavorTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -108,8 +108,6 @@ class HazoretsFavorTest extends BaseCardTest {
         UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         advanceToCombat(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentBearsId))
                 .isInstanceOf(IllegalStateException.class);

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -13,6 +15,25 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the number of {X} symbols to determine the actual generic mana that must be paid.
  */
 class ManaCostTest {
+
+    @Nested
+    @DisplayName("Snow mana color permission")
+    class SnowManaColorPermission {
+
+        @Test
+        void snowColorlessManaCanPayAColoredAndGenericCostWhenPermitted() {
+            ManaPool pool = new ManaPool();
+            pool.addSnowMana(ManaColor.COLORLESS, 2);
+            pool.setSnowManaSpendableAsAnyColor(true);
+            ManaCost cost = new ManaCost("{1}{G}");
+
+            assertThat(cost.canPayWithAdditionalGenericCost(pool, 0, 0)).isTrue();
+
+            cost.payWithAdditionalGenericCost(pool, 0, 0);
+
+            assertThat(pool.getTotalAllMana()).isZero();
+        }
+    }
 
     @Nested
     @DisplayName("X-symbol counting")
@@ -45,6 +66,16 @@ class ManaCostTest {
             assertThat(cost.hasX()).isTrue();
             assertThat(cost.getXSymbolCount()).isEqualTo(3);
         }
+    }
+
+    @Test
+    void coloredOnlyReductionDoesNotReduceUnmatchedGenericMana() {
+        ManaCost cost = new ManaCost("{2}{R}");
+
+        ManaCost reduced = cost.reducedByColoredOnly(new ManaCost("{B}{R}"));
+
+        assertThat(reduced.getGenericCost()).isEqualTo(2);
+        assertThat(reduced.getColoredCosts()).doesNotContainKey(ManaColor.RED);
     }
 
     @Nested
@@ -234,6 +265,16 @@ class ManaCostTest {
         }
 
         @Test
+        void hybridSymbolsReduceMaxX() {
+            ManaCost cost = new ManaCost("{X}{G/U}{G/U}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 2);
+            pool.add(ManaColor.GREEN, 1);
+
+            assertThat(cost.calculateMaxX(pool)).isEqualTo(1);
+        }
+
+        @Test
         void tripleXWithSevenColorlessMaxXIsTwo() {
             // {X}{X}{X}{1} with 7 colorless: 1 generic + 6 for X, 6/3 = 2.
             ManaCost cost = new ManaCost("{X}{X}{X}{1}");
@@ -303,6 +344,52 @@ class ManaCostTest {
     @Nested
     @DisplayName("hybrid mana")
     class HybridMana {
+
+        @Test
+        @DisplayName("convoke does not treat hybrid symbols as free")
+        void convokePaysHybridSymbolsBeforeGenericMana() {
+            ManaCost cost = new ManaCost("{3}{W/U}{W/U}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.WHITE, 2);
+            pool.add(ManaColor.BLUE, 2);
+
+            assertThat(cost.canPayWithConvoke(pool, 0, List.of())).isFalse();
+            assertThat(cost.canPayWithConvoke(pool, 0, List.of(ManaColor.GREEN))).isTrue();
+            assertThat(cost.canPayWithConvoke(pool, 0, List.of(ManaColor.GREEN, ManaColor.GREEN))).isTrue();
+
+            cost.payWithConvoke(pool, 0, List.of(ManaColor.GREEN));
+
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        void convokePaysMonocoloredHybridGenericAlternativeOneManaAtATime() {
+            ManaCost cost = new ManaCost("{2/W}");
+
+            assertThat(cost.canPayWithConvoke(new ManaPool(), 0, List.of(ManaColor.GREEN))).isFalse();
+            assertThat(cost.canPayWithConvoke(new ManaPool(), 0,
+                    List.of(ManaColor.GREEN, ManaColor.GREEN))).isTrue();
+        }
+
+        @Test
+        void hybridPhyrexianManaUsesEitherColorOrLife() {
+            ManaCost cost = new ManaCost("{1}{R/G/P}");
+            assertThat(cost.hasPhyrexianMana()).isTrue();
+            assertThat(cost.getPhyrexianManaCount()).isEqualTo(1);
+            assertThat(cost.getManaValue()).isEqualTo(2);
+
+            ManaPool red = new ManaPool();
+            red.add(ManaColor.RED, 2);
+            assertThat(cost.canPay(red, 0)).isTrue();
+            assertThat(cost.payPhyrexianManaAuto(red, 0)).isZero();
+            assertThat(red.get(ManaColor.RED)).isEqualTo(1);
+
+            ManaPool noColor = new ManaPool();
+            noColor.add(ManaColor.COLORLESS, 1);
+            assertThat(cost.canPay(noColor, 0)).isTrue();
+            assertThat(cost.payPhyrexianManaAuto(noColor, 0)).isEqualTo(2);
+            assertThat(noColor.get(ManaColor.COLORLESS)).isEqualTo(1);
+        }
 
         @Test
         void colorHybridManaValueCountsAsOne() {

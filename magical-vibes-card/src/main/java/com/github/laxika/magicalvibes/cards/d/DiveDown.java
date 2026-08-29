@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "XLN", collectorNumber = "53")
+@CardRegistration(set = "FDN", collectorNumber = "588")
 public class DiveDown extends Card {
 
     public DiveDown() {

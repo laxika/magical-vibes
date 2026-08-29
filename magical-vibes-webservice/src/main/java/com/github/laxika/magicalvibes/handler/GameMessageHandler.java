@@ -32,9 +32,9 @@ import com.github.laxika.magicalvibes.networking.message.RegisterResponse;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateExiledAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.ActivateExileAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
@@ -454,6 +454,28 @@ public class GameMessageHandler implements MessageHandler {
     }
 
     @Override
+    public void handleActivateExiledAbility(Connection connection, ActivateExiledAbilityRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.activateExiledAbility(gameData, player, request.exiledCardId(), request.abilityIndex(),
+                    request.xValue(), request.targetId());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
     public void handleActivateGraveyardAbility(Connection connection, ActivateGraveyardAbilityRequest request) throws Exception {
         Player player = sessionManager.getPlayer(connection.getId());
         if (player == null) {
@@ -496,28 +518,6 @@ public class GameMessageHandler implements MessageHandler {
             } else {
                 gameService.activateHandAbility(gameData, player, request.handCardIndex(), request.abilityIndex(), request.targetId(), request.xValue());
             }
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            handleError(connection, e.getMessage());
-        }
-    }
-
-    @Override
-    public void handleActivateExileAbility(Connection connection, ActivateExileAbilityRequest request) throws Exception {
-        Player player = sessionManager.getPlayer(connection.getId());
-        if (player == null) {
-            handleError(connection, "Not authenticated");
-            return;
-        }
-
-        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData == null) {
-            handleError(connection, "Not in a game");
-            return;
-        }
-
-        try {
-            gameService.activateExileAbility(gameData, player, request.cardId(), request.abilityIndex(),
-                    request.xValue(), request.targetId());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }
@@ -655,6 +655,7 @@ public class GameMessageHandler implements MessageHandler {
             case SCRY_ORDER -> new InteractionAnswer.ScryOrder(request.order(), request.secondOrder());
             case CARD_ORDER -> new InteractionAnswer.CardOrder(request.order());
             case HAND_TOP_BOTTOM -> new InteractionAnswer.HandTopBottom(request.index(), request.secondIndex());
+            case HAND_BOTTOM_EXILE -> new InteractionAnswer.HandBottomExile(request.index(), request.secondIndex());
         };
     }
 

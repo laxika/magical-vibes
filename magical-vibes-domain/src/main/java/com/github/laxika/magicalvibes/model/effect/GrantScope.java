@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.model.effect;
 
 public enum GrantScope {
     SELF,
+    /** The permanent referenced by the triggering event of a triggered ability. */
+    TRIGGERING_PERMANENT,
     /**
      * The source permanent and the creature it is soulbond-paired with (CR 702.94).
      * Used for "as long as ~ is paired with another creature, each of those creatures has …".
      */
     SELF_AND_PAIRED,
     TARGET,
+    /** The target creature and every other creature sharing a color with it. */
+    TARGET_AND_SHARING_CREATURES,
     ENCHANTED_CREATURE,
     ENCHANTED_PERMANENT,
     EQUIPPED_CREATURE,
@@ -30,6 +34,8 @@ public enum GrantScope {
     OWN_PERMANENTS,
     /** All creatures the targeted player controls (one-shot, e.g. Shields of Velis Vel). */
     TARGET_PLAYERS_CREATURES,
+    /** All lands the targeted player controls (one-shot animation effects). */
+    TARGET_PLAYERS_LANDS,
     /**
      * All creatures on the battlefield <em>except</em> the source permanent itself.
      * Use this for "other …" wordings, or when the source can never match the filter.

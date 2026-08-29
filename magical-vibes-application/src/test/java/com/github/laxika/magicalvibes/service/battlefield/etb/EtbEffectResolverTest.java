@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -137,6 +140,21 @@ class EtbEffectResolverTest {
     }
 
     @Test
+    @DisplayName("ChooseOne: unwraps every mode selected by a variable-count modal")
+    void chooseOneUnwrapsEverySelectedMode() {
+        DrawCardEffect opt0 = new DrawCardEffect(1);
+        GainLifeEffect opt1 = new GainLifeEffect(2);
+        ChooseOneEffect modal = ChooseOneEffect.oneOrMore(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null),
+                new ChooseOneEffect.ChooseOneOption("Gain", opt1, null)));
+
+        CardEffect resolved = resolver.resolve(ctx(true,
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}), false), modal);
+
+        assertThat(resolved).isEqualTo(SequenceEffect.of(opt0, opt1));
+    }
+
+    @Test
     @DisplayName("ChooseOne: out-of-range mode falls back to the first option")
     void chooseOneOutOfRangeFallsBackToFirst() {
         DrawCardEffect opt0 = new DrawCardEffect(1);
@@ -192,6 +210,19 @@ class EtbEffectResolverTest {
         spent.put(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);
         gameData.setSpellCastManaSpentByColor(card.getId(), spent);
         assertThat(resolver.resolve(ctx(true, 0, false), twoWhite)).isNull();
+    }
+
+    @Test
+    @DisplayName("SnowManaSpentToCast: snapshots the cast-time result into the ETB trigger")
+    void snowManaSpentToCastConditional() {
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        ConditionalEffect snowMana = new ConditionalEffect(new SnowManaSpentToCast(), wrapped);
+
+        gameData.setSpellCastSnowManaSpent(card.getId(), 1);
+        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isSameAs(snowMana);
+
+        gameData.setSpellCastSnowManaSpent(card.getId(), 0);
+        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isNull();
     }
 
     @Test
@@ -270,5 +301,21 @@ class EtbEffectResolverTest {
 
         gameData.playersDeclaredAttackersThisTurn.add(controllerId);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+    }
+
+    @Test
+    @DisplayName("Collect-evidence gate keeps the ETB effect only when evidence was paid")
+    void collectEvidenceGate() {
+        ConditionalEffect effect = new ConditionalEffect(
+                new CollectEvidenceCostPaid(), new DrawCardEffect(1));
+        Permanent source = new Permanent(card);
+        EtbEffectContext sourceContext = new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, source);
+
+        source.setCollectEvidenceCostPaid(true);
+        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
+
+        source.setCollectEvidenceCostPaid(false);
+        assertThat(resolver.resolve(sourceContext, effect)).isNull();
     }
 }

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ALL", collectorNumber = "127a")
 @CardRegistration(set = "ALL", collectorNumber = "127b")
+@CardRegistration(set = "DKM", collectorNumber = "37a")
+@CardRegistration(set = "DKM", collectorNumber = "37b")
 public class PhyrexianWarBeast extends Card {
 
     public PhyrexianWarBeast() {

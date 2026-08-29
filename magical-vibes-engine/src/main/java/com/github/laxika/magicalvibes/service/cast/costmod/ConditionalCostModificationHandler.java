@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
@@ -39,11 +40,31 @@ public class ConditionalCostModificationHandler implements CostModificationHandl
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
         var conditional = (ConditionalEffect) effect;
         if (!conditionEvaluationService.isMet(context.gameData(), conditional.condition(),
-                ConditionContext.forCasting(context.castingPlayerId()))) {
+                ConditionContext.forCasting(context.castingPlayerId(), context.collectEvidenceCostPaid()))) {
             return 0;
         }
         CardEffect wrapped = conditional.wrapped();
         CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(wrapped);
         return handler == null ? 0 : handler.modifyCost(context, wrapped, source);
+    }
+
+    @Override
+    public ManaCost coloredManaCostReduction(CostModificationContext context, CardEffect effect,
+                                             CostModificationSource source) {
+        var conditional = (ConditionalEffect) effect;
+        if (!conditionEvaluationService.isMet(context.gameData(), conditional.condition(),
+                ConditionContext.forCasting(context.castingPlayerId(), context.collectEvidenceCostPaid()))) {
+            return null;
+        }
+        CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(
+                conditional.wrapped());
+        return handler == null ? null : handler.coloredManaCostReduction(context, conditional.wrapped(), source);
+    }
+
+    @Override
+    public boolean coloredReductionCanReduceGeneric(CardEffect effect) {
+        CardEffect wrapped = ((ConditionalEffect) effect).wrapped();
+        CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(wrapped);
+        return handler != null && handler.coloredReductionCanReduceGeneric(wrapped);
     }
 }

@@ -21,6 +21,10 @@ public sealed interface InteractionAnswer {
     record HandTopBottom(int handCardIndex, int topCardIndex) implements InteractionAnswer {
     }
 
+    /** One viewed card to hand and one on the bottom of the library; any remainder is exiled. */
+    record HandBottomExile(int handCardIndex, int bottomCardIndex) implements InteractionAnswer {
+    }
+
     /** A full ordering of the viewed cards (indices into the viewed list). */
     record CardOrder(java.util.List<Integer> cardOrder) implements InteractionAnswer {
     }

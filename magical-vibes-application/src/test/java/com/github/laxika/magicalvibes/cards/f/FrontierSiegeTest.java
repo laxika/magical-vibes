@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +25,7 @@ class FrontierSiegeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
 
         advanceToPostcombatMain(player1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 
     @Test
@@ -44,11 +45,14 @@ class FrontierSiegeTest extends BaseCardTest {
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castSiege(player1, "Dragons");
 
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         castFlyingCreature(player1);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentBears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, opponentBears.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(opponentBears.getId()));
@@ -60,8 +64,12 @@ class FrontierSiegeTest extends BaseCardTest {
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castSiege(player1, "Dragons");
 
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -71,7 +79,7 @@ class FrontierSiegeTest extends BaseCardTest {
 
     private void castSiege(Player player, String mode) {
         harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DRAW);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player, List.of(new FrontierSiege()));
         harness.addMana(player, ManaColor.GREEN, 1);
@@ -82,8 +90,9 @@ class FrontierSiegeTest extends BaseCardTest {
     }
 
     private void castFlyingCreature(Player player) {
-        harness.setHand(player, List.of(new FaerieMiscreant()));
-        harness.addMana(player, ManaColor.BLUE, 1);
+        harness.setHand(player, List.of(new AirElemental()));
+        harness.addMana(player, ManaColor.COLORLESS, 3);
+        harness.addMana(player, ManaColor.BLUE, 2);
         harness.castCreature(player, 0);
     }
 

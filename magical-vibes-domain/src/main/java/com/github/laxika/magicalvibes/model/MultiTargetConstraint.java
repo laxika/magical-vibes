@@ -21,7 +21,7 @@ public enum MultiTargetConstraint {
      * permanent that shares one of those types with it").
      */
     SHARE_ARTIFACT_OR_CREATURE_TYPE,
-    /** The chosen permanents must share at least one permanent card type. */
+    /** The chosen permanents must share at least one card type (e.g. Daring Thief). */
     SHARE_CARD_TYPE,
     /**
      * Every permanent chosen after the first target must be controlled by the first target — the
@@ -30,16 +30,30 @@ public enum MultiTargetConstraint {
      * planeswalker's controller controls").
      */
     CONTROLLED_BY_FIRST_TARGET,
+    /** Every permanent chosen after the first must be attached to the first target. */
+    ATTACHED_TO_FIRST_TARGET,
     /**
      * At most two of the chosen permanents may be creatures and at most two may be lands
      * ("Untap up to two target creatures and up to two target lands" — Nissa, Genesis Mage +2).
      * Dual-typed permanents (creature lands) may be assigned to either quota.
      */
     AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+    /** At most one chosen target may be assigned to each of the artifact, creature, and land slots. */
+    AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
+    /** At most one chosen target may be assigned to each of the artifact, creature, enchantment, and planeswalker slots. */
+    AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
     /** At most one chosen target may belong to each player. */
     AT_MOST_ONE_PER_CONTROLLER,
     /** One target must be chosen for each player who controls at least one legal target. */
     ONE_PER_CONTROLLER_IF_ABLE,
+    /** At most one chosen graveyard card may be an instant and at most one may be a sorcery. */
+    AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
+    /** At most one chosen graveyard card may be a creature and at most one may be a land. */
+    AT_MOST_ONE_CREATURE_AND_ONE_LAND,
     /** The second target must be another creature or land of the Aura's current host type. */
-    SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST
+    SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST,
+    /** At most one selected card may be assigned to each color. */
+    AT_MOST_ONE_PER_COLOR,
+    /** The chosen targets must have different names. */
+    DIFFERENT_NAMES
 }

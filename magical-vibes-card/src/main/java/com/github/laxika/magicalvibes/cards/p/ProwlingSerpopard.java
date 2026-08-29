@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "180")
+@CardRegistration(set = "AKR", collectorNumber = "209")
 public class ProwlingSerpopard extends Card {
 
     public ProwlingSerpopard() {

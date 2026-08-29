@@ -168,14 +168,7 @@ class DesolationTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        for (int i = 0; i < 8; i++) {
-            harness.passBothPriorities();
-            if (gd.currentStep == TurnStep.END_STEP
-                    && (gd.interaction.isAwaitingInput() || gd.stack.isEmpty())) {
-                break;
-            }
-        }
-        // Resolve the Desolation trigger if still on the stack.
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         if (!gd.stack.isEmpty() && !gd.interaction.isAwaitingInput()) {
             harness.passBothPriorities();
         }

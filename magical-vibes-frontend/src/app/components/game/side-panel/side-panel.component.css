@@ -440,6 +440,12 @@
   cursor: pointer;
 }
 
+.player-badge.selected-multi-permanent {
+  outline: 3px solid var(--color-green-primary);
+  box-shadow: 0 0 16px rgba(45, 122, 80, 0.8), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
 .badge-name {
   display: block;
   overflow: hidden;
@@ -489,6 +495,14 @@
 
 .player-badge.active .badge-poison {
   color: #66ff66;
+}
+
+.badge-energy {
+  color: #d8a52b;
+}
+
+.player-badge.active .badge-energy {
+  color: #ffe082;
 }
 
 .badge-hand,

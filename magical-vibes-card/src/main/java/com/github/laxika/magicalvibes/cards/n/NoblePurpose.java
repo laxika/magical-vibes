@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "31")
+@CardRegistration(set = "MMQ", collectorNumber = "32")
 public class NoblePurpose extends Card {
 
     public NoblePurpose() {

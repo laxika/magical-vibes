@@ -16,8 +16,16 @@ public interface CounterUnlessEffect extends CardEffect {
     enum RansomKind {
         /** Pay a generic mana amount (e.g. Mana Leak, Power Sink). */
         PAY_MANA,
+        /** Pay a life amount (e.g. Phyrexian Fleshgorger's ward). */
+        PAY_LIFE,
         /** Discard a card (e.g. the "Ward—Discard a card" variant). */
-        DISCARD_CARD
+        DISCARD_CARD,
+        /** Discard the entire hand. */
+        DISCARD_HAND,
+        /** Sacrifice a permanent (e.g. Mishra, Tamer of Mak Fawa's ward). */
+        SACRIFICE_PERMANENT,
+        /** Collect evidence (e.g. Axebane Ferox's ward). */
+        COLLECT_EVIDENCE
     }
 
     /** Which kind of ransom this effect demands. */
@@ -26,8 +34,10 @@ public interface CounterUnlessEffect extends CardEffect {
     /**
      * The base magnitude of the ransom, as a components-derived fact: for {@link RansomKind#PAY_MANA}
      * the generic mana amount component (may be overridden at resolution when the effect uses an X or
-     * dynamic amount); for {@link RansomKind#DISCARD_CARD} the number of cards to discard (currently
-     * always 1).
+     * dynamic amount); for {@link RansomKind#PAY_LIFE} a dynamic amount may be evaluated at
+     * resolution, so the concrete effect may return 0; for {@link RansomKind#DISCARD_CARD} the number
+     * of cards to discard (currently always 1), 0 for {@link RansomKind#DISCARD_HAND}, 1 for a
+     * permanent sacrifice, or the evidence threshold for {@link RansomKind#COLLECT_EVIDENCE}.
      */
     int ransomMagnitude();
 }

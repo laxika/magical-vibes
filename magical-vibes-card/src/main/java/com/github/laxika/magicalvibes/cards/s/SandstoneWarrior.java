@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "215")
 @CardRegistration(set = "TMP", collectorNumber = "199")
+@CardRegistration(set = "TPR", collectorNumber = "154")
 public class SandstoneWarrior extends Card {
 
     public SandstoneWarrior() {

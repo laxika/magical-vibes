@@ -36,11 +36,11 @@ class ArcboundFiendTest extends BaseCardTest {
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(fiend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -54,6 +54,7 @@ class ArcboundFiendTest extends BaseCardTest {
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

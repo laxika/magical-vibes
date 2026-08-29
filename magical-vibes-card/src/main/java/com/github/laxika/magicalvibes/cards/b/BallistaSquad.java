@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "8")
 @CardRegistration(set = "9ED", collectorNumber = "5")
+@CardRegistration(set = "MMQ", collectorNumber = "5")
 public class BallistaSquad extends Card {
 
     public BallistaSquad() {

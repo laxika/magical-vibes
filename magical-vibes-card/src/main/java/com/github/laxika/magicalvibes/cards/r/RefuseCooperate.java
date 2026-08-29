@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
  * Back half (Cooperate) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "156")
+@CardRegistration(set = "AKR", collectorNumber = "255")
 public class RefuseCooperate extends Card {
 
     public RefuseCooperate() {

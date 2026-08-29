@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardCreatureToBattlefieldOrMayBottomHandler implements MayEffectHandlerBean {
 
     private final MayMiscHandlerService mayMiscHandlerService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -25,6 +27,16 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomHandler implements May
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        mayMiscHandlerService.handleRevealTopCardMayBottomChoice(gameData, player, accepted);
+        RevealTopCardCreatureToBattlefieldOrMayBottomEffect effect =
+                (RevealTopCardCreatureToBattlefieldOrMayBottomEffect) ability.effects().getFirst();
+        var deck = gameData.playerDecks.get(player.getId());
+        boolean matchingCard = !deck.isEmpty()
+                && predicateEvaluationService.matchesCardPredicate(
+                        deck.getFirst(), effect.predicate(), ability.sourceCard().getId());
+        if (effect.mayPutMatching() && matchingCard) {
+            mayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted);
+        } else {
+            mayMiscHandlerService.handleRevealTopCardMayBottomChoice(gameData, player, accepted);
+        }
     }
 }

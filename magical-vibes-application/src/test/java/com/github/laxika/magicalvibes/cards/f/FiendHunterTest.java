@@ -29,10 +29,10 @@ class FiendHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
-        harness.handlePermanentChosen(player1, targetId); // choose target -> effect resolves inline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     /**
@@ -54,8 +54,9 @@ class FiendHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Goblin Piker"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -82,9 +83,10 @@ class FiendHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Goblin Piker"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Fiend Hunter");
@@ -187,9 +189,10 @@ class FiendHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Goblin Piker"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         // Reset for follow-up spell
         resetForFollowUpSpell();

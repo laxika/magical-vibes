@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -12,10 +14,15 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentIfAttachedToControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -37,11 +44,31 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class CreatureControlService {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
+    private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
+                                  UnattachTriggerSupport unattachTriggerSupport,
+                                  @Lazy TriggerCollectionService triggerCollectionService) {
+        this.gameLogService = gameLogService;
+        this.gameQueryService = gameQueryService;
+        this.unattachTriggerSupport = unattachTriggerSupport;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService,
+                                  UnattachTriggerSupport unattachTriggerSupport) {
+        this(gameLogService, gameQueryService, unattachTriggerSupport, null);
+    }
+
+    public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService) {
+        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService), null);
+    }
 
     /**
      * Creates a floating control effect giving {@code newControllerId} control of {@code target}
@@ -106,7 +133,8 @@ public class CreatureControlService {
         synchronized (gameData.floatingEffects) {
             holdsTappedControl = gameData.floatingEffects.stream().anyMatch(fe ->
                     fe.isControlEffect()
-                            && fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                            && (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                            || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
                             && permanent.getId().equals(fe.sourcePermanentId()));
         }
         if (holdsTappedControl) {
@@ -131,14 +159,22 @@ public class CreatureControlService {
         if (derived == null || derived.equals(current)) {
             return;
         }
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkOpponentGainsControlTriggers(
+                    gameData, permanent, current, derived);
+        }
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
+        boolean hasControlLossUnattachTrigger = queueControlLossUnattachTriggers(
+                gameData, permanent, current);
 
         if (gameData.permanentsToTapWhenControlLost.remove(permanent.getId())) {
             permanent.tap();
         }
 
+        removeFromCombat(gameData, permanent);
         gameData.playerBattlefields.get(current).remove(permanent);
         gameData.playerBattlefields.get(derived).add(permanent);
+        permanent.recordControlChange();
         permanent.setSummoningSick(true);
 
         // Soulbond lasts only while you control both (CR 702.94) — control change breaks the pair.
@@ -158,8 +194,9 @@ public class CreatureControlService {
 
         // Legacy behavior preserved: an attached Equipment reverting to its default controller
         // becomes unattached.
-        if (revertedToDefault && permanent.isAttached()
+        if (revertedToDefault && !hasControlLossUnattachTrigger && permanent.isAttached()
                 && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo(), current);
             permanent.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
             gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
@@ -181,6 +218,41 @@ public class CreatureControlService {
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
+        gameData.expireExilePlayPermissionsForSource(permanent.getId());
+    }
+
+    private boolean queueControlLossUnattachTriggers(GameData gameData, Permanent permanent,
+                                                     UUID previousController) {
+        boolean queued = false;
+        for (var registration : gameData.controlLossUnattachTriggersFor(permanent.getId())) {
+            if (!previousController.equals(registration.controllerId())) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    registration.sourceCard(),
+                    registration.controllerId(),
+                    registration.sourceCard().getName() + "'s reflexive ability",
+                    List.of(new UnattachEquipmentIfAttachedToControlledCreatureEffect(permanent.getId())));
+            trigger.setNonTargeting(true);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
+            queued = true;
+        }
+        return queued;
+    }
+
+    private void removeFromCombat(GameData gameData, Permanent permanent) {
+        List<UUID> blockedAttackerIds = new ArrayList<>(permanent.getBlockingTargetIds());
+        permanent.clearCombatState();
+
+        for (UUID attackerId : blockedAttackerIds) {
+            Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+            if (attacker != null && attacker.isAttacking()
+                    && !gameQueryService.isBlockedByAnyCreature(gameData, attacker)) {
+                attacker.setBlockedWithoutBlockers(true);
+            }
+        }
     }
 
     /**
@@ -262,7 +334,10 @@ public class CreatureControlService {
      */
     private void expireStaleControlEffects(GameData gameData) {
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
-            if (!fe.isControlEffect()) continue;
+            boolean sourceControllerDependent = fe.isControlEffect()
+                    || (fe.effect() instanceof PermanentLockEffect lock
+                    && lock.endsWhenSourceControllerChanges());
+            if (!sourceControllerDependent) continue;
             boolean stale = false;
             if (fe.duration() == EffectDuration.WHILE_ATTACHED) {
                 Permanent source = fe.sourcePermanentId() == null ? null
@@ -286,6 +361,10 @@ public class CreatureControlService {
                 UUID sourceController = source == null ? null : gameData.findControllerOf(source);
                 stale = source == null || !source.isTapped()
                         || sourceController == null || !sourceController.equals(fe.controllerId());
+            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED) {
+                Permanent source = fe.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                stale = source == null || !source.isTapped();
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
@@ -306,7 +385,9 @@ public class CreatureControlService {
         UUID sourceController = gameData.findControllerOf(source);
         List<FloatingContinuousEffect> expired = new ArrayList<>();
         for (FloatingContinuousEffect fe : List.copyOf(gameData.floatingEffects)) {
-            if ((fe.isControlEffect() || fe.effect() instanceof GrantKeywordEffect)
+            if ((fe.isControlEffect() || fe.effect() instanceof GrantKeywordEffect
+                    || (fe.effect() instanceof PermanentLockEffect lock
+                    && lock.endsWhenSourceControllerChanges()))
                     && fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
                     && source.getId().equals(fe.sourcePermanentId())
                     && !fe.controllerId().equals(sourceController)) {

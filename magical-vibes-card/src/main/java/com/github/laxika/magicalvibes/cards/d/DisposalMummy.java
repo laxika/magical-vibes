@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 
 @CardRegistration(set = "HOU", collectorNumber = "9")
+@CardRegistration(set = "AKR", collectorNumber = "14")
 public class DisposalMummy extends Card {
 
     public DisposalMummy() {

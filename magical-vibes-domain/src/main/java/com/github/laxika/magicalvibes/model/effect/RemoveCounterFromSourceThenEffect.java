@@ -15,4 +15,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
  */
 public record RemoveCounterFromSourceThenEffect(CounterType counterType, CardEffect thenEffect)
         implements CardEffect {
+
+    @Override
+    public TargetSpec targetSpec() {
+        return new TargetSpec(null, false, null, true, 1);
+    }
 }

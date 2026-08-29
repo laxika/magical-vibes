@@ -3,14 +3,16 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SilumgarTheDriftingDeath.class, GrizzlyBears.class, ShivanDragon.class})
 class SilumgarTheDriftingDeathTest extends BaseCardTest {
 
     @Test
@@ -64,9 +66,7 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(defendingCreature.getToughnessModifier()).isEqualTo(-1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        new TurnCleanupService(null, null).resetEndOfTurnModifiers(gd);
 
         assertThat(defendingCreature.getPowerModifier()).isZero();
         assertThat(defendingCreature.getToughnessModifier()).isZero();

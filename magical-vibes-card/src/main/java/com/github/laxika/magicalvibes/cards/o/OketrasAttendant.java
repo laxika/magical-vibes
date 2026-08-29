@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "22")
+@CardRegistration(set = "AKR", collectorNumber = "28")
 public class OketrasAttendant extends Card {
 
     public OketrasAttendant() {

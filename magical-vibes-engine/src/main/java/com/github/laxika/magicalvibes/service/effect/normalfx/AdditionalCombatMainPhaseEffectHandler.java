@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -30,6 +31,12 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
         }
 
         gameData.additionalCombatMainPhasePairs += e.count();
+        if (e.additionalCombatBeginningEffect() != null) {
+            for (int i = 0; i < e.count(); i++) {
+                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
+                        entry.getControllerId(), entry.getCard(), e.additionalCombatBeginningEffect()));
+            }
+        }
 
         String logEntry;
         if (e.count() == 1) {

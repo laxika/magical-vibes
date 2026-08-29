@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DwarvenHold.class})
 class DwarvenHoldTest extends BaseCardTest {
 
     // ===== Enters tapped =====
@@ -23,7 +25,7 @@ class DwarvenHoldTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findPermanent(player1, "Dwarven Hold").isTapped()).isTrue();
     }
@@ -53,17 +55,41 @@ class DwarvenHoldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Controller may choose to untap Dwarven Hold")
+    void controllerMayChooseToUntap() {
+        Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        hold.tap();
+
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(hold.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Upkeep adds no storage counter while the land is untapped")
     void upkeepAddsNoCounterWhileUntapped() {
         Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep
-        harness.passBothPriorities(); // resolve any trigger (intervening-if is false)
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(hold.getCounterCount(CounterType.STORAGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Untapped Dwarven Hold does not trigger its upkeep ability")
+    void untappedLandDoesNotTriggerAtUpkeep() {
+        harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Mana ability =====

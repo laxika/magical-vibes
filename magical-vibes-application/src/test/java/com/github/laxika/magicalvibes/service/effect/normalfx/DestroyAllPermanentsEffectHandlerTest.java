@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.mockito.ArgumentCaptor;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +64,7 @@ class DestroyAllPermanentsEffectHandlerTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
     @Mock private EffectHandlerRegistry effectHandlerRegistry;
+    @Mock private TriggerCollectionService triggerCollectionService;
     @InjectMocks private DestructionSupport destructionSupport;
     private GameData gd;
     private UUID player1Id;
@@ -250,11 +252,11 @@ class DestroyAllPermanentsEffectHandlerTest {
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
                 when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-                when(graveyardService.tryRegenerate(gd, elves)).thenReturn(true);
+                when(graveyardService.tryReplaceDestruction(gd, elves, true)).thenReturn(true);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService).tryRegenerate(gd, elves);
+                verify(graveyardService).tryReplaceDestruction(gd, elves, true);
                 verify(permanentRemovalService, never()).destroyPermanentToGraveyard(gd, elves);
             }
 
@@ -273,7 +275,7 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(graveyardService, never()).tryRegenerate(any(), any());
+                verify(graveyardService).tryReplaceDestruction(gd, bears, false);
                 verify(permanentRemovalService).destroyPermanentToGraveyard(gd, bears);
             }
 

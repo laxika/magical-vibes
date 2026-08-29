@@ -40,6 +40,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -85,6 +86,10 @@ class AutoPassServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
+                        invocation.getArgument(1)).get());
+
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -173,6 +178,7 @@ class AutoPassServiceTest {
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
             verifyStateInvalidated();
+            verify(gameQueryService).withQueryScope(eq(gd), any());
         }
 
         @Test

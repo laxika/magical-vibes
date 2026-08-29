@@ -102,6 +102,13 @@ class ReturnCardFromGraveyardEffectHandlerTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().doAnswer(invocation -> {
+            UUID handOwnerId = invocation.getArgument(2);
+            Card card = invocation.getArgument(3);
+            gd.addCardToHand(handOwnerId, card);
+            return null;
+        }).when(permanentRemovalService).addCardToHandFromGraveyard(
+                eq(gd), any(UUID.class), any(UUID.class), any(Card.class));
         returnCardFromGraveyardHandler = new ReturnCardFromGraveyardEffectHandler(playerInputService, support);
 
     }
@@ -288,14 +295,40 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                         player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-                when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
-                when(predicateEvaluationService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(artifact), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                         i instanceof PendingInteraction.GraveyardChoice gc
                                 && gc.playerId().equals(player1Id)));
+            }
+
+            @Test
+            @DisplayName("Marks mandatory resolution-time graveyard choices as mandatory")
+            void marksMandatoryChoiceAsMandatory() {
+                Card creature = createCard("Grizzly Bears");
+                gd.playerGraveyards.get(player1Id).add(creature);
+
+                CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+                ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(filter)
+                        .mandatory(true)
+                        .build();
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
+                        player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
+
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+
+                returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc && gc.mandatory()));
             }
 
             @Test
@@ -337,12 +370,44 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                         player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-                when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(creature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(false);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(interactionHandlerRegistry, never()).begin(any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no ") && logEntry.plainText().contains("in any graveyard")));
+            }
+
+            @Test
+            @DisplayName("Filters resolution-time choices by mana value at most X")
+            void filtersResolutionTimeChoicesByManaValueAtMostX() {
+                Card expensive = createCard("Colossal Dreadmaw");
+                expensive.setManaCost("{6}{G}");
+                Card eligible = createCard("Grizzly Bears");
+                eligible.setManaCost("{1}{G}");
+                gd.playerGraveyards.get(player1Id).add(expensive);
+                gd.playerGraveyards.get(player1Id).add(eligible);
+
+                CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+                ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(filter)
+                        .requiresManaValueAtMostX(true)
+                        .enterTapped(true)
+                        .build();
+                StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Black Sun's Twilight"),
+                        player1Id, "Black Sun's Twilight", new ArrayList<>(List.of(effect)), 5);
+
+                when(predicateEvaluationService.matchesCardPredicate(
+                        any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull()))
+                        .thenReturn(true);
+
+                returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc
+                                && gc.validIndices().equals(List.of(1))));
             }
 }

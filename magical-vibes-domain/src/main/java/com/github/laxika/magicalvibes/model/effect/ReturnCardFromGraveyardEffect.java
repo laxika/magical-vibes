@@ -2,16 +2,20 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.Builder;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,7 +28,8 @@ import java.util.Set;
  * <ol>
  *   <li><b>Pre-targeted</b> — the card was targeted during casting or ability activation
  *       ({@link #targetGraveyard} is {@code true} and the stack entry has a graveyard target).
- *       Supports optional aura attachment via {@link #attachmentTarget}.</li>
+ *       Supports optional aura attachment via {@link #attachmentTarget} or
+ *       {@link #chooseAuraAttachment}.</li>
  *   <li><b>Return all</b> — returns every matching card without player choice
  *       ({@link #returnAll} is {@code true}). Optionally restricted to cards that entered the
  *       graveyard from the battlefield this turn via {@link #thisTurnOnly}.</li>
@@ -54,6 +59,7 @@ import java.util.Set;
  *                             e.g. Yawgmoth's Vile Offering). Default {@code false} means the graveyard
  *                             target is mandatory (e.g. Raise Dead, Crawl from the Cellar) even when the
  *                             spell also has optional permanent target groups
+ * @param mandatory            {@code true} when a resolution-time graveyard choice cannot be declined
  * @param returnAll            {@code true} to return all matching cards without player choice;
  *                             {@code false} to let the controller pick one
  * @param thisTurnOnly         {@code true} to restrict returned cards to <b>creature</b> cards put into the
@@ -72,15 +78,25 @@ import java.util.Set;
  *                             or discarded this turn (e.g. Shadow of the Grave); uses the
  *                             {@code cardsDiscardedOrCycledThisTurn} tracking in GameData; only meaningful
  *                             when {@link #returnAll} is {@code true}
+ * @param discardedByOpponentThisTurn {@code true} to restrict returned cards to those the controller discarded
+ *                             because of an opponent's spell or ability this turn (e.g. Pure Intentions);
+ *                             only meaningful when {@link #returnAll} is {@code true}
  * @param targetPutIntoGraveyardFromBattlefieldThisTurn {@code true} to restrict the <b>targeted</b>
  *                             graveyard card to one that was put into that graveyard from the battlefield
  *                             this turn (e.g. Grim Return, Salvager of Ruin); reads the
  *                             {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking of the
  *                             graveyard's owner and is only meaningful when {@link #targetGraveyard} is
  *                             {@code true}
+ * @param targetNotPutIntoGraveyardThisCombat {@code true} to exclude targeted graveyard cards put into
+ *                             a graveyard during the current combat phase (e.g. Storrev, Devkarin Lich);
+ *                             only meaningful when {@link #targetGraveyard} is {@code true}
  * @param attachmentTarget     when non-null, the returned card (typically an Aura) is attached to a
- *                             permanent matching this predicate after entering the battlefield; the
- *                             controller chooses which permanent to attach to (e.g. Nomad Mythmaker)
+ *                             permanent matching this predicate after entering the battlefield; for a
+ *                             single return, the controller chooses the permanent (e.g. Nomad Mythmaker),
+ *                             while a mass return attaches each matching card when possible and leaves
+ *                             cards with no legal attachment in the graveyard
+ * @param chooseAuraAttachment {@code true} when a returned Aura's controller chooses any legal
+ *                             permanent or player for it to enchant as it enters the battlefield
  * @param gainLifeEqualToManaValue {@code true} if the controller gains life equal to the returned
  *                             card's mana value after it is returned (e.g. Razor Hippogriff)
  * @param loseLifeEqualToManaValue {@code true} if the controller loses life equal to the returned
@@ -94,26 +110,34 @@ import java.util.Set;
  *                             the source is gone or the Aura can't legally enchant it (Hakim, Loreweaver)
  * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield
  *                             (e.g. Postmortem Lunge)
+ * @param grantHasteUntilNextTurn {@code true} to grant haste to the returned permanent until the
+ *                             beginning of its controller's next turn
  * @param grantKeywords        keywords granted indefinitely to the returned permanent (e.g. Kheru
  *                             Lich Lord)
  * @param exileAtEndStep       {@code true} to schedule the permanent for exile at the beginning of the
  *                             next end step (Unearth, Postmortem Lunge, Shallow Grave). Unearth's extra
  *                             "exile it instead if it would leave the battlefield" clause is the separate
  *                             {@link #exileIfLeavesBattlefield} flag — Shallow Grave has no such clause
- * @param exileAtNextUpkeep    {@code true} to remember returned permanents and exile them at the
- *                             beginning of the resolving controller's next upkeep (Rally the Ancestors)
+ * @param exileAtYourNextEndStep {@code true} to schedule the permanent for exile at the beginning of
+ *                             its controller's next end step (e.g. Coalstoke Gearhulk)
  * @param sacrificeAtEndStep   {@code true} to schedule the permanent for sacrifice at the beginning of the
  *                             next end step (Apprentice Necromancer)
  * @param returnToHandAtEndStep {@code true} to schedule a pre-targeted returned permanent for return to
  *                             its owner's hand at the beginning of the next end step (Cauldron Dance)
  * @param requiresManaValueEqualsX {@code true} to restrict targeting to cards whose mana value equals
  *                             the spell's X value (e.g. Postmortem Lunge)
+ * @param manaValueXOffset     offset added to X when {@link #requiresManaValueEqualsX} is enabled
+ *                             (e.g. a target with mana value X plus one)
  * @param requiresManaValueAtMostX {@code true} to restrict targeting to cards whose mana value is
  *                             less than or equal to the spell's X value (e.g. Profane Command)
  * @param grantColor           when non-null, permanently grants this color to the returned creature
  *                             "in addition to its other colors" (e.g. Rise from the Grave)
  * @param grantSubtype         when non-null, permanently grants this subtype to the returned creature
  *                             "in addition to its other types" (e.g. Rise from the Grave)
+ * @param grantSubtypes        additional subtypes permanently granted to the returned creature
+ *                             "in addition to its other types"
+ * @param grantIndestructible  {@code true} to permanently grant indestructible to the returned
+ *                             permanent (e.g. Fated Return)
  * @param enterTapped          {@code true} if the returned permanent enters the battlefield tapped
  *                             (e.g. Reassembling Skeleton)
  * @param underOwnersControl   {@code true} to put each returned card onto the battlefield under
@@ -157,12 +181,25 @@ import java.util.Set;
  *                             replacement (e.g. Dreams of the Dead — "If the creature would leave the
  *                             battlefield, exile it instead of putting it anywhere else"; also Unearth's
  *                             CR 702.100 rider, where it pairs with {@link #exileAtEndStep})
+ * @param exileIfDying         {@code true} to set the permanent's "if this creature would die, exile it
+ *                             instead" replacement (e.g. Can't Stay Away); unlike
+ *                             {@link #exileIfLeavesBattlefield}, this does not replace moves to hand or
+ *                             library
  * @param plusOneCountersIfSubtype when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
  *                             the returned permanent only if the returned card has this subtype (e.g. Defy
  *                             Death — "If it's an Angel, put two +1/+1 counters on it"); when null,
  *                             {@link #plusOneCounterCount} alone is an unconditional rider (e.g.
  *                             Miraculous Recovery — "Put a +1/+1 counter on it"); only meaningful for
  *                             {@code BATTLEFIELD}
+ * @param counterIfExiledCostCardHasSubtype counter type placed on the returned permanent when the
+ *                             additional-cost card has {@link #plusOneCountersIfExiledCostCardHasSubtype};
+ *                             pair with {@link #counterCountIfExiledCostCardHasSubtype}
+ * @param counterCountIfExiledCostCardHasSubtype number of
+ *                             {@link #counterIfExiledCostCardHasSubtype} counters to place when the
+ *                             exiled additional-cost card has the configured subtype
+ * @param plusOneCountersIfCardType when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
+ *                             the returned permanent only if it is currently that card type; use this for
+ *                             riders such as Recommission's creature-only counter
  * @param plusOneCountersIfCondition when non-null, {@link #plusOneCounterCount} +1/+1 counters are put on
  *                             the returned permanent only if this condition is met as the effect resolves
  *                             (e.g. Necromantic Summons' spell mastery — "If there are two or more instant
@@ -170,16 +207,22 @@ import java.util.Set;
  *                             additional +1/+1 counters on it"); combines with
  *                             {@link #plusOneCountersIfSubtype} as an AND when both are set
  * @param plusOneCounterCount  number of +1/+1 counters placed after the return; gated by
- *                             {@link #plusOneCountersIfSubtype} / {@link #plusOneCountersIfCondition} when
+ *                             {@link #plusOneCountersIfSubtype} / {@link #plusOneCountersIfCardType} /
+ *                             {@link #plusOneCountersIfCondition} when
  *                             those fields are non-null
  * @param grantCumulativeUpkeepCost when non-null, the returned permanent gains that cumulative upkeep
  *                             cost as a persistent {@code UPKEEP_TRIGGERED} ability (e.g. Dreams of the
  *                             Dead — "That creature gains Cumulative upkeep {2}.")
+ * @param createTokensIfSubtype when non-null, resolve {@link #createTokensEffect} after the returned
+ *                             permanent enters if the returned card has this subtype
+ * @param createTokensEffect token-creation effect for the {@link #createTokensIfSubtype} rider
  * @param enterWithCounter     when non-null, put {@link #enterWithCounterCount} counters of that type on
  *                             the returned permanent after it enters (e.g. Bogardan Phoenix death counter);
  *                             only meaningful for {@code BATTLEFIELD}
  * @param enterWithCounterCount number of {@link #enterWithCounter} counters to place; ignored when
  *                             {@code enterWithCounter} is null (defaults to {@code 0})
+ * @param enterWithCounters     counter types to put on the returned permanent as it enters; one
+ *                             counter of each type is placed
  * @param linkToSource         {@code true} to record the reanimated permanent on the source permanent's
  *                             {@code chosenPermanentId} (Coffin Queen), so a later
  *                             {@link RemoveLinkedPermanentEffect} trigger can still name "that creature"
@@ -189,8 +232,19 @@ import java.util.Set;
  *                             cards go to the battlefield, everything else goes to the controller's hand
  *                             (e.g. Deadbridge Chant); only honoured on the {@link #returnAtRandom} path,
  *                             where it overrides {@link #destination}
+ * @param battlefieldIfCreatureElseExile {@code true} to route each randomly selected card per its type — creature
+ *                             cards go to the battlefield, everything else is exiled; only honoured on the
+ *                             {@link #returnAtRandom} path, where it overrides {@link #destination}
+ * @param shuffleGraveyardBeforeRandomSelection {@code true} to randomly reorder the controller's graveyard before
+ *                             selecting random cards; only honoured on the {@link #returnAtRandom} path
  * @param dynamicMaxManaValue dynamic mana-value limit to snapshot when a death trigger is collected;
  *                             used for abilities such as Kodama of the Center Tree's soulshift X
+ * @param unearth              {@code true} when the battlefield return is an unearth activation,
+ *                             so the returned permanent can be recognized by effects that treat
+ *                             unearth returns specially
+ * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
+ * @param targetGroup          positional graveyard-card target group resolved by this effect, or
+ *                             {@code -1} when the effect uses the ordinary target path
  */
 @Builder(toBuilder = true)
 public record ReturnCardFromGraveyardEffect(
@@ -199,27 +253,35 @@ public record ReturnCardFromGraveyardEffect(
         boolean sourceChosenSubtype,
         GraveyardSearchScope source,
         boolean targetGraveyard,
+        boolean mandatory,
         boolean upTo,
         boolean returnAll,
         boolean thisTurnOnly,
         boolean fromBattlefieldThisTurn,
         boolean fromAnywhereThisTurn,
         boolean discardedOrCycledThisTurn,
+        boolean discardedByOpponentThisTurn,
         boolean targetPutIntoGraveyardFromBattlefieldThisTurn,
+        boolean targetNotPutIntoGraveyardThisCombat,
         PermanentPredicate attachmentTarget,
+        boolean chooseAuraAttachment,
         boolean gainLifeEqualToManaValue,
         boolean loseLifeEqualToManaValue,
         boolean attachToSource,
         boolean grantHaste,
+        boolean grantHasteUntilNextTurn,
         Set<Keyword> grantKeywords,
         boolean exileAtEndStep,
-        boolean exileAtNextUpkeep,
+        boolean exileAtYourNextEndStep,
         boolean sacrificeAtEndStep,
         boolean returnToHandAtEndStep,
         boolean requiresManaValueEqualsX,
+        int manaValueXOffset,
         boolean requiresManaValueAtMostX,
         CardColor grantColor,
         CardSubtype grantSubtype,
+        List<CardSubtype> grantSubtypes,
+        boolean grantIndestructible,
         boolean enterTapped,
         boolean underOwnersControl,
         boolean returnAtRandom,
@@ -233,16 +295,30 @@ public record ReturnCardFromGraveyardEffect(
         boolean greatestPower,
         boolean topmost,
         boolean exileIfLeavesBattlefield,
+        boolean exileIfDying,
         String grantCumulativeUpkeepCost,
         CardSubtype plusOneCountersIfSubtype,
+        CardSubtype plusOneCountersIfExiledCostCardHasSubtype,
+        CounterType counterIfExiledCostCardHasSubtype,
+        int counterCountIfExiledCostCardHasSubtype,
+        CardType plusOneCountersIfCardType,
         Condition plusOneCountersIfCondition,
         int plusOneCounterCount,
+        CardSubtype createTokensIfSubtype,
+        CreateTokenEffect createTokensEffect,
         CounterType enterWithCounter,
         int enterWithCounterCount,
+        Set<CounterType> enterWithCounters,
         boolean linkToSource,
         boolean battlefieldIfCreatureElseHand,
-        DynamicAmount dynamicMaxManaValue
-) implements CardEffect {
+        boolean battlefieldIfCreatureElseExile,
+        boolean shuffleGraveyardBeforeRandomSelection,
+        DynamicAmount dynamicMaxManaValue,
+        boolean unearth,
+        boolean exileAtNextUpkeep,
+        List<CardEffect> battlefieldEffectGrants,
+        int targetGroup
+) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -253,6 +329,10 @@ public record ReturnCardFromGraveyardEffect(
         private GraveyardSearchScope source = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
         private int randomCount = 1;
         private Set<Keyword> grantKeywords = Set.of();
+        private List<CardSubtype> grantSubtypes = List.of();
+        private Set<CounterType> enterWithCounters = Set.of();
+        private List<CardEffect> battlefieldEffectGrants = List.of();
+        private int targetGroup = -1;
     }
 
     @Override
@@ -261,6 +341,38 @@ public record ReturnCardFromGraveyardEffect(
         // resolution-time variants pick their card later. The declared scope is source(): it is the
         // one place the own/opponent/all narrowing lives, so the kept validator and every
         // enumeration path read the same value.
-        return targetGraveyard ? TargetSpec.benign(TargetPredicates.graveyardCard(source)) : TargetSpec.NONE;
+        if (!targetGraveyard) {
+            return TargetSpec.NONE;
+        }
+        if (targetGroup >= 0) {
+            return TargetSpec.benign(TargetPredicates.anyOf(
+                    TargetPredicates.graveyardCard(source), TargetPredicates.anyTarget()));
+        }
+        return TargetSpec.benign(TargetPredicates.graveyardCard(source));
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return dynamicMaxManaValue;
+    }
+
+    @Override
+    public List<Integer> targetGroups() {
+        return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    @Override
+    public ReturnCardFromGraveyardEffect snapshotCombatDamage(int damageDealt) {
+        if (dynamicMaxManaValue == null) {
+            return this;
+        }
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(damageDealt);
+        CardPredicate combinedFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder()
+                .filter(combinedFilter)
+                .dynamicMaxManaValue(null)
+                .build();
     }
 }

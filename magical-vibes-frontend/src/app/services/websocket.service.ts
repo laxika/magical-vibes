@@ -34,9 +34,9 @@ export enum MessageType {
   INTERACTION_PROMPT = 'INTERACTION_PROMPT',
   INTERACTION_ANSWER = 'INTERACTION_ANSWER',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
+  ACTIVATE_EXILED_ABILITY = 'ACTIVATE_EXILED_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
-  ACTIVATE_EXILE_ABILITY = 'ACTIVATE_EXILE_ABILITY',
   REVEAL_HAND = 'REVEAL_HAND',
   REVEAL_LIBRARY_TOP = 'REVEAL_LIBRARY_TOP',
   REVEAL_PERMANENT = 'REVEAL_PERMANENT',
@@ -141,6 +141,10 @@ export interface ActivatedAbilityView {
   variableCounterCostType: string | null;
   requiresXValue?: boolean;
   xValueFromControlledCreatureCounters?: boolean;
+  xValueFromCardsInHandColor?: string | null;
+  modalChoicesRequired?: number;
+  modalChoicesMax?: number;
+  modalOptions?: ModalOptionView[] | null;
 }
 
 export interface Card {
@@ -170,6 +174,7 @@ export interface Card {
   activatedAbilities: ActivatedAbilityView[];
   loyalty: number | null;
   hasConvoke: boolean;
+  hasHarmonize?: boolean;
   hasPhyrexianMana: boolean;
   phyrexianManaCount: number;
   token: boolean;
@@ -185,6 +190,9 @@ export interface Card {
   alternateCostExileHandLabel: string | null;
   alternateCostDiscardsHandCard?: boolean;
   alternateCostRevealsHandCard?: boolean;
+  graveyardCastRequiresDiscard?: boolean;
+  graveyardCastExileCount?: number;
+  graveyardCastExileLabel?: string | null;
   additionalBeholdSubtype: string | null;
   additionalBeholdCount: number;
   additionalBeholdFlashbackOnly: boolean;
@@ -195,15 +203,23 @@ export interface Card {
   transformable: boolean;
   kickerCost: string | null;
   kickerRequiresTap: boolean;
+  kickerRequiresReturn: boolean;
   buybackCost: string | null;
   buybackRequiresSacrifice?: boolean;
+  buybackSacrificeCount?: number;
   buybackDiscardCount?: number;
   modalChoicesRequired: number;
   modalChoicesMax: number;
   modalOptional: boolean;
+  modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
   /** Additional counters to remove when casting this card from exile. */
   exileCastCounterCost: number;
+  /** A mandatory creature-type choice made as an additional cast cost. */
+  additionalChooseCreatureType?: boolean;
+  additionalCreatureTypeChoices?: string[];
+  alternateCostCollectEvidence?: boolean;
+  alternateCostCollectEvidenceAmount?: number;
   /** SOS "Prepared": the spell printed inset on a prepare card's front face. Null for every other
    *  card. Not a face you flip to — the front face stays and this is drawn alongside it. */
   prepareSpell: Card | null;
@@ -321,6 +337,7 @@ export interface Game {
   currentStep: TurnStep | null;
   activePlayerId: string | null;
   turnNumber: number;
+  dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
   priorityPlayerId: string | null;
   hand: Card[];
   opponentHand: Card[];
@@ -332,6 +349,8 @@ export interface Game {
   autoStopSteps: string[];
   lifeTotals: number[];
   poisonCounters: number[];
+  energyCounters: number[];
+  speeds: number[];
   stack: StackEntry[];
   graveyards: Card[][];
   revealedLibraryTopCards: Card[][];
@@ -396,6 +415,7 @@ export interface GameStateNotification {
   status: GameStatus;
   activePlayerId: string;
   turnNumber: number;
+  dayNight: 'NEITHER' | 'DAY' | 'NIGHT';
   currentStep: TurnStep;
   priorityPlayerId: string;
   battlefields: Permanent[][];
@@ -405,12 +425,15 @@ export interface GameStateNotification {
   handSizes: number[];
   lifeTotals: number[];
   poisonCounters: number[];
+  energyCounters: number[];
+  speeds: number[];
   hand: Card[];
   opponentHand: Card[];
   mulliganCount: number;
   manaPool: Record<string, number>;
   autoStopSteps: string[];
   playableCardIndices: number[];
+  playableForetellIndices: number[];
   potentialPlayableCardIndices: number[];
   potentialManaTotal: number;
   potentialPayableAbilityIndices: Record<string, number[]>;
@@ -449,6 +472,8 @@ export interface AvailableAttackersNotification {
   availableTargets: AttackTarget[];
   taxPerCreature: number;
   mustAttackWithAtLeastOne: boolean;
+  /** True when the recipient chooses attackers for the active player's creatures. */
+  choosingForOpponent?: boolean;
 }
 
 export interface AvailableBlockersNotification {
@@ -474,7 +499,7 @@ export interface GameOverNotification {
 export type InteractionShape =
   'CARD_INDEX_PICK' | 'GRAVEYARD_INDEX_PICK' | 'LIBRARY_INDEX_PICK' | 'PERMANENT_PICK' |
   'MULTI_CARD_PICK' | 'MULTI_PERMANENT_PICK' | 'LIST_PICK' | 'ACCEPT_DECLINE' |
-  'NUMBER_PICK' | 'SCRY_ORDER' | 'CARD_ORDER' | 'HAND_TOP_BOTTOM';
+  'NUMBER_PICK' | 'SCRY_ORDER' | 'CARD_ORDER' | 'HAND_TOP_BOTTOM' | 'HAND_BOTTOM_EXILE';
 
 // The single prompt message for every pending interaction. The shape selects the input UI
 // and the answer payload; the optional fields carry the shape's data (unused fields are null).
@@ -644,6 +669,7 @@ export interface ValidTargetsResponse {
   validPermanentIds: string[];
   validPlayerIds: string[];
   validGraveyardCardIds: string[];
+  validExiledCardIds: string[];
   minTargets: number;
   maxTargets: number;
   prompt: string;

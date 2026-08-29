@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "363")
+@CardRegistration(set = "ATH", collectorNumber = "77")
 public class StripMine extends Card {
 
     public StripMine() {

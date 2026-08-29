@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "306")
+@CardRegistration(set = "RNA", collectorNumber = "12")
 public class ImpassionedOrator extends Card {
 
     public ImpassionedOrator() {

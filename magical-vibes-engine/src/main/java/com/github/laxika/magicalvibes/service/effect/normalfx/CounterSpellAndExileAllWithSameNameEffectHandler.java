@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +25,8 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
 
     private final CounterSupport counterSupport;
     private final GraveyardService graveyardService;
+    private final DrawService drawService;
+    private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
 
     @Override
@@ -34,6 +38,8 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
+        CounterSpellAndExileAllWithSameNameEffect counterEffect =
+                (CounterSpellAndExileAllWithSameNameEffect) effect;
 
         // Locate the target spell on the stack. If it's gone (illegal target), the whole spell fizzles.
         StackEntry targetEntry = null;
@@ -44,7 +50,8 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
             }
         }
         if (targetEntry == null) {
-            log.info("Game {} - Counterbore fizzles: target spell no longer on the stack", gameData.id);
+            log.info("Game {} - {} fizzles: target spell no longer on the stack", gameData.id,
+                    entry.getCard().getName());
             return;
         }
 
@@ -56,6 +63,11 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         StackEntry counterable = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (counterable != null) {
             counterSupport.counterSpell(gameData, entry, counterable);
+        }
+
+        if (counterEffect.chooseAnyNumber()) {
+            beginAnyNumberChoice(gameData, entry, targetPlayerId, spellName, counterEffect);
+            return;
         }
 
         // Search the spell's controller's graveyard, hand, and library for all cards with the same
@@ -76,14 +88,51 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
             Collections.shuffle(library);
         }
 
+        if (counterEffect.drawCardsExiledFromHand()) {
+            for (int i = 0; i < exiledFromHand; i++) {
+                drawService.resolveDrawCard(gameData, targetPlayerId);
+            }
+        }
+
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         int total = exiledFromGraveyard + exiledFromHand + exiledFromLibrary;
-        String logEntry = "Counterbore counters " + spellName + " and exiles " + total
+        String logEntry = entry.getCard().getName() + " counters " + spellName + " and exiles " + total
                 + " card" + (total != 1 ? "s" : "") + " named " + spellName + " from " + targetName
                 + "'s graveyard, hand, and library. " + targetName + " shuffles their library.";
         gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - Counterbore exiled {} cards named {} from {}'s zones",
-                gameData.id, total, spellName, targetName);
+        log.info("Game {} - {} exiled {} cards named {} from {}'s zones",
+                gameData.id, entry.getCard().getName(), total, spellName, targetName);
+    }
+
+    private void beginAnyNumberChoice(GameData gameData, StackEntry entry, UUID targetPlayerId,
+                                      String spellName,
+                                      CounterSpellAndExileAllWithSameNameEffect effect) {
+        List<Card> matchingCards = collectMatchingCards(gameData, targetPlayerId, spellName);
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        if (matchingCards.isEmpty()) {
+            if (library != null) {
+                Collections.shuffle(library);
+            }
+            return;
+        }
+
+        playerInputService.beginMultiZoneExileChoice(
+                gameData, entry.getControllerId(), matchingCards, targetPlayerId, spellName,
+                effect.drawCardsExiledFromHand());
+    }
+
+    private List<Card> collectMatchingCards(GameData gameData, UUID playerId, String name) {
+        List<Card> matchingCards = new ArrayList<>();
+        addMatchingCards(matchingCards, gameData.playerGraveyards.get(playerId), name);
+        addMatchingCards(matchingCards, gameData.playerHands.get(playerId), name);
+        addMatchingCards(matchingCards, gameData.playerDecks.get(playerId), name);
+        return matchingCards;
+    }
+
+    private void addMatchingCards(List<Card> matchingCards, List<Card> cards, String name) {
+        if (cards != null) {
+            matchingCards.addAll(cards.stream().filter(card -> card.getName().equals(name)).toList());
+        }
     }
 
     private List<Card> exileMatching(GameData gameData, UUID playerId, List<Card> zone, String name) {

@@ -19,10 +19,32 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param filter                predicate to match sacrificeable permanents
  * @param thenEffect            effect to execute after a successful sacrifice, or {@code null} for none
  * @param permanentDescription  human-readable description of what is sacrificed (e.g. "a Mountain")
+ * @param targetBeforeSacrifice whether a target declared by {@code thenEffect} is chosen for the
+ *                              original ability before the optional sacrifice
+ * @param reflexive whether {@code thenEffect} is a separate reflexive trigger; when false, the
+ *                  follow-up is inserted into the resolving ability after a successful sacrifice
  */
 public record SacrificePermanentThenEffect(
         PermanentPredicate filter,
         CardEffect thenEffect,
-        String permanentDescription
+        String permanentDescription,
+        boolean targetBeforeSacrifice,
+        boolean reflexive
 ) implements CardEffect {
+
+    public SacrificePermanentThenEffect(
+        PermanentPredicate filter, CardEffect thenEffect, String permanentDescription) {
+        this(filter, thenEffect, permanentDescription, false, true);
+    }
+
+    public SacrificePermanentThenEffect(
+            PermanentPredicate filter, CardEffect thenEffect, String permanentDescription,
+            boolean targetBeforeSacrifice) {
+        this(filter, thenEffect, permanentDescription, targetBeforeSacrifice, true);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetBeforeSacrifice && thenEffect != null ? thenEffect.targetSpec() : TargetSpec.NONE;
+    }
 }

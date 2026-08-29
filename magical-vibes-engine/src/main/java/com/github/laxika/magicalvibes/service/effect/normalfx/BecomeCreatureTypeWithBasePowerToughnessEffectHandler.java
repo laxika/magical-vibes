@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +12,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
@@ -45,16 +49,28 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             source.getProtectionFromPlayerIdsPermanently().clear();
         }
 
-        // Set base P/T as a layer-7b setting effect (CR 613.4b); the timestamp orders it against
-        // other 7b setters. A later level-up simply gets a newer timestamp and wins.
-        source.setBasePowerOverriddenPermanently(true);
-        source.setPermanentBasePowerOverride(e.power());
-        source.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-        source.setBaseToughnessOverriddenPermanently(true);
-        source.setPermanentBaseToughnessOverride(e.toughness());
-        source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+        if (e.power() != null) {
+            source.setBasePowerOverriddenPermanently(true);
+            source.setPermanentBasePowerOverride(e.power());
+            source.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
+        }
+        if (e.toughness() != null) {
+            source.setBaseToughnessOverriddenPermanently(true);
+            source.setPermanentBaseToughnessOverride(e.toughness());
+            source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+        }
 
-        if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
+        if (e.replacedSubtype() != null) {
+            Card copy = source.getCard().createRuntimeCopy();
+            ArrayList<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
+            subtypes.removeIf(subtype -> subtype == e.replacedSubtype());
+            if (!subtypes.contains(e.addedSubtype())) {
+                subtypes.add(e.addedSubtype());
+            }
+            copy.setSubtypes(subtypes);
+            copy.freeze();
+            source.setCard(copy);
+        } else if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
             source.getGrantedSubtypes().add(e.addedSubtype());
         }
 
@@ -68,6 +84,10 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             }
         }
 
-        gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" becomes a " + e.addedSubtype().getDisplayName() + " with base power and toughness " + e.power() + "/" + e.toughness() + ".").build());
+        String stats = e.power() != null && e.toughness() != null
+                ? " with base power and toughness " + e.power() + "/" + e.toughness()
+                : "";
+        gameLogService.append(gameData, GameLog.builder().card(source.getCard())
+                .text(" becomes a " + e.addedSubtype().getDisplayName() + stats + ".").build());
     }
 }

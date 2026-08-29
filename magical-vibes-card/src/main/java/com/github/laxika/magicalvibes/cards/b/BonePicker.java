@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "81")
+@CardRegistration(set = "AKR", collectorNumber = "94")
 public class BonePicker extends Card {
 
     public BonePicker() {

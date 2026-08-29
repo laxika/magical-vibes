@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "156")
 @CardRegistration(set = "INR", collectorNumber = "464")
+@CardRegistration(set = "SOI", collectorNumber = "159")
 public class GeierReachBandit extends Card {
 
     public GeierReachBandit() {

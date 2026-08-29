@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Resolves several {@link CardEffect} steps in order, as if they were consecutive effects on the
@@ -30,14 +31,30 @@ import java.util.List;
  * steps). Sentry Oak's {@code ClashEffect(SequenceEffect.of(BoostSelfEffect, RemoveKeywordEffect))} is the
  * canonical example — both steps resolve without interaction.</p>
  *
- * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step's non-{@link TargetSpec#NONE}
- * spec, so at cast time the entry selects a single target for the sequence exactly as multiple flat
- * targeting effects on one slot share the entry's one target. Multi-target groups inside a sequence
+ * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step with an explicitly declared
+ * target, so at cast time the entry selects a single target for the sequence exactly as multiple
+ * flat targeting effects on one slot share the entry's one target. An implicit source binding such
+ * as {@link SacrificeSelfEffect} does not consume a target slot. Multi-target groups inside a sequence
  * are <em>unsupported</em>: the spliced steps are not registered in the card's effect→target-group
  * table, so every targeting step reads the entry's shared {@code targetId}. Use flat, group-bound
  * effects on the card for genuinely multi-target abilities.</p>
+ *
+ * <p>When used in an end-step trigger, the active end-step player is also carried in the stack
+ * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
+ * "that player".</p>
  */
-public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTriggerContextEffect {
+public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect,
+        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
+
+    public SequenceEffect(List<CardEffect> steps) {
+        this(steps, 0, false);
+    }
+
+    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount) {
+        this(steps, controllerDrawCount, false);
+    }
 
     public SequenceEffect {
         steps = List.copyOf(steps);
@@ -51,15 +68,77 @@ public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTrig
         return new SequenceEffect(List.of(steps));
     }
 
+    /**
+     * Returns the first explicitly declared target in the sequence. Implicit source bindings such
+     * as {@link SacrificeSelfEffect} do not consume a target slot; they are retained only when the
+     * sequence has no explicit target at all.
+     */
+    public static SequenceEffect onSecondControllerDraw(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 2);
+    }
+
+    /** Creates a sequence that triggers only when its source permanent was sacrificed. */
+    public static SequenceEffect sacrificeOnly(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 0, true);
+    }
+
+    @Override
+    public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
+        return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
+    }
+
+    @Override
+    public boolean hasAbilityResolutionCondition() {
+        return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return onlyIfSacrificed;
+    }
+
+    @Override
+    public CardEffect boundToDyingCard(UUID dyingCardId) {
+        if (steps.stream().noneMatch(DyingCreatureCardAwareEffect.class::isInstance)) {
+            return this;
+        }
+        List<CardEffect> boundSteps = steps.stream()
+                .map(step -> step instanceof DyingCreatureCardAwareEffect aware
+                        ? aware.boundToDyingCard(dyingCardId) : step)
+                .toList();
+        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed);
+    }
+
+    @Override
+    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof DamageSourceControllerAwareEffect aware
+                        ? aware.bindDamageSourceController(controllerId, damageDealt)
+                        : step)
+                .toList(), controllerDrawCount, onlyIfSacrificed);
+    }
+
     @Override
     public TargetSpec targetSpec() {
+        TargetSpec implicitSourceSpec = TargetSpec.NONE;
         for (CardEffect step : steps) {
             TargetSpec spec = step.targetSpec();
-            if (spec != TargetSpec.NONE) {
+            if (spec.declaredTarget() != null) {
                 return spec;
             }
+            if (spec.selfTargeting()) {
+                implicitSourceSpec = spec;
+            }
         }
-        return TargetSpec.NONE;
+        return implicitSourceSpec;
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return steps.stream()
+                .filter(effect -> effect instanceof CombatOpponentReferencingEffect)
+                .map(effect -> (CombatOpponentReferencingEffect) effect)
+                .anyMatch(CombatOpponentReferencingEffect::referencesCombatOpponent);
     }
 
     /**
@@ -89,5 +168,14 @@ public record SequenceEffect(List<CardEffect> steps) implements CombatDamageTrig
             }
         }
         return result;
+    }
+
+    @Override
+    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof CombatDamageDealerAwareEffect aware
+                        ? aware.withCombatDamageDealerIds(dealerIds)
+                        : step)
+                .toList(), controllerDrawCount, onlyIfSacrificed);
     }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "156")
+@CardRegistration(set = "MMQ", collectorNumber = "152")
 public class PrimevalShambler extends Card {
 
     public PrimevalShambler() {

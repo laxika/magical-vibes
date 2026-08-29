@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "55")
+@CardRegistration(set = "AKR", collectorNumber = "88")
 public class VizierOfTheAnointed extends Card {
 
     public VizierOfTheAnointed() {

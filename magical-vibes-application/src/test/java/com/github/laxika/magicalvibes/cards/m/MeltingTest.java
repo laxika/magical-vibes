@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.ArcticFoxes;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
+import com.github.laxika.magicalvibes.cards.w.WoollyMammoths;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,32 +22,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * cares whether a land is snow: Arctic Foxes can't be blocked by power 2+ creatures while the
  * defending player controls a snow land.
  */
+@CardUsed({ArcticFoxes.class, BalduvianBarbarians.class, Melting.class, SnowCoveredPlains.class,
+        WoollyMammoths.class})
 class MeltingTest extends BaseCardTest {
 
     private Permanent blocker;
     private Permanent fox;
 
-    private Permanent snowPlainsOnDefender() {
-        Permanent snowLand = new Permanent(new Plains());
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player2.getId()).add(snowLand);
-        return snowLand;
+    private void snowPlainsOnDefender() {
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
     }
 
     private void setUpCombat() {
-        blocker = new Permanent(new HillGiant());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        blocker = addCreatureReady(player2, new BalduvianBarbarians());
 
-        fox = new Permanent(new ArcticFoxes());
-        fox.setSummoningSick(false);
+        fox = addCreatureReady(player1, new ArcticFoxes());
         fox.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(fox);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
     }
 
     private void declareBlock() {
@@ -100,5 +91,24 @@ class MeltingTest extends BaseCardTest {
         declareBlock();
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Without Melting, a snow land enables snow-dependent static abilities")
+    void snowLandEnablesSnowDependentStaticAbility() {
+        harness.addToBattlefield(player1, new SnowCoveredPlains());
+        Permanent mammoths = addCreatureReady(player1, new WoollyMammoths());
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Melting also disables snow-dependent static abilities")
+    void meltingDisablesSnowDependentStaticAbility() {
+        harness.addToBattlefield(player1, new Melting());
+        harness.addToBattlefield(player1, new SnowCoveredPlains());
+        Permanent mammoths = addCreatureReady(player1, new WoollyMammoths());
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
     }
 }

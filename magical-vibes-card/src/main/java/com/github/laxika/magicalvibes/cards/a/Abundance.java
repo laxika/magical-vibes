@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "249")
+@CardRegistration(set = "USG", collectorNumber = "229")
 public class Abundance extends Card {
 
     public Abundance() {

@@ -34,8 +34,8 @@ public class LifeTargetValidators {
 
     @ValidatesTarget(GivePoisonCountersEffect.class)
     public void validateGivePoisonCounters(TargetValidationContext ctx, GivePoisonCountersEffect effect) {
-        // Only the target-player recipient targets a player; controller / each-player / enchanted-
-        // permanent-controller take no player target and must not have one forced on them.
+        // Only the target-player recipient targets a player; controller / each-player /
+        // target-permanent-controller / enchanted-permanent-controller take no player target.
         if (effect.recipient() == PoisonRecipient.TARGET_PLAYER) {
             tvs.requireTargetPlayer(ctx);
         }

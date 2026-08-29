@@ -90,7 +90,7 @@ class ScryEffectHandlerTest {
         InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         interactionHandlerRegistry.register(new ScryInteractionHandler(
-                gameLogService, mock(InputCompletionService.class)));
+                gameLogService, mock(InputCompletionService.class), triggerCollectionService));
         scryEffectHandler = new ScryEffectHandler(
                 gameLogService,
                 interactionHandlerRegistry,
@@ -150,7 +150,7 @@ class ScryEffectHandlerTest {
 
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries") && logEntry.plainText().contains("library is empty")));
-                verify(triggerCollectionService).checkScryTriggers(gd, player1Id);
+                verify(triggerCollectionService).checkScryTriggers(gd, player1Id, 0);
             }
 
             @Test
@@ -169,7 +169,7 @@ class ScryEffectHandlerTest {
                 verifyNoInteractions(sessionManager);
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("scries 1")));
-                verify(triggerCollectionService).checkScryTriggers(gd, player1Id);
+                verifyNoInteractions(triggerCollectionService);
             }
 
             @Test

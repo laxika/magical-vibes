@@ -264,6 +264,86 @@
       </div>
     }
 
+    @if (choice.library.choosingHandBottomExile) {
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+        <h2>{{ choice.library.handBottomExilePrompt }}</h2>
+        @if (choice.library.handBottomExileAvailableCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">
+              @if (choice.library.handBottomExileStep === 0) {
+                Click a card to put into your hand:
+              } @else {
+                Click a card to put on the bottom of your library:
+              }
+            </div>
+            <div class="reorder-cards">
+              @for (item of choice.library.handBottomExileAvailableCards; track item.originalIndex) {
+                <app-card-display
+                  [card]="item.card"
+                  class="reorder-card available"
+                  (click)="choice.library.selectHandBottomExileCard(item.originalIndex)"
+                  (mouseenter)="onCardHover(item.card)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
+        @if (choice.library.handBottomExileHandIndex !== null) {
+          <div class="reorder-section">
+            <div class="reorder-label">Hand:</div>
+            <div class="reorder-cards">
+              <div class="reorder-card-wrapper">
+                <div class="reorder-position-badge">H</div>
+                <app-card-display
+                  [card]="choice.library.handBottomExileCards[choice.library.handBottomExileHandIndex]"
+                  class="reorder-card placed"
+                  (mouseenter)="onCardHover(choice.library.handBottomExileCards[choice.library.handBottomExileHandIndex])"
+                  (mouseleave)="onCardHoverEnd()" />
+              </div>
+            </div>
+          </div>
+        }
+        @if (choice.library.handBottomExileBottomIndex !== null) {
+          <div class="reorder-section">
+            <div class="reorder-label">Bottom of library:</div>
+            <div class="reorder-cards">
+              <div class="reorder-card-wrapper">
+                <div class="reorder-position-badge">B</div>
+                <app-card-display
+                  [card]="choice.library.handBottomExileCards[choice.library.handBottomExileBottomIndex]"
+                  class="reorder-card placed"
+                  (mouseenter)="onCardHover(choice.library.handBottomExileCards[choice.library.handBottomExileBottomIndex])"
+                  (mouseleave)="onCardHoverEnd()" />
+              </div>
+            </div>
+          </div>
+        }
+        @if (choice.library.handBottomExileStep === 2 && choice.library.handBottomExileAvailableCards.length > 0) {
+          <div class="reorder-section">
+            <div class="reorder-label">Exile:</div>
+            <div class="reorder-cards">
+              @for (item of choice.library.handBottomExileAvailableCards; track item.originalIndex) {
+                <div class="reorder-card-wrapper">
+                  <div class="reorder-position-badge">E</div>
+                  <app-card-display
+                    [card]="item.card"
+                    class="reorder-card placed"
+                    (mouseenter)="onCardHover(item.card)"
+                    (mouseleave)="onCardHoverEnd()" />
+                </div>
+              }
+            </div>
+          </div>
+        }
+        <div class="reorder-actions">
+          <button class="btn-keep" (click)="choice.library.undoHandBottomExile()" [disabled]="choice.library.handBottomExileHandIndex === null">Undo</button>
+          <button class="btn-keep" (click)="choice.library.confirmHandBottomExile()" [disabled]="choice.library.handBottomExileStep !== 2">Confirm</button>
+        </div>
+        </div>
+      </div>
+    }
+
     @if (choice.library.searchingLibrary) {
       <div class="reveal-hand-overlay">
         <div class="reveal-hand-card">
@@ -412,19 +492,19 @@
           [class.blocking]="creature && ip.perm.blocking"
           [class.combat-nudge]="creature && (mine ? (isAttackingCreature(ip.originalIndex, true) || isBlockingCreature(ip.originalIndex, true)) : (ip.perm.attacking || ip.perm.blocking))"
           [style.--card-shift-x]="creature ? combatShift(ip.perm.id) : null"
-          [class.can-attack]="mine && creature && canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
-          [class.selected-attacker]="mine && creature && declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
-          [class.must-attack]="mine && creature && mustAttackIndices().has(ip.originalIndex)"
+          [class.can-attack]="isAttackerSelectionSide(mine) && creature && canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+          [class.selected-attacker]="isAttackerSelectionSide(mine) && creature && declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
+          [class.must-attack]="isAttackerSelectionSide(mine) && creature && mustAttackIndices().has(ip.originalIndex)"
           [class.can-block]="isBlockerSide(mine) && creature && canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
           [class.selected-blocker]="isBlockerSide(mine) && creature && selectedBlockerIndex() === ip.originalIndex"
           [class.assigned-blocker]="isBlockerSide(mine) && creature && isAssignedBlocker(ip.originalIndex)"
           [class.block-target]="isAttackerSide(mine) && creature && isBlockTarget(ip.originalIndex)"
           [class.blocked-attacker]="isAttackerSide(mine) && creature && declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
-          [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (creature && choice.damage.distributingDamage && ip.perm.attacking)"
+          [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (creature && choice.damage.distributingDamage && ip.perm.attacking) || (choice.targeting.harmonizing && creature && !ip.perm.tapped)"
           [class.stack-targeted]="stackTargetId() === ip.perm.id"
           [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
           [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
-          [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
+          [class.alternate-cost-selected]="(choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)) || (choice.targeting.harmonizing && choice.targeting.isHarmonizeSelected(ip.perm.id))"
           (click)="onPermanentClick(ip, mine, $event)"
           (contextmenu)="onPermanentContextMenu($event, ip, creature)"
           (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
@@ -433,12 +513,12 @@
             @if (mine ? isAttackingCreature(ip.originalIndex, true) : ip.perm.attacking) {
               <div badge-tl class="card-combat-badge attacking-badge">Attacking</div>
             }
-            @if (mine && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
+            @if (isAttackerSelectionSide(mine) && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
               <div badge-tl class="card-combat-badge attack-target-badge"
                 title="Click to change attack target"
                 (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
             }
-            @if (mine && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
+            @if (isAttackerSelectionSide(mine) && declaringAttackers() && isSelectedAttacker(ip.originalIndex) && canDeclareBand()) {
               <div badge-tl class="card-combat-badge band-badge"
                 title="Banding (CR 702.22): click to group attackers into a band"
                 (click)="$event.stopPropagation(); cycleBand(ip.originalIndex)">{{ getBandLabel(ip.originalIndex) }}</div>
@@ -579,7 +659,7 @@
     @if (choice.choosingGraveyardCards) {
       <div class="reveal-hand-overlay">
         <div class="reveal-hand-card">
-          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMaxCount }} selected)</h2>
+          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMinCount > 0 ? choice.graveyardChoiceMinCount + '–' : '' }}{{ choice.graveyardChoiceMaxCount }} selected)</h2>
           <div class="reveal-hand-cards">
             @for (card of choice.multiGraveyardCards; track $index) {
               <app-card-display
@@ -591,7 +671,30 @@
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
-          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()">Confirm</button>
+          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()"
+            [disabled]="choice.graveyardChoiceSelectedIds().size < choice.graveyardChoiceMinCount">Confirm</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.selectingAlternateCostGraveyardCards) {
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+          <h2>Collect evidence {{ choice.targeting.alternateCostCollectEvidenceAmount }} ({{ choice.targeting.alternateCostSelectedGraveyardManaValue() }} mana value selected)</h2>
+          <div class="reveal-hand-cards">
+            @for (card of myGraveyard; track $index) {
+              <app-card-display
+                [card]="card"
+                class="graveyard-choice-card"
+                [class.selected-graveyard-card]="choice.targeting.isAlternateCostGraveyardCardSelected($index)"
+                (click)="choice.targeting.toggleAlternateCostGraveyardCard($index)"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+          <button class="btn-keep" (click)="choice.targeting.confirmAlternateCostGraveyardCards()"
+                  [disabled]="choice.targeting.alternateCostSelectedGraveyardManaValue() < choice.targeting.alternateCostCollectEvidenceAmount">Cast</button>
+          <button class="btn-keep" (click)="choice.targeting.cancelAlternateCostGraveyardCards()">Cancel</button>
         </div>
       </div>
     }
@@ -606,11 +709,11 @@
           <app-card-display
             animate.enter="hand-card-enter"
             [card]="card"
-            [class.playable]="isCardPlayable($index)"
+            [class.playable]="isCardPlayable($index) || isForetellPlayable($index)"
             [class.casting-pending]="choice.targeting.payingForCast && choice.targeting.pendingCastCardIndex === $index"
             [class.choosable-card]="(choice.choosingFromHand && choice.isChoosableCard($index)) || choice.targeting.isBuybackDiscardSelectable($index)"
-            [class.alternate-cost-selected]="choice.targeting.isBuybackDiscardSelected($index)"
-            (click)="choice.targeting.choosingBuybackDiscard ? choice.targeting.toggleBuybackDiscard($index) : (choice.choosingFromHand ? choice.chooseCardFromHand($index) : playCard($index))"
+            [class.alternate-cost-selected]="choice.targeting.isBuybackDiscardSelected($index) || choice.targeting.isAlternateCostHandCardSelected($index)"
+            (click)="choice.targeting.selectingAlternateCostHandCard ? choice.targeting.selectAlternateCostHandCard($index) : (choice.targeting.choosingBuybackDiscard ? choice.targeting.toggleBuybackDiscard($index) : (choice.choosingFromHand ? choice.chooseCardFromHand($index) : playCard($index)))"
             (mouseenter)="onCardHover(card)"
             (mouseleave)="onCardHoverEnd()" />
         }
@@ -694,6 +797,46 @@
           }
         </div>
         <button class="btn-cancel-combat" (click)="choice.targeting.cancelGraveyardTargeting()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (choice.targeting.targetingExile) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>{{ choice.targeting.exileTargetPrompt }}</h2>
+        <div class="reveal-hand-cards">
+          @for (card of choice.targeting.exileTargetCards; track $index) {
+            <app-card-display [card]="card"
+              class="choosable-card"
+              (click)="choice.targeting.selectExileTarget(choice.targeting.exileTargetCardIds[$index])"
+              (mouseenter)="onCardHover(card)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        <button class="btn-cancel-combat" (click)="choice.targeting.cancelExileTargeting()">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (choice.targeting.selectingGraveyardCastExile) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>Exile {{ choice.targeting.graveyardCastExileCount }} {{ choice.targeting.graveyardCastExileLabel || 'other cards' }} to cast {{ choice.targeting.graveyardCastExileCardName }}.</h2>
+        <div class="reveal-hand-cards">
+          @for (entry of choice.targeting.graveyardCastExileChoices; track entry.index) {
+            <app-card-display [card]="entry.card"
+              [class.alternate-cost-selected]="choice.targeting.isGraveyardCastExileSelected(entry.index)"
+              class="choosable-card"
+              (click)="choice.targeting.toggleGraveyardCastExile(entry.index)"
+              (mouseenter)="onCardHover(entry.card)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        <button class="btn-keep"
+          [disabled]="choice.targeting.graveyardCastExileSelectedIndices().length !== choice.targeting.graveyardCastExileCount"
+          (click)="choice.targeting.confirmGraveyardCastExile()">Confirm</button>
+        <button class="btn-cancel-combat" (click)="choice.targeting.cancelGraveyardCastExile()">Cancel</button>
       </div>
     </div>
   }
@@ -829,6 +972,8 @@
       [lifeTotal1]="getLifeTotal(1)"
       [poisonCounters0]="getPoisonCounters(0)"
       [poisonCounters1]="getPoisonCounters(1)"
+      [energyCounters0]="getEnergyCounters(0)"
+      [energyCounters1]="getEnergyCounters(1)"
       [playerId0]="getPlayerId(0)"
       [playerId1]="getPlayerId(1)"
       [stackTargetId]="stackTargetId()"

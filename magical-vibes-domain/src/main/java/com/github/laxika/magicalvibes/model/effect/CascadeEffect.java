@@ -12,6 +12,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * nonland card whose mana value is less than the cascade spell's mana value, then reuses the
  * {@link com.github.laxika.magicalvibes.model.LibrarySearchDestination#CAST_WITHOUT_PAYING} flow to
  * optionally cast that card for free and put the rest on the bottom in a random order.</p>
+ *
+ * @param instantOrSorceryOnly whether the qualifying card must be an instant or sorcery instead of
+ *                             any nonland card
  */
-public record CascadeEffect() implements CardEffect {
+public record CascadeEffect(boolean instantOrSorceryOnly) implements CardEffect {
+
+    public CascadeEffect() {
+        this(false);
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final ExileService exileService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +55,15 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
 
         Permanent linked = linkedId == null ? null : gameQueryService.findPermanentById(gameData, linkedId);
         if (linked == null) {
+            if (e.mode() == RemoveLinkedPermanentEffect.Mode.EXILE && e.linkedCardId() != null) {
+                Card linkedCard = gameQueryService.findCardInGraveyardById(gameData, e.linkedCardId());
+                if (linkedCard != null) {
+                    UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, linkedCard.getId());
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, linkedCard.getId());
+                    exileService.exileCard(gameData, ownerId, linkedCard);
+                    gameLogService.append(gameData, GameLog.cardThen(linkedCard, " is exiled."));
+                }
+            }
             return;
         }
 

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "139")
+@CardRegistration(set = "AKR", collectorNumber = "243")
 public class TheLocustGod extends Card {
 
     public TheLocustGod() {

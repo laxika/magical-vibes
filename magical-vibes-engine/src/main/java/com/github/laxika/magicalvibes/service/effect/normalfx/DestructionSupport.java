@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,15 +18,26 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
+import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerThenTapSourceIfDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceAndDamageControllerIfDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsControlOfSourceCreatureEffect;
@@ -34,18 +46,26 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -74,6 +94,8 @@ import java.util.function.Predicate;
 public class DestructionSupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CreatureControlService creatureControlService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
@@ -89,20 +111,40 @@ public class DestructionSupport {
     private final RemoveAllCountersEffectHandler removeAllCountersHandler;
     private final PhasingService phasingService;
     private final ExileSelfEffectHandler exileSelfEffectHandler;
+    private final ExileSourceCardFromGraveyardEffectHandler exileSourceCardFromGraveyardEffectHandler;
     private final LibraryExileSupport libraryExileSupport;
     private final SacrificeEnchantedCreatureEffectHandler sacrificeEnchantedHandler;
     private final DealDamageToTargetAndTheirCreaturesEffectHandler damageTargetAndTheirCreaturesHandler;
     private final MakeCreatureUnblockableEffectHandler makeCreatureUnblockableHandler;
+    private final BouncePermanentOnUpkeepEffectHandler bouncePermanentOnUpkeepEffectHandler;
+    private final ReturnToHandEffectHandler returnToHandEffectHandler;
+    private final ControllerLosesGameEffectHandler controllerLosesGameHandler;
+    private final GrantEffectToSourceUntilEndOfCombatEffectHandler grantEffectToSourceUntilEndOfCombatHandler;
+    private final PreventDamageFromChosenSourceEffectHandler preventDamageFromChosenSourceHandler;
+    private final BoostAllOwnCreaturesEffectHandler boostAllOwnCreaturesHandler;
+    private final BounceSupport bounceSupport;
+    private final EnergyCountersEffectHandler energyCountersEffectHandler;
+    private final DrawCardEffectHandler drawCardEffectHandler;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
+        beginNextDestroyRestChoice(gameData, choosers, protectedIds, sourceName,
+                new PermanentIsCreaturePredicate(), "Choose a creature to keep.", false);
+    }
+
+    public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName,
+                                           PermanentPredicate destructionFilter, String choicePrompt,
+                                           boolean requiresChoice) {
         if (choosers.isEmpty()) return;
         PendingForcedSacrifice next = choosers.getFirst();
         List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
-                new MultiPermanentChoiceContext.DestroyRestChoice(remainingChoosers, List.copyOf(protectedIds), sourceName),
-                "Choose a creature to keep. The rest will be destroyed.");
+                new MultiPermanentChoiceContext.DestroyRestChoice(
+                        remainingChoosers, List.copyOf(protectedIds), sourceName,
+                        destructionFilter, choicePrompt, requiresChoice),
+                choicePrompt + " The rest will be destroyed.");
     }
 
     public void completeDestroyRestChoice(GameData gameData, List<UUID> permanentIds,
@@ -113,22 +155,30 @@ public class DestructionSupport {
 
         if (!context.remainingChoosers().isEmpty()) {
             // More players need to choose — prompt the next one
-            beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName());
+            beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName(),
+                    context.destructionFilter(), context.choicePrompt(), context.requiresChoice());
             return;
         }
 
         // All players have chosen — destroy all non-protected creatures
         String sourceName = context.sourceName();
-        performDestroyAllCreaturesExcept(gameData, sourceName != null ? sourceName : "unknown", protectedIds);
+        performDestroyAllMatchingExcept(gameData, sourceName != null ? sourceName : "unknown", protectedIds,
+                context.destructionFilter());
     }
 
     public void performDestroyAllCreaturesExcept(GameData gameData, String sourceName, List<UUID> protectedIdList) {
+        performDestroyAllMatchingExcept(gameData, sourceName, protectedIdList, new PermanentIsCreaturePredicate());
+    }
+
+    public void performDestroyAllMatchingExcept(GameData gameData, String sourceName,
+                                                List<UUID> protectedIdList, PermanentPredicate filter) {
         Set<UUID> protectedIds = new HashSet<>(protectedIdList);
 
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm) && !protectedIds.contains(perm.getId())) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, perm, filter)
+                        && !protectedIds.contains(perm.getId())) {
                     toDestroy.add(perm);
                 }
             }
@@ -191,7 +241,7 @@ public class DestructionSupport {
             if (indestructible.contains(perm)) {
                 continue;
             }
-            if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, perm)) {
+            if (graveyardService.tryReplaceDestruction(gameData, perm, !cannotBeRegenerated)) {
                 continue;
             }
             actuallyDying.add(perm);
@@ -210,6 +260,7 @@ public class DestructionSupport {
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }
@@ -218,17 +269,27 @@ public class DestructionSupport {
 
     private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {
         for (Permanent perm : dying) {
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
             UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
             if (controllerId == null) continue;
+            gameData.simultaneousDyingPermanents.put(perm.getId(), perm);
+            gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
             gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
+            gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                    perm.getId(), List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                            gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES)));
         }
     }
 
     private void endSimultaneousCreatureDeaths(GameData gameData) {
         gameData.simultaneousDyingCreatures.clear();
         gameData.simultaneousDyingControllers.clear();
+        gameData.simultaneousDyingPermanents.clear();
+        gameData.simultaneousDyingPermanentControllers.clear();
+        gameData.simultaneousDyingPowers.clear();
+        gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
@@ -247,12 +308,14 @@ public class DestructionSupport {
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
         Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
+        gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
+        gameData.recordSacrificedPermanent(playerId, sacrificedCard);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
-        // Global "whenever a player sacrifices a creature" watchers (Thraximundar) for the
+        // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers for the
         // edict / chosen / forced-sacrifice paths that funnel through this shared helper.
-        triggerCollectionService.checkAnyCreatureSacrificedTriggers(gameData, playerId, sacrificedCard);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCard);
     }
 
     /**
@@ -354,35 +417,39 @@ public class DestructionSupport {
     }
 
     public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
-                                              String cardName, CardColor sourceColor) {
-        dealNoncombatDamageToPlayer(gameData, playerId, baseDamage, cardName, sourceColor, null);
-    }
-
-    public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
-                                             String cardName, CardColor sourceColor,
-                                             UUID sourceControllerId) {
+                                              String cardName, Card sourceCard) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
 
         if (gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
-                    || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor))) {
+                && (gameQueryService.isDamageFromCardSourcePrevented(gameData, sourceCard)
+                    || damagePreventionService.applyColorDamagePreventionForPlayer(
+                            gameData, playerId, sourceCard.getColor()))) {
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
         }
 
-        damage = damagePreventionService.applyChannelHarmPrevention(
-                gameData, playerId, sourceControllerId, damage);
-        if (damage <= 0) return;
         int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
         effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+        effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                gameData, playerId, effectiveDamage);
+
+        if (effectiveDamage > 0) {
+            gameData.recordDamageToPlayer(playerId, effectiveDamage,
+                    sourceCard.hasType(CardType.ARTIFACT) ? effectiveDamage : 0);
+        }
 
         if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
             if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
-                String playerName = gameData.playerIdToName.get(playerId);
-                gameLogService.append(gameData, GameLog.text(playerName + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
+                int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
+                if (poisonAmount > 0) {
+                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                    gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
+                    String playerName = gameData.playerIdToName.get(playerId);
+                    gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
+                }
             }
+            lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName,
+                    gameData.currentlyResolvingControllerId);
             return;
         }
 
@@ -391,8 +458,10 @@ public class DestructionSupport {
             return;
         }
 
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+        int lifeLoss = effectiveDamage
+                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        gameData.playerLifeTotals.put(playerId,
+                gameQueryService.lifeAfterDamage(gameData, playerId, lifeLoss));
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);
@@ -427,6 +496,20 @@ public class DestructionSupport {
         return ids;
     }
 
+    /** Collects matching permanents on other players' battlefields for a gain-control cost. */
+    public List<UUID> collectPermanentIdsNotControlledBy(GameData gameData, UUID playerId,
+            PermanentPredicate filter) {
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(playerId);
+        List<UUID> ids = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!controllerId.equals(playerId)
+                    && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)) {
+                ids.add(permanent.getId());
+            }
+        });
+        return ids;
+    }
+
     /**
      * Permanents the player controls that carry at least one counter of any kind — the legal
      * choices for {@link com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledPermanentCost}.
@@ -450,6 +533,9 @@ public class DestructionSupport {
             return false;
         }
         permanent.setCounterCount(kind, permanent.getCounterCount(kind) - 1);
+        if (kind == CounterType.OIL) {
+            gameData.recordOilCounterRemoved(permanent, 1);
+        }
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(
                 playerName + " removes a counter from ", permanent.getCard(), "."));
@@ -470,6 +556,11 @@ public class DestructionSupport {
 
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds) {
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, false);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -479,13 +570,14 @@ public class DestructionSupport {
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
-                        List.copyOf(accumulatedSacrificeIds)),
+                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
 
     public void performSacrificeCreatureForPlayer(GameData gameData, UUID targetPlayerId) {
-        List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId, p -> true);
+        List<UUID> creatureIds = collectCreatureIds(gameData, targetPlayerId,
+                p -> !gameQueryService.cantBeSacrificed(gameData, p));
 
         if (creatureIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
@@ -528,6 +620,52 @@ public class DestructionSupport {
             return;
         }
 
+        if (context.effect().forcedCost() instanceof GainControlOfPermanentsCost gainCost) {
+            UUID payerId = context.controllerId();
+            UUID currentControllerId = gameData.findControllerOf(target);
+            FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(payerId);
+            if (currentControllerId == null || currentControllerId.equals(payerId)
+                    || !predicateEvaluationService.matchesPermanentPredicate(
+                    target, gainCost.filter(), filterContext)) {
+                resolveForcedCostElseEffectsFromContext(gameData, context);
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            gainPermanentControl(gameData, target, payerId, context.sourceCard().getName());
+            int remaining = gainCost.count() - 1;
+            if (remaining <= 0) {
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            List<UUID> remainingIds = collectPermanentIdsNotControlledBy(gameData, payerId, gainCost.filter());
+            if (remainingIds.size() < remaining) {
+                resolveForcedCostElseEffectsFromContext(gameData, context);
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            ForcedCostOrElseEffect remainingEffect = new ForcedCostOrElseEffect(
+                    new GainControlOfPermanentsCost(remaining, gainCost.filter()), context.effect().elseEffects(),
+                    false, false, false, false, context.effect().paidEffects());
+            if (remainingIds.size() == 1) {
+                Permanent remainingTarget = gameQueryService.findPermanentById(gameData, remainingIds.getFirst());
+                if (remainingTarget != null) {
+                    gainPermanentControl(gameData, remainingTarget, payerId, context.sourceCard().getName());
+                }
+                clearForcedCostOrElseState(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ForcedCostOrElse(
+                    payerId, context.sourcePermanentId(), context.sourceCard(), remainingEffect));
+            playerInputService.beginPermanentChoice(gameData, payerId, remainingIds,
+                    "Choose a permanent to gain control of.");
+            clearForcedCostOrElseState(gameData);
+            return;
+        }
+
         if (context.effect().forcedCost() instanceof RemoveCounterFromControlledPermanentCost) {
             // "unless you remove a counter from a permanent you control" — the chosen permanent
             // sheds a counter instead of being sacrificed.
@@ -535,6 +673,26 @@ public class DestructionSupport {
         } else {
             sacrificeAndLog(gameData, target, context.controllerId());
         }
+        gameData.forcedCostOrElseSourceControllerId = null;
+        gameData.forcedCostOrElseRemainingPlayers.clear();
+    }
+
+    public void gainPermanentControl(GameData gameData, Permanent target, UUID controllerId, String sourceCardName) {
+        creatureControlService.applyControlEffect(gameData, controllerId, target,
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT, null,
+                sourceCardName);
+    }
+
+    private void resolveForcedCostElseEffectsFromContext(GameData gameData,
+            PermanentChoiceContext.ForcedCostOrElse context) {
+        StackEntry syntheticEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(), context.controllerId(), context.sourceCard().getName() + "'s ability",
+                List.of(context.effect()), null, context.sourcePermanentId());
+        resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
+    }
+
+    private void clearForcedCostOrElseState(GameData gameData) {
         gameData.forcedCostOrElseSourceControllerId = null;
         gameData.forcedCostOrElseRemainingPlayers.clear();
     }
@@ -550,7 +708,7 @@ public class DestructionSupport {
                     && damage.recipient() == DamageRecipient.CONTROLLER
                     && damage.amount() instanceof Fixed fixed) {
                 dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
-                        entry.getCard().getName(), entry.getCard().getColor(), entry.getControllerId());
+                        entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
                     && damage.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER
@@ -559,11 +717,18 @@ public class DestructionSupport {
                 UUID victim = entry.getTargetId();
                 if (victim != null) {
                     dealNoncombatDamageToPlayer(gameData, victim, fixed.value(),
-                            entry.getCard().getName(), entry.getCard().getColor(), entry.getControllerId());
+                            entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {
                 sacrificeSource(gameData, entry);
+            } else if (elseEffect instanceof DrawCardEffect draw) {
+                drawCardEffectHandler.resolve(gameData, entry, draw);
+            } else if (elseEffect instanceof ReturnToHandEffect returnToHand
+                    && returnToHand.scope() == BounceScope.SELF) {
+                bounceSupport.applyReturnSelfToHand(gameData, entry);
+            } else if (elseEffect instanceof EnergyCountersEffect energyCounters) {
+                energyCountersEffectHandler.resolve(gameData, entry, energyCounters);
             } else if (elseEffect instanceof SacrificeEnchantedCreatureEffect sacrificeEnchanted) {
                 // "that player sacrifices it unless they pay {X}" (Soul Tithe) — the enchanted
                 // permanent, not the Aura, is sacrificed by its own controller.
@@ -575,6 +740,8 @@ public class DestructionSupport {
             } else if (elseEffect instanceof ExileSelfEffect exileSelf) {
                 // "exile this creature unless you sacrifice another creature" (Demonlord of Ashmouth).
                 exileSelfEffectHandler.resolve(gameData, entry, exileSelf);
+            } else if (elseEffect instanceof ExileSourceCardFromGraveyardEffect exileSource) {
+                exileSourceCardFromGraveyardEffectHandler.resolve(gameData, entry, exileSource);
             } else if (elseEffect instanceof PhaseOutEffect phaseOut
                     && phaseOut.subject() == PhaseOutSubject.SOURCE) {
                 // "unless you pay {cost}, this creature phases out" (Vaporous Djinn).
@@ -596,12 +763,15 @@ public class DestructionSupport {
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof GivePoisonCountersEffect poison
-                    && poison.recipient() == PoisonRecipient.CONTROLLER) {
+                    && poison.recipient() == PoisonRecipient.CONTROLLER
+                    && poison.amount() instanceof Fixed poisonAmount) {
                 // "unless they pay {2}, they get another poison counter" (Sabertooth Cobra) — the
                 // entry controller is the player who owes the payment.
-                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poison.amount(),
-                        entry.getCard().getName());
+                lifeSupport.applyPoisonCounters(gameData, entry.getControllerId(), poisonAmount.value(),
+                        entry.getCard().getName(), entry.getControllerId());
                 gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof ControllerLosesGameEffect) {
+                controllerLosesGameHandler.resolve(gameData, entry, elseEffect);
             } else if (elseEffect instanceof DestroySourceAndDamageControllerIfDestroyedEffect destroyDamage) {
                 destroySourceAndDamageControllerIfDestroyed(gameData, entry, destroyDamage.damage());
             } else if (elseEffect instanceof DealDamageToControllerThenTapSourceIfDamageDealtEffect damageThenTap) {
@@ -629,6 +799,8 @@ public class DestructionSupport {
                     && removeCounters.subject() == CounterRemovalSubject.SOURCE) {
                 // "remove all wage counters from this creature" (Rogue Skycaptain).
                 removeAllCountersHandler.resolve(gameData, entry, removeCounters);
+            } else if (elseEffect instanceof GrantEffectToSourceUntilEndOfCombatEffect grant) {
+                grantEffectToSourceUntilEndOfCombatHandler.resolve(gameData, entry, grant);
             } else if (elseEffect instanceof OpponentGainsControlOfSourceCreatureEffect gainControl) {
                 // "an opponent gains control of it" (Rogue Skycaptain).
                 opponentGainsControlOfSourceHandler.resolve(gameData, entry, gainControl);
@@ -636,9 +808,31 @@ public class DestructionSupport {
                 opponentMayGainControlHandler.offer(gameData, entry, steal);
                 // Interaction started — further else-effects would race the may-prompt.
                 return;
+            } else if (elseEffect instanceof BouncePermanentOnUpkeepEffect bounce) {
+                bouncePermanentOnUpkeepEffectHandler.resolve(gameData, entry, bounce);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            } else if (elseEffect instanceof PreventDamageFromChosenSourceEffect preventDamage) {
+                preventDamageFromChosenSourceHandler.resolve(gameData, entry, preventDamage);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            } else if (elseEffect instanceof BoostAllOwnCreaturesEffect boost) {
+                boostAllOwnCreaturesHandler.resolve(gameData, entry, boost);
+            } else if (elseEffect instanceof ReturnToHandEffect returnToHand) {
+                returnToHandEffectHandler.resolve(gameData, entry, returnToHand);
             } else {
-                log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
-                        gameData.id, elseEffect.getClass().getSimpleName());
+                var handler = effectHandlerRegistry.getHandler(elseEffect);
+                if (handler == null) {
+                    log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
+                            gameData.id, elseEffect.getClass().getSimpleName());
+                } else {
+                    handler.resolve(gameData, entry, elseEffect);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        return;
+                    }
+                }
             }
         }
     }
@@ -667,7 +861,7 @@ public class DestructionSupport {
         boolean destroyed = tryDestroyAndLog(gameData, source, entry.getCard().getName());
         if (destroyed) {
             dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage,
-                    entry.getCard().getName(), entry.getCard().getColor(), entry.getControllerId());
+                    entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
             gameOutcomeService.checkWinCondition(gameData);
         }
     }
@@ -676,7 +870,7 @@ public class DestructionSupport {
         UUID controllerId = entry.getControllerId();
         int lifeBefore = gameData.getLife(controllerId);
         dealNoncombatDamageToPlayer(gameData, controllerId, damage,
-                entry.getCard().getName(), entry.getCard().getColor(), entry.getControllerId());
+                entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
         gameOutcomeService.checkWinCondition(gameData);
         // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped.
         if (gameData.getLife(controllerId) < lifeBefore) {
@@ -739,29 +933,50 @@ public class DestructionSupport {
 
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
                                       CreateTokenEffect token, String sourceName, String sourceSetCode) {
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        createTokenForPlayer(gameData, controllerId, token, 1, sourceName, sourceSetCode);
+    }
+
+    public void createTokenForPlayer(GameData gameData, UUID controllerId,
+                                       CreateTokenEffect token, int tokenCount,
+                                       String sourceName, String sourceSetCode) {
+        boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
+        CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
+                gameData, controllerId, token);
+        int totalAmount = tokenCount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        boolean isCreature = token.primaryType() == CardType.CREATURE;
-
-        for (int copy = 0; copy < tokenMultiplier; copy++) {
+        for (int count = 0; count < totalAmount + (additionalFrog != null && totalAmount > 0 ? 1 : 0); count++) {
+            boolean isAdditionalFrog = count >= totalAmount;
+            CreateTokenEffect tokenToCreate = isAdditionalFrog ? additionalFrog : token;
+            int tokenPower = isAdditionalFrog ? 1 : token.tokenPower();
+            int tokenToughness = isAdditionalFrog ? 1 : token.tokenToughness();
+            boolean isCreature = tokenToCreate.primaryType() == CardType.CREATURE;
             Card tokenCard = TokenCardFactory.create(
-                    token, token.tokenPower(), token.tokenToughness(), sourceSetCode);
+                    tokenToCreate, tokenPower, tokenToughness, sourceSetCode);
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, controllerId, tokenCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            if (tokenToCreate.tappedAndAttacking()) {
+                tokenPermanent.tap();
+                tokenPermanent.setAttacking(true);
+            } else if (tokenToCreate.tapped()) {
+                tokenPermanent.tap();
+            }
 
             String playerName = gameData.playerIdToName.get(controllerId);
-            String colorName = token.color() != null ? token.color().name().toLowerCase() + " " : "";
+            String colorName = tokenToCreate.color() != null ? tokenToCreate.color().name().toLowerCase() + " " : "";
             if (isCreature) {
                 gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " creates a " + token.tokenPower() + "/" + token.tokenToughness()
+                        .text(playerName + " creates a " + tokenPower + "/" + tokenToughness
                                 + " " + colorName)
                         .card(tokenCard)
                         .text(" creature token.")
                         .build());
                 log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                        token.tokenPower(), token.tokenToughness(), token.tokenName(), playerName);
+                        tokenPower, tokenToughness, tokenToCreate.tokenName(), playerName);
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
             } else {
@@ -771,7 +986,7 @@ public class DestructionSupport {
                         .text(" token.")
                         .build());
                 log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
-                        token.tokenName(), playerName);
+                        tokenToCreate.tokenName(), playerName);
             }
         }
     }
@@ -832,7 +1047,9 @@ public class DestructionSupport {
             for (UUID permId : pileToSacrifice) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
-                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                    if (permanentRemovalService.removePermanentToGraveyard(gameData, perm)) {
+                        gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
+                    }
                 }
             }
         }

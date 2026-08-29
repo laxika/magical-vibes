@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "180")
 @CardRegistration(set = "4ED", collectorNumber = "148")
+@CardRegistration(set = "ITP", collectorNumber = "21")
+@CardRegistration(set = "RQS", collectorNumber = "20")
+@CardRegistration(set = "DRK", collectorNumber = "49")
 public class MurkDwellers extends Card {
 
     public MurkDwellers() {

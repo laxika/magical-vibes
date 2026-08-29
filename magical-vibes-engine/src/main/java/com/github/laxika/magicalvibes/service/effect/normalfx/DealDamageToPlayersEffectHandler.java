@@ -40,19 +40,24 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToPlayersEffect) effect;
+        boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
+        gameData.unpreventableDamageInProgress = previousUnpreventable || e.unpreventable();
+        try {
+            switch (e.recipient()) {
+                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER,
+                     TRIGGERING_PLAYER ->
+                        resolveSingleTargetPlayer(gameData, entry, e);
+                case CONTROLLER -> resolveController(gameData, entry, e);
+                case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
+                case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
+                case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
+                case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
+            }
 
-        switch (e.recipient()) {
-            case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER,
-                 TRIGGERING_PLAYER ->
-                    resolveSingleTargetPlayer(gameData, entry, e);
-            case CONTROLLER -> resolveController(gameData, entry, e);
-            case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
-            case EACH_PLAYER -> resolveEachPlayer(gameData, entry, e, false);
-            case TARGET_PERMANENT_CONTROLLER -> resolveTargetPermanentController(gameData, entry, e);
-            case TARGET_SPELL_CONTROLLER -> resolveTargetSpellController(gameData, entry, e);
+            gameOutcomeService.checkWinCondition(gameData);
+        } finally {
+            gameData.unpreventableDamageInProgress = previousUnpreventable;
         }
-
-        gameOutcomeService.checkWinCondition(gameData);
     }
 
     /** TARGET_PLAYER / ENCHANTED_PLAYER / ENCHANTED_PERMANENT_CONTROLLER / TRIGGERING_PERMANENT_CONTROLLER / TRIGGERING_PLAYER: victim = the stack entry's target player. */
@@ -69,7 +74,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
     /** CONTROLLER: "deals N damage to you". */
     private void resolveController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s damage to controller is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, entry.getControllerId());
@@ -95,13 +100,15 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
     /** TARGET_PERMANENT_CONTROLLER: victim = the controller of the targeted permanent. */
     private void resolveTargetPermanentController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        java.util.List<UUID> effectTargets = entry.targetsForEffect(e);
+        UUID targetId = effectTargets.isEmpty() ? entry.getTargetId() : effectTargets.getFirst();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         String cardName = entry.getCard().getName();
 
-        if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, controllerId);

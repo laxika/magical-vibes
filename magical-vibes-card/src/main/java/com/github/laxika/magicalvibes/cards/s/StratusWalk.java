@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ORI", collectorNumber = "77")
+@CardRegistration(set = "BNG", collectorNumber = "52")
 public class StratusWalk extends Card {
 
     public StratusWalk() {

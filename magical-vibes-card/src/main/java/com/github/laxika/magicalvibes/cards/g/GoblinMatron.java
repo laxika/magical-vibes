@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "100")
 @CardRegistration(set = "7ED", collectorNumber = "191")
+@CardRegistration(set = "USG", collectorNumber = "191")
+@CardRegistration(set = "ATH", collectorNumber = "35")
 public class GoblinMatron extends Card {
 
     public GoblinMatron() {

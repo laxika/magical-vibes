@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "247")
+@CardRegistration(set = "RNA", collectorNumber = "259")
+@CardRegistration(set = "GPT", collectorNumber = "165")
 public class StompingGround extends Card {
 
     public StompingGround() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "52")
+@CardRegistration(set = "AKR", collectorNumber = "85")
 public class UneshCriosphinxSovereign extends Card {
 
     public UneshCriosphinxSovereign() {

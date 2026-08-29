@@ -21,7 +21,7 @@ public class GrantColorEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantColorEffect) effect;
-        if (support.matchesCreatureScope(context, grant.scope(), null)) {
+        if (support.matchesCreatureScope(context, grant.scope(), grant.filter())) {
             accumulator.addGrantedColor(grant.color());
             if (grant.overriding()) {
                 accumulator.setColorOverriding(true);

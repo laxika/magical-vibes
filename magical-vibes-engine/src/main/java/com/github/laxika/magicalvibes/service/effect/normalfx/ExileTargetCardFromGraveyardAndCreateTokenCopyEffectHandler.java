@@ -5,16 +5,25 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -52,7 +61,9 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             return;
         }
 
-        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                targetCard, e.filter(), entry.getCard().getId(), gameData,
+                gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId()))) {
             String filterLabel = CardPredicateUtils.describeFilter(e.filter());
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ")."));
             return;
@@ -65,6 +76,15 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             return;
         }
 
+        if (e.targetPutIntoGraveyardFromAnywhereThisTurn()
+                && (graveyardOwnerId == null
+                || !gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+                .getOrDefault(graveyardOwnerId, Set.of()).contains(targetCard.getId()))) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                    + " fizzles (target was not put into a graveyard this turn)."));
+            return;
+        }
+
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
         if (graveyardOwnerId != null) {
             exileService.exileCard(gameData, graveyardOwnerId, targetCard);
@@ -73,9 +93,36 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
+        int createdPermanentCount = entry.getCreatedPermanentIds().size();
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                e.additionalKeywords(), e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
-                e.powerOverride(), e.toughnessOverride());
+                e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
+                e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
+                new ArrayList<>(), e.additionalKeywords());
+
+        if (e.exileOtherControlledTokensOfSubtype() != null) {
+            Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()
+                    .subList(createdPermanentCount, entry.getCreatedPermanentIds().size()));
+            PermanentPredicate filter = new PermanentAllOfPredicate(List.of(
+                    new PermanentIsTokenPredicate(),
+                    new PermanentHasSubtypePredicate(e.exileOtherControlledTokensOfSubtype()),
+                    new PermanentControlledBySourceControllerPredicate()));
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard().getId())
+                    .withSourceControllerId(entry.getControllerId());
+            List<Permanent> toExile = new ArrayList<>();
+            for (Permanent permanent : gameData.playerBattlefields
+                    .getOrDefault(entry.getControllerId(), List.of())) {
+                if (!createdByThisEffect.contains(permanent.getId())
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext)) {
+                    toExile.add(permanent);
+                }
+            }
+            for (Permanent permanent : toExile) {
+                permanentRemovalService.removePermanentToExile(gameData, permanent);
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+            }
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
 
         // Soul Separator's second token: a black Zombie whose P/T are the exiled card's printed P/T.
         if (e.createZombieTokenWithExiledCardStats()) {

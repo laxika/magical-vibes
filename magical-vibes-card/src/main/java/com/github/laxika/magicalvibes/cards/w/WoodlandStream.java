@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
 @CardRegistration(set = "XLN", collectorNumber = "284")
+@CardRegistration(set = "RIX", collectorNumber = "191")
 @CardRegistration(set = "AKH", collectorNumber = "287")
 @CardRegistration(set = "HOU", collectorNumber = "204")
 @CardRegistration(set = "M19", collectorNumber = "260")
+@CardRegistration(set = "SOI", collectorNumber = "282")
 public class WoodlandStream extends Card {
 
     public WoodlandStream() {

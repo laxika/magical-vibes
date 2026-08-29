@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "73")
+@CardRegistration(set = "MGB", collectorNumber = "6")
 public class Vampirism extends Card {
 
     public Vampirism() {

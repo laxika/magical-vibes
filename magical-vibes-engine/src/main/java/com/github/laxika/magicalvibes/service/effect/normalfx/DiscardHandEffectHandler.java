@@ -46,6 +46,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case CONTROLLER -> discardHand(gameData, controllerId, controllerId, cardName);
             case TARGET_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
+            case TRIGGERING_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
             case ACTIVE_PLAYER -> discardHand(gameData, entry.getTargetId(), controllerId, cardName);
             case EACH_PLAYER, EACH_OPPONENT -> {
                 boolean opponentsOnly = e.recipient() == DiscardRecipient.EACH_OPPONENT;
@@ -73,27 +74,31 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         return order;
     }
 
-    private void discardHand(GameData gameData, UUID playerId, UUID controllerId, String cardName) {
+    /** Discards one player's entire hand and returns the number of cards discarded. */
+    public int discardHand(GameData gameData, UUID playerId, UUID controllerId, String cardName) {
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
 
         if (hand == null || hand.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));
             log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
-            return;
+            return 0;
         }
 
         List<Card> discarded = new ArrayList<>(hand);
         hand.clear();
         gameData.discardCausedByOpponent = !playerId.equals(controllerId);
 
+        triggerCollectionService.beginDiscardEvent(gameData, playerId);
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
+        triggerCollectionService.finishDiscardEvent(gameData);
 
         gameLogService.append(gameData, GameLog.text(playerName + " discards their hand ("
                 + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ")."));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discarded.size(), cardName);
+        return discarded.size();
     }
 }

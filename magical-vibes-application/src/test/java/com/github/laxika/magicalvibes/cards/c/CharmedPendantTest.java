@@ -24,9 +24,10 @@ class CharmedPendantTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(milled));
 
         harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        assertThat(gd.stack).isEmpty();
         assertThat(pendant.isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
@@ -46,8 +47,9 @@ class CharmedPendantTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(milled));
 
         harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

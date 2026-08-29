@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "280")
+@CardRegistration(set = "PCY", collectorNumber = "125")
 public class SpittingSpider extends Card {
 
     public SpittingSpider() {

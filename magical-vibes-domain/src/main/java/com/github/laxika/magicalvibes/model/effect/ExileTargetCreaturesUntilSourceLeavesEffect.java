@@ -14,11 +14,21 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Tokens exiled this way cease to exist (CR 111.7) and register no return.
  */
-public record ExileTargetCreaturesUntilSourceLeavesEffect(int maxTargets, boolean returnToHand)
+public record ExileTargetCreaturesUntilSourceLeavesEffect(int maxTargets, boolean returnToHand,
+                                                          boolean xScaled)
         implements CardEffect, BattlefieldAndGraveyardCardChoosingEffect {
+
+    public ExileTargetCreaturesUntilSourceLeavesEffect(int maxTargets, boolean returnToHand) {
+        this(maxTargets, returnToHand, false);
+    }
 
     @Override
     public int mixedZoneMaxTargets() {
         return maxTargets;
+    }
+
+    @Override
+    public int mixedZoneMaxTargets(int xValue) {
+        return xScaled ? Math.max(0, xValue) : maxTargets;
     }
 }

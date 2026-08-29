@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "55")
+@CardRegistration(set = "TPR", collectorNumber = "42")
 public class Capsize extends Card {
 
     public Capsize() {

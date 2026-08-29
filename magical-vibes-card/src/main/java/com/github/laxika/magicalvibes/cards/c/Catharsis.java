@@ -38,7 +38,7 @@ public class Catharsis extends Card {
                 new BoostAllOwnCreaturesEffect(1, 1)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.RED, 2),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());
     }

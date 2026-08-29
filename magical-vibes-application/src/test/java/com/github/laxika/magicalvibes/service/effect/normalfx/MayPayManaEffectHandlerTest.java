@@ -37,6 +37,24 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
             }
 
     @Test
+    @DisplayName("ANY_OTHER_PLAYER skips the player whose spell caused the trigger")
+    void anyOtherPlayerSkipsTriggeringPlayer() {
+        Card card = createCard("Ice Cave");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{1}", wrapped, "Pay {1}?",
+                MayPayPayer.ANY_OTHER_PLAYER);
+        StackEntry entry = createEntry(card, player1Id, List.of(mayPayEffect));
+        entry.setActivePlayerId(player2Id);
+        gd.activePlayerId = player2Id;
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player1Id);
+        assertThat(gd.anyPlayerMayPayManaRemainingPlayers).isEmpty();
+    }
+
+    @Test
     @DisplayName("ENCHANTED_CONTROLLER payer prompts the stack entry's targetId, not the controller")
     void enchantedControllerPayerPromptsTargetPlayer() {
         Card card = createCard("Paralyze");
@@ -60,6 +78,21 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         UUID targetPermanentId = UUID.randomUUID();
         StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), targetPermanentId);
         when(gameQueryService.findPermanentController(gd, targetPermanentId)).thenReturn(player2Id);
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+    }
+
+    @Test
+    @DisplayName("TARGET_PLAYER_OR_PERMANENT_CONTROLLER payer prompts a target player")
+    void targetPlayerOrPermanentControllerPayerPromptsTargetPlayer() {
+        Card card = createCard("Rhystic Lightning");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{2}", wrapped, "Pay {2}?",
+                MayPayPayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), player2Id);
 
         resolveEffect(gd, entry, mayPayEffect);
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "239")
+@CardRegistration(set = "MMQ", collectorNumber = "214")
 public class SqueeGoblinNabob extends Card {
 
     public SqueeGoblinNabob() {

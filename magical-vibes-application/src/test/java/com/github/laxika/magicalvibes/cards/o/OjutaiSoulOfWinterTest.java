@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OjutaiSoulOfWinter.class, Forest.class, GrizzlyBears.class})
 class OjutaiSoulOfWinterTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
     void nonDragonDoesNotTrigger() {
         addReadyOjutai();
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         declareAttackers(List.of(1));

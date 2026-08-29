@@ -81,4 +81,31 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         assertThat(theirAngel.getMarkedDamage()).isEqualTo(4);
         verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, theirAngel, 4, player1Id);
     }
+
+    @Test
+    @DisplayName("Applies a power multiplier as one damage event")
+    void appliesPowerMultiplier() {
+        Card wingCard = createCard("Chocobo Kick");
+        wingCard.setColor(CardColor.GREEN);
+        Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2));
+        Permanent angel = addPermanent(player2Id, createCreature("Serra Angel", 4, 4));
+        StackEntry entry = createMultiTargetEntry(wingCard, player1Id, List.of(bears.getId(), angel.getId()));
+
+        stubDamagePreventable();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(angel, 4);
+        stubCreatureSourceRedirects();
+        when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+        when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
+        when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
+        when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
+        when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
+        when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
+        stubNoKeywordsOnSourceWithDamageSource(entry, bears);
+
+        targetDealsPowerDamageToTargetHandler.resolve(gd, entry, new TargetDealsPowerDamageToTargetEffect(2));
+
+        assertThat(angel.getMarkedDamage()).isEqualTo(4);
+        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 4, player1Id);
+    }
 }

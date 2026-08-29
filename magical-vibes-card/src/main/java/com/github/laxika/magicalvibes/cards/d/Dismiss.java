@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "58")
+@CardRegistration(set = "TPR", collectorNumber = "45")
 public class Dismiss extends Card {
 
     public Dismiss() {

@@ -70,7 +70,7 @@ class IslandSanctuaryTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

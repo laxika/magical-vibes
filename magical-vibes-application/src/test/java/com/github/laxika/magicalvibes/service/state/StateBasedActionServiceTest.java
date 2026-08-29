@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,6 +76,8 @@ class StateBasedActionServiceTest {
     @Mock
     private StateTriggerService stateTriggerService;
     @Mock
+    private TriggerCollectionService triggerCollectionService;
+    @Mock
     private LegendRuleService legendRuleService;
     @Mock
     private BattleDefeatSupport battleDefeatSupport;
@@ -104,8 +108,22 @@ class StateBasedActionServiceTest {
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        lenient().when(gameQueryService.hasKeyword(any(GameData.class), any(Permanent.class),
+                eq(Keyword.START_YOUR_ENGINES))).thenReturn(false);
         // Lethal-damage SBA reads losesAllAbilities via computeStaticBonus (Ogre Enforcer path).
         lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(EMPTY_BONUS);
+        lenient().when(gameQueryService.withQueryScope(any(), any())).thenAnswer(invocation ->
+                invocation.<Supplier<?>>getArgument(1).get());
+    }
+
+    @Test
+    @DisplayName("Lethal permanent checks share one read-only query scope")
+    void lethalPermanentChecksShareQueryScope() {
+        gd.playerBattlefields.get(player1Id).add(new Permanent(createCreatureCard("Creature")));
+
+        sut.performStateBasedActions(gd);
+
+        verify(gameQueryService, atLeastOnce()).withQueryScope(eq(gd), any());
     }
 
     private static Card createCreatureCard(String name) {
@@ -137,6 +155,7 @@ class StateBasedActionServiceTest {
         if (finalChapter >= 1) card.addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 2) card.addEffect(EffectSlot.SAGA_CHAPTER_II, new DealDamageToAnyTargetEffect(1));
         if (finalChapter >= 3) card.addEffect(EffectSlot.SAGA_CHAPTER_III, new DealDamageToAnyTargetEffect(1));
+        if (finalChapter >= 4) card.addEffect(EffectSlot.SAGA_CHAPTER_IV, new DealDamageToAnyTargetEffect(1));
         return card;
     }
 
@@ -227,7 +246,10 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(1);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(true);
+            doAnswer(invocation -> {
+                perm.setMarkedDamage(0);
+                return true;
+            }).when(graveyardService).tryRegenerate(gd, perm);
 
             sut.performStateBasedActions(gd);
 
@@ -314,6 +336,62 @@ class StateBasedActionServiceTest {
         }
 
         @Test
+        @DisplayName("A lethal-damage replacement may remove a later permanent during the scan")
+        void lethalDamageReplacementCanMutateBattlefieldDuringScan() {
+            Permanent creature = new Permanent(createCreatureCard("Protected Creature"));
+            creature.setMarkedDamage(3);
+            Permanent aura = new Permanent(new Card());
+            gd.playerBattlefields.get(player1Id).add(creature);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            doAnswer(invocation -> {
+                creature.setMarkedDamage(0);
+                gd.playerBattlefields.get(player1Id).remove(aura);
+                return true;
+            }).when(graveyardService).tryRegenerate(gd, creature);
+
+            sut.performStateBasedActions(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(creature);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, creature);
+        }
+
+        @Test
+        @DisplayName("A replacement that mutates the battlefield does not skip a later lethal creature")
+        void lethalDamageReplacementDoesNotSkipLaterLethalCreature() {
+            Permanent protectedCreature = new Permanent(createCreatureCard("Protected Creature"));
+            protectedCreature.setMarkedDamage(3);
+            Permanent aura = new Permanent(new Card());
+            Permanent doomedCreature = new Permanent(createCreatureCard("Doomed Creature"));
+            doomedCreature.setMarkedDamage(3);
+            gd.playerBattlefields.get(player1Id).add(protectedCreature);
+            gd.playerBattlefields.get(player1Id).add(aura);
+            gd.playerBattlefields.get(player1Id).add(doomedCreature);
+
+            when(gameQueryService.isCreature(gd, protectedCreature)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, protectedCreature)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, protectedCreature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, aura)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, doomedCreature)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, doomedCreature)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, doomedCreature, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            doAnswer(invocation -> {
+                protectedCreature.setMarkedDamage(0);
+                gd.playerBattlefields.get(player1Id).remove(aura);
+                return true;
+            }).when(graveyardService).tryRegenerate(gd, protectedCreature);
+            when(graveyardService.tryRegenerate(gd, doomedCreature)).thenReturn(false);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, doomedCreature);
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, protectedCreature);
+        }
+
+        @Test
         @DisplayName("Indestructible creature with lethal damage survives")
         void indestructibleCreatureSurvivesLethalDamage() {
             Card card = createCreatureCard("Darksteel Colossus");
@@ -341,7 +419,10 @@ class StateBasedActionServiceTest {
             when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
             when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(2);
             when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(true);
+            doAnswer(invocation -> {
+                perm.setMarkedDamage(0);
+                return true;
+            }).when(graveyardService).tryRegenerate(gd, perm);
 
             sut.performStateBasedActions(gd);
 
@@ -574,6 +655,19 @@ class StateBasedActionServiceTest {
         }
 
         @Test
+        @DisplayName("Four-chapter Saga survives with three lore counters")
+        void fourChapterSagaSurvivesAtChapterThree() {
+            Card card = createSagaCard("Four-Chapter Saga", 4);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
         @DisplayName("Saga is not sacrificed if chapter ability from it is still on the stack")
         void sagaNotSacrificedWhenChapterAbilityOnStack() {
             Card card = createSagaCard("The Flame of Keld", 3);
@@ -586,6 +680,23 @@ class StateBasedActionServiceTest {
                     StackEntryType.TRIGGERED_ABILITY, card, player1Id,
                     "Chapter III", List.of(), null, perm.getId());
             gd.stack.add(chapterAbility);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
+        @DisplayName("Saga is not sacrificed while its chapter ability is parked for input")
+        void sagaNotSacrificedWhileChapterAbilityResolutionIsParked() {
+            Card card = createSagaCard("The Great Synthesis", 3);
+            Permanent perm = new Permanent(card);
+            perm.setCounterCount(CounterType.LORE, 3);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            gd.pendingEffectResolutionEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                    "Chapter III", List.of(), null, perm.getId());
 
             sut.performStateBasedActions(gd);
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -175,6 +176,23 @@ class SearchLibraryEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("Deferred-shuffle search leaves the shuffle for a later effect")
+    void deferredShuffleSearchLeavesShuffleForLaterEffect() {
+        Card card = createCard("Any Card");
+        gd.playerDecks.get(player1Id).add(card);
+        stubCardViewFactory();
+
+        SearchLibraryEffect effect = SearchLibraryEffect.withDeferredShuffle();
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Gamble"),
+                player1Id, "Gamble", List.of(effect));
+
+        searchLibraryHandler.resolve(gd, entry, effect);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().shuffleAfterSelection()).isFalse();
+    }
+
+    @Test
     @DisplayName("No matching cards shuffles and logs")
     void noMatchingCardsShuffles() {
         Card bears1 = createCard("Grizzly Bears", CardType.CREATURE);
@@ -230,6 +248,27 @@ class SearchLibraryEffectHandlerTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
+    }
+
+    @Test
+    @DisplayName("Carries a battlefield counter through the library search interaction")
+    void searchToBattlefieldWithCounter() {
+        Card plains = createBasicLand("Plains");
+        gd.playerDecks.get(player1Id).add(plains);
+        CardPredicate filter = new CardNamedPredicate("Test Filter");
+        when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(filter), isNull(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
+        stubCardViewFactory();
+
+        SearchLibraryEffect effect = new SearchLibraryEffect(filter,
+                LibrarySearchDestination.BATTLEFIELD_TAPPED, CounterType.STUN);
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Magmatic Hellkite"),
+                player1Id, "Magmatic Hellkite", List.of(effect));
+
+        searchLibraryHandler.resolve(gd, entry, effect);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().battlefieldCounter()).isEqualTo(CounterType.STUN);
     }
 
     @Test

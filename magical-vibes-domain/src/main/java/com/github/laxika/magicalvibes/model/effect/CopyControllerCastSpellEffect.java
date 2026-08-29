@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 
@@ -18,18 +20,64 @@ import java.util.UUID;
  *
  * @param spellSnapshot snapshot of the spell on the stack at trigger time
  * @param castingPlayerId the player who cast the spell (and controls the copy)
+ * @param additionalTypes types added to the copied card
+ * @param removedSupertypes supertypes removed from the copied card
+ * @param tokenCopy whether the copied creature spell becomes a token as it resolves
+ * @param mayChooseNewTargets whether the copy gets a choose-new-targets prompt
+ * @param grantHasteToPermanentSpell whether the copy of a permanent spell gains haste
+ * @param markSourceOncePerTurnOnAccept whether accepting the copy marks the source's once-per-turn trigger
  */
 public record CopyControllerCastSpellEffect(
         StackEntry spellSnapshot,
         UUID castingPlayerId,
-        Set<Keyword> grantedKeywords
+        Set<Keyword> grantedKeywords,
+        Set<CardType> additionalTypes,
+        Set<CardSupertype> removedSupertypes,
+        boolean tokenCopy,
+        boolean mayChooseNewTargets,
+        boolean grantHasteToPermanentSpell,
+        boolean markSourceOncePerTurnOnAccept
 ) implements CardEffect {
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId) {
-        this(spellSnapshot, castingPlayerId, Set.of());
+        this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), Set.of(), false, true, false, false);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, Set.of(), Set.of(), false, true, false, false);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy, true, false, false);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy,
+            boolean mayChooseNewTargets) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy,
+                mayChooseNewTargets, false, false);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes, boolean tokenCopy,
+            boolean mayChooseNewTargets, boolean grantHasteToPermanentSpell,
+            boolean markSourceOncePerTurnOnAccept) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, Set.of(), tokenCopy,
+                mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept);
+    }
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,
+            Set<CardSupertype> removedSupertypes, boolean tokenCopy, boolean mayChooseNewTargets) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
+                tokenCopy, mayChooseNewTargets, false, false);
     }
 
     public CopyControllerCastSpellEffect {
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
+        additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
+        removedSupertypes = removedSupertypes == null ? Set.of() : Set.copyOf(removedSupertypes);
     }
 }

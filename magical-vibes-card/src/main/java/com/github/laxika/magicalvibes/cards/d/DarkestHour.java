@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "128")
+@CardRegistration(set = "USG", collectorNumber = "128")
 public class DarkestHour extends Card {
 
     public DarkestHour() {

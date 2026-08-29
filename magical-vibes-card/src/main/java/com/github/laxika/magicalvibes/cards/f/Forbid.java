@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "EXO", collectorNumber = "35")
+@CardRegistration(set = "TPR", collectorNumber = "50")
 public class Forbid extends Card {
 
     public Forbid() {

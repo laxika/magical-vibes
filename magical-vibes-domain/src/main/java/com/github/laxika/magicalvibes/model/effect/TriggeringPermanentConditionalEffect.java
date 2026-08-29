@@ -12,11 +12,22 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record TriggeringPermanentConditionalEffect(
         PermanentPredicate predicate,
         CardEffect wrapped,
-        boolean anyController
-) implements CardEffect {
+        boolean anyController,
+        boolean combatOpponent
+) implements CardEffect, CombatOpponentReferencingEffect {
 
     public TriggeringPermanentConditionalEffect(PermanentPredicate predicate, CardEffect wrapped) {
-        this(predicate, wrapped, false);
+        this(predicate, wrapped, false, false);
+    }
+
+    public TriggeringPermanentConditionalEffect(PermanentPredicate predicate, CardEffect wrapped,
+                                                boolean anyController) {
+        this(predicate, wrapped, anyController, false);
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return combatOpponent;
     }
 
     @Override

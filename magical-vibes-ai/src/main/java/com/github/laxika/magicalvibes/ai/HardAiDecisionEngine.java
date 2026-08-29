@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -87,6 +88,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final GameSimulator gameSimulator;
     private final RaceEvaluator raceEvaluator;
     private final AmountEvaluationService amountEvaluationService;
+
+    /** Derived values shared only while one unchanged game state is being evaluated. */
+    private final class DecisionContext {
+        private final GameData gameData;
+        private VirtualManaPool virtualManaPool;
+        private long virtualManaPoolStateVersion = -1;
+
+        private DecisionContext(GameData gameData) {
+            this.gameData = gameData;
+        }
+
+        private VirtualManaPool virtualManaPool() {
+            long stateVersion = gameData.domainStateVersion();
+            if (virtualManaPool == null || virtualManaPoolStateVersion != stateVersion) {
+                virtualManaPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+                virtualManaPoolStateVersion = stateVersion;
+            }
+            return virtualManaPool;
+        }
+    }
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
@@ -262,6 +283,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
+        DecisionContext decisionContext = new DecisionContext(gameData);
+
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean isActivePlayer = aiPlayer.getId().equals(gameData.activePlayerId);
@@ -273,7 +296,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN) {
                 // Before normal spell casting, check if burn spells in hand can deal lethal
-                if (tryBurnToFaceLethal(gameData)) {
+                if (tryBurnToFaceLethal(gameData, decisionContext)) {
                     return;
                 }
 
@@ -283,17 +306,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (isAlphaStrikePlusBurnLethalPrecombat(gameData)) {
                     log.info("AI (Hard): Alpha strike + burn plan detected precombat — " +
                             "only casting combat-relevant spells in game {}", gameId);
-                    if (tryCastPrecombatPrioritySpell(gameData)) {
+                    if (tryCastPrecombatPrioritySpell(gameData, decisionContext)) {
                         return;
                     }
-                    if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                    if (tryCastCombatRelevantSpellPrecombat(gameData, decisionContext)) {
                         return;
                     }
                     // Skip non-combat spells — proceed to combat to execute the plan
                 } else {
                     // Explicit precombat heuristics: removal to clear blockers for lethal,
                     // lords to pump attackers, haste creatures that can join the attack
-                    if (tryCastPrecombatPrioritySpell(gameData)) {
+                    if (tryCastPrecombatPrioritySpell(gameData, decisionContext)) {
                         return;
                     }
 
@@ -301,7 +324,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     // lords/anthems that meaningfully pump, any haste creature.
                     // Non-combat spells (card draw, non-haste creatures, enchantments) are
                     // deferred to postcombat main where they don't delay the attack.
-                    if (tryCastCombatRelevantSpellPrecombat(gameData)) {
+                    if (tryCastCombatRelevantSpellPrecombat(gameData, decisionContext)) {
                         return;
                     }
 
@@ -311,26 +334,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     if (hasPotentialAttackers(gameData)) {
                         // Skip general sorcery casting — defer to postcombat
                     } else {
-                        if (tryCastSpellWithInstantAwareness(gameData)) {
+                        if (tryCastSpellWithInstantAwareness(gameData, decisionContext)) {
                             return;
                         }
                     }
                 }
             } else {
                 // Postcombat: cast all remaining spells
-                if (tryCastSpellWithInstantAwareness(gameData)) {
+                if (tryCastSpellWithInstantAwareness(gameData, decisionContext)) {
                     return;
                 }
             }
         }
 
         // Try casting instants with timing evaluation
-        if (tryCastInstantWithTimingEvaluation(gameData)) {
+        if (tryCastInstantWithTimingEvaluation(gameData, decisionContext)) {
             return;
         }
 
         // Try activated abilities on controlled permanents
-        if (tryActivateAbility(gameData)) {
+        if (tryActivateAbility(gameData, decisionContext)) {
             return;
         }
 
@@ -363,11 +386,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      *   <li>Haste creature whose power pushes the attack to lethal or near-lethal</li>
      * </ol>
      */
-    private boolean tryCastPrecombatPrioritySpell(GameData gameData) {
+    private boolean tryCastPrecombatPrioritySpell(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         int opponentLife = gameData.getLife(opponentId);
 
@@ -435,11 +458,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Non-combat spells (card draw, non-haste creatures, enchantments) are skipped
      * so they can be cast in postcombat main instead.
      */
-    private boolean tryCastCombatRelevantSpellPrecombat(GameData gameData) {
+    private boolean tryCastCombatRelevantSpellPrecombat(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
 
         // Gather combat state
@@ -906,7 +929,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private boolean isSingleEffectRemoval(CardEffect effect) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (isSingleEffectRemoval(option.effect())) return true;
+                for (CardEffect modeEffect : option.effects()) {
+                    if (isSingleEffectRemoval(modeEffect)) return true;
+                }
             }
             return false;
         }
@@ -927,7 +952,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.SHROUD)) return false;
         if (gameQueryService.hasProtectionFromSource(gameData, creature, spell)) return false;
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, creature, spell.getColor())) return false;
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, spell)) return false;
+        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, spell, aiPlayer.getId())) return false;
         if (gameQueryService.hasHexproofFromColor(gameData, creature, spell.getColor())) return false;
 
         for (CardEffect effect : spell.getEffects(EffectSlot.SPELL)) {
@@ -943,7 +968,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                                    Permanent creature) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (canSingleEffectRemoveCreature(gameData, spell, option.effect(), creature)) return true;
+                for (CardEffect modeEffect : option.effects()) {
+                    if (canSingleEffectRemoveCreature(gameData, spell, modeEffect, creature)) return true;
+                }
             }
             return false;
         }
@@ -977,6 +1004,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             Map<UUID, Integer> damageAssignments,
             UUID sacrificePermanentId,
             List<Integer> exileGraveyardCardIndices,
+            BeholdSelection beholdSelection,
             int targetingTax
     ) {}
 
@@ -1003,7 +1031,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         // 2. Damage distribution
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return null;
@@ -1013,7 +1041,19 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : initialTargetId;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (isMultiTarget && modalPlan == null) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) return null;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
+                    gameData, card, aiPlayer.getId());
+            if (selection == null) return null;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (isMultiTarget && modalPlan == null) {
             multiTargetIds = targetSelector.chooseMultiTargets(gameData, card, aiPlayer.getId());
             if (multiTargetIds == null) return null;
             targetId = null;
@@ -1023,18 +1063,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (targetId == null) return null;
         } else if (targetId == null && modalPlan == null
                 && !EffectResolution.needsDamageDistribution(card)
-                && (EffectResolution.needsTarget(card) || card.isAura())) {
+                && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
+                && !hasPermanentManaValueEqualsXTarget(card)
+                && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return null;
         }
 
-        // Damage distribution spells don't use a single targetId
-        if (damageAssignments != null) {
-            targetId = null;
-        }
         // 4. Targeting tax
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return null;
         }
 
@@ -1043,11 +1083,17 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // 6. Graveyard exile cost
         List<Integer> exileGraveyardCardIndices = null;
-        if (findExileXGraveyardCost(card) != null) {
-            exileGraveyardCardIndices = selectAllGraveyardIndices(gameData);
+        ExileXCardsFromGraveyardCost exileXCost = findExileXGraveyardCost(card);
+        if (exileXCost != null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(
                     gameData, findExileNGraveyardCost(card));
+        }
+
+        BeholdSelection beholdSelection = selectBeholdCost(gameData, card);
+        if (beholdSelection == null) {
+            return null;
         }
 
         // 7. X value
@@ -1056,10 +1102,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         int costModifier = castingCostService.getCastCostModifier(
                 gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
-            if (hasPermanentManaValueEqualsXTarget(card)) {
+            if (hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
-                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
+                maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 maxX = Math.min(maxX, getMaxXForDiscardCost(gameData, card));
                 if (maxX <= 0) return null;
                 List<Permanent> validTargets =
@@ -1070,19 +1116,59 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
                         .orElse(validTargets.getFirst());
                 targetId = chosen.getId();
-                xValue = chosen.getCard().getManaValue();
+                xValue = hasPermanentManaValueEqualsXTarget(card)
+                        ? chosen.getCard().getManaValue()
+                        : Math.max(1, chosen.getCard().getManaValue());
             } else {
                 int smartX = manaManager.calculateSmartX(
                         gameData, aiPlayer.getId(), card, targetId, virtualPool, costModifier);
-                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card));
+                smartX = Math.min(smartX, getMaxXForGraveyardRequirements(gameData, card, targetId));
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return null;
                 xValue = smartX;
             }
         }
 
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return null;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return null;
+            }
+        }
+
+        if (exileXCost != null && castCost.hasX() && modalPlan == null) {
+            exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
+            if (exileGraveyardCardIndices == null) {
+                return null;
+            }
+        }
+
+        if (hasDelveCost(card)) {
+            exileGraveyardCardIndices = selectDelveGraveyardIndices(gameData, card, xValue, targetingTax);
+            if (exileGraveyardCardIndices == null) {
+                return null;
+            }
+        }
+
+        if (!canAffordSelectedSpellTarget(
+                gameData, card, virtualPool, targetId, multiTargetIds, targetingTax, xValue)) {
+            return null;
+        }
+
         return new SpellCastingPlan(handIndex, card, targetId, multiTargetIds, xValue,
-                damageAssignments, sacrificePermanentId, exileGraveyardCardIndices, targetingTax);
+                damageAssignments, sacrificePermanentId, exileGraveyardCardIndices,
+                beholdSelection, targetingTax);
     }
 
     /**
@@ -1093,11 +1179,27 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private boolean executeSpellCast(GameData gameData, SpellCastingPlan plan, String logLabel) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
-        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax)) {
+        int delveReduction = hasDelveCost(plan.card) && plan.exileGraveyardCardIndices != null
+                ? plan.exileGraveyardCardIndices.size() : 0;
+        CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
+                manaManager.buildVirtualManaPool(gameData, aiPlayer.getId()));
+        if (costReductionPlan == null) {
+            return false;
+        }
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                plan.card, plan.targetId, plan.multiTargetIds, plan.damageAssignments,
+                plan.sacrificePermanentId, plan.beholdSelection, costReductionPlan);
+        if (!canPayManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax,
+                delveReduction, costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
+            return false;
+        }
+        if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction,
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true;
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
-                gameData, plan.card, plan.xValue, plan.targetingTax);
+                gameData, plan.card, plan.xValue, plan.targetingTax, delveReduction);
         if (convokeCreatureIds == null) {
             return false;
         }
@@ -1108,18 +1210,25 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID fSacrifice = plan.sacrificePermanentId;
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
-        final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(gameData, plan.card);
+        final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(
+                gameData, plan.card, idx, fXValue, plan.targetingTax);
         final List<Integer> fDiscardHandCardIndices =
-                chooseDiscardXCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
+                chooseDiscardCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
+        final List<UUID> fImposedSacrificeIds = selectImposedSacrificePermanentIds(
+                gameData, plan.card, fSacrifice, fMultiSacrificeIds);
+        if (fImposedSacrificeIds == null) {
+            return false;
+        }
         send(() -> gameActions.handlePlayCard(
-                new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
-                        fMultiTargets, convokeCreatureIds, null, fSacrifice,
-                        null, null, null, null, null, fExileIndices, null, null, null,
-                        fDiscardHandCardIndex, fDiscardHandCardIndices, null, fMultiSacrificeIds)));
+                buildSpellPlayCardRequest(gameData, plan.card, idx, fXValue, fTargetId, fDamage,
+                        fMultiTargets, convokeCreatureIds, costReductionPlan.permanentIds(),
+                        fSacrifice, null, fExileIndices,
+                        fDiscardHandCardIndex, fDiscardHandCardIndices, fImposedSacrificeIds,
+                        fMultiSacrificeIds, plan.beholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(plan.card)) {
+        if (!spellCastStarted(gameData, hand, plan.card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("{}: PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
                     logLabel, gameId, plan.card.getName(), idx,
@@ -1152,11 +1261,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * while holding mana for one instant, or holding all 5 mana for both instants if
      * their combined value exceeds the sorcery.
      */
-    private boolean tryCastSpellWithInstantAwareness(GameData gameData) {
+    private boolean tryCastSpellWithInstantAwareness(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
 
         // Compute total value of ALL castable sorcery-speed spells (no reservation)
         double totalSorceryValue = estimateTotalCastableValue(gameData, hand, virtualPool, 0);
@@ -1341,10 +1450,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (card.hasType(CardType.LAND) || isInstantSpeedCard(card)) continue;
             if (card.getManaCost() == null) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
-            // For X spells targeting a creature with MV==X (e.g. Entrancing Melody),
-            // verify valid targets exist for the affordable maxX. Without this check,
+            // For X spells whose permanent target has a mana-value constraint (e.g. Entrancing
+            // Melody or Dominate), verify valid targets exist for the affordable maxX. Without this check,
             // MCTS would wastefully simulate the spell when no targets can be hit.
-            if (hasPermanentManaValueEqualsXTarget(card) && new ManaCost(card.getManaCost()).hasX()) {
+            if ((hasPermanentManaValueEqualsXTarget(card) || hasPermanentManaValueAtMostXTarget(card))
+                    && new ManaCost(card.getManaCost()).hasX()) {
                 int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = manaManager.clampByXValueCap(gameData, aiPlayer.getId(), card, maxX);
@@ -1509,11 +1619,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * category-based timing with value multipliers.
      * Only casts if the timing-adjusted value exceeds a minimum threshold.
      */
-    private boolean tryCastInstantWithTimingEvaluation(GameData gameData) {
+    private boolean tryCastInstantWithTimingEvaluation(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
         boolean isOpponentsTurn = !aiPlayer.getId().equals(gameData.activePlayerId);
         TurnStep step = gameData.currentStep;
 
@@ -1854,7 +1964,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * Uses timing awareness to only activate combat-oriented abilities during combat
      * and card-draw abilities at end of opponent's turn.
      */
-    private boolean tryActivateAbility(GameData gameData) {
+    private boolean tryActivateAbility(GameData gameData, DecisionContext decisionContext) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         if (battlefield.isEmpty()) return false;
 
@@ -1884,7 +1994,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
 
         record AbilityCandidate(int permanentIndex, int abilityIndex, ActivatedAbility ability,
                                 Permanent permanent, double value, UUID targetId) {}
@@ -1905,6 +2015,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
                 // Skip variable loyalty cost abilities (-X, too complex)
                 if (ability.isVariableLoyaltyCost()) continue;
+
+                // Assignment-backed abilities require a per-target amount map that this path
+                // does not model. Treating them as ordinary single-target abilities produces an
+                // incomplete activation announcement even when only one target is selected.
+                if (EffectResolution.needsDamageDistribution(ability.getEffects())) continue;
 
                 // Skip multi-target abilities (rare for activated abilities)
                 if (ability.isMultiTarget()) continue;
@@ -2254,13 +2369,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleAttackers(GameData gameData) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
+        List<Integer> availableIndices = getAttackableIndicesForDecision(gameData, actingPlayerId);
         if (availableIndices.isEmpty()) {
             sendAttackerDeclaration(new DeclareAttackersRequest(List.of(), null));
             return;
         }
 
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
+        List<Integer> mustAttackIndices = getMustAttackIndicesForDecision(
+                gameData, actingPlayerId, availableIndices);
 
         // "All-in" means every creature whose attack accomplishes something — a creature
         // with power <= 0 assigns no combat damage (CR 510.1a) and just dies to a free block.
@@ -2705,11 +2821,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * until they're dead. This is checked before combat — no point attacking if we
      * can just burn them out.
      */
-    private boolean tryBurnToFaceLethal(GameData gameData) {
+    private boolean tryBurnToFaceLethal(GameData gameData, DecisionContext decisionContext) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null || hand.isEmpty()) return false;
 
-        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+        ManaPool virtualPool = decisionContext.virtualManaPool();
 
         // Collect castable burn spells that can target a player
         List<Card> castableBurn = new ArrayList<>();
@@ -2740,17 +2856,51 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             int cardIndex = hand.indexOf(burnCard);
             if (cardIndex < 0) continue;
 
+            BeholdSelection beholdSelection = selectBeholdCost(gameData, burnCard);
+            if (beholdSelection == null) {
+                continue;
+            }
+
             log.info("AI (Hard): Burn-to-face lethal! Casting {} for {} damage in game {}",
                     burnCard.getName(), raceEvaluator.getBurnToFaceDamage(burnCard), gameId);
 
+            List<Integer> delveIndices = hasDelveCost(burnCard)
+                    ? selectDelveGraveyardIndices(gameData, burnCard, null, 0) : List.of();
+            if (delveIndices == null) {
+                continue;
+            }
+            int delveReduction = delveIndices.size();
+            CostReductionPlan costReductionPlan = selectCostReductionPlan(
+                    gameData, burnCard, null, 0, delveReduction,
+                    decisionContext.virtualManaPool());
+            if (costReductionPlan == null) {
+                continue;
+            }
+            UUID sacrificePermanentId = selectSacrificeTarget(gameData, burnCard);
+            Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                    burnCard, opponentId, null, null,
+                    sacrificePermanentId, beholdSelection, costReductionPlan);
+            if (!canPayManaForSpell(gameData, burnCard, null, 0, delveReduction,
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
+                continue;
+            }
+
             // Cast the burn spell targeting the opponent player
-            if (tapManaForSpell(gameData, burnCard, null, 0)) {
+            if (tapManaForSpell(gameData, burnCard, null, 0, delveReduction,
+                    costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
                 return true; // Mana ability triggered a pending choice
+            }
+            List<UUID> imposedSacrificeIds = selectImposedSacrificePermanentIds(
+                    gameData, burnCard, null, List.of());
+            if (imposedSacrificeIds == null) {
+                continue;
             }
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> gameActions.handlePlayCard(
-                    new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                    buildSpellPlayCardRequest(gameData, burnCard, idx, null, targetId, null, null, null,
+                            costReductionPlan.permanentIds(), sacrificePermanentId, null, delveIndices, null, null,
+                            imposedSacrificeIds, List.of(), beholdSelection)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
             if (hand.contains(burnCard)) {
@@ -3225,7 +3375,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice) {
+            if (colorChoice.options().isEmpty()) {
+                return;
+            }
             String bestSubtype = findMostCommonCreatureType(gameData);
+            if (!colorChoice.options().contains(bestSubtype)) {
+                bestSubtype = colorChoice.options().getFirst();
+            }
             log.info("AI (Hard): Choosing creature type {} in game {}", bestSubtype, gameId);
             final String subtype = bestSubtype;
             send(() -> gameActions.answerInteraction(

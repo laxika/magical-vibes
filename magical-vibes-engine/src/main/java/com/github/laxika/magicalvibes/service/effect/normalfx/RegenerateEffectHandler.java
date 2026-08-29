@@ -29,7 +29,11 @@ public class RegenerateEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         
-                UUID regenerationTargetId = entry.getTargetId();
+                UUID regenerationTargetId = effect.targetSpec().selfTargeting()
+                        && entry.getTriggeringCardId() != null
+                        && entry.getSourcePermanentId() != null
+                        ? entry.getSourcePermanentId()
+                        : entry.getTargetId();
                 if (regenerationTargetId == null && entry.getSourcePermanentId() != null) {
                     Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                     if (source != null) {

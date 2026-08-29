@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "172")
 @CardRegistration(set = "INR", collectorNumber = "480")
+@CardRegistration(set = "TDM", collectorNumber = "138")
 public class CraterhoofBehemoth extends Card {
 
     public CraterhoofBehemoth() {
@@ -20,7 +21,7 @@ public class CraterhoofBehemoth extends Card {
         // turn, where X is the number of creatures you control (this one included).
         var creatureCount = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllOwnCreaturesEffect(creatureCount, creatureCount));
     }
 }

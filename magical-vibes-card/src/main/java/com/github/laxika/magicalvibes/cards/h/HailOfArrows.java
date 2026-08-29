@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "18")
+@CardRegistration(set = "SOK", collectorNumber = "11")
 public class HailOfArrows extends Card {
 
     public HailOfArrows() {

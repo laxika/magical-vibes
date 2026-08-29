@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEf
  * Heartwood Dryad — 2/1 Dryad that can block creatures with shadow as though it had shadow.
  */
 @CardRegistration(set = "TMP", collectorNumber = "231")
+@CardRegistration(set = "TPR", collectorNumber = "173")
 public class HeartwoodDryad extends Card {
 
     public HeartwoodDryad() {

@@ -14,17 +14,39 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * lock {@link DoesntUntapEffect#targetWhileSourceTapped()} records, but bound to the chosen
  * permanent instead of a cast-time target (Thalakos Dreamsower).
  *
+ * <p>With {@code skipNextUntap}, the chosen permanent skips its controller's next untap step.
+ *
  * @param predicate                     filter restricting the choosable permanents
  * @param preventUntapWhileSourceTapped whether the chosen permanent is also untap-locked while the
  *                                      source stays tapped
+ * @param preventUntapWhileSourceOnBattlefield whether the chosen permanent is also untap-locked
+ *                                              while the source stays on the battlefield
+ * @param chooseFromDamagedPlayer        whether the choice is restricted to the damaged player's
+ *                                      battlefield
+ * @param skipNextUntap                  whether the chosen permanent skips its controller's next
+ *                                      untap step
  */
 public record TapChosenPermanentEffect(PermanentPredicate predicate,
-                                       boolean preventUntapWhileSourceTapped)
+                                       boolean preventUntapWhileSourceTapped,
+                                       boolean preventUntapWhileSourceOnBattlefield,
+                                       boolean chooseFromDamagedPlayer,
+                                       boolean skipNextUntap)
         implements CombatDamageTriggerContextEffect {
 
-    /** The untap lock is keyed to the damage-dealing permanent, so the trigger binds it as its source. */
+    public TapChosenPermanentEffect(PermanentPredicate predicate, boolean preventUntapWhileSourceTapped) {
+        this(predicate, preventUntapWhileSourceTapped, false, false, false);
+    }
+
+    public static TapChosenPermanentEffect damagedPlayerControls(PermanentPredicate predicate) {
+        return new TapChosenPermanentEffect(predicate, false, true, true, false);
+    }
+
+    public static TapChosenPermanentEffect damagedPlayerControlsAndSkipsNextUntap(PermanentPredicate predicate) {
+        return new TapChosenPermanentEffect(predicate, false, false, true, true);
+    }
+
     @Override
     public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
+        return chooseFromDamagedPlayer ? TriggerContext.DAMAGED_PLAYER : TriggerContext.SOURCE_SELF;
     }
 }

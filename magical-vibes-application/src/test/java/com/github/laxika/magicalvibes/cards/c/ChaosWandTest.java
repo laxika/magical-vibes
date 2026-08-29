@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Insight;
 import com.github.laxika.magicalvibes.model.Card;
@@ -47,6 +48,32 @@ class ChaosWandTest extends BaseCardTest {
                 && entry.getEntryType() == StackEntryType.SORCERY_SPELL
                 && entry.getControllerId().equals(player1.getId()));
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chooses a mode and target before resolving a modal found spell")
+    void castsModalFoundSpellWithModeAndTarget() {
+        activateWithLibrary(List.of(new Forest(), new FuneralCharm()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "Target player discards a card");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Funeral Charm")
+                && player2.getId().equals(entry.getTargetId()));
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName).contains("Forest");
     }
 
     @Test

@@ -4,12 +4,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,6 +71,8 @@ class TargetValidationServiceSpecTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.playerIds.add(player1Id);
         gd.playerIds.add(player2Id);
+        gd.orderedPlayerIds.add(player1Id);
+        gd.orderedPlayerIds.add(player2Id);
 
         sourceCard = new Card();
         sourceCard.setName("Bolt Source");
@@ -115,6 +124,14 @@ class TargetValidationServiceSpecTest {
         @Override
         public TargetSpec targetSpec() {
             return TargetSpec.benign(TargetPredicates.land());
+        }
+    }
+
+    private record GraveyardCreatureEffect(GraveyardSearchScope scope) implements CardEffect {
+        @Override
+        public TargetSpec targetSpec() {
+            return TargetSpec.benign(TargetPredicates.graveyardCards(
+                    new CardTypePredicate(CardType.CREATURE), scope));
         }
     }
 
@@ -230,6 +247,70 @@ class TargetValidationServiceSpecTest {
     @DisplayName("NONE spec does nothing (no target checks) even with a null target")
     void noneSpecDoesNothing() {
         assertThat(check(new UntargetedEffect(), null)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An omitted up-to-one graveyard target is legal")
+    void optionalGraveyardTargetMayBeOmitted() {
+        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .targetGraveyard(true)
+                .upTo(true)
+                .build();
+
+        assertThat(sut.checkEffectTargets(
+                List.of(effect),
+                new TargetValidationContext(
+                        gd, null, Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("An omitted up-to-one graveyard target remains legal through a conditional wrapper")
+    void optionalGraveyardTargetMayBeOmittedThroughConditionalEffect() {
+        ReturnCardFromGraveyardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .targetGraveyard(true)
+                .upTo(true)
+                .build();
+
+        assertThat(sut.checkEffectTargets(
+                List.of(new ConditionalEffect(new Morbid(), returnEffect)),
+                new TargetValidationContext(
+                        gd, null, Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("GRAVEYARD_CARD spec rejects a card that does not match its predicate")
+    void graveyardSpecRejectsPredicateMismatch() {
+        Card land = new Card();
+        land.setType(CardType.LAND);
+        when(gameQueryService.canGraveyardCardsBeTargeted(gd)).thenReturn(true);
+        when(gameQueryService.findCardInGraveyardById(gd, land.getId())).thenReturn(land);
+        when(gameQueryService.findGraveyardOwnerById(gd, land.getId())).thenReturn(player1Id);
+
+        assertThat(sut.checkEffectTargets(
+                List.of(new GraveyardCreatureEffect(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
+                new TargetValidationContext(
+                        gd, land.getId(), Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
+                .contains("Target card does not match the required predicate");
+    }
+
+    @Test
+    @DisplayName("GRAVEYARD_CARD spec enforces the declared graveyard scope")
+    void graveyardSpecRejectsCardOutsideScope() {
+        Card creature = new Card();
+        creature.setType(CardType.CREATURE);
+        when(gameQueryService.canGraveyardCardsBeTargeted(gd)).thenReturn(true);
+        when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
+        when(gameQueryService.findGraveyardOwnerById(gd, creature.getId())).thenReturn(player2Id);
+
+        assertThat(sut.checkEffectTargets(
+                List.of(new GraveyardCreatureEffect(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
+                new TargetValidationContext(
+                        gd, creature.getId(), Zone.GRAVEYARD, sourceCard, 0, player1Id, null)))
+                .contains("Target card is not in an allowed graveyard");
     }
 
     @Test

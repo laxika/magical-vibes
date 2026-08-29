@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
  * Back half (Believe) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "154")
+@CardRegistration(set = "AKR", collectorNumber = "253")
 public class ReasonBelieve extends Card {
 
     public ReasonBelieve() {

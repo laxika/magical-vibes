@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "146")
+@CardRegistration(set = "DRK", collectorNumber = "48")
 public class MarshGas extends Card {
 
     public MarshGas() {

@@ -14,8 +14,11 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -175,6 +178,34 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Starts the next pending "each opponent may search for a land card to battlefield" search
+     * from the follow-up's remaining-searchers list. Each searcher may take one land card, which
+     * enters untapped, then shuffles.
+     */
+    public boolean startNextEachPlayerLandToBattlefieldSearch(GameData gameData,
+                                                               LibrarySearchFollowUp followUp) {
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerLandToBattlefieldSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
+            boolean started = performLibrarySearch(
+                    gameData,
+                    nextPlayerId,
+                    card -> card.hasType(CardType.LAND),
+                    "land cards",
+                    "You may search your library for a land card and put it onto the battlefield.",
+                    false,
+                    true,
+                    LibrarySearchDestination.BATTLEFIELD,
+                    followUp.withRemainingEachPlayerLandToBattlefieldSearches(remaining)
+            );
+            if (started) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Starts the next targeted player's mandatory unrestricted search for a card to put on top of
      * their library. Players whose searches cannot start are skipped, while the remaining players
      * continue through the shared library-search interaction flow.
@@ -205,17 +236,19 @@ public class LibrarySearchSupport {
      * pick from the follow-up's same-name queue (Clarion Ultimatum, Doubling Chant). Each queue entry
      * is one permanent's name; the queue's own destination and creature-only restriction apply to
      * every pick, and the advanced remainder rides the begun search. Names with no matching card in
-     * the library are skipped. Returns true if a search was initiated, false if the queue is
-     * exhausted or absent, search is prevented, or the library is empty.
+     * the library are skipped. A queue may also identify a different library owner and battlefield
+     * controller, as used by Dichotomancy. Returns true if a search was initiated, false if the
+     * queue is exhausted or absent, search is prevented, or the library is empty.
      */
     public boolean startNextSameNamePick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
-        if (isSearchPrevented(gameData, playerId)) return false;
-
         SameNamePickQueue queue = followUp.remainingSameNamePicks();
         if (queue == null) return false;
 
+        UUID libraryOwnerId = queue.libraryOwnerId() != null ? queue.libraryOwnerId() : playerId;
+        if (isSearchPrevented(gameData, playerId, libraryOwnerId, true, playerId)) return false;
+
         boolean tapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
-        List<Card> deck = gameData.playerDecks.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         List<String> remaining = new ArrayList<>(queue.names());
         while (!remaining.isEmpty()) {
             String name = remaining.remove(0);
@@ -229,13 +262,18 @@ public class LibrarySearchSupport {
             if (matches.isEmpty()) {
                 continue;
             }
-            String prompt = "You may search your library for a " + (queue.creatureOnly() ? "creature card" : "card")
+            String libraryDescription = queue.libraryOwnerId() == null
+                    ? "your library" : gameData.playerIdToName.get(libraryOwnerId) + "'s library";
+            String prompt = (queue.optional() ? "You may search " : "Search ") + libraryDescription + " for a "
+                    + (queue.creatureOnly() ? "creature card" : "card")
                     + " named " + name + " and put it onto the battlefield" + (tapped ? " tapped." : ".");
             sendLibrarySearchToPlayer(gameData, playerId,
                     LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .targetPlayerId(queue.libraryOwnerId())
                             .canFailToFind(true)
                             .filterCardName(name)
                             .destination(queue.destination())
+                            .battlefieldControllerId(queue.battlefieldControllerId())
                             .followUp(followUp.withRemainingSameNamePicks(queue.withNames(remaining)))
                             .build(), prompt, true);
             return true;
@@ -266,7 +304,7 @@ public class LibrarySearchSupport {
             UUID targetPlayerId = remaining.removeFirst();
             String targetName = gameData.playerIdToName.get(targetPlayerId);
 
-            if (isSearchPrevented(gameData, searcherId)) {
+            if (isSearchPrevented(gameData, searcherId, targetPlayerId, true, searcherId)) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
                 gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
                 continue;
@@ -521,16 +559,49 @@ public class LibrarySearchSupport {
     }
 
     /**
-     * Checks if a library search is prevented by Leonin Arbiter (CantSearchLibrariesEffect).
-     * Returns true if the search may proceed (no unpaid Arbiters), false if prevented.
-     * Payment is handled as a special action during priority (before the spell resolves).
+     * Checks whether a library search is prevented by a static restriction. Payment for a
+     * pay-to-ignore restriction is made by {@code searchingPlayerId}; the library owner is
+     * separate because some effects make one player search another player's library.
      */
     public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId) {
+        UUID causingControllerId = resolvingControllerId(gameData);
+        return checkSearchRestriction(gameData, searchingPlayerId, searchingPlayerId, causingControllerId);
+    }
+
+    public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
+                                          UUID causingControllerId) {
+        return checkSearchRestriction(gameData, searchingPlayerId, searchingPlayerId, causingControllerId);
+    }
+
+    public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
+                                          UUID libraryOwnerId, UUID causingControllerId) {
+        if (gameData.playersCantSearchLibrariesThisTurn) {
+            String playerName = gameData.playerIdToName.get(searchingPlayerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + "'s library search is prevented this turn."));
+            log.info("Game {} - {} search prevented this turn", gameData.id, playerName);
+            return false;
+        }
+
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof OpponentsCantSearchLibrariesEffect) {
+                        if (causingControllerId == null
+                                || !libraryOwnerId.equals(causingControllerId)
+                                || pid.equals(causingControllerId)) {
+                            continue;
+                        }
+                        String playerName = gameData.playerIdToName.get(searchingPlayerId);
+                        String sourceName = perm.getCard().getName();
+                        gameLogService.append(gameData, GameLog.text(
+                                playerName + "'s library search is prevented by " + sourceName + "."));
+                        log.info("Game {} - {} search prevented by {}",
+                                gameData.id, playerName, sourceName);
+                        return false;
+                    }
                     if (effect instanceof CantSearchLibrariesEffect restriction) {
                         boolean paid = false;
                         if (restriction.payableToIgnore()) {
@@ -554,6 +625,14 @@ public class LibrarySearchSupport {
         return true;
     }
 
+    private UUID resolvingControllerId(GameData gameData) {
+        if (gameData.currentlyResolvingControllerId != null) {
+            return gameData.currentlyResolvingControllerId;
+        }
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        return pendingEntry == null ? null : pendingEntry.getControllerId();
+    }
+
     public String formatCardTypeSetForPrompt(Set<CardType> cardTypes) {
         if (cardTypes == null || cardTypes.isEmpty()) {
             return "matching";
@@ -571,6 +650,19 @@ public class LibrarySearchSupport {
     public static boolean matchesCardTypes(Card card, Set<CardType> cardTypes) {
         return cardTypes.contains(card.getType())
                 || card.getAdditionalTypes().stream().anyMatch(cardTypes::contains);
+    }
+
+    /** Returns whether {@code card} carries a permission to be cast during its owner's library search. */
+    public boolean isLibrarySearchCastableCard(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(LibrarySearchCastPermission.class::isInstance);
+    }
+
+    /** Returns the cards in {@code playerId}'s library that may be cast during that search. */
+    public List<Card> librarySearchCastableCards(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        if (deck == null) return List.of();
+        return deck.stream().filter(this::isLibrarySearchCastableCard).toList();
     }
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
@@ -607,6 +699,25 @@ public class LibrarySearchSupport {
                 return;
             }
             params = params.withCards(restricted);
+        }
+
+        boolean ownLibrarySearch = (params.targetPlayerId() == null || params.targetPlayerId().equals(playerId))
+                && !params.sourceSideboard()
+                && params.sourceCards() == null;
+        if (ownLibrarySearch) {
+            params = params.withAllowCastFromLibraryWhileSearching(true);
+            List<Card> castableCards = librarySearchCastableCards(gameData, playerId);
+            if (!castableCards.isEmpty()) {
+                Set<UUID> existingCardIds = params.cards().stream().map(Card::getId).collect(java.util.stream.Collectors.toSet());
+                List<Card> cards = new ArrayList<>(params.cards());
+                castableCards.stream()
+                        .filter(card -> !existingCardIds.contains(card.getId()))
+                        .forEach(cards::add);
+                if (cards.size() > params.cards().size()) {
+                    params = params.withCards(cards);
+                    prompt += " You may also cast a card with a library-search permission.";
+                }
+            }
         }
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
@@ -653,9 +764,28 @@ public class LibrarySearchSupport {
     }
 
     public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
-        if (checkSearchRestriction(gameData, searchingPlayerId)) return false;
-        List<Card> deck = gameData.playerDecks.get(searchingPlayerId);
-        if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, searchingPlayerId);
+        UUID causingControllerId = resolvingControllerId(gameData);
+        return isSearchPrevented(gameData, searchingPlayerId, searchingPlayerId, true, causingControllerId);
+    }
+
+    public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId, boolean shuffleWhenPrevented) {
+        UUID causingControllerId = resolvingControllerId(gameData);
+        return isSearchPrevented(gameData, searchingPlayerId, searchingPlayerId, shuffleWhenPrevented,
+                causingControllerId);
+    }
+
+    public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId,
+                                     UUID causingControllerId) {
+        return isSearchPrevented(gameData, searchingPlayerId, searchingPlayerId, true, causingControllerId);
+    }
+
+    public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId, UUID libraryOwnerId,
+                                     boolean shuffleWhenPrevented, UUID causingControllerId) {
+        if (checkSearchRestriction(gameData, searchingPlayerId, libraryOwnerId, causingControllerId)) return false;
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        if (shuffleWhenPrevented && deck != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, libraryOwnerId);
+        }
         return true;
     }
 

@@ -24,9 +24,9 @@ class WildCelebrantsTest extends BaseCardTest {
 
         castWildCelebrants();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, targetId);
 
         harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
         harness.assertInGraveyard(player2, "Leonin Scimitar");
@@ -37,9 +37,11 @@ class WildCelebrantsTest extends BaseCardTest {
     @DisplayName("Declining the may leaves the artifact on the battlefield")
     void decliningLeavesArtifact() {
         harness.addToBattlefield(player2, new LeoninScimitar());
+        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
 
         castWildCelebrants();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -66,8 +68,6 @@ class WildCelebrantsTest extends BaseCardTest {
 
         castWildCelebrants();
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creatureId))
                 .isInstanceOf(IllegalStateException.class);

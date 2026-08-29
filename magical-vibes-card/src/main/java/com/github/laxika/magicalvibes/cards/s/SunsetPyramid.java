@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "166")
+@CardRegistration(set = "AKR", collectorNumber = "280")
 public class SunsetPyramid extends Card {
 
     public SunsetPyramid() {

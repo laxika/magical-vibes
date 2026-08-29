@@ -19,6 +19,9 @@ public class RegisterDelayedCombatDamageDrawEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.queueDelayedAction(new DelayedCombatDamageDraw(entry.getControllerId(), entry.getCard()));
+        var drawEffect = (RegisterDelayedCombatDamageDrawEffect) effect;
+        gameData.queueDelayedAction(new DelayedCombatDamageDraw(
+                entry.getControllerId(), entry.getCard(), drawEffect.sourcePredicate(),
+                drawEffect.includesPlaneswalkers()));
     }
 }

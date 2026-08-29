@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "203")
+@CardRegistration(set = "AKR", collectorNumber = "246")
 public class NehebTheWorthy extends Card {
 
     public NehebTheWorthy() {

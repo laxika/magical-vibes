@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "STH", collectorNumber = "32")
+@CardRegistration(set = "TPR", collectorNumber = "52")
 public class HammerheadShark extends Card {
 
     public HammerheadShark() {

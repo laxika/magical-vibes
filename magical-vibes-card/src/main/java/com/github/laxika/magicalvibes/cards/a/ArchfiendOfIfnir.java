@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "78")
+@CardRegistration(set = "AKR", collectorNumber = "91")
 public class ArchfiendOfIfnir extends Card {
 
     public ArchfiendOfIfnir() {

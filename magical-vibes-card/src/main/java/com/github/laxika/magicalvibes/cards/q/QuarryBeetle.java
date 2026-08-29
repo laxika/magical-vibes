@@ -18,6 +18,7 @@ public class QuarryBeetle extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.LAND))
                 .targetGraveyard(true)
+                .upTo(true)
                 .build());
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PayXLifeDrawXCardsEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "149")
 @CardRegistration(set = "EXO", collectorNumber = "68")
+@CardRegistration(set = "TPR", collectorNumber = "110")
 public class Necrologia extends Card {
 
     public Necrologia() {

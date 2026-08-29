@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "93")
+@CardRegistration(set = "SOI", collectorNumber = "138")
 public class Throttle extends Card {
 
     public Throttle() {

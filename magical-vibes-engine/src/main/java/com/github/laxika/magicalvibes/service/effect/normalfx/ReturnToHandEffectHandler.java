@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,7 +32,9 @@ import org.springframework.stereotype.Component;
  * {@code ALL_MATCHING} (every permanent matching the filter across all battlefields),
  * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents),
  * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller),
- * {@code AURAS_ATTACHED_TO_TARGET}, and {@code ENCHANTED} (the permanent the source Aura is on).
+ * {@code TARGET_CHOSEN_CREATURE_TYPE} (the chosen target creatures matching the cast-time type),
+ * {@code AURAS_ATTACHED_TO_TARGET}, {@code ENCHANTED} (the permanent the source Aura is on), and
+ * {@code ENCHANTED_AND_AURAS} (that permanent and all its attached Auras).
  */
 @Slf4j
 @Component
@@ -53,13 +59,17 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         var e = (ReturnToHandEffect) effect;
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
+            case TARGET_CHOSEN_CREATURE_TYPE -> resolveTargetChosenCreatureType(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
+            case TRIGGERING -> resolveTriggering(gameData, entry, e);
             case SELF_SPELL -> resolveSelfSpell(gameData, entry);
             case ALL_MATCHING -> resolveAllMatching(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry, e);
+            case ENCHANTED_AND_AURAS -> resolveEnchantedAndAuras(gameData, entry, e);
+            case GRANTING_EQUIPMENT -> resolveGrantingEquipment(gameData, entry, e);
         }
     }
 
@@ -77,8 +87,8 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
         UUID ownerId = entry.getOwnerId();
         List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
-        if (graveyard != null && graveyard.remove(entry.getCard())) {
-            gameData.addCardToHand(ownerId, entry.getCard());
+        if (graveyard != null && graveyard.remove(entry.getPhysicalCard())) {
+            gameData.addCardToHand(ownerId, entry.getPhysicalCard());
         }
     }
 
@@ -95,6 +105,51 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         bounceAll(gameData, entry, List.of(enchanted));
+    }
+
+    private void resolveEnchantedAndAuras(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        UUID hostId = e.enchantedPermanentId();
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (hostId == null) {
+            hostId = aura != null && aura.isAttached()
+                    ? aura.getAttachedTo()
+                    : entry.getSourcePermanentSnapshot() == null
+                            ? null
+                            : entry.getSourcePermanentSnapshot().getAttachedTo();
+        }
+        Permanent enchanted = hostId == null ? null : gameQueryService.findPermanentById(gameData, hostId);
+        if (enchanted == null) {
+            return;
+        }
+
+        List<Permanent> toReturn = new ArrayList<>();
+        UUID finalHostId = hostId;
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                toReturn.addAll(battlefield.stream()
+                        .filter(p -> p.getCard().isAura() && p.isAttached()
+                                && finalHostId.equals(p.getAttachedTo()))
+                        .toList()));
+        toReturn.add(enchanted);
+        bounceAll(gameData, entry, toReturn);
+    }
+
+    private void resolveTriggering(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        UUID triggeringPermanentId = entry.getTriggeringPermanentId();
+        if (triggeringPermanentId == null) {
+            return;
+        }
+        bounceTarget(gameData, entry, e, triggeringPermanentId);
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    private void resolveGrantingEquipment(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        if (e.grantingEquipmentId() == null) {
+            return;
+        }
+        Permanent equipment = gameQueryService.findPermanentById(gameData, e.grantingEquipmentId());
+        if (equipment != null) {
+            bounceAll(gameData, entry, List.of(equipment));
+        }
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
@@ -117,6 +172,38 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         if (e.lifeLoss() > 0) {
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    private void resolveTargetChosenCreatureType(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        if (entry.getChosenCreatureType() == null) {
+            return;
+        }
+
+        PermanentPredicate chosenTypeFilter = new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentHasSubtypePredicate(entry.getChosenCreatureType())));
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withXValue(entry.getXValue());
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target != null && predicateEvaluationService.matchesPermanentPredicate(
+                        target, chosenTypeFilter, filterContext)) {
+                    bounceTarget(gameData, entry, e, targetId);
+                }
+            }
+        } else if (entry.getTargetId() != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target != null && predicateEvaluationService.matchesPermanentPredicate(
+                    target, chosenTypeFilter, filterContext)) {
+                bounceTarget(gameData, entry, e, entry.getTargetId());
+            }
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private void bounceTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e, UUID targetId) {
@@ -142,12 +229,14 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = e.lifeLoss()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
                 int currentLife = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
+                gameData.playerLifeTotals.put(controllerId, currentLife - lifeLoss);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
-                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));
+                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, lifeLoss, entry.getCard().getName());
             }
         }
     }
@@ -156,6 +245,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                 .withXValue(entry.getXValue());
 
         FilterContext context = filterContext;

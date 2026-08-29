@@ -62,7 +62,7 @@ public class ReturnCardsFromControllerGraveyardToHandEffectHandler implements No
             try {
                 for (Card card : matching) {
                     if (graveyard.remove(card)) {
-                        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                         graveyardReturnSupport.moveCardToDestination(gameData, controllerId, card,
                                 GraveyardChoiceDestination.HAND, null, null, false);
                     }

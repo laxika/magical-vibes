@@ -47,6 +47,7 @@ class ThallidSoothsayerTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Thallid Soothsayer");
+        assertThat(entry.isNonTargeting()).isTrue();
     }
 
     @Test

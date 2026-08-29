@@ -2,28 +2,20 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final ExileSupport exileSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,13 +29,9 @@ public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements Norm
             return;
         }
 
-        Card exiledCard = target.getOriginalCard();
-        permanentRemovalService.removePermanentToExile(gameData, target);
-
-        UUID sourcePermanentId = entry.getSourcePermanentId();
+        java.util.UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
-            UUID controllerId = entry.getControllerId();
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            java.util.List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
             if (battlefield != null) {
                 for (Permanent p : battlefield) {
                     if (p.getCard() == entry.getCard()) {
@@ -55,19 +43,9 @@ public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements Norm
         }
 
         if (sourcePermanentId != null) {
-            // removePermanentToExile already added to exile without source tracking;
-            // remove that entry and re-add with source tracking
-            var exiledEntry = gameData.findExiledCard(exiledCard.getId());
-            UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : entry.getControllerId();
-            gameData.removeFromExile(exiledCard.getId());
-            gameData.addToExile(ownerId, exiledCard, sourcePermanentId);
+            exileSupport.exilePermanentAndTrackWithSource(gameData, target, sourcePermanentId, entry.getCard());
+        } else {
+            exileSupport.exilePermanentAndLog(gameData, target, entry.getCard().getName());
         }
-
-        
-        gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", entry.getCard(), "."));
-        log.info("Game {} - {} exiles {} (tracked with source)",
-                gameData.id, entry.getCard().getName(), exiledCard.getName());
-
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

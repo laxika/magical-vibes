@@ -37,6 +37,7 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
             case SOURCE -> findPermanent(gameData, entry.getSourcePermanentId());
             case ATTACHED -> findAttached(gameData, entry);
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
+            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
         };
         if (referenced == null) {
             return;
@@ -48,6 +49,20 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {
         return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        if (cardId == null) {
+            return null;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(java.util.Collection::stream)
+                .filter(permanent -> cardId.equals(permanent.getCard().getId())
+                        || (permanent.getOriginalCard() != null
+                        && cardId.equals(permanent.getOriginalCard().getId())))
+                .findFirst()
+                .orElse(null);
     }
 
     private Permanent findAttached(GameData gameData, StackEntry entry) {

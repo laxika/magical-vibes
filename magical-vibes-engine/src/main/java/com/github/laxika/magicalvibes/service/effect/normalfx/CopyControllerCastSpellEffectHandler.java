@@ -1,15 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,14 +60,32 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         }
 
         Card copyCard = copySupport.createCopyCard(spellCard);
+        if (e.tokenCopy()) {
+            copyCard.setToken(true);
+        }
+        if (!e.additionalTypes().isEmpty()) {
+            EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+            additionalTypes.addAll(copyCard.getAdditionalTypes());
+            additionalTypes.addAll(e.additionalTypes());
+            copyCard.setAdditionalTypes(Set.copyOf(additionalTypes));
+        }
+        if (!e.removedSupertypes().isEmpty()) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(copyCard.getSupertypes());
+            supertypes.removeAll(e.removedSupertypes());
+            copyCard.setSupertypes(Set.copyOf(supertypes));
+        }
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
+        if (e.grantHasteToPermanentSpell() && isPermanentSpell(spellSnapshot.getEntryType())) {
+            copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
+        }
 
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
 
-        if (copyEntry.getTargetId() != null) {
+        if (e.mayChooseNewTargets() && copyEntry.getTargetId() != null) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     castingPlayerId,
@@ -71,5 +95,12 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
         }
+    }
+
+    private boolean isPermanentSpell(StackEntryType entryType) {
+        return switch (entryType) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            case INSTANT_SPELL, SORCERY_SPELL, TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
+        };
     }
 }

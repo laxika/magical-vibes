@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *
  * <p>{@code anyNumber} switches to the "move any number of {@code counterType} counters" shape
  * (Bioshift): on resolution the controller is prompted for how many of that one counter kind
- * (0..the count present) to move. {@code counterType} is required in that mode and ignored
- * otherwise. The {@link #single(CounterType)} factory creates the typed single-counter variant,
- * which moves exactly one counter of the requested kind when possible.</p>
+ * (0..the count present) to move. {@code counterType} is required in that mode. When
+ * {@code anyNumber} is false and {@code counterType} is non-null, exactly one counter of that type
+ * is moved.</p>
  */
 public record MoveCounterFromTargetCreatureToTargetCreatureEffect(boolean moveAll, CounterType counterType,
                                                                   boolean anyNumber) implements CardEffect {
@@ -37,7 +37,7 @@ public record MoveCounterFromTargetCreatureToTargetCreatureEffect(boolean moveAl
         this(false, counterType, true);
     }
 
-    /** "Move a {@code counterType} counter" (Daghatar the Adamant). */
+    /** "Move one {@code counterType} counter" (e.g. Combine Guildmage). */
     public static MoveCounterFromTargetCreatureToTargetCreatureEffect single(CounterType counterType) {
         return new MoveCounterFromTargetCreatureToTargetCreatureEffect(false, counterType, false);
     }

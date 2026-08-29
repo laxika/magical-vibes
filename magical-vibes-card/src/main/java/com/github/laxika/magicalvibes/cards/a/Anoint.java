@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "3")
+@CardRegistration(set = "TPR", collectorNumber = "3")
 public class Anoint extends Card {
 
     public Anoint() {

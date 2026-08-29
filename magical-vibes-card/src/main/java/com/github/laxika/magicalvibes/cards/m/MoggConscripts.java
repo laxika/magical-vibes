@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "189")
+@CardRegistration(set = "TPR", collectorNumber = "143")
 public class MoggConscripts extends Card {
 
     public MoggConscripts() {

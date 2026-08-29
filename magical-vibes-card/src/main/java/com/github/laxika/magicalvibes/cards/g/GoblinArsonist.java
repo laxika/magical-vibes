@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M12", collectorNumber = "136")
 @CardRegistration(set = "M13", collectorNumber = "134")
+@CardRegistration(set = "M21", collectorNumber = "147")
+@CardRegistration(set = "ROE", collectorNumber = "147")
 public class GoblinArsonist extends Card {
 
     public GoblinArsonist() {

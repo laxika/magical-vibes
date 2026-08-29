@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "21")
+@CardRegistration(set = "BRB", collectorNumber = "83")
 public class SunClasp extends Card {
 
     public SunClasp() {

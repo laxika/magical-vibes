@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "53")
+@CardRegistration(set = "TPR", collectorNumber = "84")
 public class Carnophage extends Card {
 
     public Carnophage() {

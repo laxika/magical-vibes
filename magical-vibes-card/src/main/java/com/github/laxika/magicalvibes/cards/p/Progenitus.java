@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffec
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "121")
+@CardRegistration(set = "FDN", collectorNumber = "244")
 public class Progenitus extends Card {
 
     public Progenitus() {

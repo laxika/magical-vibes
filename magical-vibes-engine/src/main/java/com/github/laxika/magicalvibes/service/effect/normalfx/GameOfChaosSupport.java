@@ -46,6 +46,8 @@ public class GameOfChaosSupport {
 
         if (controllerWins) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 
         UUID decidingPlayer;

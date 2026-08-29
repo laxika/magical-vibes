@@ -13,6 +13,11 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "252")
 @CardRegistration(set = "KTK", collectorNumber = "243")
+@CardRegistration(set = "FDN", collectorNumber = "268")
+@CardRegistration(set = "M21", collectorNumber = "251")
+@CardRegistration(set = "DFT", collectorNumber = "265")
+@CardRegistration(set = "TDM", collectorNumber = "268")
+@CardRegistration(set = "MOM", collectorNumber = "273")
 @CardRegistration(set = "FRF", collectorNumber = "172")
 public class SwiftwaterCliffs extends Card {
 

@@ -67,7 +67,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
-            case TARGET_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, e, amount, sourceName);
+            case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, e, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
             case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, entry, amount, sourceName);
@@ -102,10 +102,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     private void loseTargetPlayerLife(GameData gameData, StackEntry entry, LoseLifeEffect effect,
             int amount, String sourceName) {
         UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null && entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            targetPlayerId = entry.getTargetIds().getFirst();
+        }
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
+            amount *= gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - amount);
 
@@ -158,7 +165,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
-            totalLifeLost += amount;
+            totalLifeLost += amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         }
 
         if (controllerGainsLifeLost(gameData, entry, e) && totalLifeLost > 0) {

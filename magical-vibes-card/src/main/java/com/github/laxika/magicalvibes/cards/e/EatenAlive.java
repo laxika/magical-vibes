@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "106")
+@CardRegistration(set = "FDN", collectorNumber = "172")
+@CardRegistration(set = "MID", collectorNumber = "99")
 public class EatenAlive extends Card {
 
     public EatenAlive() {
@@ -24,7 +26,8 @@ public class EatenAlive extends Card {
                         new PermanentIsPlaneswalkerPredicate()
                 )),
                 "Target must be a creature or planeswalker"))
-                .addEffect(EffectSlot.SPELL, new SacrificeCreatureOrPayManaCost("{3}{B}"))
+                .addEffect(EffectSlot.SPELL, new SacrificePermanentOrPayManaCost(
+                        "{3}{B}", new PermanentIsCreaturePredicate(), "a creature"))
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
     }
 }

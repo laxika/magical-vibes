@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "241")
+@CardRegistration(set = "RNA", collectorNumber = "251")
 @CardRegistration(set = "ECL", collectorNumber = "265")
 @CardRegistration(set = "ECL", collectorNumber = "347")
 public class HallowedFountain extends Card {

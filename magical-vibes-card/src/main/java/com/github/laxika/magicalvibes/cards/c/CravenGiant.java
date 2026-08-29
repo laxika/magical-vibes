@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "121")
 @CardRegistration(set = "STH", collectorNumber = "78")
+@CardRegistration(set = "TPR", collectorNumber = "128")
 public class CravenGiant extends Card {
 
     public CravenGiant() {

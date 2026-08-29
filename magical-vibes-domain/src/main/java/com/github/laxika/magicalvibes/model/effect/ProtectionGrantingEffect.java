@@ -18,10 +18,11 @@ import java.util.Set;
  * empty/self defaults for the rest, so a single {@code instanceof ProtectionGrantingEffect} match
  * replaces the four per-record checks in {@code GameQueryService}.
  *
- * <p>Scope note: this covers the four printed, statically-known protection shapes
+ * <p>Scope note: this covers the printed, statically-known protection shapes
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
  * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect},
- * {@code ProtectionFromMulticoloredEffect}). Protection whose
+ * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromAllOtherManaValuesEffect}).
+ * Protection whose
  * protected set is only known at runtime from game state — a chosen color
  * ({@code ProtectionFromChosenColorEffect}, resolved via {@link ChooseColorEffect}) or a
  * "protection from non-[subtype] creatures" grant tracked on the {@code Permanent} — is not a pure
@@ -36,6 +37,11 @@ public interface ProtectionGrantingEffect extends CardEffect {
 
     /** Whether this effect protects against sources with two or more colors. */
     default boolean protectionFromMulticolored() {
+        return false;
+    }
+
+    /** Whether this effect protects only from spells that have one or more colors. */
+    default boolean protectionFromColoredSpells() {
         return false;
     }
 
@@ -75,6 +81,14 @@ public interface ProtectionGrantingEffect extends CardEffect {
      */
     default OptionalInt protectionFromManaValueAtLeast() {
         return OptionalInt.empty();
+    }
+
+    /**
+     * The possible chosen numbers for protection from every other mana value. An empty set means
+     * this effect does not have this protection shape.
+     */
+    default Set<Integer> protectionFromManaValuesOtherThanChosen() {
+        return Set.of();
     }
 
     /**

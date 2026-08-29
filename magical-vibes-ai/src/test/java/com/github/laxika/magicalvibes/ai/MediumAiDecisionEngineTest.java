@@ -1,35 +1,92 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AetherTide;
+import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
+import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
+import com.github.laxika.magicalvibes.cards.t.Tromokratis;
+import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
+import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
+import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
+import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
+import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
+import com.github.laxika.magicalvibes.cards.c.Crawlspace;
+import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
+import com.github.laxika.magicalvibes.cards.d.Derelor;
+import com.github.laxika.magicalvibes.cards.d.Drought;
+import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
+import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
+import com.github.laxika.magicalvibes.cards.h.HollowWarrior;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
+import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
+import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RatsFeast;
+import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
+import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
+import com.github.laxika.magicalvibes.cards.v.Victimize;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -40,11 +97,39 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -139,12 +224,369 @@ class MediumAiDecisionEngineTest {
         }
     }
 
+    @Test
+    @DisplayName("Medium AI preserves an untapped spell target while paying mana")
+    void preservesUntappedSpellTargetWhilePayingMana() {
+        Permanent clearcutter = harness.addToBattlefieldAndReturn(aiPlayer, new CradleClearcutter());
+        clearcutter.setSummoningSick(false);
+        List<Permanent> plains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            plains.add(harness.addToBattlefieldAndReturn(aiPlayer, new Plains()));
+        }
+        Card spell = new Card();
+        spell.setName("Targeted Inspiration");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{3}{W}");
+        spell.target(new ControlledPermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentIsTappedPredicate()))),
+                "Target must be an untapped creature you control"))
+                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1))
+                .addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(aiPlayer, List.of(spell));
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(clearcutter.getId());
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(plains).allMatch(Permanent::isTapped);
+    }
+
+    private Card fixedCountRepeatableModalSpell() {
+        Card card = new Card();
+        card.setName("Repeatable modal draw");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{G}");
+        card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
+        ), 3));
+        return card;
+    }
+
     private void giveAiSwamps(int count) {
         for (int i = 0; i < count; i++) {
             Permanent swamp = new Permanent(new Swamp());
             swamp.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(swamp);
         }
+    }
+
+    private Card chooseTwoWithExplicitOptionFilters() {
+        Card card = new Card();
+        card.setName("Choose Two with Explicit Option Filters");
+        card.setType(CardType.INSTANT);
+        card.setManaCost("{3}{U}{R}");
+        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption(
+                        "Draw with a permanent target", new DrawCardEffect(1),
+                        TargetFilters.creatureYouControl()),
+                new ChooseOneEffect.ChooseOneOption(
+                        "Draw with a player target", new DrawCardEffect(1),
+                        new PlayerPredicateTargetFilter(
+                                new PlayerRelationPredicate(PlayerRelation.ANY),
+                                "Target must be a player"))), 2));
+        return card;
+    }
+
+    private Card creatureWithCreatureTypeAdditionalCost() {
+        Card card = new Card();
+        card.setName("Creature with creature type additional cost");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{2}{G}");
+        card.setPower(2);
+        card.setToughness(2);
+        card.addEffect(EffectSlot.SPELL, new ChooseCreatureTypeCost());
+        return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI starts Evangelize by choosing the opponent")
+    void startsEvangelizeWithOpponentChoice() {
+        giveAiPriority();
+        giveAiPlains(5);
+        harness.addToBattlefield(human, new GrizzlyBears());
+        Evangelize evangelize = new Evangelize();
+        harness.setHand(aiPlayer, List.of(evangelize));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(aiPlayer.getId());
+        assertThat(choice.validIds()).containsExactly(human.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(evangelize);
+    }
+
+    @Test
+    @DisplayName("Medium AI chooses a creature type for Selective Snare")
+    void castsSelectiveSnareWithCreatureTypeChoice() {
+        giveAiPriority();
+        giveAiIslands(3);
+        Permanent target = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        SelectiveSnare snare = new SelectiveSnare();
+        harness.setHand(aiPlayer, List.of(snare));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(snare);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        assertThat(gd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(human.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies a creature type for an additional cast cost")
+    void castsCreatureWithCreatureTypeAdditionalCost() {
+        giveAiPriority();
+        for (int i = 0; i < 3; i++) {
+            Permanent forest = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+            forest.setSummoningSick(false);
+        }
+        harness.addToBattlefield(human, new EliteVanguard());
+        Card creature = creatureWithCreatureTypeAdditionalCost();
+        harness.setHand(aiPlayer, List.of(creature));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(creature);
+        assertThat(gd.stack.getFirst().getBeholdChosenSubtype()).isEqualTo(CardSubtype.HUMAN);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .anyMatch(permanent -> permanent.getCard() == creature);
+    }
+
+    @Test
+    @DisplayName("Medium AI announces Risk Factor's opponent target")
+    void castsRiskFactorAtOpponent() {
+        giveAiPriority();
+        giveAiMountains(3);
+        RiskFactor riskFactor = new RiskFactor();
+        harness.setHand(aiPlayer, List.of(riskFactor));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(riskFactor);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
+    }
+
+    private Card multiTargetRemovalWithPerTargetLifeCost() {
+        Card card = new Card();
+        card.setName("Multi-target removal with a life cost");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{2}{B}{R}");
+        card.setAdditionalLifeCostPerTarget(3);
+        for (int targetGroup = 0; targetGroup < 3; targetGroup++) {
+            PermanentPredicateTargetFilter creatureTarget = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature");
+            card.target(creatureTarget, 0, 1)
+                    .addEffect(EffectSlot.SPELL, DestroyTargetPermanentEffect.forTargetGroup(targetGroup));
+        }
+        return card;
+    }
+
+    private Card repeatableArtifactRemoval() {
+        Card card = new Card();
+        card.setName("Repeatable artifact removal");
+        card.setType(CardType.SORCERY);
+        card.setManaCost("{X}{R}");
+        card.addEffect(EffectSlot.SPELL,
+                new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
+        card.targetX(new PermanentPredicateTargetFilter(
+                new PermanentIsArtifactPredicate(), "Targets must be artifacts"), 100)
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI limits multi-target life costs to its available life")
+    void limitsPerTargetLifeCostTargets() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        giveAiMountains(2);
+        harness.setLife(aiPlayer, 7);
+        harness.addToBattlefield(human, new SerraAngel());
+        harness.addToBattlefield(human, new GrizzlyBears());
+        harness.addToBattlefield(human, new LlanowarElves());
+        Card spell = multiTargetRemovalWithPerTargetLifeCost();
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getFirst().getTargetIds()).hasSize(2);
+        assertThat(gd.getLife(aiPlayer.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Medium AI pays a battlefield-imposed sacrifice tax when casting a black spell")
+    void castsBlackSpellWithDroughtTax() {
+        harness.addToBattlefield(human, new Drought());
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        DauthiMercenary mercenary = new DauthiMercenary();
+        harness.setHand(aiPlayer, List.of(mercenary));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId())).doesNotContain(swamp);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies Torgaar's sacrifice-based cost reduction")
+    void castsTorgaarWithSacrificeCostReduction() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(aiPlayer, new TolarianScholar());
+        TorgaarFamineIncarnate torgaar = new TorgaarFamineIncarnate();
+        harness.setHand(aiPlayer, List.of(torgaar));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 4);
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(torgaar);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId())).doesNotContain(fodder);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not spend a Costly Plunder sacrifice target for mana")
+    void doesNotSpendCostlyPlunderSacrificeTargetForMana() {
+        Permanent basalThrull = harness.addToBattlefieldAndReturn(aiPlayer, new BasalThrull());
+        basalThrull.setSummoningSick(false);
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        swamp.setSummoningSick(false);
+        CostlyPlunder costlyPlunder = new CostlyPlunder();
+        harness.setHand(aiPlayer, List.of(costlyPlunder));
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(costlyPlunder);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .containsExactly(basalThrull, swamp);
+        assertThat(basalThrull.isTapped()).isFalse();
+        assertThat(swamp.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Medium AI announces one target when paying no repeatable additional cost")
+    void castsRepeatableTargetSpellWithItsBaseTargetCount() {
+        giveAiPriority();
+        harness.addMana(aiPlayer, ManaColor.RED, 3);
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
+        Card spell = repeatableArtifactRemoval();
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+        assertThat(gd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Medium AI uses Delve cards to reduce a spell's generic mana cost")
+    void castsDelveSpellWithGraveyardReduction() {
+        giveAiPriority();
+        for (int i = 0; i < 4; i++) {
+            Permanent forest = new Permanent(new Forest());
+            forest.setSummoningSick(false);
+            gd.playerBattlefields.get(aiPlayer.getId()).add(forest);
+        }
+
+        HootingMandrills mandrills = new HootingMandrills();
+        harness.setHand(aiPlayer, List.of(mandrills));
+        harness.setGraveyard(aiPlayer, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mandrills);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not submit a Dream Halls-only alternate cast as a mana cast")
+    void skipsDreamHallsOnlyAlternateCast() {
+        giveAiPriority();
+        harness.addToBattlefield(aiPlayer, new DreamHalls());
+        giveAiIslands(3);
+        CurseOfEchoes curseOfEchoes = new CurseOfEchoes();
+        AirElemental airElemental = new AirElemental();
+        harness.setHand(aiPlayer, List.of(curseOfEchoes, airElemental));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId()))
+                .containsExactly(curseOfEchoes, airElemental);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    private Card whitePlainsCreature() {
+        Card card = new Card();
+        card.setName("White Plains Creature");
+        card.setType(CardType.LAND);
+        card.setAdditionalTypes(Set.of(CardType.CREATURE));
+        card.setColors(List.of(CardColor.WHITE));
+        card.setSubtypes(List.of(CardSubtype.PLAINS));
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI uses Pyrokinesis's hand-exile alternate cost")
+    void usesHandExileAlternateCost() {
+        giveAiPriority();
+        Permanent target = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        target.setSummoningSick(false);
+        Pyrokinesis pyrokinesis = new Pyrokinesis();
+        LightningBolt redCard = new LightningBolt();
+        harness.setHand(aiPlayer, List.of(pyrokinesis, redCard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(pyrokinesis);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).containsExactly(redCard);
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.RED)).isZero();
     }
 
     @Test
@@ -169,6 +611,82 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
         // Should target the Air Elemental (biggest threat)
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(airElemental.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI collects evidence for Urgent Necropsy's targets")
+    void castsUrgentNecropsyWithTargetEvidence() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        GrizzlyBears evidence = new GrizzlyBears();
+        harness.setGraveyard(aiPlayer, List.of(evidence));
+        UrgentNecropsy necropsy = new UrgentNecropsy();
+        // Ensure this integration test reaches the shared cast path without changing production scoring.
+        necropsy.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(aiPlayer, List.of(necropsy));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(necropsy);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId())).containsExactly(evidence);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies a matching permanent for a behold additional cost")
+    void castsBeholdSpellWithMatchingPermanent() {
+        giveAiPriority();
+        giveAiMountains(4);
+        Permanent elemental = harness.addToBattlefieldAndReturn(aiPlayer, new AirElemental());
+        elemental.setSummoningSick(false);
+        ChampionOfThePath champion = new ChampionOfThePath();
+        harness.setHand(aiPlayer, List.of(champion));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(champion);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId()))
+                .extracting(Card::getId)
+                .contains(elemental.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Ajani's Response at an unaffordable untapped target")
+    void doesNotCastTargetReducedSpellAtUnaffordableTarget() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiPlains(1);
+        giveAiIslands(2);
+
+        Permanent ownTappedCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ownTappedCreature.setSummoningSick(false);
+        ownTappedCreature.tap();
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        opponentCreature.setSummoningSick(false);
+        harness.setHand(aiPlayer, List.of(new AjanisResponse()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test
@@ -240,7 +758,7 @@ class MediumAiDecisionEngineTest {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gd));
 
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
         try {
@@ -251,6 +769,101 @@ class MediumAiDecisionEngineTest {
             watcher.uninstall();
         }
         assertThat(attacker.isAttacking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI sends a required attacker to an available planeswalker")
+    void sendsRequiredAttackerToAvailablePlaneswalker() {
+        harness.addToBattlefield(human, new IslandSanctuary());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(human, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent blocker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        gd.turnNumber = 2;
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(human, true);
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new Ramroller());
+        attacker.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gd));
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getAttackTarget()).isEqualTo(planeswalker.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI respects a controller-scoped attacker limit")
+    void respectsControllerScopedAttackerLimit() {
+        gd.playerLifeTotals.put(human.getId(), 20);
+        Permanent limit = harness.addToBattlefieldAndReturn(human, new Crawlspace());
+        limit.setSummoningSick(false);
+        Permanent first = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        first.setSummoningSick(false);
+        Permanent second = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        second.setSummoningSick(false);
+        Permanent third = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        third.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1, 2), null));
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gd.getLife(human.getId())).isEqualTo(16);
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("declares 2 attackers."));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI keeps an attacker group payable when one attacker has a creature-tap cost")
+    void keepsCreatureTapAttackCostPayable() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(aiPlayer, new HollowWarrior());
+        warrior.setSummoningSick(false);
+        Permanent support = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        support.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1), null));
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(warrior.isAttackedThisTurn()).isTrue();
+        assertThat(support.isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
@@ -281,6 +894,62 @@ class MediumAiDecisionEngineTest {
                 .filter(Permanent::isAttacking)
                 .count();
         assertThat(attackingCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI includes an attack-if-another-attacks creature")
+    void includesConditionalAttackRequirement() {
+        gd.playerLifeTotals.put(human.getId(), 5);
+        Permanent cyclops = harness.addToBattlefieldAndReturn(aiPlayer, new EkunduCyclops());
+        cyclops.setSummoningSick(false);
+        Permanent bears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        bears.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(cyclops.isAttacking()).isTrue();
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI does not declare Orcish Conscripts without enough other attackers")
+    void doesNotDeclareOrcishConscriptsWithoutEnoughOtherAttackers() {
+        gd.playerLifeTotals.put(human.getId(), 4);
+        Permanent conscripts = harness.addToBattlefieldAndReturn(aiPlayer, new OrcishConscripts());
+        conscripts.setSummoningSick(false);
+        Permanent ally = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ally.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(conscripts.isAttackedThisTurn()).isFalse();
+        assertThat(ally.isAttackedThisTurn()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test
@@ -359,6 +1028,233 @@ class MediumAiDecisionEngineTest {
         verify(actions, never()).handleDeclareBlockers(any());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class).decidingPlayerId())
                 .isEqualTo(human.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI declares a blocker required to block if able")
+    void honorsMustBlockIfAbleRequirement() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        blocker.setMustBlockThisTurnIfAble(true);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI reserves a creature to pay Hollow Warrior's block cost")
+    void reservesCreatureForBlockTapCost() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent warrior = harness.addToBattlefieldAndReturn(aiPlayer, new HollowWarrior());
+        warrior.setSummoningSick(false);
+        Permanent support = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        support.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int attackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(attacker);
+        int warriorIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(warrior);
+        int supportIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(support);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(warriorIndex, attackerIndex),
+                    new BlockerAssignment(supportIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(warrior.isBlocking()).isTrue();
+        assertThat(support.isBlocking()).isFalse();
+        assertThat(support.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI reassigns an existing blocker to a Lure attacker")
+    void reassignsExistingBlockerToLureAttacker() {
+        Permanent lureAttacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        lureAttacker.setSummoningSick(false);
+        lureAttacker.setAttacking(true);
+        Permanent lure = harness.addToBattlefieldAndReturn(human, new Lure());
+        lure.setAttachedTo(lureAttacker.getId());
+        Permanent otherAttacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        otherAttacker.setSummoningSick(false);
+        otherAttacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        blocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int otherAttackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(otherAttacker);
+        int blockerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(blocker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(
+                    List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI caps Lure blocks to an aura-granted maximum")
+    void capsLureBlocksToAuraGrantedMaximum() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new KjeldoranRoyalGuard());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent authority = harness.addToBattlefieldAndReturn(human, new AlphaAuthority());
+        authority.setAttachedTo(attacker.getId());
+        Permanent lure = harness.addToBattlefieldAndReturn(human, new Lure());
+        lure.setAttachedTo(attacker.getId());
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        secondBlocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int attackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(attacker);
+        int firstBlockerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(firstBlocker);
+        int secondBlockerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(secondBlocker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(firstBlockerIndex, attackerIndex),
+                    new BlockerAssignment(secondBlockerIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(List.of(firstBlocker, secondBlocker)).filteredOn(Permanent::isBlocking).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI drops a partial Tromokratis block without rejection")
+    void dropsPartialTromokratisBlockWithoutRejection() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new Tromokratis());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent firstBlocker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        firstBlocker.setSummoningSick(false);
+        Permanent secondBlocker = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        secondBlocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int firstBlockerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(firstBlocker);
+        int attackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(attacker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(firstBlockerIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(firstBlocker.isBlocking()).isFalse();
+        assertThat(secondBlocker.isBlocking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI drops Okk when its greater-power partner is unaffordable")
+    void dropsOkkWhenGreaterPowerPartnerIsUnaffordable() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new HillGiant());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent okk = harness.addToBattlefieldAndReturn(aiPlayer, new Okk());
+        okk.setSummoningSick(false);
+        TestCards.mutableCard(okk).setPower(2);
+        Permanent partner = harness.addToBattlefieldAndReturn(aiPlayer, new Hipparion());
+        partner.setSummoningSick(false);
+        TestCards.mutableCard(partner).setPower(4);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int attackerIndex = gd.playerBattlefields.get(human.getId()).indexOf(attacker);
+        int okkIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(okk);
+        int partnerIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(partner);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(okkIndex, attackerIndex),
+                    new BlockerAssignment(partnerIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(okk.isBlocking()).isFalse();
+        assertThat(partner.isBlocking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Medium AI does not submit an unaffordable block tax from an attacking Archangel")
+    void dropsUnaffordableGlobalBlockTax() {
+        Permanent archangel = harness.addToBattlefieldAndReturn(human, new ArchangelOfTithes());
+        archangel.setSummoningSick(false);
+        archangel.setAttacking(true);
+        Permanent attacker = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        blocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(new BlockerAssignment(
+                    gd.playerBattlefields.get(aiPlayer.getId()).indexOf(blocker),
+                    gd.playerBattlefields.get(human.getId()).indexOf(attacker)))));
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
 
     @Test
@@ -623,6 +1519,25 @@ class MediumAiDecisionEngineTest {
         assertThat(tappedCount).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Medium AI taps enough mana to pay a colored spell-cost increase")
+    void paysColoredSpellCostIncrease() {
+        giveAiPriority();
+        harness.addToBattlefield(aiPlayer, new Derelor());
+        List<Permanent> manaSources = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            manaSources.add(harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()));
+        }
+        DauthiMercenary mercenary = new DauthiMercenary();
+        harness.setHand(aiPlayer, List.of(mercenary));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(manaSources).allMatch(Permanent::isTapped);
+    }
+
     // ===== tryCastSpell silent failure recovery =====
 
     @Nested
@@ -684,7 +1599,8 @@ class MediumAiDecisionEngineTest {
                     new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,
                             new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(mockGameQueryService),
                             mockTargetValidationService,
-                            org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class)));
+                            org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                            new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(mockGameQueryService)));
             return engine;
         }
 
@@ -900,9 +1816,156 @@ class MediumAiDecisionEngineTest {
             verify(mockMessageHandler, never()).handlePlayCard(any());
             verify(mockMessageHandler, never()).handlePassPriority(any());
         }
+
+        @Test
+        @DisplayName("Medium AI does not cast a spell when mana tapping puts a trigger on the stack")
+        void doesNotCastSpellWhenManaTappingPutsTriggerOnStack() throws Exception {
+            Card creature = new Card();
+            creature.setName("Test Knight");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{W}");
+            creature.setPower(2);
+            creature.setToughness(2);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            Permanent land = new Permanent(new Plains());
+            land.setSummoningSick(false);
+            mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
+
+            when(mockGameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+            Mockito.doAnswer(inv -> {
+                mockGd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+                        mockAiPlayer.getId(), "Test trigger", List.of()));
+                return null;
+            }).when(mockMessageHandler).handleTapPermanent(any());
+
+            createEngine().handleEvent(AiDecisionKind.GAME_STATE);
+
+            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler, never()).handlePlayCard(any());
+            verify(mockMessageHandler, never()).handlePassPriority(any());
+        }
     }
 
     // ===== Modal spell handling (ChooseOneEffect) =====
+
+    @Test
+    @DisplayName("Medium AI chooses Wear // Tear's affordable mode")
+    void choosesAffordableWearTearMode() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiPlains(1);
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(human, new AngelicChorus());
+        harness.setHand(aiPlayer, List.of(new WearTear()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(Permanent::isTapped)
+                .hasSize(1);
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(aiPlayer.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerBattlefields.get(human.getId()))
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+    }
+
+    @Test
+    @DisplayName("Medium AI announces Fire's divided damage for its selected mode")
+    void castsFireWithModalDamageAssignments() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiMountains(2);
+        FireIce fireIce = new FireIce();
+        harness.setHand(aiPlayer, List.of(fireIce));
+        int lifeBefore = gd.getLife(human.getId());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
+        assertThat(gd.stack.getFirst().getDamageAssignments())
+                .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 2));
+        harness.passBothPriorities();
+        assertThat(gd.getLife(human.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies Fiery Justice's separate opponent target")
+    void castsFieryJusticeWithOpponentAsBothTargets() {
+        giveAiPriority();
+        harness.addToBattlefield(aiPlayer, new Mountain());
+        harness.addToBattlefield(aiPlayer, new Forest());
+        harness.addToBattlefield(aiPlayer, new Plains());
+        FieryJustice fieryJustice = new FieryJustice();
+        // Exercise target routing independently of the evaluator's divided-damage scoring.
+        fieryJustice.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        harness.setHand(aiPlayer, List.of(fieryJustice));
+        int lifeBefore = gd.getLife(human.getId());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getCard()).isSameAs(fieryJustice);
+        assertThat(entry.getTargetId()).isEqualTo(human.getId());
+        assertThat(entry.getDamageAssignments())
+                .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 5));
+        harness.passBothPriorities();
+        assertThat(gd.getLife(human.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Medium AI pays the selected spree mode's additional mana cost")
+    void castsSpreeModeWithItsAdditionalManaCost() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        giveAiPlains(2);
+        harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        FinalShowdown finalShowdown = new FinalShowdown();
+        finalShowdown.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+        harness.setHand(aiPlayer, List.of(finalShowdown));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(finalShowdown.getId());
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(Permanent::isTapped)
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI casts a targetless modal double-faced card face")
+    void castsTargetlessModalDoubleFacedCardFace() {
+        giveAiPriority();
+        giveAiMountains(4);
+        ToralfGodOfFury toralf = new ToralfGodOfFury();
+        harness.setHand(aiPlayer, List.of(toralf));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isZero();
+    }
 
     @Test
     @DisplayName("Medium AI casts Cryptic Command with its choose-two target")
@@ -926,6 +1989,131 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI casts a fixed-count modal spell whose modes may repeat")
+    void castsFixedCountRepeatableModalSpell() {
+        giveAiPriority();
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        Card spell = fixedCountRepeatableModalSpell();
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies targets for choose-two modes with explicit option filters")
+    void castsChooseTwoWithTargetsForEachExplicitOptionFilter() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiIslands(4);
+        giveAiMountains(1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(aiPlayer, new AirElemental());
+        harness.setHand(aiPlayer, List.of(chooseTwoWithExplicitOptionFilters()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactly(elemental.getId(), human.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI validates modal player-or-planeswalker target candidates")
+    void castsModalPlayerOrPlaneswalkerSpellAtPlayer() {
+        giveAiPriority();
+        giveAiMountains(1);
+        giveAiPlains(1);
+        Permanent ordinaryPermanent = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        Card modalSpell = new Card();
+        modalSpell.setName("Draw and Bolt");
+        modalSpell.setType(CardType.SORCERY);
+        modalSpell.setManaCost("{R}{W}");
+        modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
+                        new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
+        harness.setHand(aiPlayer, List.of(modalSpell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(ordinaryPermanent.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies both targets for Blinding Beam's tap mode")
+    void castsBlindingBeamWithTwoTargetCreatures() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        Permanent firstTarget = new Permanent(new AirElemental());
+        Permanent secondTarget = new Permanent(new AirElemental());
+        gd.playerBattlefields.get(human.getId()).add(firstTarget);
+        gd.playerBattlefields.get(human.getId()).add(secondTarget);
+        harness.setHand(aiPlayer, List.of(new BlindingBeam()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blinding Beam");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI allows one permanent for both Reign of Chaos targets")
+    void castsReignOfChaosWithSharedTarget() {
+        giveAiPriority();
+        giveAiMountains(4);
+
+        Permanent target = new Permanent(whitePlainsCreature());
+        gd.playerBattlefields.get(human.getId()).add(target);
+        harness.setHand(aiPlayer, List.of(new ReignOfChaos()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Reign of Chaos");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactly(target.getId(), target.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Pyrrhic Strike's single mode without paying blight")
+    void castsSingleModeWithoutPayingOptionalBlight() {
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        gd.interaction.clearAwaitingInput();
+        gd.stack.clear();
+        gd.priorityPassedBy.add(human.getId());
+        giveAiPlains(3);
+        Permanent blightCreature = harness.addToBattlefieldAndReturn(aiPlayer, new HillGiant());
+        Permanent artifact = harness.addToBattlefieldAndReturn(human, new Ornithopter());
+        harness.setHand(aiPlayer, List.of(new PyrrhicStrike()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+        assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test
@@ -956,6 +2144,95 @@ class MediumAiDecisionEngineTest {
                 .allMatch(permanent -> !permanent.isTapped());
         assertThat(gd.playerHands.get(aiPlayer.getId())).singleElement()
                 .isInstanceOf(Unbury.class);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Victimize without two creature cards in its graveyard")
+    void doesNotCastVictimizeWithoutTwoCreatureCardsInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(3);
+        gd.playerGraveyards.get(aiPlayer.getId()).add(new HolyDay());
+        Victimize victimize = new Victimize();
+        harness.setHand(aiPlayer, List.of(victimize));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(victimize);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast a target-player graveyard X spell without cards")
+    void doesNotCastTargetPlayerGraveyardSpellWithoutCardsInTargetGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        Card spell = new Card();
+        spell.setName("Target-player graveyard X spell");
+        spell.setType(CardType.INSTANT);
+        spell.setManaCost("{X}{B}");
+        spell.addEffect(EffectSlot.SPELL, new ExileTargetPlayerGraveyardCardsEffect(1, 1));
+        spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        harness.setHand(aiPlayer, List.of(spell));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Medium AI does not cast Rats' Feast with positive X when graveyards are empty")
+    void doesNotCastRatsFeastWithoutGraveyardTargets() {
+        giveAiPriority();
+        giveAiSwamps(2);
+        RatsFeast ratsFeast = new RatsFeast();
+        harness.setHand(aiPlayer, List.of(ratsFeast));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(ratsFeast);
+    }
+
+    @Test
+    @DisplayName("Medium AI selects Torrent of Souls' optional graveyard and player targets separately")
+    void selectsTorrentOfSoulsTargetsSeparately() {
+        giveAiPriority();
+        TorrentOfSouls torrentOfSouls = new TorrentOfSouls();
+
+        AiTargetSelector.SpellTargetSelection selection = ai.targetSelector
+                .chooseSeparateGraveyardTargets(gd, torrentOfSouls, aiPlayer.getId());
+
+        assertThat(selection).isNotNull();
+        assertThat(selection.targetId()).isNull();
+        assertThat(selection.targetIds()).containsExactly(human.getId());
+    }
+
+    @Test
+    @DisplayName("Medium AI limits Finale of Promise graveyard targets to the announced X")
+    void castsFinaleOfPromiseWithAffordableGraveyardTargets() {
+        giveAiPriority();
+        giveAiMountains(4);
+        Opportunity tooExpensive = new Opportunity();
+        Shock affordable = new Shock();
+        harness.setGraveyard(aiPlayer, List.of(tooExpensive, affordable));
+        FinaleOfPromise finale = new FinaleOfPromise();
+        finale.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+        harness.setHand(aiPlayer, List.of(finale));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(finale);
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
     }
 
     @Test
@@ -1111,6 +2388,35 @@ class MediumAiDecisionEngineTest {
                 .allMatch(c -> c.getName().equals("Holy Day"));
     }
 
+    @Test
+    @DisplayName("Medium AI exiles only cards matching an ExileX graveyard cost")
+    void castsExileXCostFromMixedGraveyard() {
+        giveAiPriority();
+
+        Card spell = new Card();
+        spell.setName("Mixed Graveyard Spell");
+        spell.setType(CardType.SORCERY);
+        spell.setManaCost("{B}");
+        spell.addEffect(EffectSlot.SPELL,
+                new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+        spell.addEffect(EffectSlot.SPELL, new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1));
+
+        harness.setGraveyard(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.h.HolyDay(),
+                new GrizzlyBears(), new com.github.laxika.magicalvibes.cards.h.HolyDay()));
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(aiPlayer.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Holy Day", "Holy Day");
+    }
+
     // ===== Entrancing Melody (PermanentManaValueEqualsXPredicate) =====
 
     @Test
@@ -1130,6 +2436,32 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Medium AI casts Dominate with a target within the announced X")
+    void castsDominateWithTargetWithinAnnouncedX() {
+        giveAiPriority();
+        giveAiIslands(6); // maxX = 3; the target determines X=2
+
+        Permanent tooExpensive = new Permanent(new HillGiant()); // MV=4
+        tooExpensive.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(tooExpensive);
+
+        Permanent target = new Permanent(new GrizzlyBears()); // MV=2
+        target.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(target);
+
+        Dominate dominate = new Dominate();
+        harness.setHand(aiPlayer, List.of(dominate));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(dominate);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
         assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
@@ -1191,6 +2523,77 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.playerHands.get(aiPlayer.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
                 .containsExactly(discard);
+    }
+
+    @Test
+    @DisplayName("Medium AI supplies all cards for a fixed multi-card discard cost")
+    void castsCatharticReunionWithTwoDiscardCards() {
+        giveAiPriority();
+        giveAiMountains(2);
+        CatharticReunion reunion = new CatharticReunion();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        GrizzlyBears secondDiscard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(reunion);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Medium AI chooses only discard for an either-or additional cost")
+    void castsEitherOrCostSpellByDiscardingWithoutSacrificing() {
+        giveAiPriority();
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(aiPlayer, new HowlingMine());
+        Card spell = eitherOrCostCreature();
+        GrizzlyBears discardedCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(spell, discardedCard));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+        assertThat(gd.playerGraveyards.get(aiPlayer.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId())).contains(artifact);
+    }
+
+    private Card eitherOrCostCreature() {
+        Card card = new Card();
+        card.setName("Either-Or Cost Creature");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}{R}");
+        card.setPower(2);
+        card.setToughness(2);
+        card.addEffect(EffectSlot.SPELL,
+                new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+        return card;
+    }
+
+    @Test
+    @DisplayName("Medium AI caps X at the number of players")
+    void capsXAtTheNumberOfPlayers() {
+        giveAiPriority();
+        giveAiIslands(5);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(bears);
+        EntrancingMelody capped = new EntrancingMelody();
+        capped.setXValueCap(new PlayersInGame());
+        harness.setHand(aiPlayer, List.of(capped));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(capped);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().getXValue()).isEqualTo(2);
     }
 
     // ===== X value cap handling =====
@@ -1279,7 +2682,7 @@ class MediumAiDecisionEngineTest {
     // ===== Forced attack (Trove of Temptation) =====
 
     @Test
-    @DisplayName("Medium AI attacks with at least one creature when Trove of Temptation forces attack")
+    @DisplayName("Medium AI chooses a legal attacker when forced and the first candidate is restricted")
     void attacksWithAtLeastOneWhenForcedByTroveOfTemptation() {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -1291,6 +2694,10 @@ class MediumAiDecisionEngineTest {
         Permanent trove = new Permanent(new TroveOfTemptation());
         trove.setSummoningSick(false);
         gd.playerBattlefields.get(human.getId()).add(trove);
+
+        Permanent conscripts = new Permanent(new OrcishConscripts());
+        conscripts.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(conscripts);
 
         // AI has a 2/2 creature and opponent has a 4/4 A?€�t simulator would normally skip attacking
         Permanent bears = new Permanent(new GrizzlyBears());
@@ -1308,6 +2715,8 @@ class MediumAiDecisionEngineTest {
                 .filter(Permanent::isAttacking)
                 .count();
         assertThat(attackingCount).isGreaterThanOrEqualTo(1);
+        assertThat(conscripts.isAttacking()).isFalse();
+        assertThat(bears.isAttacking()).isTrue();
     }
 
     // ===== Targeting tax handling =====
@@ -1328,6 +2737,9 @@ class MediumAiDecisionEngineTest {
 
         // Should NOT cast A?€�t can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test
@@ -1346,6 +2758,32 @@ class MediumAiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Medium AI leaves mana untapped when its chosen target adds an unaffordable surcharge")
+    void leavesManaUntappedWhenChosenTargetAddsOwnSurcharge() {
+        giveAiPriority();
+        giveAiPlains(3);
+
+        Card relicCard = new Card();
+        relicCard.setName("Relic");
+        relicCard.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(human, relicCard);
+        harness.addToBattlefield(human, new SerraAngel());
+        VanishIntoEternity vanish = new VanishIntoEternity();
+        harness.setHand(aiPlayer, List.of(vanish));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).containsExactly(vanish);
+        assertThat(gd.playerBattlefields.get(aiPlayer.getId()))
+                .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                .allMatch(permanent -> !permanent.isTapped());
     }
 
     @Test

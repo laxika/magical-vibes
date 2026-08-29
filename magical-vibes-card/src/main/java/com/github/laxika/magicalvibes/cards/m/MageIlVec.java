@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "86")
+@CardRegistration(set = "TPR", collectorNumber = "140")
 public class MageIlVec extends Card {
 
     public MageIlVec() {

@@ -45,9 +45,16 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
 
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
+        if (e.markSourceAsHavingAddedManaThisTurn() && amount > 0 && entry.getSourcePermanentId() != null) {
+            gameData.permanentsThatAddedManaWithAbilityThisTurn.add(entry.getSourcePermanentId());
+        }
         boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
                 entry.getControllerId(), e, amount, false, source == null ? null : source.getChosenSubtype(),
-                source == null ? null : source.getCard(), source == null ? null : source.getId());
+                source == null ? null : source.getCard(), source == null ? null : source.getId(),
+                e.manaRecipientIsTargetPlayer() ? entry.getTargetId() : null,
+                source != null && gameQueryService.hasEffectiveSupertype(
+                        gameData, source, com.github.laxika.magicalvibes.model.CardSupertype.SNOW),
+                source == null ? null : gameQueryService.getEffectiveColors(gameData, source));
         if (prompted) {
             String playerName = gameData.playerIdToName.get(entry.getControllerId());
             log.info("Game {} - Awaiting {} to choose a mana color ({})", gameData.id, playerName, e.restriction());

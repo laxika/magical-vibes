@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "5ED", collectorNumber = "190")
 @CardRegistration(set = "6ED", collectorNumber = "151")
 @CardRegistration(set = "7ED", collectorNumber = "156")
+@CardRegistration(set = "DRK", collectorNumber = "51")
 public class RagMan extends Card {
 
     public RagMan() {

@@ -13,7 +13,7 @@ import java.util.List;
 public class SoulfireGrandMaster extends Card {
 
     public SoulfireGrandMaster() {
-        addEffect(EffectSlot.STATIC, GrantLifelinkToControllerSpellsByColorEffect.allSpellColors());
+        addEffect(EffectSlot.STATIC, GrantLifelinkToControllerSpellsByColorEffect.allColors());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

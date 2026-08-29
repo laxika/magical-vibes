@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -20,6 +21,12 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param oncePerTurn whether this source can grant only one cast each turn
  * @param thisTurnOnly whether only cards exiled during the current turn qualify
  * @param withoutPayingManaCost whether qualifying spells are cast without paying their mana cost
+ * @param stashCounterOnly whether this permission applies to cards with stash counters rather
+ *                         than cards tracked with this source permanent
+ * @param persistsAfterSourceLeaves whether matching cards retain an explicit play/cast permission
+ *                                  after the source permanent leaves the battlefield
+ * @param entryCounterType counter placed on a permanent cast with this permission, or {@code null}
+ *                         when no entry counter is granted
  */
 public record AllowCastFromCardsExiledWithSourceEffect(
         boolean anyManaType,
@@ -31,23 +38,26 @@ public record AllowCastFromCardsExiledWithSourceEffect(
         boolean oncePerTurn,
         boolean thisTurnOnly,
         boolean withoutPayingManaCost,
-        ExileAccessScope accessScope)
+        ExileAccessScope accessScope,
+        boolean stashCounterOnly,
+        boolean persistsAfterSourceLeaves,
+        CounterType entryCounterType)
         implements CardEffect {
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType) {
         this(anyManaType, null, false, false, 0, null, false, false, false,
-                ExileAccessScope.CONTROLLER);
+                ExileAccessScope.CONTROLLER, false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, ExileAccessScope accessScope) {
-        this(anyManaType, null, false, false, 0, null, false, false, false, accessScope);
+        this(anyManaType, null, false, false, 0, null, false, false, false, accessScope, false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
                                                      boolean ownOnly, boolean controllerTurnOnly,
                                                      int additionalCounterCost) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
-                null, false, false, false, ExileAccessScope.CONTROLLER);
+                null, false, false, false, ExileAccessScope.CONTROLLER, false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
@@ -57,6 +67,31 @@ public record AllowCastFromCardsExiledWithSourceEffect(
                                                      boolean withoutPayingManaCost) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
                 manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost,
-                ExileAccessScope.CONTROLLER);
+                ExileAccessScope.CONTROLLER, false, false, null);
+    }
+
+    public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
+                                                     boolean ownOnly, boolean controllerTurnOnly,
+                                                     int additionalCounterCost, DynamicAmount manaValueLimit,
+                                                     boolean oncePerTurn, boolean thisTurnOnly,
+                                                     boolean withoutPayingManaCost,
+                                                     boolean persistsAfterSourceLeaves) {
+        this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
+                manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost,
+                ExileAccessScope.CONTROLLER, false, persistsAfterSourceLeaves, null);
+    }
+
+    public static AllowCastFromCardsExiledWithSourceEffect forStashCounters(boolean anyManaType) {
+        return new AllowCastFromCardsExiledWithSourceEffect(
+                anyManaType, null, false, true, 0, null, false, false, false,
+                ExileAccessScope.CONTROLLER, true, false, null);
+    }
+
+    /** Static source-linked permission that places {@code entryCounterType} on entered permanents. */
+    public static AllowCastFromCardsExiledWithSourceEffect withEntryCounter(
+            CardPredicate filter, CounterType entryCounterType) {
+        return new AllowCastFromCardsExiledWithSourceEffect(
+                false, filter, true, false, 0, null, false, false, false,
+                ExileAccessScope.CONTROLLER, false, false, entryCounterType);
     }
 }

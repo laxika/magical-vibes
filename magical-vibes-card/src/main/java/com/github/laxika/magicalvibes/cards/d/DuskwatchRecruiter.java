@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "193")
 @CardRegistration(set = "INR", collectorNumber = "323")
 @CardRegistration(set = "INR", collectorNumber = "467")
+@CardRegistration(set = "SOI", collectorNumber = "203")
 public class DuskwatchRecruiter extends Card {
 
     public DuskwatchRecruiter() {

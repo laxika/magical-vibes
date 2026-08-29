@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "247")
+@CardRegistration(set = "GPT", collectorNumber = "164")
+@CardRegistration(set = "GRN", collectorNumber = "257")
 @CardRegistration(set = "ECL", collectorNumber = "267")
 @CardRegistration(set = "ECL", collectorNumber = "348")
 public class SteamVents extends Card {

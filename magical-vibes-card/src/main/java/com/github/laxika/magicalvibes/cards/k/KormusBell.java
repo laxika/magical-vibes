@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "332")
+@CardRegistration(set = "SUM", collectorNumber = "260")
 public class KormusBell extends Card {
 
     public KormusBell() {

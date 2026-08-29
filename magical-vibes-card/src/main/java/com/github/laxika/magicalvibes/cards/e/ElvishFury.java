@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 @CardRegistration(set = "TMP", collectorNumber = "226")
+@CardRegistration(set = "TPR", collectorNumber = "170")
 public class ElvishFury extends Card {
 
     public ElvishFury() {

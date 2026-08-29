@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(HomaridWarrior.class)
 class HomaridWarriorTest extends BaseCardTest {
 
     @Test
@@ -23,7 +25,10 @@ class HomaridWarriorTest extends BaseCardTest {
 
         assertThat(warrior.getGrantedKeywords()).contains(Keyword.SHROUD);
         assertThat(warrior.isTapped()).isTrue();
-        assertThat(warrior.getSkipUntapCount()).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(warrior.isTapped()).isTrue();
     }
 
     @Test

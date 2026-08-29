@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "AKH", collectorNumber = "31")
+@CardRegistration(set = "AKR", collectorNumber = "40")
 public class TahCropElite extends Card {
 
     public TahCropElite() {

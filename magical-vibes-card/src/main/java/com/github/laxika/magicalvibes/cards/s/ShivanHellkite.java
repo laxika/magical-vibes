@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "231")
+@CardRegistration(set = "USG", collectorNumber = "214")
 public class ShivanHellkite extends Card {
 
     public ShivanHellkite() {

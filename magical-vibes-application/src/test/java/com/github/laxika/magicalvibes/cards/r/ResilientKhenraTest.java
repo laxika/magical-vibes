@@ -41,6 +41,7 @@ class ResilientKhenraTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -74,10 +75,10 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities(); // resolve eternalize -> token ETB on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve eternalize -> target choice
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Resilient Khenra") && p.getCard().isToken())
@@ -116,9 +117,9 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve creature spell -> target choice
         harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities(); // resolve triggered ability -> may prompt
+        harness.handleMayAbilityChosen(player1, true);
     }
 }

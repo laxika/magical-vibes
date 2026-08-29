@@ -21,16 +21,25 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * @param recipient     whose controller / target slot the then-effect acts on
  * @param thenCondition when non-null, the then-effect happens only if this condition is met after
  *                      the bounce (checked against the original stack entry's controller)
+ * @param beforeBounceCondition when non-null, the then-effect happens only if this condition is met
+ *                              immediately before the bounce
  */
 public record ReturnTargetPermanentToHandThenEffect(
         CardEffect thenEffect,
         ThenEffectRecipient recipient,
-        Condition thenCondition
+        Condition thenCondition,
+        Condition beforeBounceCondition
 ) implements CardEffect {
 
     /** Unconditional then-effect. */
     public ReturnTargetPermanentToHandThenEffect(CardEffect thenEffect, ThenEffectRecipient recipient) {
-        this(thenEffect, recipient, null);
+        this(thenEffect, recipient, null, null);
+    }
+
+    /** Then-effect gated by a condition checked after the bounce. */
+    public ReturnTargetPermanentToHandThenEffect(CardEffect thenEffect, ThenEffectRecipient recipient,
+                                                 Condition thenCondition) {
+        this(thenEffect, recipient, thenCondition, null);
     }
 
     @Override

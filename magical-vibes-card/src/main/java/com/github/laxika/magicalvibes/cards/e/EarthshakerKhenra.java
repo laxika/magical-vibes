@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HOU", collectorNumber = "90")
+@CardRegistration(set = "AKR", collectorNumber = "152")
 public class EarthshakerKhenra extends Card {
 
     public EarthshakerKhenra() {

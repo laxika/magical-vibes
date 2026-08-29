@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TrumpetingArmodonTest extends BaseCardTest {
@@ -64,6 +66,24 @@ class TrumpetingArmodonTest extends BaseCardTest {
                 .hasMessageContaining("must block");
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("A targeted creature that cannot legally block is not required to block")
+    void targetedOkkDoesNotHaveToBlockWithoutStrongerBlocker() {
+        Permanent armodon = addReadyArmodon(player1);
+        Permanent okk = addCreatureReady(player2, new Okk());
+        giveMana();
+
+        harness.activateAbility(player1, 0, null, okk.getId());
+        harness.passBothPriorities();
+
+        armodon.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+        assertThat(okk.isBlocking()).isFalse();
     }
 
     @Test

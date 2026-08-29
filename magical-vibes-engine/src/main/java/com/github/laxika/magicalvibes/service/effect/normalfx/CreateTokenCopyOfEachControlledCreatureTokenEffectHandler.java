@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,16 +57,16 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
             sourceCards.add(permanent.getCard());
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (Card sourceCard : sourceCards) {
+            int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                    gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 createTokenCopy(gameData, entry, sourceCard);
             }
         }
     }
 
-    private void createTokenCopy(GameData gameData, StackEntry entry, Card sourceCard) {
-        // Copy all copiable characteristics per CR 707.2.
+    void createTokenCopy(GameData gameData, StackEntry entry, Card sourceCard) {
         Card tokenCard = new Card();
         tokenCard.setName(sourceCard.getName());
         tokenCard.setType(sourceCard.getType());
@@ -94,6 +95,8 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);
+        tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                gameData, entry.getControllerId(), tokenCard);
 
         Permanent tokenPermanent = new Permanent(tokenCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);

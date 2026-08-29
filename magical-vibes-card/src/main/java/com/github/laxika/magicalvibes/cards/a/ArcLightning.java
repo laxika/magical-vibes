@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "KTK", collectorNumber = "97")
+@CardRegistration(set = "USG", collectorNumber = "174")
+@CardRegistration(set = "BRB", collectorNumber = "5")
 public class ArcLightning extends Card {
 
     public ArcLightning() {

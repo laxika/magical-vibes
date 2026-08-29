@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 
 @CardRegistration(set = "EXO", collectorNumber = "103")
+@CardRegistration(set = "BTD", collectorNumber = "46")
 public class SonicBurst extends Card {
 
     public SonicBurst() {

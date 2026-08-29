@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "164")
+@CardRegistration(set = "MOM", collectorNumber = "166")
 public class StokeTheFlames extends Card {
 
     public StokeTheFlames() {

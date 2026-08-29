@@ -37,7 +37,7 @@ class JeskaiBarricadeTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         }
 
         @Test
@@ -48,8 +48,9 @@ class JeskaiBarricadeTest extends BaseCardTest {
             castBarricade();
             harness.passBothPriorities();
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, true);
             harness.handlePermanentChosen(player1, bearsId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             harness.assertNotOnBattlefield(player1, "Grizzly Bears");
             harness.assertInHand(player1, "Grizzly Bears");
@@ -62,6 +63,9 @@ class JeskaiBarricadeTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears());
             castBarricade();
             harness.passBothPriorities();
+            harness.passBothPriorities();
+            UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+            harness.handlePermanentChosen(player1, bearsId);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 

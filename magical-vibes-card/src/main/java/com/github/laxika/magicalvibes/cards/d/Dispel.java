@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "36")
+@CardRegistration(set = "WWK", collectorNumber = "26")
 public class Dispel extends Card {
 
     public Dispel() {

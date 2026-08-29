@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "AKH", collectorNumber = "20")
 @CardRegistration(set = "ORI", collectorNumber = "26")
 @CardRegistration(set = "M19", collectorNumber = "28")
+@CardRegistration(set = "AKR", collectorNumber = "26")
 public class MightyLeap extends Card {
 
     public MightyLeap() {

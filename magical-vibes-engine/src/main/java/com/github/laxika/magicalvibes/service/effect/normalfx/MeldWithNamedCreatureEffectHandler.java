@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardScanner;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -67,7 +68,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
 
         PermanentPredicate partnerFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentNamedPredicate(e.partnerName()),
-                new PermanentIsCreaturePredicate(),
+                e.partnerPredicate(),
                 new PermanentOwnedBySourceControllerPredicate()));
 
         Permanent partner = null;
@@ -84,7 +85,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
             }
         }
         if (partner == null) {
-            log.info("Game {} - meld skipped: no owned/controlled creature named {}",
+            log.info("Game {} - meld skipped: no owned/controlled permanent named {}",
                     gameData.id, e.partnerName());
             return;
         }
@@ -109,6 +110,14 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
         Permanent melded = new Permanent(meldResult);
         melded.getMeldComponentCards().add(sourceCard);
         melded.getMeldComponentCards().add(partnerCard);
+        if (e.entersTappedAndAttacking()) {
+            melded.tap();
+            melded.setAttacking(true);
+            melded.setAttackTarget(source.getAttackTarget());
+        }
+        if (meldResult.hasType(CardType.PLANESWALKER) && meldResult.getLoyalty() != null) {
+            melded.setCounterCount(CounterType.LOYALTY, meldResult.getLoyalty());
+        }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, melded);
         // Melded permanent enters the battlefield (CR 701.37c) — fire its ETB triggers.

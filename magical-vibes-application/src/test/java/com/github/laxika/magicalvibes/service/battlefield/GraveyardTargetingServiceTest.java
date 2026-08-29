@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
@@ -81,6 +82,26 @@ class GraveyardTargetingServiceTest {
     }
 
     @Test
+    @DisplayName("handleGraveyardExileETBTargeting preserves the single-graveyard restriction")
+    void handleGraveyardExileETBTargeting_preservesSingleGraveyardRestriction() {
+        UUID player2Id = UUID.randomUUID();
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerGraveyards.put(player2Id, new ArrayList<>());
+        gd.playerGraveyards.get(player1Id).add(new Card());
+        gd.playerGraveyards.get(player2Id).add(new Card());
+
+        Card card = new Card();
+        card.setName("Soul-Shackled Zombie");
+        ExileCardsFromGraveyardEffect exile = new ExileCardsFromGraveyardEffect(
+                2, new CardTypePredicate(CardType.CREATURE), 2, 2, true);
+
+        service.handleGraveyardExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
+
+        assertThat(gd.graveyardTargetOperation.singleGraveyard).isTrue();
+        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), any(), eq(2), anyString());
+    }
+
+    @Test
     @DisplayName("handleReturnToHandETBTargeting pushes empty-target trigger when no matching land cards")
     void handleReturnToHandETBTargeting_pushesEmptyTriggerWhenNoLands() {
         Card card = new Card();
@@ -118,7 +139,25 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.graveyardTargetOperation.controllerId).isEqualTo(player1Id);
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
-                eq(1), anyString());
+                eq(1), eq(0), anyString());
+    }
+
+    @Test
+    @DisplayName("handleGraveyardCardsExileETBTargeting tracks a source permanent for source exiles")
+    void handleGraveyardCardsExileETBTargeting_tracksSourcePermanent() {
+        Card card = new Card();
+        card.setName("Pit of Offerings");
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        Card graveyardCard = new Card();
+        gd.playerGraveyards.get(player1Id).add(graveyardCard);
+        ExileGraveyardCardsEffect exile = new ExileGraveyardCardsEffect(
+                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false);
+
+        service.handleGraveyardCardsExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
+
+        assertThat(gd.graveyardTargetOperation.sourcePermanentId).isEqualTo(source.getId());
     }
 
     @Test

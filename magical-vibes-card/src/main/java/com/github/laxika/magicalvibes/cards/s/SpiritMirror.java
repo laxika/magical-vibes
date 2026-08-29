@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "TMP", collectorNumber = "48")
+@CardRegistration(set = "TPR", collectorNumber = "35")
 public class SpiritMirror extends Card {
 
     public SpiritMirror() {

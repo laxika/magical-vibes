@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "103")
+@CardRegistration(set = "DRK", collectorNumber = "104")
 public class LivingArmor extends Card {
 
     public LivingArmor() {

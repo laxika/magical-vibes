@@ -62,12 +62,17 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         var e = (SacrificePermanentsEffect) effect;
         // "Sacrifice a creature" (bare creature filter) uses the single-select creature primitive;
         // every other filter uses the multi-permanent-choice flow. Both are behaviourally tested.
-        boolean creatureSingleSac = e.filter() instanceof PermanentIsCreaturePredicate;
+        boolean creatureSingleSac = e.filter() instanceof PermanentIsCreaturePredicate
+                && !e.simultaneousChoices();
 
         switch (e.recipient()) {
             case CONTROLLER -> resolveSinglePlayer(gameData, entry, e, entry.getControllerId(), creatureSingleSac);
             case TARGET_PLAYER -> {
                 UUID targetPlayerId = entry.getTargetId();
+                if (targetPlayerId == null) {
+                    List<UUID> effectTargets = entry.targetsForEffect(e);
+                    targetPlayerId = effectTargets.isEmpty() ? null : effectTargets.getFirst();
+                }
                 if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                     return;
                 }
@@ -112,9 +117,43 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
+    void resolveForPlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect effect,
+            UUID playerId) {
+        resolveSinglePlayer(gameData, entry, effect, playerId,
+                effect.filter() instanceof PermanentIsCreaturePredicate);
+    }
+
+    public boolean hasLegalSacrificeChoice(GameData gameData, StackEntry entry,
+            SacrificePermanentsEffect effect, UUID playerId) {
+        if (playerId == null || !gameData.playerIds.contains(playerId)
+                || isSacrificeProtected(gameData, entry, playerId)) {
+            return false;
+        }
+
+        int count = evaluateCount(gameData, entry, effect, playerId);
+        if (count <= 0) {
+            return false;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return false;
+        }
+
+        FilterContext filterContext = filterContextFor(gameData, entry);
+        long matchingCount = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
+                .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                .count();
+        return matchingCount >= count;
+    }
+
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             UUID playerId, boolean creatureSingleSac) {
         if (isSacrificeProtected(gameData, entry, playerId)) {
+            if (!creatureSingleSac && (e.recordSacrificedCount() || e.recordSacrificedPower())) {
+                entry.setEventValue(0);
+            }
             return;
         }
 
@@ -125,6 +164,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         int count = evaluateCount(gameData, entry, e, playerId);
         if (count <= 0) {
+            if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
+                entry.setEventValue(0);
+            }
             // A dynamic count can evaluate to zero ("for each creature put into your graveyard this
             // turn" with no deaths) — nothing is sacrificed and no choice is prompted.
             return;
@@ -132,6 +174,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null || battlefield.isEmpty()) {
+            if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
+                entry.setEventValue(0);
+            }
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no permanents to sacrifice.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -142,9 +187,13 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         FilterContext filterContext = filterContextFor(gameData, entry);
         List<Permanent> matching = battlefield.stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
+                .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
                 .toList();
 
         if (matching.isEmpty()) {
+            if (e.recordSacrificedCount() || e.recordSacrificedPower()) {
+                entry.setEventValue(0);
+            }
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no matching permanents to sacrifice.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -152,16 +201,27 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (e.recordSacrificedPower()) {
+            entry.setEventValue(matching.stream()
+                    .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
+                    .max()
+                    .orElse(0));
+        }
+
         if (matching.size() <= count) {
             // Sacrifice all matching — no choice needed
             for (Permanent perm : matching) {
                 destructionSupport.sacrificeAndLog(gameData, perm, playerId);
             }
+            if (e.recordSacrificedCount()) {
+                entry.setEventValue(matching.size());
+            }
         } else {
             // More matching permanents than required — prompt player to choose
             List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
             playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
-                    new MultiPermanentChoiceContext.ForcedSacrifice(playerId, List.of(), List.of()),
+                    new MultiPermanentChoiceContext.ForcedSacrifice(
+                            playerId, List.of(), List.of(), false, e.recordSacrificedCount()),
                     "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
         }
     }
@@ -211,6 +271,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
 
             List<Permanent> matching = battlefield.stream()
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))
+                    .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
                     .toList();
 
             if (matching.isEmpty()) {
@@ -236,7 +297,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
         } else {
             // Some players need to choose — begin the first prompt
-            destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
+            destructionSupport.beginNextForcedSacrificeFromQueue(
+                    gameData, choosers, autoSacrificeIds, e.simultaneousChoices());
         }
     }
 

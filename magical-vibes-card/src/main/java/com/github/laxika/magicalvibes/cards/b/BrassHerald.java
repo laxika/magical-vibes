@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsMatchingToHandRestToBottomEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "293")
+@CardRegistration(set = "APC", collectorNumber = "133")
 public class BrassHerald extends Card {
 
     public BrassHerald() {

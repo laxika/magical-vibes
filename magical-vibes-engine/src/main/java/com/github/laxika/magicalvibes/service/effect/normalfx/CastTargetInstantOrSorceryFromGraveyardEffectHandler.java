@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,8 +36,11 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
 
         UUID controllerId = entry.getControllerId();
 
+        List<UUID> boundTargets = entry.targetsForEffect(effect);
         List<UUID> targetCardIds = !entry.getTargetCardIds().isEmpty()
                 ? entry.getTargetCardIds()
+                : !boundTargets.isEmpty()
+                ? boundTargets
                 : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         if (targetCardIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
@@ -68,7 +73,18 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                 continue;
             }
 
-            if (!targetCard.hasType(CardType.INSTANT) && !targetCard.hasType(CardType.SORCERY)) {
+            boolean instantOrSorcery = targetCard.hasType(CardType.INSTANT) || targetCard.hasType(CardType.SORCERY);
+            boolean matchesFilter = e.filter() == null
+                    || predicateEvaluationService.matchesCardPredicate(
+                    targetCard,
+                    e.filter(),
+                    entry.getCard().getId(),
+                    gameData,
+                    graveyardOwnerId,
+                    entry.getSourcePermanentId(),
+                    entry.getTriggeringPermanentPowerAtTrigger(),
+                    entry.getXValue());
+            if (!instantOrSorcery || !matchesFilter) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription()
                         + " fizzles (target is not an instant or sorcery)."));
                 continue;
@@ -79,7 +95,8 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                     + " without paying its mana cost?"
                     : entry.getCard().getName() + " — Cast " + targetCard.getName() + "?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    targetCard, controllerId, List.of(e), prompt));
+                    targetCard, controllerId, List.of(e), prompt,
+                    entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue()));
         }
     }
 }

@@ -25,41 +25,49 @@ import java.util.UUID;
  *   <li>{@link #permanentsTargetPlayerOwns(PermanentPredicate)} — bounce every permanent the target
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
  *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
+ *   <li>{@link #enchantedAndAuras()} — bounce the permanent the source Aura is attached to and
+ *       every Aura attached to that permanent (Mark of Eviction).</li>
+ *   <li>{@link #grantingEquipment()} — bounce the Equipment that granted the resolving ability,
+ *       captured at activation time.</li>
  * </ul>
  */
-public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect {
+public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect,
+        CombatDamageTriggerContextEffect, CastTimeCreatureTypeChoiceEffect {
 
     private final BounceScope scope;
     private final PermanentPredicate filter;
     private final int lifeLoss;
     private final int drawCount;
     private final UUID enchantedPermanentId;
+    private final UUID grantingEquipmentId;
     private final DynamicAmount castTimeXValue;
     private final CardEffect thenEffect;
     private final int minimumControlledNontokenCount;
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
-        this(scope, filter, lifeLoss, drawCount, null, null, null, 0);
+        this(scope, filter, lifeLoss, drawCount, null, null, null, 0, null);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null, null, 0);
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, null, null, 0, null);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId, DynamicAmount castTimeXValue) {
-        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, castTimeXValue, null, 0);
+        this(scope, filter, lifeLoss, drawCount, enchantedPermanentId, castTimeXValue, null, 0, null);
     }
 
     private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount,
                                UUID enchantedPermanentId, DynamicAmount castTimeXValue,
-                               CardEffect thenEffect, int minimumControlledNontokenCount) {
+                               CardEffect thenEffect, int minimumControlledNontokenCount,
+                               UUID grantingEquipmentId) {
         this.scope = scope;
         this.filter = filter;
         this.lifeLoss = lifeLoss;
         this.drawCount = drawCount;
         this.enchantedPermanentId = enchantedPermanentId;
+        this.grantingEquipmentId = grantingEquipmentId;
         this.castTimeXValue = castTimeXValue;
         this.thenEffect = thenEffect;
         this.minimumControlledNontokenCount = minimumControlledNontokenCount;
@@ -67,6 +75,10 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     public static ReturnToHandEffect target() {
         return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0);
+    }
+
+    public static ReturnToHandEffect target(PermanentPredicate filter) {
+        return new ReturnToHandEffect(BounceScope.TARGET, filter, 0, 0);
     }
 
     public static ReturnToHandEffect targetAndControllerLosesLife(int lifeLoss) {
@@ -81,8 +93,18 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0, null, castTimeXValue);
     }
 
+    /** Returns the targeted creatures that have the creature type chosen while casting this spell. */
+    public static ReturnToHandEffect targetCreaturesOfChosenType() {
+        return new ReturnToHandEffect(BounceScope.TARGET_CHOSEN_CREATURE_TYPE, null, 0, 0);
+    }
+
     public static ReturnToHandEffect self() {
         return new ReturnToHandEffect(BounceScope.SELF, null, 0, 0);
+    }
+
+    /** Returns the permanent whose event produced the resolving triggered ability. */
+    public static ReturnToHandEffect triggering() {
+        return new ReturnToHandEffect(BounceScope.TRIGGERING, null, 0, 0);
     }
 
     /**
@@ -105,7 +127,7 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
                                                                 int minimumControlledNontokenCount,
                                                                 CardEffect thenEffect) {
         return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0, null, null, thenEffect,
-                minimumControlledNontokenCount);
+                minimumControlledNontokenCount, null);
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerControls(PermanentPredicate filter) {
@@ -133,6 +155,23 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     }
 
     /**
+     * Returns the permanent the source Aura is attached to and every Aura attached to that
+     * permanent, with the Auras returned first so they do not become orphaned.
+     */
+    public static ReturnToHandEffect enchantedAndAuras() {
+        return new ReturnToHandEffect(BounceScope.ENCHANTED_AND_AURAS, null, 0, 0);
+    }
+
+    /**
+     * {@link #enchantedAndAuras()} with the host permanent already resolved, used as last known
+     * information when the Aura is no longer on the battlefield at resolution.
+     */
+    public static ReturnToHandEffect enchantedAndAurasSnapshot(UUID enchantedPermanentId) {
+        return new ReturnToHandEffect(BounceScope.ENCHANTED_AND_AURAS, null, 0, 0,
+                enchantedPermanentId);
+    }
+
+    /**
      * {@link #enchanted()} with the host permanent already resolved, used as last known information
      * when the Aura is no longer on the battlefield at resolution (Phantom Wings sacrifices itself
      * as the activation cost). Bound at activation time by {@code ActivatedAbilityExecutionService}.
@@ -141,8 +180,27 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return new ReturnToHandEffect(BounceScope.ENCHANTED, null, 0, 0, enchantedPermanentId);
     }
 
+    /** Returns the Equipment that granted the resolving ability to its owner's hand. */
+    public static ReturnToHandEffect grantingEquipment() {
+        return new ReturnToHandEffect(BounceScope.GRANTING_EQUIPMENT, null, 0, 0,
+                null, null, null, 0, null);
+    }
+
+    /**
+     * Returns the granting Equipment using the permanent captured when the ability was activated.
+     * If the Equipment has left the battlefield, this effect does nothing.
+     */
+    public static ReturnToHandEffect grantingEquipmentSnapshot(UUID grantingEquipmentId) {
+        return new ReturnToHandEffect(BounceScope.GRANTING_EQUIPMENT, null, 0, 0,
+                null, null, null, 0, grantingEquipmentId);
+    }
+
     public UUID enchantedPermanentId() {
         return enchantedPermanentId;
+    }
+
+    public UUID grantingEquipmentId() {
+        return grantingEquipmentId;
     }
 
     public BounceScope scope() {
@@ -175,13 +233,24 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     }
 
     @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return scope == BounceScope.SELF ? TriggerContext.SOURCE_SELF : null;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         // Only the single-target scope targets a battlefield permanent (PERMANENT reproduces its
         // requireBattlefieldTarget guard); the target-players scopes target a player (the old
         // validator imposed no guard there). SELF acts on the source permanent without choosing a
         // target, but marks it as self-targeting so trigger collectors retain the source id.
-        if (scope == BounceScope.TARGET || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
-            return TargetSpec.benign(TargetPredicates.permanent());
+        if (scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
+                || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
+            if (scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE) {
+                return TargetSpec.benign(TargetPredicates.creature());
+            }
+            return filter == null
+                    ? TargetSpec.benign(TargetPredicates.permanent())
+                    : TargetSpec.benign(TargetPredicates.permanent(), filter);
         }
         if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {
             return TargetSpec.benign(TargetPredicates.player());
@@ -194,19 +263,25 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == BounceScope.ENCHANTED;
+        return scope == BounceScope.ENCHANTED || scope == BounceScope.ENCHANTED_AND_AURAS;
     }
 
     @Override
     public RemovalKind removalKind() {
         // Only a single-target bounce is targeted removal; the mass/self scopes are board
         // sweeps or self-return, not single-target removal.
-        return scope == BounceScope.TARGET ? RemovalKind.BOUNCE : null;
+        return scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
+                ? RemovalKind.BOUNCE : null;
     }
 
     @Override
     public boolean sweepsBoard() {
         // Only the all-matching scope is a board sweep; the targeted / self scopes are not.
         return scope == BounceScope.ALL_MATCHING;
+    }
+
+    @Override
+    public boolean requiresCastTimeCreatureTypeChoice() {
+        return scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE;
     }
 }

@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -127,6 +130,35 @@ class ETBTokenTargetServiceTest {
     }
 
     @Test
+    @DisplayName("Single ETB target applies a restriction carried by a wrapped effect")
+    void processNextETBTokenTargetTrigger_appliesWrappedEffectRestriction() {
+        UUID player2Id = UUID.randomUUID();
+        gd.playerIds.add(player2Id);
+        gd.orderedPlayerIds.add(player2Id);
+        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        Permanent ownCreature = new Permanent(new Card());
+        Permanent opponentCreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(ownCreature);
+        gd.playerBattlefields.get(player2Id).add(opponentCreature);
+
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        MayEffect effect = new MayEffect(
+                new ExileTargetPermanentUntilSourceLeavesEffect(false,
+                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId())),
+                "Exile target permanent?");
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                sourceCard, player1Id, List.of(effect), ownCreature.getId(), null));
+
+        service.processNextETBTokenTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                gd, player1Id, List.of(opponentCreature.getId()), List.of(),
+                "Test Source's ability — Choose a target.");
+    }
+
+    @Test
     @DisplayName("Multi-target trigger skips a target group whose bound effect was gated out")
     void processNextETBTokenMultiTargetTrigger_skipsGatedOutGroup() {
         // Two target groups (like Noggle Hedge-Mage). The first group's effect was gated out
@@ -172,5 +204,29 @@ class ETBTokenTargetServiceTest {
 
         verify(playerInputService).beginAnyTargetChoice(
                 eq(gd), eq(player1Id), eq(List.of(candidate.getId())), eq(List.of()), contains("target 1.1"));
+    }
+
+    @Test
+    @DisplayName("Allows a target to be reused across target groups when the card permits it")
+    void allowsSharedTargetsAcrossGroups() {
+        Permanent candidate = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(candidate);
+        when(gameQueryService.isCreature(gd, candidate)).thenReturn(true);
+
+        Card card = new Card();
+        card.setName("Flash Thompson, Spider-Fan");
+        card.setAllowSharedTargets(true);
+        var firstEffect = new DestroyTargetPermanentEffect();
+        var secondEffect = new DestroyTargetPermanentEffect();
+        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, firstEffect);
+        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, secondEffect);
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(firstEffect, secondEffect), UUID.randomUUID(),
+                List.of(candidate.getId()), 1, 0, List.of(1)));
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                eq(gd), eq(player1Id), eq(List.of(candidate.getId())), eq(List.of()), contains("target 2"));
     }
 }

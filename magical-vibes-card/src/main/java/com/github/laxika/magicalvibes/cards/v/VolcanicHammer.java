@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "9ED", collectorNumber = "226")
 @CardRegistration(set = "POR", collectorNumber = "154")
 @CardRegistration(set = "P02", collectorNumber = "119")
+@CardRegistration(set = "S99", collectorNumber = "123")
 public class VolcanicHammer extends Card {
 
     public VolcanicHammer() {

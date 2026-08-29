@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "34")
+@CardRegistration(set = "GRN", collectorNumber = "23")
 public class RighteousBlow extends Card {
 
     public RighteousBlow() {

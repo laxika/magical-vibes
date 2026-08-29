@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "324")
+@CardRegistration(set = "TPR", collectorNumber = "242")
 public class SaltFlats extends Card {
 
     public SaltFlats() {

@@ -4,17 +4,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 
 /**
  * Static effect that grants lifelink to instant or sorcery spells controlled by this permanent's
- * controller. With a color, only spells of that color qualify; the all-spell-colors factory matches
- * spells of every color. Checked when spell damage is dealt. Used by Firesong and Sunspeaker and
- * Soulfire Grand Master.
+ * controller. When {@code color} is non-null, only spells of that color qualify; a null color
+ * grants lifelink to spells of every color. Checked when spell damage is dealt. Used by Firesong
+ * and Sunspeaker and Radiant Scrollwielder.
  */
-public record GrantLifelinkToControllerSpellsByColorEffect(CardColor color, boolean allColors) implements CardEffect {
+public record GrantLifelinkToControllerSpellsByColorEffect(CardColor color) implements CardEffect {
 
-    public GrantLifelinkToControllerSpellsByColorEffect(CardColor color) {
-        this(color, false);
-    }
-
-    public static GrantLifelinkToControllerSpellsByColorEffect allSpellColors() {
-        return new GrantLifelinkToControllerSpellsByColorEffect(null, true);
+    public static GrantLifelinkToControllerSpellsByColorEffect allColors() {
+        return new GrantLifelinkToControllerSpellsByColorEffect(null);
     }
 }

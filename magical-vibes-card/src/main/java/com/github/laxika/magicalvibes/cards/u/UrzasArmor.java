@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceTo
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "318")
+@CardRegistration(set = "USG", collectorNumber = "313")
 public class UrzasArmor extends Card {
 
     public UrzasArmor() {

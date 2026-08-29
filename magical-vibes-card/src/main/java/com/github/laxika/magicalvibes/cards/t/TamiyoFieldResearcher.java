@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "249")
+@CardRegistration(set = "EMN", collectorNumber = "190")
 public class TamiyoFieldResearcher extends Card {
 
     public TamiyoFieldResearcher() {

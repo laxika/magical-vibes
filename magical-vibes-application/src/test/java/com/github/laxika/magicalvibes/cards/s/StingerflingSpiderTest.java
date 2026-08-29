@@ -23,8 +23,7 @@ class StingerflingSpiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
     }
 
     @Test
@@ -34,9 +33,9 @@ class StingerflingSpiderTest extends BaseCardTest {
         UUID flierId = harness.getPermanentId(player2, "Air Elemental");
 
         castSpider();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, flierId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Air Elemental");
@@ -47,9 +46,11 @@ class StingerflingSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the ETB may leaves the flying creature alive")
     void decliningMayLeavesFlierAlive() {
-        harness.addToBattlefield(player2, new AirElemental());
+        UUID flierId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
 
         castSpider();
+        harness.handlePermanentChosen(player1, flierId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
@@ -78,9 +79,11 @@ class StingerflingSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("The may prompt fires when a flying creature is available")
     void mayPromptFiresWithFlier() {
-        harness.addToBattlefield(player2, new AirElemental());
+        UUID flierId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
 
         castSpider();
+        harness.handlePermanentChosen(player1, flierId);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }

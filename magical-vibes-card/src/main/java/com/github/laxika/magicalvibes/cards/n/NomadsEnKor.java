@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "9")
+@CardRegistration(set = "TPR", collectorNumber = "20")
 public class NomadsEnKor extends Card {
 
     public NomadsEnKor() {

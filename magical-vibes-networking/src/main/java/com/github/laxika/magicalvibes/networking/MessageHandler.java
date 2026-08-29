@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.RegisterRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateExiledAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.ActivateExileAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
@@ -57,11 +57,11 @@ public interface MessageHandler {
 
     void handleActivateAbility(Connection connection, ActivateAbilityRequest request) throws Exception;
 
+    void handleActivateExiledAbility(Connection connection, ActivateExiledAbilityRequest request) throws Exception;
+
     void handleActivateGraveyardAbility(Connection connection, ActivateGraveyardAbilityRequest request) throws Exception;
 
     void handleActivateHandAbility(Connection connection, ActivateHandAbilityRequest request) throws Exception;
-
-    void handleActivateExileAbility(Connection connection, ActivateExileAbilityRequest request) throws Exception;
 
     void handleSetAutoStops(Connection connection, SetAutoStopsRequest request) throws Exception;
 

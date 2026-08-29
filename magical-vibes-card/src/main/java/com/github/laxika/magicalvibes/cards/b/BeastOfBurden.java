@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "9ED", collectorNumber = "288")
 @CardRegistration(set = "8ED", collectorNumber = "292")
 @CardRegistration(set = "7ED", collectorNumber = "287")
+@CardRegistration(set = "ULG", collectorNumber = "122")
 public class BeastOfBurden extends Card {
 
     public BeastOfBurden() {

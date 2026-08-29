@@ -59,6 +59,7 @@ class VarchildsCrusaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Varchild's Crusader");
         harness.assertInGraveyard(player1, "Varchild's Crusader");

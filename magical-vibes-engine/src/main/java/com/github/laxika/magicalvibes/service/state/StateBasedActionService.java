@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
@@ -41,6 +43,7 @@ public class StateBasedActionService {
     private final GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.battlefield.CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
+    private final TriggerCollectionService triggerCollectionService;
     private final LegendRuleService legendRuleService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
 
@@ -58,6 +61,9 @@ public class StateBasedActionService {
     private static final int MAX_SBA_PASSES = 100;
 
     public void performStateBasedActions(GameData gameData) {
+        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
+        initializeSpeedForPlayers(gameData);
+
         // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the
         // check repeats until none are performed. One pass is not enough: a death can remove a
         // static effect (e.g. an anthem) and make another creature's marked damage newly lethal.
@@ -123,6 +129,24 @@ public class StateBasedActionService {
         checkEmptyLibraryLoss(gameData);
     }
 
+    private void initializeSpeedForPlayers(GameData gameData) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (gameData.playerSpeeds.containsKey(playerId)) {
+                return;
+            }
+            boolean hasStartYourEngines = battlefield.stream()
+                    .anyMatch(permanent -> gameQueryService.hasKeyword(
+                            gameData, permanent, Keyword.START_YOUR_ENGINES));
+            if (hasStartYourEngines) {
+                gameData.playerSpeeds.put(playerId, 1);
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " starts their engines at speed 1."));
+                log.info("Game {} - {} starts their engines at speed 1", gameData.id, playerName);
+            }
+        });
+    }
+
     /**
      * Removes tokens from every zone other than the battlefield after their zone-change events
      * and associated triggers have already been recorded (CR 111.7).
@@ -155,17 +179,25 @@ public class StateBasedActionService {
         for (UUID cardId : removedTokenIds) {
             gameData.exiledCardEggCounters.remove(cardId);
             gameData.exiledCardDreamCounters.remove(cardId);
+            gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
+            gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
+            gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionSourcePermanents.remove(cardId);
+            gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
             gameData.exilePlayAnyManaType.remove(cardId);
             gameData.exilePlayAnyManaTypeWhileExiled.remove(cardId);
+            gameData.stashCounterCardIds.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
             gameData.exileInsteadOfGraveyard.remove(cardId);
+            gameData.foretoldCardIds.remove(cardId);
             gameData.graveyardPlayPermissions.remove(cardId);
             gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(cardId);
+            gameData.graveyardCardsEnterTapped.remove(cardId);
         }
         gameData.imprintedCards.entrySet().removeIf(entry -> removedTokenIds.contains(entry.getValue().getId()));
         gameData.clearDelayedActions(PendingExileReturn.class,
@@ -195,43 +227,73 @@ public class StateBasedActionService {
     }
 
     private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+
         List<DeathEntry> toDie = new ArrayList<>();
-        gameData.forEachPermanent((playerId, p) -> {
-            if (processedIds.contains(p.getId())) {
-                return;
+        List<DeathEntry> lethalDamageCandidates = new ArrayList<>();
+        gameQueryService.withQueryScope(gameData, () -> {
+            for (Permanent p : permanents) {
+                if (processedIds.contains(p.getId())) {
+                    continue;
+                }
+                if (gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
+                } else if (gameQueryService.isCreature(gameData, p)
+                        && isDestroyedByLethalDamage(gameData, p)
+                        && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)) {
+                    // CR 704.5g — creature with damage >= toughness is destroyed, and
+                    // CR 704.5h — creature dealt damage by a deathtouch source since the last check
+                    // is destroyed (regeneration can replace either)
+                    lethalDamageCandidates.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
+                } else if (gameQueryService.isPlaneswalker(gameData, p)
+                        && p.getCounterCount(CounterType.LOYALTY) <= 0) {
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
+                } else if (gameQueryService.isBattle(gameData, p)
+                        && p.getCounterCount(CounterType.DEFENSE) <= 0
+                        && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
+                    // CR 704.5v — battle with no defense counters is put into the graveyard unless a
+                    // "when this battle is defeated" ability is still on the stack.
+                    toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
+                }
             }
-            if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
-            } else if (gameQueryService.isCreature(gameData, p)
-                    && isDestroyedByLethalDamage(gameData, p)
-                    && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
-                    && !graveyardService.tryRegenerate(gameData, p)) {
-                // CR 704.5g — creature with damage >= toughness is destroyed, and
-                // CR 704.5h — creature dealt damage by a deathtouch source since the last check
-                // is destroyed (regeneration can replace either)
-                toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
-            } else if (gameQueryService.isPlaneswalker(gameData, p) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
-            } else if (gameQueryService.isBattle(gameData, p) && p.getCounterCount(CounterType.DEFENSE) <= 0
-                    && !battleDefeatSupport.hasDefeatTriggerOnStack(gameData, p.getId())) {
-                // CR 704.5v — battle with no defense counters is put into the graveyard unless a
-                // "when this battle is defeated" ability is still on the stack.
-                toDie.add(new DeathEntry(p, DeathReason.ZERO_DEFENSE));
-            }
+            return null;
         });
+
+        boolean replacementPerformed = false;
+        for (DeathEntry candidate : lethalDamageCandidates) {
+            if (graveyardService.tryRegenerate(gameData, candidate.permanent())) {
+                replacementPerformed = true;
+            } else {
+                toDie.add(candidate);
+            }
+        }
 
         // CR 704.5h spans "since the last state-based check" and this pass is that check:
         // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
         // re-destroyed by a later pass or a later check.
-        gameData.forEachPermanent((playerId, p) -> p.setDamagedByDeathtouch(false));
+        for (Permanent p : permanents) {
+            p.setDamagedByDeathtouch(false);
+        }
 
         try {
             for (DeathEntry entry : toDie) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                if (controllerId != null) {
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
+                }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
+                        gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
+                                gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -260,15 +322,20 @@ public class StateBasedActionService {
                     }
                 }
             }
+            triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanentControllers.clear();
+            gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        return !toDie.isEmpty();
+        return !toDie.isEmpty() || replacementPerformed;
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
@@ -284,6 +351,11 @@ public class StateBasedActionService {
             boolean chapterOnStack = gameData.stack.stream()
                     .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                             && p.getId().equals(e.getSourcePermanentId()));
+            StackEntry pendingResolution = gameData.pendingEffectResolutionEntry;
+            if (!chapterOnStack && pendingResolution != null) {
+                chapterOnStack = pendingResolution.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && p.getId().equals(pendingResolution.getSourcePermanentId());
+            }
             if (!chapterOnStack) {
                 sagasToSacrifice.add(p);
             }

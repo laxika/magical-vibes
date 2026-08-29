@@ -48,10 +48,16 @@ public class AwardPersistentManaEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        UUID recipientId = e.recipient() == AwardPersistentManaEffect.Recipient.TARGET_PLAYER
-                && entry.getTargetId() != null
-                ? entry.getTargetId()
-                : entry.getControllerId();
+        UUID recipientId = switch (e.recipient()) {
+            case TARGET_PLAYER -> entry.getTargetId() != null
+                    ? entry.getTargetId() : entry.getControllerId();
+            case ENCHANTED_PERMANENT_CONTROLLER -> entry.getTargetId() != null
+                    ? entry.getTargetId()
+                    : source != null && source.getAttachedTo() != null
+                    ? gameQueryService.findPermanentController(gameData, source.getAttachedTo())
+                    : entry.getControllerId();
+            case CONTROLLER -> entry.getControllerId();
+        };
         ManaPool pool = gameData.playerManaPools.get(recipientId);
         pool.addPersistentMana(e.color(), amount);
 

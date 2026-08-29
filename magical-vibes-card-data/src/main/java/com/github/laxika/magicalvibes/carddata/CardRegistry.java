@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -76,10 +77,12 @@ public class CardRegistry implements CardCatalog {
     void load() {
         printings = CardScanner.scan();
 
-        if (loadMode == OracleLoadMode.ON_DEMAND) {
+        if (loadMode != OracleLoadMode.EAGER) {
             indexBackFaces();
-            Card.installOracleDataResolver(oracleDataResolver);
-            LOG.info("Card registry ready for on-demand oracle loading");
+            if (loadMode == OracleLoadMode.ON_DEMAND) {
+                Card.installOracleDataResolver(oracleDataResolver);
+            }
+            LOG.info("Card registry ready for " + loadMode.name().toLowerCase(Locale.ROOT) + " oracle loading");
             return;
         }
 
@@ -108,6 +111,41 @@ public class CardRegistry implements CardCatalog {
         loadedSets.add(cardSet);
     }
 
+    /**
+     * Loads the preferred oracle set for a registered card class. Test infrastructure uses this to
+     * preload data declared by a test before that test constructs any cards.
+     *
+     * @throws IllegalArgumentException if the class is neither a registered front face nor an
+     *                                  indexed back face
+     */
+    public void ensureCardDataLoaded(Class<? extends Card> cardClass) {
+        ensureCardDataLoaded(List.of(cardClass));
+    }
+
+    /**
+     * Limits oracle-set loads for a group of registered card classes. At each step, the set
+     * containing the most still-uncovered classes is selected. This lets {@code @CardUsed} tests
+     * reuse a shared printing set instead of independently choosing an unrelated preferred set for
+     * every reprinted support card.
+     *
+     * @throws IllegalArgumentException if any class is neither a registered front face nor an
+     *                                  indexed back face
+     */
+    public void ensureCardDataLoaded(List<Class<? extends Card>> cardClasses) {
+        Set<Class<? extends Card>> remaining = new LinkedHashSet<>(cardClasses);
+        for (Class<? extends Card> cardClass : remaining) {
+            if (setsFor(cardClass).isEmpty()) {
+                throw new IllegalArgumentException(
+                        "No registered printing found for " + cardClass.getName());
+            }
+        }
+        while (!remaining.isEmpty()) {
+            CardSet cardSet = setCoveringMost(remaining);
+            ensureSetLoaded(cardSet);
+            remaining.removeIf(cardClass -> setsFor(cardClass).contains(cardSet));
+        }
+    }
+
     private void indexBackFaces() {
         Map<Class<? extends Card>, CardSet> backFaces = new HashMap<>();
         Set<String> inspectedFronts = new HashSet<>();
@@ -134,15 +172,39 @@ public class CardRegistry implements CardCatalog {
             return;
         }
 
-        CardSet cardSet = preferredSet(cardClass);
-        if (cardSet == null) {
-            cardSet = backFaceSets.get(cardClass);
-        }
+        CardSet cardSet = findSetFor(cardClass);
         if (cardSet == null) {
             // Synthetic Card subclasses are common in engine tests and intentionally have no data.
             return;
         }
         ensureSetLoaded(cardSet);
+    }
+
+    private CardSet findSetFor(Class<? extends Card> cardClass) {
+        CardSet cardSet = preferredSet(cardClass);
+        return cardSet != null ? cardSet : backFaceSets.get(cardClass);
+    }
+
+    private CardSet setCoveringMost(Set<Class<? extends Card>> cardClasses) {
+        return Arrays.stream(CardSet.values())
+                .max(Comparator.comparingLong((CardSet cardSet) -> cardClasses.stream()
+                                .filter(cardClass -> setsFor(cardClass).contains(cardSet))
+                                .count())
+                        .thenComparingInt(CardSet::ordinal))
+                .filter(cardSet -> cardClasses.stream()
+                        .anyMatch(cardClass -> setsFor(cardClass).contains(cardSet)))
+                .orElse(null);
+    }
+
+    private Set<CardSet> setsFor(Class<? extends Card> cardClass) {
+        Set<CardSet> cardSets = Arrays.stream(cardClass.getAnnotationsByType(CardRegistration.class))
+                .map(registration -> CardSet.findByCode(registration.set()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (cardSets.isEmpty() && backFaceSets.containsKey(cardClass)) {
+            return Set.of(backFaceSets.get(cardClass));
+        }
+        return cardSets;
     }
 
     private static CardSet preferredSet(Class<? extends Card> cardClass) {

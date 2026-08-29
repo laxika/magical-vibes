@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "315")
+@CardRegistration(set = "PLS", collectorNumber = "134")
 public class StarCompass extends Card {
 
     public StarCompass() {

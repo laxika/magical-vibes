@@ -46,16 +46,20 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SearchTargetLibraryEffect e = (SearchTargetLibraryEffect) effect;
+        resolveForTargetPlayer(gameData, entry, (SearchTargetLibraryEffect) effect, entry.getTargetId());
+    }
+
+    void resolveForTargetPlayer(GameData gameData, StackEntry entry, SearchTargetLibraryEffect effect,
+                                UUID targetPlayerId) {
+        SearchTargetLibraryEffect e = effect;
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetId();
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         // Leonin Arbiter: the search itself does not happen, but "then that player shuffles" is a
         // separate instruction that still does — and the library that shuffles is the one that was
         // to be searched, not the searcher's own.
-        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId)) {
+        if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId, targetPlayerId, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(targetName + "'s library is shuffled."));
             return;
@@ -122,7 +126,10 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
         String subject = "Search " + targetName + "'s library for a " + CardPredicateUtils.describeFilter(filter);
         return switch (destination) {
             case EXILE -> subject + " to exile (" + count + " remaining).";
-            case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> subject + " to exile face down.";
+            case EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> filter == null
+                    ? subject + " to exile face down."
+                    : subject + " to exile.";
+            case EXILE_PLAYABLE_ANY_NUMBER -> subject + " to exile (any number).";
             case GRAVEYARD -> subject + " to put into their graveyard (" + count + " remaining).";
             case BATTLEFIELD_UNDER_SEARCHER -> subject + " to put onto the battlefield under your control.";
             default -> throw new IllegalStateException("Unsupported destination " + destination);

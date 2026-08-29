@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "37")
+@CardRegistration(set = "ROE", collectorNumber = "50")
 public class TotemGuideHartebeest extends Card {
 
     public TotemGuideHartebeest() {

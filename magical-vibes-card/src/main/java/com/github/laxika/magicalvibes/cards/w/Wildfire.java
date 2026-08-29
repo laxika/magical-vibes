@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "7ED", collectorNumber = "228")
 @CardRegistration(set = "9ED", collectorNumber = "228")
 @CardRegistration(set = "P02", collectorNumber = "120")
+@CardRegistration(set = "USG", collectorNumber = "228")
 public class Wildfire extends Card {
 
     public Wildfire() {

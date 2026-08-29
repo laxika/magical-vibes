@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -67,9 +68,13 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
+        UUID sourceCardId = source == null || source.getOriginalCard() == null
+                ? entry.getCard().getId()
+                : source.getOriginalCard().getId();
         FilterContext ctx = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceCardId(sourceCardId)
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(source);
         int count = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
         // Vizier of Remedies reduces per creature by its own controller's copies, so the placed -1/-1
@@ -81,17 +86,19 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
             int placed = amount;
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
-                placed = gameQueryService.reduceMinusOneMinusOneCounters(gameData, p, amount);
-                if (placed <= 0) continue;
             } else if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
                 if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, p)) continue;
-                placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, p, amount);
-                if (placed <= 0) continue;
             }
+            placed = gameQueryService.replaceCounters(gameData, p, e.counterType(), amount,
+                    entry.getControllerId());
+            if (placed <= 0) continue;
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, p, placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, p, placed);
                 plusOneTargets.add(p);
             } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 minusOneTargets.put(p, placed);
@@ -105,7 +112,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 entry.getCard().getName(), amount, counterName, count);
 
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, placement.getKey(), placement.getValue());

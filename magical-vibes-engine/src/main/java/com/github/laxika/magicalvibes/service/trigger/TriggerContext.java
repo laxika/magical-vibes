@@ -1,17 +1,31 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.UUID;
+import java.util.Map;
+import java.util.List;
 
 /**
  * Sealed hierarchy of trigger event contexts.
  * Each record carries the event-specific data that trigger collectors may need.
  */
 public sealed interface TriggerContext {
+
+    record SpellCopy(StackEntry copiedSpell, UUID copyingPlayerId) implements TriggerContext {
+        public Card spellCard() {
+            return copiedSpell.getCard();
+        }
+    }
+
+    default boolean causedByCreatureDying() {
+        return false;
+    }
 
     /**
      * Context for spell-cast triggers (ON_ANY_PLAYER_CASTS_SPELL, ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
@@ -35,19 +49,54 @@ public sealed interface TriggerContext {
     /** Context for "whenever a spell or ability you control counters a spell" triggers. */
     record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
 
+    record Foretell(UUID foretellingPlayerId, Card foretoldCard) implements TriggerContext {}
+
+    /** Context for "whenever a spell you've cast is countered" triggers. */
+    record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
+
     /**
      * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
      * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
      */
-    record LandPlayed(UUID playingPlayerId, Card landCard) implements TriggerContext {}
+    record LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone) implements TriggerContext {
+        public LandPlayed(UUID playingPlayerId, Card landCard) {
+            this(playingPlayerId, landCard, Zone.HAND);
+        }
+
+        public LandPlayed(UUID playingPlayerId, Card landCard, boolean fromExile) {
+            this(playingPlayerId, landCard, fromExile ? Zone.EXILE : Zone.HAND);
+        }
+
+        public boolean fromExile() {
+            return playZone == Zone.EXILE;
+        }
+    }
 
     /**
      * Context for discard triggers (ON_OPPONENT_DISCARDS).
      */
     record Discard(UUID discardingPlayerId, Card discardedCard) implements TriggerContext {}
 
+    /** Context for a discard event containing one or more cards. */
+    record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
-    record Scry(UUID scryingPlayerId) implements TriggerContext {}
+    record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
+        public Scry(UUID scryingPlayerId) {
+            this(scryingPlayerId, 0);
+        }
+    }
+
+    /** Context for controller-investigate triggers. */
+    record Investigate(UUID investigatingPlayerId) implements TriggerContext {}
+
+    /** Context for controller-surveil triggers. */
+    record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
+
+    /** Context for controller collect-evidence triggers. */
+    record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
+    /** Context for controller-discover triggers. */
+    record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -60,6 +109,9 @@ public sealed interface TriggerContext {
      */
     record CreatureTapForMana(UUID tappingPlayerId, UUID tappedCreatureId) implements TriggerContext {}
 
+    /** Context for a creature's mana ability resolving, including the mana it produced. */
+    record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
+
     /**
      * Context for damage-dealt-to-controller triggers (ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).
      */
@@ -68,12 +120,16 @@ public sealed interface TriggerContext {
     /**
      * Context for damage-dealt-to-controller triggers that only care about the amount
      * (ON_CONTROLLER_DEALT_DAMAGE, e.g. Living Artifact). Fired once per damage source.
+     * {@code sourcePermanentId} is populated for source-specific opponent-damage triggers.
      */
-    record DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId)
-            implements TriggerContext {
+    record DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId,
+            UUID sourceControllerId) implements TriggerContext {
+        public DamageToControllerAmount(UUID damagedPlayerId, int amount, UUID sourcePermanentId) {
+            this(damagedPlayerId, amount, sourcePermanentId, null);
+        }
 
         public DamageToControllerAmount(UUID damagedPlayerId, int amount) {
-            this(damagedPlayerId, amount, null);
+            this(damagedPlayerId, amount, null, null);
         }
     }
 
@@ -82,14 +138,34 @@ public sealed interface TriggerContext {
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
+    record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
+                                               Card sacrificedCard) implements TriggerContext {}
+
+    /** Context for opponent-nontoken-permanent-sacrificed triggers. */
+    record OpponentPermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
+    /** Context for global permanent-sacrificed triggers. */
+    record PermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
+
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */
     record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
 
+    record OpponentPermanentDealtExcessDamage(Permanent damagedPermanent,
+                                              UUID damagedPermanentControllerId,
+                                              int excessDamage) implements TriggerContext {}
+
     /** Context for a creature dealing damage to another creature. */
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
                                           int damageDealt, boolean combatDamage) implements TriggerContext {}
+
+    /** Context for a source dealing noncombat damage to a creature. */
+    record SourceDealsNoncombatDamageToCreature(Permanent damagedCreature, int damageDealt,
+                                                 UUID sourceControllerId) implements TriggerContext {}
+
+    /** Context for a permanent becoming saddled. */
+    record SelfBecomesSaddled(UUID controllerId) implements TriggerContext {}
 
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
@@ -105,6 +181,9 @@ public sealed interface TriggerContext {
      */
     record LifeLoss(UUID losingPlayerId, int lifeLostAmount) implements TriggerContext {}
 
+    /** Context for life-payment triggers (ON_CONTROLLER_PAYS_LIFE). */
+    record LifePayment(UUID payingPlayerId, int lifePaidAmount) implements TriggerContext {}
+
     /**
      * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
      * {@code sourceCard} and {@code sourceEntryType} identify what caused the life gain
@@ -118,13 +197,39 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for controller-energy-gain triggers. */
+    record EnergyGain(UUID gainingPlayerId, int energyGainedAmount) implements TriggerContext {}
+
+    /** Context for a controller proliferating. */
+    record Proliferate(UUID proliferatingPlayerId) implements TriggerContext {}
+
+    /** Context for one counter-placement event caused by a player. */
+    record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
+
+    /** Context for a controller untapping one or more permanents during their untap step. */
+    record UntapStep(int untappedPermanentCount) implements TriggerContext {}
+    /** Context for loyalty-counter-removal triggers. */
+    record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
+
+    /** Context for removing a time counter from a suspended card in exile. */
+    record TimeCounterRemovedFromExile(int remainingCounters) implements TriggerContext {}
+
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
+
+    /** Context for triggers that fire when a player loses a coin flip. */
+    record CoinFlipLost(UUID losingPlayerId) implements TriggerContext {}
 
     /**
      * Context for noncombat-damage-to-opponent triggers (ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).
      */
-    record NoncombatDamageToOpponent(UUID damagedPlayerId) implements TriggerContext {}
+    record NoncombatDamageToOpponent(UUID damagedPlayerId, UUID sourceControllerId, int damageAmount)
+            implements TriggerContext {
+
+        public NoncombatDamageToOpponent(UUID damagedPlayerId) {
+            this(damagedPlayerId, null, 0);
+        }
+    }
 
     /**
      * Context for creature-card-milled triggers (ON_OPPONENT_CREATURE_CARD_MILLED).
@@ -153,6 +258,16 @@ public sealed interface TriggerContext {
     /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
 
+    /** Context for a permanent controlled by a player transforming. */
+    record PermanentTransforms(Permanent transformedPermanent, Card transformedCard, UUID controllerId)
+            implements TriggerContext {}
+
+    /** Context for a permanent changing from one player's control to an opponent's control. */
+    record PermanentControlChanged(Permanent changedPermanent, UUID previousControllerId,
+                                   UUID newControllerId) implements TriggerContext {}
+    /** Context for a change between the day and night designations. */
+    record DayNightChange(DayNight previous, DayNight current) implements TriggerContext {}
+
     // ── Death / leaves-battlefield contexts ────────────────────────────
 
     /**
@@ -160,14 +275,49 @@ public sealed interface TriggerContext {
      * The dying permanent may be null when the 4-arg overload is used.
      */
     /** Context for one token-creation event, preserving the number of tokens that entered together. */
-    record TokensEnter(int count, int perEffectTriggerCount) implements TriggerContext {
+    record TokensEnter(int count, int perEffectTriggerCount, List<UUID> permanentIds) implements TriggerContext {
+        public TokensEnter {
+            permanentIds = permanentIds == null ? List.of() : List.copyOf(permanentIds);
+        }
+
         public TokensEnter(int count) {
-            this(count, 1);
+            this(count, 1, List.of());
+        }
+
+        public TokensEnter(int count, int perEffectTriggerCount) {
+            this(count, perEffectTriggerCount, List.of());
         }
     }
 
     record SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
-                     Permanent dyingPermanent) implements TriggerContext {}
+                     Permanent dyingPermanent, Card castingSpell, int dyingPower) implements TriggerContext {
+        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                         Permanent dyingPermanent) {
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, null,
+                    defaultDyingPower(dyingCard, dyingPermanent));
+        }
+
+        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                         Permanent dyingPermanent, Card castingSpell) {
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, castingSpell,
+                    defaultDyingPower(dyingCard, dyingPermanent));
+        }
+
+        public SelfDeath(Card dyingCard, UUID controllerId, boolean wasCreature,
+                         Permanent dyingPermanent, int dyingPower) {
+            this(dyingCard, controllerId, wasCreature, dyingPermanent, null, dyingPower);
+        }
+
+        private static int defaultDyingPower(Card dyingCard, Permanent dyingPermanent) {
+            if (dyingPermanent != null) return dyingPermanent.getEffectivePower();
+            return dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0;
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return wasCreature;
+        }
+    }
 
     /**
      * Context for creature-death triggers that reference the dying creature's card and controller.
@@ -175,17 +325,58 @@ public sealed interface TriggerContext {
      * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
      * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
      * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
+     * {@code dyingPermanent} preserves the dying permanent's counter state for trigger collectors
+     * that need last-known counters.
      */
     record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
-                         int dyingCreatureToughness) implements TriggerContext {}
+                         int dyingCreatureToughness, UUID dyingPermanentId,
+                         Permanent dyingPermanent, boolean wasCreature) implements TriggerContext {
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    null, null, true);
+        }
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness, UUID dyingPermanentId) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    dyingPermanentId, null, true);
+        }
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness, UUID dyingPermanentId,
+                             Permanent dyingPermanent) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    dyingPermanentId, dyingPermanent, true);
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return wasCreature;
+        }
+    }
 
     /**
-     * Context for ON_EQUIPPED_CREATURE_DIES triggers. {@code dyingCard} is the card that died,
-     * needed by effects that act on it in the graveyard (Oathkeeper, Takeno's Daisho).
+     * Context for ON_EQUIPPED_CREATURE_DIES triggers. The power is the equipped creature's
+     * last-known effective power; {@code dyingCard} is the card that died, needed by effects that
+     * act on it in the graveyard (Oathkeeper, Takeno's Daisho).
      */
     record EquippedCreatureDeath(UUID dyingCreatureId,
                                  UUID dyingCreatureControllerId,
-                                 Card dyingCard) implements TriggerContext {}
+                                 Card dyingCard,
+                                 int dyingCreaturePower) implements TriggerContext {
+
+        public EquippedCreatureDeath(UUID dyingCreatureId, UUID dyingCreatureControllerId, Card dyingCard) {
+            this(dyingCreatureId, dyingCreatureControllerId, dyingCard,
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0);
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return true;
+        }
+    }
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.
@@ -195,22 +386,53 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness) implements TriggerContext {}
+                                   int dyingCreatureToughness, boolean wasCreature) implements TriggerContext {
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
+                    dyingCreaturePower, dyingCreatureToughness, true);
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return wasCreature;
+        }
+    }
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD triggers.
      *
      * @param leavingPermanent   the permanent that left the battlefield
      * @param leavingControllerId the player who controlled it as it left (last-known information)
+     * @param destination         the zone it entered, or {@code null} for legacy callers
      */
-    record EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId) implements TriggerContext {}
+    record EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId,
+                                    Zone destination) implements TriggerContext {
+
+        public EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId) {
+            this(leavingPermanent, leavingControllerId, null);
+        }
+    }
 
     /**
      * Context for ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD and
      * ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD triggers.
      */
     record ArtifactGraveyard(UUID graveyardOwnerId,
-                             UUID artifactControllerId) implements TriggerContext {}
+                             UUID artifactControllerId,
+                             Card artifactCard,
+                             int artifactManaValue) implements TriggerContext {
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId) {
+            this(graveyardOwnerId, artifactControllerId, null, 0);
+        }
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId, Card artifactCard) {
+            this(graveyardOwnerId, artifactControllerId, artifactCard,
+                    artifactCard == null ? 0 : artifactCard.getManaValue());
+        }
+    }
 
     /**
      * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).
@@ -282,6 +504,14 @@ public sealed interface TriggerContext {
     record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
             implements TriggerContext {}
 
+    /** Context for ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
+    record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount)
+            implements TriggerContext {}
+
+    /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
+    record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
+            implements TriggerContext {}
+
     /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
     record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
                                          UUID causeControllerId) implements TriggerContext {}
@@ -305,7 +535,16 @@ public sealed interface TriggerContext {
     /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
-    record SelfLeaves(UUID controllerId) implements TriggerContext {}
+    record SelfLeaves(UUID controllerId, Zone destination, boolean exiledWhileActivatingCraftAbility)
+            implements TriggerContext {
+        public SelfLeaves(UUID controllerId) {
+            this(controllerId, Zone.GRAVEYARD, false);
+        }
+
+        public SelfLeaves(UUID controllerId, Zone destination) {
+            this(controllerId, destination, false);
+        }
+    }
 
     /** Context for a permanent becoming monstrous. */
     record SelfBecomesMonstrous(UUID controllerId, int xValue) implements TriggerContext {
@@ -313,6 +552,9 @@ public sealed interface TriggerContext {
             this(controllerId, 0);
         }
     }
+
+    /** Context for a permanent becoming untapped. */
+    record SelfBecomesUntapped(UUID controllerId) implements TriggerContext {}
 
     /**
      * Context for ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers.
@@ -328,16 +570,56 @@ public sealed interface TriggerContext {
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
 
+    /** Context for Kaya's creature and creature-card exile trigger. */
+    record ControllerCreaturesOrCreatureCardsExiled(UUID controllerId, int count,
+                                                     List<Card> creatureCards) implements TriggerContext {
+        public ControllerCreaturesOrCreatureCardsExiled {
+            creatureCards = List.copyOf(creatureCards);
+        }
+    }
+
+    /** Context for cards exiled from graveyards and/or the battlefield during the active player's turn. */
+    record CardsExiledFromGraveyardsOrBattlefield(int count) implements TriggerContext {}
+
+    record CardsExiledDuringTurn(UUID activePlayerId) implements TriggerContext {}
+
     /**
-     * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers (Justice). Carries the damage source object,
-     * its controller (the reflection recipient), and the total damage the source dealt in this
-     * event (already summed across every simultaneous target).
+     * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers. Carries the damage source object, its
+     * controller, the source permanent when applicable, and the total damage the source dealt in
+     * this event (already summed across every simultaneous target).
      */
-    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) implements TriggerContext {}
+    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                             int totalDamage, Map<UUID, Integer> damageToPlayers) implements TriggerContext {
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of());
+        }
+
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
+                                 Map<UUID, Integer> damageToPlayers) {
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers);
+        }
+    }
 
     /** Context for a source's combat-damage-only self trigger. */
     record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
-                                   UUID sourcePermanentId, int totalDamage) implements TriggerContext {}
+                                   UUID sourcePermanentId, int totalDamage,
+                                   int damageToPlayers) implements TriggerContext {
+        public SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                       UUID sourcePermanentId, int totalDamage) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, totalDamage);
+        }
+    }
+
+    record CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
+                                              int damage, boolean combatDamage,
+                                              java.util.List<StackEntry> deferredTriggers)
+            implements TriggerContext {
+
+        public CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
+                                                  int damage, boolean combatDamage) {
+            this(damageSource, damagedPlaneswalkerId, damage, combatDamage, null);
+        }
+    }
 
     /**
      * Context for ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT triggers (Mangara's Equity).
@@ -350,4 +632,16 @@ public sealed interface TriggerContext {
      */
     record CreatureDamageToYouOrYourPermanent(Permanent damageSource, UUID damagedPlayerId,
                                               Permanent damagedPermanent, int damage) implements TriggerContext {}
+
+    /** Context for any opponent-controlled source damaging this permanent's controller or their permanent. */
+    record SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
+                                            UUID sourcePermanentId, UUID damagedPlayerId,
+                                            UUID damagedPermanentId) implements TriggerContext {
+        SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
+                                         UUID sourcePermanentId, UUID damagedPlayerId) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, damagedPlayerId, null);
+        }
+    }
+
+    record Crime(UUID committingPlayerId) implements TriggerContext {}
 }

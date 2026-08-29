@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "29")
+@CardRegistration(set = "FDN", collectorNumber = "151")
 public class Aetherize extends Card {
 
     public Aetherize() {

@@ -13,6 +13,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "313")
+@CardRegistration(set = "USG", collectorNumber = "288")
 public class ChimericStaff extends Card {
 
     public ChimericStaff() {

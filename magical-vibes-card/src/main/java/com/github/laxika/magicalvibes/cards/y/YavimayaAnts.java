@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
 @CardRegistration(set = "ALL", collectorNumber = "105")
+@CardRegistration(set = "DKM", collectorNumber = "32")
 public class YavimayaAnts extends Card {
 
     public YavimayaAnts() {

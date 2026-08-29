@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "M12", collectorNumber = "49")
 @CardRegistration(set = "M14", collectorNumber = "49")
 @CardRegistration(set = "M20", collectorNumber = "315")
+@CardRegistration(set = "USG", collectorNumber = "67")
 public class CoralMerfolk extends Card {
 }

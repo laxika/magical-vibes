@@ -12,11 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "320")
+@CardRegistration(set = "BRO", collectorNumber = "259")
 @CardRegistration(set = "10E", collectorNumber = "349")
 @CardRegistration(set = "9ED", collectorNumber = "319")
 @CardRegistration(set = "7ED", collectorNumber = "326")
 @CardRegistration(set = "5ED", collectorNumber = "412")
 @CardRegistration(set = "ICE", collectorNumber = "352")
+@CardRegistration(set = "ATH", collectorNumber = "71")
 public class Brushland extends Card {
 
     public Brushland() {

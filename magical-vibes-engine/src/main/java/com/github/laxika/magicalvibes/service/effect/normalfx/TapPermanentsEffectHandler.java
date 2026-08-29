@@ -43,6 +43,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
             case TARGET -> resolveTarget(gameData, entry, effect);
             case SELF -> resolveSelf(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry);
+            case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
             case ALL_PERMANENTS -> resolveAllPermanents(gameData, entry, e);
@@ -125,6 +126,28 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", enchantedCreature.getCard(), "."));
         log.info("Game {} - {} taps enchanted creature {}", gameData.id, entry.getCard().getName(), enchantedCreature.getCard().getName());
+    }
+
+    private void resolveControlled(GameData gameData, StackEntry entry, TapPermanentsEffect e) {
+        UUID controllerId = entry.getControllerId();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+            if (tapUntapSupport.tapPermanent(gameData, p)) {
+                count++;
+            }
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " taps " + count + " permanent(s) you control."));
+        log.info("Game {} - {} taps {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
     private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, TapPermanentsEffect e) {

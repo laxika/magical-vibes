@@ -1,9 +1,17 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record TapOrUntapTargetPermanentEffect() implements CardEffect {
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
+public record TapOrUntapTargetPermanentEffect(PermanentPredicate targetPredicate) implements CardEffect {
+
+    public TapOrUntapTargetPermanentEffect() {
+        this(null);
+    }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent());
+        return targetPredicate == null
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
     }
 }

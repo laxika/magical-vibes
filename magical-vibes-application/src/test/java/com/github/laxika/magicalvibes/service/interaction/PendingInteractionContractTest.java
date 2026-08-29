@@ -6,21 +6,32 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
-import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
+import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
+import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
+import com.github.laxika.magicalvibes.model.PendingHostileNegotiations;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
+import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
+import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.PendingThranTomeChoice;
+import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
+import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
+import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
+import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
+import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
@@ -49,27 +60,40 @@ class PendingInteractionContractTest {
     /** Records that only wait in the queue and are serviced by beginning a promptable kind. */
     private static final Set<Class<?>> QUEUE_ONLY_CARRIERS = Set.of(
             PermanentChoiceContext.class,
+            PendingAllureOfTheUnknownChoice.class,
             PendingSphinxAmbassadorChoice.class,
             PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,
-            PendingIntuitionRevealChoice.class,
+            PendingOpponentChoosesCardToHandRestToGraveyard.class,
+            PendingMemoriesReturningChoice.class,
+            PendingMurmursFromBeyondChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
+            PendingDubiousChallengeChoice.class,
             PendingPortalPileSearch.class,
             PendingKarnRestart.class,
             PendingKnowledgePoolCast.class,
+            PendingHostileNegotiations.class,
             PendingPileSeparation.class,
             PendingEachPlayerLibraryExile.class,
             PendingBendOrBreak.class,
             PendingGuildFeud.class,
             PendingThranTomeChoice.class,
-            PendingInteraction.RevealedFreeCastGroup.class);
+            PendingStudyCounterExileReturn.class,
+            PendingPsychoticEpisodeChoice.class,
+            PendingTruthOrTaleCardChoice.class,
+            PendingWhimsOfTheFates.class,
+            PendingValkiCopyChoice.class,
+            PendingValkiHandExileChoice.class,
+            PendingInteraction.RevealedFreeCastGroup.class,
+            PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(
             PendingInteraction.HandCardChoice.class,
             PendingInteraction.TargetedHandCardChoice.class,
             PendingInteraction.DiscardChoice.class,
             PendingInteraction.ExileFromHandChoice.class,
             PendingInteraction.ImprintFromHandChoice.class,
+            PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
             PendingInteraction.DiscardCostChoice.class,
             PendingInteraction.AttackerDeclaration.class,
             PendingInteraction.BlockerDeclaration.class);

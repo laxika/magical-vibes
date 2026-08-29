@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "287")
+@CardRegistration(set = "MMQ", collectorNumber = "285")
 public class VineTrellis extends Card {
 
     public VineTrellis() {

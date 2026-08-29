@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "66")
+@CardRegistration(set = "PCY", collectorNumber = "31")
 public class CoastalHornclaw extends Card {
 
     public CoastalHornclaw() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
@@ -20,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.r.RootboundCrag;
 import com.github.laxika.magicalvibes.cards.s.SunpetalGrove;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EnergyBolt;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -844,6 +847,28 @@ class AiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("AI controller can declare blockers during the controlled player's turn")
+    void controllerCanDeclareBlockersDuringControlledTurn() {
+        setupBlockerPhase();
+        gd.mindControlledPlayerId = human.getId();
+        gd.mindControllerPlayerId = aiPlayer.getId();
+
+        Permanent humanBears = new Permanent(new GrizzlyBears());
+        humanBears.setSummoningSick(false);
+        humanBears.setAttacking(true);
+        gd.playerBattlefields.get(human.getId()).add(humanBears);
+
+        Permanent aiElemental = new Permanent(new AirElemental());
+        aiElemental.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(aiElemental);
+
+        ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(aiElemental.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Easy AI assigns the minimum three blockers to Guile")
     void assignsMinimumThreeBlockersToGuile() {
         setupBlockerPhase();
@@ -1497,6 +1522,20 @@ class AiDecisionEngineTest {
     }
 
     @Test
+    @DisplayName("prepareModalSpellCast chooses a player over an ordinary permanent for Energy Bolt")
+    void prepareModalSpellCastChoosesPlayerForPlayerOrPlaneswalkerMode() {
+        Permanent ordinaryPermanent = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(human.getId()).add(ordinaryPermanent);
+
+        var plan = ai.prepareModalSpellCast(gd, new EnergyBolt());
+
+        assertThat(plan).isNotNull();
+        assertThat(plan.modeIndex()).isZero();
+        assertThat(plan.targetId()).isEqualTo(human.getId());
+        assertThat(plan.targetId()).isNotEqualTo(ordinaryPermanent.getId());
+    }
+
+    @Test
     @DisplayName("prepareModalSpellCast returns mode 0 with null target for Slagstorm")
     void prepareModalSpellCastReturnsUntargetedMode() {
         var plan = ai.prepareModalSpellCast(gd, new Slagstorm());
@@ -1519,6 +1558,22 @@ class AiDecisionEngineTest {
         assertThat(chooseTwo.decodeModeIndices(plan.modeIndex())).containsExactly(1, 2);
         assertThat(plan.targetId()).isEqualTo(target.getId());
         assertThat(plan.targetIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast supplies one target for each targeted choose-two mode")
+    void prepareModalSpellCastSuppliesTargetsForChooseTwoModes() {
+        Permanent elemental = new Permanent(new AirElemental());
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elemental);
+
+        AshlingsCommand ashlingCommand = new AshlingsCommand();
+        var plan = ai.prepareModalSpellCast(gd, ashlingCommand);
+
+        assertThat(plan).isNotNull();
+        ChooseOneEffect chooseTwo = ai.findChooseOneEffect(ashlingCommand);
+        assertThat(chooseTwo.decodeModeIndices(plan.modeIndex())).containsExactly(0, 1);
+        assertThat(plan.targetId()).isNull();
+        assertThat(plan.targetIds()).containsExactly(elemental.getId(), human.getId());
     }
 
     @Test
@@ -1962,6 +2017,20 @@ class AiDecisionEngineTest {
         List<Integer> result = ai.prepareAttackersForTax(gd, original);
 
         assertThat(result).isEqualTo(original);
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax respects the maximum attacker count")
+    void prepareAttackersForTaxRespectsMaximumAttackers() {
+        harness.addToBattlefield(human, new DuelingGrounds());
+        for (int i = 0; i < 3; i++) {
+            Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+        }
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1, 2));
+
+        assertThat(result).containsExactly(0);
     }
 
     @Test

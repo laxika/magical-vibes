@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "174")
+@CardRegistration(set = "AKR", collectorNumber = "198")
 public class InitiatesCompanion extends Card {
 
     public InitiatesCompanion() {

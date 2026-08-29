@@ -34,9 +34,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the merged exile-top-cards-to-source effect across all three {@link LibraryScope} values:
- * the controller's own library (Colfenor's Plans / Duplicity / Search the City), a single
- * opponent's (Grimoire Thief / Nightveil Specter), and every player's (Knowledge Pool).
+ * Covers the merged exile-top-cards-to-source effect across all {@link LibraryScope} values: the
+ * controller's own library (Colfenor's Plans / Duplicity / Search the City), a chosen player's
+ * (Mindreaver), a single opponent's (Grimoire Thief / Nightveil Specter), and every player's
+ * (Knowledge Pool).
  */
 @ExtendWith(MockitoExtension.class)
 class ExileTopCardsToSourceEffectHandlerTest {
@@ -178,6 +179,25 @@ class ExileTopCardsToSourceEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("TARGET_PLAYER scope exiles from the chosen player, including the controller")
+    void targetPlayerScopeUsesChosenPlayer() {
+        Card sourceCard = card("Mindreaver");
+        Permanent source = addPermanent(player1Id, sourceCard);
+        gd.playerDecks.get(player1Id).addAll(List.of(card("Mine1"), card("Mine2")));
+        gd.playerDecks.get(player2Id).addAll(List.of(card("Theirs1"), card("Theirs2")));
+
+        var effect = new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER);
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+        stubExileFaceUp();
+
+        handler.resolve(gd, entry(sourceCard, effect, player1Id, source.getId()), effect);
+
+        assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
+        assertThat(gd.playerDecks.get(player2Id)).hasSize(2);
+        verify(exileService).exileCard(any(), eq(player1Id), any(), any());
+    }
+
+    @Test
     @DisplayName("TARGET_OPPONENT scope falls back to the sole opponent when no target is bound")
     void targetOpponentScopeFallsBackToSoleOpponent() {
         Card sourceCard = card("Grimoire Thief");
@@ -272,6 +292,8 @@ class ExileTopCardsToSourceEffectHandlerTest {
                 .isEqualTo(CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER);
         assertThat(new ExileTopCardsToSourceEffect(7).combatDamageTriggerContext()).isNull();
         assertThat(new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER)
+                .combatDamageTriggerContext()).isNull();
+        assertThat(new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.TARGET_PLAYER)
                 .combatDamageTriggerContext()).isNull();
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "38")
 @CardRegistration(set = "PTK", collectorNumber = "43")
+@CardRegistration(set = "S99", collectorNumber = "37")
 public class Extinguish extends Card {
 
     public Extinguish() {

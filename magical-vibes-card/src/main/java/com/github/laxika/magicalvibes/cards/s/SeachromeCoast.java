@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 
 @CardRegistration(set = "SOM", collectorNumber = "229")
+@CardRegistration(set = "ONE", collectorNumber = "258")
 public class SeachromeCoast extends Card {
 
     public SeachromeCoast() {

@@ -27,19 +27,21 @@ import java.util.Set;
 public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes,
                                 Condition availabilityCondition, boolean grantsFlash,
                                 boolean reduceManaBySacrificedManaValue,
-                                boolean reduceManaBySacrificedManaCost) implements CastingOption {
+                                boolean reduceManaBySacrificedManaCost,
+                                CardColor prototypeColor, Integer prototypePower,
+                                Integer prototypeToughness, boolean spectacle) implements CastingOption {
 
     public AlternateHandCast(List<CastingCost> costs) {
-        this(costs, Set.of(), null, false, false, false);
+        this(costs, Set.of(), null, false, false, false, null, null, null, false);
     }
 
     public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes) {
-        this(costs, prowlDamageSubtypes, null, false, false, false);
+        this(costs, prowlDamageSubtypes, null, false, false, false, null, null, null, false);
     }
 
     /** Convenience constructor for prowl with a single qualifying creature subtype. */
     public AlternateHandCast(List<CastingCost> costs, CardSubtype prowlDamageSubtype) {
-        this(costs, Set.of(prowlDamageSubtype), null, false, false, false);
+        this(costs, Set.of(prowlDamageSubtype), null, false, false, false, null, null, null, false);
     }
 
     /**
@@ -47,7 +49,7 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * timing (e.g. Qasali Ambusher's free "as though it had flash" cast).
      */
     public AlternateHandCast(List<CastingCost> costs, Condition availabilityCondition, boolean grantsFlash) {
-        this(costs, Set.of(), availabilityCondition, grantsFlash, false, false);
+        this(costs, Set.of(), availabilityCondition, grantsFlash, false, false, null, null, null, false);
     }
 
     /**
@@ -55,12 +57,28 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
      * sacrificed permanent's mana value.
      */
     public AlternateHandCast(List<CastingCost> costs, boolean reduceManaBySacrificedManaValue) {
-        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue, false);
+        this(costs, Set.of(), null, false, reduceManaBySacrificedManaValue, false, null, null, null, false);
     }
 
     /** Convenience factory for offering alternate costs. */
     public static AlternateHandCast offering(List<CastingCost> costs) {
-        return new AlternateHandCast(costs, Set.of(), null, true, false, true);
+        return new AlternateHandCast(costs, Set.of(), null, true, false, true, null, null, null, false);
+    }
+
+    /** Prototype's alternate cost and the characteristics used when it is cast that way. */
+    public static AlternateHandCast prototype(String manaCost, CardColor color, int power, int toughness) {
+        return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(), null,
+                false, false, false, color, power, toughness, false);
+    }
+
+    /** Creates a spectacle alternate cost gated by its spectacle condition. */
+    public static AlternateHandCast spectacle(String manaCost, Condition availabilityCondition) {
+        return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(),
+                availabilityCondition, false, false, false, null, null, null, true);
+    }
+
+    public boolean isPrototype() {
+        return prototypeColor != null;
     }
 
     @Override

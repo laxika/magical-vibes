@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -22,6 +23,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public interface CostEffect extends CardEffect {
 
     /**
+     * True when paying this cost taps the permanent that granted the activated ability rather
+     * than the permanent activating it.
+     */
+    default boolean tapsGrantingEquipment() {
+        return false;
+    }
+
+    /**
      * A predicate selecting which of the payer's battlefield permanents may be chosen to pay
      * this cost (sacrifice a creature / artifact / filtered permanent, return a creature to
      * hand, put a counter on a creature), or {@code null} when this cost does not consume a
@@ -34,6 +43,30 @@ public interface CostEffect extends CardEffect {
      */
     default PermanentPredicate consumedPermanentFilter() {
         return null;
+    }
+
+    /**
+     * The number of untapped permanents chosen through {@link #consumedPermanentFilter()} that
+     * paying this cost taps, or {@code null} when the cost does not tap chosen permanents.
+     */
+    default DynamicAmount tappedPermanentCount() {
+        return null;
+    }
+
+    /**
+     * True when permanents tapped through {@link #tappedPermanentCount()} must be creatures in
+     * addition to matching {@link #consumedPermanentFilter()}.
+     */
+    default boolean tappedPermanentMustBeCreature() {
+        return false;
+    }
+
+    /**
+     * True when the ability's source cannot be chosen through
+     * {@link #consumedPermanentFilter()} to pay this cost.
+     */
+    default boolean excludesSourceFromConsumedPermanents() {
+        return false;
     }
 
     /**
@@ -53,6 +86,22 @@ public interface CostEffect extends CardEffect {
      * estimate, and this facet preserves that.
      */
     default boolean sacrificesChosenCreature() {
+        return false;
+    }
+
+    /**
+     * True when the chosen permanent sacrificed to pay this cost is made available as a card
+     * snapshot on the activated ability's stack entry.
+     */
+    default boolean tracksSacrificedCard() {
+        return false;
+    }
+
+    /**
+     * True when paying this cost must preserve the sacrificed permanent's last-known
+     * characteristics for a later effect in the same ability.
+     */
+    default boolean recordsSacrificedPermanentSnapshot() {
         return false;
     }
 

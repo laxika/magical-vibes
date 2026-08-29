@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DKA", collectorNumber = "155")
+@CardRegistration(set = "ROE", collectorNumber = "228")
 @CardRegistration(set = "AKH", collectorNumber = "242")
 @CardRegistration(set = "M13", collectorNumber = "224")
 @CardRegistration(set = "M15", collectorNumber = "243")
@@ -22,6 +23,12 @@ import java.util.List;
 @CardRegistration(set = "INR", collectorNumber = "278")
 @CardRegistration(set = "M20", collectorNumber = "246")
 @CardRegistration(set = "ECL", collectorNumber = "264")
+@CardRegistration(set = "FDN", collectorNumber = "262")
+@CardRegistration(set = "BRO", collectorNumber = "261")
+@CardRegistration(set = "AKR", collectorNumber = "292")
+@CardRegistration(set = "RIX", collectorNumber = "186")
+@CardRegistration(set = "TDM", collectorNumber = "255")
+@CardRegistration(set = "MID", collectorNumber = "261")
 public class EvolvingWilds extends Card {
 
     public EvolvingWilds() {

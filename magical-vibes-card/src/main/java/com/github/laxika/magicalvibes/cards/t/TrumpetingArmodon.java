@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "262")
+@CardRegistration(set = "BRB", collectorNumber = "90")
 public class TrumpetingArmodon extends Card {
 
     public TrumpetingArmodon() {

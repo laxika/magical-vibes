@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TemurWarShaman.class, GrizzlyBears.class, SuntailHawk.class})
 class TemurWarShamanTest extends BaseCardTest {
 
     @Test
@@ -40,8 +42,9 @@ class TemurWarShamanTest extends BaseCardTest {
 
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manifested));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(manifested);
@@ -54,6 +57,8 @@ class TemurWarShamanTest extends BaseCardTest {
         addGrizzlyBearsFaceUpMana();
 
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manifested));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

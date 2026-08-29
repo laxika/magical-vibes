@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ALL", collectorNumber = "27a")
 @CardRegistration(set = "ALL", collectorNumber = "27b")
+@CardRegistration(set = "MMQ", collectorNumber = "80")
 public class FalseDemise extends Card {
 
     public FalseDemise() {

@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "243")
+@CardRegistration(set = "GRN", collectorNumber = "253")
 @CardRegistration(set = "ECL", collectorNumber = "266")
 @CardRegistration(set = "ECL", collectorNumber = "350")
+@CardRegistration(set = "RAV", collectorNumber = "279")
 public class OvergrownTomb extends Card {
 
     public OvergrownTomb() {

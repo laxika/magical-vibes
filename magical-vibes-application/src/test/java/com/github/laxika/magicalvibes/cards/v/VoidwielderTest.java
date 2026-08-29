@@ -35,10 +35,10 @@ class VoidwielderTest extends BaseCardTest {
             harness.addToBattlefield(player2, new GrizzlyBears());
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
             castVoidwielder();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve ETB may from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
             harness.handlePermanentChosen(player1, bearsId);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
 
             harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             harness.assertInHand(player2, "Grizzly Bears");
@@ -49,9 +49,11 @@ class VoidwielderTest extends BaseCardTest {
         @DisplayName("Declining leaves the target creature on the battlefield")
         void decliningDoesNotBounce() {
             harness.addToBattlefield(player2, new GrizzlyBears());
+            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
             castVoidwielder();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve ETB may from stack -> may prompt
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, bearsId);
+            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 
             assertThat(gd.stack).isEmpty();
@@ -69,11 +71,10 @@ class VoidwielderTest extends BaseCardTest {
             // "return target creature" has no 'another' clause, so Voidwielder is a legal target for
             // its own ETB. With no other creature present it is the only choice.
             castVoidwielder();
-            harness.passBothPriorities(); // resolve creature spell -> Voidwielder enters
-            harness.passBothPriorities(); // resolve ETB may -> may prompt
+            harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction())
-                    .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+                    .isInstanceOf(PendingInteraction.PermanentChoice.class);
         }
     }
 }

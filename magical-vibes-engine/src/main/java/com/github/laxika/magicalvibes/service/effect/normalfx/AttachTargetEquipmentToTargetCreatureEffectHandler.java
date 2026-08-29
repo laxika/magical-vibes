@@ -31,16 +31,20 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> targets = entry.getTargetIds();
-        if (targets == null || targets.size() < 2) {
+        var attachEffect = (AttachTargetEquipmentToTargetCreatureEffect) effect;
+        int equipmentGroup = attachEffect.equipmentFirst() ? 0 : 1;
+        int creatureGroup = attachEffect.equipmentFirst() ? 1 : 0;
+        List<UUID> equipmentTargets = entry.targetsForGroup(equipmentGroup);
+        List<UUID> creatureTargets = entry.targetsForGroup(creatureGroup);
+        if (equipmentTargets.isEmpty() || creatureTargets.isEmpty()) {
             
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (invalid targets)."));
             log.info("Game {} - Attach equipment ability fizzles, insufficient targets", gameData.id);
             return;
         }
 
-        UUID equipmentId = targets.get(0);
-        UUID creatureId = targets.get(1);
+        UUID equipmentId = equipmentTargets.getFirst();
+        UUID creatureId = creatureTargets.getFirst();
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
         if (equipment == null) {
@@ -58,9 +62,13 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
             return;
         }
 
+        if (!equipSupport.canAttachEquipment(gameData, equipment, creature)) {
+            return;
+        }
+
         UUID oldAttachedTo = equipment.getAttachedTo();
 
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(creature.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
@@ -69,5 +77,6 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
         log.info("Game {} - {} attached to {} via {}", gameData.id, equipment.getCard().getName(), creature.getCard().getName(), entry.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
     }
 }

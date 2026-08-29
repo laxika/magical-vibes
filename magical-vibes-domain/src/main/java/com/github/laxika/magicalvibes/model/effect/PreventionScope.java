@@ -20,6 +20,10 @@ public enum PreventionScope {
      *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
      *  declare a creature-only {@code TargetSpec} and a player can never be chosen. */
     NEXT_TO_TARGET_CREATURE,
+    /** "Prevent the next N damage that would be dealt to target creature and each other creature
+     *  that shares a color with it this turn" (Wojek Apothecary). The affected creature set is
+     *  snapshotted when the ability resolves. */
+    NEXT_TO_TARGET_AND_SHARING_CREATURES,
     /** "Prevent the next N damage that would be dealt to target player or planeswalker this turn" (Wandering Mage).
      *  Resolves exactly like {@link #NEXT_TO_TARGET}; the separate scope exists so the effect can
      *  declare a player-or-planeswalker {@code TargetSpec} and a creature can never be chosen. */
@@ -30,12 +34,20 @@ public enum PreventionScope {
     NEXT_TO_EACH_CREATURE_AND_PLAYER,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
+    /** "Prevent all combat damage that would be dealt this turn by attacking creatures" (Harmless Assault). */
+    ALL_COMBAT_BY_ATTACKING_CREATURES,
     /** "Prevent all combat damage that would be dealt to players this turn" (Defend the Hearth). */
     ALL_COMBAT_TO_PLAYERS,
     /** "Prevent all damage that would be dealt to creatures this turn" (Blinding Fog). */
     ALL_TO_CREATURES,
+    /** "Prevent all damage that would be dealt this turn to creatures you control." (Divine Light). */
+    ALL_TO_CONTROLLED_CREATURES,
     /** "Prevent all damage that would be dealt to [permanents matching a predicate] this turn" (Ethersworn Shieldmage). */
     ALL_TO_MATCHING_PERMANENTS,
+    /** "Prevent all damage that would be dealt this turn to matching permanents you control." */
+    ALL_TO_CONTROLLED_MATCHING_PERMANENTS,
+    /** "Prevent all combat damage that would be dealt this turn to matching permanents you control" (Pack Leader). */
+    ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS,
     /** "Prevent all [combat] damage that would be dealt to target creature(s) this turn" (Foxfire, Redeem). */
     ALL_TO_TARGET_CREATURES,
     /** "Prevent all [combat] damage target creature(s) would deal this turn" (Soul Parry, Resistance Fighter). */
@@ -44,6 +56,8 @@ public enum PreventionScope {
      *  Unlike {@link #ALL_BY_TARGET_CREATURES} this targets any permanent and lasts until the
      *  controller's next turn rather than only the current turn. */
     ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN,
+    /** "Until your next turn, prevent all damage that would be dealt to and dealt by target permanent." */
+    ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN,
     /** "Prevent all damage that would be dealt to ~ this turn" — the source permanent
      *  (Gideon of the Trials 0). */
     ALL_TO_SELF,
@@ -59,8 +73,18 @@ public enum PreventionScope {
     ALL_TO_CONTROLLER_UNTIL_NEXT_TURN,
     /** "Prevent all damage attacking creatures would deal to you this turn" (Deep Wood). */
     ALL_TO_CONTROLLER_FROM_ATTACKERS,
+    /** "Prevent all damage that would be dealt to you this turn by creatures matching a predicate." */
+    ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+    /** "Prevent all damage that would be dealt to players this turn by sources matching a predicate." */
+    ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */
     ALL_FROM_COLORS,
+    /** "Prevent all damage that sources of the given colors would deal to creatures you control this turn." */
+    ALL_FROM_COLORS_TO_CONTROLLED_CREATURES,
+    /** "Prevent all damage that sources of the color of your choice would deal this turn" (Prismatic Strands). */
+    ALL_FROM_CHOSEN_COLOR,
+    /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */
+    ALL_FROM_NON_HUMAN_SOURCES,
     /** "Prevent all combat damage this turn except that dealt by [exempt] creatures" (Moonmist). */
     ALL_COMBAT_EXCEPT,
     /** "Prevent all combat damage that would be dealt by creatures other than target creature this turn"

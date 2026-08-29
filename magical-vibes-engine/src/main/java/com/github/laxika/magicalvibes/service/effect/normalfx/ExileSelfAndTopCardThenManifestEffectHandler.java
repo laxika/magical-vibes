@@ -52,7 +52,7 @@ public class ExileSelfAndTopCardThenManifestEffectHandler implements NormalEffec
         }
 
         cardsToManifest.addAll(source.cardsLeavingBattlefield());
-        if (!permanentRemovalService.removePermanentToExile(gameData, source, true)) {
+        if (!permanentRemovalService.removePermanentToExileFaceDown(gameData, source)) {
             manifestTopCard(gameData, entry, controllerId);
             return;
         }

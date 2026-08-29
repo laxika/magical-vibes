@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "136")
+@CardRegistration(set = "FDN", collectorNumber = "193")
 public class DrakusethMawOfFlames extends Card {
 
     public DrakusethMawOfFlames() {

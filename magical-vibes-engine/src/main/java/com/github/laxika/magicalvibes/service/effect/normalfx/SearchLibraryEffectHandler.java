@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -57,14 +59,20 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryEffect) effect);
+        doResolve(gameData, entry, (SearchLibraryEffect) effect, LibrarySearchFollowUp.NONE);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect) {
+    void resolveWithFollowUp(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                             LibrarySearchFollowUp followUp) {
+        doResolve(gameData, entry, effect, followUp);
+    }
+
+    private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                           LibrarySearchFollowUp followUp) {
         UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
                 ? entry.getActivePlayerId() : entry.getControllerId();
         if (controllerId == null) return;
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) return;
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
 
@@ -82,31 +90,66 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty."
+                    + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
         }
 
         // "Up to X" with X=0 still searches and shuffles (Uncage the Menagerie ruling).
         if (count <= 0) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library. Library is shuffled."));
+            if (effect.shuffleAfterSelection()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library."
+                    + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
         }
 
         Predicate<Card> deckFilter = card ->
                 (filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
-                        && matchesBound(card, boundValue, bound);
+                        && matchesBound(card, boundValue, bound)
+                        && (!putsOntoBattlefield(effect.destination())
+                        || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY));
         List<Card> matchingCards = deck.stream().filter(deckFilter).toList();
 
         String baseDesc = describe(filter, boundValue, bound);
 
         if (matchingCards.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            if (!librarySearchSupport.librarySearchCastableCards(gameData, controllerId).isEmpty()) {
+                LibrarySearchDestination destination = effect.destination();
+                String prompt = buildPrompt(baseDesc, destination, restricted, count,
+                        effect.requireDifferentNames());
+                librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
+                        LibrarySearchParams.builder(controllerId, new ArrayList<>())
+                                .remainingCount(count)
+                                .canFailToFind(true)
+                                .destination(destination)
+                                .filterPredicate(restricted ? filter : null)
+                                .requireDifferentNames(effect.requireDifferentNames())
+                                .manaValueBound(boundValue, bound != null && bound.exact())
+                                .grantHaste(effect.grantHaste())
+                                .exileAtEndStep(effect.exileAtEndStep())
+                                .returnToHandAtEndStep(effect.returnToHandAtEndStep())
+                                .animateFound(effect.animateFound())
+                                .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
+                                .battlefieldCounter(effect.battlefieldCounter())
+                                .followUp(followUp)
+                                .shuffleAfterSelection(effect.shuffleAfterSelection())
+                                .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
+                                        ? entry.getBeholdChosenSubtype() : null)
+                                .build(),
+                        prompt, true);
+                return;
+            }
+            if (effect.shuffleAfterSelection()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             // Pluralize the target description ("artifact card" -> "artifact cards", "card named X"
             // -> "cards named X") by promoting the first whole-word "card"; a mana-value-bound
             // description stays singular ("creature card with mana value N").
             String noMatchDesc = bound != null ? baseDesc : baseDesc.replaceFirst("\\bcard\\b", "cards");
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no " + noMatchDesc + ". Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no " + noMatchDesc + "."
+                    + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDesc);
             return;
         }
@@ -114,8 +157,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         LibrarySearchDestination destination = effect.destination();
         String prompt = buildPrompt(baseDesc, destination, restricted, count, effect.requireDifferentNames());
 
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
-                LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+        LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                         .remainingCount(count)
                         .reveals(reveals(restricted, destination))
                         .canFailToFind(restricted)
@@ -125,10 +167,19 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .manaValueBound(boundValue, bound != null && bound.exact())
                         .grantHaste(effect.grantHaste())
                         .exileAtEndStep(effect.exileAtEndStep())
+                        .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
+                        .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
+                        .battlefieldCounter(effect.battlefieldCounter())
+                        .followUp(followUp)
+                        .enterWithCounters(effect.enterWithCounters())
+                        .shuffleAfterSelection(effect.shuffleAfterSelection())
                         .battlefieldIfChosenBeholdType(effect.battlefieldIfChosenBeholdType()
-                                ? entry.getBeholdChosenSubtype() : null)
-                        .build(),
+                                ? entry.getBeholdChosenSubtype() : null);
+        if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER) {
+            params.battlefieldControllerId(entry.getTargetId());
+        }
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, params.build(),
                 prompt, restricted);
 
         log.info("Game {} - {} searches library for {} card(s) to {} ({} matches)",
@@ -147,6 +198,15 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         return bound.exact()
                 ? card.getManaValue() == boundValue
                 : card.getManaValue() <= boundValue;
+    }
+
+    private boolean putsOntoBattlefield(LibrarySearchDestination destination) {
+        return switch (destination) {
+            case BATTLEFIELD, BATTLEFIELD_TAPPED, BATTLEFIELD_ATTACHED_TO_PLAYER,
+                    BATTLEFIELD_ATTACHED_TO_CREATURE, BATTLEFIELD_ATTACHED_TO_PERMANENT,
+                    BATTLEFIELD_UNDER_SEARCHER -> true;
+            default -> false;
+        };
     }
 
     /** Human description of the search target, e.g. "creature card with mana value 3 or less". */
@@ -178,12 +238,16 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                             ? ", reveal it, then shuffle and put that card on top."
                             : ", then shuffle and put that card on top.");
             case EXILE -> "Search your library for a " + desc + " to exile" + remaining + ".";
+            case EXILE_FOR_MAY_CAST -> "Search your library for a " + desc + " to exile" + remaining + ".";
+            case EXILE_PLAYABLE_ANY_NUMBER -> "Search your library for matching cards to exile (any number).";
             case GRAVEYARD -> count > 1
                     ? "Search your library for a " + desc + " to put into your graveyard" + remaining + "."
                     : "Search your library for a " + desc + " and put it into your graveyard.";
             case BATTLEFIELD_TAPPED -> count > 1
                     ? "Search your library for a " + desc + " to put onto the battlefield tapped" + remaining + "."
                     : "Search your library for a " + desc + " and put it onto the battlefield tapped.";
+            case BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER -> "Search your library for a " + desc
+                    + " and put it onto the battlefield tapped under target player's control.";
             default -> count > 1
                     ? "Search your library for a " + desc + " to put onto the battlefield" + remaining + "."
                     : "Search your library for a " + desc + " and put it onto the battlefield.";

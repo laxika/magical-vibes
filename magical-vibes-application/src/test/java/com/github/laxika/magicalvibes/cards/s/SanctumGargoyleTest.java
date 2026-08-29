@@ -38,6 +38,7 @@ class SanctumGargoyleTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
         harness.passBothPriorities(); // resolve the ETB triggered ability
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Ornithopter");
         harness.assertNotInGraveyard(player1, "Ornithopter");
@@ -65,8 +66,9 @@ class SanctumGargoyleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         // Choose nothing — "you may return"
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertNotInHand(player1, "Ornithopter");

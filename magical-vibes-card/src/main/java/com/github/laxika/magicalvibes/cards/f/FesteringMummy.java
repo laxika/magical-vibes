@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "91")
+@CardRegistration(set = "AKR", collectorNumber = "105")
 public class FesteringMummy extends Card {
 
     public FesteringMummy() {

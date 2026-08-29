@@ -12,6 +12,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,6 +21,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MtgjsonOracleLoaderTest {
 
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
+
+    @Test
+    void boundsConnectionAndRequestDuration() {
+        try (HttpClient client = MtgjsonOracleLoader.createHttpClient()) {
+            assertThat(client.connectTimeout()).contains(Duration.ofSeconds(20));
+        }
+
+        assertThat(MtgjsonOracleLoader.createRequest("grn").timeout())
+                .contains(Duration.ofMinutes(2));
+    }
 
     @Test
     void parsesFrontFaceOfTransformCard() {
@@ -51,7 +63,7 @@ class MtgjsonOracleLoaderTest {
         assertThat(data.colors()).containsExactly(CardColor.GREEN, CardColor.RED);
         assertThat(data.power()).isEqualTo(2);
         assertThat(data.toughness()).isEqualTo(2);
-        assertThat(data.keywords()).containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.TRANSFORM);
+        assertThat(data.keywords()).isEmpty();
         assertThat(data.cardText()).isEqualTo("Whenever this creature enters, create a 2/2 green Wolf creature token.");
     }
 

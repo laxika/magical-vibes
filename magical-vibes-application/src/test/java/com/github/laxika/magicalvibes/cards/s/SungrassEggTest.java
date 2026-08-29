@@ -21,6 +21,10 @@ class SungrassEggTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Sungrass Egg");
         harness.assertInGraveyard(player1, "Sungrass Egg");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

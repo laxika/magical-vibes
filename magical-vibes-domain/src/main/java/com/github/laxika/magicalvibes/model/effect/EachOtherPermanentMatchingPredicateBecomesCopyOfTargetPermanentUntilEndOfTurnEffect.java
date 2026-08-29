@@ -9,7 +9,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect(
         PermanentPredicate targetPredicate,
-        PermanentPredicate affectedPredicate) implements CardEffect {
+        PermanentPredicate affectedPredicate,
+        boolean removeLegendary) implements CardEffect {
+
+    public EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect(
+            PermanentPredicate targetPredicate, PermanentPredicate affectedPredicate) {
+        this(targetPredicate, affectedPredicate, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

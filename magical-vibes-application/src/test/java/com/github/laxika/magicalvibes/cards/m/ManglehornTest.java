@@ -27,10 +27,10 @@ class ManglehornTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
-        harness.handlePermanentChosen(player1, artifactId); // choose target -> destruction resolves
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifactId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     // ===== ETB may destroy artifact =====
@@ -41,8 +41,6 @@ class ManglehornTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Ornithopter());
         UUID artifactId = harness.getPermanentId(player2, "Ornithopter");
         castAndAcceptMay(artifactId);
-
-        harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player2, "Ornithopter");
@@ -59,9 +57,10 @@ class ManglehornTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Ornithopter"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Ornithopter");

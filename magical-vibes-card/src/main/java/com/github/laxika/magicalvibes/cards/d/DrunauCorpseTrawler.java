@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "63")
+@CardRegistration(set = "SOI", collectorNumber = "57")
 public class DrunauCorpseTrawler extends Card {
 
     public DrunauCorpseTrawler() {

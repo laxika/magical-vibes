@@ -3,20 +3,90 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
+import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
+import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
+import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
+import com.github.laxika.magicalvibes.cards.f.FlameblastDragon;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
+import com.github.laxika.magicalvibes.cards.h.HollowWarrior;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.b.BorrowedHostility;
+import com.github.laxika.magicalvibes.cards.b.BasalThrull;
+import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
+import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
+import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
+import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
+import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
+import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
+import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
+import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
+import com.github.laxika.magicalvibes.cards.c.Crawlspace;
+import com.github.laxika.magicalvibes.cards.d.Dominate;
+import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
+import com.github.laxika.magicalvibes.cards.d.Derelor;
+import com.github.laxika.magicalvibes.cards.d.Drought;
+import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.Lure;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
+import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
+import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
+import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
+import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.r.ReignOfChaos;
+import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RatsFeast;
+import com.github.laxika.magicalvibes.cards.r.RiskFactor;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SufferThePast;
+import com.github.laxika.magicalvibes.cards.s.SelectiveSnare;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SpiritFlare;
+import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
+import com.github.laxika.magicalvibes.cards.t.Tromokratis;
+import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
+import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
+import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
+import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.u.Unbury;
+import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
+import com.github.laxika.magicalvibes.cards.v.Victimize;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -32,15 +102,22 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
@@ -67,6 +144,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -123,9 +201,18 @@ class EasyAiDecisionEngineTest {
         gd.playerDecks.put(opponent.getId(), Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(aiPlayer.getId(), Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(opponent.getId(), Collections.synchronizedList(new ArrayList<>()));
+        Mockito.lenient().when(combatAttackService.getMaximumAttackers(gd))
+                .thenReturn(Integer.MAX_VALUE);
 
         gameRegistry = new GameRegistry();
         gameRegistry.register(gd);
+
+        Mockito.lenient().when(combatAttackService.getMaximumAttackers(
+                any(GameData.class), any(UUID.class))).thenReturn(Integer.MAX_VALUE);
+        Mockito.lenient().doAnswer(invocation -> {
+            java.util.function.Supplier<?> queries = invocation.getArgument(1);
+            return queries.get();
+        }).when(gameQueryService).withQueryScope(any(GameData.class), any());
     }
 
     private EasyAiDecisionEngine createEngine() {
@@ -138,8 +225,279 @@ class EasyAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
                         new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
                         targetValidationService,
-                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class)));
+                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                        new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(gameQueryService)));
         return engine;
+    }
+
+    @Test
+    @DisplayName("Easy AI preserves Spirit Flare's untapped target while paying mana")
+    void preservesUntappedSpellTargetWhilePayingMana() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player human = testHarness.getPlayer1();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+        testHarness.clearMessages();
+
+        FakeConnection aiConn = new FakeConnection("ai-easy-target-payment-test");
+        testHarness.getSessionManager().registerPlayer(aiConn, testAiPlayer.getId(), "Bob");
+        EasyAiDecisionEngine easyAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(),
+                testHarness.getGameService(), testHarness.getGameQueryService(),
+                testHarness.getBlockLegalityService(), testHarness.getCombatAttackService(),
+                testHarness.getGameActionAvailabilityService(), testHarness.getCastingCostService(),
+                testHarness.getCastingPermissionService(), testHarness.getTargetValidationService(),
+                testHarness.getTargetLegalityService());
+
+        Permanent clearcutter = testHarness.addToBattlefieldAndReturn(testAiPlayer, new CradleClearcutter());
+        clearcutter.setSummoningSick(false);
+        List<Permanent> plains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            plains.add(testHarness.addToBattlefieldAndReturn(testAiPlayer, new Plains()));
+        }
+        Permanent attacker = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        SpiritFlare spiritFlare = new SpiritFlare();
+        testHarness.setHand(testAiPlayer, List.of(spiritFlare));
+
+        testHarness.forceActivePlayer(human);
+        testHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+        testGameData.priorityPassedBy.add(human.getId());
+
+        easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(spiritFlare);
+        assertThat(testGameData.stack.getFirst().getTargetIds())
+                .containsExactly(clearcutter.getId(), attacker.getId());
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(plains).allMatch(Permanent::isTapped);
+    }
+
+    private Card whitePlainsCreature() {
+        Card card = new Card();
+        card.setName("White Plains Creature");
+        card.setType(CardType.LAND);
+        card.setAdditionalTypes(Set.of(CardType.CREATURE));
+        card.setColors(List.of(CardColor.WHITE));
+        card.setSubtypes(List.of(CardSubtype.PLAINS));
+        card.setPower(2);
+        card.setToughness(2);
+        return card;
+    }
+
+    @Test
+    @DisplayName("Easy AI uses Delve cards to reduce a spell's generic mana cost")
+    void castsDelveSpellWithGraveyardReduction() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        FakeConnection aiConnection = new FakeConnection("ai-easy-delve-test");
+        testHarness.getSessionManager().registerPlayer(
+                aiConnection, testAiPlayer.getId(), testAiPlayer.getUsername());
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        for (int i = 0; i < 4; i++) {
+            Permanent forest = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Forest());
+            forest.setSummoningSick(false);
+        }
+        HootingMandrills mandrills = new HootingMandrills();
+        testHarness.setHand(testAiPlayer, List.of(mandrills));
+        testHarness.setGraveyard(testAiPlayer, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(mandrills);
+        assertThat(testGameData.playerGraveyards.get(testAiPlayer.getId())).hasSize(3);
+        assertThat(testGameData.getPlayerExiledCards(testAiPlayer.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Easy AI pays a battlefield-imposed sacrifice tax when casting a black spell")
+    void castsBlackSpellWithDroughtTax() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        Player opponent = testHarness.getPlayer1();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        testHarness.addToBattlefield(opponent, new Drought());
+        Permanent swamp = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp());
+        DauthiMercenary mercenary = new DauthiMercenary();
+        testHarness.setHand(testAiPlayer, List.of(mercenary));
+        testHarness.addMana(testAiPlayer, ManaColor.BLACK, 1);
+        testHarness.addMana(testAiPlayer, ManaColor.COLORLESS, 2);
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(mercenary);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(swamp);
+    }
+
+    @Test
+    @DisplayName("Easy AI taps enough mana to pay a colored spell-cost increase")
+    void paysColoredSpellCostIncrease() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        testHarness.addToBattlefield(testAiPlayer, new Derelor());
+        List<Permanent> manaSources = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            manaSources.add(testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp()));
+        }
+        FaithOfTheDevoted faith = new FaithOfTheDevoted();
+        testHarness.setHand(testAiPlayer, List.of(faith));
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(faith);
+        assertThat(manaSources).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Easy AI supplies Torgaar's sacrifice-based cost reduction")
+    void castsTorgaarWithSacrificeCostReduction() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        Permanent fodder = testHarness.addToBattlefieldAndReturn(testAiPlayer, new TolarianScholar());
+        TorgaarFamineIncarnate torgaar = new TorgaarFamineIncarnate();
+        testHarness.setHand(testAiPlayer, List.of(torgaar));
+        testHarness.addMana(testAiPlayer, ManaColor.BLACK, 2);
+        testHarness.addMana(testAiPlayer, ManaColor.COLORLESS, 4);
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        FakeConnection aiConnection = new FakeConnection("ai-easy-torgaar-test");
+        testHarness.getSessionManager().registerPlayer(
+                aiConnection, testAiPlayer.getId(), testAiPlayer.getUsername());
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(torgaar);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(fodder);
+    }
+
+    @Test
+    @DisplayName("Easy AI does not spend a Costly Plunder sacrifice target for mana")
+    void doesNotSpendCostlyPlunderSacrificeTargetForMana() {
+        GameTestHarness testHarness = new GameTestHarness();
+        Player testAiPlayer = testHarness.getPlayer2();
+        GameData testGameData = testHarness.getGameData();
+        testHarness.skipMulligan();
+
+        Permanent basalThrull = testHarness.addToBattlefieldAndReturn(testAiPlayer, new BasalThrull());
+        basalThrull.setSummoningSick(false);
+        Permanent swamp = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp());
+        swamp.setSummoningSick(false);
+        CostlyPlunder costlyPlunder = new CostlyPlunder();
+        testHarness.setHand(testAiPlayer, List.of(costlyPlunder));
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        EasyAiDecisionEngine testAi = new EasyAiDecisionEngine(
+                testGameData.id, testAiPlayer, testHarness.getGameRegistry(), testHarness.getGameService(),
+                testHarness.getGameQueryService(), testHarness.getBlockLegalityService(),
+                testHarness.getCombatAttackService(), testHarness.getGameActionAvailabilityService(),
+                testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
+                testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).isEmpty();
+        assertThat(testGameData.playerHands.get(testAiPlayer.getId())).containsExactly(costlyPlunder);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId()))
+                .containsExactly(basalThrull, swamp);
+        assertThat(basalThrull.isTapped()).isFalse();
+        assertThat(swamp.isTapped()).isFalse();
+        assertThat(testGameData.playerManaPools.get(testAiPlayer.getId()).getTotal()).isZero();
+
+        for (int i = 0; i < 2; i++) {
+            Permanent additionalSwamp = testHarness.addToBattlefieldAndReturn(testAiPlayer, new Swamp());
+            additionalSwamp.setSummoningSick(false);
+        }
+        testHarness.forceActivePlayer(testAiPlayer);
+        testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        testHarness.clearPriorityPassed();
+        testGameData.status = GameStatus.RUNNING;
+        testGameData.interaction.clearAwaitingInput();
+        testGameData.stack.clear();
+
+        testAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(testGameData.stack).hasSize(1);
+        assertThat(testGameData.stack.getFirst().getCard()).isSameAs(costlyPlunder);
+        assertThat(testGameData.playerHands.get(testAiPlayer.getId())).doesNotContain(costlyPlunder);
+        assertThat(testGameData.playerBattlefields.get(testAiPlayer.getId())).doesNotContain(basalThrull);
     }
 
     @Nested
@@ -187,6 +545,190 @@ class EasyAiDecisionEngineTest {
             }
         }
 
+        private Card fixedCountRepeatableModalSpell() {
+            Card card = new Card();
+            card.setName("Repeatable modal draw");
+            card.setType(CardType.SORCERY);
+            card.setManaCost("{G}");
+            card.addEffect(EffectSlot.SPELL, ChooseOneEffect.withRepeatedModes(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Draw first", new DrawCardEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Draw second", new DrawCardEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Draw third", new DrawCardEffect(1))
+            ), 3));
+            return card;
+        }
+
+        @Test
+        @DisplayName("Easy AI casts a fixed-count modal spell whose modes may repeat")
+        void castsFixedCountRepeatableModalSpell() {
+            giveAiPriority();
+            giveManaSources(Forest::new, 1);
+            Card spell = fixedCountRepeatableModalSpell();
+            testHarness.setHand(aiTestPlayer, List.of(spell));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
+            testHarness.passBothPriorities();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).hasSize(3);
+        }
+
+        @Test
+        @DisplayName("Easy AI starts Evangelize by choosing the opponent")
+        void startsEvangelizeWithOpponentChoice() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 5);
+            testHarness.addToBattlefield(human, new GrizzlyBears());
+            Evangelize evangelize = new Evangelize();
+            testHarness.setHand(aiTestPlayer, List.of(evangelize));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            PendingInteraction.PermanentChoice choice =
+                    testGd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice.playerId()).isEqualTo(aiTestPlayer.getId());
+            assertThat(choice.validIds()).containsExactly(human.getId());
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(evangelize);
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses a creature type for Selective Snare")
+        void castsSelectiveSnareWithCreatureTypeChoice() {
+            giveAiPriority();
+            giveManaSources(Island::new, 3);
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            SelectiveSnare snare = new SelectiveSnare();
+            testHarness.setHand(aiTestPlayer, List.of(snare));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(snare);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+            assertThat(testGd.stack.getFirst().getChosenCreatureType()).isEqualTo(CardSubtype.BEAR);
+
+            testHarness.passBothPriorities();
+
+            assertThat(testGd.playerBattlefields.get(human.getId())).doesNotContain(target);
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies a creature type for an additional cast cost")
+        void castsCallerOfTheHuntWithCreatureTypeChoice() {
+            giveAiPriority();
+            giveManaSources(Forest::new, 3);
+            testHarness.addToBattlefield(human, new EliteVanguard());
+            CallerOfTheHunt caller = new CallerOfTheHunt();
+            testHarness.setHand(aiTestPlayer, List.of(caller));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(caller);
+            assertThat(testGd.stack.getFirst().getBeholdChosenSubtype()).isEqualTo(CardSubtype.HUMAN);
+
+            testHarness.passBothPriorities();
+
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .anyMatch(permanent -> permanent.getCard() == caller);
+        }
+
+        @Test
+        @DisplayName("Easy AI announces Risk Factor's opponent target")
+        void castsRiskFactorAtOpponent() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 3);
+            RiskFactor riskFactor = new RiskFactor();
+            testHarness.setHand(aiTestPlayer, List.of(riskFactor));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(riskFactor);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI limits Phyrexian Purge targets to its available life")
+        void limitsPerTargetLifeCostTargets() {
+            giveAiPriority();
+            testHarness.setLife(aiTestPlayer, 7);
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 2);
+            testHarness.addMana(aiTestPlayer, ManaColor.RED, 2);
+            testHarness.addToBattlefield(human, new SerraAngel());
+            testHarness.addToBattlefield(human, new GrizzlyBears());
+            testHarness.addToBattlefield(human, new LlanowarElves());
+            PhyrexianPurge purge = new PhyrexianPurge();
+            testHarness.setHand(aiTestPlayer, List.of(purge));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(purge);
+            assertThat(testGd.stack.getFirst().getTargetIds()).hasSize(2);
+            assertThat(testGd.getLife(aiTestPlayer.getId())).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Easy AI announces one target when paying no repeatable additional cost")
+        void castsPrimitiveJusticeWithItsBaseTargetCount() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 2);
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(human, new Ornithopter());
+            PrimitiveJustice primitiveJustice = new PrimitiveJustice();
+            testHarness.setHand(aiTestPlayer, List.of(primitiveJustice));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(primitiveJustice);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(artifact.getId());
+            assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Easy AI uses the base X when paying no multikicker payments")
+        void castsStrengthOfTheTajuruWithoutMultikicker() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 4);
+            Permanent creature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            StrengthOfTheTajuru strengthOfTheTajuru = new StrengthOfTheTajuru();
+            testHarness.setHand(aiTestPlayer, List.of(strengthOfTheTajuru));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(creature.getId());
+            assertThat(testGd.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Easy AI does not submit a Dream Halls-only alternate cast as a mana cast")
+        void skipsDreamHallsOnlyAlternateCast() {
+            giveAiPriority();
+            testHarness.addToBattlefield(aiTestPlayer, new DreamHalls());
+            giveManaSources(Island::new, 3);
+            CurseOfEchoes curseOfEchoes = new CurseOfEchoes();
+            AirElemental airElemental = new AirElemental();
+            testHarness.setHand(aiTestPlayer, List.of(curseOfEchoes, airElemental));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId()))
+                    .containsExactly(curseOfEchoes, airElemental);
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).getTotal()).isZero();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+        }
+
         @Test
         @DisplayName("Easy AI casts Cryptic Command with its choose-two target")
         void castsCrypticCommandWithChooseTwoTarget() {
@@ -201,6 +743,224 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Cryptic Command");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies targets for Ashling's Command's targeted modes")
+        void castsAshlingsCommandWithTargetsForEachChosenMode() {
+            giveAiPriority();
+            giveManaSources(Island::new, 4);
+            giveManaSources(Mountain::new, 1);
+            Permanent elemental = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new AirElemental());
+            AshlingsCommand command = new AshlingsCommand();
+            testHarness.setHand(aiTestPlayer, List.of(command));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds())
+                    .containsExactly(elemental.getId(), human.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI validates modal player-or-planeswalker target candidates")
+        void castsModalPlayerOrPlaneswalkerSpellAtPlayer() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 1);
+            giveManaSources(Plains::new, 1);
+            Permanent ordinaryPermanent = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            Card modalSpell = new Card();
+            modalSpell.setName("Draw and Bolt");
+            modalSpell.setType(CardType.SORCERY);
+            modalSpell.setManaCost("{R}{W}");
+            modalSpell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Draw and damage", List.of(
+                            new DrawCardEffect(1), new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))),
+                    new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)))));
+            testHarness.setHand(aiTestPlayer, List.of(modalSpell));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(human.getId());
+            assertThat(testGd.stack.getFirst().getTargetId()).isNotEqualTo(ordinaryPermanent.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses Wear // Tear's affordable mode")
+        void choosesAffordableWearTearMode() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 1);
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(human, new Ornithopter());
+            Permanent enchantment = testHarness.addToBattlefieldAndReturn(human, new AngelicChorus());
+            testHarness.setHand(aiTestPlayer, List.of(new WearTear()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Wear");
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(enchantment.getId());
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(Permanent::isTapped)
+                    .hasSize(1);
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).get(ManaColor.RED)).isZero();
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).get(ManaColor.WHITE)).isZero();
+            assertThat(testGd.playerBattlefields.get(human.getId()))
+                    .extracting(permanent -> permanent.getCard().getName())
+                    .containsExactly(artifact.getCard().getName(), enchantment.getCard().getName());
+        }
+
+        @Test
+        @DisplayName("Easy AI announces Fire's divided damage for its selected mode")
+        void castsFireWithModalDamageAssignments() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 2);
+            FireIce fireIce = new FireIce();
+            testHarness.setHand(aiTestPlayer, List.of(fireIce));
+            int lifeBefore = testGd.getLife(human.getId());
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
+            assertThat(testGd.stack.getFirst().getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 2));
+            testHarness.passBothPriorities();
+            assertThat(testGd.getLife(human.getId())).isEqualTo(lifeBefore - 2);
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies Fiery Justice's separate opponent target")
+        void castsFieryJusticeWithOpponentAsBothTargets() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.RED, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.WHITE, 1);
+            FieryJustice fieryJustice = new FieryJustice();
+            testHarness.setHand(aiTestPlayer, List.of(fieryJustice));
+            int lifeBefore = testGd.getLife(human.getId());
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            StackEntry entry = testGd.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(fieryJustice);
+            assertThat(entry.getTargetId()).isEqualTo(human.getId());
+            assertThat(entry.getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(human.getId(), 5));
+            testHarness.passBothPriorities();
+            assertThat(testGd.getLife(human.getId())).isEqualTo(lifeBefore);
+        }
+
+        @Test
+        @DisplayName("Easy AI pays the selected spree mode's additional mana cost")
+        void castsSpreeModeWithItsAdditionalManaCost() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 2);
+            FinalShowdown finalShowdown = new FinalShowdown();
+            testHarness.setHand(aiTestPlayer, List.of(finalShowdown));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(finalShowdown.getId());
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(Permanent::isTapped)
+                    .hasSize(2);
+        }
+
+        @Test
+        @DisplayName("Easy AI casts a targetless modal double-faced card face")
+        void castsTargetlessModalDoubleFacedCardFace() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            ToralfGodOfFury toralf = new ToralfGodOfFury();
+            testHarness.setHand(aiTestPlayer, List.of(toralf));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isZero();
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies a matching permanent for a behold additional cost")
+        void castsBeholdSpellWithMatchingPermanent() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            Permanent elemental = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new AirElemental());
+            elemental.setSummoningSick(false);
+            ChampionOfThePath champion = new ChampionOfThePath();
+            testHarness.setHand(aiTestPlayer, List.of(champion));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(champion);
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId()))
+                    .extracting(Card::getId)
+                    .contains(elemental.getCard().getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies both targets for Blinding Beam's tap mode")
+        void castsBlindingBeamWithTwoTargetCreatures() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 3);
+            Permanent firstTarget = new Permanent(new GrizzlyBears());
+            Permanent secondTarget = new Permanent(new GrizzlyBears());
+            testGd.playerBattlefields.get(human.getId()).add(firstTarget);
+            testGd.playerBattlefields.get(human.getId()).add(secondTarget);
+            testHarness.setHand(aiTestPlayer, List.of(new BlindingBeam()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Blinding Beam");
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds())
+                    .containsExactlyInAnyOrder(firstTarget.getId(), secondTarget.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI collects evidence for Urgent Necropsy's targets")
+        void castsUrgentNecropsyWithTargetEvidence() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.COLORLESS, 2);
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            GrizzlyBears evidence = new GrizzlyBears();
+            testHarness.setGraveyard(aiTestPlayer, List.of(evidence));
+            UrgentNecropsy necropsy = new UrgentNecropsy();
+            testHarness.setHand(aiTestPlayer, List.of(necropsy));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(necropsy);
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(target.getId());
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId())).containsExactly(evidence);
+        }
+
+        @Test
+        @DisplayName("Easy AI allows one permanent for both Reign of Chaos targets")
+        void castsReignOfChaosWithSharedTarget() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            Permanent target = new Permanent(whitePlainsCreature());
+            testGd.playerBattlefields.get(human.getId()).add(target);
+            testHarness.setHand(aiTestPlayer, List.of(new ReignOfChaos()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Reign of Chaos");
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds())
+                    .containsExactly(target.getId(), target.getId());
         }
 
         @Test
@@ -221,6 +981,22 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI casts Pyrrhic Strike's single mode without paying blight")
+        void castsSingleModeWithoutPayingOptionalBlight() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 3);
+            Permanent blightCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new HillGiant());
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(human, new Ornithopter());
+            testHarness.setHand(aiTestPlayer, List.of(new PyrrhicStrike()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(artifact.getId());
+            assertThat(blightCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        }
+
+        @Test
         @DisplayName("Easy AI pays an X-discard additional cost")
         void castsAbandonHopeWithRequiredDiscardCard() {
             giveAiPriority();
@@ -238,6 +1014,57 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).isEmpty();
             assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
                     .containsExactly(discard);
+        }
+
+        @Test
+        @DisplayName("Easy AI supplies all cards for a fixed multi-card discard cost")
+        void castsCatharticReunionWithTwoDiscardCards() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 2);
+            CatharticReunion reunion = new CatharticReunion();
+            GrizzlyBears firstDiscard = new GrizzlyBears();
+            GrizzlyBears secondDiscard = new GrizzlyBears();
+            GrizzlyBears remainingCard = new GrizzlyBears();
+            testHarness.setHand(aiTestPlayer, List.of(reunion, firstDiscard, secondDiscard, remainingCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(reunion);
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
+                    .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(remainingCard);
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses only discard for an either-or additional cost")
+        void castsEitherOrCostSpellByDiscardingWithoutSacrificing() {
+            giveAiPriority();
+            testHarness.addMana(aiTestPlayer, ManaColor.RED, 1);
+            testHarness.addMana(aiTestPlayer, ManaColor.COLORLESS, 1);
+            Permanent artifact = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new HowlingMine());
+            Card spell = eitherOrCostCreature();
+            GrizzlyBears discardedCard = new GrizzlyBears();
+            testHarness.setHand(aiTestPlayer, List.of(spell, discardedCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(spell);
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId())).containsExactly(discardedCard);
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId())).contains(artifact);
+        }
+
+        private Card eitherOrCostCreature() {
+            Card card = new Card();
+            card.setName("Either-Or Cost Creature");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{1}{R}");
+            card.setPower(2);
+            card.setToughness(2);
+            card.addEffect(EffectSlot.SPELL,
+                    new SacrificePermanentOrDiscardCardCost(new PermanentIsArtifactPredicate(), "an artifact"));
+            return card;
         }
 
         @Test
@@ -282,6 +1109,114 @@ class EasyAiDecisionEngineTest {
                     .allMatch(permanent -> !permanent.isTapped());
             assertThat(testGd.playerHands.get(aiTestPlayer.getId())).singleElement()
                     .isInstanceOf(Unbury.class);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Victimize without two creature cards in its graveyard")
+        void doesNotCastVictimizeWithoutTwoCreatureCardsInGraveyard() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 3);
+            testGd.playerGraveyards.get(aiTestPlayer.getId()).add(new HolyDay());
+            Victimize victimize = new Victimize();
+            testHarness.setHand(aiTestPlayer, List.of(victimize));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(victimize);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Suffer the Past without cards in the target graveyard")
+        void doesNotCastSufferThePastWithoutCardsInTargetGraveyard() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            SufferThePast sufferThePast = new SufferThePast();
+            testHarness.setHand(aiTestPlayer, List.of(sufferThePast));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(sufferThePast);
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Rats' Feast with positive X when graveyards are empty")
+        void doesNotCastRatsFeastWithoutGraveyardTargets() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            RatsFeast ratsFeast = new RatsFeast();
+            testHarness.setHand(aiTestPlayer, List.of(ratsFeast));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .allMatch(permanent -> !permanent.isTapped());
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(ratsFeast);
+        }
+
+        @Test
+        @DisplayName("Easy AI keeps Torrent of Souls' optional graveyard target separate from its player target")
+        void castsTorrentOfSoulsWithoutOptionalGraveyardTarget() {
+            giveAiPriority();
+            giveManaSources(Swamp::new, 2);
+            giveManaSources(Mountain::new, 3);
+            TorrentOfSouls torrentOfSouls = new TorrentOfSouls();
+            testHarness.setHand(aiTestPlayer, List.of(torrentOfSouls));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(torrentOfSouls);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(human.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI limits Finale of Promise graveyard targets to the announced X")
+        void castsFinaleOfPromiseWithAffordableGraveyardTargets() {
+            giveAiPriority();
+            giveManaSources(Mountain::new, 4);
+            Opportunity tooExpensive = new Opportunity();
+            Shock affordable = new Shock();
+            testHarness.setGraveyard(aiTestPlayer, List.of(tooExpensive, affordable));
+            FinaleOfPromise finale = new FinaleOfPromise();
+            testHarness.setHand(aiTestPlayer, List.of(finale));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(finale);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+            assertThat(testGd.stack.getFirst().getTargetId()).isNull();
+            assertThat(testGd.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
+        }
+
+        @Test
+        @DisplayName("Easy AI does not cast Ajani's Response at an unaffordable untapped target")
+        void doesNotCastTargetReducedSpellAtUnaffordableTarget() {
+            giveAiPriority();
+            giveManaSources(Plains::new, 1);
+            giveManaSources(Island::new, 2);
+
+            Permanent ownTappedCreature = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new GrizzlyBears());
+            ownTappedCreature.setSummoningSick(false);
+            ownTappedCreature.tap();
+            Permanent opponentCreature = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            opponentCreature.setSummoningSick(false);
+            testHarness.setHand(aiTestPlayer, List.of(new AjanisResponse()));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
     }
 
@@ -799,7 +1734,8 @@ class EasyAiDecisionEngineTest {
                 new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
                         new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
                         targetValidationService,
-                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class)));
+                        Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                        new com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService(gameQueryService)));
         engine.handleEvent(AiDecisionKind.GAME_STATE);
 
         // Should NOT attempt to cast A?€�t spell casting restricted
@@ -1052,6 +1988,274 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI declares a blocker required to block if able")
+        void honorsMustBlockIfAbleRequirement() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            blocker.setMustBlockThisTurnIfAble(true);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            combatAi.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
+
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI reserves a creature to pay Hollow Warrior's block cost")
+        void reservesCreatureForBlockTapCost() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent warrior = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HollowWarrior());
+            warrior.setSummoningSick(false);
+            Permanent support = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            support.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            int warriorIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(warrior);
+            int supportIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(support);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(warriorIndex, attackerIndex),
+                        new BlockerAssignment(supportIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(warrior.isBlocking()).isTrue();
+            assertThat(support.isBlocking()).isFalse();
+            assertThat(support.isTapped()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI reassigns an existing blocker to a Lure attacker")
+        void reassignsExistingBlockerToLureAttacker() {
+            Permanent lureAttacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            lureAttacker.setSummoningSick(false);
+            lureAttacker.setAttacking(true);
+            Permanent lure = combatHarness.addToBattlefieldAndReturn(opponent, new Lure());
+            lure.setAttachedTo(lureAttacker.getId());
+            Permanent otherAttacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            otherAttacker.setSummoningSick(false);
+            otherAttacker.setAttacking(true);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            blocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int otherAttackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(otherAttacker);
+            int blockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(blocker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(
+                        List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI caps Lure blocks to an aura-granted maximum")
+        void capsLureBlocksToAuraGrantedMaximum() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new KjeldoranRoyalGuard());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent authority = combatHarness.addToBattlefieldAndReturn(opponent, new AlphaAuthority());
+            authority.setAttachedTo(attacker.getId());
+            Permanent lure = combatHarness.addToBattlefieldAndReturn(opponent, new Lure());
+            lure.setAttachedTo(attacker.getId());
+            Permanent firstBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            firstBlocker.setSummoningSick(false);
+            Permanent secondBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            secondBlocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            int firstBlockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(firstBlocker);
+            int secondBlockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(secondBlocker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(firstBlockerIndex, attackerIndex),
+                        new BlockerAssignment(secondBlockerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(List.of(firstBlocker, secondBlocker)).filteredOn(Permanent::isBlocking).hasSize(1);
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI drops a partial Tromokratis block without rejection")
+        void dropsPartialTromokratisBlockWithoutRejection() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new Tromokratis());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent firstBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            firstBlocker.setSummoningSick(false);
+            Permanent secondBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            secondBlocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int firstBlockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(firstBlocker);
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(firstBlockerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(firstBlocker.isBlocking()).isFalse();
+            assertThat(secondBlocker.isBlocking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI drops Okk when its greater-power partner is unaffordable")
+        void dropsOkkWhenGreaterPowerPartnerIsUnaffordable() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new HillGiant());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent okk = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Okk());
+            okk.setSummoningSick(false);
+            TestCards.mutableCard(okk).setPower(2);
+            Permanent partner = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Hipparion());
+            partner.setSummoningSick(false);
+            TestCards.mutableCard(partner).setPower(4);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            int okkIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(okk);
+            int partnerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(partner);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(okkIndex, attackerIndex),
+                        new BlockerAssignment(partnerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(okk.isBlocking()).isFalse();
+            assertThat(partner.isBlocking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI leaves Tromokratis unblocked when a defending creature cannot block")
+        void leavesTromokratisUnblockedWhenADefendingCreatureCannotBlock() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new Tromokratis());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent firstBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            firstBlocker.setSummoningSick(false);
+            Permanent secondBlocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            secondBlocker.setSummoningSick(false);
+            secondBlocker.tap();
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int firstBlockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(firstBlocker);
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(firstBlockerIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(firstBlocker.isBlocking()).isFalse();
+            assertThat(secondBlocker.isBlocking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI does not submit an unaffordable block tax from an attacking Archangel")
+        void dropsUnaffordableGlobalBlockTax() {
+            Permanent archangel = combatHarness.addToBattlefieldAndReturn(opponent, new ArchangelOfTithes());
+            archangel.setSummoningSick(false);
+            archangel.setAttacking(true);
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            blocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(new BlockerAssignment(
+                        combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(blocker),
+                        combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker)))));
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(blocker.isBlocking()).isFalse();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
         @DisplayName("Easy AI removes a creature that can only attack alone from a larger group")
         void removesCanOnlyAttackAloneCreature() {
             Permanent restricted = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
@@ -1081,6 +2285,69 @@ class EasyAiDecisionEngineTest {
             List<Integer> result = combatAi.prepareAttackersForTax(combatGd, List.of(0, 2));
 
             assertThat(result).containsExactly(0);
+        }
+
+        @Test
+        @DisplayName("Easy AI includes an attack-if-another-attacks creature")
+        void includesConditionalAttackRequirement() {
+            combatGd.playerLifeTotals.put(opponent.getId(), 5);
+            Permanent cyclops = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new EkunduCyclops());
+            cyclops.setSummoningSick(false);
+            Permanent bears = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            bears.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.inMutationScope(() ->
+                    combatHarness.getCombatAttackService().handleDeclareAttackersStep(combatGd));
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(cyclops.isAttacking()).isTrue();
+            assertThat(bears.isAttacking()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses a legal attacker when forced and the first candidate is restricted")
+        void doesNotDeclareOrcishConscriptsWithoutEnoughOtherAttackers() {
+            Permanent conscripts = combatHarness.addToBattlefieldAndReturn(combatAiPlayer,
+                    new OrcishConscripts());
+            conscripts.setSummoningSick(false);
+            Permanent ally = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            ally.setSummoningSick(false);
+            Permanent trove = combatHarness.addToBattlefieldAndReturn(opponent, new TroveOfTemptation());
+            trove.setSummoningSick(false);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(opponent, new AirElemental());
+            blocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(conscripts.isAttackedThisTurn()).isFalse();
+            assertThat(ally.isAttackedThisTurn()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
         }
 
         @Test
@@ -1139,6 +2406,105 @@ class EasyAiDecisionEngineTest {
             }
             assertThat(attacker.isAttacking()).isFalse();
             assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI sends a required attacker to an available planeswalker")
+        void sendsRequiredAttackerToAvailablePlaneswalker() {
+            combatHarness.addToBattlefield(opponent, new IslandSanctuary());
+            Permanent planeswalker = combatHarness.addToBattlefieldAndReturn(opponent, new JaceBeleren());
+            planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            blocker.setSummoningSick(false);
+            combatGd.turnNumber = 2;
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.UPKEEP);
+            combatHarness.clearPriorityPassed();
+            combatHarness.passBothPriorities();
+            combatHarness.handleMayAbilityChosen(opponent, true);
+
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new Ramroller());
+            attacker.setSummoningSick(false);
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.inMutationScope(() ->
+                    combatHarness.getCombatAttackService().handleDeclareAttackersStep(combatGd));
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+            assertThat(attacker.isAttacking()).isTrue();
+            assertThat(attacker.getAttackTarget()).isEqualTo(planeswalker.getId());
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI respects a controller-scoped attacker limit")
+        void respectsControllerScopedAttackerLimit() {
+            combatGd.playerLifeTotals.put(opponent.getId(), 20);
+            Permanent limit = combatHarness.addToBattlefieldAndReturn(opponent, new Crawlspace());
+            limit.setSummoningSick(false);
+            Permanent first = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            first.setSummoningSick(false);
+            Permanent second = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            second.setSummoningSick(false);
+            Permanent third = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            third.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1, 2), null));
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(combatGd.getLife(opponent.getId())).isEqualTo(16);
+            assertThat(combatGd.gameLog.stream().map(entry -> entry.plainText()))
+                    .anyMatch(log -> log.contains("declares 2 attackers."));
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI keeps an attacker group payable when one attacker has a creature-tap cost")
+        void keepsCreatureTapAttackCostPayable() {
+            Permanent warrior = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HollowWarrior());
+            warrior.setSummoningSick(false);
+            Permanent support = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            support.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(combatAiPlayer);
+            combatHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginAttackerDeclarationInput();
+
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendAttackerDeclaration(new DeclareAttackersRequest(List.of(0, 1), null));
+
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(warrior.isAttackedThisTurn()).isTrue();
+            assertThat(support.isTapped()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
+                    .isNull();
         }
     }
 
@@ -1488,6 +2854,52 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI uses Pyrokinesis's hand-exile alternate cost")
+        void usesHandExileAlternateCost() {
+            giveAiPriorityLocal();
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+            target.setSummoningSick(false);
+            Pyrokinesis pyrokinesis = new Pyrokinesis();
+            LightningBolt redCard = new LightningBolt();
+            testHarness.setHand(aiTestPlayer, List.of(pyrokinesis, redCard));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(pyrokinesis);
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId())).containsExactly(redCard);
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).get(ManaColor.RED)).isZero();
+        }
+
+        @Test
+        @DisplayName("Easy AI exiles only cards matching an ExileX graveyard cost")
+        void exilesOnlyMatchingCardsForExileXCost() {
+            giveAiPriorityLocal();
+
+            Card spell = new Card();
+            spell.setName("Mixed Graveyard Spell");
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost("{B}");
+            spell.addEffect(EffectSlot.SPELL,
+                    new com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost(CardType.CREATURE));
+
+            testHarness.setGraveyard(aiTestPlayer, List.of(
+                    new HolyDay(), new GrizzlyBears(), new HolyDay()));
+            testHarness.setHand(aiTestPlayer, List.of(spell));
+            testHarness.addMana(aiTestPlayer, ManaColor.BLACK, 1);
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.getPlayerExiledCards(aiTestPlayer.getId()))
+                    .extracting(Card::getName)
+                    .containsExactly("Grizzly Bears");
+            assertThat(testGd.playerGraveyards.get(aiTestPlayer.getId()))
+                    .extracting(Card::getName)
+                    .containsExactly("Holy Day", "Holy Day");
+        }
+
+        @Test
         @DisplayName("Easy AI casts Entrancing Melody with X matching target's mana value")
         void castsEntrancingMelodyWithCorrectX() {
             giveAiPriorityLocal();
@@ -1504,6 +2916,32 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Entrancing Melody");
             assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Easy AI casts Dominate with a target within the announced X")
+        void castsDominateWithTargetWithinAnnouncedX() {
+            giveAiPriorityLocal();
+            giveAiIslandsLocal(6); // maxX = 3; the target determines X=2
+
+            Permanent tooExpensive = new Permanent(new HillGiant()); // MV=4
+            tooExpensive.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(tooExpensive);
+
+            Permanent target = new Permanent(new GrizzlyBears()); // MV=2
+            target.setSummoningSick(false);
+            testGd.playerBattlefields.get(human.getId()).add(target);
+
+            Dominate dominate = new Dominate();
+            testHarness.setHand(aiTestPlayer, List.of(dominate));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(dominate);
+            assertThat(testGd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+            assertThat(testGd.stack.getFirst().getTargetId()).isNotEqualTo(tooExpensive.getId());
             assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
         }
 
@@ -1545,6 +2983,21 @@ class EasyAiDecisionEngineTest {
             easyAi.handleEvent(AiDecisionKind.GAME_STATE);
 
             assertThat(testGd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Easy AI caps Open the Way at the number of players")
+        void capsOpenTheWayAtTheNumberOfPlayers() {
+            giveAiPriorityLocal();
+            testHarness.addMana(aiTestPlayer, ManaColor.GREEN, 4);
+            OpenTheWay openTheWay = new OpenTheWay();
+            testHarness.setHand(aiTestPlayer, List.of(openTheWay));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).hasSize(1);
+            assertThat(testGd.stack.getFirst().getCard()).isSameAs(openTheWay);
+            assertThat(testGd.stack.getFirst().getXValue()).isEqualTo(2);
         }
 
         @Test
@@ -1603,8 +3056,6 @@ class EasyAiDecisionEngineTest {
         }
     }
 
-    // ===== Forced attack (Trove of Temptation) =====
-
     @Test
     @DisplayName("Easy AI attacks with at least one creature when forced by opponent effect")
     void attacksWithAtLeastOneWhenForcedByOpponentEffect() throws Exception {
@@ -1631,6 +3082,8 @@ class EasyAiDecisionEngineTest {
         gd.playerBattlefields.get(opponentId).add(blocker);
 
         when(combatAttackService.getAttackableCreatureIndices(gd, aiPlayer.getId()))
+                .thenReturn(List.of(0));
+        when(combatAttackService.getAttackableCreatureIndicesForTarget(gd, aiPlayer.getId(), opponentId))
                 .thenReturn(List.of(0));
         when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
                 .thenReturn(List.of());
@@ -1732,6 +3185,35 @@ class EasyAiDecisionEngineTest {
         createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
         // AI should have tapped the land but NOT cast the spell or passed priority
+        verify(messageHandler).handleTapPermanent(any());
+        verify(messageHandler, never()).handlePlayCard(any());
+        verify(messageHandler, never()).handlePassPriority(any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not cast a spell when mana tapping puts a trigger on the stack")
+    void doesNotCastSpellWhenManaTappingPutsTriggerOnStack() throws Exception {
+        Card creature = new Card();
+        creature.setName("Test Knight");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{W}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        Permanent land = new Permanent(new Plains());
+        land.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(land);
+
+        when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
+        Mockito.doAnswer(inv -> {
+            gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+                    aiPlayer.getId(), "Test trigger", List.of()));
+            return null;
+        }).when(messageHandler).handleTapPermanent(any());
+
+        createEngine().handleEvent(AiDecisionKind.GAME_STATE);
+
         verify(messageHandler).handleTapPermanent(any());
         verify(messageHandler, never()).handlePlayCard(any());
         verify(messageHandler, never()).handlePassPriority(any());
@@ -1842,6 +3324,9 @@ class EasyAiDecisionEngineTest {
 
             // Should NOT cast A?€�t can't afford {1}{W} + {2} tax = 4 mana with only 2 Plains
             assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
 
         @Test
@@ -1860,6 +3345,32 @@ class EasyAiDecisionEngineTest {
 
             assertThat(testGd.stack).hasSize(1);
             assertThat(testGd.stack.getFirst().getCard().getName()).isEqualTo("Pacifism");
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(Permanent::isTapped);
+        }
+
+        @Test
+        @DisplayName("Easy AI leaves mana untapped when its chosen target adds an unaffordable surcharge")
+        void leavesManaUntappedWhenChosenTargetAddsOwnSurcharge() {
+            giveAiPriorityLocal();
+            giveAiPlainsLocal(3);
+
+            Card relicCard = new Card();
+            relicCard.setName("Relic");
+            relicCard.setType(CardType.ARTIFACT);
+            testHarness.addToBattlefield(human, relicCard);
+            testHarness.addToBattlefield(human, new SerraAngel());
+            VanishIntoEternity vanish = new VanishIntoEternity();
+            testHarness.setHand(aiTestPlayer, List.of(vanish));
+
+            easyAi.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(testGd.stack).isEmpty();
+            assertThat(testGd.playerHands.get(aiTestPlayer.getId())).containsExactly(vanish);
+            assertThat(testGd.playerBattlefields.get(aiTestPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .allMatch(permanent -> !permanent.isTapped());
         }
 
         @Test
@@ -1960,6 +3471,39 @@ class EasyAiDecisionEngineTest {
 
             assertThat(testGd.playerLifeTotals.get(aiTestPlayer.getId())).isEqualTo(lifeBefore);
             assertThat(testGd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI chooses a legal X when a pay-X trigger has a fixed mana component")
+        void choosesLegalXForFlameblastDragon() {
+            Permanent dragon = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new FlameblastDragon());
+            dragon.setSummoningSick(false);
+            for (int i = 0; i < 4; i++) {
+                Permanent mountain = testHarness.addToBattlefieldAndReturn(aiTestPlayer, new Mountain());
+                mountain.setSummoningSick(false);
+            }
+            Permanent target = testHarness.addToBattlefieldAndReturn(human, new AirElemental());
+            target.setSummoningSick(false);
+            testHarness.setHand(aiTestPlayer, List.of());
+
+            testHarness.forceActivePlayer(aiTestPlayer);
+            testHarness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            testHarness.clearPriorityPassed();
+            testGd.status = GameStatus.RUNNING;
+            testHarness.beginAttackerDeclarationInput();
+
+            int dragonIndex = testGd.playerBattlefields.get(aiTestPlayer.getId()).indexOf(dragon);
+            testHarness.getGameService().declareAttackers(testGd, aiTestPlayer, List.of(dragonIndex));
+            testHarness.handlePermanentChosen(aiTestPlayer, target.getId());
+            testHarness.passBothPriorities();
+
+            assertThat(testGd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+
+            easyAi.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(target.getMarkedDamage()).isEqualTo(3);
+            assertThat(testGd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+            assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).getTotal()).isZero();
         }
     }
 }

@@ -19,6 +19,7 @@ import java.util.List;
  * Back half (Fame) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "150")
+@CardRegistration(set = "AKR", collectorNumber = "229")
 public class ClaimFame extends Card {
 
     public ClaimFame() {

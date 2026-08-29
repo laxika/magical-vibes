@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "87")
+@CardRegistration(set = "MMQ", collectorNumber = "183")
 public class CinderElemental extends Card {
 
     public CinderElemental() {

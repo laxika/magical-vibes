@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-public record SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean trackSacrificedPower, boolean trackSacrificedToughness, boolean excludeSelf, ManaColor trackSacrificedColorSymbols) implements CostEffect {
+public record SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean trackSacrificedPower, boolean trackSacrificedToughness, boolean excludeSelf, ManaColor trackSacrificedColorSymbols, boolean recordSacrificedPermanentSnapshot) implements CostEffect {
 
     private static final PermanentPredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
 
@@ -18,28 +18,39 @@ public record SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean tr
         return true;
     }
 
+    @Override
+    public boolean tracksSacrificedCard() {
+        return true;
+    }
+
     public SacrificeCreatureCost() {
-        this(false, false, false, false, null);
+        this(false, false, false, false, null, false);
     }
 
     public SacrificeCreatureCost(boolean trackSacrificedManaValue) {
-        this(trackSacrificedManaValue, false, false, false, null);
+        this(trackSacrificedManaValue, false, false, false, null, false);
     }
 
     public SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean trackSacrificedPower) {
-        this(trackSacrificedManaValue, trackSacrificedPower, false, false, null);
+        this(trackSacrificedManaValue, trackSacrificedPower, false, false, null, false);
     }
 
     public SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean trackSacrificedPower, boolean trackSacrificedToughness) {
-        this(trackSacrificedManaValue, trackSacrificedPower, trackSacrificedToughness, false, null);
+        this(trackSacrificedManaValue, trackSacrificedPower, trackSacrificedToughness, false, null, false);
     }
 
     public SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean trackSacrificedPower, boolean trackSacrificedToughness, boolean excludeSelf) {
-        this(trackSacrificedManaValue, trackSacrificedPower, trackSacrificedToughness, excludeSelf, null);
+        this(trackSacrificedManaValue, trackSacrificedPower, trackSacrificedToughness, excludeSelf, null, false);
     }
 
     /** Snapshots the number of {@code color} mana symbols in the sacrificed creature's mana cost into the entry's xValue (Fiery Bombardment). */
     public SacrificeCreatureCost(ManaColor trackSacrificedColorSymbols) {
-        this(false, false, false, false, trackSacrificedColorSymbols);
+        this(false, false, false, false, trackSacrificedColorSymbols, false);
     }
+
+    /** Preserves the sacrificed creature's battlefield characteristics for a later effect. */
+    public static SacrificeCreatureCost withPermanentSnapshot() {
+        return new SacrificeCreatureCost(false, false, false, false, null, true);
+    }
+
 }

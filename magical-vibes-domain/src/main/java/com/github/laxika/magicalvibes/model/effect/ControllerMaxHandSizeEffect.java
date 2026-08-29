@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+
 /**
  * Capability interface for static effects that change their own controller's maximum hand size.
  *
@@ -17,4 +19,14 @@ public interface ControllerMaxHandSizeEffect extends CardEffect {
      * @return the maximum hand size after applying this effect
      */
     int applyToMaximumHandSize(int currentMax);
+
+    /**
+     * Applies this effect when the source permanent's current state is available.
+     *
+     * <p>Fixed-value effects use the default implementation. Effects whose value depends on the
+     * source permanent can override this overload.
+     */
+    default int applyToMaximumHandSize(int currentMax, Permanent source) {
+        return applyToMaximumHandSize(currentMax);
+    }
 }

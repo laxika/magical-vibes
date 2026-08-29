@@ -1,33 +1,28 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-
-import java.util.Set;
-import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
+/** Returns a source card from exile to the battlefield under its owner's control. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReturnSourceCardFromExileToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     @Override
@@ -37,36 +32,26 @@ public class ReturnSourceCardFromExileToBattlefieldEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var returnEffect = (ReturnSourceCardFromExileToBattlefieldEffect) effect;
-        Card card = entry.getCard();
-        ExiledCardEntry exiledEntry = gameData.findExiledCard(card.getId());
-        if (exiledEntry == null) {
-            log.info("Game {} - {} exile return fizzles (no longer in exile)", gameData.id, card.getName());
+        ReturnSourceCardFromExileToBattlefieldEffect returnEffect =
+                (ReturnSourceCardFromExileToBattlefieldEffect) effect;
+        UUID cardId = entry.getCard().getId();
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null || !gameData.removeFromExile(cardId)) {
             return;
         }
 
-        if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.EXILE)) {
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " can't return from exile; it stays in exile."));
-            log.info("Game {} - {} exile return blocked", gameData.id, card.getName());
-            return;
-        }
-
-        UUID ownerId = exiledEntry.ownerId();
-        gameData.removeFromExile(card.getId());
-
-        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        Card card = exiled.card();
         Permanent permanent = new Permanent(card);
         if (returnEffect.tapped()) {
             permanent.tap();
         }
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
-
-        String playerName = gameData.playerIdToName.get(ownerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", card,
-                " to the battlefield from exile" + (returnEffect.tapped() ? " tapped" : "") + "."));
-        log.info("Game {} - {} returns to the battlefield from exile", gameData.id, card.getName());
-
+        UUID ownerId = exiled.ownerId();
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent);
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(ownerId) + " returns ", card,
+                " from exile to the battlefield" + (returnEffect.tapped() ? " tapped" : "") + "."));
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+        log.info("Game {} - {} returns from exile to the battlefield under its owner's control",
+                gameData.id, card.getName());
     }
 }

@@ -23,8 +23,7 @@ class GiltLeafWinnowerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
     }
 
     @Test
@@ -34,9 +33,9 @@ class GiltLeafWinnowerTest extends BaseCardTest {
         UUID vanguardId = harness.getPermanentId(player2, "Elite Vanguard");
 
         castWinnower();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, vanguardId);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player2, "Elite Vanguard");
         harness.assertOnBattlefield(player1, "Gilt-Leaf Winnower");
@@ -46,8 +45,11 @@ class GiltLeafWinnowerTest extends BaseCardTest {
     @DisplayName("Declining the may leaves the creature alive")
     void decliningLeavesCreatureAlive() {
         harness.addToBattlefield(player2, new EliteVanguard());
+        UUID vanguardId = harness.getPermanentId(player2, "Elite Vanguard");
 
         castWinnower();
+        harness.handlePermanentChosen(player1, vanguardId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
@@ -64,7 +66,6 @@ class GiltLeafWinnowerTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         castWinnower();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         PendingInteraction.PermanentChoice choice =

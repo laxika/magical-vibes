@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,20 +9,16 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransform
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -45,51 +39,14 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
             return;
         }
 
-        // Put the counter
-        String counterName = switch (e.counterType()) {
-            case CHARGE -> { self.setCounterCount(CounterType.CHARGE, self.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
-            case HATCHLING -> { self.setCounterCount(CounterType.HATCHLING, self.getCounterCount(CounterType.HATCHLING) + 1); yield "hatchling"; }
-            case LANDMARK -> { self.setCounterCount(CounterType.LANDMARK, self.getCounterCount(CounterType.LANDMARK) + 1); yield "landmark"; }
-            case SLIME -> { self.setCounterCount(CounterType.SLIME, self.getCounterCount(CounterType.SLIME) + 1); yield "slime"; }
-            case STUDY -> { self.setCounterCount(CounterType.STUDY, self.getCounterCount(CounterType.STUDY) + 1); yield "study"; }
-            case WISH -> { self.setCounterCount(CounterType.WISH, self.getCounterCount(CounterType.WISH) + 1); yield "wish"; }
-            case PLUS_ONE_PLUS_ONE -> {
-                if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, self)) { yield null; }
-                int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, self, 1);
-                if (placed <= 0) { yield null; }
-                self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                yield "+1/+1";
-            }
-            case MINUS_ONE_MINUS_ONE -> {
-                if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, self)) { yield null; }
-                if (gameQueryService.reduceMinusOneMinusOneCounters(gameData, self, 1) <= 0) { yield null; }
-                self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, self.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
-                yield "-1/-1";
-            }
-            default -> throw new IllegalStateException("Unsupported counter type: " + e.counterType());
-        };
-        if (counterName == null) return;
-
-        
-        gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text(" gets a " + counterName + " counter.").build());
-        log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
-
-        if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
-            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, self, 1);
-        }
+        int before = self.getCounterCount(e.counterType());
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), 1);
+        int placed = self.getCounterCount(e.counterType()) - before;
+        if (placed <= 0) return;
+        String counterName = permanentCounterSupport.counterTypeName(e.counterType());
 
         // Check threshold and transform if met
-        int currentCount = switch (e.counterType()) {
-            case CHARGE -> self.getCounterCount(CounterType.CHARGE);
-            case HATCHLING -> self.getCounterCount(CounterType.HATCHLING);
-            case LANDMARK -> self.getCounterCount(CounterType.LANDMARK);
-            case SLIME -> self.getCounterCount(CounterType.SLIME);
-            case STUDY -> self.getCounterCount(CounterType.STUDY);
-            case WISH -> self.getCounterCount(CounterType.WISH);
-            case PLUS_ONE_PLUS_ONE -> self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
-            case MINUS_ONE_MINUS_ONE -> self.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
-            default -> 0;
-        };
+        int currentCount = self.getCounterCount(e.counterType());
 
         if (currentCount >= e.threshold()) {
             if (e.optional()) {

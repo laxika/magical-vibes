@@ -31,6 +31,6 @@ public class FlamerushRider extends Card {
                 )),
                 "Must target another attacking creature."
         )).addEffect(EffectSlot.ON_ATTACK,
-                new CreateTokenCopyOfTargetPermanentEffect(false, false, false, true, true));
+                CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat());
     }
 }

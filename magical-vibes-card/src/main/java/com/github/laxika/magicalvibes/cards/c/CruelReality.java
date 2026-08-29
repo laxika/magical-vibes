@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "84")
+@CardRegistration(set = "AKR", collectorNumber = "98")
 public class CruelReality extends Card {
 
     public CruelReality() {

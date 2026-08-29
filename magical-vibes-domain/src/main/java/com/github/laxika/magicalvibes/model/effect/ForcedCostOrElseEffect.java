@@ -14,7 +14,7 @@ import java.util.List;
  * <p>When {@code anyPlayerMayPay} is true (Icy Prison: "sacrifice this unless any player pays
  * {3}"), players are prompted in APNAP order; the first to pay satisfies the cost and stops the
  * sequence, and only if every player declines (or can't pay) do the fallback effects resolve.
- * Currently only meaningful with an optional {@link PayManaCost}.
+ * Currently used with optional {@link PayManaCost} and {@link PayLifeCost} costs.
  *
  * <p>When {@code payerIsEnchantedController} is true, the prompt goes to the player on the stack
  * entry's {@code targetId} instead of the source's controller. That covers both the enchanted
@@ -35,19 +35,30 @@ public record ForcedCostOrElseEffect(
         boolean optional,
         boolean anyPlayerMayPay,
         boolean payerIsEnchantedController,
-        boolean payerIsDefendingPlayer
+        boolean payerIsDefendingPlayer,
+        List<CardEffect> paidEffects
 ) implements CardEffect {
+    public ForcedCostOrElseEffect {
+        paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
+    }
+
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects) {
-        this(forcedCost, elseEffects, false, false, false, false);
+        this(forcedCost, elseEffects, false, false, false, false, List.of());
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional) {
-        this(forcedCost, elseEffects, optional, false, false, false);
+        this(forcedCost, elseEffects, optional, false, false, false, List.of());
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional,
                                   boolean anyPlayerMayPay) {
-        this(forcedCost, elseEffects, optional, anyPlayerMayPay, false, false);
+        this(forcedCost, elseEffects, optional, anyPlayerMayPay, false, false, List.of());
+    }
+
+    /** "You may pay the cost; if you do, resolve {@code paidEffects}." */
+    public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects, boolean optional,
+                                  List<CardEffect> paidEffects) {
+        this(forcedCost, elseEffects, optional, false, false, false, paidEffects);
     }
 
     /**
@@ -56,7 +67,7 @@ public record ForcedCostOrElseEffect(
      */
     public static ForcedCostOrElseEffect defendingPlayerMayPay(CostEffect forcedCost,
                                                                List<CardEffect> elseEffects) {
-        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true);
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true, List.of());
     }
 
     /**
@@ -66,6 +77,6 @@ public record ForcedCostOrElseEffect(
      */
     public static ForcedCostOrElseEffect enchantedControllerMayPay(CostEffect forcedCost,
                                                                    List<CardEffect> elseEffects) {
-        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true, false);
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, true, false, List.of());
     }
 }

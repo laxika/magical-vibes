@@ -31,10 +31,10 @@ class SeparatistVoidmageTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         castVoidmage();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -45,9 +45,11 @@ class SeparatistVoidmageTest extends BaseCardTest {
     @DisplayName("Declining the may leaves the creature on the battlefield")
     void decliningLeavesCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         castVoidmage();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
@@ -62,9 +64,9 @@ class SeparatistVoidmageTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         castVoidmage();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bearsId);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -74,11 +76,11 @@ class SeparatistVoidmageTest extends BaseCardTest {
     @DisplayName("Can bounce itself when it is the only creature")
     void canBounceItself() {
         castVoidmage();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger -> may prompt
+        harness.passBothPriorities();
         UUID voidmageId = harness.getPermanentId(player1, "Separatist Voidmage");
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, voidmageId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Separatist Voidmage");
         harness.assertInHand(player1, "Separatist Voidmage");
@@ -91,8 +93,6 @@ class SeparatistVoidmageTest extends BaseCardTest {
         UUID lotusId = harness.getPermanentId(player2, "Gilded Lotus");
         castVoidmage();
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, lotusId))
                 .isInstanceOf(IllegalStateException.class);
@@ -100,12 +100,11 @@ class SeparatistVoidmageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The may prompt appears because the Voidmage itself is always a legal target")
+    @DisplayName("The target prompt appears because the Voidmage itself is always a legal target")
     void promptAppearsWithNoOtherCreatures() {
         castVoidmage();
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 }

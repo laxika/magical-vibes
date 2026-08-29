@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "8ED", collectorNumber = "234")
 @CardRegistration(set = "7ED", collectorNumber = "232")
 @CardRegistration(set = "M19", collectorNumber = "169")
+@CardRegistration(set = "USG", collectorNumber = "237")
+@CardRegistration(set = "FDN", collectorNumber = "213")
+@CardRegistration(set = "BRO", collectorNumber = "171")
 public class BlanchwoodArmor extends Card {
 
     public BlanchwoodArmor() {

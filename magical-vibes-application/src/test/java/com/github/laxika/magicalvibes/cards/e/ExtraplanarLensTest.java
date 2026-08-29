@@ -23,11 +23,11 @@ class ExtraplanarLensTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID forestId = harness.getPermanentId(player1, "Forest");
-        harness.castArtifact(player1, 0, forestId);
+        harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forestId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, forestId);
 
         harness.assertNotOnBattlefield(player1, "Forest");
         Permanent lens = findPermanent(player1, "Extraplanar Lens");
@@ -42,8 +42,9 @@ class ExtraplanarLensTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID forestId = harness.getPermanentId(player1, "Forest");
-        harness.castArtifact(player1, 0, forestId);
+        harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forestId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

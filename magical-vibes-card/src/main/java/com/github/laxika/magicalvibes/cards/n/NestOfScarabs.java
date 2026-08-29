@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "AKH", collectorNumber = "101")
+@CardRegistration(set = "AKR", collectorNumber = "117")
 public class NestOfScarabs extends Card {
 
     public NestOfScarabs() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "EXO", collectorNumber = "59")
+@CardRegistration(set = "TPR", collectorNumber = "98")
 public class DauthiWarlord extends Card {
 
     public DauthiWarlord() {

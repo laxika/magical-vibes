@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "231")
 @CardRegistration(set = "INR", collectorNumber = "426")
+@CardRegistration(set = "MID", collectorNumber = "212")
 public class BladestitchedSkaab extends Card {
 
     public BladestitchedSkaab() {

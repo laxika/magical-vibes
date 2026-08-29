@@ -33,7 +33,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
                 anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
-                anySet(), isNull());
+                anySet(), isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull());
     }
 
     @Test
@@ -54,7 +54,51 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true),
                 isNull(), eq(false), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0), anySet(),
-                isNull());
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull());
+    }
+
+    @Test
+    @DisplayName("Passes the end-step-return flag through to the card choice")
+    void passesReturnToHandAtEndStepFlag() {
+        Card card = createCard("Surprise Deployment");
+        CardPredicate predicate = new CardNamedPredicate("Test Filter");
+        PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "nonwhite creature")
+                .returningToHandAtEndStep();
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        Card creatureCard = createCard("Grizzly Bears");
+        gd.playerHands.get(player1Id).add(creatureCard);
+
+        when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
+                anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
+                anySet(), isNull(), eq(true), eq(false), isNull(), isNull(), isNull(), isNull());
+    }
+
+    @Test
+    @DisplayName("Passes the conditional tapped-and-attacking predicate through to the card choice")
+    void passesConditionalTappedAndAttackingPredicate() {
+        Card card = createCard("Summoner's Grimoire");
+        CardPredicate predicate = new CardNamedPredicate("Test Filter");
+        CardPredicate enterTappedAndAttackingIf = new CardNamedPredicate("Enchantment");
+        PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "creature")
+                .withEnterTappedAndAttackingIf(enterTappedAndAttackingIf);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        Card creatureCard = createCard("Grizzly Bears");
+        gd.playerHands.get(player1Id).add(creatureCard);
+
+        when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any(), eq(gd), eq(player1Id)))
+                .thenReturn(true);
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(),
+                anyBoolean(), any(), anyBoolean(), eq(false), isNull(), isNull(), eq(false), eq(false), eq(0), eq(0),
+                anySet(), isNull(), eq(false), eq(false), isNull(), isNull(),
+                eq(enterTappedAndAttackingIf), isNull());
     }
 
     @Test
@@ -74,7 +118,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
                 isNull(), eq(false), eq(true), eq(predicate), eq("land"), eq(false), eq(false), eq(0), eq(0), anySet(),
-                isNull());
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull());
     }
 
     @Test
@@ -94,7 +138,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
         verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(true), eq(false), eq(false),
                 isNull(), eq(false), eq(false), eq(predicate), eq("land"), eq(true), eq(false), eq(0), eq(0), anySet(),
-                isNull());
+                isNull(), eq(false), eq(false), isNull(), isNull(), isNull(), isNull());
     }
 
     @Test

@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import java.util.List;
 public class SetAllOwnCreaturesBasePowerToughnessEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -47,10 +50,19 @@ public class SetAllOwnCreaturesBasePowerToughnessEffectHandler implements Normal
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int power = amountEvaluationService.evaluate(gameData, e.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, e.toughness(), ctx);
+        FilterContext filterContext = new FilterContext(
+                gameData,
+                entry.getCard() != null ? entry.getCard().getId() : null,
+                entry.getControllerId(),
+                null,
+                source,
+                entry.getSourcePermanentId());
 
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) {
+            if (!gameQueryService.isCreature(gameData, permanent)
+                    || (e.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                    permanent, e.filter(), filterContext))) {
                 continue;
             }
             // CR 613 layer engine: one floating layer-7b effect per affected creature locks the

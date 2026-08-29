@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "92")
+@CardRegistration(set = "AKR", collectorNumber = "99")
 public class DemonicPact extends Card {
 
     public DemonicPact() {

@@ -81,6 +81,8 @@ public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean {
 
         if (wonFlip) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 
         UUID losingPlayerId = wonFlip ? opponentId : controllerId;

@@ -10,15 +10,22 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -27,23 +34,43 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -76,6 +103,9 @@ class MiscTriggerCollectorServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+
+    @Mock
     private ExileService exileService;
 
     @Mock
@@ -83,6 +113,9 @@ class MiscTriggerCollectorServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
     private MiscTriggerCollectorService sut;
@@ -133,6 +166,159 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("life-gain may-pay trigger keeps the optional payment on the stack")
+    void lifeGainMayPayTriggerKeepsOptionalPayment() {
+        Permanent perm = createPermanent("Dawn of Hope");
+        var effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2} to draw a card?");
+        var ctx = new TriggerContext.LifeGain(player1Id, 1);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("exactly-one life-loss sequence trigger queues once")
+    void exactlyOneLifeLossSequenceTriggerQueuesOnce() {
+        Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");
+        var effect = SequenceEffect.of(
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
+
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_OPPONENT_LOSES_LIFE,
+                effect,
+                new TriggerContext.LifeLoss(player2Id, 1))).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+    }
+
+    @Test
+    @DisplayName("exactly-one life-loss sequence trigger ignores larger losses")
+    void exactlyOneLifeLossSequenceTriggerIgnoresLargerLosses() {
+        Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");
+        var effect = SequenceEffect.of(
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
+
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_OPPONENT_LOSES_LIFE,
+                effect,
+                new TriggerContext.LifeLoss(player2Id, 2))).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("creature card from any library queues the triggered ability")
+    void creatureCardFromAnyLibraryQueuesTriggeredAbility() {
+        Permanent perm = createPermanent("Dreadhound");
+        var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyardFromLibrary(
+                createCard("Grizzly Bears"), player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("surveil once-per-turn trigger queues its wrapped effect only once")
+    void surveilOncePerTurnTriggerQueuesWrappedEffectOnlyOnce() {
+        Permanent perm = createPermanent("Whispering Snitch");
+        var effect = new OncePerTurnTriggerEffect(SequenceEffect.of(
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(1)));
+        var ctx = new TriggerContext.Surveil(player1Id);
+
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isTrue();
+        assertThat(registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect.wrapped());
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("surveil default trigger queues the original effect")
+    void surveilDefaultTriggerQueuesOriginalEffect() {
+        Permanent perm = createPermanent("Disinformation Campaign");
+        var effect = ReturnToHandEffect.self();
+        var ctx = new TriggerContext.Surveil(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("graveyard-leave trigger skips a false intervening turn condition")
+    void graveyardLeaveTriggerSkipsFalseInterveningCondition() {
+        Permanent perm = createPermanent("Kishla Skimmer");
+        var effect = new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(1));
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect, ctx);
+
+        assertThat(result).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("energy-gain default trigger queues the original effect")
+    void energyGainDefaultTriggerQueuesEffect() {
+        Permanent perm = createPermanent("Fabrication Module");
+        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        var ctx = new TriggerContext.EnergyGain(player1Id, 1);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        PermanentChoiceContext.SelfTriggeredAbilityTarget pending =
+                gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        assertThat(pending).isNotNull();
+        assertThat(pending.effects()).containsExactly(effect);
+        assertThat(pending.controllerId()).isEqualTo(player1Id);
+        assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("proliferate trigger queues the bundled effect")
+    void proliferateTriggerQueuesBundledEffect() {
+        Permanent perm = createPermanent("Scheming Aspirant");
+        var effect = new SequenceEffect(List.of(
+                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2)));
+        var ctx = new TriggerContext.Proliferate(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_PROLIFERATES, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
     // ===== ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect =====
@@ -269,6 +455,40 @@ class MiscTriggerCollectorServiceTest {
     // ===== ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER) =====
 
     @Nested
+    @DisplayName("ON_ALLY_PERMANENT_SACRIFICED - targeted conditional trigger")
+    class SacrificeTargetedConditional {
+
+        @Test
+        @DisplayName("queues target selection instead of putting an untargeted ability on the stack")
+        void queuesTargetSelection() {
+            Permanent perm = createPermanent("Fleeting Memories");
+            Card clue = createCard("Clue");
+            clue.setType(CardType.ARTIFACT);
+            clue.setSubtypes(List.of(CardSubtype.CLUE));
+            var effect = new TriggeringPermanentConditionalEffect(
+                    new PermanentHasSubtypePredicate(CardSubtype.CLUE),
+                    new MillEffect(3, MillRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.AllySacrificed(player1Id, clue);
+
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+            assertThat(pending.controllerId()).isEqualTo(player1Id);
+            assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(pending.effects()).containsExactly(effect.wrapped());
+        }
+    }
+
+    @Nested
     @DisplayName("ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE")
     class PermanentCardPutIntoGraveyard {
 
@@ -288,6 +508,32 @@ class MiscTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("queues target selection for a targeted graveyard trigger")
+        void queuesTargetSelectionForTargetedTrigger() {
+            Card sourceCard = createCard("Measure of Wickedness");
+            var effect = new TargetPlayerGainsControlOfSourceCreatureEffect();
+            sourceCard.target(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                    "Target must be an opponent"
+            )).addEffect(EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect);
+            Permanent perm = new Permanent(sourceCard);
+            var ctx = new TriggerContext.CardPutIntoGraveyard(
+                    createCard("Spellbook"), player1Id);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            PermanentChoiceContext.SelfTriggeredAbilityTarget pending =
+                    gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+            assertThat(pending).isNotNull();
+            assertThat(pending.effects()).containsExactly(effect);
+            assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
         }
     }
 
@@ -330,7 +576,7 @@ class MiscTriggerCollectorServiceTest {
 
             var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
             assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
-            assertThat(resolved.amount()).isEqualTo(1);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(1));
         }
 
         @Test
@@ -598,6 +844,49 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — SurveilEffect")
+    class LifeGainSurveil {
+
+        @Test
+        @DisplayName("puts surveil trigger on the stack")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Vanguard Seraph");
+            var effect = new SurveilEffect(1);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — CreateTokenEffect")
+    class LifeGainCreateToken {
+
+        @Test
+        @DisplayName("puts token creation trigger on the stack")
+        void putsTokenCreationTriggerOnStack() {
+            Permanent perm = createPermanent("Cat Collector");
+            var effect = CreateTokenEffect.whiteSoldier(1);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        }
+    }
+
     // ===== ON_CONTROLLER_GAINS_LIFE — PutCountersOnSelfEffect =====
 
     @Nested
@@ -624,9 +913,46 @@ class MiscTriggerCollectorServiceTest {
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
+
+        @Test
+        @DisplayName("snapshots life gained for a dynamic counter amount")
+        void snapshotsLifeGainedForDynamicAmount() {
+            Permanent perm = createPermanent("Light of Promise");
+            var effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            when(amountEvaluationService.referencesEventValue(effect.amount())).thenReturn(true);
+
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+        }
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect =====
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — UntapPermanentsEffect")
+    class LifeGainUntapSelf {
+
+        @Test
+        @DisplayName("puts triggered ability on stack with the source permanent")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Famished Paladin");
+            var effect = new UntapPermanentsEffect(TapUntapScope.SELF);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+    }
 
     @Nested
     @DisplayName("ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect")
@@ -756,6 +1082,26 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
+    @Test
+    @DisplayName("queues energy gain on controller life loss")
+    void queuesEnergyGainOnControllerLifeLoss() {
+        Permanent perm = createPermanent("Gonti's Machinations");
+        var effect = new EnergyCountersEffect(1);
+        var ctx = new TriggerContext.LifeLoss(player1Id, 2);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        var entry = gd.stack.getLast();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+        assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+    }
+
     // ===== ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — BoostSelfEffect =====
 
     @Nested
@@ -833,5 +1179,79 @@ class MiscTriggerCollectorServiceTest {
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
         }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE — DrawCardEffect")
+    class NoncombatDamageDraw {
+
+        @Test
+        @DisplayName("snapshots damage from a source controlled by the watcher")
+        void snapshotsControlledSourceDamage() {
+            Permanent perm = createPermanent("Niv-Mizzet, Visionary");
+            var effect = new DrawCardEffect(new EventValue());
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 2);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEventValue()).isEqualTo(2);
+            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("does not trigger for a source controlled by another player")
+        void ignoresOtherPlayersSource() {
+            Permanent perm = createPermanent("Niv-Mizzet, Visionary");
+            var effect = new DrawCardEffect(new EventValue());
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player2Id, 2);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Test
+    @DisplayName("queues a trigger for a creature card entering a graveyard from a non-battlefield zone")
+    void queuesNonBattlefieldCreatureCardGraveyardTrigger() {
+        Permanent perm = createPermanent("Syr Konrad, the Grim");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(
+                createCard("Grizzly Bears"), player2Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("queues a trigger for each creature card leaving the controller's graveyard")
+    void queuesCreatureCardLeavesGraveyardTrigger() {
+        Permanent perm = createPermanent("Syr Konrad, the Grim");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 }

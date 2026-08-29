@@ -39,6 +39,11 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
                     return;
                 }
 
+                if (!entry.getControllerId().equals(
+                        gameQueryService.findPermanentController(gameData, self.getId()))) {
+                    return;
+                }
+
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
                     gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));

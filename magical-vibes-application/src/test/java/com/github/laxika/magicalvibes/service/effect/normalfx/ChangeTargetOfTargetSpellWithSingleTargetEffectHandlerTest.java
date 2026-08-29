@@ -304,6 +304,31 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("playerTargetsOnly offers players and never permanents")
+            void playerOnlyOffersPlayers() {
+                Card redirectCard = createCard("Reflecting Mirror");
+                Card targetSpellCard = createDamageSpellCard("Lightning Bolt", 3);
+                Permanent permanentCandidate = createCreature("Grizzly Bears");
+                gd.playerBattlefields.get(player1Id).add(permanentCandidate);
+
+                StackEntry targetSpell = spellEntry(targetSpellCard, player2Id, player2Id);
+                addToStack(targetSpell);
+
+                StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
+
+                changeTargetWithSingleTargetHandler.resolve(
+                        gd, entry, ChangeTargetOfTargetSpellWithSingleTargetEffect.playersOnly());
+
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
+                verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), idsCaptor.capture(), anyString());
+
+                assertThat(idsCaptor.getValue())
+                        .containsExactly(player1Id)
+                        .doesNotContain(permanentCandidate.getId(), player2Id);
+            }
+
+            @Test
             @DisplayName("creatureTargetsOnly: logs when the target spell's single target isn't a creature")
             void creatureOnlyLogsWhenTargetIsNotACreature() {
                 Card redirectCard = createCard("Meddle");

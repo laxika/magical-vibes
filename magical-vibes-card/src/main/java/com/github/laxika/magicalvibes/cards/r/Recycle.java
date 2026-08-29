@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "248")
+@CardRegistration(set = "TPR", collectorNumber = "189")
 public class Recycle extends Card {
 
     public Recycle() {

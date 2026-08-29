@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardUpToThenT
 
 @CardRegistration(set = "5ED", collectorNumber = "105")
 @CardRegistration(set = "4ED", collectorNumber = "87")
+@CardRegistration(set = "DRK", collectorNumber = "33")
 public class MindBomb extends Card {
 
     public MindBomb() {

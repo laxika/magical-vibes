@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
 /**
  * One or more players exile the top {@code count} cards of their library, tracked as "exiled with"
  * the source permanent. Which players is set by {@code scope} — the controller alone (Colfenor's
- * Plans, Duplicity, Search the City), a single opponent (Grimoire Thief, Nightveil Specter), or
- * every player (Knowledge Pool). Pair with {@link AllowCastFromCardsExiledWithSourceEffect} to let
- * a player play those cards.
+ * Plans, Duplicity, Search the City), the chosen player (Mindreaver), a single opponent (Grimoire
+ * Thief, Nightveil Specter), or every player (Knowledge Pool). Pair with
+ * {@link AllowCastFromCardsExiledWithSourceEffect} to let a player play those cards.
  *
  * <p>The effect fizzles if the source permanent has left the battlefield by the time it resolves,
  * since there would be nothing to track the exiled cards with.
@@ -25,30 +27,47 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                           boolean toGraveyardOnControlLoss, LibraryScope scope,
-                                          boolean targetedOpponent)
-        implements CombatDamageTriggerContextEffect {
+                                          boolean targetedOpponent, DynamicAmount dynamicCount)
+        implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     /** Face-down exile from the controller's own library (Colfenor's Plans). */
     public ExileTopCardsToSourceEffect(int count) {
-        this(count, true, false, LibraryScope.CONTROLLER, false);
+        this(count, true, false, LibraryScope.CONTROLLER, false, null);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown) {
-        this(count, faceDown, false, LibraryScope.CONTROLLER, false);
+        this(count, faceDown, false, LibraryScope.CONTROLLER, false, null);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss) {
-        this(count, faceDown, toGraveyardOnControlLoss, LibraryScope.CONTROLLER, false);
+        this(count, faceDown, toGraveyardOnControlLoss, LibraryScope.CONTROLLER, false, null);
     }
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss,
                                        LibraryScope scope) {
-        this(count, faceDown, toGraveyardOnControlLoss, scope, false);
+        this(count, faceDown, toGraveyardOnControlLoss, scope, false, null);
+    }
+
+    public ExileTopCardsToSourceEffect(int count, boolean faceDown, boolean toGraveyardOnControlLoss,
+                                       LibraryScope scope, boolean targetedOpponent) {
+        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, null);
+    }
+
+    public ExileTopCardsToSourceEffect(DynamicAmount dynamicCount, boolean faceDown,
+                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
+                                       boolean targetedOpponent) {
+        this(0, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return targetedOpponent ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
+        return targetedOpponent || scope == LibraryScope.TARGET_PLAYER
+                ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return dynamicCount;
     }
 
     /**

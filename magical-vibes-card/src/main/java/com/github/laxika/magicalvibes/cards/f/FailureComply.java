@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect
  * Back half (Comply) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "AKH", collectorNumber = "221")
+@CardRegistration(set = "AKR", collectorNumber = "235")
 public class FailureComply extends Card {
 
     public FailureComply() {

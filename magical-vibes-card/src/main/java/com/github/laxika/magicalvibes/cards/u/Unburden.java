@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "114")
+@CardRegistration(set = "AKR", collectorNumber = "131")
 public class Unburden extends Card {
 
     public Unburden() {

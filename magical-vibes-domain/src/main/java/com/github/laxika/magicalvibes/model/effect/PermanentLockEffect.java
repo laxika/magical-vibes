@@ -30,4 +30,9 @@ public interface PermanentLockEffect extends CardEffect {
     default boolean locksActivatedAbilities() {
         return false;
     }
+
+    /** Whether this lock ends when its source changes controllers. */
+    default boolean endsWhenSourceControllerChanges() {
+        return false;
+    }
 }

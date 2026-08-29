@@ -25,11 +25,6 @@ class ClashOfRealitiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -37,6 +32,7 @@ class ClashOfRealitiesTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -51,11 +47,6 @@ class ClashOfRealitiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
@@ -63,6 +54,7 @@ class ClashOfRealitiesTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, kami.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Kami of False Hope");
     }
@@ -77,10 +69,10 @@ class ClashOfRealitiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }

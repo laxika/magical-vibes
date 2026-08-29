@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "48")
+@CardRegistration(set = "AKR", collectorNumber = "57")
 public class CrypticSerpent extends Card {
 
     public CrypticSerpent() {

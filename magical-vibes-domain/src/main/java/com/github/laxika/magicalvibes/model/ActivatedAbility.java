@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import lombok.Getter;
@@ -19,6 +22,14 @@ import java.util.UUID;
 @Getter
 public class ActivatedAbility {
 
+    /**
+     * Whether this ability is the engine's representation of a level-up ability.
+     * Level-up is represented by an activated ability that puts a level counter on its source.
+     */
+    public boolean isLevelUpAbility() {
+        return description != null && description.startsWith("Level up ");
+    }
+
     private final boolean requiresTap;
     private final String manaCost;
     private final List<CardEffect> effects;
@@ -30,10 +41,14 @@ public class ActivatedAbility {
     private final List<TargetFilter> multiTargetFilters;
     private final int minTargets;
     private final int maxTargets;
+    /** Whether this ability is a boast ability and can use extra boast activation permissions. */
+    private boolean boast;
     private final boolean variableLoyaltyCost;
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
+    /** Whether this ability's mana cost is the mana cost of the permanent this Aura enchants. */
+    private boolean manaCostOfEnchantedPermanent;
     /** Colors that may be spent on X in this ability's mana cost, or null when unrestricted. */
     private Set<ManaColor> xColorRestrictions;
     /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
@@ -48,6 +63,8 @@ public class ActivatedAbility {
     private boolean activatableOnlyByOpponents;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
+    /** When true, the source permanent must have another activated ability to activate this ability. */
+    private boolean requiresAnotherActivatedAbility;
     /** Predicate a controlled permanent must match to count toward {@link #requiredControlledPermanentCount} (e.g. Leechridden Swamp's "two or more black permanents"). Null = no such restriction. Set via {@link #withRequiredControlledPermanents}. */
     private PermanentPredicate requiredControlledPermanentPredicate;
     /** Minimum number of controlled permanents matching {@link #requiredControlledPermanentPredicate} required to activate. */
@@ -106,6 +123,10 @@ public class ActivatedAbility {
     private CounterType sourceCounterScaledTargetsType;
     /** Whether activation requires a player-chosen xValue even though the cost is not mana-based. */
     private boolean requiresXValue;
+    /** Minimum value that may be chosen for X in this ability's mana cost. */
+    private int minimumXValue;
+    /** Whether this ability's ChooseOneEffect mode is selected as the ability is activated. */
+    private boolean modalChoiceAtActivation;
     /**
      * Whether the chosen xValue is bounded by the +1/+1 counters on all creatures the activating
      * player controls rather than by those on the source permanent ("Remove one or more +1/+1
@@ -113,6 +134,8 @@ public class ActivatedAbility {
      * {@link #withXValueFromControlledCreatureCounters()}.
      */
     private boolean xValueFromControlledCreatureCounters;
+    /** Color of cards in the controller's hand that bounds the chosen xValue, or null. */
+    private CardColor xValueFromCardsInHandColor;
     /**
      * Whole-game activation cap for "Activate only once" (e.g. Goblin Ski Patrol). Null = no such
      * cap. Counted per permanent object in {@code GameData.activatedAbilityUsesThisGame}, so a
@@ -120,12 +143,22 @@ public class ActivatedAbility {
      * {@link #withMaxActivationsPerGame(int)}.
      */
     private Integer maxActivationsPerGame;
+    /** Whether this is an exhaust ability, which may be activated only once per permanent object. */
+    private boolean exhaustAbility;
     /**
      * When true this hand-activated ability's intrinsic cost exiles the source card instead of
      * discarding it ("Exile this card from your hand: Add {G}" — Elvish Spirit Guide). No discard
      * triggers fire. Set via {@link #withExilesSourceFromHand()}.
      */
     private boolean exilesSourceFromHand;
+    /** Whether this hand-activated ability suspends the source card with the configured counters. */
+    private boolean suspendsSourceFromHand;
+    /** Number of time counters placed when this ability suspends its source card. */
+    private int suspendTimeCounters;
+    /** Whether the number of time counters placed by suspend is the activated ability's X value. */
+    private boolean suspendTimeCountersFromX;
+    /** Whether this hand-activated ability reveals the source card without moving it out of hand. */
+    private boolean revealsSourceFromHand;
     /**
      * When true this hand-activated ability is a ninjutsu ability (CR 702.49a). Its intrinsic cost
      * returns an unblocked attacking creature the activating player controls to its owner's hand
@@ -134,6 +167,10 @@ public class ActivatedAbility {
      * {@link #withNinjutsu()}.
      */
     private boolean ninjutsuAbility;
+    /** Whether this hand-activated ability leaves its source card in hand as part of its cost. */
+    private boolean sourceStaysInHand;
+    /** Whether this ability can be activated only while its source card is in exile. */
+    private boolean exileOnly;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -226,15 +263,29 @@ public class ActivatedAbility {
      * Used by the static bonus system to track which permanent granted this ability.
      */
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
+        return copyWith(sourcePermanentId, maxActivationsPerTurn);
+    }
+
+    /** Returns a copy with a fixed per-turn activation cap, preserving all other ability properties. */
+    public ActivatedAbility withMaxActivationsPerTurn(int maxActivations) {
+        if (maxActivations < 0) {
+            throw new IllegalArgumentException("Maximum activations must not be negative");
+        }
+        return copyWith(grantSourcePermanentId, maxActivations);
+    }
+
+    private ActivatedAbility copyWith(UUID sourcePermanentId, Integer maxActivations) {
         ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
-                maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
+                maxActivations, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
         copy.activatableOnlyByEnchantedPermanentController = this.activatableOnlyByEnchantedPermanentController;
+        copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
         copy.requiresUntap = this.requiresUntap;
+        copy.requiresAnotherActivatedAbility = this.requiresAnotherActivatedAbility;
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
@@ -253,19 +304,41 @@ public class ActivatedAbility {
         copy.maxActivationsPerTurnAmount = this.maxActivationsPerTurnAmount;
         copy.maxActivationsPerTurnDescription = this.maxActivationsPerTurnDescription;
         copy.maxActivationsPerGame = this.maxActivationsPerGame;
+        copy.boast = this.boast;
+        copy.exhaustAbility = this.exhaustAbility;
+        copy.exilesSourceFromHand = this.exilesSourceFromHand;
+        copy.revealsSourceFromHand = this.revealsSourceFromHand;
+        copy.ninjutsuAbility = this.ninjutsuAbility;
+        copy.sourceStaysInHand = this.sourceStaysInHand;
+        copy.suspendsSourceFromHand = this.suspendsSourceFromHand;
+        copy.suspendTimeCounters = this.suspendTimeCounters;
+        copy.suspendTimeCountersFromX = this.suspendTimeCountersFromX;
         copy.xScaledTargets = this.xScaledTargets;
         copy.sourceCounterScaledTargetsType = this.sourceCounterScaledTargetsType;
         copy.requiresXValue = this.requiresXValue;
+        copy.minimumXValue = this.minimumXValue;
+        copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
+        copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
+        copy.exileOnly = this.exileOnly;
         return copy;
     }
 
     /** Restricts every mana spent on this ability's X cost to one color. */
     public ActivatedAbility withXColorRestriction(ManaColor color) {
         this.xColorRestrictions = EnumSet.of(color);
+        return this;
+    }
+
+    /** Sets the minimum value that may be chosen for X in this ability's mana cost. */
+    public ActivatedAbility withMinimumXValue(int minimumXValue) {
+        if (minimumXValue < 0) {
+            throw new IllegalArgumentException("Minimum X value cannot be negative");
+        }
+        this.minimumXValue = minimumXValue;
         return this;
     }
 
@@ -281,6 +354,12 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this once-per-turn ability as a boast ability. */
+    public ActivatedAbility withBoast() {
+        this.boast = true;
+        return this;
+    }
+
     /**
      * Fluent setter for a whole-game activation cap ("Activate only once", Goblin Ski Patrol). The
      * count is kept per permanent object, so a permanent that leaves and re-enters the battlefield is
@@ -288,6 +367,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
         this.maxActivationsPerGame = maxActivations;
+        return this;
+    }
+
+    /** Marks this activated ability as an exhaust ability. */
+    public ActivatedAbility withExhaust() {
+        this.exhaustAbility = true;
         return this;
     }
 
@@ -301,12 +386,50 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this hand-activated ability as suspending its source card with {@code timeCounters}. */
+    public ActivatedAbility withSuspendsSourceFromHand(int timeCounters) {
+        if (timeCounters < 1) {
+            throw new IllegalArgumentException("Suspend requires at least one time counter");
+        }
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCounters = timeCounters;
+        return this;
+    }
+
+    /** Marks this hand-activated ability as suspend X, using the chosen X value as time counters. */
+    public ActivatedAbility withSuspendsSourceFromHandX() {
+        this.suspendsSourceFromHand = true;
+        this.suspendTimeCountersFromX = true;
+        return this;
+    }
+
+    /**
+     * Fluent setter marking a hand-activated ability whose intrinsic cost reveals the source card
+     * while leaving it in its owner's hand.
+     */
+    public ActivatedAbility withRevealsSourceFromHand() {
+        this.revealsSourceFromHand = true;
+        return this;
+    }
+
+    /** Marks a hand-activated ability whose source card remains in hand after activation. */
+    public ActivatedAbility withSourceStaysInHand() {
+        this.sourceStaysInHand = true;
+        return this;
+    }
+
     /**
      * Fluent setter marking this hand-activated ability as ninjutsu (CR 702.49a). Returns this
      * ability for chaining.
      */
     public ActivatedAbility withNinjutsu() {
         this.ninjutsuAbility = true;
+        return this;
+    }
+
+    /** Marks this ability as activatable only while its source card is in exile. */
+    public ActivatedAbility withExileOnly() {
+        this.exileOnly = true;
         return this;
     }
 
@@ -371,6 +494,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withRequiresUntap() {
         this.requiresUntap = true;
+        return this;
+    }
+
+    /** Marks this ability as requiring another activated ability on its source permanent. */
+    public ActivatedAbility withRequiresAnotherActivatedAbility() {
+        this.requiresAnotherActivatedAbility = true;
         return this;
     }
 
@@ -440,6 +569,12 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks this Aura ability as using its enchanted permanent's mana cost. */
+    public ActivatedAbility withManaCostOfEnchantedPermanent() {
+        this.manaCostOfEnchantedPermanent = true;
+        return this;
+    }
+
     /**
      * Narrows {@link #withActivatableByAnyPlayer()} to the opponents of the source permanent's
      * controller (Soul Ransom: "Only your opponents may activate this ability."). Chain both flags:
@@ -452,13 +587,20 @@ public class ActivatedAbility {
         return this;
     }
 
+    /**
+     * Whether this ability carries a target during activation. An ability-side target filter is
+     * itself a target declaration, even when its effect target specs are neutral (for example,
+     * an ability that looks at a target player's library).
+     */
     public boolean isNeedsTarget() {
-        return !multiTargetFilters.isEmpty()
+        return targetFilter != null
+                || !multiTargetFilters.isEmpty()
                 || effects.stream().anyMatch(e -> {
                     TargetSpec spec = e.targetSpec();
                     return spec.admits(TargetPredicate.Kind.PLAYER)
                             || spec.admits(TargetPredicate.Kind.PERMANENT)
-                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
+                            || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                            || spec.admits(TargetPredicate.Kind.EXILED_CARD);
                 });
     }
 
@@ -493,11 +635,44 @@ public class ActivatedAbility {
         return this;
     }
 
+    /** Marks the modal choice as part of activating this ability rather than resolving it. */
+    public ActivatedAbility withModalChoiceAtActivation() {
+        this.modalChoiceAtActivation = true;
+        return this;
+    }
+
+    public boolean isModalChoiceAtActivation() {
+        return modalChoiceAtActivation;
+    }
+
+    public ChooseOneEffect modalEffectAtActivation() {
+        if (!modalChoiceAtActivation) {
+            return null;
+        }
+        return effects.stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Modal activated ability has no ChooseOneEffect"));
+    }
+
     /** As {@link #withXValue()}, but X is capped by the +1/+1 counters among all creatures you control. */
     public ActivatedAbility withXValueFromControlledCreatureCounters() {
         this.requiresXValue = true;
         this.xValueFromControlledCreatureCounters = true;
         return this;
+    }
+
+    /** Marks the ability as choosing X from cards of the given color in the controller's hand. */
+    public ActivatedAbility withXValueFromCardsInHand(CardColor color) {
+        this.requiresXValue = true;
+        this.xValueFromCardsInHandColor = color;
+        return this;
+    }
+
+    /** Backward-compatible shorthand for abilities that reveal white cards from hand. */
+    public ActivatedAbility withXValueFromWhiteCardsInHand() {
+        return withXValueFromCardsInHand(CardColor.WHITE);
     }
 
     /**
@@ -516,6 +691,16 @@ public class ActivatedAbility {
 
     public boolean isNeedsSpellTarget() {
         return effects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
+    }
+
+    /** Whether this activated ability produces mana without targeting or using a loyalty cost. */
+    public boolean isManaAbility() {
+        if (isNeedsTarget() || isNeedsSpellTarget() || loyaltyCost != null) {
+            return false;
+        }
+        return effects.stream()
+                .filter(effect -> !(effect instanceof CostEffect))
+                .anyMatch(ManaProducingEffect.class::isInstance);
     }
 
     /**

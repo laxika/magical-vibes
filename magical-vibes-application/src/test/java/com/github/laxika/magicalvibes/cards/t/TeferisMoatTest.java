@@ -45,7 +45,7 @@ class TeferisMoatTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+                .hasMessageContaining("Invalid attacker index");
     }
 
     @Test

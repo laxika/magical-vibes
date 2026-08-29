@@ -10,6 +10,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "318")
+@CardRegistration(set = "5DN", collectorNumber = "111")
 public class CompositeGolem extends Card {
 
     public CompositeGolem() {

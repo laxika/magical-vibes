@@ -24,7 +24,7 @@ public class ValiantKnight extends Card {
 
         // Knights you control (including this one) gain double strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{3}{W}{W}",
-                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.OWN_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KNIGHT)))),
                 "{3}{W}{W}: Knights you control gain double strike until end of turn."));
     }

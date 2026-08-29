@@ -15,7 +15,9 @@ import java.util.UUID;
  * triggering, and the resulting ability is always controlled by {@code controllerId} — the player
  * who activated the ability — regardless of who controls the damaging creature. It fires once per
  * watched creature per combat damage step (all damage that creature deals simultaneously is one
- * trigger) and covers combat damage to anything: a player, a planeswalker, or another creature.
+ * trigger) and covers combat damage to anything: a player, a planeswalker, or another creature,
+ * unless {@code combatDamageToPlayerOnly} is set. It expires during cleanup when
+ * {@code untilEndOfTurn} is set; otherwise it expires at the controller's next turn.
  *
  * <p>Cleared at the beginning of {@code controllerId}'s next turn by {@code TurnProgressionService},
  * matching the "until your next turn" duration rather than the usual end-of-turn cleanup.
@@ -24,6 +26,8 @@ public record DelayedWatchedCreaturesCombatDamage(
         Set<UUID> watchedPermanentIds,
         UUID controllerId,
         List<CardEffect> effects,
-        Card sourceCard
+        Card sourceCard,
+        boolean combatDamageToPlayerOnly,
+        boolean untilEndOfTurn
 ) implements DelayedAction {
 }

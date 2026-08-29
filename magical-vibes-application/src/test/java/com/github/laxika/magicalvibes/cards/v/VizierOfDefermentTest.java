@@ -25,9 +25,8 @@ class VizierOfDefermentTest extends BaseCardTest {
         attacker.setAttacking(true); // attacked this turn
         UUID attackerId = attacker.getId();
 
-        castVizierToMayPrompt(player1);
+        castVizierToMayPrompt(player1, attackerId);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, attackerId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -46,9 +45,8 @@ class VizierOfDefermentTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        castVizierToMayPrompt(player1);
+        castVizierToMayPrompt(player1, blockerId);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, blockerId);
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -62,9 +60,8 @@ class VizierOfDefermentTest extends BaseCardTest {
         attacker.setAttacking(true);
         UUID attackerId = attacker.getId();
 
-        castVizierToMayPrompt(player1);
+        castVizierToMayPrompt(player1, attackerId);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, attackerId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
@@ -97,7 +94,7 @@ class VizierOfDefermentTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        castVizierToMayPrompt(player1);
+        castVizierToMayPrompt(player1, attacker.getId());
         harness.handleMayAbilityChosen(player1, false); // decline
 
         assertThat(gd.stack).isEmpty();
@@ -108,12 +105,13 @@ class VizierOfDefermentTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void castVizierToMayPrompt(Player caster) {
+    private void castVizierToMayPrompt(Player caster, UUID targetId) {
         harness.setHand(caster, List.of(new VizierOfDeferment()));
         harness.addMana(caster, ManaColor.WHITE, 3);
         harness.castCreature(caster, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(caster, targetId);
+        harness.passBothPriorities();
     }
 
     private void declareBlock() {

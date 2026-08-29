@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
+import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
@@ -24,8 +24,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
     void arcaneSpellPumpsOtherCreatures() {
         addCreatureReady(player1, new KodamaOfTheSouthTree());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();
@@ -39,8 +39,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
     @DisplayName("Kodama does not pump itself")
     void kodamaDoesNotPumpItself() {
         Permanent kodama = addCreatureReady(player1, new KodamaOfTheSouthTree());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();
@@ -70,8 +70,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
     void opponentCreaturesUnaffected() {
         addCreatureReady(player1, new KodamaOfTheSouthTree());
         Permanent enemy = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();
@@ -100,8 +100,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new KodamaOfTheSouthTree());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, (UUID) null);
         harness.passBothPriorities();

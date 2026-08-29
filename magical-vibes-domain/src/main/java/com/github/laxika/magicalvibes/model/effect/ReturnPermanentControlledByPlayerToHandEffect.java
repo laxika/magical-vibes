@@ -16,13 +16,39 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param controllerChooses when true, the resolving ability's controller chooses a permanent
  *                          controlled by the acting player (Sigil of Sleep)
+ * @param actingPlayerIsController when true, the resolving ability's controller is the acting
+ *                                 player even when the stack entry has an unrelated target
+ *                                 (Sparkcaster)
+ * @param thenCondition when non-null, the selected permanent is checked against this predicate
+ *                      before it is returned; a matching permanent causes {@code thenEffect} to
+ *                      resolve after the return
+ * @param thenEffect effect to resolve after a returned permanent matches {@code thenCondition}
  */
 public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
-                                                            boolean controllerChooses)
+                                                            boolean controllerChooses,
+                                                            boolean actingPlayerIsController,
+                                                            PermanentPredicate thenCondition,
+                                                            CardEffect thenEffect)
         implements CombatDamageTriggerContextEffect {
 
     public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun) {
-        this(filter, noun, false);
+        this(filter, noun, false, false, null, null);
+    }
+
+    public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
+                                                         boolean controllerChooses) {
+        this(filter, noun, controllerChooses, false, null, null);
+    }
+
+    public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
+                                                         PermanentPredicate thenCondition,
+                                                         CardEffect thenEffect) {
+        this(filter, noun, false, false, thenCondition, thenEffect);
+    }
+
+    public static ReturnPermanentControlledByPlayerToHandEffect controller(PermanentPredicate filter,
+                                                                            String noun) {
+        return new ReturnPermanentControlledByPlayerToHandEffect(filter, noun, false, true, null, null);
     }
 
     /**

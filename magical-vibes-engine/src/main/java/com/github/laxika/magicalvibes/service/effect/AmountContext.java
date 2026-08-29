@@ -35,6 +35,18 @@ import java.util.UUID;
  *                          {@code SourceCardPower} for abilities that have no source permanent at
  *                          all (scavenge activates from the graveyard). {@code null} outside stack
  *                          resolution
+ * @param stackEntry        the stack entry currently being resolved, when one exists. Used by
+ *                          amounts that read counters from a spell's stack object
+ * @param chosenPermanentPowerAtTrigger last-known effective power captured for an entering permanent
+ *                          carried as the chosen permanent; used if that permanent leaves before
+ *                          resolution
+ * @param triggeringPermanentPowerAtTrigger effective power captured for the permanent that caused
+ *                          a trigger, used as last-known information when an enchanted permanent
+ *                          leaves before resolution
+ * @param sacrificedPower   effective power snapshotted from a permanent sacrificed as a cost
+ * @param sacrificedToughness effective toughness snapshotted from a permanent sacrificed as a cost
+ * @param targetCardIds      graveyard card ids chosen by the resolving stack entry
+ * @param madness            whether the spell was cast using madness
  */
 public record AmountContext(
         UUID controllerId,
@@ -45,8 +57,50 @@ public record AmountContext(
         boolean staticEvaluation,
         UUID chosenPermanentId,
         List<String> repeatedAdditionalCosts,
-        Card sourceCard
+        Card sourceCard,
+        StackEntry stackEntry,
+        Integer chosenPermanentPowerAtTrigger,
+        Integer triggeringPermanentPowerAtTrigger,
+        int sacrificedPower,
+        int sacrificedToughness,
+        List<UUID> targetCardIds,
+        boolean madness,
+        int convokeCreatureCount
 ) {
+
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation,
+                         UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard,
+                         StackEntry stackEntry, Integer chosenPermanentPowerAtTrigger,
+                         Integer triggeringPermanentPowerAtTrigger, int sacrificedPower,
+                         int sacrificedToughness, List<UUID> targetCardIds, boolean madness) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, stackEntry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
+                sacrificedToughness, targetCardIds, madness, 0);
+    }
+
+    /** Backward-compatible full context constructor for contexts that are not madness casts. */
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation,
+                         UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard,
+                         StackEntry stackEntry, Integer chosenPermanentPowerAtTrigger,
+                         Integer triggeringPermanentPowerAtTrigger, int sacrificedPower,
+                         int sacrificedToughness, List<UUID> targetCardIds) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, stackEntry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
+                sacrificedToughness, targetCardIds, false);
+    }
+
+    /** Backward-compatible context constructor without last-known or sacrificed-permanent snapshots. */
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation,
+                         UUID chosenPermanentId, List<String> repeatedAdditionalCosts, Card sourceCard) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation,
+                chosenPermanentId, repeatedAdditionalCosts, sourceCard, null, null, null,
+                0, 0, List.of());
+    }
 
     /** Convenience for the common case with no repeatable additional cost payments. */
     public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
@@ -75,14 +129,22 @@ public record AmountContext(
      */
     public AmountContext withControllerId(UUID otherControllerId) {
         return new AmountContext(otherControllerId, sourcePermanent, targetPermanentId, xValue,
-                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard);
+                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
+                stackEntry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
+                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount);
     }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
                 entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
-                entry.getRepeatedAdditionalCosts(), entry.getCard());
+                entry.getRepeatedAdditionalCosts(), entry.getCard(), entry, entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getSacrificedPower(),
+                entry.getSacrificedToughness(),
+                entry.getTargetCardIds() == null ? List.of() : List.copyOf(entry.getTargetCardIds()),
+                entry.isMadness(), entry.getConvokeCreatureIds().size());
     }
 
     /**
@@ -112,6 +174,12 @@ public record AmountContext(
         return new AmountContext(controllerId, source, null, xValue, 0);
     }
 
+    /** Context for evaluating replacement effects on a permanent as it enters the battlefield. */
+    public static AmountContext forEnteringPermanent(UUID controllerId, Permanent permanent, int xValue) {
+        return new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
+                List.of(), permanent.getCard());
+    }
+
     /** Source-less context for heuristic estimation (AI evaluation). */
     public static AmountContext forEstimation(UUID controllerId) {
         return new AmountContext(controllerId, null, null, 0, 0);
@@ -132,6 +200,12 @@ public record AmountContext(
      */
     public static AmountContext forCasting(UUID castingPlayerId, int xValue) {
         return new AmountContext(castingPlayerId, null, null, xValue, 0);
+    }
+
+    /** Cast-time context that also records whether the spell is being cast using madness. */
+    public static AmountContext forCasting(UUID castingPlayerId, int xValue, boolean madness) {
+        return new AmountContext(castingPlayerId, null, null, xValue, 0, false, null,
+                List.of(), null, null, null, null, 0, 0, List.of(), madness);
     }
 
     /** Cast-time context for a spell whose source card is still in a zone being counted. */

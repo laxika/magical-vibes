@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "5ED", collectorNumber = "276")
 @CardRegistration(set = "ICE", collectorNumber = "224")
+@CardRegistration(set = "MMQ", collectorNumber = "228")
 public class WordOfBlasting extends Card {
 
     public WordOfBlasting() {

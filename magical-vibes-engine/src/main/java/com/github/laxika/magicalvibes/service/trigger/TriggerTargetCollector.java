@@ -3,13 +3,18 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -22,7 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -42,12 +47,29 @@ import java.util.UUID;
  * across every slot that offers targets via the {@code pendingXxxTriggerTargets} queues.
  */
 @Service
-@RequiredArgsConstructor
 public class TriggerTargetCollector {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;
+    private final TargetValidationService targetValidationService;
+
+    @Autowired
+    public TriggerTargetCollector(GameQueryService gameQueryService,
+                                  PredicateEvaluationService predicateEvaluationService,
+                                  TargetLegalityService targetLegalityService,
+                                  TargetValidationService targetValidationService) {
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.targetLegalityService = targetLegalityService;
+        this.targetValidationService = targetValidationService;
+    }
+
+    public TriggerTargetCollector(GameQueryService gameQueryService,
+                                  PredicateEvaluationService predicateEvaluationService,
+                                  TargetLegalityService targetLegalityService) {
+        this(gameQueryService, predicateEvaluationService, targetLegalityService, null);
+    }
 
     /**
      * Result of a target-collection pass.
@@ -63,19 +85,20 @@ public class TriggerTargetCollector {
     public record Result(List<UUID> validTargets,
                          boolean canTargetPlayers,
                          boolean canTargetPermanents,
+                         boolean canTargetExiledCards,
                          boolean opponentOnly) {
     }
 
     /**
      * Options controlling trigger-slot–specific differences. Use the predefined constants:
-     * {@link #DEATH}, {@link #ATTACK}, {@link #END_STEP}, {@link #UPKEEP}.
+     * {@link #DEATH}, {@link #ATTACK}, {@link #END_STEP}, {@link #UPKEEP}, {@link #DAY_NIGHT}.
      *
      * @param creaturesOnly            when {@code true}, permanent candidates are restricted to
      *                                 creatures. Used by death triggers such as Black Cat.
      * @param supportControlledFilter  when {@code true}, a target filter of type
      *                                 {@link ControlledPermanentPredicateTargetFilter} is consulted
-     *                                 via {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesFilters}. Death and attack
-     *                                 trigger pipelines support this; end-step does not.
+     *                                 via {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesFilters}. Death, attack,
+     *                                 and end-step trigger pipelines support this.
      * @param unwrapConditional        when {@code true}, {@link ConditionalEffect} wrappers are
      *                                 unwrapped before inspecting {@code canTarget*} /
      *                                 {@code targetPredicate}. End-step wraps effects in morbid /
@@ -97,8 +120,9 @@ public class TriggerTargetCollector {
 
         public static final Options DEATH = new Options(true, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
-        public static final Options END_STEP = new Options(false, false, true, true);
+        public static final Options END_STEP = new Options(false, true, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);
+        public static final Options DAY_NIGHT = new Options(false, true, true, true);
     }
 
     /**
@@ -132,6 +156,23 @@ public class TriggerTargetCollector {
                           Card sourceCard,
                           Options options,
                           Permanent sourcePermanentSnapshot) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options,
+                sourcePermanentSnapshot, null);
+    }
+
+    /**
+     * Collects targets with the player that was attacked by the trigger's source, when the
+     * trigger captured a combat-damage event. This lets defending-player filters use the event's
+     * last known combat target after combat state has been cleared.
+     */
+    public Result collect(GameData gameData,
+                          List<CardEffect> effects,
+                          TargetFilter targetFilter,
+                          UUID controllerId,
+                          Card sourceCard,
+                          Options options,
+                          Permanent sourcePermanentSnapshot,
+                          UUID defendingPlayerId) {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -139,6 +180,9 @@ public class TriggerTargetCollector {
         boolean canTargetPermanents = effects.stream()
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean canTargetExiledCards = effects.stream()
+                .map(e -> unwrap(e, options))
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
 
         // An effect narrows the player half on its own only when it says so through
         // CardEffect.targetPlayerRelation() (Scalding Tongs' "target opponent or planeswalker").
@@ -167,20 +211,21 @@ public class TriggerTargetCollector {
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
                     ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
+                    .withDefendingPlayerId(defendingPlayerId)
                     : null;
 
             PermanentPredicate effectPredicate = null;
             FilterContext effectFilterCtx = null;
             if (options.useEffectTargetPredicate()) {
-                effectPredicate = effects.stream()
-                        .map(e -> e instanceof ConditionalEffect ce ? ce.wrapped() : e)
-                        .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                && EffectResolution.targetPredicateOf(e) != null)
-                        .map(EffectResolution::targetPredicateOf)
-                        .findFirst().orElse(null);
+                List<CardEffect> targetingEffects = effects.stream()
+                        .map(e -> unwrap(e, options))
+                        .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                        .toList();
+                effectPredicate = EffectResolution.declaredPermanentRestriction(targetingEffects)
+                        .orElse(null);
                 if (effectPredicate != null) {
                     effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null,
-                            sourcePermanentSnapshot);
+                            sourcePermanentSnapshot).withDefendingPlayerId(defendingPlayerId);
                 }
             }
 
@@ -214,6 +259,9 @@ public class TriggerTargetCollector {
                         break;
                     }
                 }
+            }
+            if (declaredPermanentTarget != null) {
+                creaturesOnly = false;
             }
             PermanentPredicate declaredTargetRestriction = declaredPermanentTarget != null
                     ? declaredPermanentTarget.permanentRestriction().orElseThrow()
@@ -257,7 +305,29 @@ public class TriggerTargetCollector {
             }
         }
 
-        return new Result(validTargets, canTargetPlayers, canTargetPermanents, opponentOnly);
+        if (canTargetExiledCards && targetValidationService != null) {
+            List<CardEffect> exiledEffects = effects.stream()
+                    .map(e -> unwrap(e, options))
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                    .toList();
+            for (var exiledEntry : gameData.exiledCards) {
+                if (exiledEntry.faceDown()) {
+                    continue;
+                }
+                UUID cardId = exiledEntry.card().getId();
+                boolean valid = exiledEffects.stream().anyMatch(effect ->
+                        targetValidationService.checkEffectTargets(
+                                List.of(effect),
+                                new TargetValidationContext(gameData, cardId, Zone.EXILE, sourceCard,
+                                        0, controllerId, sourcePermanentSnapshot)).isEmpty());
+                if (valid) {
+                    validTargets.add(cardId);
+                }
+            }
+        }
+
+        return new Result(validTargets, canTargetPlayers, canTargetPermanents,
+                canTargetExiledCards, opponentOnly);
     }
 
     /**
@@ -278,14 +348,33 @@ public class TriggerTargetCollector {
     /**
      * Looks through the wrappers that hide an effect's own targeting from this collector.
      *
-     * <p>A {@link MayPayManaEffect} keeps its wrapped effect's {@code targetSpec()} private (the
-     * payment is a resolution-time choice, CR 603.5), but the target of the ability as a whole is
-     * still chosen when the trigger is put on the stack (CR 603.3d) — Drainpipe Vermin's "you may
-     * pay {B}. If you do, target player discards a card". {@link ConditionalEffect} is unwrapped
-     * only for the slots whose {@link Options#unwrapConditional()} says so.
+     * <p>{@link MayEffect} and {@link MayPayManaEffect} carry the target restriction on the
+     * effective wrapped or else effect, while the target of the ability as a whole is still chosen
+     * when the trigger is put on the stack. {@link ConditionalEffect} is unwrapped only for the slots whose
+     * {@link Options#unwrapConditional()} says so.
      */
     private static CardEffect unwrap(CardEffect effect, Options options) {
-        CardEffect unwrapped = effect instanceof MayPayManaEffect mayPay ? mayPay.wrapped() : effect;
+        CardEffect unwrapped = switch (effect) {
+            case MayEffect may -> effectiveTargetEffect(may.wrapped(), may.elseEffect(), effect);
+            case MayPayManaEffect mayPay -> effectiveTargetEffect(
+                    mayPay.wrapped(), mayPay.elseEffect(), effect);
+            default -> effect;
+        };
         return options.unwrapConditional() && unwrapped instanceof ConditionalEffect ce ? ce.wrapped() : unwrapped;
+    }
+
+    private static CardEffect effectiveTargetEffect(CardEffect wrapped, CardEffect elseEffect,
+                                                    CardEffect fallback) {
+        if (hasTargetingSpec(wrapped)) {
+            return wrapped;
+        }
+        if (hasTargetingSpec(elseEffect)) {
+            return elseEffect;
+        }
+        return fallback;
+    }
+
+    private static boolean hasTargetingSpec(CardEffect effect) {
+        return effect != null && !TargetSpec.NONE.equals(effect.targetSpec());
     }
 }

@@ -61,6 +61,9 @@ class CardEffectTargetingConsistencyTest {
             // Static marker: TargetingRestrictionEffect is a "can't be targeted by X" property read
             // by the target-legality services; it never resolves or targets anything itself.
             "TargetingRestrictionEffect",
+            // Marker: declares a target-group position consumed by a sibling effect and never
+            // resolves or chooses a target itself.
+            "TargetGroupMarkerEffect",
             // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
             // EACH_DRAW_TRIGGERED trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.
@@ -103,9 +106,6 @@ class CardEffectTargetingConsistencyTest {
             // Pre-resolved: EACH_UPKEEP_TRIGGERED carries Emberwilde Djinn's active player on the
             // stack entry, so this effect never asks the shared pipeline to choose a player.
             "TargetPlayerMayPayManaOrLifeEffect",
-            // Pre-resolved: EACH_UPKEEP_TRIGGERED carries the active player in the stack entry;
-            // the choice handler reads that UUID and does not ask for a target.
-            "TargetPlayerChoosesOneEffect",
             // Piggyback: Shuriken's effect reads the creature target already chosen for the
             // activated ability's damage effect; it does not choose a second target.
             "TargetPermanentControllerGainsControlOfGrantingEquipmentEffect",

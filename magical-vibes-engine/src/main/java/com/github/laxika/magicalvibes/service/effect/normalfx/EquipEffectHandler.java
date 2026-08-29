@@ -56,9 +56,16 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s equip ability has no effect (the target can't be equipped)."));
+            log.info("Game {} - Equip has no effect, target cannot be equipped", gameData.id);
+            return;
+        }
+
         UUID oldAttachedTo = equipment.getAttachedTo();
 
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(target.getId());
         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
         equipment.setTimestamp(gameData.nextTimestamp());
@@ -68,5 +75,6 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
     }
 }

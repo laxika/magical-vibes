@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "85")
 @CardRegistration(set = "6ED", collectorNumber = "69")
 @CardRegistration(set = "WTH", collectorNumber = "40")
+@CardRegistration(set = "BTD", collectorNumber = "7")
 public class FogElemental extends Card {
 
     public FogElemental() {

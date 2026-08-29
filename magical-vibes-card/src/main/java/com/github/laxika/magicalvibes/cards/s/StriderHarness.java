@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SOM", collectorNumber = "207")
+@CardRegistration(set = "RIX", collectorNumber = "183")
 public class StriderHarness extends Card {
 
     public StriderHarness() {

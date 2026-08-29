@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 
 
 @CardRegistration(set = "HOU", collectorNumber = "163")
+@CardRegistration(set = "AKR", collectorNumber = "274")
 public class HollowOne extends Card {
 
     public HollowOne() {

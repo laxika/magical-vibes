@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
 
 @CardRegistration(set = "AKH", collectorNumber = "5")
+@CardRegistration(set = "AKR", collectorNumber = "5")
 public class AvenMindcensor extends Card {
 
     public AvenMindcensor() {

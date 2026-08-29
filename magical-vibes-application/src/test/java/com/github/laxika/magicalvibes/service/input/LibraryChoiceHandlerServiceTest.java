@@ -6,13 +6,17 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
+import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -21,6 +25,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -29,6 +34,8 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.LibraryRevealChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.LibraryReorderInteractionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -68,6 +75,9 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private ExileService exileService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
     private LibraryChoiceHandlerService service;
 
@@ -92,14 +102,19 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport.class),
-                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
+                murmursFromBeyondEffectHandler,
+                memoriesReturningEffectHandler,
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
-                permanentControlSupport);
+                permanentControlSupport, permanentCounterSupport,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class));
+        registry.register(new LibraryRevealChoiceInteractionHandler(service));
+        registry.register(new LibraryReorderInteractionHandler(
+                gameLogService, mock(WarpWorldService.class), inputCompletionService));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -122,6 +137,83 @@ class LibraryChoiceHandlerServiceTest {
         gd.activePlayerId = player1Id;
     }
 
+    @Nested
+    @DisplayName("handleLibraryRevealChoice for Dubious Challenge")
+    class HandleDubiousChallengeChoice {
+
+        @Test
+        @DisplayName("Exiles the controller's selection and prompts the targeted opponent")
+        void initialChoicePromptsOpponent() {
+            Card creature1 = createCard("Creature One", CardType.CREATURE);
+            Card creature2 = createCard("Creature Two", CardType.CREATURE);
+            Card land = createCard("Forest", CardType.LAND);
+            List<Card> lookedAt = List.of(creature1, creature2, land);
+            gd.playerDecks.get(player1Id).addAll(lookedAt);
+
+            gd.queueInteraction(new PendingDubiousChallengeChoice(player1Id, player2Id, List.of()));
+            gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                    player1Id, lookedAt, List.of(creature1.getId(), creature2.getId()),
+                    false, false, false, false, false, 0, null, 2,
+                    "Choose up to two creature cards.", 0, false));
+
+            service.handleLibraryRevealChoice(gd, player1, List.of(creature1.getId(), creature2.getId()));
+
+            assertThat(gd.playerDecks.get(player1Id)).containsExactly(land);
+            verify(exileService).exileCard(gd, player1Id, creature1);
+            verify(exileService).exileCard(gd, player1Id, creature2);
+            PendingInteraction.LibraryRevealChoice opponentChoice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(opponentChoice.playerId()).isEqualTo(player2Id);
+            assertThat(opponentChoice.validCardIds()).containsExactly(creature1.getId(), creature2.getId());
+        }
+
+        @Test
+        @DisplayName("Puts the opponent's choice under the opponent's control and the rest under the controller's")
+        void opponentChoicePlacesCardsUnderCorrectPlayers() {
+            Card opponentCard = createCard("Opponent Creature", CardType.CREATURE);
+            Card controllerCard = createCard("Controller Creature", CardType.CREATURE);
+            gd.addToExile(player1Id, opponentCard);
+            gd.addToExile(player1Id, controllerCard);
+            gd.queueInteraction(new PendingDubiousChallengeChoice(
+                    player1Id, player2Id, List.of(opponentCard, controllerCard)));
+            gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                    player2Id, List.of(opponentCard, controllerCard),
+                    List.of(opponentCard.getId(), controllerCard.getId()),
+                    false, false, false, false, false, 0, null, 1,
+                    "Choose one.", 0, false));
+
+            service.handleLibraryRevealChoice(gd, player2, List.of(opponentCard.getId()));
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player2Id), any(), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(), any());
+            assertThat(gd.exiledCards).isEmpty();
+            verify(stateBasedActionService).performStateBasedActions(gd);
+            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+        }
+    }
+
+    @Test
+    @DisplayName("Routes Murmurs from Beyond's opponent choice through its effect handler")
+    void murmursFromBeyondChoiceUsesEffectHandler() {
+        Card first = createCard("First Card");
+        Card second = createCard("Second Card");
+        Card third = createCard("Third Card");
+        List<Card> revealed = List.of(first, second, third);
+        gd.queueInteraction(new PendingMurmursFromBeyondChoice(player1Id));
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player2Id, revealed,
+                List.of(first.getId(), second.getId(), third.getId()),
+                false, false, false, false, false, 0, null, 1,
+                "Choose one.", 1, false));
+
+        service.handleLibraryRevealChoice(gd, player2, List.of(second.getId()));
+
+        verify(murmursFromBeyondEffectHandler).completeCardChoice(gd, revealed, List.of(second.getId()));
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
@@ -136,6 +228,24 @@ class LibraryChoiceHandlerServiceTest {
         Card card = createCard(name);
         card.setType(type);
         return card;
+    }
+
+    @Test
+    @DisplayName("Puts the requested counter on a card entering from a library")
+    void putsCounterOnLibraryCardEnteringBattlefield() {
+        Card forest = createBasicLand("Forest");
+        gd.playerDecks.get(player1Id).add(forest);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(forest))
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                .battlefieldCounter(CounterType.STUN)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a land", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(permanentCounterSupport).placeCounterOnPermanent(
+                eq(gd), isNull(), any(), eq(CounterType.STUN), eq(1));
     }
 
     @Test
@@ -174,6 +284,149 @@ class LibraryChoiceHandlerServiceTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerDecks.get(player1Id)).containsExactly(artifact2);
         verify(permanentControlSupport).applyCreateToken(gd, player1Id, token, 1, "MRD");
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
+    @DisplayName("Dynamic card-type follow-up offers one card for each remaining type")
+    void dynamicCardTypeFollowUpOffersEachRemainingType() {
+        Card instant = createCard("Instant One", CardType.INSTANT);
+        Card artifact = createCard("Artifact One", CardType.ARTIFACT);
+        Card sorcery = createCard("Sorcery One", CardType.SORCERY);
+        gd.playerDecks.get(player1Id).addAll(List.of(instant, artifact, sorcery));
+
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(instant))
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.HAND)
+                .sourceCards(new ArrayList<>(List.of(instant, artifact, sorcery)))
+                .reorderRemainingToBottom(true)
+                .followUp(LibrarySearchFollowUp.forCardTypeBoundedPick(
+                        List.of(CardType.ARTIFACT, CardType.SORCERY)))
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                params, "Choose an instant card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(artifact);
+        assertThat(next.params().cards()).doesNotContain(sorcery);
+    }
+
+    @Test
+    @DisplayName("Puts one qualifying card into hand and the other revealed cards on the library bottom")
+    void putsOneCardIntoHandAndBottomsTheRest() {
+        Card chosen = createCard("Chosen");
+        Card rest = createCard("Rest");
+        Card land = createCard("Land", CardType.LAND);
+        List<Card> sourceCards = new ArrayList<>(List.of(chosen, rest, land));
+        gd.addToExile(player1Id, chosen);
+        gd.addToExile(player1Id, rest);
+        gd.addToExile(player1Id, land);
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(player1Id, List.of(chosen, rest))
+                        .reveals(true)
+                        .sourceCards(sourceCards)
+                        .reorderRemainingToBottom(true)
+                        .shuffleAfterSelection(false)
+                        .destination(LibrarySearchDestination.PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM)
+                        .build(),
+                "Choose one", false));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(land);
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(rest);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
+    @DisplayName("Face-down exile search puts the unchosen cards into the target player's graveyard")
+    void faceDownExileSearchPutsRestIntoTargetGraveyard() {
+        Card first = createCard("First");
+        Card chosen = createCard("Chosen");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, chosen, third));
+        UUID sourcePermanentId = UUID.randomUUID();
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(first, chosen, third))
+                .canFailToFind(false)
+                .targetPlayerId(player2Id)
+                .sourceCards(sourceCards)
+                .restToGraveyard(true)
+                .destination(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD)
+                .sourcePermanentId(sourcePermanentId)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose one", false));
+
+        service.handleLibraryCardChosen(gd, player1, 1);
+
+        verify(exileService).exileCardFaceDown(gd, player2Id, chosen, sourcePermanentId);
+        verify(graveyardService).addCardToGraveyard(gd, player2Id, first, Zone.LIBRARY);
+        verify(graveyardService).addCardToGraveyard(gd, player2Id, third, Zone.LIBRARY);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1Id);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
+    @DisplayName("Bounded face-down exile search takes two cards before bottoming the rest")
+    void boundedFaceDownExileSearchTakesTwoCards() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, second, third));
+        UUID sourcePermanentId = UUID.randomUUID();
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, new ArrayList<>(sourceCards))
+                .canFailToFind(false)
+                .targetPlayerId(player2Id)
+                .remainingCount(2)
+                .sourceCards(sourceCards)
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                .sourcePermanentId(sourcePermanentId)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose two", false));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(second, third);
+        assertThat(next.params().remainingCount()).isEqualTo(1);
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId);
+        verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId);
+        assertThat(gd.playerDecks.get(player2Id)).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("Face-down exile search can leave casting permission to a source static effect")
+    void faceDownExileSearchCanSkipSeparateCastPermission() {
+        Card first = createCard("First");
+        Card chosen = createCard("Chosen");
+        Card third = createCard("Third");
+        UUID sourcePermanentId = UUID.randomUUID();
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(first, chosen, third))
+                .canFailToFind(false)
+                .sourceCards(new ArrayList<>(List.of(first, chosen, third)))
+                .reorderRemainingToBottom(true)
+                .destination(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM)
+                .sourcePermanentId(sourcePermanentId)
+                .grantExilePlayPermission(false)
+                .allowAnyManaType(false)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose one", false));
+
+        service.handleLibraryCardChosen(gd, player1, 1);
+
+        verify(exileService).exileCardFaceDown(gd, player1Id, chosen, sourcePermanentId);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(chosen.getId());
         verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
@@ -456,7 +709,8 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
             // Dino should have been put onto battlefield
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
 
             // Remaining cards should be on bottom of library (not in graveyard)
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
@@ -505,11 +759,37 @@ class LibraryChoiceHandlerServiceTest {
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
             verify(exileService).exileCard(gd, player1Id, land);
             verify(exileService).exileCard(gd, player1Id, instant);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
         }
+    }
+
+    @Test
+    @DisplayName("handleLibraryRevealChoice orders non-random battlefield leftovers on the bottom")
+    void selectedToBattlefieldRestToOrderedBottom() {
+        Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
+        Card land = createCard("Forest", CardType.LAND);
+        Card instant = createCard("Shock", CardType.INSTANT);
+        List<Card> allCards = List.of(dino, land, instant);
+
+        gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
+                player1Id, new ArrayList<>(allCards), List.of(dino.getId()),
+                false, false, true, false, false, 0, null, 1, "Choose."));
+        when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+        service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(land, instant);
+        assertThat(reorder.toBottom()).isTrue();
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        verify(gameLogService, never()).append(eq(gd), argThat((GameLogEntry logEntry) ->
+                logEntry.plainText().contains("Library is shuffled")));
     }
 
     // =========================================================================

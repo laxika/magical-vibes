@@ -13,16 +13,23 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentCausedDiscardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -33,6 +40,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,11 +59,47 @@ public class DiscardTriggerCollectorService {
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final LifeSupport lifeSupport;
+
+    @CollectsTrigger(value = OpponentCausedDiscardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
+            OpponentCausedDiscardTriggerEffect trigger, TriggerContext ctx) {
+        if (!match.gameData().discardCausedByOpponent) return false;
+
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger.wrapped())),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on opponent-caused discard", gameData.id, sourceCard.getName());
+        return true;
+    }
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
+        UUID triggeringCardId = discard.discardedCard() == null ? null : discard.discardedCard().getId();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(may)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(triggeringCardId);
+        if (triggeringCardId != null) {
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(triggeringCardId));
+        }
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on discard (may ability)", match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -70,6 +114,8 @@ public class DiscardTriggerCollectorService {
         int damage = trigger.damage();
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
+        damage += gameQueryService.getControllerDamageToOpponentBonus(
+                gameData, match.controllerId(), discardingPlayerId);
 
         gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                 " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + "."));
@@ -79,12 +125,12 @@ public class DiscardTriggerCollectorService {
         CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
         boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
                 gameData, discardingPlayerId, match.permanent().getId());
-        if (sourceDamagePrevented && !gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)) {
+        if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())) {
             damagePreventionService.applySourceDamagePreventionForPlayer(
                     gameData, discardingPlayerId, match.permanent().getId(), damage,
                     gameQueryService.getEffectiveColors(gameData, match.permanent()));
         }
-        if (!gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
+        if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
                 && !sourceDamagePrevented
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
@@ -94,22 +140,22 @@ public class DiscardTriggerCollectorService {
             if (damage <= 0) return true;
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
+            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                    gameData, discardingPlayerId, effectiveDamage);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
-                if (gameQueryService.canPlayerGetPoisonCounters(gameData, discardingPlayerId)) {
-                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);
-                    gameData.playerPoisonCounters.put(discardingPlayerId, currentPoison + effectiveDamage);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            gameData.playerIdToName.get(discardingPlayerId) + " gets " + effectiveDamage + " poison counters from ",
-                            sourceCard, "."));
-                }
+                lifeSupport.applyPoisonCounters(gameData, discardingPlayerId, effectiveDamage,
+                        cardName, match.controllerId());
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
-                int currentLife = gameData.getLife(discardingPlayerId);
-                gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
+                int lifeLoss = effectiveDamage
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
+                gameData.playerLifeTotals.put(discardingPlayerId,
+                        gameQueryService.lifeAfterDamage(gameData, discardingPlayerId, lifeLoss));
             }
             if (effectiveDamage > 0) {
-                gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage);
+                gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
+                        gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, discardingPlayerId, effectiveDamage);
             }
         }
@@ -138,7 +184,67 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleTurnScopedModalOnDiscard(TriggerMatchContext match,
+            ChooseModeNotYetChosenThisTurnEffect trigger, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                sourceCard, match.controllerId(), new ChooseOneEffect(trigger.options()),
+                match.permanent().getId(), true));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard (turn-scoped modal)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleDamageToEachOpponentOnDiscardEvent(TriggerMatchContext match,
+            DealDamageToPlayersEffect trigger, TriggerContext ctx) {
+        if (trigger.recipient() != DamageRecipient.EACH_OPPONENT) return false;
+
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(discardEvent.discardedCount());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller discard event (damage to each opponent)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handlePutCountersOnSelfOnDiscardEvent(TriggerMatchContext match,
+            PutCountersOnSelfEffect trigger, TriggerContext ctx) {
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(discardEvent.discardedCount());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (put {} counter(s))", gameData.id,
+                sourceCard.getName(), discardEvent.discardedCount());
+        return true;
+    }
+
     @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleExileDiscardedFromGraveyard(TriggerMatchContext match,
             ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
@@ -170,6 +276,12 @@ public class DiscardTriggerCollectorService {
                 gameData.id, sourceCard.getName(), discarded.getName(),
                 trigger.trackWithSource() ? " with the source" : "");
         return true;
+    }
+
+    @CollectsTrigger(value = ExileTopCardMayPlayThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleExileTopCardMayPlayOnDiscard(TriggerMatchContext match,
+            ExileTopCardMayPlayThisTurnEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "exile top card and allow play");
     }
 
     @CollectsTrigger(value = ScryEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
@@ -214,12 +326,11 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn and can't be
-        // blocked this turn" (and similar mandatory multi-step self-triggers). Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. The steps must stay ONE
-        // atomic triggered ability (SequenceEffect), so queue a single stack entry carrying the source
-        // permanent id — each self step then resolves against this creature. (Cunning Survivor)
+        // Multi-step discard triggers must stay ONE atomic triggered ability (SequenceEffect), so queue
+        // a single stack entry carrying the source permanent id. Each self step then resolves against
+        // this creature.
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -232,6 +343,20 @@ public class DiscardTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (sequence)", gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleSequenceOnDiscardEvent(TriggerMatchContext match, SequenceEffect trigger,
+                                                  TriggerContext ctx) {
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)),
+                match.permanent().getId(), discardEvent.discardedCount()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (sequence)", gameData.id, sourceCard.getName());
         return true;
     }
 
@@ -302,12 +427,9 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
-    private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, you may pay {N}. If you do, ..." Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. Queue it as a proper
-        // triggered ability so it uses the stack (and, when cycling, resolves above the cycling draw); its
-        // MayAbilityChoice pay prompt then comes up at resolution. (Drake Haven)
+    @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handlePutCountersOnSourceOnDiscard(TriggerMatchContext match,
+            PutCountersOnSourceEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -319,7 +441,30 @@ public class DiscardTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on cycle/discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
+        log.info("Game {} - {} triggers on controller discard (put counters on source)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    })
+    private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
+        // Queue may-pay discard triggers as proper triggered abilities so they use the stack and the
+        // MayAbilityChoice payment prompt comes up at resolution. (Drake Haven, Spirit Cairn)
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard (may pay {})", gameData.id, sourceCard.getName(), trigger.manaCost());
         return true;
     }
 
@@ -330,28 +475,12 @@ public class DiscardTriggerCollectorService {
      */
     @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleCreateTokenOnDiscard(TriggerMatchContext match, CreateTokenEffect trigger, TriggerContext ctx) {
-        return enqueueOpponentDiscardTrigger(match, trigger, "create token");
+        return enqueueDiscardTrigger(match, trigger, "create token");
     }
 
-    /**
-     * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
-     * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
-     * controller's pool when it resolves. (Waste Not)
-     */
-    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    private boolean handleAwardManaOnDiscard(TriggerMatchContext match, AwardManaEffect trigger, TriggerContext ctx) {
-        return enqueueOpponentDiscardTrigger(match, trigger, "add mana");
-    }
-
-    /**
-     * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
-     */
-    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
-        return enqueueOpponentDiscardTrigger(match, trigger, "draw");
-    }
-
-    private boolean enqueueOpponentDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleCreateTokenOnControllerDiscard(TriggerMatchContext match,
+            CreateTokenEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(
@@ -363,17 +492,98 @@ public class DiscardTriggerCollectorService {
                 null,
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on opponent discard ({})", gameData.id, sourceCard.getName(), what);
+        log.info("Game {} - {} triggers on controller discard (create token)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleCreateTokenOnDiscardEvent(TriggerMatchContext match, CreateTokenEffect trigger,
+                                                    TriggerContext ctx) {
+        TriggerContext.DiscardEvent discardEvent = (TriggerContext.DiscardEvent) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(discardEvent.discardedCount());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (create {} token(s))", gameData.id,
+                sourceCard.getName(), discardEvent.discardedCount());
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTopCardsMayPlayUntilNextEndStepEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleExileTopCardsMayPlayUntilNextEndStepOnDiscardEvent(
+            TriggerMatchContext match, ExileTopCardsMayPlayUntilNextEndStepEffect trigger,
+            TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (exile top card)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    /**
+     * "Whenever an opponent discards a land card, add {B}{B}." Not a mana ability — it does not
+     * trigger off a mana ability, so it uses the stack (CR 605.1b) and the mana lands in the
+     * controller's pool when it resolves. (Waste Not)
+     */
+    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = AwardManaEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleAwardManaOnDiscard(TriggerMatchContext match, AwardManaEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "add mana");
+    }
+
+    /**
+     * "Whenever an opponent discards a noncreature, nonland card, draw a card." (Waste Not)
+     */
+    @CollectsTrigger(value = DrawCardEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleDrawOnDiscard(TriggerMatchContext match, DrawCardEffect trigger, TriggerContext ctx) {
+        return enqueueDiscardTrigger(match, trigger, "draw");
+    }
+
+    private boolean enqueueDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard ({})", gameData.id, sourceCard.getName(), what);
         return true;
     }
 
     @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleLifeLossOnDiscard(TriggerMatchContext match,
             LoseLifeEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
         Card sourceCard = match.permanent().getCard();
         String cardName = sourceCard.getName();
-        // The ON_OPPONENT_DISCARDS marker always carries a literal amount ("that player loses N life").
+        // Discard-triggered life loss carries a literal amount ("that player loses N life" or
+        // "you lose N life").
         int amount = trigger.amount() instanceof Fixed fixed ? fixed.value() : 0;
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
@@ -386,8 +596,10 @@ public class DiscardTriggerCollectorService {
         if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
+            int lifeLoss = amount
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
             int currentLife = gameData.getLife(discardingPlayerId);
-            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);
+            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - lifeLoss);
         }
 
         return true;

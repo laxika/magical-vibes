@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "261")
+@CardRegistration(set = "S99", collectorNumber = "139")
 public class PrideOfLions extends Card {
 
     public PrideOfLions() {

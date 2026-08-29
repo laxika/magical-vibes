@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 
 @CardRegistration(set = "AKH", collectorNumber = "243")
+@CardRegistration(set = "AKR", collectorNumber = "293")
 public class FetidPools extends Card {
 
     public FetidPools() {

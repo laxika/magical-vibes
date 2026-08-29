@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -49,19 +51,13 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
-        // Vizier of Remedies: every target is controlled by this same player, so the reduction is
-        // uniform. If it drops the count to zero no counters are placed.
-        if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
-            amount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, entry.getControllerId(), amount);
-            if (amount <= 0) return;
-        }
-
         FilterContext ctx = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourcePermanentSnapshot(source);
         int count = 0;
+        int loyaltyCountersPlaced = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
-        List<Permanent> minusOneTargets = new ArrayList<>();
+        Map<Permanent, Integer> minusOneTargets = new LinkedHashMap<>();
         for (Permanent p : new ArrayList<>(battlefield)) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
@@ -70,19 +66,22 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE
                     && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, p)) continue;
 
-            int placed = amount;
-            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                // Per-permanent: only creatures get Corpsejack's doubling.
-                placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, p, amount);
-                if (placed <= 0) continue;
-            }
+            int placed = gameQueryService.replaceCounters(gameData, p, e.counterType(), amount,
+                    entry.getControllerId());
+            if (placed <= 0) continue;
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + placed);
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, p, placed);
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && placed > 0) {
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, p, placed);
                 plusOneTargets.add(p);
+            } else if (e.counterType() == CounterType.LOYALTY
+                    && gameQueryService.isPlaneswalker(gameData, p)) {
+                loyaltyCountersPlaced += placed;
             } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && placed > 0) {
-                minusOneTargets.add(p);
+                minusOneTargets.put(p, placed);
             }
         }
 
@@ -92,13 +91,18 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         log.info("Game {} - {} puts {} {} counter(s) on {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
 
-        // Fire ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT triggers after all placements (rules-correct).
+        // Fire +1/+1 counter-placement triggers after all placements.
         // Deferred past the loop since firing pushes triggered abilities onto the stack.
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
         }
-        for (Permanent p : minusOneTargets) {
-            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, p, amount);
+        for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
+                    gameData, placement.getKey(), placement.getValue());
+        }
+        if (loyaltyCountersPlaced > 0) {
+            permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
+                    gameData, entry.getControllerId(), loyaltyCountersPlaced);
         }
     }
 }

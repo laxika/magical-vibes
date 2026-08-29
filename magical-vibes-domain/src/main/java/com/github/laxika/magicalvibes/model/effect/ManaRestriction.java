@@ -18,6 +18,10 @@ public sealed interface ManaRestriction {
     /** Adds {@code amount} mana of {@code color} to the pool bucket for this restriction. */
     void applyTo(ManaPool pool, ManaColor color, int amount);
 
+    default void applyTo(ManaPool pool, ManaColor color, int amount, CardSubtype sourceChosenSubtype) {
+        applyTo(pool, color, amount);
+    }
+
     /** Short human-readable description of the restriction, used in game log lines. */
     String description();
 
@@ -53,16 +57,104 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /** Colorless mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect). */
+    /** Mana spendable only to cast noncreature spells. */
+    record NoncreatureSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNoncreatureSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "noncreature spells only";
+        }
+    }
+
+    /** Mana spendable only to cast spells from a graveyard. */
+    record GraveyardSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addGraveyardOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "graveyard spells only";
+        }
+    }
+
+    record ForetellOrInstantSorcery() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addForetellOrInstantSorceryOnlyColorless(amount);
+            } else {
+                pool.addForetellOrInstantSorceryOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "foretell or instant/sorcery spells only";
+        }
+    }
+
+    record DisturbOrInstantSorcery() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addDisturbOrInstantSorceryOnlyColorless(amount);
+            } else {
+                pool.addDisturbOrInstantSorceryOnlyColored(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "disturb or instant/sorcery spells only";
+        }
+    }
+
+    record ForetellSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addForetellSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "foretell cards or spells with foretell only";
+        }
+    }
+
+    /** Mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect). */
+    /** Mana spendable only to cast artifact spells or activate abilities of artifacts (Grand Architect, Slobad). */
     record ArtifactSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addArtifactOnlyColorless(amount);
+            if (color == ManaColor.COLORLESS) {
+                pool.addArtifactOnlyColorless(amount);
+            } else {
+                pool.addArtifactOnlyMana(color, amount);
+            }
         }
 
         @Override
         public String description() {
             return "artifact spells only";
+        }
+    }
+
+    /** Mana spendable only to cast artifact spells or activate any activated ability (Guidelight Optimizer). */
+    record ArtifactSpellsOrAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addArtifactSpellOrAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "artifact spells or abilities only";
         }
     }
 
@@ -82,6 +174,74 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast creature spells or activate abilities of creatures (Lukka, Bound to Ruin). */
+    record CreatureSpellsOrAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellOrAbilityMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells or creature abilities only";
+        }
+    }
+
+    /** Mana spendable only to cast spells of the given subtype or activate equip abilities. */
+    record SubtypeSpellsOrAbilities(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSubtypeSpellOrAbilityMana(subtype, color, amount);
+        }
+
+        @Override
+        public String description() {
+            return subtype + " spells or abilities only";
+        }
+    }
+
+    /** Mana spendable only to pay ability costs, not to cast spells (Thran Turbine). */
+    record Abilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "abilities only";
+        }
+    }
+
+    /** Mana spendable only to activate abilities of land sources (Sunken Citadel). */
+    record LandAbilities() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addLandAbilityOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "land abilities only";
+        }
+    }
+
+    /** Mana that can't be spent to cast nonartifact spells (Powerstone tokens and Karn). */
+    record Powerstone(boolean persistsUntilEndOfTurn) implements ManaRestriction {
+        public Powerstone() {
+            this(false);
+        }
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addPowerstoneOnlyColorless(amount, persistsUntilEndOfTurn);
+        }
+
+        @Override
+        public String description() {
+            return "nonartifact spells prohibited";
+        }
+    }
+
     /**
      * Colorless mana spendable only to cast legendary spells — any spell with the legendary supertype
      * (Untaidake, the Cloud Keeper). Spell-only: it cannot pay activation costs.
@@ -98,11 +258,7 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /**
-     * Colorless mana spendable only to cast spells / activate abilities of the given creature subtype.
-     * Only Myr exists in the pool today (routes to the myr-only bucket, e.g. Myr Reservoir); the
-     * subtype is retained as the routing/logging key.
-     */
+    /** Colorless mana spendable only to cast spells / activate abilities of Myr. */
     record SubtypeSpells(CardSubtype subtype) implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -112,6 +268,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return subtype + " spells only";
+        }
+    }
+
+    /** Colorless mana spendable only to cast colorless spells or activate abilities of the given subtype. */
+    record ColorlessSubtypeSpellsOrAbilities(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColorlessSubtypeSpellOrAbilityMana(subtype, amount);
+        }
+
+        @Override
+        public String description() {
+            return "colorless " + subtype + " spells or abilities only";
         }
     }
 
@@ -135,7 +304,32 @@ public sealed interface ManaRestriction {
     }
 
     /** Mana spendable only to cast spells with {@code spellSubtype} or planeswalker spells of {@code planeswalkerSubtype}. */
+    record SubtypeOrLegendaryCreatureSpells(CardSubtype subtype) implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            applyTo(pool, color, amount, subtype);
+        }
+
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount, CardSubtype sourceChosenSubtype) {
+            CardSubtype effectiveSubtype = subtype != null ? subtype : sourceChosenSubtype;
+            if (effectiveSubtype != null) {
+                pool.addSubtypeOrLegendaryCreatureMana(effectiveSubtype, color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return (subtype == null ? "chosen creature type" : subtype) + " or legendary creature spells only";
+        }
+    }
+
     record SubtypeOrPlaneswalkerSpells(CardSubtype spellSubtype, CardSubtype planeswalkerSubtype) implements ManaRestriction {
+        /** Mana spendable only to cast planeswalker spells. */
+        public SubtypeOrPlaneswalkerSpells() {
+            this(null, null);
+        }
+
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
             pool.addSubtypeOrPlaneswalkerSpellMana(this, color, amount);
@@ -143,6 +337,9 @@ public sealed interface ManaRestriction {
 
         @Override
         public String description() {
+            if (spellSubtype == null && planeswalkerSubtype == null) {
+                return "planeswalker spells only";
+            }
             return spellSubtype + " or " + planeswalkerSubtype + " planeswalker spells only";
         }
     }
@@ -194,6 +391,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "cumulative upkeep costs only";
+        }
+    }
+
+    /** Mana spendable only to cast face-down spells or turn creatures face up. */
+    record FaceDownSpellsOrTurnFaceUp() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addFaceDownSpellsOrTurnFaceUpMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "face-down spells or turning creatures face up only";
         }
     }
 }

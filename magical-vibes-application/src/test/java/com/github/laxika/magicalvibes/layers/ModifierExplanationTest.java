@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * matches {@code computeStaticBonus}, and that one-shot pumps stored on the permanent are
  * deliberately NOT attributed (the client reconciles them as an "Other effects" remainder).
  */
+@CardUsed({BlackWard.class, Dub.class, GiantGrowth.class, GloriousAnthem.class, GoblinKing.class,
+        GrizzlyBears.class, Lignify.class, RagingGoblin.class, TwistedImage.class})
 class ModifierExplanationTest extends BaseCardTest {
 
     private Permanent addPermanent(Player player, Card card) {

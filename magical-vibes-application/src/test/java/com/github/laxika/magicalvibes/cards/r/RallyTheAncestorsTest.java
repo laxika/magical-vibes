@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.ExilePermanentsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RallyTheAncestors.class, RagingGoblin.class, GrizzlyBears.class,
+        AirElemental.class, Island.class})
 class RallyTheAncestorsTest extends BaseCardTest {
 
     private StepTriggerService stepTriggerService() {
@@ -47,7 +50,7 @@ class RallyTheAncestorsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Island");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Rally the Ancestors"));
-        assertThat(gd.getDelayedActions(ExilePermanentsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.getDelayedActions(ExilePermanentAtNextUpkeep.class)).hasSize(2);
     }
 
     @Test
@@ -67,7 +70,7 @@ class RallyTheAncestorsTest extends BaseCardTest {
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.getDelayedActions(ExilePermanentsAtNextUpkeep.class)).hasSize(1);
+        assertThat(gd.getDelayedActions(ExilePermanentAtNextUpkeep.class)).hasSize(1);
 
         gd.activePlayerId = player1.getId();
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
@@ -79,6 +82,6 @@ class RallyTheAncestorsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(creature.getId()));
-        assertThat(gd.getDelayedActions(ExilePermanentsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.getDelayedActions(ExilePermanentAtNextUpkeep.class)).isEmpty();
     }
 }

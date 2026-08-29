@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "8ED", collectorNumber = "53")
+@CardRegistration(set = "PCY", collectorNumber = "25")
 public class SwordDancer extends Card {
 
     public SwordDancer() {

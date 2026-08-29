@@ -7,12 +7,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,6 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
     private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
-    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,14 +41,13 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileGraveyardCardWithConditionalBonusEffect) effect;
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()) {
+            targetCardId = entry.getTargetCardIds().getFirst();
+        }
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
-            return;
-        }
-        if (e.filter() != null
-                && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer valid)."));
             return;
         }
 
@@ -73,8 +72,14 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                     permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, source, e.creatureCountersOnSource());
                 }
             }
-            lifeSupport.applyGainLife(gameData, controllerId, e.creatureLifeGain(),
-                    entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+            if (e.creatureLifeGain() > 0) {
+                lifeSupport.applyGainLife(gameData, controllerId, e.creatureLifeGain(),
+                        entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+            }
+            if (e.creatureLifeLossToGraveyardOwner() > 0 && graveyardOwnerId != null) {
+                lifeSupport.applyLifeLoss(gameData, graveyardOwnerId,
+                        e.creatureLifeLossToGraveyardOwner(), entry.getCard().getName());
+            }
         } else if (e.noncreaturePowerBoost() != 0 || e.noncreatureToughnessBoost() != 0) {
             // Noncreature card exiled: boost source permanent
             UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -91,5 +96,20 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                 }
             }
         }
+
+        if (!isCreatureCard && e.noncreatureCardsToDraw() > 0) {
+            insertDrawEffect(entry, effect, e.noncreatureCardsToDraw());
+        }
+    }
+
+    private void insertDrawEffect(StackEntry entry, CardEffect currentEffect, int amount) {
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            if (effects.get(i) == currentEffect) {
+                entry.insertEffectsToResolve(i + 1, List.of(new DrawCardEffect(amount)));
+                return;
+            }
+        }
+        throw new IllegalStateException("Could not locate graveyard conditional bonus effect on stack entry");
     }
 }

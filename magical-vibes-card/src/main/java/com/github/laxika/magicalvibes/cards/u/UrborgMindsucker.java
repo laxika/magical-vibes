@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "71")
+@CardRegistration(set = "MGB", collectorNumber = "5")
 public class UrborgMindsucker extends Card {
 
     public UrborgMindsucker() {

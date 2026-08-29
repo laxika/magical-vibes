@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AltarsReap;
 import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.b.BloodthroneVampire;
+import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.d.Divination;
@@ -459,6 +460,18 @@ class SpellEvaluatorTest {
         double withCreature = spellEvaluator.evaluateAbilityEffects(
                 gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
         assertThat(withCreature).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Blinding Beam has positive value against an untapped opponent creature")
+    void blindingBeamScoresItsTapMode() {
+        Permanent creature = new Permanent(new AirElemental());
+        creature.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new BlindingBeam(), player1.getId());
+
+        assertThat(value).isGreaterThan(0.0);
     }
 
     @Test

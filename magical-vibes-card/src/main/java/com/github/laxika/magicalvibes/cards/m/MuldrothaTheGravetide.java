@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DOM", collectorNumber = "199")
+@CardRegistration(set = "FDN", collectorNumber = "243")
 public class MuldrothaTheGravetide extends Card {
 
     public MuldrothaTheGravetide() {

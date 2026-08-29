@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Answers "exile any number of cards named X" choices: the AI always exiles all of them.
+ * Answers "exile up to N cards named X" choices by selecting as many valid cards as allowed.
  */
 @Slf4j
 class MultiZoneExileChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.MultiZoneExileChoice> {
@@ -25,7 +25,8 @@ class MultiZoneExileChoiceAiStrategy implements AiInteractionStrategy<PendingInt
             return;
         }
 
-        List<UUID> chosen = new ArrayList<>(interaction.validCardIds());
+        int selectionSize = Math.min(interaction.maxCount(), interaction.validCardIds().size());
+        List<UUID> chosen = new ArrayList<>(interaction.validCardIds().subList(0, selectionSize));
         log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), interaction.cardName(), ctx.gameId());
         ctx.gameActions().answerInteraction(new InteractionAnswer.CardsChosen(chosen));
     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -21,7 +22,9 @@ public class MarduWoeReaper extends Card {
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.WARRIOR),
                         new MayEffect(
                                 new ExileGraveyardCardWithConditionalBonusEffect(
-                                        1, 0, 0, 0, new CardTypePredicate(CardType.CREATURE)),
+                                        1, 0, 0, 0, 0, 0,
+                                        GraveyardSearchScope.ALL_GRAVEYARDS,
+                                        new CardTypePredicate(CardType.CREATURE)),
                                 "Exile target creature card from a graveyard?")));
     }
 }

@@ -28,8 +28,9 @@ class SunCeYoungConquererTest extends BaseCardTest {
     void etbTriggersMayPrompt() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castSunCe();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -40,10 +41,10 @@ class SunCeYoungConquererTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         castSunCe();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -54,9 +55,10 @@ class SunCeYoungConquererTest extends BaseCardTest {
     void decliningMayDoesNotBounce() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         castSunCe();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -68,10 +70,10 @@ class SunCeYoungConquererTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         castSunCe();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Sun Ce, Young Conquerer");
     }

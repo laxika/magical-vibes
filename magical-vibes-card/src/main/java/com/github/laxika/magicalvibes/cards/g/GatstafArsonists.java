@@ -1,0 +1,24 @@
+package com.github.laxika.magicalvibes.cards.g;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+
+@CardRegistration(set = "SOI", collectorNumber = "158")
+public class GatstafArsonists extends Card {
+
+    public GatstafArsonists() {
+        setBackFaceCard(new GatstafRavagers());
+
+        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
+                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
+    }
+
+    @Override
+    public String getBackFaceClassName() {
+        return "GatstafRavagers";
+    }
+}

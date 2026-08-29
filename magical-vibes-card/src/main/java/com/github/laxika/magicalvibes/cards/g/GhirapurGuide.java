@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "182")
+@CardRegistration(set = "KLD", collectorNumber = "156")
 public class GhirapurGuide extends Card {
 
     public GhirapurGuide() {

@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "INR", collectorNumber = "1")
 @CardRegistration(set = "INR", collectorNumber = "329")
+@CardRegistration(set = "EMN", collectorNumber = "1")
 public class AbundantMaw extends Card {
 
     public AbundantMaw() {

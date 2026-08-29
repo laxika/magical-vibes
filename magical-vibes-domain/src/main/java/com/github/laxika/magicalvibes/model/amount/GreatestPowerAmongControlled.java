@@ -4,11 +4,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * The greatest effective power among creatures the controller controls that match the optional
- * filter (0 when no creature matches; negative powers never lower the result below 0).
+ * filter.
  */
-public record GreatestPowerAmongControlled(PermanentPredicate filter) implements DynamicAmount {
+public record GreatestPowerAmongControlled(PermanentPredicate filter, boolean floorAtZero) implements DynamicAmount {
+
+    public GreatestPowerAmongControlled(PermanentPredicate filter) {
+        this(filter, true);
+    }
 
     public GreatestPowerAmongControlled() {
-        this(null);
+        this(null, true);
+    }
+
+    public static GreatestPowerAmongControlled includingNegative(PermanentPredicate filter) {
+        return new GreatestPowerAmongControlled(filter, false);
     }
 }

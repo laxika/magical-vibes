@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMP", collectorNumber = "153")
+@CardRegistration(set = "BRB", collectorNumber = "61")
 public class SadisticGlee extends Card {
 
     public SadisticGlee() {

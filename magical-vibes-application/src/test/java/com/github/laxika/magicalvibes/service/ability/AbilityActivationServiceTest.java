@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,8 +17,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
@@ -28,13 +31,20 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -46,6 +56,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +76,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -96,6 +108,7 @@ class AbilityActivationServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private ExileService exileService;
     @Mock private AmountEvaluationService amountEvaluationService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
 
     @InjectMocks
@@ -511,6 +524,34 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Pay X life is checked before an activated ability's mana is paid")
+        void payXLifeCostIsCheckedBeforeManaPayment() {
+            Card card = createCreatureCard("Krumar Initiate", 2, 2);
+            card.addActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{X}{B}",
+                    List.of(new PayXLifeCost()),
+                    "{X}{B}: Pay X life."
+            ).withXValue());
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+            gameData.playerLifeTotals.put(player1Id, 1);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, 2, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Not enough life");
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
+            verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
+                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
+        }
+
+        @Test
         @DisplayName("Dynamic activation cost reduction lowers the generic mana requirement")
         void dynamicActivationCostReductionLowersManaRequirement() {
             Card artifact = createGenericArtifact("Cost Reducer");
@@ -535,6 +576,29 @@ class AbilityActivationServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+        }
+
+        @Test
+        @DisplayName("Graveyard activation cost modifier lowers the generic mana requirement")
+        void graveyardActivationCostReductionLowersManaRequirement() {
+            Card card = createGenericArtifact("Graveyard Cost Reducer");
+            card.addGraveyardActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{3}{B}",
+                    List.of(new ReduceActivationCostEffect(new Fixed(2)), new DrawCardEffect()),
+                    "{3}{B}: Draw a card."
+            ));
+            gameData.playerGraveyards.get(player1Id).add(card);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+            when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+            when(amountEvaluationService.evaluate(eq(gameData), any(), any())).thenReturn(2);
+
+            service.activateGraveyardAbility(gameData, player1, 0, null);
+
+            assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
+            assertThat(gameData.stack).hasSize(1);
         }
 
         @Test
@@ -911,6 +975,26 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Cannot activate loyalty ability while planeswalker loyalty abilities are locked")
+        void cannotActivateLoyaltyWhileLocked() {
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isPlaneswalkerLoyaltyAbilityLocked(gameData, perm)).thenReturn(true);
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("can't be activated");
+        }
+
+        @Test
         @DisplayName("Cannot activate loyalty ability outside main phase")
         void cannotActivateLoyaltyOutsideMainPhase() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
@@ -1234,6 +1318,32 @@ class AbilityActivationServiceTest {
 
             assertThat(perm.getCounterCount(CounterType.BRICK)).isEqualTo(2);
         }
+
+        @Test
+        @DisplayName("RemoveCounterFromGrantingPermanentCost removes a counter from the granting permanent")
+        void removeCounterFromGrantingPermanent() {
+            Card card = createCreatureCard("Test Creature", 2, 2);
+            Permanent aura = addReadyPermanent(player2Id, createCreatureCard("Test Aura", 0, 0));
+            aura.setCounterCount(CounterType.TASK, 2);
+            ActivatedAbility ability = new ActivatedAbility(
+                    true,
+                    null,
+                    List.of(new RemoveCounterFromGrantingPermanentCost(1, CounterType.TASK)),
+                    "Remove a task counter from the granting Aura"
+            ).withGrantSource(aura.getId());
+            card.addActivatedAbility(ability);
+            Permanent creature = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, creature)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(creature), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.findPermanentById(gameData, aura.getId())).thenReturn(aura);
+
+            service.activateAbility(gameData, player1, 0, null, null, null, null);
+
+            assertThat(aura.getCounterCount(CounterType.TASK)).isEqualTo(1);
+        }
     }
 
     // =========================================================================
@@ -1386,7 +1496,7 @@ class AbilityActivationServiceTest {
 
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("no more than 1 times each turn");
+                    .hasMessageContaining("only once each turn");
         }
 
         @Test
@@ -1422,6 +1532,41 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             assertThat(gameData.activatedAbilityUsesThisGame.get(perm.getId()).get(0)).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("activateGraveyardAbility")
+    class ActivateGraveyardAbility {
+
+        @Test
+        @DisplayName("Validates and records a graveyard ability's stack-spell target")
+        void validatesAndRecordsStackSpellTarget() {
+            Card source = new Card();
+            source.setName("Graveyard Copier");
+            source.addGraveyardActivatedAbility(new ActivatedAbility(
+                    false,
+                    "{U}",
+                    List.of(new ExileSelfFromGraveyardCost(), new CopySpellEffect()),
+                    "{U}, Exile this card: Copy target spell."));
+            gameData.playerGraveyards.get(player1Id).add(source);
+
+            Card target = new Card();
+            target.setName("Target Spell");
+            target.setType(CardType.SORCERY);
+            StackEntry targetEntry = new StackEntry(
+                    StackEntryType.SORCERY_SPELL, target, player1Id, target.getName(), List.of());
+            gameData.stack.add(targetEntry);
+            gameData.playerManaPools.get(player1Id).add(ManaColor.BLUE, 1);
+            when(gameQueryService.canPlayersActivateGraveyardAbilities(gameData)).thenReturn(true);
+
+            service.activateGraveyardAbility(gameData, player1, 0, null, null, target.getId(), null);
+
+            verify(targetLegalityService).validateSpellTargetOnStack(
+                    gameData, target.getId(), null, player1Id);
+            StackEntry abilityEntry = gameData.stack.getLast();
+            assertThat(abilityEntry.getTargetId()).isEqualTo(target.getId());
+            assertThat(abilityEntry.getTargetZone()).isEqualTo(Zone.STACK);
         }
     }
 
@@ -1510,7 +1655,8 @@ class AbilityActivationServiceTest {
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.isArtifact(perm)).thenReturn(true);
-            when(castingCostService.getActivatedAbilityActivationTax(gameData, perm)).thenReturn(3);
+            when(castingCostService.getActivatedAbilityActivationTax(
+                    eq(gameData), eq(player1Id), eq(perm), any(), anyBoolean())).thenReturn(3);
 
             ManaPool insufficientPool = new ManaPool();
             insufficientPool.add(ManaColor.COLORLESS, 1);
@@ -1547,6 +1693,46 @@ class AbilityActivationServiceTest {
                     gameData, player1Id, perm, 0, insufficientPool, targetId, null)).isFalse();
             assertThat(service.canActivateAbility(
                     gameData, player1Id, perm, 0, sufficientPool, targetId, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false when craft materials do not cover every required subtype")
+        void falseWhenCraftMaterialsDoNotCoverRequiredSubtypes() {
+            Card card = createArtifactWithCraftAbility();
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerGraveyards.get(player1Id).addAll(List.of(
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.DINOSAUR)));
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true when craft materials cover every required subtype")
+        void trueWhenCraftMaterialsCoverRequiredSubtypes() {
+            Card card = createArtifactWithCraftAbility();
+            Permanent perm = addReadyPermanent(player1Id, card);
+            gameData.playerGraveyards.get(player1Id).addAll(List.of(
+                    createCraftMaterial(CardSubtype.DINOSAUR),
+                    createCraftMaterial(CardSubtype.MERFOLK),
+                    createCraftMaterial(CardSubtype.PIRATE),
+                    createCraftMaterial(CardSubtype.VAMPIRE)));
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(
+                    eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isTrue();
         }
 
         @Test
@@ -1599,6 +1785,45 @@ class AbilityActivationServiceTest {
             card.setManaCost("{0}");
             card.addActivatedAbility(new ActivatedAbility(
                     true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS, 1)), "{T}: Add {C}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns false for a mana-producing ability with a library-moving cost")
+        void falseForLibraryMovingManaCost() {
+            Card card = new Card();
+            card.setName("Milling Mana Creature");
+            card.setType(CardType.CREATURE);
+            card.setManaCost("{2}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new MillControllerCost(1), new AwardManaEffect(ManaColor.COLORLESS, 1)),
+                    "{T}, Mill a card: Add {C}."
+            ));
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.isManaAbilityAt(gameData, player1Id, 0, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns true when the ability only schedules a draw for the next upkeep")
+        void trueForDelayedDrawRegistration() {
+            Card card = new Card();
+            card.setName("Delayed Draw Mana Rock");
+            card.setType(CardType.ARTIFACT);
+            card.setManaCost("{0}");
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null,
+                    List.of(new AwardManaEffect(ManaColor.COLORLESS, 1),
+                            new RegisterDrawCardsAtNextUpkeepEffect()),
+                    "{T}: Add {C}. Draw a card at the beginning of the next turn's upkeep."
             ));
             Permanent perm = addReadyPermanent(player1Id, card);
 
@@ -1828,6 +2053,30 @@ class AbilityActivationServiceTest {
         card.addActivatedAbility(new ActivatedAbility(
                 false, manaCost, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Pay mana to add counter"
         ));
+        return card;
+    }
+
+    private Card createArtifactWithCraftAbility() {
+        Card card = new Card();
+        card.setName("Test Craft Artifact");
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("{0}");
+        card.addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(CraftMaterialCost.withRequiredSubtypes(
+                        CardSubtype.DINOSAUR, CardSubtype.MERFOLK,
+                        CardSubtype.PIRATE, CardSubtype.VAMPIRE)),
+                "Test craft ability"
+        ));
+        return card;
+    }
+
+    private Card createCraftMaterial(CardSubtype subtype) {
+        Card card = new Card();
+        card.setName("Test " + subtype.name());
+        card.setType(CardType.CREATURE);
+        card.setSubtypes(List.of(subtype));
         return card;
     }
 

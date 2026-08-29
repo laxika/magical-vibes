@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
  * control a Zombie.
  */
 @CardRegistration(set = "INR", collectorNumber = "57")
+@CardRegistration(set = "SOI", collectorNumber = "52")
 public class CompellingDeterrence extends Card {
 
     public CompellingDeterrence() {

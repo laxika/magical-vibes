@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEf
  * as though it had shadow. Defender comes from Scryfall keywords.
  */
 @CardRegistration(set = "TMP", collectorNumber = "211")
+@CardRegistration(set = "TPR", collectorNumber = "164")
 public class WallOfDiffusion extends Card {
 
     public WallOfDiffusion() {

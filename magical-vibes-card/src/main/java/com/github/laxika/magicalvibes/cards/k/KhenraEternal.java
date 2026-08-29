@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "HOU", collectorNumber = "66")
+@CardRegistration(set = "AKR", collectorNumber = "109")
 public class KhenraEternal extends Card {
 
     public KhenraEternal() {

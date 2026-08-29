@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "31")
+@CardRegistration(set = "ATH", collectorNumber = "21")
 public class CuombajjWitches extends Card {
 
     public CuombajjWitches() {

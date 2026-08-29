@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,6 +22,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReignOfChaosTest extends BaseCardTest {
+
+    private Card whitePlainsCreature() {
+        Card card = new Card();
+        card.setName("White Plains Creature");
+        card.setType(CardType.LAND);
+        card.setAdditionalTypes(java.util.Set.of(CardType.CREATURE));
+        card.setColors(List.of(CardColor.WHITE));
+        card.setSubtypes(List.of(CardSubtype.PLAINS));
+        return card;
+    }
 
     private void giveMana() {
         harness.addMana(player1, ManaColor.RED, 2);
@@ -40,6 +54,20 @@ class ReignOfChaosTest extends BaseCardTest {
         assertThat(battlefield).extracting(Permanent::getId)
                 .doesNotContain(plains.getId(), vanguard.getId())
                 .contains(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Mode 0 may target one permanent for both target requirements")
+    void mode0MayTargetOnePlainsWhiteCreatureTwice() {
+        harness.setHand(player1, List.of(new ReignOfChaos()));
+        giveMana();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, whitePlainsCreature());
+
+        harness.castModalInstant(player1, 0, 0, List.of(target.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .doesNotContain(target.getId());
     }
 
     @Test

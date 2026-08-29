@@ -11,6 +11,7 @@ import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "52")
 @CardRegistration(set = "INR", collectorNumber = "454")
+@CardRegistration(set = "SOI", collectorNumber = "49")
 public class AberrantResearcher extends Card {
 
     public AberrantResearcher() {

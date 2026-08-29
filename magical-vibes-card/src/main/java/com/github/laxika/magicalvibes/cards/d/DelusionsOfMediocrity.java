@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "70")
+@CardRegistration(set = "ULG", collectorNumber = "30")
 public class DelusionsOfMediocrity extends Card {
 
     public DelusionsOfMediocrity() {

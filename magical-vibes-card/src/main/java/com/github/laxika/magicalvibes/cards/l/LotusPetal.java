@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "294")
+@CardRegistration(set = "TPR", collectorNumber = "225")
 public class LotusPetal extends Card {
 
     public LotusPetal() {

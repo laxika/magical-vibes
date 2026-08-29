@@ -130,6 +130,7 @@ public final class BlockLegalityContext {
      * land type, or {@code null}.
      */
     record AttackerFacts(boolean unblockable,
+                         boolean requiresAllDefendingCreaturesToBlock,
                          boolean flying,
                          boolean horsemanship,
                          boolean fear,
@@ -137,6 +138,7 @@ public final class BlockLegalityContext {
                          boolean skulk,
                          boolean shadow,
                          boolean cantBeBlockedByLessPower,
+                         boolean cantBeBlockedByPowerLessThanIslandCount,
                          Set<CardColor> colors,
                          List<BlockabilityRestrictionEffect> pairRestrictions,
                          BlockDenial landwalkDenial) {

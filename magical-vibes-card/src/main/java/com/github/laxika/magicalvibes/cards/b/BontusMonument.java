@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "225")
+@CardRegistration(set = "AKR", collectorNumber = "269")
 public class BontusMonument extends Card {
 
     public BontusMonument() {

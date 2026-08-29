@@ -11,6 +11,10 @@ public enum CardPileDisposition {
     PLAY_FROM_EXILE,
     /** Fact-or-Fiction style (Unesh, Criosphinx Sovereign): chosen pile → controller's hand; other pile → controller's graveyard. */
     HAND,
+    /** Intrude on the Mind: chosen pile → controller's hand; other pile → graveyard, then create a Thopter with counters. */
+    HAND_AND_THOPTER,
+    /** Curator of Destinies and Fortune's Favor: one pile is face down; the chosen pile goes to hand and the other to the graveyard. */
+    HAND_WITH_FACE_DOWN_PILE,
     /**
      * Phyrexian Portal: the pile the controller picks is searched for one card to put into their
      * hand (the rest of that pile is shuffled into their library); the other pile is exiled. The
@@ -19,12 +23,16 @@ public enum CardPileDisposition {
     SEARCH_ONE_TO_HAND,
     /** Jace, Architect of Thought −2: chosen pile → controller's hand; other pile → the bottom of their library in any order. */
     HAND_AND_BOTTOM,
+    /** Truth or Tale: one card from the chosen pile → controller's hand; every other card → the bottom of their library in any order. */
+    ONE_FROM_CHOSEN_HAND_AND_BOTTOM,
     /**
      * Gifts Ungiven: the opponent's selection is not a pile split but a direct disposal — the cards
      * they choose go to the controller's graveyard and every other card goes to the controller's
      * hand, so the flow completes in step 1 and never asks the controller to pick a pile.
      */
     GIFTS_UNGIVEN,
+    /** Deliver Unto Evil: the opponent chooses cards to leave in the controller's graveyard. */
+    DELIVER_UNTO_EVIL,
     /** Death or Glory: the opponent chooses which pile is exiled; the other returns to the battlefield. */
     OPPONENT_CHOOSES_EXILE,
     /** Fight or Flight: the chosen pile contains the only creatures that can attack this turn. */

@@ -7,12 +7,19 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,10 +33,12 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -45,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -69,6 +79,18 @@ import java.util.UUID;
  * Shared target selection logic for AI spell casting.
  */
 class AiTargetSelector {
+
+    record SpellTargetSelection(UUID targetId, List<UUID> targetIds) {
+        SpellTargetSelection {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+        }
+    }
+
+    record XScaledTargetSelection(int xValue, List<UUID> targetIds) {
+        XScaledTargetSelection {
+            targetIds = List.copyOf(targetIds);
+        }
+    }
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -100,12 +122,33 @@ class AiTargetSelector {
         this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);
     }
 
+    List<UUID> findLegalSingleSpellTargets(GameData gameData, Card card, UUID controllerId) {
+        ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                gameData, card, controllerId, List.of(), null, false);
+        List<UUID> targets = new ArrayList<>();
+        targets.addAll(response.validPermanentIds());
+        targets.addAll(response.validPlayerIds());
+        targets.addAll(response.validGraveyardCardIds());
+        return targets;
+    }
+
     UUID chooseTarget(GameData gameData, Card card, UUID aiPlayerId) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
 
         // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
         // Use base-mode targeting since AI never kicks spells
         Set<TargetType> allowedTargets = computeBaseAllowedTargets(card);
+        ValidTargetsResponse legalTargets = validTargetService.computeValidTargetsForSpell(
+                gameData, card, aiPlayerId, List.of(), null, false);
+        if (!allowedTargets.contains(TargetType.PLAYER)
+                && legalTargets.validPermanentIds().isEmpty()
+                && legalTargets.validGraveyardCardIds().isEmpty()
+                && legalTargets.validExiledCardIds().isEmpty()
+                && !legalTargets.validPlayerIds().isEmpty()) {
+            return legalTargets.validPlayerIds().contains(opponentId)
+                    ? opponentId
+                    : legalTargets.validPlayerIds().getFirst();
+        }
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
             if (opponentId != null
                     && !gameQueryService.playerHasShroud(gameData, opponentId)
@@ -352,26 +395,111 @@ class AiTargetSelector {
      * single-target {@link #chooseTarget}: either it declares several target groups, or its
      * one group accepts more than one target ("up to N" spells like Feeling of Dread, which
      * previously took the single-target path and always submitted just one target).
-     * X-scaled targeting (target count decided with X elsewhere), divided-damage spells
-     * (damage-assignment path), and stack-targeting spells keep their existing paths.
+     * X-scaled targeting (target count decided with X elsewhere), the assignment group of a
+     * divided-damage spell, and stack-targeting spells keep their existing paths. A divided-damage
+     * spell whose separate group accepts multiple targets still uses this path for that group.
      *
      * <p>So does a spell that charges mana per extra target (Fireball's {@code
-     * additionalCostPerExtraTarget}): the AI's affordability check prices a cast by its mana cost
-     * and X alone, so every target past the first would be mana it never taps and the engine would
-     * reject the cast. Those spells take the single-target line — one target, no extra cost, and
-     * for an evenly divided burn spell the hardest hit available.
+     * additionalCostPerExtraTarget} or Setessan Tactics's {@code additionalManaCostPerExtraTarget}):
+     * the AI's affordability check prices a cast by its mana cost and X alone, so every target past
+     * the first would be mana it never taps and the engine would reject the cast. Those spells take
+     * the single-target line — one target, no extra cost, and for an evenly divided burn spell the
+     * hardest hit available.
      */
     boolean needsMultiTargetSelection(Card card) {
         List<SpellTarget> groups = card.getSpellTargets();
         if (groups.size() > 1) {
             return true;
         }
+        if (groups.size() == 1 && EffectResolution.needsDamageDistribution(card)) {
+            SpellTarget group = groups.getFirst();
+            boolean separateFromDistribution = findEffectsForTargetGroup(card, group.getIndex()).stream()
+                    .noneMatch(this::isAmountDistributionEffect);
+            return separateFromDistribution && card.getMaxTargets() > 1;
+        }
         return groups.size() == 1
                 && card.getMaxTargets() > 1
                 && card.getAdditionalCostPerExtraTarget() <= 0
+                && (card.getAdditionalManaCostPerExtraTarget() == null
+                        || card.getAdditionalManaCostPerExtraTarget().isEmpty())
                 && !card.hasXScaledTargets()
                 && !EffectResolution.needsDamageDistribution(card)
                 && !EffectResolution.needsSpellTarget(card);
+    }
+
+    /**
+     * Returns whether a spell has a cast-time graveyard target carried separately from its
+     * ordinary spell-target groups.
+     */
+    boolean hasSeparateGraveyardTarget(Card card) {
+        boolean hasGroupedGraveyardTarget = card.getSpellTargets().stream()
+                .anyMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
+        return !hasGroupedGraveyardTarget && card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+    }
+
+    /**
+     * Returns whether every declared spell-target group selects graveyard cards. These targets
+     * must be recomputed after an X value is chosen because their filters may depend on X.
+     */
+    boolean hasOnlyGroupedGraveyardTargets(Card card) {
+        return !card.getSpellTargets().isEmpty()
+                && card.getSpellTargets().stream()
+                .allMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
+    }
+
+    boolean needsXScaledTargetSelection(Card card) {
+        return card.hasXScaledTargets()
+                && card.getParsedManaCost() != null
+                && card.getParsedManaCost().hasX();
+    }
+
+    XScaledTargetSelection chooseXScaledTargets(GameData gameData, Card card, UUID aiPlayerId,
+                                                 int preferredXValue) {
+        int maximumX = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(RepeatableAdditionalManaCost.class::isInstance)
+                ? 1
+                : preferredXValue;
+        for (int xValue = maximumX; xValue >= 1; xValue--) {
+            List<UUID> targets = chooseMultiTargets(gameData, card, aiPlayerId, xValue);
+            if (targets != null && (!targets.isEmpty() || !EffectResolution.needsTarget(card))) {
+                return new XScaledTargetSelection(xValue, targets);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Selects both target channels for spells that combine a graveyard target with ordinary
+     * target groups. The engine stores the graveyard card in {@code targetId} and the ordinary
+     * targets in {@code targetIds}; combining them into one list would make the announcement
+     * invalid even when every individual choice is legal.
+     */
+    SpellTargetSelection chooseSeparateGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        List<Card> graveyardCandidates = findValidGraveyardTargets(gameData, card, aiPlayerId);
+        UUID graveyardTarget = graveyardCandidates.stream()
+                .max(Comparator.comparingInt(Card::getManaValue))
+                .map(Card::getId)
+                .orElse(null);
+
+        boolean graveyardTargetRequired = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                .map(this::unwrapConditionalEffect)
+                .anyMatch(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
+                        || !returnEffect.upTo());
+        if (graveyardTarget == null && graveyardTargetRequired) {
+            return null;
+        }
+
+        List<UUID> ordinaryTargets = chooseMultiTargets(gameData, card, aiPlayerId);
+        if (ordinaryTargets == null) {
+            return null;
+        }
+        return new SpellTargetSelection(graveyardTarget, ordinaryTargets);
+    }
+
+    private CardEffect unwrapConditionalEffect(CardEffect effect) {
+        return effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect;
     }
 
     /**
@@ -380,40 +508,213 @@ class AiTargetSelector {
      * a group's mandatory targets cannot be satisfied.
      */
     List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        return chooseMultiTargets(gameData, card, aiPlayerId, null);
+    }
+
+    /** Selects multi-target groups using the announced X for X-dependent target filters. */
+    List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId, Integer xValue) {
+        return chooseMultiTargets(gameData, card, aiPlayerId, Set.of(), 0, Set.of(), xValue);
+    }
+
+    /**
+     * Selects the target groups that are not represented by an amount-assignment map. The
+     * assignment targets are reserved when cross-group sharing is not allowed, so the ordinary
+     * groups remain distinct from them when the engine combines both target channels for validation.
+     */
+    List<UUID> chooseMultiTargetsAfterDistribution(GameData gameData, Card card, UUID aiPlayerId,
+                                                    Map<UUID, Integer> distributionAssignments) {
+        Set<UUID> assignedTargets = distributionAssignments == null
+                ? Set.of() : distributionAssignments.keySet();
+        Set<Integer> assignedTargetGroups = new HashSet<>();
+        for (SpellTarget spellTarget : card.getSpellTargets()) {
+            if (findEffectsForTargetGroup(card, spellTarget.getIndex()).stream()
+                    .anyMatch(this::isAmountDistributionEffect)) {
+                assignedTargetGroups.add(spellTarget.getIndex());
+            }
+        }
+        Set<UUID> reservedTargets = card.isAllowSharedTargets() ? Set.of() : assignedTargets;
+        return chooseMultiTargets(gameData, card, aiPlayerId, reservedTargets,
+                assignedTargets.size(), assignedTargetGroups, null);
+    }
+
+    /**
+     * Selects target groups outside an amount assignment and places them in the channel expected by
+     * the engine: one ordinary target uses {@code targetId}, while multiple groups or a group that
+     * accepts multiple targets uses {@code targetIds}.
+     */
+    SpellTargetSelection chooseTargetsAfterDistribution(GameData gameData, Card card, UUID aiPlayerId,
+                                                         Map<UUID, Integer> distributionAssignments) {
+        List<UUID> selectedTargets = chooseMultiTargetsAfterDistribution(
+                gameData, card, aiPlayerId, distributionAssignments);
+        if (selectedTargets == null) {
+            return null;
+        }
+        if (needsMultiTargetSelection(card) || selectedTargets.size() > 1) {
+            return new SpellTargetSelection(null, selectedTargets);
+        }
+        UUID targetId = selectedTargets.isEmpty() ? null : selectedTargets.getFirst();
+        return new SpellTargetSelection(targetId, List.of());
+    }
+
+    private List<UUID> chooseMultiTargets(GameData gameData, Card card, UUID aiPlayerId,
+                                           Set<UUID> reservedTargets,
+                                           int separatelySelectedTargetCount,
+                                           Set<Integer> skippedTargetGroups,
+                                           Integer xValue) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         List<SpellTarget> spellTargets = card.getSpellTargets();
         List<UUID> result = new ArrayList<>();
-        Set<UUID> alreadyChosen = new HashSet<>();
+        Set<UUID> alreadyChosen = new HashSet<>(reservedTargets);
+        int maxTargetsAffordable = maxTargetsAffordableWithAdditionalLife(
+                gameData, card, aiPlayerId);
+        int maxAdditionalTargetsAffordable = Math.max(0,
+                maxTargetsAffordable - separatelySelectedTargetCount);
 
         for (SpellTarget st : spellTargets) {
+            if (skippedTargetGroups.contains(st.getIndex())) {
+                continue;
+            }
+            int effectiveMaxTargets = targetLegalityService.getEffectiveMaxTargetsForGroup(
+                    gameData, card, aiPlayerId, null, st, xValue != null ? xValue : 0);
+            effectiveMaxTargets = Math.min(effectiveMaxTargets,
+                    Math.max(0, maxAdditionalTargetsAffordable - result.size()));
+            int effectiveMinTargets = st.isXScaled() && xValue != null
+                    ? Math.min(xValue, st.getMinTargets())
+                    : st.isXScaled() ? 0 : st.getMinTargets();
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
-            boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                    || targetFilterAllowsPlayer(st.getFilter());
             boolean wantsPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                    || st.getFilter() != null;
+                    || targetFilterAllowsPermanent(st.getFilter());
 
-            if (wantsPlayer && !wantsPermanent) {
-                UUID chosen = pickPlayerTargetForGroup(gameData, aiPlayerId, opponentId, groupEffects);
-                if (chosen != null) {
-                    result.add(chosen);
-                    alreadyChosen.add(chosen);
-                } else if (st.getMinTargets() > 0) {
-                    return null; // Mandatory target cannot be satisfied
+            if (st.getFilter() instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                List<UUID> chosen = xValue == null
+                        ? List.of()
+                        : pickGraveyardTargetsForGroup(
+                                gameData, card, aiPlayerId, graveyardFilter, effectiveMaxTargets,
+                                alreadyChosen, xValue);
+                if (chosen.size() < effectiveMinTargets) {
+                    return null;
                 }
-            } else if (wantsPermanent) {
-                List<UUID> chosen = pickPermanentTargetsForGroup(gameData, card, aiPlayerId, opponentId,
-                        st, alreadyChosen, groupEffects);
-                if (chosen.size() < st.getMinTargets()) {
+                result.addAll(chosen);
+                alreadyChosen.addAll(chosen);
+            } else if (wantsPlayer && !wantsPermanent) {
+                if (effectiveMaxTargets == 0) {
+                    if (effectiveMinTargets > 0) {
+                        return null;
+                    }
+                    continue;
+                }
+                List<UUID> chosen = new ArrayList<>();
+                Set<UUID> unavailable = card.isAllowSharedTargets()
+                        ? new HashSet<>()
+                        : new HashSet<>(alreadyChosen);
+                while (chosen.size() < effectiveMaxTargets) {
+                    unavailable.addAll(chosen);
+                    UUID player = pickPlayerTargetForGroup(
+                            gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
+                            unavailable, false);
+                    if (player == null) {
+                        break;
+                    }
+                    chosen.add(player);
+                }
+                if (chosen.size() < effectiveMinTargets) {
                     return null; // Mandatory targets cannot be satisfied
                 }
                 result.addAll(chosen);
                 alreadyChosen.addAll(chosen);
-            } else if (st.getMinTargets() > 0) {
+            } else if (wantsPermanent) {
+                List<UUID> chosen = pickPermanentTargetsForGroup(gameData, card, aiPlayerId, opponentId,
+                        st, effectiveMaxTargets, alreadyChosen, groupEffects);
+                if (chosen.size() < effectiveMinTargets && wantsPlayer) {
+                    UUID player = pickPlayerTargetForGroup(
+                            gameData, aiPlayerId, opponentId, st.getFilter(), groupEffects,
+                            alreadyChosen, card.isAllowSharedTargets());
+                    if (player != null
+                            && !chosen.contains(player) && chosen.size() < effectiveMaxTargets) {
+                        chosen.add(player);
+                    }
+                }
+                if (chosen.size() < effectiveMinTargets) {
+                    return null; // Mandatory targets cannot be satisfied
+                }
+                result.addAll(chosen);
+                alreadyChosen.addAll(chosen);
+            } else if (effectiveMinTargets > 0) {
                 return null; // Mandatory target cannot be satisfied
             }
         }
 
-        return result.isEmpty() ? null : result;
+        return result;
+    }
+
+    private List<UUID> pickGraveyardTargetsForGroup(
+            GameData gameData,
+            Card card,
+            UUID aiPlayerId,
+            GraveyardCardPredicateTargetFilter filter,
+            int maxTargets,
+            Set<UUID> alreadyChosen,
+            Integer xValue) {
+        if (maxTargets <= 0 || !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
+
+        List<Card> candidates = getGraveyardCandidates(
+                gameData, filter.scope(), aiPlayerId, AiUtils.getOpponentId(gameData, aiPlayerId)).stream()
+                .filter(candidate -> card.isAllowSharedTargets() || !alreadyChosen.contains(candidate.getId()))
+                .filter(candidate -> !gameQueryService.isLandCardTargetRestricted(
+                        gameData, candidate, aiPlayerId))
+                .filter(candidate -> filter.predicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        candidate, filter.predicate(), card.getId(), gameData,
+                        gameQueryService.findGraveyardOwnerById(gameData, candidate.getId()),
+                        null, null, xValue))
+                .sorted(Comparator.comparingInt(Card::getManaValue).reversed())
+                .toList();
+
+        return candidates.stream()
+                .limit(maxTargets)
+                .map(Card::getId)
+                .toList();
+    }
+
+    private boolean isAmountDistributionEffect(CardEffect effect) {
+        if (effect == null) {
+            return false;
+        }
+        if (EffectResolution.distributesAmountsAmongTargets(effect)) {
+            return true;
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return replacement.baseEffect() != null
+                    && replacement.upgradedEffect() != null
+                    && EffectResolution.distributesAmountsAmongTargets(replacement.baseEffect())
+                    && EffectResolution.distributesAmountsAmongTargets(replacement.upgradedEffect());
+        }
+        return false;
+    }
+
+    private int maxTargetsAffordableWithAdditionalLife(GameData gameData, Card card, UUID playerId) {
+        int lifeCostPerTarget = card.getAdditionalLifeCostPerTarget();
+        if (lifeCostPerTarget <= 0) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(0, gameData.getLife(playerId) / lifeCostPerTarget);
+    }
+
+    static boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof PlayerPredicateTargetFilter;
+    }
+
+    static boolean targetFilterAllowsPermanent(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter
+                || targetFilter instanceof OwnedPermanentPredicateTargetFilter
+                || targetFilter instanceof PermanentPredicateTargetFilter;
     }
 
     /**
@@ -439,21 +740,46 @@ class AiTargetSelector {
      * (e.g. ExtraTurnEffect), opponent for harmful effects.
      */
     private UUID pickPlayerTargetForGroup(GameData gameData, UUID aiPlayerId, UUID opponentId,
-                                           List<CardEffect> effects) {
+                                          TargetFilter groupFilter, List<CardEffect> effects,
+                                          Set<UUID> alreadyChosen, boolean allowSharedTargets) {
         boolean isBeneficial = effects.stream().anyMatch(ExtraTurnEffect.class::isInstance);
 
         UUID preferred = isBeneficial ? aiPlayerId : opponentId;
         UUID fallback = isBeneficial ? opponentId : aiPlayerId;
 
-        if (preferred != null && !gameQueryService.playerHasShroud(gameData, preferred)
+        if (isAvailablePlayerTarget(preferred, alreadyChosen, allowSharedTargets)
+                && isLegalPlayerTargetForGroup(gameData, aiPlayerId, preferred, groupFilter)
                 && (isBeneficial || !gameQueryService.playerHasHexproof(gameData, preferred))) {
             return preferred;
         }
-        if (fallback != null && !gameQueryService.playerHasShroud(gameData, fallback)
+        if (isAvailablePlayerTarget(fallback, alreadyChosen, allowSharedTargets)
+                && isLegalPlayerTargetForGroup(gameData, aiPlayerId, fallback, groupFilter)
                 && (!isBeneficial || !gameQueryService.playerHasHexproof(gameData, fallback))) {
             return fallback;
         }
         return null;
+    }
+
+    private boolean isAvailablePlayerTarget(UUID playerId, Set<UUID> alreadyChosen,
+                                            boolean allowSharedTargets) {
+        return playerId != null && (allowSharedTargets || !alreadyChosen.contains(playerId));
+    }
+
+    private boolean isLegalPlayerTargetForGroup(GameData gameData, UUID aiPlayerId, UUID playerId,
+                                                TargetFilter groupFilter) {
+        if (playerId == null || gameQueryService.isPeaceTalksActive(gameData)
+                || gameQueryService.playerHasShroud(gameData, playerId)) {
+            return false;
+        }
+        if (groupFilter instanceof PlayerPredicateTargetFilter playerFilter) {
+            return targetLegalityService.matchesPlayerPredicate(
+                    gameData, aiPlayerId, playerId, playerFilter.predicate());
+        }
+        if (groupFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+            return targetLegalityService.matchesPlayerPredicate(
+                    gameData, aiPlayerId, playerId, anyFilter.playerPredicate());
+        }
+        return groupFilter == null;
     }
 
     /**
@@ -467,8 +793,8 @@ class AiTargetSelector {
      * candidate first, e.g. Pounce's own-fighter group choosing the AI's strongest creature).
      */
     private List<UUID> pickPermanentTargetsForGroup(GameData gameData, Card card, UUID aiPlayerId,
-                                                    UUID opponentId, SpellTarget st, Set<UUID> alreadyChosen,
-                                                    List<CardEffect> groupEffects) {
+                                                    UUID opponentId, SpellTarget st, int maxTargets,
+                                                    Set<UUID> alreadyChosen, List<CardEffect> groupEffects) {
         TargetFilter groupFilter = st.getFilter();
         boolean beneficial = polarityClassifier.classifyGroup(gameData, groupEffects, aiPlayerId)
                 == TargetPolarity.BENEFICIAL;
@@ -477,10 +803,10 @@ class AiTargetSelector {
 
         List<UUID> chosen = new ArrayList<>();
         takeGroupTargets(gameData, card, aiPlayerId, opponentId, groupFilter, preferredBoard,
-                st.getMaxTargets(), alreadyChosen, chosen);
+                maxTargets, alreadyChosen, chosen);
         if (chosen.size() < st.getMinTargets()) {
             takeGroupTargets(gameData, card, aiPlayerId, opponentId, groupFilter, fallbackBoard,
-                    st.getMinTargets(), alreadyChosen, chosen);
+                    Math.min(st.getMinTargets(), maxTargets), alreadyChosen, chosen);
         }
         return chosen;
     }
@@ -497,7 +823,8 @@ class AiTargetSelector {
         }
         UUID boardOpponent = boardOwner.equals(aiPlayerId) ? opponentId : aiPlayerId;
         List<Permanent> candidates = gameData.playerBattlefields.getOrDefault(boardOwner, List.of()).stream()
-                .filter(p -> !alreadyChosen.contains(p.getId()) && !chosen.contains(p.getId()))
+                .filter(p -> (card.isAllowSharedTargets() || !alreadyChosen.contains(p.getId()))
+                        && !chosen.contains(p.getId()))
                 .filter(p -> validTargetService.isValidMultiTargetPermanent(gameData, card, p, aiPlayerId, groupFilter))
                 .sorted(Comparator.comparingDouble(
                         (Permanent p) -> generalTargetPriority(gameData, p, boardOwner, boardOpponent)).reversed())
@@ -535,6 +862,16 @@ class AiTargetSelector {
             trial.add(candidate.getId());
             return targetLegalityService.fitsAtMostTwoCreaturesAndTwoLands(gameData, trial);
         }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND) {
+            List<UUID> trial = new ArrayList<>(chosenSoFar);
+            trial.add(candidate.getId());
+            return targetLegalityService.fitsAtMostOneArtifactOneCreatureAndOneLand(gameData, trial);
+        }
+        if (constraint == MultiTargetConstraint.AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER) {
+            List<UUID> trial = new ArrayList<>(chosenSoFar);
+            trial.add(candidate.getId());
+            return targetLegalityService.fitsAtMostOneArtifactCreatureEnchantmentAndPlaneswalker(gameData, trial);
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
             UUID candidateControllerId = gameQueryService.findPermanentController(gameData, candidate.getId());
@@ -560,12 +897,16 @@ class AiTargetSelector {
                         gameQueryService.sharesArtifactCreatureOrLandType(other, candidate);
                 case SHARE_ARTIFACT_OR_CREATURE_TYPE ->
                         gameQueryService.sharesArtifactOrCreatureType(other, candidate);
-                case SHARE_CARD_TYPE ->
-                        gameQueryService.sharesCardType(gameData, other, candidate);
+                case SHARE_CARD_TYPE -> gameQueryService.sharesCardType(other, candidate);
                 case CONTROLLED_BY_FIRST_TARGET -> java.util.Objects.equals(candidateControllerId,
                         gameQueryService.findPermanentController(gameData, other.getId()));
-                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS, AT_MOST_ONE_PER_CONTROLLER,
-                     ONE_PER_CONTROLLER_IF_ABLE -> true; // handled above
+                case ATTACHED_TO_FIRST_TARGET -> java.util.Objects.equals(other.getId(), candidate.getAttachedTo());
+                case DIFFERENT_NAMES -> !other.getCard().getName().equals(candidate.getCard().getName());
+                case AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_CONTROLLER,
+                     AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
+                     ONE_PER_CONTROLLER_IF_ABLE, AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
+                     AT_MOST_ONE_CREATURE_AND_ONE_LAND, AT_MOST_ONE_PER_COLOR -> true; // handled above
                 case SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST ->
                         isAnotherPermanentOfAuraHostType(gameData, other, candidate);
             };
@@ -602,7 +943,20 @@ class AiTargetSelector {
         if (targetValidationService.checkEffectTargets(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), ctx).isPresent()) {
             return false;
         }
-        return true;
+        return hasPossibleCastTimeCreatureType(gameData, card, target);
+    }
+
+    private boolean hasPossibleCastTimeCreatureType(GameData gameData, Card card, Permanent target) {
+        boolean requiresChoice = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(CastTimeCreatureTypeChoiceEffect.class::isInstance)
+                .map(CastTimeCreatureTypeChoiceEffect.class::cast)
+                .anyMatch(CastTimeCreatureTypeChoiceEffect::requiresCastTimeCreatureTypeChoice);
+        if (!requiresChoice) {
+            return true;
+        }
+        return gameQueryService.isCreature(gameData, target)
+                && (!gameQueryService.effectiveCreatureSubtypes(gameData, target).isEmpty()
+                || gameQueryService.hasKeyword(gameData, target, Keyword.CHANGELING));
     }
 
     /**
@@ -617,6 +971,17 @@ class AiTargetSelector {
      */
     boolean isValidPlayerTarget(GameData gameData, Card card, UUID playerTargetId, UUID aiPlayerId) {
         return targetLegalityService.checkSpellTargeting(gameData, card, playerTargetId, null, aiPlayerId).isEmpty();
+    }
+
+    boolean isValidModalTarget(GameData gameData, Card card, List<CardEffect> modeEffects,
+                               UUID targetId, UUID aiPlayerId) {
+        try {
+            targetLegalityService.validateSpellTargeting(
+                    gameData, card, modeEffects, targetId, null, aiPlayerId, true, 0);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
     }
 
     /**
@@ -634,20 +999,20 @@ class AiTargetSelector {
                 result.add(TargetType.PERMANENT);
             }
         }
-        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
-            CardEffect effectToCheck = e;
-            if (e instanceof ConditionalReplacementEffect replacement) {
-                effectToCheck = replacement.baseEffect();
-            }
-            TargetSpec spec = effectToCheck.targetSpec();
+        List<CardEffect> baseSpellEffects = EffectResolution.resolveEffects(
+                card.getEffects(EffectSlot.SPELL), false, null);
+        for (CardEffect effect : baseSpellEffects) {
+            TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
             if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
-            if (EffectResolution.targetsSpellOnStack(effectToCheck)) result.add(TargetType.SPELL_ON_STACK);
+            if (EffectResolution.targetsSpellOnStack(effect)) result.add(TargetType.SPELL_ON_STACK);
             if (spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) result.add(TargetType.GRAVEYARD);
             if (spec.admits(TargetPredicate.Kind.EXILED_CARD)) result.add(TargetType.EXILE);
         }
-        for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            TargetSpec spec = e.targetSpec();
+        List<CardEffect> baseEtbEffects = EffectResolution.resolveEffects(
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), false, null);
+        for (CardEffect effect : baseEtbEffects) {
+            TargetSpec spec = effect.targetSpec();
             if (spec.admits(TargetPredicate.Kind.PLAYER)) result.add(TargetType.PLAYER);
             if (spec.admits(TargetPredicate.Kind.PERMANENT)) result.add(TargetType.PERMANENT);
         }
@@ -697,20 +1062,22 @@ class AiTargetSelector {
     }
 
     /**
-     * Returns all valid permanent targets for an X spell whose target filter
-     * includes {@link com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate},
-     * filtered to those with mana value between 1 and maxAffordableX (inclusive).
+     * Returns all valid permanent targets for an X spell whose target filter includes a mana-value
+     * constraint, filtered to those reachable with an announced X up to maxAffordableX.
      */
     List<Permanent> findValidPermanentTargetsForManaValueX(GameData gameData, Card card,
                                                             UUID aiPlayerId, int maxAffordableX) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         List<Permanent> result = new ArrayList<>();
+        boolean allowsZeroManaValue = AiUtils.hasManaValueAtMostXTarget(card);
         // Search opponent's battlefield first (more likely target for steal effects)
         for (UUID playerId : new UUID[]{opponentId, aiPlayerId}) {
             if (playerId == null) continue;
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
                 int mv = p.getCard().getManaValue();
-                if (mv >= 1 && mv <= maxAffordableX && isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
+                if ((allowsZeroManaValue || mv >= 1)
+                        && mv <= maxAffordableX
+                        && isValidPermanentTarget(gameData, card, p, aiPlayerId)) {
                     result.add(p);
                 }
             }
@@ -810,6 +1177,9 @@ class AiTargetSelector {
      */
     List<Card> findValidGraveyardReturnTargets(GameData gameData, Card card, UUID aiPlayerId,
                                                ReturnTargetCardsFromGraveyardToHandEffect effect) {
+        if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+            return List.of();
+        }
         List<Card> candidates = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of()).stream()
                 .filter(candidate -> predicateEvaluationService.matchesCardPredicate(
                         candidate, effect.filter(), card.getId()))
@@ -1074,20 +1444,37 @@ class AiTargetSelector {
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
 
-        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean effectsDeclareTarget = nonCostEffects.stream()
+                .anyMatch(e -> e.targetSpec().declaredTarget() != null);
+        boolean effectsCanTargetPlayer = nonCostEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean effectsCanTargetPermanent = nonCostEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        TargetFilter targetFilter = ability.getTargetFilter();
+        boolean canTargetPlayer = targetFilter == null
+                ? effectsCanTargetPlayer
+                : targetFilterAllowsPlayer(targetFilter)
+                && (effectsCanTargetPlayer || !effectsDeclareTarget);
+        boolean canTargetPermanent = targetFilter == null
+                ? effectsCanTargetPermanent
+                : targetFilterAllowsPermanent(targetFilter)
+                && (effectsCanTargetPermanent || !effectsDeclareTarget);
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
                 (e instanceof CreatureBoostEffect boost
                         && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
                         || e instanceof RegenerationEffect
-                        || (e instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.TARGET));
+                        || (e instanceof KeywordGrantingEffect grant
+                        && (grant.scope() == GrantScope.TARGET
+                        || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES)));
 
         if (canTargetPermanent) {
             if (isBeneficial) {
                 // Target own best creature
                 UUID target = findBestOwnCreatureTarget(gameData, ability, aiPlayerId, source);
+                if (target != null) return target;
+                target = findBestOwnPermanentTarget(gameData, ability, aiPlayerId, opponentId, source);
                 if (target != null) return target;
             } else {
                 // Target opponent's best creature (for damage, destruction, bounce, tap, etc.)
@@ -1096,13 +1483,9 @@ class AiTargetSelector {
             }
         }
 
-        // For "any target" damage, fall back to opponent's face. One effect allowing a player
-        // target doesn't make the player legal for the ability as a whole: a companion effect may
-        // require a permanent (Samite Alchemist's "prevent … to target creature you control. Tap
-        // that creature."), so the engine gets the final say here too.
-        if (canTargetPlayer && opponentId != null
-                && isValidAbilityTarget(gameData, ability, opponentId, aiPlayerId, source)) {
-            return opponentId;
+        if (canTargetPlayer) {
+            UUID target = findBestPlayerTarget(gameData, ability, aiPlayerId, opponentId, isBeneficial, source);
+            if (target != null) return target;
         }
 
         return null;
@@ -1117,6 +1500,17 @@ class AiTargetSelector {
                 .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
                 .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
                         + gameQueryService.getEffectiveToughness(gameData, p)))
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    private UUID findBestOwnPermanentTarget(GameData gameData, ActivatedAbility ability,
+                                            UUID aiPlayerId, UUID opponentId, Permanent source) {
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        return ownBattlefield.stream()
+                .filter(p -> !p.getId().equals(source.getId()))
+                .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                .max(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, aiPlayerId, opponentId)))
                 .map(Permanent::getId)
                 .orElse(null);
     }
@@ -1151,12 +1545,39 @@ class AiTargetSelector {
         }
 
         // General case: target opponent's highest-threat creature
-        return oppBattlefield.stream()
+        UUID creatureTarget = oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
                 .max(Comparator.comparingDouble(p -> threatScore(gameData, p, opponentId, aiPlayerId)))
                 .map(Permanent::getId)
                 .orElse(null);
+        if (creatureTarget != null) return creatureTarget;
+
+        return oppBattlefield.stream()
+                .filter(p -> isValidAbilityPermanentTarget(gameData, ability, p, aiPlayerId, source))
+                .max(Comparator.comparingDouble(p -> generalTargetPriority(gameData, p, opponentId, aiPlayerId)))
+                .map(Permanent::getId)
+                .orElse(null);
+    }
+
+    private UUID findBestPlayerTarget(GameData gameData, ActivatedAbility ability,
+                                      UUID aiPlayerId, UUID opponentId, boolean beneficial, Permanent source) {
+        List<UUID> candidates = new ArrayList<>();
+        addPlayerCandidate(candidates, beneficial ? aiPlayerId : opponentId);
+        addPlayerCandidate(candidates, beneficial ? opponentId : aiPlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            addPlayerCandidate(candidates, playerId);
+        }
+        return candidates.stream()
+                .filter(targetId -> isValidAbilityTarget(gameData, ability, targetId, aiPlayerId, source))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void addPlayerCandidate(List<UUID> candidates, UUID playerId) {
+        if (playerId != null && !candidates.contains(playerId)) {
+            candidates.add(playerId);
+        }
     }
 
     /**

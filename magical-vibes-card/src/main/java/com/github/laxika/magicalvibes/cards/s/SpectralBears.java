@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "HML", collectorNumber = "98")
+@CardRegistration(set = "ATH", collectorNumber = "63")
 public class SpectralBears extends Card {
 
     public SpectralBears() {

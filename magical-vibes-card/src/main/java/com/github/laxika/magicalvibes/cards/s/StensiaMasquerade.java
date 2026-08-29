@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "172")
+@CardRegistration(set = "SOI", collectorNumber = "184")
 public class StensiaMasquerade extends Card {
 
     public StensiaMasquerade() {
