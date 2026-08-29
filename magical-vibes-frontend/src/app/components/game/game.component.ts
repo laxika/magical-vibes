@@ -644,6 +644,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playExileCard(card: Card): void {
     if (card.id) {
+      const ability = card.exileActivatedAbilities?.[0];
+      if (ability && !ability.needsTarget && !ability.manaCost?.includes('{X}')) {
+        this.websocketService.send({ type: MessageType.ACTIVATE_EXILE_ABILITY, cardId: card.id, abilityIndex: 0 });
+        return;
+      }
       this.choice.targeting.startExilePlay(card);
     }
   }

@@ -36,6 +36,7 @@ export enum MessageType {
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
   ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
+  ACTIVATE_EXILE_ABILITY = 'ACTIVATE_EXILE_ABILITY',
   REVEAL_HAND = 'REVEAL_HAND',
   REVEAL_LIBRARY_TOP = 'REVEAL_LIBRARY_TOP',
   REVEAL_PERMANENT = 'REVEAL_PERMANENT',
@@ -190,6 +191,7 @@ export interface Card {
   additionalBeholdChosenCreatureType: boolean;
   graveyardActivatedAbilities: ActivatedAbilityView[];
   handActivatedAbilities?: ActivatedAbilityView[];
+  exileActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
   kickerRequiresTap: boolean;

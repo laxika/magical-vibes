@@ -15,7 +15,8 @@ import java.util.Set;
  * The token copies all copiable characteristics per CR 707.2.
  *
  * <p>Optional overrides support "except it's X/Y", "except it's also a [type]",
- * additional subtypes, and counters placed after the token enters.
+ * additional subtypes, counters placed after the token enters, tapped-and-attacking entry,
+ * and delayed exile at end step or end of combat.
  */
 public record CreateTokenCopyOfTargetPermanentEffect(
         List<CardSubtype> additionalSubtypes,
@@ -26,16 +27,17 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean grantHaste,
         boolean exileAtEndStep,
         boolean sacrificeAtEndStep,
-        boolean tappedAndAttacking
+        boolean tappedAndAttacking,
+        boolean exileAtEndOfCombat
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect() {
-        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false);
+        this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false, false);
     }
 
     /** "except it has haste and 'At the beginning of the end step, exile this token.'" (Heat Shimmer). */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
-        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false);
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false, false);
     }
 
     /**
@@ -44,14 +46,22 @@ public record CreateTokenCopyOfTargetPermanentEffect(
      * dies-triggers and other players' "whenever a creature dies" abilities fire.
      */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep, boolean sacrificeAtEndStep) {
-        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep, false);
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep, false, false);
     }
 
     /** "Create a tapped and attacking token that's a copy of the target permanent." */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep,
                                                   boolean sacrificeAtEndStep, boolean tappedAndAttacking) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
-                sacrificeAtEndStep, tappedAndAttacking);
+                sacrificeAtEndStep, tappedAndAttacking, false);
+    }
+
+    /** "Create a tapped and attacking token that's a copy of the target permanent. Exile it at end of combat." */
+    public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep,
+                                                  boolean sacrificeAtEndStep, boolean tappedAndAttacking,
+                                                  boolean exileAtEndOfCombat) {
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, tappedAndAttacking, exileAtEndOfCombat);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -61,7 +71,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Integer toughnessOverride,
             Map<CounterType, Integer> initialCounters) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
-                false, false, false, false);
+                false, false, false, false, false);
     }
 
     @Override

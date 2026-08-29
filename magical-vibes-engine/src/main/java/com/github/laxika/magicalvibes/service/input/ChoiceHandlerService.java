@@ -1124,6 +1124,11 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (ctx.asEnters()) {
+            handleAsEntersModeChoice(gameData, player, chosen, ctx);
+            return;
+        }
+
         // Splice the chosen mode's effects into the paused resolution at the ChooseOneEffect's slot
         // so they resolve in card-text order through the same effect loop.
         if (gameData.pendingEffectResolutionEntry != null) {
@@ -1136,6 +1141,28 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
                 chosenLabel, ctx.sourceCard().getName());
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleAsEntersModeChoice(GameData gameData, Player player,
+            ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source != null) {
+            source.setChosenMode(chosen.label());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses \"" + chosen.label() + "\" for ", source.getCard(), "."));
+            log.info("Game {} - {} chooses mode \"{}\" for {} as it enters", gameData.id,
+                    player.getUsername(), chosen.label(), source.getCard().getName());
+            battlefieldEntryService.processCreatureETBEffects(gameData, ctx.controllerId(), source.getCard(),
+                    ctx.etbTargetId(), ctx.wasCastFromHand(), ctx.etbMode(), ctx.kicked(), ctx.targetIds());
+        }
+
+        if (gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

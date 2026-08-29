@@ -45,7 +45,8 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean drawAndRepeat, boolean putAnyNumber,
                                          boolean faceDown, int faceDownPower, int faceDownToughness,
                                          Set<CardType> faceDownCardTypes,
-                                         boolean returnExiledSourceIfSacrificed) implements CardEffect {
+                                         boolean returnExiledSourceIfSacrificed,
+                                         int maxPuts) implements CardEffect {
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
@@ -60,7 +61,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                       Set<CardType> faceDownCardTypes) {
         this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
                 attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
-                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false);
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, false, 0);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
@@ -132,6 +133,15 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
         return new PutCardToBattlefieldEffect(predicate, label, false, false, false, false, false, false, false, true);
     }
 
+    /** Ugin, the Spirit Dragon: put up to a fixed number of permanent cards from hand onto the battlefield. */
+    public static PutCardToBattlefieldEffect upToN(CardPredicate predicate, String label, int maxPuts) {
+        if (maxPuts < 1) {
+            throw new IllegalArgumentException("maxPuts must be positive");
+        }
+        return new PutCardToBattlefieldEffect(predicate, label, false, false, false, false, false, false,
+                false, true, false, 0, 0, Set.of(), false, maxPuts);
+    }
+
     /**
      * Wrenn and Seven: "Put any number of land cards from your hand onto the battlefield tapped."
      * Declinable HandCardChoice; each put re-offers until decline / no matches (no draw).
@@ -151,6 +161,13 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
     public PutCardToBattlefieldEffect returningExiledSourceIfSacrificed() {
         return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
-                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, true);
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, true, maxPuts);
+    }
+
+    public PutCardToBattlefieldEffect withMaxPuts(int newMaxPuts) {
+        return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
+                grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
+                returnExiledSourceIfSacrificed, newMaxPuts);
     }
 }

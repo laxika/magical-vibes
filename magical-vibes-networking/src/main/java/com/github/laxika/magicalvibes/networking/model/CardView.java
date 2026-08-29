@@ -70,6 +70,7 @@ public record CardView(
         boolean alternateCostRevealsHandCard,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,
+        List<ActivatedAbilityView> exileActivatedAbilities,
         boolean transformable,
         String kickerCost,
         boolean kickerRequiresTap,

@@ -207,6 +207,15 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        Permanent channelHarmSource = damageSource != null ? damageSource
+                : entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID channelHarmSourceControllerId = channelHarmSource != null
+                ? gameQueryService.findPermanentController(gameData, channelHarmSource.getId())
+                : entry.getControllerId();
+        rawDamage = damagePreventionService.applyChannelHarmPreventionToPermanent(
+                gameData, target, channelHarmSourceControllerId, rawDamage);
+        if (rawDamage <= 0) return 0;
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
         if (sourcePermId != null) {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
@@ -872,6 +881,12 @@ public class DamageSupport {
         rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(gameData, playerId, rawDamage);
         processSourceRedirectDamage(gameData);
         if (rawDamage <= 0) return;
+        UUID channelHarmSourceControllerId = sourcePermanent != null
+                ? gameQueryService.findPermanentController(gameData, sourcePermanent.getId())
+                : entry.getControllerId();
+        rawDamage = damagePreventionService.applyChannelHarmPrevention(
+                gameData, playerId, channelHarmSourceControllerId, rawDamage);
+        if (rawDamage <= 0) return;
         if (!damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, source.getColor())) {
             rawDamage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, playerId, entry.getControllerId(), rawDamage);
             // Apply target+source-specific prevention shields (e.g. Healing Grace)
@@ -1144,7 +1159,13 @@ public class DamageSupport {
                     " deals " + damage + " damage to " + targetName + "."));
 
             // Apply prevention shields on the redirect target (they may also have shields)
-            int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+            UUID redirectSourceControllerId = redirect.sourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentController(gameData, redirect.sourcePermanentId());
+            int redirectEffective = damagePreventionService.applyChannelHarmPrevention(
+                    gameData, targetId, redirectSourceControllerId, damage);
+            if (redirectEffective > 0) {
+                redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, redirectEffective);
+            }
             // Recursively process any redirects triggered by the target's shields
             processPendingRedirectDamage(gameData);
 
@@ -1215,7 +1236,13 @@ public class DamageSupport {
                 String targetName = gameData.playerIdToName.get(targetId);
                 gameLogService.append(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
 
-                int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+                UUID redirectSourceControllerId = redirect.damageSourceId() == null ? null
+                        : gameQueryService.findPermanentController(gameData, redirect.damageSourceId());
+                int redirectEffective = damagePreventionService.applyChannelHarmPrevention(
+                        gameData, targetId, redirectSourceControllerId, damage);
+                if (redirectEffective > 0) {
+                    redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, redirectEffective);
+                }
                 processPendingRedirectDamage(gameData);
 
                 if (redirectEffective > 0) {
@@ -1234,7 +1261,13 @@ public class DamageSupport {
                 gameLogService.append(gameData, GameLog.textCardText(
                         damage + " damage is redirected to ", targetPerm.getCard(), "."));
 
-                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
+                UUID redirectSourceControllerId = redirect.damageSourceId() == null ? null
+                        : gameQueryService.findPermanentController(gameData, redirect.damageSourceId());
+                int effectiveDamage = damagePreventionService.applyChannelHarmPreventionToPermanent(
+                        gameData, targetPerm, redirectSourceControllerId, damage);
+                if (effectiveDamage > 0) {
+                    effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, effectiveDamage);
+                }
                 if (effectiveDamage > 0) {
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
                     // destination that many defense counters (CR 120.3h); a permanent that is also

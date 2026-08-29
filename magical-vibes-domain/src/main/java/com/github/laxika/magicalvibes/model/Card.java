@@ -231,6 +231,8 @@ public class Card {
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
     /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
     private List<ActivatedAbility> handActivatedAbilities = new ArrayList<>();
+    /** Abilities activatable while this card is in exile (e.g. Torrent Elemental). */
+    private List<ActivatedAbility> exileActivatedAbilities = new ArrayList<>();
 
     public Card() {
         this.id = UUID.randomUUID();
@@ -328,6 +330,7 @@ public class Card {
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
+        this.exileActivatedAbilities = new ArrayList<>(source.exileActivatedAbilities);
     }
 
     /**
@@ -812,6 +815,11 @@ public class Card {
     public void addHandActivatedAbility(ActivatedAbility ability) {
         assertMutable();
         handActivatedAbilities.add(ability);
+    }
+
+    public void addExileActivatedAbility(ActivatedAbility ability) {
+        assertMutable();
+        exileActivatedAbilities.add(ability);
     }
 
     /**

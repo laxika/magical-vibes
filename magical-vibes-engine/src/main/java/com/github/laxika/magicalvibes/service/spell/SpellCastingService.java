@@ -2074,6 +2074,7 @@ public class SpellCastingService {
             if (additionalCostPayment.sacrificedCardId() != null) {
                 entry.setSacrificedCardId(additionalCostPayment.sacrificedCardId());
             }
+            entry.setDelvedCardIds(additionalCostPayment.delvedCardIds());
             entry.setPutCounterCostPaid(isPutCounterCostPaid(additionalCosts, paymentCostSelection));
             if (hasModalEtb) {
                 entry.setEtbMode(xValue != null ? xValue : 0);
@@ -2770,6 +2771,9 @@ public class SpellCastingService {
                 gameData.stack.getLast().setSacrificedCardId(additionalCostPayment.sacrificedCardId());
             }
             if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setDelvedCardIds(additionalCostPayment.delvedCardIds());
+            }
+            if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setPutCounterCostPaid(
                         isPutCounterCostPaid(additionalCosts, paymentCostSelection));
             }
@@ -2922,7 +2926,8 @@ public class SpellCastingService {
         resolvedXValue = payExileGraveyardCost(gameData, player, card, costs.exileGraveyardCost(), selection.exileGraveyardCardIndex(), resolvedXValue);
         resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, costs.exileXCardsCost(), selection.exileGraveyardCardIndices(), resolvedXValue);
         payExileNCardsFromGraveyardCost(gameData, player, card, costs.exileNCardsCost(), selection.exileGraveyardCardIndices());
-        payDelveCost(gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
+        List<UUID> delvedCardIds = payDelveCost(
+                gameData, player, card, costs.delveCost(), selection.exileGraveyardCardIndices());
         payDiscardCardOrPayManaCost(gameData, player, card, costs.discardCardOrPayManaCost(),
                 selection.discardHandCardIndex(), selection.spellCardIndex(), preManaPaymentPool);
         payDiscardCost(gameData, player, card, costs.discardCost(), selection.discardHandCardIndex(), selection.spellCardIndex());
@@ -2936,7 +2941,7 @@ public class SpellCastingService {
         }
         payEscalateDiscardCost(gameData, player, card, costs.escalateDiscardCost(),
                 selection.escalateModeCount(), selection.discardHandCardIndices(), selection.spellCardIndex());
-        return new AdditionalCostPayment(resolvedXValue, sacrificeCostPayment.sacrificedCardId());
+        return new AdditionalCostPayment(resolvedXValue, sacrificeCostPayment.sacrificedCardId(), delvedCardIds);
     }
 
     private BeheldCardPayment payBeholdCost(GameData gameData, Player player, Card card,
@@ -3210,7 +3215,7 @@ public class SpellCastingService {
         return toReturn.size();
     }
 
-    private record AdditionalCostPayment(int resolvedXValue, UUID sacrificedCardId) {}
+    private record AdditionalCostPayment(int resolvedXValue, UUID sacrificedCardId, List<UUID> delvedCardIds) {}
 
     private record SacrificeCostPayment(int resolvedXValue, UUID sacrificedCardId) {}
 
@@ -3503,12 +3508,12 @@ public class SpellCastingService {
         }
     }
 
-    private void payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
-                               List<Integer> exileGraveyardCardIndices) {
-        if (cost == null) return;
+    private List<UUID> payDelveCost(GameData gameData, Player player, Card card, DelveCost cost,
+                                    List<Integer> exileGraveyardCardIndices) {
+        if (cost == null) return List.of();
         additionalSpellCostService.validateDelveCost(gameData, player, card, cost, exileGraveyardCardIndices);
         List<Integer> indices = exileGraveyardCardIndices == null ? List.of() : exileGraveyardCardIndices;
-        if (indices.isEmpty()) return;
+        if (indices.isEmpty()) return List.of();
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Integer> sortedDescending = indices.stream().sorted(java.util.Comparator.reverseOrder()).toList();
@@ -3533,6 +3538,7 @@ public class SpellCastingService {
                     .text(".")
                     .build());
         }
+        return exiledCards.stream().map(Card::getId).toList();
     }
 
     // --- Play with flashback from graveyard ---

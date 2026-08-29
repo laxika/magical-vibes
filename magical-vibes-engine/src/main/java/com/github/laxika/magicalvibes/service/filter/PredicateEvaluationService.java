@@ -171,6 +171,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
@@ -575,7 +576,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
-                yield host != null && gameQueryService.isCreature(gameData, host);
+                yield host != null && (GameQueryService.isStaticEvaluationActive()
+                        ? isCreatureForStaticEvaluation(host)
+                        : gameQueryService.isCreature(gameData, host));
             }
             case PermanentIsAuraAttachedToLandPredicate ignored -> {
                 if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
@@ -995,6 +998,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (sourcePermanent == null && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
                 if (sourcePermanent == null) {
                     yield false;
                 }
@@ -1266,6 +1272,19 @@ public class PredicateEvaluationService {
         return (permanentArtifact && sourceArtifact)
                 || (permanentCreature && sourceCreature)
                 || (permanentEnchantment && sourceEnchantment);
+    }
+
+    private boolean isCreatureForStaticEvaluation(Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.hasCardType(CardType.CREATURE);
+        }
+        return permanent.getCard().hasType(CardType.CREATURE)
+                || permanent.isAnimatedUntilEndOfTurn()
+                || permanent.isAnimatedUntilEndOfCombat()
+                || permanent.isAnimatedUntilNextTurn()
+                || permanent.isPermanentlyAnimated()
+                || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
     /**
@@ -1879,6 +1898,8 @@ public class PredicateEvaluationService {
                 }
                 yield false;
             }
+            case StackEntryIsMulticoloredPredicate ignored ->
+                    entry.getCard().getColors() != null && entry.getCard().getColors().size() >= 2;
             case StackEntryCardTypeInPredicate cardTypeIn ->
                     cardTypeIn.cardTypes().stream().anyMatch(entry.getCard()::hasType);
             case StackEntrySubtypeInPredicate subtypeIn ->

@@ -340,6 +340,8 @@ public class StackResolutionService {
         }
 
         Permanent perm = createEnteringPermanent(entry, card, disturbCharacteristics(entry, card));
+        perm.setEvoked(entry.isEvoked());
+        perm.setProwl(entry.isProwl());
         // Carry the zone the spell was cast from so an "if cast from a graveyard, it enters with …
         // counters" as-enters replacement (e.g. Worldheart Phoenix) can gate on it during entry.
         // (castFromZone already set in createEnteringPermanent)
@@ -353,11 +355,8 @@ public class StackResolutionService {
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
                 entry.getXValue(), entry.isKicked());
+        gameData.trackExiledCardsWithPermanent(entry.getDelvedCardIds(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);
-        // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
-        perm.setEvoked(entry.isEvoked());
-        // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
-        perm.setProwl(entry.isProwl());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -695,6 +694,8 @@ public class StackResolutionService {
         }
 
         Permanent perm = new Permanent(card);
+        perm.setEvoked(entry.isEvoked());
+        perm.setProwl(entry.isProwl());
 
         // Gather Specimens (CR 614.1): an artifact creature that would enter under an opponent's
         // control instead enters under the gatherer's control. Resolve up front so the log, ETB
@@ -705,10 +706,6 @@ public class StackResolutionService {
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
                 entry.getXValue(), entry.isKicked());
-        // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
-        perm.setEvoked(entry.isEvoked());
-        // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
-        perm.setProwl(entry.isProwl());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing

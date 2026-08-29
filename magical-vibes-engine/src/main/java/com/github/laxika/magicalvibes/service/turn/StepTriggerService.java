@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
@@ -77,6 +79,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -489,6 +492,31 @@ public class StepTriggerService {
                 gameLogService.append(gameData, GameLog.text("The card exiled with " + sourceName + " is put into its owner's graveyard."));
                 log.info("Game {} - unplayed card exiled with {} put into owner's graveyard",
                         gameData.id, sourceName);
+            }
+        }
+
+        if (gameData.hasDelayedAction(ExilePermanentsAtNextUpkeep.class)) {
+            List<ExilePermanentsAtNextUpkeep> pending = gameData.drainDelayedActions(
+                    ExilePermanentsAtNextUpkeep.class,
+                    action -> action.controllerId().equals(gameData.activePlayerId));
+            for (ExilePermanentsAtNextUpkeep action : pending) {
+                if (action.permanentIds().isEmpty()) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        List.of(new ExileTargetPermanentEffect()),
+                        null,
+                        action.permanentIds());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed upkeep exile trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
             }
         }
 
@@ -4110,7 +4138,8 @@ public class StepTriggerService {
     }
 
     /**
-     * Scans battlefields for beginning-of-combat triggered abilities and pushes them onto the stack.
+     * Scans battlefields and the active player's graveyard for beginning-of-combat triggered
+     * abilities and pushes them onto the stack.
      * {@code BEGINNING_OF_COMBAT_TRIGGERED} fires only for the active player's permanents
      * (CR 507.1: "At the beginning of combat on your turn").
      * {@code EACH_BEGINNING_OF_COMBAT_TRIGGERED} fires for every permanent on every
@@ -4129,6 +4158,8 @@ public class StepTriggerService {
                         perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
             }
         }
+
+        handleGraveyardBeginningOfCombatTriggers(gameData, activePlayerId);
 
         gameData.forEachPermanent((playerId, perm) ->
                 queueBeginningOfCombatTriggers(gameData, playerId, perm,
@@ -4161,6 +4192,43 @@ public class StepTriggerService {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    private void handleGraveyardBeginningOfCombatTriggers(GameData gameData, UUID activePlayerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
+        if (graveyard == null) {
+            return;
+        }
+
+        for (Card card : new ArrayList<>(graveyard)) {
+            List<CardEffect> combatEffects = card.getEffects(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED);
+            if (combatEffects == null || combatEffects.isEmpty()) {
+                continue;
+            }
+
+            for (CardEffect effect : combatEffects) {
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forCard(card, activePlayerId))) {
+                    log.info("Game {} - {} graveyard beginning-of-combat ability skipped ({})",
+                            gameData.id, card.getName(), conditional.conditionNotMetReason());
+                    continue;
+                }
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        activePlayerId,
+                        card.getName() + "'s combat ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s combat ability triggers."));
+                log.info("Game {} - {} graveyard beginning-of-combat trigger pushed onto stack",
+                        gameData.id, card.getName());
+            }
+        }
+    }
+
     private void queueBeginningOfCombatTriggers(GameData gameData, UUID controllerId, Permanent perm,
                                                 List<CardEffect> combatEffects) {
         if (combatEffects == null || combatEffects.isEmpty()) {
@@ -4190,7 +4258,8 @@ public class StepTriggerService {
             if (effect instanceof ConditionalEffect conditional
                     && (conditional.condition() instanceof AllOf
                         || conditional.condition() instanceof ControlsPermanentCount
-                        || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower)) {
+                        || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower
+                        || conditional.condition() instanceof SourceHasChosenMode)) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, controllerId))) {
                     log.info("Game {} - {} beginning-of-combat trigger skipped ({} not met)",

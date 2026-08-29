@@ -25,6 +25,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
 | destroy, terror, wrath, board wipe | CARD_PATTERNS_LANDS_SPELLS.md |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
+| manifest, face-down creature, turn face up | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |

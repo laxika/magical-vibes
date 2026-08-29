@@ -162,6 +162,7 @@ on what the mana may pay for.
 | Counter if mana value matches discarded card | `h/HisokaMinamoSensei.java` | Activated: {2}{U}+DiscardCardTypeCost(null, null, false, 1, false, true)+CounterSpellIfManaValueEqualsXEffect — the trackManaValue discard cost snapshots the discarded card's mana value into the ability's X |
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |
 | Bounce target | `u/Unsummon.java` | ReturnToHandEffect.target() |
+| Bounce target + token copy | `s/SupplantForm.java` | `ReturnTargetCreatureToHandAndCreateTokenCopyEffect` — return the target creature, then create a token copy from its last-known card characteristics |
 | Bounce target + all same name | `e/EchoingTruth.java` | `target(nonland)` + `ReturnTargetPermanentAndAllWithSameNameToHandEffect(nonland, PermanentTruePredicate())` — only the chosen nonland permanent is targeted; every other permanent with that name is returned without being targeted |
 | Bounce target + life loss | `v/VaporSnag.java` | ReturnToHandEffect.targetAndControllerLosesLife(1) — bounce creature, its controller loses life |
 | Bounce target + controller draws | `c/CallToHeel.java` | ReturnToHandEffect.targetAndControllerDraws(1) — bounce creature, its controller draws a card |
@@ -243,6 +244,7 @@ on what the mana may pay for.
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealDamageToAnyTargetEffect(new XValue(), false, true) + ShuffleIntoLibraryEffect |
 | X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateTokenEffect(new XValue(), ...) + ShuffleIntoLibraryEffect |
 | Fight (two-target) | `p/PreyUpon.java` | FightTargetsEffect, multi-target: creature you control + creature you don't control |
+| Toughness-based mutual damage (two-target) | `g/GrimContest.java` | TargetCreaturesDealToughnessDamageToEachOtherEffect, multi-target: creature you control + creature an opponent controls; unlike fight, uses each creature's toughness |
 | Fight (any two creatures) | `b/BloodFeud.java` | FightTargetsEffect, both targets are any creature (no controller restriction). Cross-group distinct is the default — no extra flags needed when oracle text says "another target" |
 | Counter + target spell cost reduction | `b/BrushOff.java` | STATIC ReduceOwnCastCostIfTargetingStackEntryEffect(StackEntryTypeInPredicate(INSTANT_SPELL, SORCERY_SPELL), 2) + SPELL CounterSpellEffect — costs {1}{U} less when targeting an instant or sorcery spell, counters any spell |
 | Fight + counter + target cost reduction | `s/SavageStomp.java` | STATIC ReduceOwnCastCostIfTargetingPermanentEffect(PermanentHasSubtypePredicate(DINOSAUR), 2, true) + PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 1) bound to the first target group + FightTargetsEffect — costs less when targeting a matching controlled permanent, puts +1/+1 counter on the first target then fights. Also see a/AncientAnimus.java: PutCounterOnTargetPermanentEffect.withResolutionCondition(..., PermanentHasSupertypePredicate(LEGENDARY)) for "if it's legendary" |

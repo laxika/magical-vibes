@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Exiles a targeted card from any graveyard. If the exiled card is a creature card, the controller
@@ -9,20 +10,30 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
  * +{@code noncreaturePowerBoost}/+{@code noncreatureToughnessBoost} until end of turn.
  *
  * <p>Used by Deathgorge Scavenger and Scavenging Ooze and similar cards that provide conditional
- * bonuses based on the type of card exiled from a graveyard.</p>
+ * bonuses based on the type of card exiled from a graveyard. The optional {@code filter} narrows
+ * which graveyard cards may be targeted.</p>
  */
 public record ExileGraveyardCardWithConditionalBonusEffect(
         int creatureLifeGain,
         int creatureCountersOnSource,
         int noncreaturePowerBoost,
-        int noncreatureToughnessBoost
+        int noncreatureToughnessBoost,
+        CardPredicate filter
 ) implements CardEffect {
+
+    public ExileGraveyardCardWithConditionalBonusEffect(int creatureLifeGain,
+                                                         int creatureCountersOnSource,
+                                                         int noncreaturePowerBoost,
+                                                         int noncreatureToughnessBoost) {
+        this(creatureLifeGain, creatureCountersOnSource, noncreaturePowerBoost,
+                noncreatureToughnessBoost, null);
+    }
 
     /**
      * Convenience constructor for cards whose creature-card branch only gains life.
      */
     public ExileGraveyardCardWithConditionalBonusEffect(int creatureLifeGain, int noncreaturePowerBoost, int noncreatureToughnessBoost) {
-        this(creatureLifeGain, 0, noncreaturePowerBoost, noncreatureToughnessBoost);
+        this(creatureLifeGain, 0, noncreaturePowerBoost, noncreatureToughnessBoost, null);
     }
 
     @Override

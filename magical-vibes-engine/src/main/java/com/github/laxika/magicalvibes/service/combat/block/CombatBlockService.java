@@ -299,17 +299,6 @@ public class CombatBlockService {
         int blockLifeTaxTotal = blockLifeTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
         blockTaxTotal += globalBlockManaTaxByBlocker.values().stream().mapToInt(Integer::intValue).sum();
 
-        // Team-wide "each creature you control can't be blocked by more than N creatures" (Yuan Shao).
-        // All attackers belong to the active player, so scan that player's battlefield once.
-        int teamMaxBlockers = Integer.MAX_VALUE;
-        for (Permanent p : attackerBattlefield) {
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
-                    teamMaxBlockers = Math.min(teamMaxBlockers, restriction.maxBlockers());
-                }
-            }
-        }
-
         for (var entry : blockersPerAttacker.entrySet()) {
             int attackerIdx = entry.getKey();
             int blockerCount = entry.getValue();
@@ -317,6 +306,7 @@ public class CombatBlockService {
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
             }
+            int teamMaxBlockers = getTeamMaxBlockersForAttacker(gameData, attackerBattlefield, attacker);
             if (blockerCount > teamMaxBlockers) {
                 throw new IllegalStateException(attacker.getCard().getName()
                         + " can't be blocked by more than " + teamMaxBlockers
@@ -698,6 +688,23 @@ public class CombatBlockService {
         }
 
         return CombatResult.AUTO_PASS_ONLY;
+    }
+
+    private int getTeamMaxBlockersForAttacker(GameData gameData,
+                                               List<Permanent> controlledPermanents,
+                                               Permanent attacker) {
+        int maxBlockers = Integer.MAX_VALUE;
+        for (Permanent source : controlledPermanents) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
+                        && (restriction.affectedCreaturePredicate() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, restriction.affectedCreaturePredicate()))) {
+                    maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
+                }
+            }
+        }
+        return maxBlockers;
     }
 
     /**

@@ -91,7 +91,7 @@ public class GargantuanGorillaUpkeepSupport {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);
         }
         destructionSupport.dealNoncombatDamageToPlayer(gameData, controllerId, 7,
-                sourceCard.getName(), sourceCard.getColor());
+                sourceCard.getName(), sourceCard.getColor(), controllerId);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

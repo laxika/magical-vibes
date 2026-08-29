@@ -159,6 +159,26 @@ public class CastingPermissionService {
         // Dosan the Falling Leaf: players can cast spells only during their own turns.
         if (gameQueryService.isLockedOutByOwnTurnOnlySpellRestriction(gameData, playerId)) return true;
 
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (!perm.isAttacking()) continue;
+                UUID attackTarget = perm.getAttackTarget();
+                if (attackTarget == null) continue;
+                UUID defendingPlayerId = gameData.playerIds.contains(attackTarget)
+                        ? attackTarget
+                        : gameQueryService.findPermanentController(gameData, attackTarget);
+                if (!playerId.equals(defendingPlayerId)) continue;
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SpellCastingRestrictionEffect restriction
+                            && restriction.restrictsDefendingPlayerWhileSourceAttacking()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {

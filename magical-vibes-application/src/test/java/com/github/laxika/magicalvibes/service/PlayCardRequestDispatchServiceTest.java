@@ -84,7 +84,7 @@ class PlayCardRequestDispatchServiceTest {
                 8, List.of(9, 10), List.of(imposedSacrifice), List.of(multiSacrifice),
                 List.of("{1}{G}"), true, null,
                 beholdPermanent, 11, List.of(multiBeholdPermanent), List.of(12, 13),
-                null, "ELF", false);
+                null, "ELF", false, null);
 
         dispatchService.dispatch(gameData, player, request);
 
@@ -94,6 +94,22 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of(9, 10)), eq(List.of(imposedSacrifice)), eq(List.of(multiSacrifice)),
                 eq(List.of("{1}{G}")), eq(true), eq(beholdPermanent), eq(11),
                 eq(List.of(multiBeholdPermanent)), eq(List.of(12, 13)), eq(CardSubtype.ELF));
+        verifyNoMoreInteractions(gameService);
+    }
+
+    @Test
+    @DisplayName("Explicit mana-only alternate-cost casts use the alternate-cost engine path")
+    void explicitAlternateCostRoutesToAlternateCast() {
+        PlayCardRequest request = new PlayCardRequest(0, null, null, null,
+                null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, List.of(), null, null, null, null, null, null, null, null,
+                null, true);
+
+        dispatchService.dispatch(gameData, player, request);
+
+        verify(gameService).playCardWithAlternateCost(eq(gameData), eq(player), eq(0), isNull(),
+                isNull(), isNull(), eq(List.of()));
         verifyNoMoreInteractions(gameService);
     }
 

@@ -118,7 +118,7 @@ public class PlayerInteractionSupport {
                 + ". If you do, draw a card and repeat this process."
                 : effect.putAnyNumber()
                 ? "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix
-                + " (or decline to finish)."
+                + (effect.maxPuts() > 0 ? " (up to " + effect.maxPuts() + ")." : " (or decline to finish).")
                 : "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
         UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourceEquipmentCardId : null;
         UUID returnExiledSourceCardId = effect.returnExiledSourceIfSacrificed()
@@ -129,7 +129,7 @@ public class PlayerInteractionSupport {
                 effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                 repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                 effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),
-                returnExiledSourceCardId);
+                returnExiledSourceCardId, effect.maxPuts());
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {

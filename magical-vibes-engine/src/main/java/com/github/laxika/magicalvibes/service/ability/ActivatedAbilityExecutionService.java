@@ -960,6 +960,9 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
                 if (damage > 0) {
+                    damage = damagePreventionService.applyChannelHarmPrevention(gameData, playerId, playerId, damage);
+                }
+                if (damage > 0) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
@@ -1089,6 +1092,9 @@ public class ActivatedAbilityExecutionService {
                 // One-shot Circle-of-Protection shields may prevent only part of the damage
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage);
             }
+        }
+        if (damage > 0) {
+            damage = damagePreventionService.applyChannelHarmPrevention(gameData, playerId, playerId, damage);
         }
         if (damage > 0) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);

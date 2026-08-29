@@ -2,6 +2,10 @@
 
 All paths relative to `cards/`.
 
+## Library and manifest effects
+
+| Manifest the top card, then put counters on it | `f/FierceInvocation.java` / `w/Wildcall.java` | `ManifestTopCardAndPutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)` / `ManifestTopCardAndPutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())` |
+
 ## Activated abilities
 
 | Planeswalker with source-tracked exile, filtered X return, and opponent hand/graveyard exile | `a/AshiokNightmareWeaver.java` | `ExileTopCardsToSourceEffect(... TARGET_OPPONENT, true)` + `ReturnCardExiledWithSourceToBattlefieldEffect(CardTypePredicate(CREATURE), true, NIGHTMARE)` + `ExileAllOpponentsHandsEffect` + `ExileGraveyardCardsEffect(ALL_OPPONENTS)` |

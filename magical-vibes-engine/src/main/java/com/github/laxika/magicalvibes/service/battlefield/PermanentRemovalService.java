@@ -249,6 +249,14 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToExile(GameData gameData, Permanent target) {
+        return removePermanentToExile(gameData, target, false);
+    }
+
+    /**
+     * Removes a permanent from the battlefield and puts its cards into the owner's exile zone,
+     * optionally face down.
+     */
+    public boolean removePermanentToExile(GameData gameData, Permanent target, boolean faceDown) {
         // Capture unattach-sacrifice info before removal
         UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
@@ -267,7 +275,11 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         for (Card leaving : target.cardsLeavingBattlefield()) {
-            exileService.exileCard(gameData, ownerId, leaving);
+            if (faceDown) {
+                exileService.exileCardFaceDown(gameData, ownerId, leaving, null);
+            } else {
+                exileService.exileCard(gameData, ownerId, leaving);
+            }
         }
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
@@ -745,7 +757,12 @@ public class PermanentRemovalService {
      * from the battlefield list. This is the single point where structural cleanup happens.
      */
     private RemovedPermanentInfo processRemovalCleanup(GameData gameData, Permanent target, UUID controllerId) {
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+        UUID ownerId = gameData.stolenCreatures.get(target.getId());
+        if (ownerId == null) {
+            ownerId = target.getCard().getOwnerId() != null
+                    ? target.getCard().getOwnerId()
+                    : controllerId;
+        }
         gameData.stolenCreatures.remove(target.getId());
         // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
         // WHILE_ATTACHED floating effect expires here and drives the enchanted creature's revert.

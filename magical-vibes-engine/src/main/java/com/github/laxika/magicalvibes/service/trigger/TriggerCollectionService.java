@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
@@ -513,6 +514,25 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
                 log.info("Game {} - {} delayed spell-copy trigger(s) queued for {}",
                         gameData.id, pendingTurnCopies, spellCard.getName());
+            }
+        }
+
+        Integer pendingReturns = gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
+                .get(castingPlayerId);
+        if (pendingReturns != null && pendingReturns > 0
+                && castZone == Zone.HAND
+                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
+            for (StackEntry stackEntry : gameData.stack) {
+                if (stackEntry.getCard().getId().equals(spellCard.getId())
+                        && stackEntry.getSourceZone() == Zone.HAND) {
+                    stackEntry.setReturnToHandAfterResolving(true);
+                    gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.remove(castingPlayerId);
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(spellCard, " will be returned to its owner's hand as it resolves."));
+                    log.info("Game {} - {} will return {} to its owner's hand as it resolves",
+                            gameData.id, castingPlayerId, spellCard.getName());
+                    break;
+                }
             }
         }
 
@@ -2698,6 +2718,28 @@ public class TriggerCollectionService {
 
         collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE,
                 damagedCreature.getId(), damageDealt);
+
+        for (DelayedWatchedCreatureDealtDamage watch
+                : gameData.getDelayedActions(DelayedWatchedCreatureDealtDamage.class)) {
+            if (!watch.watchedPermanentId().equals(damagedCreature.getId())) continue;
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watch.sourceCard(),
+                    watch.controllerId(),
+                    watch.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(watch.effects()),
+                    (UUID) null,
+                    watch.watchedPermanentId());
+            trigger.setNonTargeting(true);
+            trigger.setEventValue(damageDealt);
+            trigger.setDamageSourceCard(damagedCreature.getCard());
+            trigger.setSourcePermanentSnapshot(new Permanent(damagedCreature));
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
+            log.info("Game {} - {} delayed trigger fires after damage to watched creature",
+                    gameData.id, watch.sourceCard().getName());
+        }
     }
 
     private void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
@@ -4586,6 +4628,35 @@ public class TriggerCollectionService {
             if (perm.getId().equals(leavingId)) continue;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD)) {
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, controllerId))) {
+                    continue;
+                }
+                boolean needsPlayerTarget = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
+                boolean needsPermanentTarget = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+                if (needsPlayerTarget || needsPermanentTarget) {
+                    int targetGroupIndex = perm.getCard().getEffectTargetIndex(effect);
+                    TargetFilter targetFilter = targetGroupIndex >= 0
+                            && targetGroupIndex < perm.getCard().getSpellTargets().size()
+                            ? perm.getCard().getSpellTargets().get(targetGroupIndex).getFilter()
+                            : perm.getCard().getTargetFilter();
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            perm.getCard(),
+                            controllerId,
+                            new ArrayList<>(List.of(effect)),
+                            needsPlayerTarget && !needsPermanentTarget,
+                            targetFilter,
+                            0,
+                            perm.getId()
+                    ));
+                    gameLogService.append(gameData,
+                            GameLog.text(perm.getCard().getName() + "'s ability triggers — choose a target."));
+                    log.info("Game {} - {} ally-creature-leaves trigger queued for target selection",
+                            gameData.id, perm.getCard().getName());
+                    continue;
+                }
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),

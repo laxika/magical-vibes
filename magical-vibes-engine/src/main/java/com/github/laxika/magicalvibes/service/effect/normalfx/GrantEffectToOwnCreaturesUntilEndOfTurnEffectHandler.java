@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ public class GrantEffectToOwnCreaturesUntilEndOfTurnEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,6 +37,10 @@ public class GrantEffectToOwnCreaturesUntilEndOfTurnEffectHandler implements Nor
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                if (e.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter())) {
                     continue;
                 }
                 permanent.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());

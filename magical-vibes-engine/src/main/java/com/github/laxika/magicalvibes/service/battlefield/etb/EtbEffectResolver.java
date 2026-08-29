@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -15,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -71,6 +74,10 @@ public class EtbEffectResolver {
         // when the evoke cost was paid, otherwise drop the trigger entirely.
         register(SacrificeSelfIfEvokedEffect.class, (ctx, effect) ->
                 ctx.evoked() ? new SacrificeSelfEffect() : null);
+
+        register(ReturnSelfToHandIfDashCostPaidEffect.class, (ctx, effect) ->
+                ctx.evoked() && ctx.card().getKeywords().contains(Keyword.DASH)
+                        ? new ReturnSelfToHandAtEndStepEffect() : null);
 
         // "Gain life equal to that creature's toughness" — read toughness at trigger time.
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->

@@ -323,6 +323,8 @@ public class GameData {
     public boolean preventAllDamageByCreatures;
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
+    /** Controller-relative context for {@link #combatDamageExemptPredicate}, when needed. */
+    public UUID combatDamageExemptControllerId;
     public boolean allPermanentsEnterTappedThisTurn;
     /**
      * Per-player count of additional +1/+1 counters that creatures entering under that player's
@@ -661,6 +663,8 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Channel Harm shields: prevent damage from sources controlled by opponents to a player and their permanents. */
+    public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     /** Source-specific damage redirect shields (e.g. Harm's Way): prevent damage from a chosen source and redirect to any target. */
@@ -889,6 +893,9 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+
+    /** Pending one-shot return-to-hand replacements for the next instant or sorcery cast from hand this turn. */
+    public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount = new ConcurrentHashMap<>();
 
     /** Pending one-shot loyalty-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
@@ -2439,6 +2446,23 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, exilerId));
     }
 
+    /** Attaches the selected delve exiles to the permanent that the spell became. */
+    public void trackExiledCardsWithPermanent(Collection<UUID> cardIds, UUID sourcePermanentId) {
+        if (cardIds == null || cardIds.isEmpty() || sourcePermanentId == null) {
+            return;
+        }
+        Set<UUID> selectedCardIds = new HashSet<>(cardIds);
+        synchronized (exiledCards) {
+            for (int i = 0; i < exiledCards.size(); i++) {
+                ExiledCardEntry entry = exiledCards.get(i);
+                if (entry.sourcePermanentId() == null && selectedCardIds.contains(entry.card().getId())) {
+                    exiledCards.set(i, new ExiledCardEntry(entry.card(), entry.ownerId(), sourcePermanentId,
+                            entry.faceDown(), entry.exilerId(), entry.exiledTurnNumber()));
+                }
+            }
+        }
+    }
+
     /**
      * Exile entries displayed tucked under the given permanent: its imprinted card (if still in
      * exile) plus all entries tracked with the permanent as source. An imprinted card that is
@@ -2708,6 +2732,7 @@ public class GameData {
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
+        copy.combatDamageExemptControllerId = this.combatDamageExemptControllerId;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
@@ -2855,6 +2880,7 @@ public class GameData {
         copy.temporaryGlobalTriggeredAbilities.addAll(this.temporaryGlobalTriggeredAbilities);
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
+        copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
@@ -3092,6 +3118,12 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume;
         copy.graveyardTargetOperation.phyrexianGrimoireChosenCardId =
                 this.graveyardTargetOperation.phyrexianGrimoireChosenCardId;
+        copy.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume =
+                this.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume;
+        copy.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId =
+                this.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
+        copy.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId =
+                this.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
@@ -3195,6 +3227,8 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
+                .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
         copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->

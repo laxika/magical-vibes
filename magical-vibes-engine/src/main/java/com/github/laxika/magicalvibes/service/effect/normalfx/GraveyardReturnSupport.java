@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.ExilePermanentsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -435,7 +436,8 @@ public class GraveyardReturnSupport {
             for (Card card : graveyard) {
                 if (!card.isToken()
                         && trackedIds.contains(card.getId())
-                        && predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)
+                        && matchesManaValueLimit(card, effect, entry.getXValue())) {
                     toReturn.add(card);
                 }
             }
@@ -447,6 +449,7 @@ public class GraveyardReturnSupport {
             }
 
             boolean toBattlefield = effect.destination() == GraveyardChoiceDestination.BATTLEFIELD;
+            List<UUID> returnedPermanentIds = new ArrayList<>();
             graveyardService.beginGraveyardLeaveBatch(gameData);
             try {
                 for (Card card : toReturn) {
@@ -454,8 +457,11 @@ public class GraveyardReturnSupport {
                     trackedIds.remove(card.getId());
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                     if (toBattlefield) {
-                        putCardOntoBattlefield(gameData, controllerId, card,
-                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+                        Permanent returnedPermanent = putCardOntoBattlefield(gameData, controllerId, card,
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), false, null);
+                        if (returnedPermanent != null && effect.exileAtNextUpkeep()) {
+                            returnedPermanentIds.add(returnedPermanent.getId());
+                        }
                         applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
                     } else {
                         gameData.addCardToHand(controllerId, card);
@@ -464,6 +470,8 @@ public class GraveyardReturnSupport {
             } finally {
                 graveyardService.endGraveyardLeaveBatch(gameData);
             }
+
+            queueExileAtNextUpkeep(gameData, entry, effect, controllerId, returnedPermanentIds);
 
             String destinationLabel = toBattlefield ? " from graveyard to the battlefield." : " from graveyard to hand.";
             String playerName = gameData.playerIdToName.get(controllerId);
@@ -495,13 +503,15 @@ public class GraveyardReturnSupport {
         }
 
         List<Card> returnedCards = new ArrayList<>();
+        List<UUID> returnedPermanentIds = new ArrayList<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
                 List<Card> gy = gyEntry.getValue();
                 List<Card> toReturn = new ArrayList<>();
                 for (Card card : gy) {
-                    if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                    if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)
+                            && matchesManaValueLimit(card, effect, entry.getXValue())) {
                         toReturn.add(card);
                     }
                 }
@@ -513,13 +523,19 @@ public class GraveyardReturnSupport {
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
                         gameData.addCardToHand(targetPlayerId, card);
                     } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.sacrificeAtEndStep()) {
-                        putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
+                        Permanent returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
                                 effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                                 effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking());
+                        if (returnedPermanent != null && effect.exileAtNextUpkeep()) {
+                            returnedPermanentIds.add(returnedPermanent.getId());
+                        }
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
-                        putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
-                                effect.enterTapped(), effect.enterAttacking());
+                        Permanent returnedPermanent = putCardOntoBattlefield(gameData, targetPlayerId, card,
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(), null);
+                        if (returnedPermanent != null && effect.exileAtNextUpkeep()) {
+                            returnedPermanentIds.add(returnedPermanent.getId());
+                        }
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     }
                     returnedCards.add(card);
@@ -533,6 +549,8 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        queueExileAtNextUpkeep(gameData, entry, effect, controllerId, returnedPermanentIds);
+
         String playerName = gameData.playerIdToName.get(controllerId);
         String destName = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
         GameLog.Builder builder = GameLog.builder().text(playerName + " puts ");
@@ -542,6 +560,19 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 returnedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse(""), destName);
+    }
+
+    private boolean matchesManaValueLimit(Card card, ReturnCardFromGraveyardEffect effect, int xValue) {
+        return (!effect.requiresManaValueEqualsX() || card.getManaValue() == xValue)
+                && (!effect.requiresManaValueAtMostX() || card.getManaValue() <= xValue);
+    }
+
+    private void queueExileAtNextUpkeep(GameData gameData, StackEntry entry,
+                                        ReturnCardFromGraveyardEffect effect, UUID controllerId,
+                                        List<UUID> permanentIds) {
+        if (effect.exileAtNextUpkeep() && !permanentIds.isEmpty()) {
+            gameData.queueDelayedAction(new ExilePermanentsAtNextUpkeep(controllerId, permanentIds, entry.getCard()));
+        }
     }
 
     public void resolveReturnAtRandom(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,

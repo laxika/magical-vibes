@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -101,6 +102,8 @@ public class MultiPermanentChoiceHandlerService {
             tappedLandSacrificeDamageIfSubtypeHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CulturalExchangeSupport
             culturalExchangeSupport;
+    private final PlayerChoosesUpToPermanentsThenSacrificesRestEffectHandler
+            playerChoosesUpToPermanentsThenSacrificesRestEffectHandler;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -233,8 +236,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapPermanentsForAmount(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanents ctx) {
             handleUntapChosenPermanents(gameData, playerId, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand) {
-            handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ReturnTargetPermanentsToHand ctx) {
+            handleReturnTargetPermanentsToHand(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
             handleCombatDamageBounce(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AimCounterPlacement) {
@@ -249,6 +252,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapSubtypeBoost(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice ctx) {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.PlayerChoosesUpToPermanentsThenSacrificesRestChoice ctx) {
+            handlePlayerChoosesUpToPermanentsThenSacrificesRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
             handleForcedSacrifice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrificeThenDamageIfSubtype ctx) {
@@ -751,7 +756,8 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleReturnTargetPermanentsToHand(GameData gameData, UUID playerId, List<UUID> permanentIds) {
+    private void handleReturnTargetPermanentsToHand(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                    MultiPermanentChoiceContext.ReturnTargetPermanentsToHand context) {
         if (permanentIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " chooses not to return any permanents."));
@@ -771,6 +777,11 @@ public class MultiPermanentChoiceHandlerService {
                                         + " returned to their owners' hands.").build());
                 log.info("Game {} - {} returns {} permanents to hand", gameData.id,
                         gameData.playerIdToName.get(playerId), bouncedCards.size());
+
+                if (context.thenEffect() != null && gameData.pendingEffectResolutionEntry != null) {
+                    gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                            gameData.pendingEffectResolutionIndex, List.of(context.thenEffect()));
+                }
             }
         }
 
@@ -1646,6 +1657,16 @@ public class MultiPermanentChoiceHandlerService {
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handlePlayerChoosesUpToPermanentsThenSacrificesRestChoice(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.PlayerChoosesUpToPermanentsThenSacrificesRestChoice context) {
+        playerChoosesUpToPermanentsThenSacrificesRestEffectHandler.completeChoice(
+                gameData, permanentIds, context);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

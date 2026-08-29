@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
@@ -1065,6 +1066,11 @@ public class TargetLegalityService {
                         if (!gameQueryService.sharesArtifactOrCreatureType(a, b)) {
                             throw new IllegalStateException(
                                     "Chosen permanents must share an artifact or creature type");
+                        }
+                    }
+                    case SHARE_CARD_TYPE -> {
+                        if (!gameQueryService.sharesCardType(gameData, a, b)) {
+                            throw new IllegalStateException("Chosen permanents must share a card type");
                         }
                     }
                     case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
@@ -2097,6 +2103,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
                     .anyMatch(colorInPredicate.colors()::contains);
+        }
+        if (predicate instanceof StackEntryIsMulticoloredPredicate) {
+            return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).size() >= 2;
         }
         if (predicate instanceof StackEntryCardTypeInPredicate cardTypeInPredicate) {
             return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);

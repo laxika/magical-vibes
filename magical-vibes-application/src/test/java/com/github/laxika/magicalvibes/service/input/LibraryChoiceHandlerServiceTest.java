@@ -92,6 +92,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport.class),
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),

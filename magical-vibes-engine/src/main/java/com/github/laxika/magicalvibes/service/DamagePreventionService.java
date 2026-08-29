@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
@@ -23,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfE
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
@@ -455,6 +458,40 @@ public class DamagePreventionService {
         if (sourcePermanentId == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         return source != null && source.isAttacking();
+    }
+
+    /** Applies Channel Harm to damage aimed at a protected player. */
+    public int applyChannelHarmPrevention(GameData gameData, UUID protectedPlayerId,
+                                          UUID sourceControllerId, int damage) {
+        return applyChannelHarmPrevention(gameData, protectedPlayerId, sourceControllerId, damage, true);
+    }
+
+    /** Applies Channel Harm to damage aimed at a permanent controlled by a protected player. */
+    public int applyChannelHarmPreventionToPermanent(GameData gameData, Permanent target,
+                                                     UUID sourceControllerId, int damage) {
+        UUID protectedPlayerId = gameQueryService.findPermanentController(gameData, target.getId());
+        return applyChannelHarmPrevention(gameData, protectedPlayerId, sourceControllerId, damage, true);
+    }
+
+    private int applyChannelHarmPrevention(GameData gameData, UUID protectedPlayerId,
+                                           UUID sourceControllerId, int damage, boolean damagePreventable) {
+        if (damage <= 0 || !damagePreventable || !gameQueryService.isDamagePreventable(gameData)
+                || protectedPlayerId == null || sourceControllerId == null
+                || protectedPlayerId.equals(sourceControllerId)) {
+            return damage;
+        }
+
+        for (ChannelHarmShield shield : gameData.channelHarmShields) {
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    shield.sourceCard(),
+                    protectedPlayerId,
+                    List.of(new DealDamageToTargetCreatureEffect(damage)),
+                    "Have " + shield.sourceCard().getName() + " deal " + damage + " damage to the target creature?",
+                    shield.targetCreatureId()));
+            return 0;
+        }
+        return damage;
     }
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {

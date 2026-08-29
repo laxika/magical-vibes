@@ -4644,6 +4644,29 @@ public class GameQueryService {
     }
 
     /**
+     * Returns whether two permanents currently share at least one permanent card type, including
+     * card types granted or removed by continuous effects.
+     */
+    public boolean sharesCardType(GameData gameData, Permanent a, Permanent b) {
+        StaticBonus aBonus = computeStaticBonus(gameData, a);
+        StaticBonus bBonus = computeStaticBonus(gameData, b);
+        boolean aCreature = isCreature(gameData, a);
+        boolean bCreature = isCreature(gameData, b);
+        for (CardType type : CardType.values()) {
+            boolean aHasType = type == CardType.CREATURE
+                    ? aCreature
+                    : hasEffectiveCardType(a, aBonus, type);
+            boolean bHasType = type == CardType.CREATURE
+                    ? bCreature
+                    : hasEffectiveCardType(b, bBonus, type);
+            if (type.isPermanentType() && aHasType && bHasType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the given card (in a library, hand, or other non-battlefield zone)
      * shares at least one creature type with a creature the given player controls. Changeling on
      * either side counts as every creature type, and the card side honours all-zone subtype grants
@@ -5112,7 +5135,7 @@ public class GameQueryService {
             if (!playerId.equals(entry.getControllerId())) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantLifelinkToControllerSpellsByColorEffect glse
-                        && entry.getCard().getColors().contains(glse.color())) {
+                        && (glse.allColors() || entry.getCard().getColors().contains(glse.color()))) {
                     hasLifelink[0] = true;
                 }
             }
@@ -5257,7 +5280,10 @@ public class GameQueryService {
             return true;
         }
         if (isCombatDamage && gameData.combatDamageExemptPredicate != null
-                && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, gameData.combatDamageExemptPredicate)) {
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                creature,
+                gameData.combatDamageExemptPredicate,
+                FilterContext.of(gameData).withSourceControllerId(gameData.combatDamageExemptControllerId))) {
             return true;
         }
         return false;

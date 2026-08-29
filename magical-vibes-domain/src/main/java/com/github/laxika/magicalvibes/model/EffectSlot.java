@@ -80,6 +80,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DAMAGED_CREATURE_DIES,
     ON_COMBAT_DAMAGE_TO_PLAYER,
     ON_COMBAT_DAMAGE_TO_CREATURE,
+    /** Triggers once per combat damage step when the source deals combat damage to one or more blockers. */
+    ON_COMBAT_DAMAGE_TO_BLOCKING_CREATURE,
     ON_DAMAGE_TO_PLAYER,
     ON_ATTACK,
     ON_BECOMES_BLOCKED,
@@ -476,6 +478,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
+    /** Triggers at the beginning of combat on this card's owner's turn while the card is in their
+     *  graveyard. Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
+    GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
     /** Triggers at the beginning of each combat (any player's turn), not only the controller's.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning all
      *  battlefields. Used by Majestic Myriarch / Odric, Lunarch Marshal. */

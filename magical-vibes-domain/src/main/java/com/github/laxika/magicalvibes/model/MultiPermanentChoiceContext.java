@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -133,7 +134,10 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand() {
+            this(null);
+        }
     }
 
     /**
@@ -174,6 +178,12 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record DestroyRestChoice(java.util.List<PendingForcedSacrifice> remainingChoosers,
                              java.util.List<UUID> protectedIds, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** The affected player chooses permanents to keep before the rest of a snapshot is sacrificed. */
+    record PlayerChoosesUpToPermanentsThenSacrificesRestChoice(
+            java.util.List<UUID> candidateIds)
             implements MultiPermanentChoiceContext {
     }
 

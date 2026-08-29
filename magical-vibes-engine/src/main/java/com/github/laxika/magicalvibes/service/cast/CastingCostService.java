@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostReducingE
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -215,27 +216,48 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
-                        if (activatedAbility && !taxEffect.taxesActivatedAbilities()) continue;
-                        for (UUID tid : allTargetIds) {
-                            Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
-                            if (targetPerm != null) {
-                                UUID targetController = gameQueryService.findPermanentController(gameData, tid);
-                                if (controllerId.equals(targetController)
-                                        && predicateEvaluationService.matchesPermanentPredicate(
-                                                targetPerm, taxEffect.predicate(),
-                                                FilterContext.of(gameData).withSourcePermanentSnapshot(perm))) {
-                                    tax += taxEffect.amount();
-                                    break;
-                                }
+                for (CardEffect rawEffect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect effect = resolveConditionalStaticEffect(gameData, perm, controllerId, rawEffect);
+                    if (!(effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect)
+                            || (activatedAbility && !taxEffect.taxesActivatedAbilities())) {
+                        continue;
+                    }
+                    boolean targetsController = taxEffect.taxesController()
+                            && allTargetIds.contains(controllerId);
+                    boolean targetsControlledPermanent = false;
+                    for (UUID tid : allTargetIds) {
+                        Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
+                        if (targetPerm != null) {
+                            UUID targetController = gameQueryService.findPermanentController(gameData, tid);
+                            if (controllerId.equals(targetController)
+                                    && predicateEvaluationService.matchesPermanentPredicate(
+                                            targetPerm, taxEffect.predicate(),
+                                            FilterContext.of(gameData).withSourcePermanentSnapshot(perm))) {
+                                targetsControlledPermanent = true;
+                                break;
                             }
                         }
+                    }
+                    if (targetsController || targetsControlledPermanent) {
+                        tax += taxEffect.amount();
                     }
                 }
             }
         }
         return tax;
+    }
+
+    private CardEffect resolveConditionalStaticEffect(GameData gameData, Permanent source,
+                                                       UUID sourceControllerId, CardEffect effect) {
+        CardEffect current = effect;
+        while (current instanceof ConditionalEffect conditional) {
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(source, sourceControllerId))) {
+                return null;
+            }
+            current = conditional.wrapped();
+        }
+        return current;
     }
 
     /**

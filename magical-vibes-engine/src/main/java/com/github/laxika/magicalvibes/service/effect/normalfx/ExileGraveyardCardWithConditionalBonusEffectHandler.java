@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
     private final GameLogService gameLogService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,6 +44,11 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
+            return;
+        }
+        if (e.filter() != null
+                && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer valid)."));
             return;
         }
 

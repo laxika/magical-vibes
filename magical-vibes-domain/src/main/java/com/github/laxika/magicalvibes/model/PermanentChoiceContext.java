@@ -790,6 +790,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Bend or Break: a player chooses which opponent will choose one of their land piles. */
     record BendOrBreakOpponentChoice(UUID playerId) implements PermanentChoiceContext {}
 
+    /** Tasigur: the controller chooses which opponent chooses a card from the controller's graveyard. */
+    record OpponentChoosesCardFromGraveyardToHand() implements PermanentChoiceContext {}
+
     /** Tariff tie-break: {@code playerId} chooses which of their creatures tied for greatest mana
      *  value is the one they must pay for or sacrifice. */
     record TariffTieBreak(UUID playerId, Card sourceCard) implements PermanentChoiceContext {}

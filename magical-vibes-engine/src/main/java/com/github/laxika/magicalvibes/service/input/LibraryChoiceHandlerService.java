@@ -92,6 +92,7 @@ public class LibraryChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
     private final DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
@@ -1629,6 +1630,11 @@ public class LibraryChoiceHandlerService {
             }
         }
 
+        if (libraryRevealChoice.selectedToManifest()) {
+            resolveManifestChoice(gameData, controllerId, selectedCards, remainingCards);
+            return;
+        }
+
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
                     libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
@@ -1732,6 +1738,29 @@ public class LibraryChoiceHandlerService {
         }
 
         finishSearchAndResume(gameData);
+    }
+
+    private void resolveManifestChoice(GameData gameData, UUID controllerId,
+                                       List<Card> selectedCards, List<Card> remainingCards) {
+        if (selectedCards.size() != 1 || remainingCards.size() > 1) {
+            throw new IllegalStateException("Invalid manifest choice");
+        }
+
+        StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
+        Card sourceCard = sourceEntry == null ? selectedCards.getFirst() : sourceEntry.getCard();
+        manifestService.manifestCard(gameData, controllerId, sourceCard, selectedCards.getFirst());
+
+        if (remainingCards.isEmpty()) {
+            performStateBasedActionsIfResolutionComplete(gameData);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        Card remainingCard = remainingCards.getFirst();
+        gameData.playerDecks.get(controllerId).addFirst(remainingCard);
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.TargetLibraryDestinationChoice(
+                        controllerId, remainingCard.getId(), remainingCard.getName()));
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,

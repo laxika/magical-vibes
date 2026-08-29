@@ -841,35 +841,50 @@ public class GameService {
                 throw new IllegalStateException("Permanent is not face down");
             }
             String morphCost = permanent.getCard().getMorphCost();
-            if (morphCost == null || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
+            boolean manifested = permanent.isManifested();
+            if (!manifested && (morphCost == null || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities())) {
                 throw new IllegalStateException("Permanent does not have morph");
             }
-            RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
-            if (morphRevealCost != null) {
-                List<Card> hand = gameData.playerHands.get(player.getId());
-                if (revealedHandCardIndex == null || hand == null
-                        || revealedHandCardIndex < 0 || revealedHandCardIndex >= hand.size()) {
-                    throw new IllegalStateException("Must reveal " + morphRevealLabel(morphRevealCost)
-                            + " from your hand to turn the permanent face up");
+            if (manifested) {
+                if (!permanent.getCard().hasType(CardType.CREATURE)) {
+                    throw new IllegalStateException("Manifested permanent is not a creature card");
                 }
-                Card toReveal = hand.get(revealedHandCardIndex);
-                if (morphRevealCost.predicate() != null
-                        && !predicateEvaluationService.matchesCardPredicate(toReveal,
-                        morphRevealCost.predicate(), toReveal.getId())) {
-                    throw new IllegalStateException("Revealed card must be " + morphRevealLabel(morphRevealCost));
-                }
-                cardRevealService.revealToAllPlayers(gameData, player.getId(),
-                        GameEventFact.RevealZone.HAND, List.of(toReveal));
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
-            } else {
-                ManaCost cost = new ManaCost(morphCost);
+                ManaCost cost = permanent.getCard().getParsedManaCost();
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
-                if (pool == null || !cost.canPay(pool)) {
-                    throw new IllegalStateException("Not enough mana to turn the permanent face up");
+                if (cost == null || pool == null || !cost.canPay(pool)) {
+                    throw new IllegalStateException("Not enough mana to turn the manifested permanent face up");
                 }
                 cost.pay(pool);
+                cardRevealService.revealToAllPlayers(gameData, player.getId(),
+                        GameEventFact.RevealZone.PERMANENT, List.of(permanent.getCard()));
+            } else {
+                RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
+                if (morphRevealCost != null) {
+                    List<Card> hand = gameData.playerHands.get(player.getId());
+                    if (revealedHandCardIndex == null || hand == null
+                            || revealedHandCardIndex < 0 || revealedHandCardIndex >= hand.size()) {
+                        throw new IllegalStateException("Must reveal " + morphRevealLabel(morphRevealCost)
+                                + " from your hand to turn the permanent face up");
+                    }
+                    Card toReveal = hand.get(revealedHandCardIndex);
+                    if (morphRevealCost.predicate() != null
+                            && !predicateEvaluationService.matchesCardPredicate(toReveal,
+                            morphRevealCost.predicate(), toReveal.getId())) {
+                        throw new IllegalStateException("Revealed card must be " + morphRevealLabel(morphRevealCost));
+                    }
+                    cardRevealService.revealToAllPlayers(gameData, player.getId(),
+                            GameEventFact.RevealZone.HAND, List.of(toReveal));
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
+                } else {
+                    ManaCost cost = new ManaCost(morphCost);
+                    ManaPool pool = gameData.playerManaPools.get(player.getId());
+                    if (pool == null || !cost.canPay(pool)) {
+                        throw new IllegalStateException("Not enough mana to turn the permanent face up");
+                    }
+                    cost.pay(pool);
+                }
             }
             permanent.turnFaceUp();
             List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
@@ -1166,6 +1181,23 @@ public class GameService {
             requireCanActivateAbilities(gameData, player);
             abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue,
                     targetId, graveyardTargetIds);
+        }
+    }
+
+    public void activateExileAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
+        activateExileAbility(gameData, player, cardId, abilityIndex, null, null);
+    }
+
+    public void activateExileAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex,
+                                     Integer xValue, UUID targetId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> activateExileAbility(gameData, actionPlayer, cardId, abilityIndex, xValue, targetId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            requireCanActivateAbilities(gameData, player);
+            abilityActivationService.activateExileAbility(gameData, player, cardId, abilityIndex, xValue, targetId);
         }
     }
 

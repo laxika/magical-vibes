@@ -31,6 +31,7 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,6 +67,11 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
             }
             playerInputService.beginMoveCountersAmountChoice(gameData, entry.getControllerId(), source.getId(),
                     destination.getId(), moveEffect.counterType(), entry.getCard().getName(), available);
+            return;
+        }
+
+        if (moveEffect.counterType() != null) {
+            moveSingleCounter(gameData, entry, source, destination, moveEffect.counterType());
             return;
         }
 
@@ -107,5 +113,25 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
         gameLogService.append(gameData, GameLog.builder().text("A counter is moved from ").card(source.getCard()).text(" onto ").card(destination.getCard()).text(".").build());
         log.info("Game {} - {} moves a {} counter from {} to {}", gameData.id, entry.getCard().getName(),
                 toMove, source.getCard().getName(), destination.getCard().getName());
+    }
+
+    private void moveSingleCounter(GameData gameData, StackEntry entry, Permanent source,
+                                    Permanent destination, CounterType counterType) {
+        if (source == destination
+                || source.getCounterCount(counterType) <= 0
+                || gameQueryService.cantHaveCounters(gameData, destination)
+                || (counterType == CounterType.PLUS_ONE_PLUS_ONE
+                && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, destination))) {
+            return;
+        }
+
+        source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, destination, counterType, 1);
+
+        gameLogService.append(gameData, GameLog.builder().text("A ")
+                .text(counterType.name().toLowerCase()).text(" counter is moved from ")
+                .card(source.getCard()).text(" onto ").card(destination.getCard()).text(".").build());
+        log.info("Game {} - {} moves a {} counter from {} to {}", gameData.id, entry.getCard().getName(),
+                counterType, source.getCard().getName(), destination.getCard().getName());
     }
 }

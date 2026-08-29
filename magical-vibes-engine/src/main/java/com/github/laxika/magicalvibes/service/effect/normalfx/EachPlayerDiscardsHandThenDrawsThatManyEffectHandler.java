@@ -19,9 +19,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link EachPlayerDiscardsHandThenDrawsThatManyEffect}: in APNAP order, each player
- * discards their entire hand, then draws that many cards. Discards are automatic; each player's
- * draw count is their own discard count. Mirrors {@link DiscardOwnHandThenDrawThatManyEffectHandler}
- * but applies to every player.
+ * discards their entire hand, then draws their discard count less the effect's fixed reduction.
+ * Discards are automatic. Mirrors {@link DiscardOwnHandThenDrawThatManyEffectHandler} but applies
+ * to every player.
  */
 @Slf4j
 @Component
@@ -43,15 +43,17 @@ public class EachPlayerDiscardsHandThenDrawsThatManyEffectHandler implements Nor
         String cardName = entry.getCard().getName();
 
         UUID activePlayerId = gameData.activePlayerId;
-        discardHandThenDraw(gameData, activePlayerId, cardName);
+        var e = (EachPlayerDiscardsHandThenDrawsThatManyEffect) effect;
+        discardHandThenDraw(gameData, activePlayerId, entry.getControllerId(), e.drawReduction(), cardName);
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(activePlayerId)) {
-                discardHandThenDraw(gameData, playerId, cardName);
+                discardHandThenDraw(gameData, playerId, entry.getControllerId(), e.drawReduction(), cardName);
             }
         }
     }
 
-    private void discardHandThenDraw(GameData gameData, UUID playerId, String cardName) {
+    private void discardHandThenDraw(GameData gameData, UUID playerId, UUID controllerId,
+            int drawReduction, String cardName) {
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
 
@@ -64,7 +66,7 @@ public class EachPlayerDiscardsHandThenDrawsThatManyEffectHandler implements Nor
 
         List<Card> discarded = new ArrayList<>(hand);
         hand.clear();
-        gameData.discardCausedByOpponent = false;
+        gameData.discardCausedByOpponent = !playerId.equals(controllerId);
 
         for (Card card : discarded) {
             graveyardService.discardCard(gameData, playerId, card);
@@ -75,10 +77,11 @@ public class EachPlayerDiscardsHandThenDrawsThatManyEffectHandler implements Nor
                 + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
         gameLogService.append(gameData, GameLog.text(discardLog));
 
-        for (int i = 0; i < discardCount; i++) {
+        int drawCount = Math.max(0, discardCount - drawReduction);
+        for (int i = 0; i < drawCount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }
-        String drawLog = playerName + " draws " + discardCount + " card" + (discardCount != 1 ? "s" : "") + ".";
+        String drawLog = playerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".";
         gameLogService.append(gameData, GameLog.text(drawLog));
     }
 }

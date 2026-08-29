@@ -57,7 +57,9 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 : entry.getCard().getId();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentSnapshot(source)
+                .withSourcePermanentId(entry.getSourcePermanentId());
         Predicate<Permanent> baseFilter = e.damagesPlaneswalkers()
                 ? p -> gameQueryService.isCreature(gameData, p) || p.getCard().hasType(CardType.PLANESWALKER)
                 : p -> gameQueryService.isCreature(gameData, p);

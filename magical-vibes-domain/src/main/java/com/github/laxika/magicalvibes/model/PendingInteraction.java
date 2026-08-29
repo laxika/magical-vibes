@@ -1317,7 +1317,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           String drawAndRepeatLabel, boolean putAnyNumber,
                           boolean faceDown, int faceDownPower, int faceDownToughness,
                           java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
-                          UUID returnSourcePermanentId)
+                          UUID returnSourcePermanentId, int maxPuts)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -1330,7 +1330,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
-                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, null, null);
+                    faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, null, null, 0);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -1340,7 +1340,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               String drawAndRepeatLabel, boolean putAnyNumber) {
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
                     enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate,
-                    drawAndRepeatLabel, putAnyNumber, false, 0, 0, java.util.Set.of(), null, null);
+                    drawAndRepeatLabel, putAnyNumber, false, 0, 0,
+                    java.util.Set.<CardType>of(), null, null, 0);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
@@ -1351,7 +1352,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                     attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction,
                     drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber,
-                    false, 0, 0, java.util.Set.of(), null, returnSourcePermanentId);
+                    false, 0, 0, java.util.Set.<CardType>of(), null, returnSourcePermanentId, 0);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
@@ -1836,7 +1837,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                int lifeCostPerSelection,
                                UUID beneficiaryPlayerId, int maxCount, String prompt,
                                boolean selectedToBattlefieldTapped, int minCount,
-                               boolean gainLifeEqualToSelectedCardManaValue)
+                               boolean gainLifeEqualToSelectedCardManaValue,
+                               boolean selectedToManifest)
             implements PendingInteraction {
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -1847,7 +1849,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    String prompt) {
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
-                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false, 0, false);
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt, false, 0, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -1859,7 +1861,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    selectedToBattlefieldTapped, 0, false);
+                    selectedToBattlefieldTapped, 0, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -1871,7 +1873,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
-                    false, minCount, gainLifeEqualToSelectedCardManaValue);
+                    false, minCount, gainLifeEqualToSelectedCardManaValue, false);
+        }
+
+        public static LibraryRevealChoice manifestOneOfTopTwo(UUID playerId,
+                                                              java.util.List<Card> allCards,
+                                                              String prompt) {
+            return new LibraryRevealChoice(playerId, allCards,
+                    allCards.stream().map(Card::getId).toList(), false, false, false,
+                    false, false, 0, null, 1, prompt, false, 1, false, true);
         }
 
         @Override

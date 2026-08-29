@@ -70,6 +70,10 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 }
             }
 
+            if (e.exileAtEndOfCombat()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+            }
             if (e.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }

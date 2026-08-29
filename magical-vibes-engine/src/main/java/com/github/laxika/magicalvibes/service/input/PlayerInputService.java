@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -105,7 +106,20 @@ public class PlayerInputService {
                                 String drawAndRepeatLabel, boolean putAnyNumber, UUID returnExiledSourceCardId) {
         beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
-                drawAndRepeatLabel, putAnyNumber, false, 0, 0, Set.of(), returnExiledSourceCardId);
+                drawAndRepeatLabel, putAnyNumber, false, 0, 0, Set.of(), returnExiledSourceCardId, 0);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                                String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId, int maxPuts) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, null, maxPuts);
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
@@ -115,11 +129,25 @@ public class PlayerInputService {
                                 String drawAndRepeatLabel, boolean putAnyNumber,
                                 boolean faceDown, int faceDownPower, int faceDownToughness,
                                 Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, 0);
+    }
+
+    private void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                                String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                UUID returnSourcePermanentId, int maxPuts) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceCardId, null));
+                returnExiledSourceCardId, returnSourcePermanentId, maxPuts));
     }
 
     public void beginCardChoiceThenReturnSourceToHand(GameData gameData, UUID playerId, List<Integer> validIndices,
@@ -472,6 +500,25 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
+    }
+
+    public void beginChooseModeOnEnterChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            ChooseModeOnEnterEffect effect, UUID sourcePermanentId, UUID etbTargetId,
+            boolean wasCastFromHand, int etbMode, boolean kicked, List<UUID> targetIds) {
+        com.github.laxika.magicalvibes.model.effect.ChooseOneEffect choiceEffect =
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(effect.modes().stream()
+                        .map(mode -> new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                                mode, List.of()))
+                        .toList());
+        ChoiceContext.ChooseModeChoice ctx = new ChoiceContext.ChooseModeChoice(
+                sourceCard, controllerId, choiceEffect, false, sourcePermanentId,
+                true, etbTargetId, wasCastFromHand, etbMode, kicked, targetIds);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, effect.modes(), sourceCard.getName() + " — Choose one."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a mode for {} as it enters",
+                gameData.id, playerName, sourceCard.getName());
     }
 
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,

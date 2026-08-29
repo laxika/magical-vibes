@@ -638,10 +638,22 @@ public sealed interface ChoiceContext {
      * triggered ability (with that mode's targets) rather than being spliced into a resolution.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                            boolean triggerTime, UUID sourcePermanentId) implements ChoiceContext {
+                            boolean triggerTime, UUID sourcePermanentId, boolean asEnters,
+                            UUID etbTargetId, boolean wasCastFromHand, int etbMode, boolean kicked,
+                            List<UUID> targetIds) implements ChoiceContext {
+
+        public ChooseModeChoice {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+        }
 
         public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect) {
-            this(sourceCard, controllerId, effect, false, null);
+            this(sourceCard, controllerId, effect, false, null, false, null, false, 0, false, List.of());
+        }
+
+        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                boolean triggerTime, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effect, triggerTime, sourcePermanentId,
+                    false, null, false, 0, false, List.of());
         }
     }
 

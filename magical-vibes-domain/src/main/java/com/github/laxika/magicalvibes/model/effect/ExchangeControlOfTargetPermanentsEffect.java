@@ -33,6 +33,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>{@code requireSharedArtifactOrCreatureType} re-checks Legerdemain's cross-target "another
  * target permanent that shares one of those types with it" restriction at resolution; at
  * announcement it is enforced by {@code MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE}.
+ * {@code requireSharedCardType} is the corresponding generic card-type restriction used by
+ * Shifting Loyalties.
  */
 public record ExchangeControlOfTargetPermanentsEffect(
         PermanentPredicate targetPredicate,
@@ -40,25 +42,26 @@ public record ExchangeControlOfTargetPermanentsEffect(
         boolean requireFirstTargetControlledByController,
         boolean sourceIsFirstTarget,
         boolean requireSharedArtifactOrCreatureType,
-        boolean triggeringPermanentIsFirstTarget) implements CardEffect {
+        boolean triggeringPermanentIsFirstTarget,
+        boolean requireSharedCardType) implements CardEffect {
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater) {
-        this(targetPredicate, requireOpponentManaValueNotGreater, true, false, false, false);
+        this(targetPredicate, requireOpponentManaValueNotGreater, true, false, false, false, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
             boolean requireFirstTargetControlledByController) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
-                requireFirstTargetControlledByController, false, false, false);
+                requireFirstTargetControlledByController, false, false, false, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
             PermanentPredicate targetPredicate, boolean requireOpponentManaValueNotGreater,
             boolean requireFirstTargetControlledByController, boolean sourceIsFirstTarget) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
-                requireFirstTargetControlledByController, sourceIsFirstTarget, false, false);
+                requireFirstTargetControlledByController, sourceIsFirstTarget, false, false, false);
     }
 
     public ExchangeControlOfTargetPermanentsEffect(
@@ -67,13 +70,19 @@ public record ExchangeControlOfTargetPermanentsEffect(
             boolean requireSharedArtifactOrCreatureType) {
         this(targetPredicate, requireOpponentManaValueNotGreater,
                 requireFirstTargetControlledByController, sourceIsFirstTarget,
-                requireSharedArtifactOrCreatureType, false);
+                requireSharedArtifactOrCreatureType, false, false);
     }
 
     public static ExchangeControlOfTargetPermanentsEffect forTriggeringPermanent(
             PermanentPredicate targetPredicate) {
         return new ExchangeControlOfTargetPermanentsEffect(
-                targetPredicate, false, false, false, false, true);
+                targetPredicate, false, false, false, false, true, false);
+    }
+
+    public static ExchangeControlOfTargetPermanentsEffect withSharedCardType(
+            PermanentPredicate targetPredicate) {
+        return new ExchangeControlOfTargetPermanentsEffect(
+                targetPredicate, false, false, false, false, false, true);
     }
 
     @Override

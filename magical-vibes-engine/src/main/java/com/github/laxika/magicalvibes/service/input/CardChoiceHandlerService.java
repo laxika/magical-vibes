@@ -100,6 +100,7 @@ public class CardChoiceHandlerService {
         boolean enterAttacking = false;
         boolean drawAndRepeat = false;
         boolean putAnyNumber = false;
+        int maxPuts = 0;
         boolean faceDown = false;
         int faceDownPower = 0;
         int faceDownToughness = 0;
@@ -124,6 +125,7 @@ public class CardChoiceHandlerService {
             sacrificeUnlessPayGenericReduction = hc.sacrificeUnlessPayGenericReduction();
             drawAndRepeat = hc.drawAndRepeat();
             putAnyNumber = hc.putAnyNumber();
+            maxPuts = hc.maxPuts();
             returnExiledSourceCardId = hc.returnExiledSourceCardId();
             drawAndRepeatPredicate = hc.drawAndRepeatPredicate();
             drawAndRepeatLabel = hc.drawAndRepeatLabel();
@@ -195,15 +197,20 @@ public class CardChoiceHandlerService {
                     }
                 }
                 // Cultivator Colossus / Wrenn and Seven: re-offer until decline / no matches.
-                if ((drawAndRepeat || putAnyNumber) && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
+                if ((drawAndRepeat || putAnyNumber) && (maxPuts <= 0 || maxPuts > 1)
+                        && drawAndRepeatPredicate != null && drawAndRepeatLabel != null
                         && !gameData.interaction.isAwaitingInput()) {
                     if (drawAndRepeat) {
                         drawService.resolveDrawCard(gameData, playerId);
                     }
-                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId,
-                            new PutCardToBattlefieldEffect(drawAndRepeatPredicate, drawAndRepeatLabel, enterTapped,
-                                    false, false, false, false, false, drawAndRepeat, putAnyNumber, faceDown,
-                                    faceDownPower, faceDownToughness, faceDownCardTypes));
+                    PutCardToBattlefieldEffect repeatEffect = new PutCardToBattlefieldEffect(
+                            drawAndRepeatPredicate, drawAndRepeatLabel, enterTapped,
+                            false, false, false, false, false, drawAndRepeat, putAnyNumber, faceDown,
+                            faceDownPower, faceDownToughness, faceDownCardTypes);
+                    if (maxPuts > 0) {
+                        repeatEffect = repeatEffect.withMaxPuts(maxPuts - 1);
+                    }
+                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect);
                 }
             }
         }

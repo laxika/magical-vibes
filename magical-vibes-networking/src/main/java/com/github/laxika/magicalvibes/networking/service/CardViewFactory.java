@@ -94,6 +94,10 @@ public class CardViewFactory {
                 .map(this::createAbilityView)
                 .toList();
 
+        List<ActivatedAbilityView> exileAbilityViews = card.getExileActivatedAbilities().stream()
+                .map(this::createAbilityView)
+                .toList();
+
         ChooseOneEffect modalEffect = findModalEffect(card);
         List<ModalOptionView> modalOptions = modalEffect == null ? null
                 : modalEffect.options().stream().map(this::createModalOptionView).toList();
@@ -191,6 +195,7 @@ public class CardViewFactory {
                 alternateCostRevealsHandCard,
                 graveyardAbilityViews,
                 handAbilityViews,
+                exileAbilityViews,
                 card.getBackFaceCard() != null,
                 kickerCost,
                 kickerRequiresTap,

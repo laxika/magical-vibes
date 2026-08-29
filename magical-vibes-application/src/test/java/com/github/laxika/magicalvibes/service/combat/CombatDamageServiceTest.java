@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -18,6 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -213,6 +217,12 @@ class CombatDamageServiceTest {
         }).when(permanentRemovalService).removePermanentToGraveyard(eq(gameData), any(Permanent.class));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
+                eq(gameData), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.findPermanentController(eq(gameData), any(UUID.class)))
                 .thenAnswer(inv -> {
@@ -1177,6 +1187,25 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Explicitly targeted combat trigger queues a target choice")
+        void explicitlyTargetedCombatTriggerQueuesTargetChoice() {
+            Card card = createCard("Targeted Mill Dragon", 3, 3);
+            MillEffect effect = new MillEffect(4, MillRecipient.TARGET_PLAYER);
+            card.target(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"
+            )).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, effect);
+            Permanent attacker = new Permanent(card);
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            gameData.playerBattlefields.get(player1Id).add(attacker);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
+            assertThat(gameData.stack).noneMatch(entry -> entry.getEffectsToResolve().contains(effect));
         }
 
         @Test

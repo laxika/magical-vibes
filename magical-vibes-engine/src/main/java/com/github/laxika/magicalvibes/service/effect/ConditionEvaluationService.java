@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
+import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestToughness;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
@@ -156,6 +157,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceHasDealtDamage;
 import com.github.laxika.magicalvibes.model.condition.SourceBlockedOrWasBlockedByColorThisTurn;
@@ -326,6 +328,8 @@ public class ConditionEvaluationService {
                     controlledCreaturesTotalPower(gameData, ctx) >= c.threshold();
             case ControlsCreatureWithGreatestPower ignored ->
                     controlsCreatureWithGreatestPower(gameData, ctx);
+            case ControlsCreatureWithGreatestToughness ignored ->
+                    controlsCreatureWithGreatestToughness(gameData, ctx);
             case ControlsEachCreatureWithGreatestPower ignored ->
                     controlsEachCreatureWithGreatestPower(gameData, ctx);
             case SourceRegeneratedThisTurn ignored ->
@@ -555,7 +559,15 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && !ctx.controllerId().equals(gameData.activePlayerId);
             case TargetPermanentMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-                yield target != null && predicateEvaluationService.matchesPermanentPredicate(gameData, target, c.filter());
+                FilterContext filterContext = new FilterContext(
+                        gameData,
+                        ctx.sourceCard() == null ? null : ctx.sourceCard().getId(),
+                        ctx.controllerId(),
+                        ctx.xValue(),
+                        ctx.sourcePermanentSnapshot(),
+                        ctx.sourcePermanentId());
+                yield target != null && predicateEvaluationService.matchesPermanentPredicate(
+                        target, c.filter(), filterContext);
             }
             case TargetPermanentManaValueEqualsControllerUnspentMana ignored -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
@@ -584,6 +596,10 @@ public class ConditionEvaluationService {
                                 .findFirst().orElse(null);
                 yield targetSpell != null
                         && predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
+            }
+            case SourceHasChosenMode c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && c.mode().equals(source.getChosenMode());
             }
             case SourceHasSubtype c ->
                     sourceHasSubtype(gameData, ctx, c.subtype());
@@ -784,6 +800,31 @@ public class ConditionEvaluationService {
                 if (bestOverall == null || power > bestOverall) bestOverall = power;
                 if (playerId.equals(controllerId) && (bestControlled == null || power > bestControlled)) {
                     bestControlled = power;
+                }
+            }
+        }
+        return bestControlled != null && bestControlled.equals(bestOverall);
+    }
+
+    /**
+     * Whether the controller controls a creature tied for (or holding) the greatest effective
+     * toughness among all creatures on the battlefield. False when they control no creature.
+     */
+    private boolean controlsCreatureWithGreatestToughness(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+        Integer bestControlled = null;
+        Integer bestOverall = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (!isCreatureForCondition(gameData, permanent)) continue;
+                int toughness = gameQueryService.getEffectiveToughness(gameData, permanent);
+                if (bestOverall == null || toughness > bestOverall) bestOverall = toughness;
+                if (playerId.equals(controllerId)
+                        && (bestControlled == null || toughness > bestControlled)) {
+                    bestControlled = toughness;
                 }
             }
         }

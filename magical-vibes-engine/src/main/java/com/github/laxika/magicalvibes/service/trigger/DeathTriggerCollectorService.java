@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDiesLoseLifeEqualPowerGainLifeEqualToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -756,6 +757,26 @@ public class DeathTriggerCollectorService {
                         new EnchantedCreatureControllerLosesLifeEffect(power, epd.dyingPermanentControllerId()),
                         new GainLifeEffect(toughness)
                 ))
+        ));
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                "'s ability triggers (enchanted permanent put into graveyard)."));
+        log.info("Game {} - {} triggers (enchanted permanent put into graveyard)", match.gameData().id,
+                match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleEnchantedCreatureDiesGainLifeAndDrawEqualToToughness(TriggerMatchContext match,
+            EnchantedCreatureDiesGainLifeAndDrawEqualToToughnessEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        int toughness = Math.max(0, epd.dyingCreatureToughness());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new GainLifeEffect(toughness), new DrawCardEffect(toughness)))
         ));
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));

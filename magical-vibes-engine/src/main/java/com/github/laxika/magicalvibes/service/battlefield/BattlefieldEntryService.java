@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterE
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
@@ -858,6 +859,7 @@ public class BattlefieldEntryService {
         applyGrantedBloodthirst(gameData, controllerId, permanent);
         applySpellAdditionalEnterCounters(gameData, controllerId, permanent);
         applySpellGrantedHaste(gameData, permanent);
+        applyDashHaste(gameData, permanent);
     }
 
     /**
@@ -870,6 +872,13 @@ public class BattlefieldEntryService {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
             log.info("Game {} - {} enters with haste (paid for with haste-granting mana)",
                     gameData.id, permanent.getCard().getName());
+        }
+    }
+
+    private void applyDashHaste(GameData gameData, Permanent permanent) {
+        if (permanent.isEvoked() && permanent.getCard().getKeywords().contains(Keyword.DASH)) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            log.info("Game {} - {} enters with haste from dash", gameData.id, permanent.getCard().getName());
         }
     }
 
@@ -1439,6 +1448,16 @@ public class BattlefieldEntryService {
                     subtypeChoice.allowedSubtypes());
             return;
         }
+        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseModeOnEnterEffect.class::isInstance)
+                .map(ChooseModeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (enteringPermanent != null && enteringPermanent.getChosenMode() == null && modeChoice != null) {
+            playerInputService.beginChooseModeOnEnterChoice(gameData, controllerId, card, modeChoice,
+                    enteringPermanent.getId(), targetId, wasCastFromHand, etbMode, kicked, targetIds);
+            return;
+        }
 
         // Torpor Orb: "Creatures entering don't cause abilities to trigger."
         if (gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)) {
@@ -1469,6 +1488,7 @@ public class BattlefieldEntryService {
                 // "As enters, choose a creature type" is a replacement-style choice made during entry
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
                 .filter(e -> !(e instanceof ChooseSubtypeOnEnterEffect))
+                .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
                 .filter(e -> !(e instanceof ReplacementEffect))
                 // Conditional as-enters replacements ("if kicked, enters with N counters") are
                 // handled during entry, not by the triggered-ability pipeline.

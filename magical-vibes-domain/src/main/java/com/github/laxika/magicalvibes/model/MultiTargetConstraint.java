@@ -21,6 +21,8 @@ public enum MultiTargetConstraint {
      * permanent that shares one of those types with it").
      */
     SHARE_ARTIFACT_OR_CREATURE_TYPE,
+    /** The chosen permanents must share at least one permanent card type. */
+    SHARE_CARD_TYPE,
     /**
      * Every permanent chosen after the first target must be controlled by the first target — the
      * first target itself when it is a player, otherwise the controller of the first target

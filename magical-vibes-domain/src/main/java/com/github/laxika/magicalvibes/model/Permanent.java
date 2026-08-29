@@ -134,6 +134,7 @@ public class Permanent {
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
+    @Setter private String chosenMode;
     /** The number last chosen for this permanent by a "choose a number between X and Y" effect
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
@@ -248,6 +249,8 @@ public class Permanent {
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
+    /** Whether this face-down permanent was put onto the battlefield by manifest. */
+    @Setter private boolean manifested;
     @Setter private boolean animatedUntilEndOfTurn;
     /** When {@code true}, this permanent is animated as a creature until the combat phase ends
      *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
@@ -603,6 +606,7 @@ public class Permanent {
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;
         this.secondChosenSubtype = source.secondChosenSubtype;
+        this.chosenMode = source.chosenMode;
         this.chosenNumber = source.chosenNumber;
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
@@ -644,6 +648,7 @@ public class Permanent {
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
+        this.manifested = source.manifested;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
@@ -749,6 +754,7 @@ public class Permanent {
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
+        this.manifested = false;
     }
 
     public void setCard(Card card) {

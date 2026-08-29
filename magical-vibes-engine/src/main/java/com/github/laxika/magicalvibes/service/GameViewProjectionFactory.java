@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -496,6 +497,13 @@ public class GameViewProjectionFactory {
             boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
                     || castableFromExileWithSource.contains(card.getId());
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            boolean hasExileAbility = !card.getExileActivatedAbilities().isEmpty();
+            if (hasExileAbility && !hasPermission && !hasExileCast) {
+                if (canActivateExileAbilityNow(gameData, playerId, card, pool, isActivePlayer, isMainPhase, stackEmpty)) {
+                    playable.add(exileCardView(gameData, playerId, card));
+                }
+                continue;
+            }
             if (!hasPermission && !hasExileCast) {
                 continue;
             }
@@ -548,6 +556,23 @@ public class GameViewProjectionFactory {
         }
 
         return playable;
+    }
+
+    private boolean canActivateExileAbilityNow(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                                boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        for (ActivatedAbility ability : card.getExileActivatedAbilities()) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                    && (!isActivePlayer || !isMainPhase || !stackEmpty)) {
+                continue;
+            }
+            if (ability.getManaCost() == null) {
+                return true;
+            }
+            if (pool != null && new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private CardView exileCardView(GameData gameData, UUID playerId, Card card) {

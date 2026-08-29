@@ -44,7 +44,7 @@ public class DestroyTargetPermanentAndDamageControllerIfDestroyedEffectHandler i
                 // Deal damage only if the permanent was actually put into a graveyard
                 if (destroyed) {
                     destructionSupport.dealNoncombatDamageToPlayer(gameData, targetControllerId, e.damage(),
-                            entry.getCard().getName(), entry.getCard().getColor());
+                            entry.getCard().getName(), entry.getCard().getColor(), entry.getControllerId());
                 }
 
                 gameOutcomeService.checkWinCondition(gameData);

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -37,7 +38,11 @@ public class GraveyardTargetingSupport {
     }
 
     private CardEffect unwrapMay(CardEffect effect) {
-        return effect instanceof MayEffect may ? may.wrapped() : effect;
+        return switch (effect) {
+            case MayEffect may -> may.wrapped();
+            case MayPayManaEffect mayPay -> mayPay.wrapped();
+            default -> effect;
+        };
     }
 
     private Target targetOf(CardEffect effect) {

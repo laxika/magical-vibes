@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -506,13 +507,15 @@ public class AmountEvaluationService {
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx,
                                 boolean includeSourceIfAbsent) {
-        // In static evaluation the filter context carries a null GameData: type and keyword checks then
-        // use intrinsic values, so counting never calls computeStaticBonus on other permanents
-        // (which could recurse back into the count being computed). The P/T leaves are exempt —
-        // they route through GameQueryService's recursion-safe accessors. The source identity is
-        // supplied either way: it costs no query, and without it source-relative predicates
-        // silently match nothing.
-        FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
+        // In static evaluation most filter contexts carry a null GameData: type and keyword checks
+        // then use intrinsic values, so counting never calls computeStaticBonus on other permanents
+        // (which could recurse back into the count being computed). Attachment predicates that
+        // inspect a host receive the live game data and use a recursion-safe creature check.
+        // The source identity is supplied either way: it costs no query, and without it
+        // source-relative predicates silently match nothing.
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        FilterContext filterContext = staticEvaluation
+                && !(count.filter() instanceof PermanentIsAuraAttachedToCreaturePredicate)
                 ? FilterContext.empty()
                 : FilterContext.of(gameData);
         filterContext = filterContext.withSourceControllerId(ctx.controllerId());
