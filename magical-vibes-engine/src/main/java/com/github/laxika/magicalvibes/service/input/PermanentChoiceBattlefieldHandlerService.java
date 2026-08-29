@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEither
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
@@ -155,6 +156,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
     private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
+    private final ExileSelfAndReturnUnderOpponentControlEffectHandler exileSelfAndReturnUnderOpponentControlHandler;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
@@ -535,10 +537,15 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         if (context.exile()) {
             Card exiledCard = target.getCard();
-            permanentRemovalService.removePermanentToExile(gameData, target);
-            gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
-            log.info("Game {} - {} exiles {}", gameData.id, context.sourceCardName(), exiledCard.getName());
-            permanentRemovalService.removeOrphanedAuras(gameData);
+            if (context.sourcePermanentId() != null && context.sourceCard() != null) {
+                exileSupport.exilePermanentAndTrackWithSource(
+                        gameData, target, context.sourcePermanentId(), context.sourceCard());
+            } else {
+                permanentRemovalService.removePermanentToExile(gameData, target);
+                gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
+                log.info("Game {} - {} exiles {}", gameData.id, context.sourceCardName(), exiledCard.getName());
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
         } else {
             destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName());
         }
@@ -645,6 +652,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleChooseOpponentGainsControlOfSource(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentGainsControlOfSource context) {
         chooseOpponentGainsControlOfSourceEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseOpponentForSelfFlicker(GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseOpponentForSelfFlicker context) {
+        exileSelfAndReturnUnderOpponentControlHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

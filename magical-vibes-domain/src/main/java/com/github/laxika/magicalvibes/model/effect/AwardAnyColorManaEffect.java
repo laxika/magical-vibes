@@ -112,6 +112,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(new Fixed(amount), restriction, null, false, false, false, false, false, false, spellOnlySubtypes, false);
     }
 
+    /** "Add N mana in any combination of colors" with a spell-subtype restriction. */
+    public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction,
+                                   Set<CardSubtype> spellOnlySubtypes, boolean anyColorCombination) {
+        this(new Fixed(amount), restriction, null, false, false, false, false, anyColorCombination,
+                false, spellOnlySubtypes, false);
+    }
+
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype,
                                    boolean sourceBecomesProducedColorUntilEndOfTurn) {
         this(new Fixed(amount), restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,

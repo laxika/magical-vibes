@@ -29,6 +29,8 @@ public enum CardPileDisposition {
      * hand, so the flow completes in step 1 and never asks the controller to pick a pile.
      */
     GIFTS_UNGIVEN,
+    /** Elemental Teachings: selected cards go to the graveyard and the rest enter tapped. */
+    GIFTS_UNGIVEN_BATTLEFIELD_TAPPED,
     /** Deliver Unto Evil: the opponent chooses cards to leave in the controller's graveyard. */
     DELIVER_UNTO_EVIL,
     /** Death or Glory: the opponent chooses which pile is exiled; the other returns to the battlefield. */

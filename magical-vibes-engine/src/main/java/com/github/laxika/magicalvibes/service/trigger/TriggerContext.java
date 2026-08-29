@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -92,6 +93,8 @@ public sealed interface TriggerContext {
 
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
+
+    record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
 
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
@@ -611,4 +614,8 @@ public sealed interface TriggerContext {
     }
 
     record Crime(UUID committingPlayerId) implements TriggerContext {}
+
+    /** Context for an attacking creature causing one of its triggered abilities to trigger. */
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
+            implements TriggerContext {}
 }

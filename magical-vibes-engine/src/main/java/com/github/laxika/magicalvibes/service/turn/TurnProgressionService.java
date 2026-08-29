@@ -130,6 +130,17 @@ public class TurnProgressionService {
             return;
         }
 
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.mindControlUntilEndOfCombat) {
+            gameData.mindControlledPlayerId = null;
+            gameData.mindControllerPlayerId = null;
+            gameData.mindControlUntilEndOfCombat = false;
+        }
+
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
+            gameData.onlyLandCreaturesCanAttackThisCombat = false;
+            gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
+        }
+
         gameData.priorityPassedBy.clear();
         gameData.interaction.clearAwaitingInput();
 
@@ -189,6 +200,7 @@ public class TurnProgressionService {
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.additionalCombatPhasesOnly > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatPhasesOnly--;
+            additionalCombatPhase = true;
         }
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
@@ -279,6 +291,19 @@ public class TurnProgressionService {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
                 gameData.combatPhasesThisTurn++;
+                UUID combatController = gameData.pendingCombatControl.remove(gameData.activePlayerId);
+                if (combatController != null && gameData.playerIds.contains(combatController)) {
+                    gameData.mindControlledPlayerId = gameData.activePlayerId;
+                    gameData.mindControllerPlayerId = combatController;
+                    gameData.mindControlUntilEndOfCombat = true;
+                    String combatControllerName = gameData.playerIdToName.get(combatController);
+                    String combatPlayerName = gameData.playerIdToName.get(gameData.activePlayerId);
+                    String controlLog = combatControllerName + " controls " + combatPlayerName
+                            + " during their next combat phase.";
+                    gameLogService.append(gameData, GameLog.text(controlLog));
+                    log.info("Game {} - {} controls {} during combat", gameData.id,
+                            combatControllerName, combatPlayerName);
+                }
                 gameData.cardsPutIntoGraveyardThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
@@ -321,9 +346,9 @@ public class TurnProgressionService {
     }
 
     private void processAdditionalCombatBeginningEffects(GameData gameData) {
-        List<DelayedAdditionalCombatBeginningEffect> pendingEffects =
-                gameData.drainDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
-        for (DelayedAdditionalCombatBeginningEffect pending : pendingEffects) {
+        DelayedAdditionalCombatBeginningEffect pending =
+                gameData.drainFirstDelayedAction(DelayedAdditionalCombatBeginningEffect.class);
+        if (pending != null) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     pending.sourceCard(),
@@ -381,6 +406,7 @@ public class TurnProgressionService {
         // Clear any active mind control from the ending turn
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
+        gameData.mindControlUntilEndOfCombat = false;
 
         UUID nextActive;
         boolean currentTurnIsExtraTurn = false;
@@ -476,6 +502,7 @@ public class TurnProgressionService {
         if (pendingController != null && gameData.playerIds.contains(pendingController)) {
             gameData.mindControlledPlayerId = nextActive;
             gameData.mindControllerPlayerId = pendingController;
+            gameData.mindControlUntilEndOfCombat = false;
             String controllerName = gameData.playerIdToName.get(pendingController);
             String controlLog = controllerName + " controls " + nextActiveName + " this turn (Mindslaver).";
             gameLogService.append(gameData, GameLog.text(controlLog));
@@ -511,6 +538,7 @@ public class TurnProgressionService {
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
+        gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.playersWhoSurveilledThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
@@ -620,6 +648,7 @@ public class TurnProgressionService {
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
+        gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
@@ -630,6 +659,7 @@ public class TurnProgressionService {
         gameData.creatureTriggeringEffectOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.additionalCombatPhasesOnly = 0;
+        gameData.onlyLandCreaturesCanAttackThisCombat = false;
         gameData.additionalCombatPhasesAfterMain = 0;
         gameData.additionalCombatPhasesAfterMainReturnStep = null;
         gameData.additionalUpkeepStepsAfterCombat = 0;
@@ -678,6 +708,7 @@ public class TurnProgressionService {
         // Comply: "until your next turn, your opponents can't cast spells with the chosen name".
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.remove(nextActive);
         gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);

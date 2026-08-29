@@ -611,7 +611,7 @@ public class GameViewProjectionFactory {
             }
 
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
-            if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) continue;
+            if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
@@ -671,12 +671,31 @@ public class GameViewProjectionFactory {
                     }
                     if (playWithoutPaying || canAfford) {
                         playable.add(cardViewFactory.create(card));
+                    } else if (castingPermissionService.hasWaterbendCastFromExiledWithSourcePermission(
+                            gameData, playerId, card.getId())
+                            && canPayWaterbendFromExile(gameData, playerId, card.getManaValue())) {
+                        playable.add(cardViewFactory.create(card));
                     }
                 }
             }
         }
 
         return playable;
+    }
+
+    private boolean canPayWaterbendFromExile(GameData gameData, UUID playerId, int amount) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        int availableMana = pool == null ? 0 : pool.getTotal();
+        if (availableMana >= amount) {
+            return true;
+        }
+        int untappedEligible = (int) gameData.playerBattlefields
+                .getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
+                        || gameQueryService.isCreature(gameData, permanent))
+                .count();
+        return untappedEligible >= amount - availableMana;
     }
 
     private CardView exileCardView(GameData gameData, UUID playerId, Card card) {
@@ -733,7 +752,7 @@ public class GameViewProjectionFactory {
         if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
             return playable;
         }
-        if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY)) {
+        if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY, playerId)) {
             return playable;
         }
 

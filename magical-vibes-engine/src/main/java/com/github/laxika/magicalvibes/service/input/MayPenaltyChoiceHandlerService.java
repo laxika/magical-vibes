@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessContro
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -114,6 +115,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreatureUnlessControllerPaysEffectHandler returnTargetCreatureUnlessControllerPaysEffectHandler;
     private final CounterSupport counterSupport;
+    private final WaterbendPaymentService waterbendPaymentService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
@@ -227,6 +229,49 @@ public class MayPenaltyChoiceHandlerService {
             }
         } else {
             counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessWaterbendsChoice(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability) {
+        CounterUnlessEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessEffect ce
+                        && ce.ransomKind() == CounterUnlessEffect.RansomKind.PAY_WATERBEND)
+                .map(CounterUnlessEffect.class::cast)
+                .findFirst().orElseThrow();
+        int amount = effect.ransomMagnitude();
+        UUID targetCardId = ability.targetCardId();
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-waterbend target no longer on stack", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String costText = "{" + amount + "} using waterbend";
+        if (accepted && waterbendPaymentService.canPay(gameData, player.getId(), amount)) {
+            waterbendPaymentService.pay(gameData, player.getId(), amount, ability.sourceCard());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
+        } else {
+            counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, false, List.of());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

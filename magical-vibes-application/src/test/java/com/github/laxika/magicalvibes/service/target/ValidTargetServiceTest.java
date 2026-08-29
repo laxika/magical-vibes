@@ -1411,6 +1411,30 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("multi-target ability keeps only creatures sharing a type with the first target")
+        void multiTarget_filtersToSharedCreatureType() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "Deal 2 damage to two creatures", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+
+            Permanent first = addPermanentToBattlefield(player1Id, createCreatureCard());
+            Permanent shared = addPermanentToBattlefield(player1Id, createCreatureCard());
+            Permanent different = addPermanentToBattlefield(player1Id, createCreatureCard());
+            when(gameQueryService.findPermanentById(gameData, first.getId())).thenReturn(first);
+            when(gameQueryService.findPermanentById(gameData, shared.getId())).thenReturn(shared);
+            when(gameQueryService.findPermanentById(gameData, different.getId())).thenReturn(different);
+            when(gameQueryService.shareCreatureType(gameData, first, shared)).thenReturn(true);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of(first.getId()));
+
+            assertThat(response.validPermanentIds()).contains(shared.getId()).doesNotContain(different.getId());
+        }
+
+        @Test
         @DisplayName("X-scaled ability caps its max targets at the announced X")
         void xScaledTargets_boundedByAnnouncedX() {
             Card sourceCard = createCreatureCard();

@@ -94,7 +94,8 @@ class CostEffectClassificationTest {
             "TapTwoCreaturesSharingTypeCost",
             "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
-            "UntapMultiplePermanentsCost");
+                "UntapMultiplePermanentsCost",
+                "WaterbendCost");
 
     /**
      * Spell-handled cost types that do not use the generic single-permanent payment field. These
@@ -107,6 +108,7 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
+            "PayLifeOrPayManaCost",
             "ChooseXValueCost",
             "ChooseCreatureTypeCost",
             "ExileCardFromGraveyardCost",

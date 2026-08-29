@@ -590,7 +590,8 @@ public class TargetLegalityService {
                         "Land cards in graveyards can't be the targets of spells or abilities opponents control");
             }
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-            if (graveyardOwnerId == null || !graveyardOwnerId.equals(playerId)) {
+            if (effect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                    && (graveyardOwnerId == null || !graveyardOwnerId.equals(playerId))) {
                 throw new IllegalStateException("Target must be in your graveyard");
             }
             if (effect.filter() != null
@@ -1936,6 +1937,11 @@ public class TargetLegalityService {
                 Permanent a = targets.get(i);
                 Permanent b = targets.get(j);
                 switch (constraint) {
+                    case SHARE_CREATURE_TYPES -> {
+                        if (!gameQueryService.shareCreatureType(gameData, a, b)) {
+                            throw new IllegalStateException("Chosen creatures must share a creature type");
+                        }
+                    }
                     case SHARE_NO_CREATURE_TYPES -> {
                         if (gameQueryService.shareCreatureType(gameData, a, b)) {
                             throw new IllegalStateException("Chosen creatures must share no creature types");

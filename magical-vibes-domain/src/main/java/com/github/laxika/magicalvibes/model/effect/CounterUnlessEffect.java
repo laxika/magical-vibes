@@ -23,7 +23,9 @@ public interface CounterUnlessEffect extends CardEffect {
         /** Discard the entire hand. */
         DISCARD_HAND,
         /** Sacrifice a permanent (e.g. Mishra, Tamer of Mak Fawa's ward). */
-        SACRIFICE_PERMANENT
+        SACRIFICE_PERMANENT,
+        /** Pay a generic mana amount, with untapped artifacts and creatures helping (waterbend ward). */
+        PAY_WATERBEND
     }
 
     /** Which kind of ransom this effect demands. */
@@ -31,8 +33,8 @@ public interface CounterUnlessEffect extends CardEffect {
 
     /**
      * The base magnitude of the ransom, as a components-derived fact: for {@link RansomKind#PAY_MANA}
-     * the generic mana amount component (may be overridden at resolution when the effect uses an X or
-     * dynamic amount); for {@link RansomKind#PAY_LIFE} a dynamic amount may be evaluated at
+     * and {@link RansomKind#PAY_WATERBEND} the generic mana amount component (which may be overridden
+     * at resolution when the effect uses an X or dynamic amount); for {@link RansomKind#PAY_LIFE} a dynamic amount may be evaluated at
      * resolution, so the concrete effect may return 0; for {@link RansomKind#DISCARD_CARD} the number
      * of cards to discard (currently always 1), for {@link RansomKind#DISCARD_HAND} 0, or 1 for a
      * permanent sacrifice.

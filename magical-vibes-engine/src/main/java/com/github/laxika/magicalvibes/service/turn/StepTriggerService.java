@@ -2703,7 +2703,9 @@ public class StepTriggerService {
 
         drainAddManaAtNextMainPhase(gameData, true);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
             processNextMainPhasePlayerTarget(gameData);
         }
     }
@@ -2777,7 +2779,17 @@ public class StepTriggerService {
                 continue;
             }
 
+            List<CardEffect> modalEffects = triggering.stream()
+                    .filter(effect -> effect instanceof ChooseModeNotYetChosenEffect)
+                    .toList();
+            for (CardEffect modalEffect : modalEffects) {
+                ChooseModeNotYetChosenEffect modal = (ChooseModeNotYetChosenEffect) modalEffect;
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        perm.getCard(), activePlayerId, new ChooseOneEffect(modal.options()), perm.getId(), false, true));
+            }
+
             List<CardEffect> playerTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect))
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
@@ -2788,6 +2800,7 @@ public class StepTriggerService {
             }
 
             List<CardEffect> nonPlayerTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect))
                     .filter(effect -> !playerTargetEffects.contains(effect))
                     .toList();
             if (!nonPlayerTargetEffects.isEmpty()) {

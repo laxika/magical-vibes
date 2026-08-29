@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler;
@@ -37,6 +38,7 @@ public class PermanentChoiceHandlerService {
     private final GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler grantChosenCreatureKeywordEffectHandler;
     private final MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
     private final InputCompletionService inputCompletionService;
+    private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
             returnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 
@@ -122,6 +124,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesCreatureYouGainControl(gameData, permanentId, richesChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentForSelfFlicker chooseOpponent) {
+            battlefieldHandler.handleChooseOpponentForSelfFlicker(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentSacrifice chooseOpponent) {
             battlefieldHandler.handleChooseOpponentForPermanentSacrifice(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesPermanentToSacrifice sacrificeChoice) {
@@ -237,6 +241,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleReflectDamageToSourceControllerChoice(gameData, permanentId, reflectDamage);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
+        } else if (context instanceof PermanentChoiceContext.EarthbendThenFightTarget earthbendFight) {
+            earthbendThenFightHandler.handleTargetChoice(gameData, permanentId, earthbendFight);
         } else if (context instanceof PermanentChoiceContext.ResolvingModalTarget rmt) {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
         } else if (context instanceof PermanentChoiceContext.MaySacrificeForCounterOnSource msfc) {

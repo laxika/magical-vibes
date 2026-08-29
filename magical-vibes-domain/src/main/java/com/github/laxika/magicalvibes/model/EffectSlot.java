@@ -138,6 +138,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DRAWS,
     /** Triggers when the controller draws their second card of the turn. */
     ON_CONTROLLER_DRAWS_SECOND_CARD,
+    /** Triggers when this card's owner draws their second card of the turn while this card is in
+     *  their graveyard. Checked in {@code DrawService}. */
+    GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
     ON_OPPONENT_DISCARDS,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
@@ -153,6 +156,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    ON_CONTROLLER_BENDS,
     /** Triggers when this card is discarded for any reason ("When you discard this card, …").
      *  Unlike {@link #ON_SELF_DISCARDED_BY_OPPONENT}, fires on self-discard and opponent-caused discard.
      *  Checked in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Edgar's Awakening. */
@@ -481,6 +485,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code enteredFromGraveyardOwnerId} flag. Queues the resolved effects as a non-targeting stack
      *  entry for the source's controller. Used by River Kelpie. */
     ON_PERMANENT_ENTERS_FROM_GRAVEYARD,
+    /** Triggers whenever a permanent controlled by this permanent's controller enters the
+     *  battlefield directly from exile. Checked after the permanent enters, using the
+     *  {@code enteredFromExile} flag on the entering permanent. */
+    ON_PERMANENT_ENTERS_FROM_EXILE,
     /** "When this creature enters from a graveyard" — fires only for the entering permanent itself
      *  (not for other permanents), checked via the {@code enteredFromGraveyardOwnerId} flag in
      *  {@code TriggerCollectionService.checkSelfEntersFromGraveyardTriggers}. A targeting effect
@@ -534,6 +542,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
+    /** Triggers once for each player directly attacked by one or more creatures the controller
+     *  controls. Attacking a planeswalker does not count. Checked in
+     *  {@code CombatAttackService.declareAttackers}. */
+    ON_ALLY_CREATURES_ATTACK_PLAYER,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
     STATE_TRIGGERED,
@@ -644,6 +656,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers. Used by Luminous
      *  Phantom ("you gain 1 life"). */
     ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another permanent controlled by this permanent's controller leaves the
+     *  battlefield during that controller's turn. */
+    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */

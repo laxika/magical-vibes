@@ -261,6 +261,17 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    private boolean handleSacrificeConditional(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        return handleSacrificeDefault(match, conditional, ctx);
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
@@ -1598,14 +1609,18 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         Permanent source = match.permanent();
 
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source.getCard(),
                 match.controllerId(),
                 source.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
                 null,
-                source.getId()));
+                source.getId());
+        if (match.rawEffect() instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+            entry.setMarkSourceOncePerTurnOnAcceptance(true);
+        }
+        gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         log.info("Game {} - {} triggers on surveil", gameData.id, source.getCard().getName());

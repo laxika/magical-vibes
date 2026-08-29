@@ -226,6 +226,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.pendingTurnControlExtraTurn.clear();
+        gameData.pendingCombatControl.clear();
         gameData.playersDealtCombatDamageSinceTheirLastTurn.clear();
         gameData.playersDealtCombatDamageLastTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
@@ -284,12 +285,14 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();
+        gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.endTurnRequested = false;
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.discardCausedByOpponent = false;
         gameData.cleanupDiscardPending = false;
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
+        gameData.mindControlUntilEndOfCombat = false;
         gameData.pendingSearchContext = null;
         gameData.pendingETBDamageAssignments = Map.of();
         gameData.combatDamageFirstStrikeAssignmentPhase = false;
@@ -332,6 +335,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.turnNumber = 1;
         gameData.turnsTakenByPlayer.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
+        gameData.sacrificedPermanentCountThisTurn.clear();
 
         // Step 4: Each player draws 7 cards (CR 726 — pregame procedure)
         for (UUID playerId : gameData.orderedPlayerIds) {

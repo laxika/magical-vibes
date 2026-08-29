@@ -112,9 +112,9 @@ public class EtbEffectResolver {
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), false, false, false,
                     sourceZone, 0, null, null, false, false, false, null, null, null,
-                    ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
-                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
-                    false, false, 0);
+                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
+                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
+                     false, false, 0, false);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;

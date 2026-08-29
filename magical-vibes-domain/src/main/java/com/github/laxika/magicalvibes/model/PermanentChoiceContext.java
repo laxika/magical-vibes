@@ -102,9 +102,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TormentSacrifice(UUID playerId) implements PermanentChoiceContext {}
 
     /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
-    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) implements PermanentChoiceContext {
+    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
+                                 UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {
         public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) {
-            this(choosingPlayerId, sourceCardName, false);
+            this(choosingPlayerId, sourceCardName, false, null, null);
+        }
+
+        public DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile) {
+            this(choosingPlayerId, sourceCardName, exile, null, null);
         }
     }
 
@@ -339,15 +344,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *                                the battlefield; {@code null} otherwise.
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
-                              Integer eventValue, Permanent sourcePermanentSnapshot) implements PermanentChoiceContext {
+                              Integer eventValue, Permanent sourcePermanentSnapshot,
+                              boolean creaturesOnly) implements PermanentChoiceContext {
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) {
-            this(dyingCard, controllerId, effects, null, null);
+            this(dyingCard, controllerId, effects, null, null, true);
         }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                                   Integer eventValue) {
-            this(dyingCard, controllerId, effects, eventValue, null);
+            this(dyingCard, controllerId, effects, eventValue, null, true);
+        }
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue, Permanent sourcePermanentSnapshot) {
+            this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, true);
         }
     }
 
@@ -497,16 +508,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  differs only for text such as Erithizon's "of defending player's choice". */
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                UUID sourcePermanentId, UUID choosingPlayerId,
-                               UUID attackedTargetId) implements PermanentChoiceContext {
+                               UUID attackedTargetId, UUID triggeringPermanentId) implements PermanentChoiceContext {
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId,
+                                   UUID attackedTargetId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, null);
+        }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, controllerId, null, null);
         }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId, null, null);
         }
     }
 
@@ -565,13 +583,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                 UUID sourcePermanentId, boolean modesResetEachTurn) implements PermanentChoiceContext {
+                                 UUID sourcePermanentId, boolean modesResetEachTurn,
+                                 boolean consumeModes) implements PermanentChoiceContext {
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false);
+        }
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId, boolean modesResetEachTurn) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false);
         }
     }
+
+    /** A resolving effect asks its controller to choose an opponent before returning its source under that opponent's control. */
+    record ChooseOpponentForSelfFlicker(UUID sourcePermanentId, UUID controllerId, String sourceCardName)
+            implements PermanentChoiceContext {}
 
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
      *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
@@ -1202,31 +1230,37 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code GraveyardSearchScope}.
      */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                       UUID graveyardOwnerId, int minCount, int xValue, int maxCount)
+                                       UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                       Integer sourcePowerAtTrigger)
             implements PermanentChoiceContext {
 
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null);
+        }
+
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, 0, 0, 0);
+            this(sourceCard, controllerId, effects, null, 0, 0, 0, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            int xValue) {
-            this(sourceCard, controllerId, effects, null, 0, xValue, 0);
+            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null);
         }
     }
 
@@ -1359,6 +1393,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
 
     record PlotTriggerAnyTarget(Card plottedCard, UUID controllerId, List<CardEffect> effects)
+            implements PermanentChoiceContext {}
+
+    /** Target choices for the reflexive fight created by Earth Rumble's Earthbend action. */
+    record EarthbendThenFightTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                    UUID firstTargetId, boolean choosingOpponentTarget)
             implements PermanentChoiceContext {}
 
 }

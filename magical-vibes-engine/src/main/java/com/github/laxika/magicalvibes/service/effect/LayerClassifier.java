@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOthe
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherMulticoloredCreaturesByColorCountEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostNonHumanCreaturesByCreatureTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesSharingColorWithTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
@@ -370,6 +372,8 @@ public final class LayerClassifier {
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainAbilitiesOfLastChosenExiledCardEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
@@ -409,6 +413,7 @@ public final class LayerClassifier {
         map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesSharingColorWithTopCardEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenSubtypeEffect.class, fixed(Layer.L7C_MODIFY_PT));

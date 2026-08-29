@@ -88,6 +88,8 @@ public record CardView(
         int exileCastCounterCost,
         boolean additionalChooseCreatureType,
         List<String> additionalCreatureTypeChoices,
+        int additionalCostLifePayment,
+        String additionalCostManaCost,
         CardView prepareSpell
 ) {
 }

@@ -120,6 +120,8 @@ public class StackEntry {
     @Setter private boolean putCounterCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** Whether this spell's optional waterbend additional cost was paid. */
+    @Setter private boolean waterbendCostPaid;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -171,8 +173,9 @@ public class StackEntry {
      * (parallel to {@link #xValue}, but for trigger-event data rather than cast-time data), or set by
      * an earlier effect on the same entry (e.g. excess damage from a damage effect). Read back by the
      * {@code EventValue} dynamic amount at resolution.
-     */
+    */
     @Setter private int eventValue;
+    @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
     @Setter private ManaColor producedManaColor;
     @Setter private Integer dyingPermanentManaValue;
@@ -573,6 +576,7 @@ public class StackEntry {
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.waterbendCostPaid = source.waterbendCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
@@ -595,6 +599,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);

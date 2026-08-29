@@ -153,6 +153,10 @@ public class ChoiceHandlerService {
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid card name: " + colorName);
         }
+        if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice
+                && !colorChoice.options().contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mode: " + colorName);
+        }
 
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
@@ -1238,19 +1242,29 @@ public class ChoiceHandlerService {
         if (ctx.chosenModes().contains(chosen)) {
             throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
         }
+        if (ctx.consumeModes()) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (source != null && source.getChosenModeLabels().contains(chosenLabel)) {
+                throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
+            }
+        }
 
         gameData.interaction.clearAwaitingInput();
         List<ChooseOneEffect.ChooseOneOption> chosenModes = new ArrayList<>(ctx.chosenModes());
         chosenModes.add(chosen);
         if (chosenModes.size() < ctx.effect().choicesRequired()) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
-                    ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), chosenModes);
+                    ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), ctx.consumeModes(), chosenModes);
             return;
         }
-        if (ctx.modesResetEachTurn()) {
+        if (ctx.consumeModes() || ctx.modesResetEachTurn()) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null) {
-                source.getChosenModeLabelsThisTurn().add(chosenLabel);
+                if (ctx.consumeModes()) {
+                    source.getChosenModeLabels().add(chosenLabel);
+                } else {
+                    source.getChosenModeLabelsThisTurn().add(chosenLabel);
+                }
             }
         }
         gameLogService.append(gameData, GameLog.textCardText(
@@ -1262,6 +1276,10 @@ public class ChoiceHandlerService {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+            turnProgressionService.processNextMainPhasePlayerTarget(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1882,7 +1900,8 @@ public class ChoiceHandlerService {
 
         List<String> chosenLabels = new ArrayList<>(ctx.chosenLabels());
         if (ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)) {
-            if (!ctx.effect().variableModeCount() || chosenLabels.isEmpty()) {
+            if (!ctx.effect().variableModeCount()
+                    || chosenLabels.size() < ctx.effect().choicesRequired()) {
                 throw new IllegalArgumentException("Invalid mode: " + chosenLabel);
             }
         } else {
@@ -1969,10 +1988,37 @@ public class ChoiceHandlerService {
 
     private void handleManaColorSpellChosen(GameData gameData, Player player, String colorName,
                                              ChoiceContext.ManaColorSpellChoice ctx) {
-        ManaColor manaColor = ManaColor.valueOf(colorName);
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(
+                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
         gameData.interaction.clearAwaitingInput();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        if (ctx.anyColorCombination()) {
+            manaPool.addSubtypeSpellOnlyMana(ctx.subtypes(), manaColor, 1);
+
+            String subtypeLabel = ctx.subtypes().stream()
+                    .map(CardSubtype::getDisplayName)
+                    .toList().toString();
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds one "
+                    + colorName.toLowerCase() + " mana (" + subtypeLabel + " spells only)."));
+            log.info("Game {} - {} adds one {} mana for {} spells only", gameData.id,
+                    player.getUsername(), colorName.toLowerCase(), subtypeLabel);
+
+            int remaining = ctx.amount() - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorSpellChoice nextContext =
+                        ChoiceContext.ManaColorSpellChoice.anyColorCombination(
+                                ctx.playerId(), remaining, ctx.subtypes());
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextContext, colors,
+                        "Choose a color of mana to add (" + ctx.subtypes() + " spells only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         manaPool.addSubtypeSpellOnlyMana(ctx.subtypes(), manaColor, ctx.amount());
 
         String subtypeLabel = ctx.subtypes().stream()

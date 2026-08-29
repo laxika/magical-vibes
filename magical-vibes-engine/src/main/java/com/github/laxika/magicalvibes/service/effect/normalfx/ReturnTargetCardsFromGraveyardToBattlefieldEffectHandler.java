@@ -55,6 +55,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private void resolveFromAllGraveyards(GameData gameData, StackEntry entry,
                                           ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         List<GraveyardCard> cardsToReturn = new ArrayList<>();
+        int totalManaValue = 0;
         for (UUID targetCardId : entry.getTargetCardIds()) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
             if (graveyardOwnerId == null) {
@@ -64,8 +65,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
                     .findFirst().orElse(null);
             if (card != null && predicateEvaluationService.matchesCardPredicate(
-                    card, effect.filter(), entry.getCard().getId())) {
+                    card, effect.filter(), entry.getCard().getId())
+                    && (!effect.hasTotalManaValueCap()
+                    || totalManaValue + card.getManaValue() <= effect.maxTotalManaValue())) {
                 cardsToReturn.add(new GraveyardCard(graveyardOwnerId, card));
+                totalManaValue += card.getManaValue();
             }
         }
 

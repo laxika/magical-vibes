@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -153,6 +154,9 @@ class SpellCastingServiceTest {
     private ConditionEvaluationService conditionEvaluationService;
 
     @Mock
+    private WaterbendPaymentService waterbendPaymentService;
+
+    @Mock
     private GameMutationCoordinator mutationCoordinator;
 
     @Mock
@@ -183,6 +187,7 @@ class SpellCastingServiceTest {
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
+                waterbendPaymentService,
                 mutationCoordinator, stateBasedActionService, lifeSupport, playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

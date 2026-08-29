@@ -32,11 +32,9 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfTargetPermanentEffect) effect;
 
-        List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
-        if (targetIds == null) {
-            targetIds = !entry.getTargetCardIds().isEmpty()
-                    ? entry.getTargetCardIds()
-                    : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+        List<UUID> targetIds = entry.targetsForEffect(copyEffect);
+        if (targetIds.isEmpty() && !entry.getTargetCardIds().isEmpty()) {
+            targetIds = entry.getTargetCardIds();
         } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
                 && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());

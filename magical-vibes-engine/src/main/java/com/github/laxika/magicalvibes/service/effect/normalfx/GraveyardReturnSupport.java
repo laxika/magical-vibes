@@ -2245,21 +2245,53 @@ public class GraveyardReturnSupport {
      * pile-separation dispositions this completes the flow — there is no second choice.
      */
     public void completeGiftsUngivenChoice(GameData gameData, List<UUID> chosenCardIds) {
+        completeGiftsUngivenChoice(gameData, chosenCardIds, false);
+    }
+
+    /**
+     * Completes a Gifts-style opponent choice. The chosen cards go to the controller's graveyard;
+     * the remaining cards either go to hand or enter the controller's battlefield tapped.
+     */
+    public void completeGiftsUngivenChoice(GameData gameData, List<UUID> chosenCardIds,
+                                            boolean remainingCardsEnterBattlefieldTapped) {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         UUID controllerId = state.controllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
         String chooserName = gameData.playerIdToName.get(state.targetPlayerId());
+        Set<CardType> enterTappedTypes = remainingCardsEnterBattlefieldTapped
+                ? battlefieldEntryService.snapshotEnterTappedTypes(gameData) : Set.of();
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<Permanent> enteredPermanents = new ArrayList<>();
 
         for (Card card : state.cards()) {
             if (chosenCardIds.contains(card.getId())) {
                 gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
                 gameLogService.append(gameData, GameLog.textCardText(chooserName + " chooses ", card,
                         ", putting it into " + controllerName + "'s graveyard."));
+            } else if (remainingCardsEnterBattlefieldTapped) {
+                if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
+                    gameData.playerDecks.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(card);
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            " can't enter the battlefield from a library; it stays in the library."));
+                    continue;
+                }
+
+                Permanent permanent = new Permanent(card, Zone.LIBRARY);
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                permanent.tap();
+                simultaneouslyEntered.add(permanent);
+                enteredPermanents.add(permanent);
+                gameLogService.append(gameData, GameLog.entersBattlefieldTappedUnder(card, controllerName));
             } else {
                 gameData.addCardToHand(controllerId, card);
                 gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
                         " into their hand."));
             }
+        }
+
+        for (Permanent permanent : enteredPermanents) {
+            handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, permanent.getCard());
         }
     }
 
@@ -2301,6 +2333,7 @@ public class GraveyardReturnSupport {
     public Permanent putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
         initializePlaneswalkerLoyalty(permanent, card);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 

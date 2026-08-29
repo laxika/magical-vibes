@@ -10,11 +10,18 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
  * regeneration and indestructible do not apply and no "dies" triggers fire. With 0 creatures
  * nothing happens; with exactly 1 it is exiled automatically; with 2+ the target player picks.
  * When {@code greatestPowerOnly} is true, only creatures tied for greatest power are eligible
- * and the controller of the effect chooses among them.
+ * and the controller of the effect chooses among them. When {@code nontokenOnly} is true, token
+ * creatures are not eligible. When {@code trackWithSource} is true, the exiled creature is tracked
+ * with the source permanent.
  */
-public record TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly) implements CardEffect {
+public record TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly, boolean nontokenOnly,
+                                                      boolean trackWithSource) implements CardEffect {
     public TargetPlayerChoosesCreatureExileEffect() {
-        this(false);
+        this(false, false, false);
+    }
+
+    public TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly) {
+        this(greatestPowerOnly, false, false);
     }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.player()); }

@@ -614,7 +614,9 @@ public class PlayerInputService {
             optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
         }
         String prompt = effect.variableModeCount()
-                ? sourceCard.getName() + " - Choose one or more modes, or Done."
+                ? effect.choicesRequired() == 0
+                ? sourceCard.getName() + " - Choose up to " + effect.choicesMax() + " modes, or Done."
+                : sourceCard.getName() + " - Choose one or more modes, or Done."
                 : effect.choicesRequired() > 1
                 ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
                 : sourceCard.getName() + " - Choose one.";
@@ -672,16 +674,24 @@ public class PlayerInputService {
             return;
         }
         beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, List.of());
+                modesResetEachTurn, false, List.of());
     }
 
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
             boolean modesResetEachTurn,
             List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, false, chosenModes);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn, boolean consumeModes,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
-                        sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                        sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
                         chosenModes);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> !chosenModes.contains(option))
@@ -1311,6 +1321,7 @@ public class PlayerInputService {
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
             CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.DESERT,
+            CardSubtype.CAVE,
             CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.AURA,
             CardSubtype.EQUIPMENT, CardSubtype.LOCUS
     );

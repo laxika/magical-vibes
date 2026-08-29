@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,7 @@ public class FightSupport {
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     /** Has {@code first} and {@code second} fight each other; either being gone is a no-op. */
     public void fight(GameData gameData, StackEntry entry, Permanent first, Permanent second) {
@@ -68,7 +71,11 @@ public class FightSupport {
     }
 
     private boolean referencesExcessDamage(CardEffect effect) {
-        return effect instanceof ConditionalEffect conditional
-                && conditional.condition() instanceof EventValueAtLeast;
+        if (effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof EventValueAtLeast) {
+            return true;
+        }
+        return effect instanceof CombatDamageAmountAwareEffect amountAware
+                && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount());
     }
 }

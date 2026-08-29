@@ -44,6 +44,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
         PendingInteraction.LudevicCopyChoice,
+        PendingInteraction.KohExiledCreatureChoice,
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
         PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
@@ -579,6 +580,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses which creature card exiled with Koh is used for ability copying. */
+    record KohExiledCreatureChoice(UUID playerId, UUID sourcePermanentId,
+                                   java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public KohExiledCreatureChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

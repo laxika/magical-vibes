@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -327,6 +328,24 @@ class UntapStepServiceTest {
     @Nested
     @DisplayName("Seedborn Muse untap")
     class SeedbornMuseUntap {
+
+        @Test
+        @DisplayName("Self-scoped effect untaps only its source during an opponent's untap step")
+        void selfScopedEffectOnlyUntapsSource() {
+            Card waterskinCard = createCardWithName("Bender's Waterskin");
+            waterskinCard.addEffect(EffectSlot.STATIC,
+                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+                            TurnStep.UNTAP, null, TapUntapScope.SELF));
+            Permanent waterskin = addPermanent(player2Id, waterskinCard);
+            waterskin.tap();
+            Permanent otherPermanent = addPermanent(player2Id, createCardWithName("Other Permanent"));
+            otherPermanent.tap();
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(waterskin.isTapped()).isFalse();
+            assertThat(otherPermanent.isTapped()).isTrue();
+        }
 
         @Test
         @DisplayName("Non-active player's permanents untap when they control Seedborn Muse")

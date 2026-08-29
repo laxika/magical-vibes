@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.PutCounterOnCreatureC
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -152,6 +153,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.PowerBasedTapCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -3238,6 +3240,15 @@ public class AbilityActivationService {
         validateImprintedCopyXValue(gameData, permanent, abilityEffects, effectiveXValue);
 
         // Pay mana cost (including targeting tax if applicable)
+        WaterbendCost waterbendCost = abilityEffects.stream()
+                .filter(WaterbendCost.class::isInstance)
+                .map(WaterbendCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (waterbendCost != null) {
+            payWaterbendCost(gameData, playerId, permanent, waterbendCost, effectiveXValue,
+                    ability.isRequiresTap());
+        }
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
@@ -4188,6 +4199,10 @@ public class AbilityActivationService {
                                            boolean discardCostAlreadyPaid) {
         List<CardEffect> abilityEffects = ability.getEffects();
 
+        if (xValue < ability.getMinimumXValue()) {
+            throw new IllegalStateException("X must be at least " + ability.getMinimumXValue());
+        }
+
         // Sen Triplets: a player locked out this turn can't activate any ability.
         if (gameData.playersCantActivateAbilitiesThisTurn.contains(playerId)) {
             throw new IllegalStateException("You can't activate abilities this turn");
@@ -4330,6 +4345,16 @@ public class AbilityActivationService {
             if (additionalHandler != null) {
                 additionalHandler.validateCanPay(gameData, playerId);
             }
+        }
+
+        WaterbendCost waterbendCost = abilityEffects.stream()
+                .filter(WaterbendCost.class::isInstance)
+                .map(WaterbendCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (waterbendCost != null && minimumWaterbendTaps(
+                gameData, playerId, permanent, waterbendCost.effectiveAmount(xValue), ability.isRequiresTap()) < 0) {
+            throw new IllegalStateException("Not enough mana or untapped artifacts and creatures to pay waterbend cost");
         }
 
         // Pay-life cost
@@ -5104,6 +5129,95 @@ public class AbilityActivationService {
         permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
         gameData.playersWhoActivatedLoyaltyAbilityThisTurn.add(playerId);
+    }
+
+    private int minimumWaterbendTaps(GameData gameData, UUID playerId, Permanent source, int amount,
+                                     boolean sourceMustBeTapped) {
+        List<Permanent> eligible = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> !sourceMustBeTapped || !permanent.getId().equals(source.getId()))
+                .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
+                        || gameQueryService.isCreature(gameData, permanent))
+                .toList();
+        int maxTaps = Math.min(amount, eligible.size());
+        for (int taps = 0; taps <= maxTaps; taps++) {
+            if (canPayWaterbendMana(gameData, playerId, source, amount - taps)) {
+                return taps;
+            }
+        }
+        return -1;
+    }
+
+    private boolean canPayWaterbendMana(GameData gameData, UUID playerId, Permanent source, int amount) {
+        if (amount <= 0) {
+            return true;
+        }
+        ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        if (manaPool == null) {
+            return false;
+        }
+        ManaPool affordabilityPool = manaPool;
+        if (gameQueryService.canSpendBlueManaAsAnyColorForActivatedAbilities(gameData, source)
+                && !manaPool.isBlueSpendableAsAnyColorForActivatedAbilities()) {
+            affordabilityPool = copyManaPool(manaPool);
+            affordabilityPool.setBlueSpendableAsAnyColorForActivatedAbilities(true);
+        }
+        if (gameQueryService.isCreature(gameData, source)) {
+            affordabilityPool = copyManaPool(affordabilityPool);
+            affordabilityPool.promoteCreatureSpellOrAbilityMana();
+        }
+        boolean artifactContext = gameQueryService.isArtifact(source);
+        boolean myrContext = source.getCard().getSubtypes().contains(CardSubtype.MYR);
+        Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, source);
+        Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, source)
+                ? subtypeSpellOrAbilityContext : Set.of();
+        boolean powerstoneContext = manaPool.getPowerstoneOnlyColorless() > 0;
+        return new ManaCost("{" + amount + "}").canPay(affordabilityPool, 0,
+                artifactContext, myrContext, false, false, false, null,
+                subtypeSpellOrAbilityContext, false, artifactContext, false, false, Set.of(),
+                subtypeCreatureSourceSpellOrAbilityContext, powerstoneContext);
+    }
+
+    private void payWaterbendCost(GameData gameData, UUID playerId, Permanent source, WaterbendCost cost,
+                                  int announcedXValue, boolean sourceMustBeTapped) {
+        int amount = cost.effectiveAmount(announcedXValue);
+        int stackBeforeWaterbendTriggers = gameData.stack.size();
+        List<Permanent> eligible = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> !sourceMustBeTapped || !permanent.getId().equals(source.getId()))
+                .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
+                        || gameQueryService.isCreature(gameData, permanent))
+                .toList();
+        int tapCount = minimumWaterbendTaps(
+                gameData, playerId, source, amount, sourceMustBeTapped);
+        if (tapCount < 0) {
+            throw new IllegalStateException("Not enough mana or untapped artifacts and creatures to pay waterbend cost");
+        }
+        for (int i = 0; i < tapCount; i++) {
+            Permanent chosen = eligible.get(i);
+            chosen.tap();
+            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(playerId) + " taps ", chosen.getCard(), " as a waterbend cost."));
+        }
+
+        int remaining = amount - tapCount;
+        if (remaining > 0) {
+            boolean artifactContext = gameQueryService.isArtifact(source);
+            boolean myrContext = source.getCard().getSubtypes().contains(CardSubtype.MYR);
+            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, source);
+            Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, source)
+                    ? subtypeSpellOrAbilityContext : Set.of();
+            payManaCost(gameData, playerId, "{" + remaining + "}", 0,
+                    artifactContext, myrContext, subtypeSpellOrAbilityContext,
+                    subtypeCreatureSourceSpellOrAbilityContext, 0, null);
+        }
+        triggerCollectionService.checkBendingTriggers(gameData, playerId, BendingType.WATERBEND);
+        if (gameData.stack.size() > stackBeforeWaterbendTriggers) {
+            gameData.pendingActivatedAbilityCostTriggers.addAll(new ArrayList<>(
+                    gameData.stack.subList(stackBeforeWaterbendTriggers, gameData.stack.size())));
+            gameData.stack.subList(stackBeforeWaterbendTriggers, gameData.stack.size()).clear();
+        }
     }
 
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext) {

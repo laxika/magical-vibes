@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,7 +35,8 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         CardColor colorOverride,
         Set<Keyword> additionalKeywords,
         List<CardSubtype> creatureSubtypeOverride,
-        boolean tapped
+        boolean tapped,
+        boolean removeLegendary
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -46,7 +48,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             CardColor colorOverride, Set<Keyword> additionalKeywords) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
-                trackWithSource, createForTargetController, colorOverride, additionalKeywords, List.of(), false);
+                trackWithSource, createForTargetController, colorOverride, additionalKeywords, List.of(), false, false);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -60,18 +62,18 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
                 trackWithSource, createForTargetController, colorOverride, additionalKeywords,
-                creatureSubtypeOverride, false);
+                creatureSubtypeOverride, false, false);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect() {
         this(List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
-                false, false, null, Set.of(), List.of(), false);
+                false, false, null, Set.of(), List.of(), false, false);
     }
 
     /** "except it has haste and 'At the beginning of the end step, exile this token.'" (Heat Shimmer). */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false, false,
-                false, false, null, Set.of(), List.of(), false);
+                false, false, null, Set.of(), List.of(), false, false);
     }
 
     /**
@@ -81,14 +83,14 @@ public record CreateTokenCopyOfTargetPermanentEffect(
      */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep, boolean sacrificeAtEndStep) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep, false,
-                false, false, null, Set.of(), List.of(), false);
+                false, false, null, Set.of(), List.of(), false, false);
     }
 
     /** "Create a tapped and attacking token that's a copy of the target permanent." */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep,
                                                   boolean sacrificeAtEndStep, boolean tappedAndAttacking) {
         this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep,
-                sacrificeAtEndStep, tappedAndAttacking, false, false, null, Set.of(), List.of(), false);
+                sacrificeAtEndStep, tappedAndAttacking, false, false, null, Set.of(), List.of(), false, false);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -98,7 +100,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Integer toughnessOverride,
             Map<CounterType, Integer> initialCounters) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
-                false, false, false, false, false, false, null, Set.of(), List.of(), false);
+                false, false, false, false, false, false, null, Set.of(), List.of(), false, false);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -110,7 +112,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             CardColor colorOverride,
             Set<Keyword> additionalKeywords) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
-                false, false, false, false, false, false, colorOverride, additionalKeywords, List.of(), false);
+                false, false, false, false, false, false, colorOverride, additionalKeywords, List.of(), false, false);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -125,7 +127,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             boolean tappedAndAttacking) {
         this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
-                false, false, null, Set.of(), List.of(), false);
+                false, false, null, Set.of(), List.of(), false, false);
     }
 
     /** Creates a copy with the supplied creature subtypes replacing the copied creature types. */
@@ -133,20 +135,30 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             List<CardSubtype> creatureSubtypes, CardColor colorOverride, int power, int toughness) {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), power, toughness, Map.of(), false, false, false, false,
-                false, false, colorOverride, Set.of(), creatureSubtypes, false);
+                false, false, colorOverride, Set.of(), creatureSubtypes, false, false);
     }
 
     /** Used by global enter triggers that create a tracked copy for the entering creature's controller. */
     public static CreateTokenCopyOfTargetPermanentEffect trackedForTargetController() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
-                true, true, null, Set.of(), List.of(), false);
+                true, true, null, Set.of(), List.of(), false, false);
     }
 
     public static CreateTokenCopyOfTargetPermanentEffect tappedTokenCopy() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
-                false, false, null, Set.of(), List.of(), true);
+                false, false, null, Set.of(), List.of(), true, false);
+    }
+
+    /** Creates a copy with the supplied overrides that is not legendary. */
+    public static CreateTokenCopyOfTargetPermanentEffect nonLegendary(
+            List<CardSubtype> additionalSubtypes, Set<CardType> additionalTypes,
+            Integer powerOverride, Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters) {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                false, false, false, false, false, false, null, Set.of(), List.of(), false, true);
     }
 
     @Override

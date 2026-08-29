@@ -37,6 +37,8 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -82,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
+import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -183,6 +186,57 @@ class SpellCastTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect effect) {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
+    }
+
+    @Nested
+    class ControllerCastSpellCopyTrigger {
+
+        @Test
+        @DisplayName("checks a trigger-only source condition when the spell is cast")
+        void checksTriggerConditionAtCastTime() {
+            Permanent perm = createPermanent("Fire Lord Azula");
+            var effect = CopyControllerCastSpellOnSpellCastEffect.withTriggerCondition(
+                    null, new SourceIsAttacking());
+            Card spellCard = createInstant("Life Gain");
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            gd.stack.add(spellOnStack);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getLast().getEffectsToResolve().getFirst())
+                    .isInstanceOf(CopyControllerCastSpellEffect.class);
+        }
+
+        @Test
+        @DisplayName("does not trigger when a trigger-only source condition is false")
+        void doesNotTriggerWhenTriggerConditionFails() {
+            Permanent perm = createPermanent("Fire Lord Azula");
+            var effect = CopyControllerCastSpellOnSpellCastEffect.withTriggerCondition(
+                    null, new SourceIsAttacking());
+            Card spellCard = createInstant("Life Gain");
+            gd.stack.add(new StackEntry(spellCard, player1Id));
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any())).thenReturn(true);
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).hasSize(1);
+        }
     }
 
     // ===== ON_ANY_PLAYER_CASTS_SPELL — SpellCastTriggerEffect =====

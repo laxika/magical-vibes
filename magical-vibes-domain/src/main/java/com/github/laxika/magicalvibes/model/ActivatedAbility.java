@@ -165,6 +165,8 @@ public class ActivatedAbility {
     private boolean sourceStaysInHand;
     /** Whether this ability can be activated only while its source card is in exile. */
     private boolean exileOnly;
+    /** Minimum player-chosen X value required to activate this ability. */
+    private int minimumXValue;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -296,6 +298,7 @@ public class ActivatedAbility {
         copy.modalChoiceAtActivation = this.modalChoiceAtActivation;
         copy.xValueFromControlledCreatureCounters = this.xValueFromControlledCreatureCounters;
         copy.xValueFromCardsInHandColor = this.xValueFromCardsInHandColor;
+        copy.minimumXValue = this.minimumXValue;
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
@@ -580,6 +583,15 @@ public class ActivatedAbility {
     /** Marks the ability as requiring a player-chosen xValue for a dynamic non-mana cost. */
     public ActivatedAbility withXValue() {
         this.requiresXValue = true;
+        return this;
+    }
+
+    /** Requires the player-chosen X value to be at least {@code minimumXValue}. */
+    public ActivatedAbility withMinimumXValue(int minimumXValue) {
+        if (minimumXValue < 0) {
+            throw new IllegalArgumentException("Minimum X value cannot be negative");
+        }
+        this.minimumXValue = minimumXValue;
         return this;
     }
 

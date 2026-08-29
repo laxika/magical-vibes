@@ -131,7 +131,8 @@ public enum CardSet {
     SET_TDM("TDM"),
     SET_APC("APC"),
     SET_DKM("DKM"),
-    SET_SPM("SPM");
+    SET_SPM("SPM"),
+    SET_TLA("TLA");
 
     @Getter
     private final String code;

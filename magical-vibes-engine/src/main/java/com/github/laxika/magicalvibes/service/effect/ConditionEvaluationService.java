@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -105,7 +106,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerOwnTurnCountAtMo
 import com.github.laxika.magicalvibes.model.condition.ControllerPlayedOrCastFromOutsideHandThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerPlayedAtLeastLandsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPermanentsAtLeastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerUnspentManaAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsMoreCreaturesThanOpponent;
@@ -165,6 +168,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
+import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
+import com.github.laxika.magicalvibes.model.condition.AllBendingTypesCompletedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
@@ -394,6 +399,10 @@ public class ConditionEvaluationService {
                     ctx.buyback();
             case BeholdCostPaid ignored ->
                     ctx.beholdCostPaid();
+            case WaterbendCostPaid ignored ->
+                    ctx.waterbendCostPaid();
+            case AllBendingTypesCompletedThisTurn ignored ->
+                    gameData.completedAllBendingTypes(ctx.controllerId());
             case CanBeholdSubtype c ->
                     canBeholdSubtype(gameData, ctx.controllerId(), c.subtype());
             case PutCounterCostPaid ignored ->
@@ -418,6 +427,10 @@ public class ConditionEvaluationService {
             case ControllerSacrificedPermanentThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoSacrificedPermanentsThisTurn.contains(ctx.controllerId());
+            case ControllerSacrificedPermanentsAtLeastThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.sacrificedPermanentCountThisTurn
+                                    .getOrDefault(ctx.controllerId(), 0) >= c.minimum();
             case AttackedWithCreaturesThisTurn c ->
                     ctx.controllerId() != null
                             && gameData.creaturesAttackedCountThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
@@ -517,6 +530,10 @@ public class ConditionEvaluationService {
             case ControllerEnergyAtLeast c ->
                     ctx.controllerId() != null
                             && gameData.playerEnergyCounters.getOrDefault(ctx.controllerId(), 0) >= c.threshold();
+            case ControllerUnspentManaAtLeast c ->
+                    ctx.controllerId() != null
+                            && gameData.playerManaPools.getOrDefault(ctx.controllerId(), new ManaPool())
+                            .getTotalAllMana() >= c.threshold();
             case AnOpponentLifeAtMost c ->
                     ctx.controllerId() != null
                             && gameData.orderedPlayerIds.stream()
@@ -2072,6 +2089,8 @@ public class ConditionEvaluationService {
         if (battlefield == null) return false;
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
+                .filter(p -> ctx.targetId() == null || !gameData.playerIds.contains(ctx.targetId())
+                        || ctx.targetId().equals(p.getAttackTarget()))
                 .anyMatch(p -> matchesPermanent(gameData, p, predicate, ctx));
     }
 
@@ -2082,6 +2101,8 @@ public class ConditionEvaluationService {
         if (battlefield == null) return 0;
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
+                .filter(p -> ctx.targetId() == null || !gameData.playerIds.contains(ctx.targetId())
+                        || ctx.targetId().equals(p.getAttackTarget()))
                 .filter(p -> matchesPermanent(gameData, p, predicate, ctx))
                 .count();
     }

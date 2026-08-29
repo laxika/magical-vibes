@@ -932,6 +932,11 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
 
+        if (trigger.triggerCondition() != null && !conditionEvaluationService.isMet(match.gameData(),
+                trigger.triggerCondition(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
         if (trigger.intervening() != null && !conditionEvaluationService.isMet(match.gameData(),
                 trigger.intervening(), ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
             return false;

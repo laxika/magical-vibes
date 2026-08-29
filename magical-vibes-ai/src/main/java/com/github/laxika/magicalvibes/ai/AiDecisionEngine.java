@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -2414,8 +2415,11 @@ public abstract class AiDecisionEngine {
      */
     protected int getMaxXForGraveyardRequirements(GameData gameData, Card card) {
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
-        boolean needsGraveyardCreatures = spellEffects.stream()
-                .anyMatch(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance);
+        ExileCreaturesFromGraveyardAndCreateTokensEffect graveyardCreatureEffect = spellEffects.stream()
+                .filter(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance)
+                .map(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::cast)
+                .findFirst().orElse(null);
+        boolean needsGraveyardCreatures = graveyardCreatureEffect != null;
         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect = spellEffects.stream()
                 .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
                 .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
@@ -2442,7 +2446,10 @@ public abstract class AiDecisionEngine {
                     .count();
         }
         if (needsGraveyardCreatures) {
-            maxX = (int) graveyard.stream()
+            List<UUID> graveyardOwners = graveyardCreatureEffect.graveyardScope()
+                    .graveyardOwners(gameData.orderedPlayerIds, aiPlayer.getId());
+            maxX = (int) graveyardOwners.stream()
+                    .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .count();
         }
@@ -2619,6 +2626,7 @@ public abstract class AiDecisionEngine {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
             }
@@ -2712,6 +2720,15 @@ public abstract class AiDecisionEngine {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof WaterbendCost cost) {
+                return battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isArtifact(gameData, p)
+                                || gameQueryService.isCreature(gameData, p))
+                        .limit(cost.amount())
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()

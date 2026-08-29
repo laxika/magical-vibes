@@ -1063,6 +1063,37 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("accepts creatures that share a creature type")
+        void acceptsCreaturesSharingType() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}", List.of(), "test", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+            Permanent first = addPermanent(player1Id, createCreature("First", CardColor.GREEN));
+            Permanent second = addPermanent(player1Id, createCreature("Second", CardColor.GREEN));
+            when(gameQueryService.shareCreatureType(gd, first, second)).thenReturn(true);
+
+            sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(first.getId(), second.getId()), source);
+        }
+
+        @Test
+        @DisplayName("rejects creatures that do not share a creature type")
+        void rejectsCreaturesWithoutSharedType() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}", List.of(), "test", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+            Permanent first = addPermanent(player1Id, createCreature("First", CardColor.GREEN));
+            Permanent second = addPermanent(player1Id, createCreature("Second", CardColor.GREEN));
+
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(first.getId(), second.getId()), source))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Chosen creatures must share a creature type");
+        }
+
+        @Test
         @DisplayName("accepts one artifact, one creature, and one land in any order")
         void acceptsOneArtifactCreatureAndLand() {
             Card artifactCard = new Card();

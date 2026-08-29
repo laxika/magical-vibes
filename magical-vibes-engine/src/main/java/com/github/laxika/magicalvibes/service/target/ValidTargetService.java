@@ -187,6 +187,17 @@ public class ValidTargetService {
                             .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CREATURE_TYPES && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
+                });
+            }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE && !excludeIds.isEmpty()) {
                 List<Permanent> selected = excludeIds.stream()
                         .map(id -> gameQueryService.findPermanentById(gameData, id))
@@ -541,6 +552,18 @@ public class ValidTargetService {
                             || !firstTarget.getId().equals(target.getAttachedTo());
                 });
             }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CREATURE_TYPES
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                List<Permanent> selected = alreadySelectedIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
+                });
+            }
 
             // "Up to two creatures and up to two lands" (Nissa, Genesis Mage +2): drop candidates
             // that would make a legal assignment to the two quotas impossible.
@@ -868,7 +891,7 @@ public class ValidTargetService {
         if (positionFilter == null && !isMultiTarget
                 && targetValidationService.checkEffectTargets(spellEffects,
                         new TargetValidationContext(gameData, perm.getId(), null, card,
-                                xValue != null ? xValue : 0)).isPresent()) {
+                                xValue != null ? xValue : 0, controllerId, null)).isPresent()) {
             return false;
         }
 
@@ -1081,7 +1104,8 @@ public class ValidTargetService {
         // ability positions are governed by their per-position TargetFilter.
         if (!ability.isMultiTarget()
                 && targetValidationService.checkEffectTargets(ability.getEffects(),
-                        new TargetValidationContext(gameData, perm.getId(), null, sourceCard)).isPresent()) {
+                        new TargetValidationContext(gameData, perm.getId(), null, sourceCard,
+                                0, controllerId, null)).isPresent()) {
             return false;
         }
 

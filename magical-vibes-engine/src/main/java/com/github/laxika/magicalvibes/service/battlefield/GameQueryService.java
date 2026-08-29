@@ -256,6 +256,7 @@ public class GameQueryService {
             CardSubtype.PLAINS,
             CardSubtype.SWAMP,
             CardSubtype.DESERT,
+            CardSubtype.CAVE,
             CardSubtype.GATE,
             CardSubtype.LOCUS,
             CardSubtype.AURA,
@@ -1176,6 +1177,11 @@ public class GameQueryService {
     /** Returns whether the given player may cast the given spell from the given zone. */
     public boolean canCastSpellFromZone(GameData gameData, Card card, Zone zone, UUID playerId) {
         if (!canPlayerCastSpellsFromZone(gameData, playerId, zone)) {
+            return false;
+        }
+        if (zone != Zone.HAND && !card.hasType(CardType.LAND)
+                && gameData.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.values().stream()
+                .anyMatch(playerIds -> playerIds.contains(playerId))) {
             return false;
         }
         if (card.hasType(CardType.CREATURE)) {
@@ -6364,7 +6370,8 @@ public class GameQueryService {
     private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
                                                      Permanent source, UUID controllerId) {
         if (effect instanceof ControllerOpponentDamageBonusEffect damageBonus) {
-            return damageBonus.amount();
+            return amountEvaluationService.evaluate(gameData, damageBonus.amount(),
+                    AmountContext.forStaticEffect(source, controllerId));
         }
         if (effect instanceof ConditionalEffect conditional
                 && conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -6822,7 +6829,9 @@ public class GameQueryService {
             if (!playerId.equals(entry.getControllerId())) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantLifelinkToControllerSpellsByColorEffect glse
-                        && (glse.color() == null || entry.getCard().getColors().contains(glse.color()))) {
+                        && (glse.color() == null || entry.getCard().getColors().contains(glse.color()))
+                        && predicateEvaluationService.matchesCardPredicate(entry.getCard(), glse.filter(),
+                        p.getCard().getId(), gameData, entry.getCard().getOwnerId())) {
                     hasLifelink[0] = true;
                 }
             }

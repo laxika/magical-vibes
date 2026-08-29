@@ -180,6 +180,11 @@ public final class AnyColorManaChoiceSupport {
             return effect.grantsAdditionalPlusOneCounter() ? choice.withAdditionalPlusOneCounter() : choice;
         }
         if (effect.anyColorCombination()) {
+            if (effect.restriction() == ManaSpendRestriction.SUBTYPE_SPELL
+                    && !effect.spellOnlySubtypes().isEmpty()) {
+                return ChoiceContext.ManaColorSpellChoice.anyColorCombination(
+                        playerId, amount, effect.spellOnlySubtypes());
+            }
             ChoiceContext.ManaColorChoice choice = ChoiceContext.ManaColorChoice.fixedColorCombination(
                     playerId, fromCreature, amount, ManaColor.COLORS);
             if (effect.restriction() == ManaSpendRestriction.PLANESWALKER_SPELLS) {

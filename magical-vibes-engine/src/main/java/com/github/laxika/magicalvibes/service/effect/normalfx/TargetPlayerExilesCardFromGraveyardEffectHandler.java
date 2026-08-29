@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
 
     @Override
@@ -53,11 +54,25 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
             return;
         }
 
-        if (graveyard.size() == 1) {
+        List<Integer> validIndices = java.util.stream.IntStream.range(0, graveyard.size())
+                .filter(index -> e.filter() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        graveyard.get(index), e.filter(), null, gameData, targetPlayerId))
+                .boxed()
+                .toList();
+        if (validIndices.isEmpty()) {
+            return;
+        }
+
+        if (validIndices.size() == 1) {
             // Auto-exile the only card
-            Card card = graveyard.removeFirst();
+            Card card = graveyard.remove(validIndices.getFirst().intValue());
             graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, card);
-            exileService.exileCard(gameData, targetPlayerId, card);
+            if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+                exileService.exileCard(gameData, targetPlayerId, card, entry.getSourcePermanentId());
+            } else {
+                exileService.exileCard(gameData, targetPlayerId, card);
+            }
 
             gameLogService.append(gameData, GameLog.textCardText(targetName + " exiles " , card, " from their graveyard."));
             log.info("Game {} - {} exiles {} from graveyard", gameData.id, targetName, card.getName());
@@ -69,11 +84,13 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
         }
 
         // Multiple cards — target player must choose
-        List<Integer> validIndices = IntStream.range(0, graveyard.size()).boxed().toList();
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(targetPlayerId, validIndices, GraveyardChoiceDestination.EXILE,
                         "Choose a card to exile from your graveyard.")
                 .exileRemainingCount(1);
+        if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+            choice.trackWithSourcePermanentId(entry.getSourcePermanentId());
+        }
         if (e.lifeGainIfCreature() > 0) {
             choice.gainLifeIfCreature(e.lifeGainIfCreature(), controllerId);
         }

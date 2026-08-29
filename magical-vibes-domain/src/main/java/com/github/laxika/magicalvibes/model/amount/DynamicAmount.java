@@ -106,6 +106,7 @@ public sealed interface DynamicAmount permits
         OtherAttackersSharingCreatureTypeWithTarget,
         DistinctPermanentNamesCount,
         PermanentCount,
+        PermanentsSacrificedThisTurn,
         PermanentCounterSum,
         PermanentManaValueSum,
         RepeatedAdditionalCostCount,

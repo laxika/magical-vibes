@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 
 /**
  * A generic conditional wrapper around a {@link CardEffect} that only applies when the
@@ -44,6 +45,11 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean
     /** Human-readable reason shown when the condition is not met (e.g. "fewer than three artifacts"). */
     public String conditionNotMetReason() {
         return condition.conditionNotMetReason();
+    }
+
+    @Override
+    public boolean countsAbilityResolution() {
+        return condition instanceof NthAbilityResolutionThisTurn || wrapped.countsAbilityResolution();
     }
 
     @Override

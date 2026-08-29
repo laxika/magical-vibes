@@ -614,6 +614,12 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, null, List.of(), convokeCreatureIds);
     }
 
+    public void castFromExileWithWaterbend(Player player, UUID exileCardId, List<UUID> waterbendPermanentIds) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, null,
+                List.of(), List.of(), waterbendPermanentIds, true);
+    }
+
     public void castFromExile(Player player, UUID exileCardId, UUID targetId) {
         ensurePriority(player);
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
@@ -1028,6 +1034,14 @@ public class GameTestHarness {
     public void castInstant(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
+    }
+
+    public void castInstantWithLifeOrManaAdditionalCost(Player player, int cardIndex, UUID targetId,
+                                                        boolean payLife) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, false, payLife);
     }
 
     public void castInstantWithBehold(Player player, int cardIndex, UUID targetId,

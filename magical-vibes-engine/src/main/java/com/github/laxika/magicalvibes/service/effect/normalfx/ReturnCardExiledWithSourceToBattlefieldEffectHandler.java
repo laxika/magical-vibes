@@ -98,6 +98,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             return;
         }
         Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
         if (grantedSubtype != null) {
             permanent.getGrantedSubtypes().add(grantedSubtype);
         }

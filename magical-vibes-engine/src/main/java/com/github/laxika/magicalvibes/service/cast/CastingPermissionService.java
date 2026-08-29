@@ -935,6 +935,22 @@ public class CastingPermissionService {
                 }
             }
         }
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent source : battlefield) {
+                for (ExiledCardEntry entry : gameData.getExiledWithPermanentEntries(
+                        source.getId(), source.getCard().getId())) {
+                    if (entry.card().getId().equals(card.getId())
+                            && activeExileCastPermissions(gameData, source, sourceControllerId)
+                            .anyMatch(permission -> permission.grantsFlash()
+                                    && canAccessExiledEntry(source, sourceControllerId, permission, entry, playerId)
+                                    && applies(permission, gameData, playerId, source, entry))) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -1221,14 +1237,30 @@ public class CastingPermissionService {
         return Optional.empty();
     }
 
-    public boolean hasGrantedFlashback(GameData gameData, UUID playerId, Card card) {
+    public Optional<FlashbackCast> findGrantedFlashback(GameData gameData, UUID playerId, Card card) {
+        if (!isCastableSpellCard(card)) {
+            return Optional.empty();
+        }
+        if (!playerId.equals(gameQueryService.findGraveyardOwnerById(gameData, card.getId()))) {
+            return Optional.empty();
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null && battlefield.stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
-                .filter(GrantFlashbackToGraveyardCardsEffect.class::isInstance)
-                .map(GrantFlashbackToGraveyardCardsEffect.class::cast)
-                .anyMatch(effect -> effect.cardTypes().stream().anyMatch(card::hasType))) {
-            return true;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    CardEffect resolved = staticEffectConditionResolver.resolve(
+                            gameData, permanent, playerId, effect);
+                    if (resolved instanceof GrantFlashbackToGraveyardCardsEffect grant
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, grant.filter(), null, gameData, playerId)) {
+                        String flashbackCost = grant.flashbackCost() != null
+                                ? grant.flashbackCost() : card.getManaCost();
+                        if (flashbackCost != null) {
+                            return Optional.of(new FlashbackCast(flashbackCost));
+                        }
+                    }
+                }
+            }
         }
         for (Emblem emblem : gameData.emblems) {
             if (!emblem.controllerId().equals(playerId)) continue;
@@ -1236,13 +1268,19 @@ public class CastingPermissionService {
                 if (effect instanceof EmblemGrantsFlashbackEffect egf) {
                     for (CardType type : egf.cardTypes()) {
                         if (card.hasType(type)) {
-                            return true;
+                            return card.getManaCost() == null
+                                    ? Optional.empty()
+                                    : Optional.of(new FlashbackCast(card.getManaCost()));
                         }
                     }
                 }
             }
         }
-        return false;
+        return Optional.empty();
+    }
+
+    public boolean hasGrantedFlashback(GameData gameData, UUID playerId, Card card) {
+        return findGrantedFlashback(gameData, playerId, card).isPresent();
     }
 
     /**
@@ -1483,9 +1521,30 @@ public class CastingPermissionService {
             for (Permanent perm : battlefield) {
                 if (!perm.getId().equals(entry.sourcePermanentId())) continue;
                 if (activeExileCastPermissions(gameData, perm, sourceControllerId)
-                        .anyMatch(permission -> canAccessExiledEntry(
+                        .anyMatch(permission -> !permission.waterbendManaValue()
+                                && canAccessExiledEntry(
                                 perm, sourceControllerId, permission, entry, playerId)
                                 && applies(permission, gameData, playerId, perm, entry))) return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasWaterbendCastFromExiledWithSourcePermission(GameData gameData, UUID playerId,
+                                                                   UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null) return false;
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (!perm.getId().equals(entry.sourcePermanentId())) continue;
+                if (activeExileCastPermissions(gameData, perm, sourceControllerId)
+                        .anyMatch(permission -> permission.waterbendManaValue()
+                                && canAccessExiledEntry(perm, sourceControllerId, permission, entry, playerId)
+                                && applies(permission, gameData, playerId, perm, entry))) {
+                    return true;
+                }
             }
         }
         return false;
@@ -1529,6 +1588,7 @@ public class CastingPermissionService {
                 for (AllowCastFromCardsExiledWithSourceEffect permission :
                         activeExileCastPermissions(gameData, perm, sourceControllerId).toList()) {
                     if (!permission.withoutPayingManaCost()
+                            || permission.waterbendManaValue()
                             || !canAccessExiledEntry(perm, sourceControllerId, permission, entry, playerId)
                             || !applies(permission, gameData, playerId, perm, entry)) continue;
                     if (consume && permission.oncePerTurn()) {
@@ -1588,10 +1648,12 @@ public class CastingPermissionService {
     private OptionalInt additionalCounterCostFromSource(GameData gameData, UUID playerId,
                                                         Permanent source, ExiledCardEntry entry) {
         if (activeExileCastPermissions(gameData, source, playerId)
-                .noneMatch(permission -> applies(permission, gameData, playerId, source, entry))) {
+                .noneMatch(permission -> !permission.waterbendManaValue()
+                        && applies(permission, gameData, playerId, source, entry))) {
             return OptionalInt.empty();
         }
         return activeExileCastPermissions(gameData, source, playerId)
+                .filter(permission -> !permission.waterbendManaValue())
                 .filter(permission -> applies(permission, gameData, playerId, source, entry))
                 .mapToInt(AllowCastFromCardsExiledWithSourceEffect::additionalCounterCost)
                 .min();
@@ -1670,7 +1732,8 @@ public class CastingPermissionService {
                         perm.getId(), perm.getCard().getId())) {
                     if (entry.card().getId().equals(cardId)
                             && activeExileCastPermissions(gameData, perm, sourceControllerId)
-                            .anyMatch(effect -> effect.anyManaType()
+                            .anyMatch(effect -> !effect.waterbendManaValue()
+                                    && effect.anyManaType()
                                     && canAccessExiledEntry(perm, sourceControllerId, effect, entry, playerId)
                                     && applies(effect, gameData, playerId, perm, entry))) {
                         return true;

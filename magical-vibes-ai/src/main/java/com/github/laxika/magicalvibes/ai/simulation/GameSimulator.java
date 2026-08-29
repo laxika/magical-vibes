@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -1284,6 +1285,7 @@ public class GameSimulator {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
             }
@@ -1326,6 +1328,15 @@ public class GameSimulator {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof WaterbendCost cost) {
+                return battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isArtifact(gd, p)
+                                || gameQueryService.isCreature(gd, p))
+                        .limit(cost.amount())
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()

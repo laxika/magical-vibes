@@ -136,6 +136,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesOpponentPermanentToExileEffectHandler eachPlayerChoosesOpponentPermanentToExileHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .RaidingPartyEffectHandler raidingPartyEffectHandler;
@@ -531,6 +533,8 @@ public class MultiPermanentChoiceHandlerService {
             handleForcedReturnToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature ctx) {
             handleEachPlayerReturnsCreature(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToExile ctx) {
+            handleEachPlayerChoosesOpponentPermanentToExile(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
@@ -2478,6 +2482,17 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleEachPlayerChoosesOpponentPermanentToExile(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToExile context) {
+        eachPlayerChoosesOpponentPermanentToExileHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

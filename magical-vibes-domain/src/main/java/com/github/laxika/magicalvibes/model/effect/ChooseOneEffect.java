@@ -29,8 +29,8 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     }
 
     public ChooseOneEffect {
-        if (choicesRequired < 1) {
-            throw new IllegalArgumentException("choicesRequired must be >= 1");
+        if (choicesRequired < 0) {
+            throw new IllegalArgumentException("choicesRequired must be >= 0");
         }
         if (choicesMax < choicesRequired) {
             throw new IllegalArgumentException("choicesMax must be >= choicesRequired");

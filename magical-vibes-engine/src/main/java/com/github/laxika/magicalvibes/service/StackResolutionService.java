@@ -1066,7 +1066,7 @@ public class StackResolutionService {
 
     /**
      * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
-     * entry is an activated ability whose effects branch on {@code NthAbilityResolutionThisTurn}
+     * entry is an ability whose effects branch on {@code NthAbilityResolutionThisTurn}
      * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
      * Counted at resolution (not activation), so copies of the ability count but activations
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
@@ -1074,13 +1074,14 @@ public class StackResolutionService {
      * here (not on async resume) so each resolution counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
-        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY || entry.getSourcePermanentId() == null) {
+        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
             return;
         }
-        boolean countsResolutions = entry.getEffectsToResolve().stream()
-                .anyMatch(e -> e instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof NthAbilityResolutionThisTurn);
-        if (countsResolutions) {
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
+        if (entry.getEffectsToResolve().stream().anyMatch(CardEffect::countsAbilityResolution)) {
             gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
         }
     }

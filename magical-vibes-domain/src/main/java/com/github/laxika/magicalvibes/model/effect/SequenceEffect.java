@@ -89,6 +89,12 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     public boolean onlyTriggersOnSacrifice() {
         return onlyIfSacrificed;
     }
+
+    @Override
+    public boolean countsAbilityResolution() {
+        return steps.stream().anyMatch(CardEffect::countsAbilityResolution);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         TargetSpec implicitSourceSpec = TargetSpec.NONE;

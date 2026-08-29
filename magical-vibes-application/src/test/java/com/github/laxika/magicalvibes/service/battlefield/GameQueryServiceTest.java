@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersE
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
@@ -76,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -129,6 +131,8 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
         ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
+        ReflectionTestUtils.setField(gqs, "amountEvaluationService",
+                new AmountEvaluationService(evaluator, gqs));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -2025,6 +2029,18 @@ class GameQueryServiceTest {
                     "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
 
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(1);
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("evaluates a dynamic bonus from the source permanent's counters")
+        void evaluatesDynamicBonusFromSourceCounters() {
+            Permanent fatedFirepower = addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Fated Firepower", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(
+                            new CountersOnSource(CounterType.FIRE))));
+            fatedFirepower.setCounterCount(CounterType.FIRE, 3);
+
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(3);
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
         }
     }

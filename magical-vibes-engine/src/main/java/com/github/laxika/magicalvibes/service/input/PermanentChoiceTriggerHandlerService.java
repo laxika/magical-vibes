@@ -823,6 +823,14 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
             pushTriggeredEntry(gameData, entry);
+            if (att.triggeringPermanentId() != null) {
+                Permanent triggeringCreature = gameQueryService.findPermanentById(
+                        gameData, att.triggeringPermanentId());
+                if (triggeringCreature != null) {
+                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                            gameData, triggeringCreature, entry);
+                }
+            }
 
             String targetName = getTargetDisplayName(gameData, permanentId);
             
@@ -1623,17 +1631,37 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                etbTtt.sourceCard(),
-                etbTtt.controllerId(),
-                etbTtt.sourceCard().getName() + "'s ETB ability",
-                new ArrayList<>(etbTtt.effects()),
-                targetId,
-                etbTtt.sourcePermanentId()
-        );
-        if (etbTtt.targetFilter() != null) {
-            entry.setTargetFilter(etbTtt.targetFilter());
+        StackEntry entry;
+        StackEntry selectedSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
+        boolean spellTarget = selectedSpell != null && isSpell(selectedSpell);
+        if (spellTarget) {
+            entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    etbTtt.sourceCard(),
+                    etbTtt.controllerId(),
+                    etbTtt.sourceCard().getName() + "'s ETB ability",
+                    new ArrayList<>(etbTtt.effects()),
+                    0,
+                    targetId,
+                    etbTtt.sourcePermanentId(),
+                    null,
+                    Zone.STACK,
+                    List.of(),
+                    List.of()
+            );
+        } else {
+            entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    etbTtt.sourceCard(),
+                    etbTtt.controllerId(),
+                    etbTtt.sourceCard().getName() + "'s ETB ability",
+                    new ArrayList<>(etbTtt.effects()),
+                    targetId,
+                    etbTtt.sourcePermanentId()
+            );
+            if (etbTtt.targetFilter() != null) {
+                entry.setTargetFilter(etbTtt.targetFilter());
+            }
         }
         entry.setTriggeringPermanentId(etbTtt.triggeringPermanentId());
         if (etbTtt.sourcePermanentId() != null) {
@@ -1671,6 +1699,14 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private static boolean isSpell(StackEntry stackEntry) {
+        return switch (stackEntry.getEntryType()) {
+            case INSTANT_SPELL, SORCERY_SPELL, CREATURE_SPELL, ENCHANTMENT_SPELL,
+                    ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            default -> false;
+        };
     }
 
     public void handleChampionedTrigger(GameData gameData, UUID playerId,

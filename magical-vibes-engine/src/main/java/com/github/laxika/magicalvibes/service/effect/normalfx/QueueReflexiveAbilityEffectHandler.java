@@ -48,14 +48,16 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         if (beginPermanentOrPlayerTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget())) {
             return;
         }
-        gameData.stack.add(new StackEntry(
+        StackEntry reflexiveAbility = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
                 entry.getControllerId(),
                 entry.getCard().getName() + "'s reflexive ability",
                 new ArrayList<>(List.of(queueEffect.effect())),
                 0,
-                entry.getSourcePermanentId()));
+                entry.getSourcePermanentId());
+        reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        gameData.stack.add(reflexiveAbility);
     }
 
     private boolean beginPermanentOrPlayerTargetChoice(GameData gameData, StackEntry entry, CardEffect effect,
