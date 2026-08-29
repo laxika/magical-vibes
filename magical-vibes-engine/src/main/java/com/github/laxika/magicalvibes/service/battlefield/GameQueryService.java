@@ -3298,6 +3298,20 @@ public class GameQueryService {
         }
     }
 
+    /**
+     * Runs queries in a new layered pass even when the caller already has an active query scope.
+     * Use this only when evaluating a temporary, isolated state adjustment whose layered values
+     * must not come from the caller's pre-adjustment pass.
+     */
+    public <T> T withFreshQueryScope(GameData gameData, Supplier<T> queries) {
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            return queries.get();
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
     public StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
         return computeStaticBonusForController(gameData, target, null);
     }
