@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "242")
+@CardRegistration(set = "MKM", collectorNumber = "315")
 public class WarleadersCall extends Card {
 
     public WarleadersCall() {

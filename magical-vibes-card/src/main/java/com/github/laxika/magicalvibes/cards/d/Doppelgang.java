@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "198")
+@CardRegistration(set = "MKM", collectorNumber = "414")
 public class Doppelgang extends Card {
 
     public Doppelgang() {

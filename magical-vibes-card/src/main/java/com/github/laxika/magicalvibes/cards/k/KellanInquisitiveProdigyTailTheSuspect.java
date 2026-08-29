@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "212")
+@CardRegistration(set = "MKM", collectorNumber = "334")
 public class KellanInquisitiveProdigyTailTheSuspect extends Card {
 
     public KellanInquisitiveProdigyTailTheSuspect() {

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "234")
+@CardRegistration(set = "MKM", collectorNumber = "321")
+@CardRegistration(set = "MKM", collectorNumber = "370")
 public class TeysaOpulentOligarch extends Card {
 
     public TeysaOpulentOligarch() {

@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "133")
+@CardRegistration(set = "FIN", collectorNumber = "318")
+@CardRegistration(set = "FIN", collectorNumber = "385")
+@CardRegistration(set = "FIN", collectorNumber = "458")
+@CardRegistration(set = "FIN", collectorNumber = "530")
 public class CliveIfritsDominant extends Card {
 
     public CliveIfritsDominant() {

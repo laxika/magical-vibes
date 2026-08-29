@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,8 +17,7 @@ public class CorruptedHarvester extends Card {
                 false,
                 "{B}",
                 List.of(new SacrificeCreatureCost(), new RegenerateEffect()),
-                "{B}, Sacrifice a creature: Regenerate Corrupted Harvester.",
-                TargetFilters.creatureYouControl()
+                "{B}, Sacrifice a creature: Regenerate Corrupted Harvester."
         ));
     }
 }

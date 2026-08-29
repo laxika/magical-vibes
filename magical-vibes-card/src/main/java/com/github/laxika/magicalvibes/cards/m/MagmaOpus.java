@@ -20,6 +20,8 @@ import java.util.Set;
 public class MagmaOpus extends Card {
 
     public MagmaOpus() {
+        setAllowSharedTargets(true);
+
         target(1, 4).addEffect(EffectSlot.SPELL,
                 DealDividedDamageEffect.chosenAmongAnyTargets(4));
         target(TargetFilters.permanent(), 2, 2)

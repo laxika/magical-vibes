@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "53")
+@CardRegistration(set = "MKM", collectorNumber = "294")
 public class DramaticAccusation extends Card {
 
     public DramaticAccusation() {

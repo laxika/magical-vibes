@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "293")
+@CardRegistration(set = "FIN", collectorNumber = "314")
 public class ZanarkandAncientMetropolis extends Card {
 
     public ZanarkandAncientMetropolis() {

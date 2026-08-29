@@ -729,6 +729,21 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Uses the card owner when no stolen-permanent record exists")
+        void usesCardOwnerWhenOwnershipRecordIsAbsent() {
+            Card card = createCreature("Grizzly Bears");
+            card.setOwnerId(player2Id);
+            Permanent permanent = addPermanent(player1Id, card);
+
+            prs.removePermanentToHand(gd, permanent);
+
+            assertThat(gd.playerHands.get(player2Id))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.playerHands.get(player1Id))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
         @DisplayName("Exiled card returns to battlefield when source permanent is bounced")
         void exileReturnOnLeave() {
             Permanent source = addPermanent(player1Id, createCreature("Serra Angel"));
@@ -792,6 +807,20 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
+        }
+
+        @Test
+        @DisplayName("Ends source-controlled exile play permissions when source leaves")
+        void endsSourceControlledExilePlayPermissionsWhenSourceLeaves() {
+            Permanent source = addPermanent(player1Id, createCreature("Source"));
+            UUID exiledCardId = UUID.randomUUID();
+            gd.exilePlayPermissions.put(exiledCardId, player1Id);
+            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+
+            prs.removePermanentToExile(gd, source);
+
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
         }
 
         @Test

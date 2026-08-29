@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "86")
+@CardRegistration(set = "MKM", collectorNumber = "343")
 public class HomicideInvestigator extends Card {
 
     public HomicideInvestigator() {

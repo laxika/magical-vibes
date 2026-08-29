@@ -61,6 +61,9 @@ class AureliaTheLawAboveTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0, 1, 2, 3, 4));
         resolveAllTriggers();
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);

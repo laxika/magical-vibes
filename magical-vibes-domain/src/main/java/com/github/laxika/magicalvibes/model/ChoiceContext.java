@@ -43,9 +43,19 @@ public sealed interface ChoiceContext {
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)
             implements ChoiceContext {}
 
-    record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) implements ChoiceContext {
+    record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes,
+                                boolean anyColorCombination) implements ChoiceContext {
         public ManaColorSpellChoice {
             subtypes = Set.copyOf(subtypes);
+        }
+
+        public ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) {
+            this(playerId, amount, subtypes, false);
+        }
+
+        public static ManaColorSpellChoice anyColorCombination(UUID playerId, int amount,
+                                                                Set<CardSubtype> subtypes) {
+            return new ManaColorSpellChoice(playerId, amount, subtypes, true);
         }
     }
 
@@ -559,6 +569,9 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId)
+            implements ChoiceContext {}
+
     /**
      * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
      * {@code damagePerCard} damage per revealed copy, then every copy in their hand/graveyard/library
@@ -713,7 +726,8 @@ public sealed interface ChoiceContext {
      * Choosing how many {@code counterType} counters to remove from {@code permanentId} as a
      * storage land's mana ability resolves (0..the count present). On resume the chosen number of
      * counters is removed and that much mana of {@code color} is added to {@code playerId}'s pool
-     * (times {@code manaMultiplier} for Mana Reflection; {@code fromCreature} marks creature mana).
+     * (times {@code manaMultiplier} for static mana replacement effects; {@code fromCreature}
+     * marks creature mana).
      * Used by the storage-land cycle via {@code RemoveCountersForManaEffect}.
      */
     record RemoveCountersForManaChoice(UUID playerId, UUID permanentId, List<ManaColor> colors,
@@ -1360,8 +1374,19 @@ public sealed interface ChoiceContext {
         }
     }
 
+    record ExileFreeCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
+                                   StackEntryType spellType, List<Integer> chosenModeIndices,
+                                   List<Integer> offeredModeIndices, int maximumChoices,
+                                   boolean copy) implements ChoiceContext {
+
+        public ExileFreeCastModeChoice {
+            chosenModeIndices = List.copyOf(chosenModeIndices);
+            offeredModeIndices = List.copyOf(offeredModeIndices);
+        }
+    }
+
     record TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                UUID sourcePermanentId, boolean modesResetEachTurn,
+                                UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
                                 List<ChooseOneEffect.ChooseOneOption> chosenModes,
                                 UUID triggeringCardId) implements ChoiceContext {
 
@@ -1371,13 +1396,28 @@ public sealed interface ChoiceContext {
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false, List.of(), null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, false, false, List.of(), null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                     UUID sourcePermanentId, boolean modesResetEachTurn) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, List.of(), null);
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false, List.of(), null);
         }
+
+        public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                    UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
+                                    List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
+                    chosenModes, null);
+        }
+
+        public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                    UUID sourcePermanentId, boolean modesResetEachTurn,
+                                    List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, false,
+                    chosenModes, triggeringCardId);
+        }
+
     }
 
     record RedistributePlayerLifeTotalsChoice(Map<String, Map<UUID, Integer>> choices) implements ChoiceContext {

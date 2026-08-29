@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.ArtifactsPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
@@ -126,10 +127,12 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
@@ -161,6 +164,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -244,6 +248,9 @@ public class AmountEvaluationService {
                     (int) ctx.repeatedAdditionalCosts().stream().filter(a.manaCost()::equals).count();
             case Scaled s ->
                     s.factor() * evaluate(gameData, s.amount(), ctx);
+            case SacrificedPermanentManaValue ignored ->
+                    ctx.stackEntry() == null || ctx.stackEntry().getSacrificedPermanentSnapshot() == null
+                            ? 0 : Math.max(0, ctx.stackEntry().getSacrificedPermanentSnapshot().getCard().getManaValue());
             case SacrificedPermanentPower ignored ->
                     Math.max(0, ctx.sacrificedPower());
             case SacrificedPermanentColorCount ignored ->
@@ -263,6 +270,9 @@ public class AmountEvaluationService {
                             ? evaluate(gameData, d.amount(), ctx) : 0;
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case PermanentsSacrificedThisTurn ignored ->
+                    ctx.controllerId() == null ? 0
+                            : gameData.sacrificedPermanentCountThisTurn.getOrDefault(ctx.controllerId(), 0);
             case PermanentCounterSum s ->
                     sumPermanentCounters(gameData, s, ctx);
             case DistinctPermanentNamesCount c ->
@@ -281,6 +291,8 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case CardTypesAmongControlledPermanents c ->
+                    countCardTypesAmongControlledPermanents(gameData, c, ctx);
             case CardTypesAmongCardsDiscardedThisResolution ignored ->
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisTurn c ->
@@ -336,8 +348,8 @@ public class AmountEvaluationService {
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
-            case ColorsAmongControlledPermanents ignored ->
-                    countColorsAmongControlledPermanents(gameData, ctx);
+            case ColorsAmongControlledPermanents count ->
+                    countColorsAmongControlledPermanents(gameData, count, ctx);
             case ColorManaSymbolsInGraveyard c ->
                     countColorManaSymbolsInGraveyard(gameData, c, ctx);
             case ColorManaSymbolsInHand c ->
@@ -567,7 +579,7 @@ public class AmountEvaluationService {
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                 ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, ctx.madness(), false,
                 null, ctx.xValue(), ctx.targetPermanentId(), null, ctx.staticEvaluation(), false,
-                null, null, null);
+                null, null, null).withEventValue(ctx.eventValue());
     }
 
     private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {
@@ -925,6 +937,48 @@ public class AmountEvaluationService {
         return found.size();
     }
 
+    private int countCardTypesAmongControlledPermanents(
+            GameData gameData, CardTypesAmongControlledPermanents amount, AmountContext ctx) {
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        boolean ownershipNeedsBoard = staticEvaluation
+                && predicateEvaluationService.requiresGameDataForStaticFilter(amount.filter());
+        FilterContext filterContext = staticEvaluation && !ownershipNeedsBoard
+                ? FilterContext.empty() : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
+        }
+
+        java.util.Set<CardType> found = java.util.EnumSet.noneOf(CardType.class);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, amount.scope(), ctx)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (amount.excludeSource() && ctx.sourcePermanent() != null
+                        && permanent.getId().equals(ctx.sourcePermanent().getId())) {
+                    continue;
+                }
+                boolean matches = ownershipNeedsBoard
+                        ? predicateEvaluationService.matchesStaticFilter(permanent, amount.filter(), filterContext)
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext);
+                if (!matches) continue;
+
+                if (staticEvaluation) {
+                    var state = LayerSystemService.activeStateFor(permanent.getId());
+                    if (state != null) {
+                        found.addAll(state.getCardTypes());
+                        continue;
+                    }
+                }
+                found.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
+            }
+        }
+        return found.size();
+    }
+
     private int countDistinctManaCostsAmongCardsInGraveyard(
             GameData gameData, DistinctManaCostsAmongCardsInGraveyard amount, AmountContext ctx) {
         java.util.Set<String> found = new java.util.HashSet<>();
@@ -971,16 +1025,7 @@ public class AmountEvaluationService {
 
     private int countColorManaSymbolsAmongControlledPermanents(
             GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return 0;
-        int total = 0;
-        for (Permanent permanent : battlefield) {
-            ManaCost cost = permanent.getCard().getParsedManaCost();
-            if (cost != null) {
-                total += cost.countColorSymbols(amount.color());
-            }
-        }
-        return total;
+        return gameQueryService.getDevotionToColor(gameData, ctx.controllerId(), amount.color());
     }
 
     private int colorManaPairsSpentToCast(
@@ -1458,16 +1503,39 @@ public class AmountEvaluationService {
         return total;
     }
 
-    private int countColorsAmongControlledPermanents(GameData gameData, AmountContext ctx) {
+    private int countColorsAmongControlledPermanents(
+            GameData gameData, ColorsAmongControlledPermanents count, AmountContext ctx) {
         if (gameData == null || ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
-        return (int) battlefield.stream()
-                .flatMap(permanent -> (GameQueryService.isStaticEvaluationActive()
-                        ? gameQueryService.colorsForStaticEvaluation(permanent)
-                        : gameQueryService.getEffectiveColors(gameData, permanent)).stream())
-                .distinct()
-                .count();
+
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        boolean filterNeedsBoard = staticEvaluation
+                && count.filter() != null
+                && predicateEvaluationService.requiresGameDataForStaticFilter(count.filter());
+        FilterContext filterContext = staticEvaluation && !filterNeedsBoard
+                ? FilterContext.empty()
+                : FilterContext.of(gameData);
+        filterContext = filterContext.withSourceControllerId(ctx.controllerId());
+        if (ctx.sourcePermanent() != null) {
+            filterContext = filterContext
+                    .withSourceCardId(ctx.sourcePermanent().getCard().getId())
+                    .withSourcePermanentSnapshot(ctx.sourcePermanent());
+        }
+
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        for (Permanent permanent : battlefield) {
+            if (count.filter() != null) {
+                boolean matches = filterNeedsBoard
+                        ? predicateEvaluationService.matchesStaticFilter(permanent, count.filter(), filterContext)
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext);
+                if (!matches) continue;
+            }
+            colors.addAll(staticEvaluation
+                    ? gameQueryService.colorsForStaticEvaluation(permanent)
+                    : gameQueryService.getEffectiveColors(gameData, permanent));
+        }
+        return colors.size();
     }
 
     private int countCreaturesEnteredBattlefieldThisTurn(

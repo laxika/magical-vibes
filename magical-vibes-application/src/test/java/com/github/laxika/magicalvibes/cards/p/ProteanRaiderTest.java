@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ProteanRaider.class, AngelOfMercy.class})
 class ProteanRaiderTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,7 @@ class ProteanRaiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(findRaider()).isNotNull();
     }
 
@@ -52,7 +55,24 @@ class ProteanRaiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(findRaider()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Declining the raid copy leaves Protean Raider as itself without triggering")
+    void entersNormallyWhenRaidCopyIsDeclined() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+        harness.addToBattlefield(player2, new AngelOfMercy());
+        castProteanRaider();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findRaider()).isNotNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     private void castProteanRaider() {

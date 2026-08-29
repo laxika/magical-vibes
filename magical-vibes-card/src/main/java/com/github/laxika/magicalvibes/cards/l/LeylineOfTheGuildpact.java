@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "217")
+@CardRegistration(set = "MKM", collectorNumber = "418")
 public class LeylineOfTheGuildpact extends Card {
 
     public LeylineOfTheGuildpact() {

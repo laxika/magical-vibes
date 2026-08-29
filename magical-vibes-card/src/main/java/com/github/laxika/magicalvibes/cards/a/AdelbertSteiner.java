@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "3")
+@CardRegistration(set = "FIN", collectorNumber = "422")
 public class AdelbertSteiner extends Card {
 
     public AdelbertSteiner() {

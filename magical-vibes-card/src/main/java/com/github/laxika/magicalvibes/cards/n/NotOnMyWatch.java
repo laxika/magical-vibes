@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "28")
+@CardRegistration(set = "MKM", collectorNumber = "291")
 public class NotOnMyWatch extends Card {
 
     public NotOnMyWatch() {

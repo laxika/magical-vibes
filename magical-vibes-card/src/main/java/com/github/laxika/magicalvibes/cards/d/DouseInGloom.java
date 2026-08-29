@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "GPT", collectorNumber = "49")
+@CardRegistration(set = "FRF", collectorNumber = "68")
 public class DouseInGloom extends Card {
 
     public DouseInGloom() {

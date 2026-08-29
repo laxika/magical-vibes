@@ -8,6 +8,14 @@ public record SearchLibraryAndConditionalEffect(
         CardPredicate searchFilter,
         LibrarySearchDestination destination,
         CardPredicate selectedCardFilter,
-        CardEffect conditionalEffect
+        CardEffect conditionalEffect,
+        boolean shuffleAfterSelection
 ) implements CardEffect {
+
+    public SearchLibraryAndConditionalEffect(CardPredicate searchFilter,
+                                             LibrarySearchDestination destination,
+                                             CardPredicate selectedCardFilter,
+                                             CardEffect conditionalEffect) {
+        this(searchFilter, destination, selectedCardFilter, conditionalEffect, true);
+    }
 }

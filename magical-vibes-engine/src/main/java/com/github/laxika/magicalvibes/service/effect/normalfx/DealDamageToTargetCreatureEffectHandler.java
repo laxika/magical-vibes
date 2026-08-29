@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -76,26 +77,31 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         // Excess-damage tracking for companion effects (e.g. Archaic's Agony exiles cards equal to
         // the excess damage dealt to the target). The excess is stored on the entry's event value,
         // which a later EventValue amount reads back — so only snapshot it when such an effect asks.
-        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
-        if (tracksExcess) {
-            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-            if (target == null || damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                entry.setEventValue(0);
-            } else {
-                int markedBefore = target.getMarkedDamage();
-                boolean deathtouch = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
-                entry.setEventValue(damageSupport.computeExcessDamageToCreature(
-                        gameData, target, damage, markedBefore, deathtouch));
-            }
-        }
+        boolean tracksExcess = !amountEvaluationService.referencesEventValue(e.damage())
+                && entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
+        Permanent target = tracksExcess
+                ? gameQueryService.findPermanentById(gameData, entry.getTargetId())
+                : null;
+        int markedBefore = target == null ? 0 : target.getMarkedDamage();
+        boolean deathtouch = tracksExcess
+                && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
 
         // Single-target
+        int damageDealt;
         if (e.unpreventable()) {
-            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target == null) {
+                target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            }
             if (target == null) return;
             damageSupport.dealCreatureDamageUnpreventable(gameData, entry, target, damage);
+            damageDealt = damage;
         } else {
-            damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
+            damageDealt = damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
+        }
+
+        if (tracksExcess) {
+            entry.setEventValue(target == null ? 0 : damageSupport.computeExcessDamageToCreature(
+                    gameData, target, damageDealt, markedBefore, deathtouch));
         }
 
     }
@@ -111,6 +117,9 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         if (effect instanceof DealDamageToPlayersEffect playerDamage) {
             return playerDamage.recipient() == DamageRecipient.TARGET_PERMANENT_CONTROLLER
                     && amountEvaluationService.referencesEventValue(playerDamage.amount());
+        }
+        if (effect instanceof GainLifeEffect gainLife) {
+            return amountEvaluationService.referencesEventValue(gainLife.amount());
         }
         return effect instanceof CombatDamageAmountAwareEffect amountAware
                 && amountEvaluationService.referencesEventValue(amountAware.combatDamageAmount());

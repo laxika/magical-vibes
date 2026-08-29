@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "337")
 @CardRegistration(set = "6ED", collectorNumber = "307")
@@ -20,8 +19,7 @@ public class PhyrexianVault extends Card {
                 true,
                 "{2}",
                 List.of(new SacrificeCreatureCost(), new DrawCardEffect()),
-                "{2}, {T}, Sacrifice a creature: Draw a card.",
-                TargetFilters.creatureYouControl()
+                "{2}, {T}, Sacrifice a creature: Draw a card."
         ));
     }
 }

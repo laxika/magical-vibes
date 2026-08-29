@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.InvestigateForEachTargetPlayerCreatureEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "222")
+@CardRegistration(set = "MKM", collectorNumber = "314")
 public class OfficiousInterrogation extends Card {
 
     public OfficiousInterrogation() {

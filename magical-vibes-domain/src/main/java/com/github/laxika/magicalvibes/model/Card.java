@@ -173,7 +173,7 @@ public class Card {
      */
     private int additionalLifeCostPerTarget;
     /**
-     * When true, the same permanent may be chosen for different target groups (CR 114.6c).
+     * When true, the same permanent may be chosen for different target groups (CR 601.2c).
      * By default, targets across groups must be distinct — matching the common MTG pattern
      * where separate "target" instances imply "another". Set this for cards whose oracle text
      * does NOT use "another" and whose target filters can overlap (e.g. "target creature" +
@@ -867,9 +867,8 @@ public class Card {
      * Returns true if the target group at the given expanded position allows player targets.
      * Used by the valid target service to determine per-position player targeting in multi-target spells.
      *
-     * <p>Bound effects win when their {@code targetSpec()} includes players. Bare positional groups
-     * (no bound effect — e.g. Injury's creature + player/planeswalker slots feeding
-     * {@code DealDamageToEachTargetEffect}) fall back to the group's declared filter.
+     * <p>An explicit group filter defines the legal target kind. Only an unfiltered group inherits
+     * player targeting from the effects bound to it.
      */
     public boolean doesPositionAllowPlayerTargets(int expandedPosition) {
         if (spellTargets.isEmpty()) return false;
@@ -877,6 +876,11 @@ public class Card {
         for (SpellTarget st : spellTargets) {
             cumulative += st.getMaxTargets();
             if (expandedPosition < cumulative) {
+                TargetFilter filter = st.getFilter();
+                if (filter != null) {
+                    return filter instanceof PlayerPredicateTargetFilter
+                            || filter instanceof AnyTargetPredicateTargetFilter;
+                }
                 int groupIndex = st.getIndex();
                 for (Map.Entry<CardEffect, List<Integer>> entry : effectTargetIndexMap.entrySet()) {
                     if (entry.getValue().contains(groupIndex)
@@ -884,9 +888,7 @@ public class Card {
                         return true;
                     }
                 }
-                TargetFilter filter = st.getFilter();
-                return filter instanceof PlayerPredicateTargetFilter
-                        || filter instanceof AnyTargetPredicateTargetFilter;
+                return false;
             }
         }
         return false;

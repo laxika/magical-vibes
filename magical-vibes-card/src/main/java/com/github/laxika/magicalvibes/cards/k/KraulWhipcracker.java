@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "213")
+@CardRegistration(set = "MKM", collectorNumber = "364")
+@CardRegistration(set = "MKM", collectorNumber = "425")
 public class KraulWhipcracker extends Card {
 
     public KraulWhipcracker() {

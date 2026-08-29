@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "106")
+@CardRegistration(set = "MKM", collectorNumber = "302")
 public class SoulEnervation extends Card {
 
     public SoulEnervation() {

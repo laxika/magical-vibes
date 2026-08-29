@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "129")
+@CardRegistration(set = "FIN", collectorNumber = "457")
+@CardRegistration(set = "FIN", collectorNumber = "584")
 public class BarretWallace extends Card {
 
     public BarretWallace() {

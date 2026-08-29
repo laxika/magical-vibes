@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "48")
+@CardRegistration(set = "MKM", collectorNumber = "393")
 public class CovetedFalcon extends Card {
 
     public CovetedFalcon() {

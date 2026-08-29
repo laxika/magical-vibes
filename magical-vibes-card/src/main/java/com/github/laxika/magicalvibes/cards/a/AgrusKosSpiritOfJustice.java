@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "184")
+@CardRegistration(set = "MKM", collectorNumber = "354")
+@CardRegistration(set = "MKM", collectorNumber = "383")
 public class AgrusKosSpiritOfJustice extends Card {
 
     public AgrusKosSpiritOfJustice() {

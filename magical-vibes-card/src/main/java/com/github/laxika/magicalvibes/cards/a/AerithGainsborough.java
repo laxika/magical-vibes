@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "4")
+@CardRegistration(set = "FIN", collectorNumber = "374")
+@CardRegistration(set = "FIN", collectorNumber = "423")
+@CardRegistration(set = "FIN", collectorNumber = "519")
 public class AerithGainsborough extends Card {
 
     public AerithGainsborough() {

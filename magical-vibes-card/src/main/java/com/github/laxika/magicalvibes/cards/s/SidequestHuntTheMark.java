@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FIN", collectorNumber = "119")
+@CardRegistration(set = "FIN", collectorNumber = "453")
 public class SidequestHuntTheMark extends Card {
 
     public SidequestHuntTheMark() {

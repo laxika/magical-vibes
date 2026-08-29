@@ -91,6 +91,8 @@ public enum Keyword {
     DELVE,
     DREDGE,
     MODULAR,
+    PROWESS,
+    DASH,
     SUNBURST,
     PROTOTYPE,
     REBOUND,
@@ -108,6 +110,8 @@ public enum Keyword {
     DOUBLE,
     PLOT,
     AMASS,
+    WATERBEND,
+    FIREBENDING,
     BLOW_UP,
     DISGUISE;
 

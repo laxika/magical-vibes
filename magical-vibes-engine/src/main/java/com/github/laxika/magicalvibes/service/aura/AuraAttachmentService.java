@@ -253,6 +253,10 @@ public class AuraAttachmentService {
      * @param auraControllerId the controller of the Aura, for controller-relative enchant filters
      */
     public boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
+        if (!auraCard.isAura()
+                || gameQueryService.hasProtectionFromSource(gameData, host, auraCard, auraControllerId)) {
+            return false;
+        }
         TargetFilter filter = auraCard.getDeclaredTargetFilter();
         if (filter == null) {
             return gameQueryService.isCreature(gameData, host);
@@ -261,6 +265,31 @@ public class AuraAttachmentService {
                 .withSourceCardId(auraCard.getId())
                 .withSourceControllerId(auraControllerId);
         return predicateEvaluationService.checkTargetFilter(filter, host, context).isEmpty();
+    }
+
+    /**
+     * Whether {@code auraCard} could legally enchant {@code playerId}. This is the player
+     * counterpart to {@link #canEnchant(GameData, Card, UUID, Permanent)} for Curse-style Auras
+     * and other Auras whose enchant ability refers to a player.
+     */
+    public boolean canEnchantPlayer(GameData gameData, Card auraCard, UUID auraControllerId, UUID playerId) {
+        if (!auraCard.isEnchantPlayer()) {
+            return false;
+        }
+        TargetFilter filter = auraCard.getDeclaredTargetFilter();
+        if (filter == null) {
+            return true;
+        }
+        if (!(filter instanceof PlayerPredicateTargetFilter playerFilter)
+                || !targetLegalityService.matchesPlayerPredicate(
+                gameData, auraControllerId, playerId, playerFilter.predicate())) {
+            return false;
+        }
+        return !gameQueryService.playerHasProtectionFromEverything(gameData, playerId)
+                && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
+                .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
+                && !gameQueryService.playerHasProtectionFromChosenName(
+                gameData, playerId, auraCard.getName());
     }
 
     /**

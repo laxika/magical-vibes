@@ -75,6 +75,7 @@ class CostEffectClassificationTest {
             "RemoveAllCountersAsCostEffect",
             "RemoveCounterFromControlledCreatureCost",
             "RemoveCounterFromControlledPermanentCost",
+            "RemoveCounterFromGrantingPermanentCost",
             "RemoveCounterFromSourceCost",
             "RemoveOneOrMoreCountersFromControlledCreaturesCost",
             "RemoveOneOrMoreCountersFromSourceCost",
@@ -86,6 +87,7 @@ class CostEffectClassificationTest {
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
             "SacrificeAllMatchingPermanentsCost",
+            "SacrificeDistinctNamePermanentsCost",
             "SacrificePermanentsSequenceCost",
             "SacrificeSelfCost",
             "SacrificeSourceEquipmentCost",
@@ -96,7 +98,8 @@ class CostEffectClassificationTest {
             "TapTwoCreaturesSharingTypeCost",
             "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
-            "UntapMultiplePermanentsCost");
+                "UntapMultiplePermanentsCost",
+                "WaterbendCost");
 
     /**
      * Spell-handled cost types that do not use the generic single-permanent payment field. These
@@ -109,6 +112,7 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
+            "PayLifeOrPayManaCost",
             "ChooseXValueCost",
             "ChooseCreatureTypeCost",
             "ExileCardFromGraveyardCost",

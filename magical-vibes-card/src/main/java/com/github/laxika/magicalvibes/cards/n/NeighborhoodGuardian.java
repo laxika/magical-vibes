@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "26")
+@CardRegistration(set = "MKM", collectorNumber = "339")
 public class NeighborhoodGuardian extends Card {
 
     public NeighborhoodGuardian() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "166")
+@CardRegistration(set = "MKM", collectorNumber = "410")
 public class HideInPlainSight extends Card {
 
     public HideInPlainSight() {

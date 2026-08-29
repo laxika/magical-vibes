@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "111")
+@CardRegistration(set = "MKM", collectorNumber = "303")
 public class AnzragsRampage extends Card {
 
     public AnzragsRampage() {

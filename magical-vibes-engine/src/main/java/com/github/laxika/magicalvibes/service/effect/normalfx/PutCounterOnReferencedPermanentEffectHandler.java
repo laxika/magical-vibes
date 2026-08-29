@@ -45,7 +45,7 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
             // Unreachable: the record's constructor rejects SOURCE (PutCountersOnSourceEffect owns it).
             case SOURCE -> throw new IllegalStateException("SOURCE counters belong on PutCountersOnSourceEffect");
-            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
+            case RETURNED -> findPermanentByCardId(gameData, returnedCardId(entry));
         };
         if (referenced == null) {
             return;
@@ -80,14 +80,29 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
                 .orElse(null);
     }
 
+    private UUID returnedCardId(StackEntry entry) {
+        if (entry.getTargetId() != null) {
+            return entry.getTargetId();
+        }
+        return entry.getTargetCardIds() == null ? null : entry.getTargetCardIds().stream().findFirst().orElse(null);
+    }
+
     private Permanent findAttached(GameData gameData, StackEntry entry, String sourceName) {
         Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-        if (source == null || !source.isAttached()) {
+        UUID attachedTo = source != null && source.isAttached() ? source.getAttachedTo() : null;
+        if (attachedTo == null && entry.getAttachedPermanentSnapshot() != null) {
+            attachedTo = entry.getAttachedPermanentSnapshot().getId();
+        }
+        if (attachedTo == null && entry.getSourcePermanentSnapshot() != null
+                && entry.getSourcePermanentSnapshot().isAttached()) {
+            attachedTo = entry.getSourcePermanentSnapshot().getAttachedTo();
+        }
+        if (attachedTo == null) {
             log.info("Game {} - {} fizzles: source no longer attached", gameData.id, sourceName);
             return null;
         }
 
-        Permanent host = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        Permanent host = gameQueryService.findPermanentById(gameData, attachedTo);
         if (host == null) {
             log.info("Game {} - {} fizzles: attached permanent no longer on battlefield", gameData.id, sourceName);
         }

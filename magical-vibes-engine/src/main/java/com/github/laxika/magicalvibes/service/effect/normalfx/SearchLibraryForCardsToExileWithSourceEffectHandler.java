@@ -90,8 +90,13 @@ public class SearchLibraryForCardsToExileWithSourceEffectHandler implements Norm
                         .destination(LibrarySearchDestination.EXILE_WITH_SOURCE)
                         .filterPredicate(filter)
                         .sourcePermanentId(sourcePermanentId)
+                        .requireDifferentNames(searchEffect.requireDifferentNames())
                         .build(),
-                prompt, true);
+                searchEffect.requireDifferentNames()
+                        ? "Search your library for up to " + maxCount + " " + desc
+                                + " with different names to exile."
+                        : prompt,
+                true);
 
         log.info("Game {} - {} searches library to exile any number of {} ({} matches)",
                 gameData.id, playerName, desc, matchingCards.size());

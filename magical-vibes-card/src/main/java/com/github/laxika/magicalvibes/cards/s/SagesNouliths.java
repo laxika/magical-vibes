@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "70")
+@CardRegistration(set = "FIN", collectorNumber = "582")
 public class SagesNouliths extends Card {
 
     public SagesNouliths() {

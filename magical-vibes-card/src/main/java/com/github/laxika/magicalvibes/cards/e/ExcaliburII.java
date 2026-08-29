@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "257")
+@CardRegistration(set = "FIN", collectorNumber = "352")
 public class ExcaliburII extends Card {
 
     public ExcaliburII() {

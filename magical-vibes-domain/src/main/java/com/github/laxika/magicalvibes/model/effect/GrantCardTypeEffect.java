@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Static effect that grants a card type to permanents matching the given scope.
@@ -10,5 +11,10 @@ import com.github.laxika.magicalvibes.model.CardType;
  * @param cardType the card type to grant
  * @param scope    which permanents are affected (EQUIPPED_CREATURE, ENCHANTED_CREATURE, etc.)
  */
-public record GrantCardTypeEffect(CardType cardType, GrantScope scope) implements CardEffect {
+public record GrantCardTypeEffect(CardType cardType, GrantScope scope, PermanentPredicate filter)
+        implements CardEffect {
+
+    public GrantCardTypeEffect(CardType cardType, GrantScope scope) {
+        this(cardType, scope, null);
+    }
 }

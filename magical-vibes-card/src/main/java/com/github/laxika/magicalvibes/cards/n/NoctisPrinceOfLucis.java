@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "235")
+@CardRegistration(set = "FIN", collectorNumber = "401")
+@CardRegistration(set = "FIN", collectorNumber = "500")
+@CardRegistration(set = "FIN", collectorNumber = "546")
 public class NoctisPrinceOfLucis extends Card {
 
     public NoctisPrinceOfLucis() {

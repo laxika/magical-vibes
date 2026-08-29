@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "23")
+@CardRegistration(set = "MKM", collectorNumber = "290")
 public class MakeshiftBinding extends Card {
 
     public MakeshiftBinding() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "255")
+@CardRegistration(set = "FIN", collectorNumber = "351")
 public class BusterSword extends Card {
 
     public BusterSword() {

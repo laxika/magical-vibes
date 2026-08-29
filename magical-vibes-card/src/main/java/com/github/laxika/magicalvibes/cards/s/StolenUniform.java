@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FIN", collectorNumber = "75")
+@CardRegistration(set = "FIN", collectorNumber = "332")
 public class StolenUniform extends Card {
 
     public StolenUniform() {

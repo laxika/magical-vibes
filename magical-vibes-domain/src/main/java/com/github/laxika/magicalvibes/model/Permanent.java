@@ -152,6 +152,7 @@ public class Permanent {
     /** Second basic land type chosen "as this enters" when the card chooses two types
      *  (Illusionary Terrain: first type → {@link #chosenSubtype}, second → here). */
     @Setter private CardSubtype secondChosenSubtype;
+    @Setter private String chosenMode;
     /** The number last chosen for this permanent by a "choose a number between X and Y" effect
      *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
      *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
@@ -180,6 +181,8 @@ public class Permanent {
      * sacrificed for "add one mana of any type that land could produce").
      */
     @Setter private Card chosenCard;
+    /** The creature card exiled with this permanent most recently chosen for ability copying. */
+    @Setter private Card lastChosenExiledCard;
     /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
     @Setter private Permanent chosenSacrificedPermanentSnapshot;
     @Setter private boolean cantBeBlocked;
@@ -291,6 +294,8 @@ public class Permanent {
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
+    /** Whether this face-down permanent was put onto the battlefield by manifest. */
+    @Setter private boolean manifested;
     @Setter private boolean animatedUntilEndOfTurn;
     /** When {@code true}, this permanent is animated as a creature until the combat phase ends
      *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
@@ -510,6 +515,8 @@ public class Permanent {
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
     @Setter private boolean evoked;
+    /** Whether this permanent was cast using an escape permission. */
+    @Setter private boolean escaped;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
     /** Whether this permanent was cast by paying an alternate cost. */
@@ -703,6 +710,7 @@ public class Permanent {
         this.chosenSubtype = source.chosenSubtype;
         this.chosenCardType = source.chosenCardType;
         this.secondChosenSubtype = source.secondChosenSubtype;
+        this.chosenMode = source.chosenMode;
         this.chosenNumber = source.chosenNumber;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
@@ -713,6 +721,7 @@ public class Permanent {
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);
         this.chosenCard = source.chosenCard;
+        this.lastChosenExiledCard = source.lastChosenExiledCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.cantBeBlocked = source.cantBeBlocked;
@@ -760,6 +769,7 @@ public class Permanent {
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
+        this.manifested = source.manifested;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
         this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
@@ -830,6 +840,7 @@ public class Permanent {
         this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
         this.kicked = source.kicked;
         this.evoked = source.evoked;
+        this.escaped = source.escaped;
         this.prowl = source.prowl;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
@@ -893,6 +904,7 @@ public class Permanent {
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
+        this.manifested = false;
     }
 
     public void setCard(Card card) {
@@ -1338,6 +1350,7 @@ public class Permanent {
         CounterType keywordCounter = switch (keyword) {
             case FLYING -> CounterType.FLYING;
             case FIRST_STRIKE -> CounterType.FIRST_STRIKE;
+            case DOUBLE_STRIKE -> CounterType.DOUBLE_STRIKE;
             case DEATHTOUCH -> CounterType.DEATHTOUCH;
             case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;

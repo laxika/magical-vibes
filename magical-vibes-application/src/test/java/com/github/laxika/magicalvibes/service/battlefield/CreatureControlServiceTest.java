@@ -130,6 +130,20 @@ class CreatureControlServiceTest {
         }
 
         @Test
+        @DisplayName("Ends source-controlled exile play permissions on control change")
+        void endsSourceControlledExilePlayPermissionsOnControlChange() {
+            Permanent source = addCreature(player1Id, "Source");
+            UUID exiledCardId = UUID.randomUUID();
+            gd.exilePlayPermissions.put(exiledCardId, player1Id);
+            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+
+            applySteal(player2Id, source, EffectDuration.PERMANENT, null);
+
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
+        }
+
+        @Test
         @DisplayName("Removes a controlled creature from combat")
         void removesCreatureFromCombat() {
             Permanent attacker = addCreature(player1Id, "Attacker");

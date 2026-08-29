@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "85")
+@CardRegistration(set = "FIN", collectorNumber = "333")
 public class TheWaterCrystal extends Card {
 
     public TheWaterCrystal() {

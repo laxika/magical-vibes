@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.b.BrigidClachansHeart;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CephalidConstable.class, GrizzlyBears.class})
 class CephalidConstableTest extends BaseCardTest {
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
@@ -63,6 +66,27 @@ class CephalidConstableTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("returned"));
+    }
+
+    @Test
+    @CardUsed(BrigidClachansHeart.class)
+    @DisplayName("Bouncing a transformed permanent returns its physical front-face card")
+    void bounceTransformedPermanent() {
+        Permanent constable = addReadyCreature(player1, new CephalidConstable());
+        constable.setAttacking(true);
+        Permanent brigid = addReadyCreature(player2, new BrigidClachansHeart());
+        Card physicalCard = brigid.getOriginalCard();
+        Card backFace = physicalCard.getBackFaceCard();
+        brigid.setCard(backFace);
+        brigid.setTransformed(true);
+
+        resolveCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of(brigid.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(brigid);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .contains(physicalCard)
+                .doesNotContain(backFace);
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "254")
+@CardRegistration(set = "MKM", collectorNumber = "376")
 public class MagneticSnuffler extends Card {
 
     public MagneticSnuffler() {

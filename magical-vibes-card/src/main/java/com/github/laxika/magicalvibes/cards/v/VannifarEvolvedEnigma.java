@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "241")
+@CardRegistration(set = "MKM", collectorNumber = "323")
+@CardRegistration(set = "MKM", collectorNumber = "373")
+@CardRegistration(set = "MKM", collectorNumber = "389")
 public class VannifarEvolvedEnigma extends Card {
 
     public VannifarEvolvedEnigma() {

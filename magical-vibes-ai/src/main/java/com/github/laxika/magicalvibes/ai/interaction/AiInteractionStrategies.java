@@ -39,6 +39,7 @@ public final class AiInteractionStrategies {
         register(new ExiledSpellCopyChoiceAiStrategy());
         register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new ExiledCreatureCopyChoiceAiStrategy());
+        register(new ExileCardFromHandAndCreateTokenCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new TargetedHandBattlefieldChoiceAiStrategy());
@@ -71,6 +72,7 @@ public final class AiInteractionStrategies {
         register(new ExilePermanentsOrHandCardsChoiceAiStrategy());
         register(new BeholdChoiceAiStrategy());
         register(new AttachAurasChoiceAiStrategy());
+        register(new ReturnAurasFromGraveyardChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
         register(new ExiledCardChoiceAiStrategy());

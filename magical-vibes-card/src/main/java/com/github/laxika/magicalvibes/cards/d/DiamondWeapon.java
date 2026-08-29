@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "183")
+@CardRegistration(set = "FIN", collectorNumber = "470")
 public class DiamondWeapon extends Card {
 
     public DiamondWeapon() {

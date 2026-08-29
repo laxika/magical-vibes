@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "159")
+@CardRegistration(set = "MKM", collectorNumber = "310")
 public class FanaticalStrength extends Card {
 
     public FanaticalStrength() {

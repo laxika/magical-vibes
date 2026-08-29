@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "121")
+@CardRegistration(set = "FIN", collectorNumber = "365")
 public class SummonPrimalOdin extends Card {
 
     private static final PermanentPredicate OPPONENT_CREATURE = new PermanentAllOfPredicate(List.of(

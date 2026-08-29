@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -907,6 +908,47 @@ public class CardChoiceHandlerService {
                         gameData.pendingEffectResolutionIndex);
             }
 
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
+    /** Answers the Nexus of Becoming hand-card choice and queues the copy of the selected card. */
+    public void handleExileCardFromHandAndCreateTokenCopyChosen(
+            GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice choice =
+                gameData.interaction.activeInteraction(
+                        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            log.warn("Game {} - {} sent invalid card index {}, re-prompting",
+                    gameData.id, player.getUsername(), cardIndex);
+            interactionHandlerRegistry.requestActiveDecision(gameData);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Card chosenCard = hand.remove(cardIndex);
+        exileService.exileCard(gameData, player.getId(), chosenCard);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", chosenCard, " from hand."));
+
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(new CreateTokenCopyOfCardEffect(
+                            chosenCard, choice.effect().tokenCopyEffect())));
+            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }

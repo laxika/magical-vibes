@@ -22,7 +22,7 @@ import java.util.UUID;
  * {@code remainingTargetPlayerTopSearches} is the remainder of a search where each of several
  * targeted players searches their own library for a card and puts it on top (Scheming Symmetry);
  * {@code opponentExileChoice} prompts the opponent after the Distant Memories exile;
- * {@code imprintSourcePermanentId} receives the imprinted card at EXILE_IMPRINT completion;
+ * {@code imprintSourcePermanentId} receives the imprinted card when the face-down exile completes;
      * {@code secondBoundedPick} begins the next bounded pick (may reveal a card of its type or
      * subtype from the same looked-at cards to hand, then dispose the rest) after the prior pick
      * resolves — Gift of the Gargantuan, Benefaction of Rhonas, and Kaalia, Zenith Seeker;

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "226")
+@CardRegistration(set = "MKM", collectorNumber = "419")
 public class ReliveThePast extends Card {
 
     public ReliveThePast() {

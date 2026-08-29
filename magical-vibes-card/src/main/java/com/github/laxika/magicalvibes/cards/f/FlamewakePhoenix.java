@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "198")
+@CardRegistration(set = "FRF", collectorNumber = "100")
 public class FlamewakePhoenix extends Card {
 
     public FlamewakePhoenix() {

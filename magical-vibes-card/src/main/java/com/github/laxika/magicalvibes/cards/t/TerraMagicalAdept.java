@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "245")
+@CardRegistration(set = "FIN", collectorNumber = "323")
+@CardRegistration(set = "FIN", collectorNumber = "511")
 public class TerraMagicalAdept extends Card {
 
     public TerraMagicalAdept() {

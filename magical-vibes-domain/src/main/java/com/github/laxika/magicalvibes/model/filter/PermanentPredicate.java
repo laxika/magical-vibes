@@ -86,6 +86,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsBlockingPredicate,
         PermanentIsCreaturePredicate,
         PermanentIsEnchantedPredicate,
+        PermanentIsEnchantedBySourceControllerAuraPredicate,
         PermanentIsEnchantmentPredicate,
         PermanentIsEquippedPredicate,
         PermanentIsFaceDownPredicate,

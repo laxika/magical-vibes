@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "199")
+@CardRegistration(set = "MKM", collectorNumber = "415")
 public class DragTheCanal extends Card {
 
     public DragTheCanal() {

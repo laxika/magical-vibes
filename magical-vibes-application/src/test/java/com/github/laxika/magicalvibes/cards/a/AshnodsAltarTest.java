@@ -26,6 +26,7 @@ class AshnodsAltarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
 
         // One Grizzly Bears is sacrificed to the graveyard
         assertThat(gd.playerBattlefields.get(player1.getId()))

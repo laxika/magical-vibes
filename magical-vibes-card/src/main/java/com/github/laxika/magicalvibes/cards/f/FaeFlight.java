@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "56")
+@CardRegistration(set = "MKM", collectorNumber = "295")
 public class FaeFlight extends Card {
 
     public FaeFlight() {

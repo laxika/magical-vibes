@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MKM", collectorNumber = "103")
+@CardRegistration(set = "MKM", collectorNumber = "301")
 public class SliceFromTheShadows extends Card {
 
     public SliceFromTheShadows() {

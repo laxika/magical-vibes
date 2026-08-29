@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "283")
+@CardRegistration(set = "FIN", collectorNumber = "310")
 public class IshgardTheHolySee extends Card {
 
     public IshgardTheHolySee() {

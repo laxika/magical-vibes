@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -15,17 +17,29 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * cards should not receive play permission at all.
  */
 public record ExileTopCardMayPlayThisTurnEffect(
-        int count,
+        DynamicAmount count,
         boolean withoutPayingManaCost,
         CardPredicate freeCastFilter
 ) implements CardEffect {
 
     /** Single-card variant (Oracle's Vault). */
     public ExileTopCardMayPlayThisTurnEffect(boolean withoutPayingManaCost) {
-        this(1, withoutPayingManaCost, null);
+        this(new Fixed(1), withoutPayingManaCost, null);
     }
 
     public ExileTopCardMayPlayThisTurnEffect(int count, boolean withoutPayingManaCost) {
+        this(new Fixed(count), withoutPayingManaCost, null);
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(DynamicAmount count, boolean withoutPayingManaCost) {
         this(count, withoutPayingManaCost, null);
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(
+            int count,
+            boolean withoutPayingManaCost,
+            CardPredicate freeCastFilter
+    ) {
+        this(new Fixed(count), withoutPayingManaCost, freeCastFilter);
     }
 }

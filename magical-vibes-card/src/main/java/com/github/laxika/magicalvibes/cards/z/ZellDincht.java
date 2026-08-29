@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPl
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "170")
+@CardRegistration(set = "FIN", collectorNumber = "468")
+@CardRegistration(set = "FIN", collectorNumber = "586")
+@CardRegistration(set = "FIN", collectorNumber = "587")
 public class ZellDincht extends Card {
 
     public ZellDincht() {

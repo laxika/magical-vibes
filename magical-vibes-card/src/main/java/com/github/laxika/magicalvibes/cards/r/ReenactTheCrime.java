@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "70")
+@CardRegistration(set = "MKM", collectorNumber = "297")
 public class ReenactTheCrime extends Card {
 
     public ReenactTheCrime() {

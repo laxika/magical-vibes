@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "212")
+@CardRegistration(set = "FIN", collectorNumber = "476")
 public class AbsoluteVirtue extends Card {
 
     public AbsoluteVirtue() {

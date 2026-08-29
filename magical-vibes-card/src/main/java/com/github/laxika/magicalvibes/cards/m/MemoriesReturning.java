@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.MemoriesReturningEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "63")
+@CardRegistration(set = "FIN", collectorNumber = "331")
 public class MemoriesReturning extends Card {
 
     public MemoriesReturning() {

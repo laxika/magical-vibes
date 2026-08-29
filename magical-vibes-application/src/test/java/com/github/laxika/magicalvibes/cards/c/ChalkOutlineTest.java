@@ -40,7 +40,7 @@ class ChalkOutlineTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recollect()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
+        harness.castSorcery(player1, 0, shock.getId());
         resolveAllStack();
 
         assertThat(findPermanents(player1, "Detective")).isEmpty();

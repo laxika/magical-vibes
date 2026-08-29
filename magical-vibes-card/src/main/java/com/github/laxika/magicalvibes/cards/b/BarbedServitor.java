@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "77")
+@CardRegistration(set = "MKM", collectorNumber = "398")
 public class BarbedServitor extends Card {
 
     public BarbedServitor() {

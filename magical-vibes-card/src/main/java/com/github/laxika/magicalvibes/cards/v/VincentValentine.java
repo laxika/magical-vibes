@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyi
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "125")
+@CardRegistration(set = "FIN", collectorNumber = "383")
+@CardRegistration(set = "FIN", collectorNumber = "454")
+@CardRegistration(set = "FIN", collectorNumber = "528")
 public class VincentValentine extends Card {
 
     public VincentValentine() {

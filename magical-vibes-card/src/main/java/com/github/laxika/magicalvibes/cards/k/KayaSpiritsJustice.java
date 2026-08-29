@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "211")
+@CardRegistration(set = "MKM", collectorNumber = "335")
 public class KayaSpiritsJustice extends Card {
 
     public KayaSpiritsJustice() {

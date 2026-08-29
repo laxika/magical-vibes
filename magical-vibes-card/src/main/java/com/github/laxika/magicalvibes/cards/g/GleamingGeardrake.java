@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MKM", collectorNumber = "205")
+@CardRegistration(set = "MKM", collectorNumber = "361")
+@CardRegistration(set = "MKM", collectorNumber = "424")
 public class GleamingGeardrake extends Card {
 
     public GleamingGeardrake() {

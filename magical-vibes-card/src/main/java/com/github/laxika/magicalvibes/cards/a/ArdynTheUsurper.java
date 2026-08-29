@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "89")
+@CardRegistration(set = "FIN", collectorNumber = "315")
+@CardRegistration(set = "FIN", collectorNumber = "379")
+@CardRegistration(set = "FIN", collectorNumber = "444")
+@CardRegistration(set = "FIN", collectorNumber = "524")
 public class ArdynTheUsurper extends Card {
 
     public ArdynTheUsurper() {

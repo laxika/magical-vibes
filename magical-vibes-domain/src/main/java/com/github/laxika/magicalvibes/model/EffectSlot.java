@@ -47,8 +47,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
     GRAVEYARD_UPKEEP_TRIGGERED,
-    /** Triggers at the beginning of the controller's combat while this card is in their graveyard. */
-    GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
     SUSPENDED_EACH_UPKEEP_TRIGGERED,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
@@ -99,6 +97,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DAMAGED_CREATURE_DIES,
     ON_COMBAT_DAMAGE_TO_PLAYER,
     ON_COMBAT_DAMAGE_TO_CREATURE,
+    /** Triggers once per combat damage step when the source deals combat damage to one or more blockers. */
+    ON_COMBAT_DAMAGE_TO_BLOCKING_CREATURE,
     ON_DAMAGE_TO_PLAYER,
     ON_ATTACK,
     ON_BECOMES_BLOCKED,
@@ -145,6 +145,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DRAWS,
     /** Triggers when the controller draws their second card of the turn. */
     ON_CONTROLLER_DRAWS_SECOND_CARD,
+    /** Triggers when this card's owner draws their second card of the turn while this card is in
+     *  their graveyard. Checked in {@code DrawService}. */
+    GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
     /** Triggers whenever the player enchanted by this Aura draws a card. */
     ON_ENCHANTED_PLAYER_DRAWS,
@@ -162,6 +165,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this permanent's controller surveils. Checked by
      *  {@code TriggerCollectionService.checkSurveilTriggers}. */
     ON_CONTROLLER_SURVEILS,
+    ON_CONTROLLER_BENDS,
     /** Triggers whenever this permanent's controller collects evidence. */
     ON_CONTROLLER_COLLECTS_EVIDENCE,
     /** Triggers whenever this permanent's controller completes a discover action. */
@@ -287,6 +291,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once for each library-to-graveyard event in which one or more creature cards enter the
      *  controller's graveyard. */
     ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
+    /** Triggers once for each library-to-graveyard event in which one or more cards enter the
+     *  controller's graveyard. */
+    ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a creature card is put into any player's graveyard from a library. */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers whenever a non-token card is put into the controller's graveyard from anywhere. */
@@ -337,6 +344,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controlled by that permanent's controller (so it fires for an opponent's Aura too).
      *  Checked in {@code TriggerCollectionService.checkAuraAttachedTriggers}. Used by Brood Keeper. */
     ON_AURA_ATTACHED_TO_SELF,
+    /** Triggers whenever an Aura controlled by this permanent's controller becomes attached to a creature controlled by that player. */
+    ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE,
     /** Triggers on an Equipment whenever it becomes attached to a permanent. */
     ON_EQUIPMENT_ATTACHED,
     ON_ENCHANTED_PERMANENT_TAPPED,
@@ -502,6 +511,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code enteredFromGraveyardOwnerId} flag. Queues the resolved effects as a non-targeting stack
      *  entry for the source's controller. Used by River Kelpie. */
     ON_PERMANENT_ENTERS_FROM_GRAVEYARD,
+    /** Triggers whenever a permanent controlled by this permanent's controller enters the
+     *  battlefield directly from exile. Checked after the permanent enters, using the
+     *  {@code enteredFromExile} flag on the entering permanent. */
+    ON_PERMANENT_ENTERS_FROM_EXILE,
     /** "When this creature enters from a graveyard" — fires only for the entering permanent itself
      *  (not for other permanents), checked via the {@code enteredFromGraveyardOwnerId} flag in
      *  {@code TriggerCollectionService.checkSelfEntersFromGraveyardTriggers}. A targeting effect
@@ -557,6 +570,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
+    /** Triggers once for each player directly attacked by one or more creatures the controller
+     *  controls. Attacking a planeswalker does not count. Checked in
+     *  {@code CombatAttackService.declareAttackers}. */
+    ON_ALLY_CREATURES_ATTACK_PLAYER,
     /** State-triggered abilities (MTG rule 603.8). Checked after SBAs; fire once onto the
      *  stack and don't retrigger while the ability is already on the stack. */
     STATE_TRIGGERED,
@@ -566,12 +583,16 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_II,
     /** Saga chapter III ability (MTG rule 714). Triggers when the third lore counter is placed. */
     SAGA_CHAPTER_III,
+    /** Saga chapter IV ability. Triggers when the fourth lore counter is placed. */
     SAGA_CHAPTER_IV,
     /** Saga chapter V ability. Triggers when the fifth lore counter is placed. */
     SAGA_CHAPTER_V,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,
+    /** Triggers at the beginning of combat on this card's owner's turn while the card is in their
+     *  graveyard. Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
+    GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
     /** Triggers at the beginning of each combat (any player's turn), not only the controller's.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers} by scanning all
      *  battlefields. Used by Majestic Myriarch / Odric, Lunarch Marshal. */
@@ -678,6 +699,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers. Used by Luminous
      *  Phantom ("you gain 1 life"). */
     ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
+    /** Triggers whenever another permanent controlled by this permanent's controller leaves the
+     *  battlefield during that controller's turn. */
+    ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
     /** Triggers whenever an Aura or Equipment controlled by the same player is put into a
      *  graveyard from the battlefield. Checked in DeathTriggerService after the card enters
      *  the graveyard. Used by Tiana, Ship's Caretaker. */

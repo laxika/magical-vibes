@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -30,11 +31,13 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -416,7 +419,18 @@ public final class EffectResolution {
      * Returns true if any of the given effects use the Converge mechanic.
      */
     public static boolean hasConvergeEffect(List<CardEffect> effects) {
-        return effects.stream().anyMatch(TargetPlayerDiscardsByConvergeEffect.class::isInstance);
+        if (effects.stream().anyMatch(TargetPlayerDiscardsByConvergeEffect.class::isInstance)) {
+            return true;
+        }
+        boolean dealsConvergeDamage = effects.stream()
+                .filter(DealDamageToTargetCreatureEffect.class::isInstance)
+                .map(DealDamageToTargetCreatureEffect.class::cast)
+                .anyMatch(effect -> effect.damage() instanceof XValue);
+        boolean usesExcessDamage = effects.stream()
+                .filter(ExileTopCardsMayPlayUntilNextTurnEffect.class::isInstance)
+                .map(ExileTopCardsMayPlayUntilNextTurnEffect.class::cast)
+                .anyMatch(effect -> effect.count() instanceof EventValue);
+        return dealsConvergeDamage && usesExcessDamage;
     }
 
     /**

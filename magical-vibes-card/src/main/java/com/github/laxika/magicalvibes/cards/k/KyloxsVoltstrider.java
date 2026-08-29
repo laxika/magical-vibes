@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "215")
+@CardRegistration(set = "MKM", collectorNumber = "417")
 public class KyloxsVoltstrider extends Card {
 
     public KyloxsVoltstrider() {

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersE
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfCombatDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -73,6 +75,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
@@ -81,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -135,6 +139,8 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
         ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
+        ReflectionTestUtils.setField(gqs, "amountEvaluationService",
+                new AmountEvaluationService(evaluator, gqs));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -153,6 +159,40 @@ class GameQueryServiceTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+    }
+
+    @Test
+    void matchesCardPredicatesThroughSharedEvaluator() {
+        Card creature = new Card();
+        creature.setType(CardType.CREATURE);
+
+        assertThat(gqs.matchesCardPredicate(
+                creature, new CardTypePredicate(CardType.CREATURE), UUID.randomUUID())).isTrue();
+        assertThat(gqs.matchesCardPredicate(
+                creature, new CardTypePredicate(CardType.LAND), UUID.randomUUID())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Player-scoped land mana replacement follows the land's current controller")
+    void playerScopedLandManaReplacementFollowsCurrentController() {
+        Card firstLandCard = new Card();
+        firstLandCard.setType(CardType.LAND);
+        Permanent firstPlayersLand = new Permanent(firstLandCard);
+        gd.playerBattlefields.get(player1Id).add(firstPlayersLand);
+
+        Card secondLandCard = new Card();
+        secondLandCard.setType(CardType.LAND);
+        Permanent secondPlayersLand = new Permanent(secondLandCard);
+        gd.playerBattlefields.get(player2Id).add(secondPlayersLand);
+        gd.landManaFixedColorThisTurn.put(player1Id, ManaColor.BLUE);
+
+        assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isEqualTo(ManaColor.BLUE);
+        assertThat(gqs.fixedLandManaColor(gd, secondPlayersLand)).isNull();
+
+        gd.playerBattlefields.get(player1Id).remove(firstPlayersLand);
+        gd.playerBattlefields.get(player2Id).add(firstPlayersLand);
+
+        assertThat(gqs.fixedLandManaColor(gd, firstPlayersLand)).isNull();
     }
 
     private static final class CountingLayerSystemService extends LayerSystemService {
@@ -1784,6 +1824,61 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("threshold controller protection applies at the mana-value boundary")
+        void thresholdControllerProtectionAppliesAtBoundary() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Thryx", 4, 5, CardColor.BLUE, new ControllerSpellsCantBeCounteredEffect(5)));
+            Card highSpell = spellOnStack("High spell", "{4}{U}", player1Id, 0);
+            Card lowSpell = spellOnStack("Low spell", "{3}{U}", player1Id, 0);
+
+            assertThat(gqs.isUncounterable(gd, highSpell)).isTrue();
+            assertThat(gqs.isUncounterable(gd, lowSpell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("threshold controller protection includes an announced X value")
+        void thresholdControllerProtectionIncludesAnnouncedX() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Thryx", 4, 5, CardColor.BLUE, new ControllerSpellsCantBeCounteredEffect(5)));
+            Card xSpell = spellOnStack("X spell", "{X}{U}", player1Id, 4);
+
+            assertThat(gqs.isUncounterable(gd, xSpell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("threshold controller protection does not affect an opponent's spell")
+        void thresholdControllerProtectionDoesNotAffectOpponent() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Thryx", 4, 5, CardColor.BLUE, new ControllerSpellsCantBeCounteredEffect(5)));
+            Card opponentSpell = spellOnStack("Opponent spell", "{4}{U}", player2Id, 0);
+
+            assertThat(gqs.isUncounterable(gd, opponentSpell)).isFalse();
+        }
+
+        @Test
+        @DisplayName("type-restricted controller protection matches only the listed card types")
+        void typeRestrictedControllerProtection() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Destiny Spinner", 2, 3, CardColor.GREEN,
+                    new ControllerSpellsCantBeCounteredEffect(Set.of(CardType.CREATURE, CardType.ENCHANTMENT))));
+            Card creature = creatureOnStack("Creature spell", 2, player1Id);
+            Card enchantment = new Card();
+            enchantment.setName("Enchantment spell");
+            enchantment.setType(CardType.ENCHANTMENT);
+            gd.stack.add(new StackEntry(StackEntryType.ENCHANTMENT_SPELL, enchantment,
+                    player1Id, "Enchantment spell", new ArrayList<>()));
+            Card instant = new Card();
+            instant.setName("Instant spell");
+            instant.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, instant,
+                    player1Id, "Instant spell", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, creature)).isTrue();
+            assertThat(gqs.isUncounterable(gd, enchantment)).isTrue();
+            assertThat(gqs.isUncounterable(gd, instant)).isFalse();
+        }
+
+        @Test
         @DisplayName("returns true when CreatureSpellsCantBeCounteredEffect on battlefield")
         void returnsTrueWithEffect() {
             addPermanent(player1Id, createCreatureWithStaticEffect("Gaea's Herald", 1, 1, CardColor.GREEN, new CreatureSpellsCantBeCounteredEffect()));
@@ -1882,6 +1977,16 @@ class GameQueryServiceTest {
             gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, creature, controllerId,
                     name, new ArrayList<>()));
             return creature;
+        }
+
+        private Card spellOnStack(String name, String manaCost, UUID controllerId, int xValue) {
+            Card spell = new Card();
+            spell.setName(name);
+            spell.setType(CardType.SORCERY);
+            spell.setManaCost(manaCost);
+            gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spell, controllerId,
+                    name, new ArrayList<>(), xValue));
+            return spell;
         }
     }
 
@@ -2077,6 +2182,18 @@ class GameQueryServiceTest {
                     "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
 
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(1);
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("evaluates a dynamic bonus from the source permanent's counters")
+        void evaluatesDynamicBonusFromSourceCounters() {
+            Permanent fatedFirepower = addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Fated Firepower", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(
+                            new CountersOnSource(CounterType.FIRE))));
+            fatedFirepower.setCounterCount(CounterType.FIRE, 3);
+
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(3);
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
         }
     }
@@ -3232,6 +3349,37 @@ class GameQueryServiceTest {
 
             assertThat(gqs.canPlayerGainLife(gd, player1Id)).isTrue();
             assertThat(gqs.canPlayerGainLife(gd, player2Id)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("manaProductionMultiplier")
+    class ManaProductionMultiplier {
+
+        @Test
+        @DisplayName("returns one when no mana replacement effect is present")
+        void returnsOneWithoutReplacementEffect() {
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("ignores a mana replacement effect controlled by an opponent")
+        void ignoresOpponentsReplacementEffect() {
+            addPermanent(player2Id, createEnchantmentWithStaticEffect("Mana Reflection",
+                    new ManaReflectionEffect()));
+
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("combines configured multipliers multiplicatively")
+        void combinesMultiplicatively() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Nyxbloom Ancient",
+                    new ManaReflectionEffect(3)));
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Mana Reflection",
+                    new ManaReflectionEffect()));
+
+            assertThat(gqs.manaProductionMultiplier(gd, player1Id)).isEqualTo(6);
         }
     }
 

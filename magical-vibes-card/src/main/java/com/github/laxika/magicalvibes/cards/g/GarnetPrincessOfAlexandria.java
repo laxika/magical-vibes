@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "222")
+@CardRegistration(set = "FIN", collectorNumber = "487")
 public class GarnetPrincessOfAlexandria extends Card {
 
     public GarnetPrincessOfAlexandria() {

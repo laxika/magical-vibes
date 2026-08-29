@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "202")
+@CardRegistration(set = "MKM", collectorNumber = "360")
 public class EzrimAgencyChief extends Card {
 
     public EzrimAgencyChief() {

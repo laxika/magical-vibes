@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "FIN", collectorNumber = "203")
+@CardRegistration(set = "FIN", collectorNumber = "372")
 public class SummonFenrir extends Card {
 
     public SummonFenrir() {

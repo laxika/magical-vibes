@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "118")
+@CardRegistration(set = "MKM", collectorNumber = "403")
 public class ConnectingTheDots extends Card {
 
     public ConnectingTheDots() {

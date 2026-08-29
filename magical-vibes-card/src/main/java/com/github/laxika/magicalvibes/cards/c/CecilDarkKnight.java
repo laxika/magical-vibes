@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 
 @CardRegistration(set = "FIN", collectorNumber = "91")
+@CardRegistration(set = "FIN", collectorNumber = "380")
+@CardRegistration(set = "FIN", collectorNumber = "445")
+@CardRegistration(set = "FIN", collectorNumber = "525")
 public class CecilDarkKnight extends Card {
 
     public CecilDarkKnight() {

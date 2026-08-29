@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "2")
+@CardRegistration(set = "FIN", collectorNumber = "324")
+@CardRegistration(set = "FIN", collectorNumber = "421")
 public class UltimaOriginOfOblivion extends Card {
 
     public UltimaOriginOfOblivion() {

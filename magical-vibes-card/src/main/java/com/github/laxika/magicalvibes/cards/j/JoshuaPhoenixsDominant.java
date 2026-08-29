@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformed
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "229")
+@CardRegistration(set = "FIN", collectorNumber = "397")
+@CardRegistration(set = "FIN", collectorNumber = "494")
+@CardRegistration(set = "FIN", collectorNumber = "542")
 public class JoshuaPhoenixsDominant extends Card {
 
     public JoshuaPhoenixsDominant() {

@@ -25,6 +25,21 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
         return false;
     }
 
+    /** Number of additional cards the player must exile from their graveyard to cast the spell. */
+    default int additionalGraveyardExileCount() {
+        return 0;
+    }
+
+    /** Whether this permission casts the spell using escape. */
+    default boolean escape() {
+        return false;
+    }
+
+    /** Label for the additional graveyard exile choice shown to the player, if any. */
+    default String additionalGraveyardExileLabel() {
+        return null;
+    }
+
     /** Additional costs required when using this permission. */
     default List<CastingCost> additionalCosts() {
         return List.of();

@@ -31,6 +31,8 @@ import java.util.Set;
 public class QuandrixCommand extends Card {
 
     public QuandrixCommand() {
+        setAllowSharedTargets(true);
+
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature or planeswalker to its owner's hand",

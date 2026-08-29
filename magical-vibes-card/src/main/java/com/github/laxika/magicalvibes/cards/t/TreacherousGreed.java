@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "237")
+@CardRegistration(set = "MKM", collectorNumber = "420")
 public class TreacherousGreed extends Card {
 
     public TreacherousGreed() {

@@ -34,7 +34,7 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
             @Test
             @DisplayName("Does nothing when hand is empty")
-            void doesNothingWhenHandEmpty() {
+    void doesNothingWhenHandEmpty() {
                 Card card = createCard("Faithless Looting");
                 DiscardAndDrawCardEffect effect = new DiscardAndDrawCardEffect(1, 2);
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
@@ -46,4 +46,31 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
                 verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(),
                         any(DiscardFollowUp.class));
             }
+
+    @Test
+    @DisplayName("Randomly discards then draws when the random mode is enabled")
+    void randomlyDiscardsThenDraws() {
+        Card card = createCard("Gallia of the Endless Dance");
+        DiscardAndDrawCardEffect effect = new DiscardAndDrawCardEffect(1, 2, true);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+        gd.playerHands.get(player1Id).add(createCard("Mountain"));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(),
+                any(DiscardFollowUp.class));
+        verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
+    }
+
+    @Test
+    @DisplayName("Random mode does not draw when the hand is empty")
+    void randomModeDoesNotDrawWithoutDiscard() {
+        Card card = createCard("Gallia of the Endless Dance");
+        DiscardAndDrawCardEffect effect = new DiscardAndDrawCardEffect(1, 2, true);
+        StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+        resolveEffect(gd, entry, effect);
+
+        verify(drawService, never()).resolveDrawCard(any(), any());
+    }
 }

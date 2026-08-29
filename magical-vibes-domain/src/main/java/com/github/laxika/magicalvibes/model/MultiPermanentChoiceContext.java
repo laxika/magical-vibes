@@ -66,6 +66,15 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Selects zero or one permanent for an optional upkeep target. */
+    record UpkeepOptionalPermanentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+
+        public UpkeepOptionalPermanentTarget {
+            effects = List.copyOf(effects);
+        }
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total)
             implements MultiPermanentChoiceContext {
@@ -165,6 +174,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller selected Equipment they control to attach to the targeted creature. */
+    record AttachAnyNumberOfControlledEquipmentToTargetCreature(UUID targetCreatureId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The defending player sacrifices the chosen attacking creatures. */
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
@@ -234,7 +248,17 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand() {
+            this(null);
+        }
+    }
+
+    record PlayerChoosesUpToPermanentsThenSacrificesRestChoice(List<UUID> candidateIds)
+            implements MultiPermanentChoiceContext {
+        public PlayerChoosesUpToPermanentsThenSacrificesRestChoice {
+            candidateIds = List.copyOf(candidateIds);
+        }
     }
 
     /** Return the chosen permanents and record the number returned on the resolving stack entry. */
@@ -383,6 +407,20 @@ public sealed interface MultiPermanentChoiceContext {
                                      String sourceName) implements MultiPermanentChoiceContext {
 
         public EachPlayerReturnsCreature {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
+    /** Each player chooses up to one qualifying permanent controlled by an opponent. */
+    record EachPlayerChoosesOpponentPermanentToExile(List<UUID> remainingPlayerIds,
+                                                     List<UUID> chosenIds,
+                                                     PermanentPredicate filter,
+                                                     UUID sourceCardId,
+                                                     UUID sourceControllerId,
+                                                     String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesOpponentPermanentToExile {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             chosenIds = List.copyOf(chosenIds);
         }

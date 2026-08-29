@@ -134,6 +134,10 @@ public class DiscardTriggerCollectorService {
                 && !sourceDamagePrevented
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
+            damage = damagePreventionService.applyChannelHarmPrevention(
+                    gameData, discardingPlayerId,
+                    gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
+            if (damage <= 0) return true;
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
