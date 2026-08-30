@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
@@ -2111,6 +2112,37 @@ public class TriggerCollectionService {
                     (UUID) null);
             trigger.setNonTargeting(true);
             trigger.setEventValue(totalDamage);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
+        }
+    }
+
+    /**
+     * Fires delayed triggers watching a Wall for damage from an attacking creature. The source's
+     * attacking status is checked at the damage event, so noncombat damage from a spell and damage
+     * from a blocking creature do not qualify.
+     */
+    public void checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
+            GameData gameData, Permanent damageSource, Permanent damagedCreature, int damage) {
+        if (damageSource == null || damagedCreature == null || damage <= 0
+                || !damageSource.isAttacking() || !gameQueryService.isCreature(gameData, damageSource)) {
+            return;
+        }
+
+        for (DelayedWatchedCreatureDealtDamageByAttackingCreature watch
+                : gameData.getDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class)) {
+            if (!watch.watchedPermanentId().equals(damagedCreature.getId())) continue;
+
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watch.sourceCard(),
+                    watch.controllerId(),
+                    watch.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(watch.effects()),
+                    watch.watchedPermanentId(),
+                    (UUID) null);
+            trigger.setNonTargeting(true);
+            trigger.setEventValue(damage);
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
         }
@@ -5041,19 +5073,28 @@ public class TriggerCollectionService {
      * {@code targetId} so a player-directed effect (e.g. {@code DealDamageToPlayersEffect(2, TARGET_PLAYER)})
      * acts on "that player".
      */
-    public void checkOpponentActivatesNonManaAbilityTriggers(GameData gameData, UUID activatingPlayerId, Permanent activatedPermanent) {
+    public void checkOpponentActivatesNonManaAbilityTriggers(GameData gameData, UUID activatingPlayerId,
+                                                              StackEntry abilityEntry, ActivatedAbility ability,
+                                                              Permanent activatedPermanent) {
+        if (abilityEntry == null) return;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(activatingPlayerId)) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY)) {
-                CardEffect resolved = resolveTriggeringPermanentConditional(gameData, perm, ownerId, activatedPermanent, effect);
+                CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
+                resolved = resolveTriggeringPermanentConditional(
+                        gameData, perm, ownerId, activatedPermanent, resolved);
+                if (resolved == null) continue;
+                UUID targetId = EffectResolution.targetsSpellOnStack(resolved)
+                        ? abilityEntry.getCard().getId()
+                        : activatingPlayerId;
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(resolved)),
-                        activatingPlayerId,
+                        targetId,
                         perm.getId());
                 // "That player" is the opponent who activated the ability — set by the event, not chosen.
                 trigger.setNonTargeting(true);
@@ -5143,8 +5184,10 @@ public class TriggerCollectionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY)) {
                 if (!(effect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
                     if (!ownerId.equals(activatingPlayerId)) continue;
-                    CardEffect resolved = resolveTriggeringPermanentConditional(
-                            gameData, perm, ownerId, activatedPermanent, effect);
+                    CardEffect resolved = effect.resolveForActivatedAbility(ability);
+                    if (resolved == null) continue;
+                    resolved = resolveTriggeringPermanentConditional(
+                            gameData, perm, ownerId, activatedPermanent, resolved);
                     if (resolved == null) continue;
                     if (resolved.targetSpec().declares(TargetPredicates.anyTarget())) {
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -5154,15 +5197,22 @@ public class TriggerCollectionService {
                         log.info("Game {} - {} queues an any-target non-mana ability trigger ({})",
                                 gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
                     } else {
-                        gameData.enqueueTrigger(new StackEntry(
+                        UUID targetId = EffectResolution.targetsSpellOnStack(resolved)
+                                ? abilityEntry.getCard().getId()
+                                : null;
+                        StackEntry activationTrigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 ownerId,
                                 perm.getCard().getName() + "'s ability",
                                 new ArrayList<>(List.of(resolved)),
-                                null,
+                                targetId,
                                 perm.getId()
-                        ));
+                        );
+                        if (targetId != null) {
+                            activationTrigger.setNonTargeting(true);
+                        }
+                        gameData.enqueueTrigger(activationTrigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers on non-mana ability activation ({})",
                                 gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());

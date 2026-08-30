@@ -666,8 +666,9 @@ public class CombatAttackService {
             }
         }
 
-        // Validate attacking bands (CR 702.22c/d): each band needs >=1 creature with banding and
-        // <=1 without, and all its members must attack the same player or planeswalker.
+        // Validate attacking bands (CR 702.22c/d): ordinary bands need >=1 creature with banding
+        // and <=1 without, while a "bands with other" band needs matching named creatures and at
+        // least one creature with that ability. All members must attack the same target.
         List<Set<Integer>> validatedBands = validateBands(gameData, battlefield, uniqueIndices, resolvedTargets, bands);
 
         // --- All validation passed — commit state changes ---
@@ -2303,9 +2304,13 @@ public class CombatAttackService {
                 }
             }
             if (withBanding < 1) {
-                throw new IllegalStateException("A band must contain at least one creature with banding");
+                List<Permanent> bandPermanents = members.stream().map(battlefield::get).toList();
+                if (!gameQueryService.canUseBandsWithOther(gameData, bandPermanents)) {
+                    throw new IllegalStateException("A band must contain at least one creature with banding");
+                }
             }
-            if (withoutBanding > 1) {
+            if (withoutBanding > 1 && !gameQueryService.canUseBandsWithOther(
+                    gameData, members.stream().map(battlefield::get).toList())) {
                 throw new IllegalStateException("A band can contain at most one creature without banding");
             }
             result.add(members);

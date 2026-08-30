@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfCombatOpponentAt
 
 @CardRegistration(set = "5ED", collectorNumber = "197")
 @CardRegistration(set = "CHR", collectorNumber = "39")
+@CardRegistration(set = "LEG", collectorNumber = "121")
 public class TheWretched extends Card {
 
     public TheWretched() {

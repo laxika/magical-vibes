@@ -207,6 +207,7 @@ public class GraveyardChoiceHandlerService {
         UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
         boolean enterTapped = graveyardChoice.enterTapped();
         boolean exileIfLeavesBattlefield = graveyardChoice.exileIfLeavesBattlefield();
+        UUID destinationControllerId = graveyardChoice.destinationControllerId();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -346,10 +347,12 @@ public class GraveyardChoiceHandlerService {
                     if (enterTapped) {
                         perm.tap();
                     }
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
-                    if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(playerId)) {
+                    UUID battlefieldControllerId = destinationControllerId != null
+                            ? destinationControllerId : playerId;
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm);
+                    if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(battlefieldControllerId)) {
                         graveyardReturnSupport.trackStolenCreature(
-                                gameData, perm.getId(), playerId, cardGraveyardOwnerId);
+                                gameData, perm.getId(), battlefieldControllerId, cardGraveyardOwnerId);
                     }
 
                     if (graveyardChoice.enterWithCounter() != null
@@ -382,10 +385,10 @@ public class GraveyardChoiceHandlerService {
                     }
 
                     if (card.hasType(CardType.CREATURE)) {
-                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, battlefieldControllerId, card, null, false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
-                        legendRuleService.checkLegendRule(gameData, playerId);
+                        legendRuleService.checkLegendRule(gameData, battlefieldControllerId);
                     }
                 }
                 case COPY_ON_ENTER -> {

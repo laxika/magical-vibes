@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredica
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceCombatThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerCastSorceryThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreLandsThanControllerPredicate;
@@ -1962,6 +1963,10 @@ public class TargetLegalityService {
             validateAttachedToFirstTarget(gameData, targetIds);
             return;
         }
+        if (constraint == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET) {
+            validateBlockedByFirstTarget(gameData, targetIds);
+            return;
+        }
         if (constraint == MultiTargetConstraint.AT_MOST_TWO_CREATURES_AND_TWO_LANDS) {
             validateAtMostTwoCreaturesAndTwoLands(gameData, targetIds);
             return;
@@ -2022,7 +2027,8 @@ public class TargetLegalityService {
                             throw new IllegalStateException("Chosen permanents must share a card type");
                         }
                     }
-                    case CONTROLLED_BY_FIRST_TARGET, AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+                    case CONTROLLED_BY_FIRST_TARGET, ATTACHED_TO_FIRST_TARGET, BLOCKED_BY_FIRST_TARGET,
+                         AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
@@ -2296,6 +2302,20 @@ public class TargetLegalityService {
         }
     }
 
+    private void validateBlockedByFirstTarget(GameData gameData, List<UUID> targetIds) {
+        if (targetIds.size() < 2) {
+            return;
+        }
+        Set<UUID> blockedIds = gameData.combatOpponentIdsBlockedByThisTurn
+                .getOrDefault(targetIds.getFirst(), Set.of());
+        for (int i = 1; i < targetIds.size(); i++) {
+            if (!blockedIds.contains(targetIds.get(i))) {
+                throw new IllegalStateException(
+                        "Target must have been blocked by the first target this turn");
+            }
+        }
+    }
+
     public boolean isTargetIllegalOnResolution(GameData gameData, StackEntry entry) {
         if (entry.isNonTargeting()) {
             return false;
@@ -2386,6 +2406,20 @@ public class TargetLegalityService {
                     Permanent target = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
                     if (targetLegal[i] && (!targetLegal[0] || firstTarget == null
                             || !firstTarget.getId().equals(target.getAttachedTo()))) {
+                        targetLegal[i] = false;
+                        entry.markTargetIllegal(i);
+                    }
+                }
+            }
+            if (entry.getCard() != null
+                    && entry.getCard().getMultiTargetConstraint() == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET) {
+                UUID firstTargetId = declaredTargetIds.isEmpty() ? null : declaredTargetIds.getFirst();
+                Set<UUID> blockedIds = firstTargetId == null
+                        ? Set.of()
+                        : gameData.combatOpponentIdsBlockedByThisTurn
+                        .getOrDefault(firstTargetId, Set.of());
+                for (int i = 1; i < declaredTargetIds.size(); i++) {
+                    if (targetLegal[i] && (!targetLegal[0] || !blockedIds.contains(declaredTargetIds.get(i)))) {
                         targetLegal[i] = false;
                         entry.markTargetIllegal(i);
                     }
@@ -3859,6 +3893,10 @@ public class TargetLegalityService {
                     gameData.playersDeclaredAttackersThisTurn.contains(targetPlayerId);
             case PlayerDealtDamageThisTurnPredicate ignored ->
                     gameData.playersDealtDamageThisTurn.contains(targetPlayerId);
+            case PlayerCastSorceryThisTurnPredicate ignored ->
+                    targetPlayerId != null
+                            && gameData.getSpellsCastThisTurn(targetPlayerId).stream()
+                            .anyMatch(card -> card.hasType(CardType.SORCERY));
             case PlayerLostLifeThisTurnPredicate ignored ->
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
             case PlayerDamagedBySourceThisTurnPredicate ignored ->

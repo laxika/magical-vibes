@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +74,8 @@ public class StateBasedActionService {
         boolean anyPerformed;
         int passes = 0;
         do {
-            anyPerformed = destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            anyPerformed = enforceCounterLimits(gameData);
+            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
@@ -178,6 +180,7 @@ public class StateBasedActionService {
 
         for (UUID cardId : removedTokenIds) {
             gameData.exiledCardEggCounters.remove(cardId);
+            gameData.exiledCardScreamCounters.remove(cardId);
             gameData.exiledCardDreamCounters.remove(cardId);
             gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
@@ -325,6 +328,32 @@ public class StateBasedActionService {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
         return !toDie.isEmpty() || replacementPerformed;
+    }
+
+    private boolean enforceCounterLimits(GameData gameData) {
+        boolean changed = false;
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+        for (Permanent permanent : permanents) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || permanent.isLosesAllAbilitiesPermanently()) {
+                continue;
+            }
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>(
+                    permanent.getCard().getEffects(EffectSlot.STATIC));
+            effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+            for (com.github.laxika.magicalvibes.model.effect.CardEffect effect : effects) {
+                if (!(effect instanceof CounterLimitEffect limit)
+                        || permanent.isStaticEffectSuppressed(effect.getClass())) {
+                    continue;
+                }
+                int current = permanent.getCounterCount(limit.counterType());
+                if (current > limit.maximum()) {
+                    permanent.setCounterCount(limit.counterType(), limit.maximum());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed

@@ -9,6 +9,7 @@ public sealed interface PlayerPredicate permits
         PlayerAttackedThisTurnPredicate,
         PlayerDamagedBySourceThisTurnPredicate,
         PlayerDealtDamageThisTurnPredicate,
+        PlayerCastSorceryThisTurnPredicate,
         PlayerControlsMoreCreaturesThanControllerPredicate,
         PlayerControlsMoreLandsThanControllerPredicate,
         PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate,

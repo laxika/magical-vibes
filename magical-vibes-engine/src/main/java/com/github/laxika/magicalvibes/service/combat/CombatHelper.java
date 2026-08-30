@@ -32,7 +32,8 @@ public final class CombatHelper {
                                                           GameData gameData,
                                                           Permanent attacker,
                                                           List<Permanent> defenderBattlefield) {
-        boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData);
+        boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData)
+                || isLandwalkIgnoredForBlocking(gameData, attacker.getId());
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction
                     && hasDefenderCondition(restriction, landwalkIgnored)
@@ -88,11 +89,21 @@ public final class CombatHelper {
         boolean[] found = {false};
         gameData.forEachPermanent((playerId, permanent) -> {
             if (!found[0] && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(LandwalkIgnoredForBlockingEffect.class::isInstance)) {
+                    .anyMatch(effect -> effect instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
+                            && landwalkEffect.ignoresAllLandwalk())) {
                 found[0] = true;
             }
         });
         return found[0];
+    }
+
+    public static boolean isLandwalkIgnoredForBlocking(GameData gameData, UUID permanentId) {
+        synchronized (gameData.floatingEffects) {
+            return gameData.floatingEffects.stream()
+                    .anyMatch(floatingEffect -> permanentId.equals(floatingEffect.affectedPermanentId())
+                            && floatingEffect.effect() instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
+                            && landwalkEffect.ignoresAllLandwalk());
+        }
     }
 
     private static boolean defenderControls(PredicateEvaluationService predicateEvaluationService,

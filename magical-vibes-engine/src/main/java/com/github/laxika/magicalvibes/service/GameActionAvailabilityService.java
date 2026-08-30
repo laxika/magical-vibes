@@ -387,7 +387,8 @@ public class GameActionAvailabilityService {
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
-                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card);
+                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
+                && !castingPermissionService.isCardPlayRestrictedInHand(gameData, playerId, card);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays

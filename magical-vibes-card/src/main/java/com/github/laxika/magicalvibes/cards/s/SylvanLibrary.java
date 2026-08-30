@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SylvanLibraryDrawEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "329")
 @CardRegistration(set = "4ED", collectorNumber = "273")
+@CardRegistration(set = "LEG", collectorNumber = "207")
 public class SylvanLibrary extends Card {
 
     public SylvanLibrary() {

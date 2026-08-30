@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -44,6 +45,13 @@ public class LandCopyOnEnterService {
 
     public boolean prepare(GameData gameData, UUID controllerId, Card physicalCard, Card enteringCard,
                            boolean landPlay, boolean initiallyTapped, String logSuffix) {
+        return prepare(gameData, controllerId, physicalCard, enteringCard, landPlay, initiallyTapped,
+                logSuffix, landPlay ? Zone.HAND : null);
+    }
+
+    public boolean prepare(GameData gameData, UUID controllerId, Card physicalCard, Card enteringCard,
+                           boolean landPlay, boolean initiallyTapped, String logSuffix,
+                           Zone landPlayZone) {
         if (findEffect(enteringCard) == null) {
             return false;
         }
@@ -56,6 +64,7 @@ public class LandCopyOnEnterService {
         gameData.landCopyOperation.enteringCard = enteringCard;
         gameData.landCopyOperation.controllerId = controllerId;
         gameData.landCopyOperation.landPlay = landPlay;
+        gameData.landCopyOperation.landPlayZone = landPlayZone;
         gameData.landCopyOperation.initiallyTapped = initiallyTapped;
         gameData.landCopyOperation.logSuffix = logSuffix;
 
@@ -88,6 +97,7 @@ public class LandCopyOnEnterService {
         Card enteringCard = gameData.landCopyOperation.enteringCard;
         UUID controllerId = gameData.landCopyOperation.controllerId;
         boolean landPlay = gameData.landCopyOperation.landPlay;
+        Zone landPlayZone = gameData.landCopyOperation.landPlayZone;
         boolean initiallyTapped = gameData.landCopyOperation.initiallyTapped;
         String logSuffix = gameData.landCopyOperation.logSuffix;
 
@@ -111,7 +121,12 @@ public class LandCopyOnEnterService {
             permanent.tap();
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        if (landPlay) {
+            battlefieldEntryService.putLandOntoBattlefield(
+                    gameData, controllerId, permanent, landPlayZone);
+        } else {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+        }
         if (landPlay) {
             gameData.landsPlayedThisTurn.merge(controllerId, 1, Integer::sum);
         }
@@ -159,6 +174,7 @@ public class LandCopyOnEnterService {
         gameData.landCopyOperation.enteringCard = null;
         gameData.landCopyOperation.controllerId = null;
         gameData.landCopyOperation.landPlay = false;
+        gameData.landCopyOperation.landPlayZone = null;
         gameData.landCopyOperation.initiallyTapped = false;
         gameData.landCopyOperation.logSuffix = null;
     }

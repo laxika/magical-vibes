@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -979,7 +980,7 @@ public class CombatSimulator {
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
                 || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield, bonus)
                 || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
-                || hasLandwalkAgainstDefender(perm, bonus, defenderBattlefield);
+                || hasLandwalkAgainstDefender(gameData, perm, bonus, defenderBattlefield);
 
         // Temporarily stolen creatures (e.g. via Act of Treason) have no permanent value to the
         // controller — they will be returned at end of turn regardless. Treat their combat loss
@@ -1014,9 +1015,12 @@ public class CombatSimulator {
         );
     }
 
-    private boolean hasLandwalkAgainstDefender(Permanent attacker, GameQueryService.StaticBonus bonus,
+    private boolean hasLandwalkAgainstDefender(GameData gameData, Permanent attacker,
+                                                GameQueryService.StaticBonus bonus,
                                                 List<Permanent> defenderBattlefield) {
-        if (defenderBattlefield == null) return false;
+        if (defenderBattlefield == null
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData)
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData, attacker.getId())) return false;
         for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
             if (gameQueryService.hasKeyword(attacker, bonus, entry.getKey())
                     && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
@@ -1037,10 +1041,13 @@ public class CombatSimulator {
                                                            List<Permanent> defenderBattlefield,
                                                            GameQueryService.StaticBonus bonus) {
         if (defenderBattlefield == null) return false;
+        boolean landwalkIgnored = CombatHelper.isLandwalkIgnoredForBlocking(gameData)
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData, attacker.getId());
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
-                if (defenderPredicate == null) {
+                if (defenderPredicate == null
+                        || (landwalkIgnored && restriction.unblockableIfDefenderControlsIsLandwalk())) {
                     continue;
                 }
                 boolean defenderMatches = defenderBattlefield.stream()
@@ -1053,7 +1060,8 @@ public class CombatSimulator {
         for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
-                if (defenderPredicate == null) {
+                if (defenderPredicate == null
+                        || (landwalkIgnored && restriction.unblockableIfDefenderControlsIsLandwalk())) {
                     continue;
                 }
                 boolean defenderMatches = defenderBattlefield.stream()
@@ -1064,6 +1072,7 @@ public class CombatSimulator {
             }
         }
         // Until-end-of-turn defender-condition grants (Barbarian Guides' snow landwalk).
+        if (landwalkIgnored) return false;
         for (PermanentPredicate predicate : attacker.getUnblockableIfDefenderControlsUntilEndOfTurn()) {
             if (defenderBattlefield.stream()
                     .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate))) {

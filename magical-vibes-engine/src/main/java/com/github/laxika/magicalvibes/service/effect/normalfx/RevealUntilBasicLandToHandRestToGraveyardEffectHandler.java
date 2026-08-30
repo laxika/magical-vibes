@@ -63,7 +63,7 @@ public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements N
         List<Card> rest = new ArrayList<>(revealed);
         if (basicLand != null) {
             rest.remove(basicLand);
-            gameData.playerHands.get(controllerId).add(basicLand);
+            gameData.addCardToHand(controllerId, basicLand);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " puts " + basicLand.getName() + " into their hand."));
         } else {

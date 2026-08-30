@@ -155,7 +155,7 @@ public class PermanentRemovalService {
             return true;
         }
 
-        if (tryApplyEnchantedCreatureReturnToHandReplacement(gameData, target)) {
+        if (tryApplyDyingCreatureReturnToHandReplacement(gameData, target)) {
             return true;
         }
 
@@ -211,25 +211,71 @@ public class PermanentRemovalService {
         return true;
     }
 
-    private boolean tryApplyEnchantedCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
-        if (!gameQueryService.isCreature(gameData, target)
-                || !gameQueryService.isEnchanted(gameData, target)) {
+    private boolean tryApplyDyingCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
+        if (!gameQueryService.isCreature(gameData, target)) {
             return false;
         }
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        if (controllerId == null) {
+        UUID dyingCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (dyingCreatureControllerId == null) {
             return false;
         }
 
-        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
-        if (controllerBattlefield == null || controllerBattlefield.stream()
-                .noneMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(DyingCreatureReturnToHandReplacementEffect.class::isInstance))) {
-            return false;
-        }
+        boolean dyingCreatureIsEnchanted = gameQueryService.isEnchanted(gameData, target);
+        List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
+        for (UUID sourceControllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent source : battlefield) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof DyingCreatureReturnToHandReplacementEffect replacement)
+                            || !replacement.appliesTo(source, target, dyingCreatureIsEnchanted,
+                            sourceControllerId, dyingCreatureControllerId)) {
+                        continue;
+                    }
 
-        return removePermanentToHand(gameData, target);
+                    UUID ownerId = gameData.stolenCreatures.getOrDefault(
+                            target.getId(), dyingCreatureControllerId);
+                    boolean removed = removePermanentToHand(gameData, target);
+                    if (removed && replacement.revealsReturnedCardUntilOwnerNextTurn()) {
+                        markCardsRevealedInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
+                    }
+                    if (removed && replacement.preventsPlayingReturnedCardUntilOwnerNextTurn()) {
+                        markCardsUnplayableInHandUntilOwnerNextTurn(gameData, ownerId, leavingCards);
+                    }
+                    return removed;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void markCardsRevealedInHandUntilOwnerNextTurn(GameData gameData, UUID ownerId,
+                                                            List<Card> cards) {
+        List<Card> hand = gameData.playerHands.get(ownerId);
+        if (hand == null) {
+            return;
+        }
+        for (Card card : cards) {
+            if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
+                gameData.cardsRevealedInHandUntilOwnerNextTurn.put(card.getId(), ownerId);
+            }
+        }
+    }
+
+    private void markCardsUnplayableInHandUntilOwnerNextTurn(GameData gameData, UUID ownerId,
+                                                              List<Card> cards) {
+        List<Card> hand = gameData.playerHands.get(ownerId);
+        if (hand == null) {
+            return;
+        }
+        for (Card card : cards) {
+            if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
+                gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.put(card.getId(), ownerId);
+            }
+        }
     }
 
     /**
@@ -924,6 +970,8 @@ public class PermanentRemovalService {
                         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
                         gameData.recordDamageSourceControlledBy(sourcePermanentId, sourceControllerId);
                         graveyardService.recordCreatureDamagedByPermanent(gameData, sourcePermanentId, target, effectiveDamage);
+                        triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
+                                gameData, source, target, effectiveDamage);
                         triggerCollectionService.checkDealtDamageToCreatureTriggers(
                                 gameData, target, effectiveDamage, sourceControllerId);
                     }
@@ -1566,7 +1614,7 @@ public class PermanentRemovalService {
                         gameData.id, exiledCard.getName());
             } else if (pending.returnToHand()) {
                 // Return to owner's hand (e.g. Kitesail Freebooter — exiled from hand)
-                gameData.playerHands.get(ownerId).add(exiledCard);
+                gameData.addCardToHand(ownerId, exiledCard);
                 gameLogService.append(gameData,
                         GameLog.cardThen(exiledCard, " returns to " + playerName + "'s hand."));
                 log.info("Game {} - {} returns to hand from exile (source left battlefield)", gameData.id, exiledCard.getName());

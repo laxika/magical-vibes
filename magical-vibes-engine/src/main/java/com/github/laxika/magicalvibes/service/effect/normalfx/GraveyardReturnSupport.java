@@ -1358,10 +1358,13 @@ public class GraveyardReturnSupport {
 
             Permanent permanent = new Permanent(card);
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+            UUID battlefieldControllerId = batch.underOwnersControl()
+                    ? card.getOwnerId() != null ? card.getOwnerId() : graveyardOwnerId
+                    : batch.controllerId();
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, batch.controllerId(), permanent, enterTappedTypes, simultaneouslyEntered);
+                    gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(permanent);
-            enteredPermanents.add(new ReturnedPermanent(batch.controllerId(), permanent, card));
+            enteredPermanents.add(new ReturnedPermanent(battlefieldControllerId, permanent, card));
         }
 
         for (ReturnedPermanent returned : enteredPermanents) {

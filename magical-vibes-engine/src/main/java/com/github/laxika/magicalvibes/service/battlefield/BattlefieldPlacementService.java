@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.UncastEnteringCreatureExileSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
@@ -103,6 +104,7 @@ public class BattlefieldPlacementService {
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BecomeDayAsEntersEffectHandler becomeDayAsEntersEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler noteControllerLifeTotalEffectHandler;
+    private LandEquilibriumSupport landEquilibriumSupport;
 
     @Autowired
     public BattlefieldPlacementService(GameQueryService gameQueryService,
@@ -169,7 +171,13 @@ public class BattlefieldPlacementService {
         this.sacrificeAllPermanentsAsEntersEffectHandler = handler;
     }
 
+    @Autowired
+    void setLandEquilibriumSupport(@Lazy LandEquilibriumSupport support) {
+        this.landEquilibriumSupport = support;
+    }
+
     public void place(GameData gameData, BattlefieldEntryRequest request) {
+        UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
         Set<CardType> enterTappedTypes = request.enterTappedTypes();
@@ -196,6 +204,7 @@ public class BattlefieldPlacementService {
         }
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
+        LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan = null;
         RevealSubtypeOrEntersTappedEffect conditionalRevealEffect = null;
         try {
             if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
@@ -228,6 +237,9 @@ public class BattlefieldPlacementService {
             becomeDayAsEntersEffectHandler.applyIfPresent(gameData, permanent);
             if (noteControllerLifeTotalEffectHandler != null) {
                 noteControllerLifeTotalEffectHandler.applyIfPresent(gameData, controllerId, permanent);
+            }
+            if (landEquilibriumSupport != null) {
+                landEquilibriumPlan = landEquilibriumSupport.findPlan(gameData, controllerId, permanent);
             }
         } finally {
             restoreHiddenBattlefields(gameData, hidden);
@@ -273,6 +285,7 @@ public class BattlefieldPlacementService {
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
+        gameData.recordNontokenPermanentPutOntoBattlefield(puttingPlayerId, permanent.getCard());
         if (permanent.isFaceDown() && permanent.getFaceDownCardTypes().contains(CardType.CREATURE)) {
             gameData.faceDownCreaturesEnteredBattlefieldThisTurn
                     .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -288,6 +301,10 @@ public class BattlefieldPlacementService {
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
         applyUnleash(gameData, controllerId, permanent);
         applyRiot(gameData, controllerId, permanent, simultaneouslyEntered);
+        if (landEquilibriumSupport != null) {
+            landEquilibriumSupport.applyPlan(gameData, controllerId, permanent,
+                    landEquilibriumPlan, request.landPlayZone());
+        }
         if (simultaneouslyEntered.isEmpty()) {
             gameData.activeMysticReflectionsForEntryBatch.clear();
         }

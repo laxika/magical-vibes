@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -275,8 +276,11 @@ public class TurnCleanupService {
         gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
                 watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
+        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
+        gameData.creaturesProtectedFromTargetingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
+        gameData.targetSorceryDamageRedirectShields.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
@@ -314,6 +318,7 @@ public class TurnCleanupService {
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
+        gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
@@ -387,6 +392,8 @@ public class TurnCleanupService {
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
+        gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
+        gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();

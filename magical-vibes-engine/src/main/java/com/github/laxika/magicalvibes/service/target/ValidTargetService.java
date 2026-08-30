@@ -239,6 +239,13 @@ public class ValidTargetService {
                             || !firstTarget.getId().equals(target.getAttachedTo());
                 });
             }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                validPlayerIds.clear();
+                validGraveyardCardIds.clear();
+                validPermanentIds.removeIf(id -> !wasBlockedByFirstTargetThisTurn(
+                        gameData, alreadySelectedIds.getFirst(), id));
+            }
             if (isOnePerControllerConstraint(card.getMultiTargetConstraint())
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()
@@ -552,6 +559,13 @@ public class ValidTargetService {
                     return firstTarget == null || target == null
                             || !firstTarget.getId().equals(target.getAttachedTo());
                 });
+            }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                validPlayerIds.clear();
+                validGraveyardCardIds.clear();
+                validPermanentIds.removeIf(id -> !wasBlockedByFirstTargetThisTurn(
+                        gameData, alreadySelectedIds.getFirst(), id));
             }
 
             // "Up to two creatures and up to two lands" (Nissa, Genesis Mage +2): drop candidates
@@ -1150,10 +1164,14 @@ public class ValidTargetService {
                 spellEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
                 card.isAura(), card.isEnchantPlayer());
         boolean isMultiTarget = card.getMaxTargets() > 1;
+        boolean hasValidPermanentTargetSet = card.getMultiTargetConstraint()
+                == MultiTargetConstraint.BLOCKED_BY_FIRST_TARGET
+                ? hasValidBlockedByFirstTargetSet(gameData, card, controllerId, maxXValue, kicked)
+                : anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue,
+                        requiredTargetEffects, kicked);
 
         if (allowedTargets.contains(TargetType.PERMANENT)
-                && anyAnnounceableXHasPermanentTarget(gameData, card, controllerId, isMultiTarget, maxXValue,
-                requiredTargetEffects, kicked)) {
+                && hasValidPermanentTargetSet) {
             return true;
         }
 
@@ -1235,6 +1253,24 @@ public class ValidTargetService {
                             spellEffects, xValue, kicked)) {
                         return true;
                     }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasValidBlockedByFirstTargetSet(GameData gameData, Card card, UUID controllerId,
+                                                    Integer maxXValue, Boolean kicked) {
+        int highestX = maxXValue == null ? 0 : maxXValue;
+        for (int x = highestX; x >= 0; x--) {
+            Integer xValue = maxXValue == null ? null : x;
+            ValidTargetsResponse firstTargets = computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), xValue, kicked);
+            for (UUID firstTargetId : firstTargets.validPermanentIds()) {
+                ValidTargetsResponse laterTargets = computeValidTargetsForSpell(
+                        gameData, card, controllerId, List.of(firstTargetId), xValue, kicked);
+                if (!laterTargets.validPermanentIds().isEmpty()) {
+                    return true;
                 }
             }
         }
@@ -1344,6 +1380,13 @@ public class ValidTargetService {
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
         return constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                 || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+    }
+
+    private boolean wasBlockedByFirstTargetThisTurn(GameData gameData, UUID firstTargetId,
+                                                     UUID candidateId) {
+        return gameData.combatOpponentIdsBlockedByThisTurn
+                .getOrDefault(firstTargetId, Set.of())
+                .contains(candidateId);
     }
 
     private List<UUID> computeValidGraveyardTargets(GameData gameData, Card card, List<CardEffect> spellEffects, UUID controllerId, Integer xValue) {

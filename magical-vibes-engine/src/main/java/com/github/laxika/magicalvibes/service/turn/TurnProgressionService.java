@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourc
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -108,6 +109,7 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class)
                     || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
                     || gameData.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class))) {
@@ -260,9 +262,16 @@ public class TurnProgressionService {
 
         turnCleanupService.drainManaPools(gameData);
 
+        if (gameData.currentStep == TurnStep.UPKEEP) {
+            gameData.expireFloatingEffectsAtUpkeepEnd(gameData.activePlayerId);
+        }
+
         if (next != null) {
             gameData.currentStep = next;
             gameData.currentUpkeepIsAdditional = next == TurnStep.UPKEEP && nextUpkeepIsAdditional;
+            if (next == TurnStep.UPKEEP) {
+                gameData.markUpkeepStart();
+            }
             String logEntry = "Step: " + next.getDisplayName();
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - Step advanced to {}", gameData.id, next);
@@ -388,6 +397,13 @@ public class TurnProgressionService {
     }
 
     void advanceTurn(GameData gameData) {
+        advanceTurn(gameData, true);
+    }
+
+    private void advanceTurn(GameData gameData, boolean snapshotEndingPlayer) {
+        if (snapshotEndingPlayer) {
+            gameData.snapshotPlayerActionsForLastTurn(gameData.activePlayerId);
+        }
         // Clear any active mind control from the ending turn
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
@@ -404,7 +420,7 @@ public class TurnProgressionService {
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
-                advanceTurn(gameData);
+                advanceTurn(gameData, false);
                 return;
             }
         } else {
@@ -426,7 +442,7 @@ public class TurnProgressionService {
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
             // Advance turn order past the skipped player so the next selection is correct.
             gameData.activePlayerId = nextActive;
-            advanceTurn(gameData);
+            advanceTurn(gameData, false);
             return;
         }
 
@@ -587,6 +603,7 @@ public class TurnProgressionService {
         gameData.noncombatDamageToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
+        gameData.sorcerySpellDamageDealtThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
         gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn.clear();
@@ -623,6 +640,7 @@ public class TurnProgressionService {
         gameData.combatBlockOpponentColorsThisTurn.clear();
         gameData.creaturesInCombatWithChangelingThisTurn.clear();
         gameData.combatBlockOpponentIdsThisTurn.clear();
+        gameData.combatBlockOpponentControllerIdsThisTurn.clear();
         gameData.combatOpponentIdsBlockedByThisTurn.clear();
         gameData.creaturesBlockedThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
@@ -637,6 +655,8 @@ public class TurnProgressionService {
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
+        gameData.damageDealtToPermanentsBySourceThisTurn.clear();
+        gameData.damageSourceNamesThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
@@ -707,6 +727,8 @@ public class TurnProgressionService {
         gameData.opponentsCantCastNamedSpellsUntilControllerNextTurn.remove(nextActive);
         gameData.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.remove(nextActive);
         gameData.playersCantCastNoncreatureSpellsUntilControllerNextTurn.remove(nextActive);
+        gameData.cardsRevealedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);
+        gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.values().removeIf(nextActive::equals);
         gameData.cardTypeFlashGrantsUntilNextTurn.remove(nextActive);
         gameData.playersWithNoMaximumHandSizeUntilNextTurn.remove(nextActive);
         gameData.playersWithAllPlayerDamagePreventedUntilNextTurn.remove(nextActive);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "225")
+@CardRegistration(set = "LEG", collectorNumber = "166")
 public class TempestEfreet extends Card {
 
     public TempestEfreet() {

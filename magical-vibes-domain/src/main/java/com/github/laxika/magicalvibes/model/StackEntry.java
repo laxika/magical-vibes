@@ -237,6 +237,8 @@ public class StackEntry {
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
+    /** Card ids of permanents sacrificed as an activated-ability cost, retained for later effects. */
+    @Setter private List<UUID> sacrificedCardIds = List.of();
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
     @Setter private Permanent sacrificedPermanentSnapshot;
@@ -642,6 +644,8 @@ public class StackEntry {
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
+        this.sacrificedCardIds = source.sacrificedCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.sacrificedCardIds);
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
         this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.sacrificedPermanentSnapshot);

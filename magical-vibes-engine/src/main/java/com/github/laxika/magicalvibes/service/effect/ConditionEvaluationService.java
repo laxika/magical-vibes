@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentAttackedTargetMatches;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
+import com.github.laxika.magicalvibes.model.condition.SourceBlocksWithAtLeastAndOnlyMatchingBlockers;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
@@ -246,6 +248,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedDuringControllersLastTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
@@ -276,11 +279,19 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
+import com.github.laxika.magicalvibes.model.condition.SourceStartedTurnUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyRecipient;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.PlayerDestroysPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
@@ -296,6 +307,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellWouldDestroyLandYouControl;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellSharesColorWithControlledCreature;
 import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TotalCreatureCardsInGraveyardsAtLeast;
@@ -987,6 +999,8 @@ public class ConditionEvaluationService {
                 yield targetSpell != null
                         && predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
             }
+            case TargetSpellWouldDestroyLandYouControl ignored ->
+                    targetSpellWouldDestroyLandYouControl(gameData, ctx);
             case TargetSpellSharesColorWithControlledCreature ignored ->
                     targetSpellSharesColorWithControlledCreature(gameData, ctx);
             case SourceHasSubtype c ->
@@ -1020,6 +1034,10 @@ public class ConditionEvaluationService {
             case SourceAttackedThisTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isAttackedThisTurn();
+            }
+            case SourceAttackedDuringControllersLastTurn ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttackedDuringControllersLastTurn();
             }
             case SourceIsPaired ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
@@ -1107,6 +1125,10 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && !source.isTapped();
             }
+            case SourceStartedTurnUntapped ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isUntappedAtTurnStart();
+            }
             case SourceBlockedOrWasBlockedByColorThisTurn c ->
                     ctx.sourcePermanentId() != null
                             && gameData.combatBlockOpponentColorsThisTurn
@@ -1170,6 +1192,8 @@ public class ConditionEvaluationService {
                     isTopCardOfLibraryType(gameData, resolveLibraryOwner(gameData, ctx, c.libraryOwner()), c);
             case BlockedByMinCreatures c ->
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
+            case SourceBlocksWithAtLeastAndOnlyMatchingBlockers c ->
+                    sourceBlocksWithAtLeastAndOnlyMatchingBlockers(gameData, ctx, c);
             case ImprintedCardMatches c -> imprintedCardMatches(gameData, ctx, c);
             case ImprintedCardNameMatchesEnteringPermanent ignored ->
                     imprintedCardNameMatches(gameData, ctx);
@@ -1210,10 +1234,17 @@ public class ConditionEvaluationService {
     /** Returns whether a trigger effect's intervening-if condition is met at trigger time. */
     public boolean isInterveningIfMet(GameData gameData, CardEffect effect, Permanent source,
                                      UUID controllerId) {
+        return isInterveningIfMet(gameData, effect, source, controllerId, null);
+    }
+
+    /** Returns whether a block trigger condition is met, retaining the blocked attacker as context. */
+    public boolean isInterveningIfMet(GameData gameData, CardEffect effect, Permanent source,
+                                     UUID controllerId, UUID triggeringPermanentId) {
         if (!(effect instanceof ConditionalEffect conditional)) {
             return true;
         }
-        return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId));
+        return isMet(gameData, conditional.condition(), ConditionContext.forPermanent(source, controllerId)
+                .withTriggeringPermanentId(triggeringPermanentId));
     }
 
     /**
@@ -1448,6 +1479,63 @@ public class ConditionEvaluationService {
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .map(permanent -> gameQueryService.getEffectiveColors(gameData, permanent))
                 .anyMatch(creatureColors -> creatureColors.stream().anyMatch(spellColors::contains));
+    }
+
+    private boolean targetSpellWouldDestroyLandYouControl(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || ctx.targetId() == null) return false;
+        StackEntry targetSpell = gameData.stack.stream()
+                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .findFirst()
+                .orElse(null);
+        if (targetSpell == null) return false;
+
+        return targetSpell.getEffectsToResolve().stream()
+                .anyMatch(effect -> effectWouldDestroyLandYouControl(
+                        gameData, targetSpell, effect, ctx.controllerId()));
+    }
+
+    private boolean effectWouldDestroyLandYouControl(GameData gameData, StackEntry targetSpell,
+                                                     CardEffect effect, UUID controllerId) {
+        ConditionContext targetSpellContext = ConditionContext.forStackEntry(targetSpell);
+        if (effect instanceof ConditionalEffect conditional) {
+            return isMet(gameData, conditional.condition(), targetSpellContext, targetSpell.getEventValue())
+                    && effectWouldDestroyLandYouControl(gameData, targetSpell, conditional.wrapped(), controllerId);
+        }
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream()
+                    .anyMatch(step -> effectWouldDestroyLandYouControl(gameData, targetSpell, step, controllerId));
+        }
+        if (effect instanceof RemovalEffect removal && removal.removalKind() == RemovalKind.DESTROY) {
+            return targetSpell.targetsForEffect(effect).stream()
+                    .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
+                    .anyMatch(target -> target != null
+                            && gameQueryService.isLand(gameData, target)
+                            && controllerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))
+                            && (effect.targetSpec().predicate() == null
+                            || matchesPermanent(gameData, target, effect.targetSpec().predicate(), targetSpellContext)));
+        }
+        if (effect instanceof DestroyAllPermanentsEffect destroyAll) {
+            if (destroyAll.scope() == EachPermanentScope.TARGET_PLAYER
+                    && !controllerId.equals(targetSpell.getTargetId())) {
+                return false;
+            }
+            return controlsMatchingLand(gameData, controllerId, destroyAll.filter(), targetSpellContext);
+        }
+        if (effect instanceof PlayerDestroysPermanentsEffect playerDestroys) {
+            UUID affectedPlayerId = playerDestroys.recipient() == DestroyRecipient.CONTROLLER
+                    ? targetSpell.getControllerId() : targetSpell.getTargetId();
+            return controllerId.equals(affectedPlayerId)
+                    && controlsMatchingLand(gameData, controllerId, playerDestroys.filter(), targetSpellContext);
+        }
+        return false;
+    }
+
+    private boolean controlsMatchingLand(GameData gameData, UUID controllerId,
+                                         PermanentPredicate filter, ConditionContext ctx) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                .anyMatch(permanent -> matchesPermanent(gameData, permanent, filter, ctx));
     }
 
     private boolean aPlayerControlsMoreCreaturesThanEachOtherPlayer(GameData gameData) {
@@ -2736,6 +2824,30 @@ public class ConditionEvaluationService {
             }
         });
         return blockerCount[0];
+    }
+
+    private boolean sourceBlocksWithAtLeastAndOnlyMatchingBlockers(
+            GameData gameData, ConditionContext ctx,
+            SourceBlocksWithAtLeastAndOnlyMatchingBlockers condition) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        UUID attackerId = ctx.triggeringPermanentId();
+        if (source == null || attackerId == null || !source.isBlocking()
+                || !source.getBlockingTargetIds().contains(attackerId)) {
+            return false;
+        }
+
+        final int[] blockerCount = {0};
+        final boolean[] allBlockersMatch = {true};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.isBlocking() || !permanent.getBlockingTargetIds().contains(attackerId)) {
+                return;
+            }
+            blockerCount[0]++;
+            if (!matchesPermanent(gameData, permanent, condition.blockerPredicate(), ctx)) {
+                allBlockersMatch[0] = false;
+            }
+        });
+        return blockerCount[0] >= condition.minimumBlockers() && allBlockersMatch[0];
     }
 
     private boolean imprintedCardMatches(GameData gameData, ConditionContext ctx, ImprintedCardMatches condition) {

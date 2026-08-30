@@ -2628,8 +2628,13 @@ public class CombatDamageService {
                     ? effectiveDamage
                     : Math.max(unpreventable, effectiveDamage);
             if (dmg > 0) {
-                recordCombatMarkedDamage(perm, dmg, bySource);
+                Map<UUID, Integer> attributedDamage = recordCombatMarkedDamage(perm, dmg, bySource);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
+                attributedDamage.forEach((sourceId, amount) -> {
+                    Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceId);
+                    gameData.recordDamageToPermanentFromSource(perm.getId(), amount, sourceId,
+                            damageSource == null ? null : gameQueryService.getEffectiveName(gameData, damageSource));
+                });
                 damageTakenBySource.getOrDefault(idx, Map.of()).keySet()
                         .forEach(sourceId -> recordQualifyingCombatDamageBySourceId(gameData, sourceId, perm));
                 // CR 702.2b — the deathtouch memory only sticks when damage was actually dealt,
@@ -2660,21 +2665,23 @@ public class CombatDamageService {
      * Marks {@code dmg} on {@code perm}, attributing it across {@code bySource} (scaled when a
      * prevention shield reduced the step total below the sum of per-source contributions).
      */
-    private static void recordCombatMarkedDamage(Permanent perm, int dmg, Map<UUID, Integer> bySource) {
+    private static Map<UUID, Integer> recordCombatMarkedDamage(Permanent perm, int dmg,
+                                                                Map<UUID, Integer> bySource) {
         if (bySource.isEmpty()) {
             perm.addMarkedDamage(null, dmg);
-            return;
+            return Map.of();
         }
         int sourceSum = bySource.values().stream().mapToInt(Integer::intValue).sum();
         if (sourceSum <= 0) {
             perm.addMarkedDamage(null, dmg);
-            return;
+            return Map.of();
         }
         if (sourceSum == dmg) {
             bySource.forEach(perm::addMarkedDamage);
-            return;
+            return Map.copyOf(bySource);
         }
         int remaining = dmg;
+        Map<UUID, Integer> attributedDamage = new LinkedHashMap<>();
         List<Map.Entry<UUID, Integer>> entries = new ArrayList<>(bySource.entrySet());
         for (int i = 0; i < entries.size(); i++) {
             Map.Entry<UUID, Integer> e = entries.get(i);
@@ -2684,12 +2691,14 @@ public class CombatDamageService {
             portion = Math.max(0, Math.min(portion, remaining));
             if (portion > 0) {
                 perm.addMarkedDamage(e.getKey(), portion);
+                attributedDamage.put(e.getKey(), portion);
                 remaining -= portion;
             }
         }
         if (remaining > 0) {
             perm.addMarkedDamage(null, remaining);
         }
+        return Map.copyOf(attributedDamage);
     }
 
     /**
@@ -2962,7 +2971,9 @@ public class CombatDamageService {
                             && !targetPerm.getCard().hasType(CardType.BATTLE))) {
                         targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
                     }
-                    gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage);
+                    gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage,
+                            redirect.damageSourceId(), damageSource == null ? null
+                                    : gameQueryService.getEffectiveName(gameData, damageSource));
                     recordQualifyingCombatDamageBySourceId(gameData, redirect.damageSourceId(), targetPerm);
                     gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
                     gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
@@ -3517,7 +3528,7 @@ public class CombatDamageService {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
-        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source)) {
+        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source, true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
@@ -3534,7 +3545,8 @@ public class CombatDamageService {
                 }
             }
             if (afterShield > 0) {
-                gameData.recordDamageToPermanent(target.getId(), afterShield);
+                gameData.recordDamageToPermanent(target.getId(), afterShield, source.getId(),
+                        gameQueryService.getEffectiveName(gameData, source));
                 recordQualifyingCombatDamage(gameData, source, target);
             }
             // Counter damage is still damage dealt (CR 702.90e), so a deathtouch source marks
@@ -3592,6 +3604,8 @@ public class CombatDamageService {
                     .add(targetControllerId);
         }
         graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
+        triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
+                gameData, source, target, damage);
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);
     }
 
@@ -3754,7 +3768,7 @@ public class CombatDamageService {
     /**
      * CR 702.22j — the player who assigns a blocked attacker's combat damage among its blockers.
      * Normally the active player (CR 510.1c), but the defending player instead when any of the
-     * attacker's living blockers has banding.
+     * attacker's living blockers has banding or forms a named bands-with-other pair.
      */
     private UUID attackerDamageAssigner(GameData gameData, Permanent attacker, List<Integer> livingBlockers,
                                         List<Permanent> defBf, UUID activeId, UUID defenderId) {
@@ -3768,6 +3782,10 @@ public class CombatDamageService {
             if (gameQueryService.hasKeyword(gameData, defBf.get(blkIdx), Keyword.BANDING)) {
                 return defenderId;
             }
+        }
+        List<Permanent> blockers = livingBlockers.stream().map(defBf::get).toList();
+        if (gameQueryService.canUseBandsWithOther(gameData, blockers)) {
+            return defenderId;
         }
         return activeId;
     }
@@ -3791,17 +3809,22 @@ public class CombatDamageService {
     /**
      * CR 702.22k — the player who divides a blocking creature's combat damage among the creatures it
      * blocks. Normally the defending player (CR 510.1d), but the active player instead when the
-     * blocker is blocking any attacker with banding.
+     * blocker is blocking any attacker with banding or a named bands-with-other pair.
      */
     private UUID blockerDamageAssigner(GameData gameData, int blkIdx, CombatDamagePhase1State p1,
                                        List<Permanent> atkBf, UUID activeId, UUID defenderId) {
+        List<Permanent> blockedAttackers = new ArrayList<>();
         for (var bEntry : p1.blockerMap.entrySet()) {
             int atkIdx = bEntry.getKey();
             if (p1.deadAttackerIndices.contains(atkIdx)) continue;
             if (!bEntry.getValue().contains(blkIdx)) continue;
+            blockedAttackers.add(atkBf.get(atkIdx));
             if (gameQueryService.hasKeyword(gameData, atkBf.get(atkIdx), Keyword.BANDING)) {
                 return activeId;
             }
+        }
+        if (gameQueryService.canUseBandsWithOther(gameData, blockedAttackers)) {
+            return activeId;
         }
         return defenderId;
     }

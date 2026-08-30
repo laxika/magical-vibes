@@ -42,6 +42,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
 | `BEFORE_ATTACKERS_DECLARED` | Activate only before attackers are declared (any player's turn). Also requires `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-attackers step. Norritt |
 | `BEFORE_BLOCKERS_DECLARED` | Activate only before blockers are declared (any player's turn). Steps before `DECLARE_BLOCKERS`, plus `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-blockers step. Acidic Dagger |
+| `BEFORE_COMBAT_DAMAGE` | Activate only before the combat damage step (any player's turn). Uses `TurnStep.isBeforeCombatDamage()`. Angus Mackenzie |
 | `ONLY_BEFORE_END_OF_COMBAT` | Activate only during a step that precedes the end of combat step, on any player's turn (`gameData.currentStep.isBeforeEndOfCombat()`). Dwarven Sea Clan |
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_DURING_END_OF_COMBAT` | Activate only during the end of combat step (`currentStep == END_OF_COMBAT`). Desert |
@@ -1115,3 +1116,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_TRANSFORM_TO_FRONT_FACE` | This permanent transforms back to front face |
 | `ON_PLAYER_LOSES_GAME` | A player loses the game (fired in `GameOutcomeService`; 2-player engine ends before it resolves) |
 | `GRAVEYARD_ON_ALLY_CREATURE_DIES` | Like ON_ALLY_CREATURE_DIES but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect` to filter the dying creature. A `MayEffect` inner is queued as a may-ability; anything else (e.g. `MayPayManaEffect`) goes on the stack. A source card that dies in the same event does not trigger. Scanned in `TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers`. Used by Furious Forebear |
+`SacrificeAnyNumberOfPermanentsCost(filter, trackSacrificedPower, excludeSource)` is the activated-ability form for "sacrifice this permanent and any number of matching permanents." It permits zero choices, snapshots effective power before paying when requested, and carries the selected card IDs through the stack entry for later effects. Use `excludeSource=true` when the source is also paid with `SacrificeSelfCost`.

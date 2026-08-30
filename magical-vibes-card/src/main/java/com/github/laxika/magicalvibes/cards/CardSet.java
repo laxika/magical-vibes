@@ -126,6 +126,7 @@ public enum CardSet {
     SET_TSP("TSP"),
     SET_TSB("TSB"),
     SET_ATH("ATH"),
+    SET_LEG("LEG"),
     SET_FDN("FDN"),
     SET_FIN("FIN"),
     SET_ULG("ULG"),

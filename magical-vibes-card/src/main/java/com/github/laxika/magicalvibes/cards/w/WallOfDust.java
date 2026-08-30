@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOpponentEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "229")
+@CardRegistration(set = "LEG", collectorNumber = "168")
 public class WallOfDust extends Card {
 
     public WallOfDust() {

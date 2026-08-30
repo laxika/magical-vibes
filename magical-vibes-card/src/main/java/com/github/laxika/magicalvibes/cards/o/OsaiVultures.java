@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "38")
+@CardRegistration(set = "LEG", collectorNumber = "29")
 public class OsaiVultures extends Card {
 
     public OsaiVultures() {
