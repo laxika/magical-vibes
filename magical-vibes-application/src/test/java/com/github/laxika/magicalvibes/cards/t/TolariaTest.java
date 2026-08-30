@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,15 +31,13 @@ class TolariaTest extends BaseCardTest {
     @Test
     void removesBandingAndBandsWithOtherUntilEndOfTurnDuringAnyUpkeep() {
         Permanent engine = harness.addToBattlefieldAndReturn(player1, new UrzasEngine());
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        TestCards.mutableCard(engine).setKeywords(Set.of(Keyword.BANDING));
         assertThat(gqs.hasKeyword(gd, engine, Keyword.BANDING)).isTrue();
 
         harness.addToBattlefield(player1, new Tolaria());
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.activateAbility(player1, 1, null, engine.getId());
+        harness.activateAbility(player1, 1, 1, null, engine.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, engine, Keyword.BANDING)).isFalse();
@@ -66,7 +67,7 @@ class TolariaTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         int tolariaIndex = gd.playerBattlefields.get(player1.getId()).indexOf(tolaria);
-        harness.activateAbility(player1, tolariaIndex, null, wolf.getId());
+        harness.activateAbility(player1, tolariaIndex, 1, null, wolf.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.bandsWithOtherNames(gd, wolf)).isEmpty();
@@ -83,7 +84,7 @@ class TolariaTest extends BaseCardTest {
         Permanent engine = harness.addToBattlefieldAndReturn(player1, new UrzasEngine());
         harness.addToBattlefield(player1, new Tolaria());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, engine.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, engine.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

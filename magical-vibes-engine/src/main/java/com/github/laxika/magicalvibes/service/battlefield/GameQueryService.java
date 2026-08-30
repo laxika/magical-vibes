@@ -2112,7 +2112,8 @@ public class GameQueryService {
                                                                     Permanent permanent,
                                                                     StaticBonus bonus) {
         List<BandsWithOtherEffect> effects = new ArrayList<>();
-        effects.addAll(staticEffectsIncludingTemporary(permanent).stream()
+        effects.addAll(staticEffectsIncludingTemporary(
+                gameData, permanent, findPermanentController(gameData, permanent.getId())).stream()
                 .filter(effect -> !permanent.isStaticEffectSuppressed(effect.getClass()))
                 .filter(BandsWithOtherEffect.class::isInstance)
                 .map(BandsWithOtherEffect.class::cast)
@@ -2646,7 +2647,7 @@ public class GameQueryService {
         if (affectedPermanentIsEntering) {
             result = applyEnteringPermanentReplacements(counterType, result, affectedPermanent);
         }
-        return limitCounters(affectedPermanent, counterType, result);
+        return limitCounters(gameData, affectedPermanent, controllerId, counterType, result);
     }
 
     private int applyEnteringPermanentReplacements(CounterType counterType, int count,
@@ -2711,7 +2712,8 @@ public class GameQueryService {
             result = applyEnteringPermanentReplacements(CounterType.PLUS_ONE_PLUS_ONE, result,
                     affectedPermanent);
         }
-        return limitCounters(affectedPermanent, CounterType.PLUS_ONE_PLUS_ONE, result);
+        return limitCounters(gameData, affectedPermanent, controllerId,
+                CounterType.PLUS_ONE_PLUS_ONE, result);
     }
 
     private List<CardEffect> staticEffectsIncludingTemporary(
@@ -2783,7 +2785,7 @@ public class GameQueryService {
                 }
             }
         });
-        return limitCounters(permanent, counterType, result[0]);
+        return limitCounters(gameData, permanent, affectedControllerId, counterType, result[0]);
     }
 
     /** Applies proliferate replacement effects controlled by {@code controllerId}. */
@@ -2849,16 +2851,18 @@ public class GameQueryService {
                 }
             }
         });
-        return limitCounters(permanent, counterType, result[0]);
+        return limitCounters(gameData, permanent, controllerId, counterType, result[0]);
     }
 
     /** Clamps a counter placement to any active static maximum on the affected permanent. */
-    public int limitCounters(Permanent permanent, CounterType counterType, int count) {
+    public int limitCounters(GameData gameData, Permanent permanent, UUID controllerId,
+                             CounterType counterType, int count) {
         if (permanent == null || count <= 0) {
             return count;
         }
         int maximum = Integer.MAX_VALUE;
-        for (CardEffect effect : staticEffectsIncludingTemporary(permanent)) {
+        for (CardEffect effect : staticEffectsIncludingTemporary(
+                gameData, permanent, controllerId)) {
             if (effect instanceof CounterLimitEffect limit
                     && limit.counterType() == counterType
                     && !permanent.isStaticEffectSuppressed(effect.getClass())) {

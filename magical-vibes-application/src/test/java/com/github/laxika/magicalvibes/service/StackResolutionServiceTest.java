@@ -109,7 +109,7 @@ class StackResolutionServiceTest {
                 legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameLogService, effectResolutionService, playerInputService, triggerCollectionService,
                 creatureControlService, stateTriggerService, exileService, null, permanentCounterSupport,
-                mutationCoordinator, null, auraCopyService, null);
+                mutationCoordinator, null, auraCopyService, null, null);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));

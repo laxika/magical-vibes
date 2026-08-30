@@ -72,6 +72,11 @@ public class PotentialManaService {
      * called on it during construction, so a deferred proxy costs nothing.
      */
     private final AbilityActivationService abilityActivationService;
+
+    /**
+     * Deferred because the handler graph includes logging services that reach view projection and
+     * therefore this service again. The registry is only consulted while answering a mana query.
+     */
     private final ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
 
     public PotentialManaService(GameQueryService gameQueryService,
@@ -82,7 +87,7 @@ public class PotentialManaService {
     @Autowired
     public PotentialManaService(GameQueryService gameQueryService,
                                 @Lazy AbilityActivationService abilityActivationService,
-                                ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry) {
+                                @Lazy ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry) {
         this.gameQueryService = gameQueryService;
         this.abilityActivationService = abilityActivationService;
         this.manaAbilityEffectHandlerRegistry = manaAbilityEffectHandlerRegistry;

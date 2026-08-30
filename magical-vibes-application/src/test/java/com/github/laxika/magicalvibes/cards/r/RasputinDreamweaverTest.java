@@ -35,7 +35,6 @@ class RasputinDreamweaverTest extends BaseCardTest {
         rasputin.setCounterCount(CounterType.DREAM, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
 
         assertThat(rasputin.getCounterCount(CounterType.DREAM)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
