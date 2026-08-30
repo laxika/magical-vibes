@@ -393,7 +393,8 @@ public class GameActionAvailabilityService {
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
-                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card);
+                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
+                && !castingPermissionService.isCardPlayRestrictedInHand(gameData, playerId, card);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays
@@ -798,6 +799,9 @@ public class GameActionAvailabilityService {
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
             }
+            if (canAfford && card.isRequiresBasicLandMana()) {
+                canAfford = cost.canPayBasicLandOnly(pool, 0, effectiveAdditionalCost);
+            }
             if (canAfford && canPayWaterbendCost(
                     gameData, playerId, card, paymentPool, cost, effectiveAdditionalCost)) {
                 return true;
@@ -1025,8 +1029,10 @@ public class GameActionAvailabilityService {
         boolean canPlayAnyLandsFromGraveyard = castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId);
         boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
                 .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
+        boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
         boolean hasMayhemLandPermission = graveyard.stream()
                 .anyMatch(card -> card.hasType(CardType.LAND)
+                        && !graveyardAbilitiesSuppressed
                         && card.getCastingOption(GraveyardCast.class)
                         .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                         .orElse(false));
@@ -1049,7 +1055,8 @@ public class GameActionAvailabilityService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            boolean hasMayhemPermission = card.getCastingOption(GraveyardCast.class)
+            boolean hasMayhemPermission = !graveyardAbilitiesSuppressed
+                    && card.getCastingOption(GraveyardCast.class)
                     .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                     .orElse(false);
             if (card.hasType(CardType.LAND)
@@ -1124,6 +1131,7 @@ public class GameActionAvailabilityService {
         Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
                 .map(id -> gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(id, Set.of()))
                 .orElse(Set.of());
+        boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
@@ -1135,19 +1143,27 @@ public class GameActionAvailabilityService {
                 continue;
             }
 
-            var flashback = card.effectiveFlashbackCast();
+            var flashback = graveyardAbilitiesSuppressed
+                    ? Optional.<FlashbackCast>empty()
+                    : card.effectiveFlashbackCast();
             if (flashback.isPresent()
                     && !castingPermissionService.canUseFlashback(gameData, playerId, flashback.get())) {
                 flashback = Optional.empty();
             }
-            var disturb = card.getCastingOption(DisturbCast.class);
+            var disturb = graveyardAbilitiesSuppressed
+                    ? Optional.<DisturbCast>empty()
+                    : card.getCastingOption(DisturbCast.class);
             Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
             if (castingPermissionService.isSpellLimitReached(gameData, playerId, castHalf)) {
                 continue;
             }
-            var harmonize = card.getCastingOption(HarmonizeCast.class);
+            var harmonize = graveyardAbilitiesSuppressed
+                    ? Optional.<HarmonizeCast>empty()
+                    : card.getCastingOption(HarmonizeCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
-            if (graveyardCast.isEmpty()) {
+            if (graveyardAbilitiesSuppressed) {
+                graveyardCast = Optional.empty();
+            } else if (graveyardCast.isEmpty()) {
                 graveyardCast = castingPermissionService.findMayhemCastOption(gameData, playerId, card);
             }
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
@@ -1155,13 +1171,16 @@ public class GameActionAvailabilityService {
                     ? castingPermissionService.findGrantedFlashback(gameData, playerId, card)
                     : Optional.empty();
             boolean grantedHarmonize = harmonize.isEmpty() && flashback.isEmpty() && !isDisturb
+                    && !graveyardAbilitiesSuppressed
                     && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
             boolean isHarmonize = (harmonize.isPresent() && flashback.isEmpty() && !isDisturb) || grantedHarmonize;
             boolean grantedFlashback = flashback.isEmpty()
+                    && !graveyardAbilitiesSuppressed
                     && !isDisturb
                     && !isHarmonize
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback
+                    && !graveyardAbilitiesSuppressed
                     && grantedFlashbackOption.isPresent();
             boolean grantedGraveyardCardCast = flashback.isEmpty()
                     && !isDisturb
@@ -1209,7 +1228,8 @@ public class GameActionAvailabilityService {
                     : Optional.empty();
             boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermission.isPresent();
 
-            boolean isJumpStart = (card.getCastingOption(JumpStartCast.class).isPresent()
+            boolean isJumpStart = !graveyardAbilitiesSuppressed
+                    && (card.getCastingOption(JumpStartCast.class).isPresent()
                     || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                     && flashback.isEmpty()
                     && !isDisturb
@@ -1225,7 +1245,8 @@ public class GameActionAvailabilityService {
 
             // Retrace (CR 702.81): castable from the graveyard for its normal mana cost if the
             // player has a land card in hand to discard as the additional cost.
-            boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
+            boolean isRetrace = !graveyardAbilitiesSuppressed
+                    && card.getCastingOption(Retrace.class).isPresent()
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize

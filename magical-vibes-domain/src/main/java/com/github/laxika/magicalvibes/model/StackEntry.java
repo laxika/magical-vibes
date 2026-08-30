@@ -248,6 +248,8 @@ public class StackEntry {
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
+    /** Card ids of permanents sacrificed as an activated-ability cost, retained for later effects. */
+    @Setter private List<UUID> sacrificedCardIds = List.of();
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
     /** Last-known card discarded as an activation cost, when an effect refers to that card. */
@@ -318,6 +320,8 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /** Keywords this spell gains while it is on the stack. */
+    private final Set<Keyword> grantedKeywordsWhileOnStack = EnumSet.noneOf(Keyword.class);
     /**
      * Bloodthirst granted to this creature spell while it is on the stack (Bloodlord of Vaasgoth:
      * "it gains bloodthirst 3"). Per CR 702.54c each instance of bloodthirst applies separately, so
@@ -661,6 +665,8 @@ public class StackEntry {
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
+        this.sacrificedCardIds = source.sacrificedCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.sacrificedCardIds);
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
         this.discardedCardSnapshot = source.discardedCardSnapshot;
         this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
@@ -687,6 +693,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
@@ -782,6 +789,12 @@ public class StackEntry {
 
     public Card getCard() {
         return castCard != null ? castCard : card;
+    }
+
+    /** Whether this stack object has the given printed or cast-time-granted keyword. */
+    public boolean hasKeyword(Keyword keyword) {
+        return getCard() != null && (getCard().getKeywords().contains(keyword)
+                || grantedKeywordsWhileOnStack.contains(keyword));
     }
 
     public void setCastCard(Card castCard) {

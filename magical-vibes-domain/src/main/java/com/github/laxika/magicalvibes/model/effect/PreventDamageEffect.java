@@ -74,7 +74,8 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
                 || scope == PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES
                 || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER
-                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER;
+                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER
+                || scope == PreventionScope.NEXT_TO_CONTROLLED_CREATURES;
         if (needsAmount && amount == null) {
             throw new IllegalArgumentException("NEXT_* prevention scopes require an amount: " + scope);
         }
@@ -191,6 +192,16 @@ public record PreventDamageEffect(
     public static PreventDamageEffect nextToEachCreatureAndPlayer(int amount) {
         return new PreventDamageEffect(
                 PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER, new Fixed(amount), false, null, null, null);
+    }
+
+    /**
+     * "Prevent the next {@code amount} damage that would be dealt to each creature you control
+     * this turn." Non-targeting; only creatures controlled by the ability's controller as it
+     * resolves are shielded.
+     */
+    public static PreventDamageEffect nextToControlledCreatures(int amount) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_CONTROLLED_CREATURES, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent all combat damage that would be dealt this turn." */

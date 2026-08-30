@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "58")
 @CardRegistration(set = "MIR", collectorNumber = "56")
 @CardRegistration(set = "CHR", collectorNumber = "16")
+@CardRegistration(set = "LEG", collectorNumber = "48")
 public class Boomerang extends Card {
 
     public Boomerang() {

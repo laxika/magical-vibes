@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1269,6 +1271,31 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("queues a suspended card's conditional opponent-graveyard trigger")
+    void queuesSuspendedCardOpponentGraveyardTrigger() {
+        Card sourceCard = createCard("Nihilith");
+        var effect = new ConditionalEffect(
+                new SourceCardSuspended(),
+                new MayEffect(new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()),
+                        "Remove a time counter from Nihilith?"));
+        var ctx = new TriggerContext.CardPutIntoGraveyard(createCard("Shock"), player2Id);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                new TriggerMatchContext(gd, null, player1Id, effect, sourceCard),
+                EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(sourceCard);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isNull();
+        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
     }
 
     @Test

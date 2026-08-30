@@ -535,6 +535,9 @@ public class GraveyardService {
             gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn++;
         }
         gameData.markGraveyardEntry(card);
+        if (sourceZone == Zone.BATTLEFIELD) {
+            gameData.permanentsPutIntoGraveyardFromBattlefieldThisTurn++;
+        }
         if (!card.isToken() && isPermanentCard(card)) {
             gameData.playersWhoDescendedThisTurn.add(ownerId);
             gameData.descentsThisTurn.merge(ownerId, 1, Integer::sum);

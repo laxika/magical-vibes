@@ -393,7 +393,8 @@ public class MayAbilityHandlerService {
             // Effects that copy an entering permanent need the target permanent ID from the trigger
             boolean needsEnteringTarget = ability.effects().stream()
                     .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect
-                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget());
+                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget()
+                            || e.usesEnteringPermanentReference());
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
             }

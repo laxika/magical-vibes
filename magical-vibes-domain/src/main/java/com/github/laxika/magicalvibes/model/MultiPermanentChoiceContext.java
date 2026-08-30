@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -33,6 +34,20 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
 
         public ActivatedAbilityExileArtifactsCost {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? Map.of() : Map.copyOf(damageAssignments);
+        }
+    }
+
+    /** The activating player chooses any number of permanents to sacrifice as an ability cost. */
+    record ActivatedAbilitySacrificeAnyNumberCost(UUID playerId, UUID sourcePermanentId, int abilityIndex,
+                                                   int xValue, UUID targetId, Zone targetZone,
+                                                   List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                                   ActivatedAbility ability, Permanent sourcePermanentSnapshot,
+                                                   SacrificeAnyNumberOfPermanentsCost cost)
+            implements MultiPermanentChoiceContext {
+
+        public ActivatedAbilitySacrificeAnyNumberCost {
             targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
             damageAssignments = damageAssignments == null ? Map.of() : Map.copyOf(damageAssignments);
         }
@@ -669,6 +684,13 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeCreaturesSetEnteringPowerToughness(UUID enteringPermanentId, UUID controllerId, Card card,
                                                        UUID targetId, boolean wasCastFromHand, int etbMode,
                                                        boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chose matching permanents to sacrifice as the entering permanent's P/T was set to their count. */
+    record SacrificePermanentsSetEnteringPowerToughness(UUID enteringPermanentId, PermanentPredicate filter,
+                                                        UUID controllerId, Card card, UUID targetId,
+                                                        boolean wasCastFromHand, int etbMode, boolean kicked)
             implements MultiPermanentChoiceContext {
     }
 

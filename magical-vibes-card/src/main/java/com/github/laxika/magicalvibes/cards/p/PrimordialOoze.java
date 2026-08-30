@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 
 @CardRegistration(set = "5ED", collectorNumber = "261")
 @CardRegistration(set = "CHR", collectorNumber = "54")
+@CardRegistration(set = "LEG", collectorNumber = "160")
 public class PrimordialOoze extends Card {
 
     public PrimordialOoze() {

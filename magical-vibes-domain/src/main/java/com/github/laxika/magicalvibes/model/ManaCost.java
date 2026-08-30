@@ -549,6 +549,15 @@ public class ManaCost {
         return remaining >= genericCost + additionalGenericCost;
     }
 
+    public boolean canPayBasicLandOnly(ManaPool pool) {
+        return canPayBasicLandOnly(pool, 0, 0);
+    }
+
+    public boolean canPayBasicLandOnly(ManaPool pool, int xValue, int additionalGenericCost) {
+        return canPayWithAdditionalGenericCost(
+                pool.copyBasicLandMana(), xValue, additionalGenericCost);
+    }
+
     // ── White-as-red substitution (Sunglasses of Urza) ─────────────────
     // These only engage when the pool carries the whiteSpendableAsRed permission AND the cost needs
     // red, so the ordinary payment path (the overwhelming majority of casts) is left untouched.
@@ -2192,6 +2201,17 @@ public class ManaCost {
         int remainingGeneric = genericCost + extraHybridGeneric + xDemand + additionalGenericCost;
         remainingGeneric = spendXCostOnlyForGeneric(pool, remainingGeneric);
         payGenericPreferColorless(pool, remainingGeneric);
+    }
+
+    public void payBasicLandOnly(ManaPool pool, int xValue, int additionalGenericCost) {
+        ManaPool basicLandPool = pool.copyBasicLandMana();
+        EnumMap<ManaColor, Integer> before = basicLandPool.getBasicLandManaTotals();
+        payWithAdditionalGenericCost(basicLandPool, xValue, additionalGenericCost);
+        for (ManaColor color : ManaColor.values()) {
+            int spent = before.getOrDefault(color, 0)
+                    - basicLandPool.getBasicLandMana(color);
+            pool.removeBasicLandMana(color, spent);
+        }
     }
 
     /**

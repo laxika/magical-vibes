@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "397")
 @CardRegistration(set = "CHR", collectorNumber = "108")
+@CardRegistration(set = "LEG", collectorNumber = "295")
 public class SerpentGenerator extends Card {
 
     public SerpentGenerator() {

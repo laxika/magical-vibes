@@ -53,6 +53,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                     nextToTarget(gameData, entry, e);
             case NEXT_TO_TARGET_AND_SHARING_CREATURES -> nextToTargetAndSharingCreatures(gameData, entry, e);
             case NEXT_TO_EACH_CREATURE_AND_PLAYER -> nextToEachCreatureAndPlayer(gameData, entry, e);
+            case NEXT_TO_CONTROLLED_CREATURES -> nextToControlledCreatures(gameData, entry, e);
             case ALL_COMBAT -> {
                 gameData.preventAllCombatDamage = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage will be prevented this turn."));
@@ -322,6 +323,28 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(
                 "The next " + amount + " damage that would be dealt to each creature and each player this turn is prevented."));
         log.info("Game {} - Prevention shield {} added to every creature and player", gameData.id, amount);
+    }
+
+    private void nextToControlledCreatures(GameData gameData, StackEntry entry, PreventDamageEffect e) {
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null) return;
+
+        int amount = evaluate(gameData, entry, e);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    permanent.setDamagePreventionShield(permanent.getDamagePreventionShield() + amount);
+                }
+            }
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.text(
+                "The next " + amount + " damage that would be dealt to each creature "
+                        + controllerName + " controls this turn is prevented."));
+        log.info("Game {} - Prevention shield {} added to creatures controlled by {}", gameData.id, amount,
+                controllerName);
     }
 
     private void nextToTarget(GameData gameData, StackEntry entry, PreventDamageEffect e) {

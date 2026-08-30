@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
@@ -1153,6 +1154,11 @@ public class GameService {
                 spellCastingService.validateMorphAdditionalCost(
                         gameData, player, morphAdditionalCost, additionalCostPermanentIds);
             }
+            DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
+            if (morphDiscardCost != null) {
+                spellCastingService.validateMorphDiscardCost(
+                        gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
             if (!manifestedOrCloaked && morphRevealCost != null) {
                 List<Card> hand = gameData.playerHands.get(player.getId());
@@ -1171,7 +1177,7 @@ public class GameService {
                         GameEventFact.RevealZone.HAND, List.of(toReveal));
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
-            } else {
+            } else if (morphDiscardCost == null) {
                 ManaCost cost = new ManaCost(faceUpCost);
                 DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
                 if (!manifestedOrCloaked && morphCostReduction != null && amountEvaluationService != null) {
@@ -1216,6 +1222,10 @@ public class GameService {
                 spellCastingService.payMorphAdditionalCost(
                         gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
             }
+            if (morphDiscardCost != null) {
+                spellCastingService.payMorphDiscardCost(
+                        gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
             finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true);
         }
     }
@@ -1259,6 +1269,8 @@ public class GameService {
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is turned face up."));
 
         if (triggerCollectionService != null) {
+            triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(
+                    gameData, controllerId, permanent);
             triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(
                     gameData, controllerId, permanent);
             triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(

@@ -715,12 +715,14 @@ public class CastingCostService {
 
         int reduction = 0;
         for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(casterId)) continue;
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent source : battlefield) {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof ReduceOpponentCostForTargetingControlledPermanentEffect reduceEffect)) {
+                        continue;
+                    }
+                    if (controllerId.equals(casterId) && !reduceEffect.affectsController()) {
                         continue;
                     }
                     for (UUID target : allTargetIds) {

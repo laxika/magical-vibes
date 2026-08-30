@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -387,6 +388,27 @@ class ActivatedAbilityExecutionServiceTest {
 
             verify(lifeSupport).applyGainLife(gameData, player1Id, 1, perm.getCard().getName(),
                     perm.getCard(), StackEntryType.ACTIVATED_ABILITY, player1Id);
+        }
+
+        @Test
+        @DisplayName("Opponent GainLifeEffect rider delegates to the opponent")
+        void opponentGainLifeEffectDelegatesToOpponent() {
+            Card card = createCard("Test Mana Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(
+                    new AwardManaEffect(ManaColor.RED, 1),
+                    new GainLifeEffect(new Fixed(1), GainLifeRecipient.OPPONENT));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add {R}. An opponent gains 1 life.");
+
+            stubIsCreature(perm, false);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new Fixed(1)), any())).thenReturn(1);
+            when(gameQueryService.getOpponentId(gameData, player1Id)).thenReturn(player2Id);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(lifeSupport).applyGainLife(gameData, player2Id, 1);
+            verify(lifeSupport, never()).applyGainLife(gameData, player1Id, 1);
         }
 
         @Test

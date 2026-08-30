@@ -261,7 +261,7 @@ public sealed interface TriggerContext {
     record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
                            int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
 
-    /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
+    /** Context for triggers watching a permanent being turned face up. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
 
     /** Context for a permanent controlled by a player transforming. */

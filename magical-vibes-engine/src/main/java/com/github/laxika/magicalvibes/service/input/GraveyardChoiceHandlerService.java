@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterSer
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExileGraveyardCardsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,6 +103,7 @@ public class GraveyardChoiceHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
     private final DredgeSupport dredgeSupport;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -227,6 +229,7 @@ public class GraveyardChoiceHandlerService {
         UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
         boolean enterTapped = graveyardChoice.enterTapped();
         boolean exileIfLeavesBattlefield = graveyardChoice.exileIfLeavesBattlefield();
+        UUID destinationControllerId = graveyardChoice.destinationControllerId();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -366,10 +369,12 @@ public class GraveyardChoiceHandlerService {
                     if (enterTapped) {
                         perm.tap();
                     }
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
-                    if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(playerId)) {
+                    UUID battlefieldControllerId = destinationControllerId != null
+                            ? destinationControllerId : playerId;
+                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm);
+                    if (cardGraveyardOwnerId != null && !cardGraveyardOwnerId.equals(battlefieldControllerId)) {
                         graveyardReturnSupport.trackStolenCreature(
-                                gameData, perm.getId(), playerId, cardGraveyardOwnerId);
+                                gameData, perm.getId(), battlefieldControllerId, cardGraveyardOwnerId);
                     }
 
                     if (graveyardChoice.enterWithCounter() != null
@@ -402,10 +407,10 @@ public class GraveyardChoiceHandlerService {
                     }
 
                     if (card.hasType(CardType.CREATURE)) {
-                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+                        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, battlefieldControllerId, card, null, false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
-                        legendRuleService.checkLegendRule(gameData, playerId);
+                        legendRuleService.checkLegendRule(gameData, battlefieldControllerId);
                     }
                 }
                 case COPY_ON_ENTER -> {
@@ -714,6 +719,14 @@ public class GraveyardChoiceHandlerService {
             }
             gameData.pendingEffectResolutionIndex++;
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
+        if (gameData.pendingSpellweaverVoluteReattachment != null
+                && gameData.pendingSpellweaverVoluteReattachment.copyCardId() == null) {
+            gameData.interaction.clearAwaitingInput();
+            spellweaverVoluteSupport.completeAttachmentChoice(gameData, cardIds.getFirst());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

@@ -42,6 +42,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
 | `BEFORE_ATTACKERS_DECLARED` | Activate only before attackers are declared (any player's turn). Also requires `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-attackers step. Norritt |
 | `BEFORE_BLOCKERS_DECLARED` | Activate only before blockers are declared (any player's turn). Steps before `DECLARE_BLOCKERS`, plus `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-blockers step. Acidic Dagger |
+| `BEFORE_COMBAT_DAMAGE` | Activate only before the combat damage step (any player's turn). Uses `TurnStep.isBeforeCombatDamage()`. Angus Mackenzie |
 | `ONLY_BEFORE_END_OF_COMBAT` | Activate only during a step that precedes the end of combat step, on any player's turn (`gameData.currentStep.isBeforeEndOfCombat()`). Dwarven Sea Clan |
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_DURING_END_OF_COMBAT` | Activate only during the end of combat step (`currentStep == END_OF_COMBAT`). Desert |
@@ -337,6 +338,22 @@ new ActivatedAbility(true, "{B}",
 Cards: `LeechriddenSwamp`
 
 ---
+
+### Time-counter payment from a permanent or suspended card
+
+Use `RemoveTimeCounterFromPermanentOrSuspendedCardCost` for an activated ability that lets its
+controller remove a time counter from either a permanent they control or a suspended card they
+own. If more than one eligible object exists, the engine presents a mixed permanent/card choice.
+
+```java
+new ActivatedAbility(false, "{1}{R}",
+    List.of(new RemoveTimeCounterFromPermanentOrSuspendedCardCost(),
+            new BoostSelfEffect(2, 0)),
+    "{1}{R}, Remove a time counter from a permanent you control or suspended card you own: "
+            + "This creature gets +2/+0 until end of turn.")
+```
+
+Used by `RiftElemental` (`FUT`).
 
 ### 8a-counters. Ability gated on counters on the source (`.withRequiredSourceCounters`)
 
@@ -772,6 +789,12 @@ addHandActivatedAbility(new ActivatedAbility(false, "{1}{W}",
 Typecycling and landcycling (`Islandcycling`, `Basic landcycling`) search rather than draw, so
 they are built explicitly too; `isCyclingAbility()` still recognises them by the name segment.
 
+Static effects that grant a typecycling ability to cards in hand use the
+`HandAbilityGrantingEffect` capability and `GrantHandActivatedAbilityToCardsEffect`. The effective
+ability list is the card's printed hand abilities followed by matching grants from permanents on
+the battlefield; the same list is used by activation and card-view projection. Homing Sliver uses
+this for Slivercycling {3} in each player's hand.
+
 Cards: `DesertCerodon` (plain), the Sojourners and Resounding cycles (with an extra effect)
 
 #### Ninjutsu
@@ -859,7 +882,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeAllPermanentsYouControlCost` | `()` | "Sacrifice all permanents you control: ..." — SPELL-slot additional cast cost (Kaervek's Spite). Legal with zero permanents |
 | `SacrificeXPermanentsCost` | `(PermanentPredicate filter[, boolean requireAtLeastOne])` | "Sacrifice X [matching]: ..." — sacrifices X permanents matching the filter, where X is the ability's xValue chosen at activation (the sacrifice-analog of `TapMultiplePermanentsCost` with an `XValue` count). Set `requireAtLeastOne=true` for "sacrifice one or more" wording. Springjack Pasture uses the default; Radiant Lotus requires at least one artifact |
 | `DiscardCardTypeCost` | `(CardPredicate, String label)` or `(CardPredicate, String label, boolean manaValueEqualsX)` or `(CardPredicate, String label, int count)` or `(predicate, label, manaValueEqualsX, count, sameName, trackManaValue)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any. `manaValueEqualsX=true` → "Discard a card with mana value X" (restricts valid discards to MV == chosen X; pair with an `{X}` cost). Knollspine Invocation. `count` (default 1) for "Discard N cards" (Haunted Dead = 2); activation prompts sequentially until all are paid. `(predicate, label, int count, boolean sameName)` with `sameName=true` for "Discard two nonland cards with the same name" (Sphinx of the Chimes): the first prompt only offers cards whose name appears at least `count` times in hand, and every later prompt is pinned to that name. `trackManaValue=true` snapshots the discarded card's mana value into the entry's `xValue` (Mercurial Chemister + `DealDamageToTargetCreatureEffect(new XValue())`) . `imprintOnSource=true` (7th component) imprints the discarded card on the source card so the ability's own effects can inspect it at resolution via `ImprintedCardMatches` — Necromancer's Stockpile's "If the discarded card was a Zombie card" |
-| `ExileCardFromHandCost` | `()`, `(CardPredicate, String label)`, `(CardPredicate, String label, int count)`, or `(CardPredicate, String label, int count, boolean imprintOnSource)` | "Exile a card from your hand: ..." — null predicate = any card. Shares the `HandCardCost` activation path with `DiscardCardTypeCost` (up-front legality check, interactive hand pick), but exiles the chosen card, firing no discard triggers. `imprintOnSource=true` remembers the exiled card on the source for resolution-time comparisons (Holistic Wisdom). Cadaverous Bloom |
+| `ExileCardFromHandCost` | `()`, `(CardPredicate, String label)`, `(CardPredicate, String label, int count)`, or `(CardPredicate, String label, int count, boolean imprintOnSource)` | "Exile a card from your hand: ..." — null predicate = any card. Shares the `HandCardCost` activation path with `DiscardCardTypeCost` (up-front legality check, interactive hand pick), but exiles the chosen card, firing no discard triggers. `imprintOnSource=true` remembers the exiled card on the source for resolution-time comparisons (Holistic Wisdom), or for activation-time binding by an effect such as `PutTimeCountersOnImprintedCardEffect` (Jhoira of the Ghitu). Cadaverous Bloom |
 | `ExileTopCardOfLibraryCost` | `(int count)` or `(int count, boolean imprintOnSource)` | "Exile the top card of your library: ..." — exiles the top N library cards as activation cost. Blocks activation if the library is too small. Royal Herbalist (`count=1`). `imprintOnSource=true` imprints the last card exiled this way on the source permanent so the ability's effect can inspect it at resolution via the `ImprintedCardMatches` condition (Storm Elemental) |
 | `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Works as an activation cost (Slate of Ancestry) **and** as a SPELL-slot additional cast cost (Kaervek's Spite; spell already left the hand before payment) |
 | `DiscardRandomCardCost` | `()` | "Discard a card at random: ..." — discards one uniformly-random card from the controller's hand as a cost (no player choice). Requires a non-empty hand to activate, or another card in hand when used in a SPELL slot. Fires the discarded card's discard triggers. Coral Helm; Acceptable Losses |
@@ -1145,3 +1168,6 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_TRANSFORM_TO_FRONT_FACE` | This permanent transforms back to front face |
 | `ON_PLAYER_LOSES_GAME` | A player loses the game (fired in `GameOutcomeService`; 2-player engine ends before it resolves) |
 | `GRAVEYARD_ON_ALLY_CREATURE_DIES` | Like ON_ALLY_CREATURE_DIES but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect` to filter the dying creature. A `MayEffect` inner is queued as a may-ability; anything else (e.g. `MayPayManaEffect`) goes on the stack. A source card that dies in the same event does not trigger. Scanned in `TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers`. Used by Furious Forebear |
+| `GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD` | Fires from the controller's graveyard when a creature enters that graveyard from the battlefield. Use `TriggeringCardConditionalEffect` for a nontoken or other dying-card filter; the source is skipped when it dies in the same event. |
+| `GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | Fires from a card's graveyard when a creature enters any opponent's graveyard from the battlefield. The source is skipped when it dies in the same event; used by Bridge from Below. |
+`SacrificeAnyNumberOfPermanentsCost(filter, trackSacrificedPower, excludeSource)` is the activated-ability form for "sacrifice this permanent and any number of matching permanents." It permits zero choices, snapshots effective power before paying when requested, and carries the selected card IDs through the stack entry for later effects. Use `excludeSource=true` when the source is also paid with `SacrificeSelfCost`.

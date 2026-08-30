@@ -1341,25 +1341,36 @@ public class MiscTriggerCollectorService {
             slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleConditionalCardPutIntoOpponentGraveyard(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
             return false;
         }
 
-        TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
+        Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
+        if (sourceCard == null) return false;
+        ConditionContext conditionContext = match.permanent() != null
+                ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                : ConditionContext.forCard(sourceCard, match.controllerId());
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(), conditionContext)) {
+            return false;
+        }
+
         var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-        gameData.enqueueTrigger(new StackEntry(
+        String cardName = sourceCard.getName();
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
+                sourceCard,
                 match.controllerId(),
                 cardName + "'s ability",
                 new ArrayList<>(List.of(conditional)),
-                cardPut.graveyardOwnerId(),
-                match.permanent().getId()
-        ));
+                match.permanent() == null ? null : cardPut.graveyardOwnerId(),
+                match.permanent() == null ? null : match.permanent().getId()
+        );
+        if (match.permanent() == null) {
+            entry.setNonTargeting(true);
+        }
+        gameData.enqueueTrigger(entry);
 
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
         return true;
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "7")
+@CardRegistration(set = "LEG", collectorNumber = "21")
 public class IndestructibleAura extends Card {
 
     public IndestructibleAura() {

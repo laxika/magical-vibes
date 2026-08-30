@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibrary
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 
 @CardRegistration(set = "4ED", collectorNumber = "54")
+@CardRegistration(set = "LEG", collectorNumber = "41")
 public class Visions extends Card {
 
     public Visions() {

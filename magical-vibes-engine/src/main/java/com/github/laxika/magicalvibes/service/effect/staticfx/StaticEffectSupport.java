@@ -313,6 +313,10 @@ public class StaticEffectSupport {
         return predicateEvaluationService.matchesStaticLeaf(target, leaf);
     }
 
+    public boolean sharesCreatureType(Permanent first, Permanent second) {
+        return predicateEvaluationService.sharesCreatureType(first, second);
+    }
+
     /**
      * The board shape and source identity the four board-reading filter predicates need. The
      * source is identified by its current card id, which is what a clone's filter must match on.

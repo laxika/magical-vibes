@@ -69,6 +69,7 @@ public class FaceUpTriggerCollectorService {
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP)
     private boolean handleCreatureTurnsFaceUp(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentTurnsFaceUp faceUp = (TriggerContext.PermanentTurnsFaceUp) ctx;
         CardEffect resolvedEffect = effect;

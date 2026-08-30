@@ -354,6 +354,7 @@ public class GameViewProjectionFactory {
                                 : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
                         return cardViewFactory.createForGraveyard(c, cardGranted,
                                 gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
+                                gameQueryService.graveyardCardsHaveLostAllAbilities(data),
                                 filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
                                         .orElse(0),
                                 filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
@@ -396,26 +397,34 @@ public class GameViewProjectionFactory {
             }
         }
 
-        boolean reveals = allHandsRevealed || opponentRevealsOwnHand || opponentHandRevealedBySource(gameData, playerId);
-        if (!reveals) {
+        boolean fullHandRevealed = allHandsRevealed
+                || opponentRevealsOwnHand
+                || opponentHandRevealedBySource(gameData, playerId);
+        if (!fullHandRevealed) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) return List.of();
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof RevealOpponentHandsEffect) {
-                        reveals = true;
-                        break;
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof RevealOpponentHandsEffect) {
+                            fullHandRevealed = true;
+                            break;
+                        }
                     }
+                    if (fullHandRevealed) break;
                 }
-                if (reveals) break;
             }
         }
-        if (!reveals) return List.of();
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
-                return gameData.playerHands.getOrDefault(opponentId, List.of())
-                        .stream().map(c -> cardViewFactory.create(c, granted)).toList();
+                List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
+                boolean revealEntireOpponentHand = fullHandRevealed;
+                return opponentHand.stream()
+                        .filter(card -> revealEntireOpponentHand
+                                || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId())))
+                        .map(c -> cardViewFactory.create(c, granted, List.of(),
+                                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, opponentId, c)))
+                        .toList();
             }
         }
         return List.of();
@@ -905,7 +914,8 @@ public class GameViewProjectionFactory {
     }
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
-        CardView view = cardViewFactory.create(card, grantedSubtypes);
+        CardView view = cardViewFactory.create(card, grantedSubtypes, List.of(),
+                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, playerId, card));
         if (view.hasAlternateCastingCost()) {
             return view;
         }

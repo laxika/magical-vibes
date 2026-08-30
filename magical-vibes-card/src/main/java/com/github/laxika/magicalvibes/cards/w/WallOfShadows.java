@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCre
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "41")
+@CardRegistration(set = "LEG", collectorNumber = "128")
 public class WallOfShadows extends Card {
 
     public WallOfShadows() {

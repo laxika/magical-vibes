@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "45")
+@CardRegistration(set = "LEG", collectorNumber = "133")
 public class BeastsOfBogardan extends Card {
 
     public BeastsOfBogardan() {

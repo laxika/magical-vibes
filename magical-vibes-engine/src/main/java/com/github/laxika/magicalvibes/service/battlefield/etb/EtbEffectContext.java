@@ -23,25 +23,26 @@ import java.util.List;
  * @param kicked          whether the spell was kicked (gates kicked-conditional effects)
  * @param evoked          whether the spell was cast for its evoke cost (gates the evoke sacrifice)
  * @param prowl           whether the spell was cast for its prowl cost (gates prowl-conditional effects)
+ * @param madness         whether the spell was cast for its madness cost
  * @param sourcePermanent the permanent that just entered, when available
  * @param repeatedAdditionalCosts the repeatable additional mana payments made to cast the source spell
  */
 public record EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                                boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
-                               boolean prowl, boolean alternateCost, Permanent sourcePermanent,
+                               boolean prowl, boolean madness, boolean alternateCost, Permanent sourcePermanent,
                                List<String> repeatedAdditionalCosts) {
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl) {
         this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
-                false, null, List.of());
+                false, false, null, List.of());
     }
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl, Permanent sourcePermanent) {
         this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
-                false, sourcePermanent, List.of());
+                false, false, sourcePermanent, List.of());
     }
 }

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "272")
 @CardRegistration(set = "4ED", collectorNumber = "226")
+@CardRegistration(set = "LEG", collectorNumber = "167")
 public class TheBrute extends Card {
 
     public TheBrute() {

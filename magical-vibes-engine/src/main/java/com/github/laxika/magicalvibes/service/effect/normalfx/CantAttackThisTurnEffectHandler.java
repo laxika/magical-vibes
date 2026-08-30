@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -33,9 +34,11 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CantAttackThisTurnEffect) effect;
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry);
-            case ALL_CREATURES -> resolveAllCreatures(gameData, e);
+            case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
+            case ALL_CREATURES -> resolveAllCreatures(gameData, e, filterContext);
             default -> throw new IllegalStateException("Unsupported can't-attack scope: " + e.scope());
         }
     }
@@ -56,7 +59,34 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
         }
     }
 
-    private void resolveAllCreatures(GameData gameData, CantAttackThisTurnEffect e) {
+    private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry,
+                                                 CantAttackThisTurnEffect e, FilterContext filterContext) {
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetId);
+        if (battlefield == null) return;
+
+        String playerName = gameData.playerIdToName.get(targetId);
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (gameQueryService.isCreature(gameData, p)
+                    && (e.filter() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
+                p.setCantAttackThisTurn(true);
+                count++;
+            }
+        }
+
+        if (count > 0) {
+            gameLogService.append(gameData, GameLog.text(
+                    "Creatures controlled by " + playerName + " can't attack this turn."));
+            log.info("Game {} - {} creatures controlled by {} can't attack this turn",
+                    gameData.id, count, playerName);
+        }
+    }
+
+    private void resolveAllCreatures(GameData gameData, CantAttackThisTurnEffect e, FilterContext filterContext) {
         int count = 0;
         for (UUID playerId : gameData.playerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -64,7 +94,7 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
             for (Permanent p : battlefield) {
                 if (gameQueryService.isCreature(gameData, p)
                         && (e.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                            || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
                     p.setCantAttackThisTurn(true);
                     count++;
                 }

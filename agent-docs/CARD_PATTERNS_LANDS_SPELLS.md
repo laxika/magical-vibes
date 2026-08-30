@@ -19,6 +19,7 @@ on what the mana may pay for.
 | Counter each opponent spell and ability unless its controller pays | `w/WhirlwindDenial.java` | SPELL CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect(4) — snapshots opponent-controlled spells and activated/triggered abilities, offers payment choices in active-player order, and counters unpaid objects after all choices |
 | Controller-scoped land animation with first strike | `n/NaturalEmergence.java` | ETB `ReturnPermanentControlledByPlayerToHandEffect` filtered to red or green enchantments + STATIC `AllLandsAreCreaturesEffect(2, 2, null, null, GrantScope.OWN_LANDS)` + `GrantKeywordEffect(FIRST_STRIKE, GrantScope.OWN_LANDS)` |
 | Basic land | `f/Forest.java` | `addEffect(ON_TAP, AwardManaEffect(color))` |
+| Condition-dependent mana land | `r/RiverOfTears.java` | One `{T}` ability with `ConditionalManaEffect(condition, ifMetColor, ifNotMetColor)` when the printed ability replaces one mana color with another based on game state |
 | Pain land | `s/SulfurousSprings.java` | 3 activated abilities: colorless + 2x colored with DealDamageToController |
 | Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + ON_TAP mana + AnimatePermanentsEffect (5-arg SELF/UEOT) ability |
 | Fetch-a-basic land that bounces itself | `t/ThawingGlaciers.java` | STATIC `EntersTappedEffect` + `{1}`,`{T}` ability with `ReturnSourceToHandAtNextCleanupEffect` + `SearchLibraryEffect(basicLand(), BATTLEFIELD_TAPPED)` |
@@ -198,6 +199,7 @@ on what the mana may pay for.
 | Counter if mana value matches discarded card | `h/HisokaMinamoSensei.java` | Activated: {2}{U}+DiscardCardTypeCost(null, null, false, 1, false, true)+CounterSpellIfManaValueEqualsXEffect — the trackManaValue discard cost snapshots the discarded card's mana value into the ability's X |
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |
 | Bounce target | `u/Unsummon.java` | ReturnToHandEffect.target() |
+| Bounce nonland permanent or suspended card | `v/VensersDiffusion.java` | `ReturnToHandEffect.targetNonlandPermanentOrSuspendedCard()` — target a battlefield nonland permanent or a face-up suspended card in exile; return the chosen card to its owner's hand |
 | Bounce creature + mana-value tokens | `a/AetherMutation.java` | `target(TargetFilters.creature()).addEffect(SPELL, new ReturnTargetCreatureToHandThenCreateTokensEqualToManaValueEffect(saprolingToken))` - return the target creature first, snapshot its mana value, then create that many tokens under the spell controller's control |
 | Bounce target spell or creature | `u/Unsubstantiate.java` | `ReturnTargetSpellOrCreatureToHandEffect()` — declarative `spellOnStack` + `creature` target; the handler routes the chosen ID to the stack or battlefield |
 | Bounce X target creatures of a chosen type | `s/SelectiveSnare.java` | `targetX(TargetFilters.creature(), 100)` + `ReturnToHandEffect.targetCreaturesOfChosenType()`; the type is supplied with the cast-time choice and targets must match it while casting |

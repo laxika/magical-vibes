@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -336,6 +337,20 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent no longer exists");
             }
         }
+        if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness enterCtx) {
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(enterCtx.card().getId())
+                    .withSourceControllerId(enterCtx.controllerId());
+            if (permanentIds.stream().anyMatch(id -> {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                return permanent == null
+                        || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
+                        || !predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, enterCtx.filter(), filterContext);
+            })) {
+                throw new IllegalStateException("A selected permanent is no longer eligible to sacrifice");
+            }
+        }
         if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse sacrificeCtx) {
             if (!permanentIds.isEmpty() && permanentIds.size() != sacrificeCtx.requiredCount()) {
                 throw new IllegalStateException("Must select exactly " + sacrificeCtx.requiredCount()
@@ -477,6 +492,10 @@ public class MultiPermanentChoiceHandlerService {
             abilityActivationService.validateActivatedAbilityExileArtifactsChoice(
                     gameData, exileArtifactsContext, permanentIds);
         }
+        if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
+            abilityActivationService.validateActivatedAbilitySacrificeAnyNumberChoice(
+                    gameData, sacrificeContext, permanentIds);
+        }
         if (context instanceof MultiPermanentChoiceContext.CounterDistribution
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("At least one target creature must be selected");
@@ -487,6 +506,9 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
                     gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost sacrificeContext) {
+            abilityActivationService.completeActivatedAbilitySacrificeAnyNumberCostChoice(
+                    gameData, player, sacrificeContext, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {
@@ -654,6 +676,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDevourSacrifice(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeCreaturesSetEnteringPowerToughness ctx) {
             handleSacrificeCreaturesSetEnteringPowerToughness(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness ctx) {
+            handleSacrificePermanentsSetEnteringPowerToughness(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAsEntersForCounters ctx) {
             handleSacrificeAsEntersForCounters(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsToEnter ctx) {
@@ -2472,6 +2496,41 @@ public class MultiPermanentChoiceHandlerService {
             entering.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
             gameLogService.append(gameData, GameLog.cardThen(context.card(),
                     " becomes " + totalPower + "/" + totalToughness + "."));
+        }
+
+        battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
+                context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
+    private void handleSacrificePermanentsSetEnteringPowerToughness(
+            GameData gameData, UUID playerId, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+
+        int sacrificed = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (entering != null) {
+            long timestamp = gameData.nextTimestamp();
+            entering.setBasePowerOverriddenPermanently(true);
+            entering.setPermanentBasePowerOverride(sacrificed);
+            entering.setPermanentBasePowerOverrideTimestamp(timestamp);
+            entering.setBaseToughnessOverriddenPermanently(true);
+            entering.setPermanentBaseToughnessOverride(sacrificed);
+            entering.setPermanentBaseToughnessOverrideTimestamp(timestamp);
+            gameLogService.append(gameData, GameLog.cardThen(context.card(),
+                    " becomes " + sacrificed + "/" + sacrificed + "."));
         }
 
         battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),

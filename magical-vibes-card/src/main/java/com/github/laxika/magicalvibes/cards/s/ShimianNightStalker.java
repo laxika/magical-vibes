@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "36")
+@CardRegistration(set = "LEG", collectorNumber = "116")
 public class ShimianNightStalker extends Card {
 
     public ShimianNightStalker() {

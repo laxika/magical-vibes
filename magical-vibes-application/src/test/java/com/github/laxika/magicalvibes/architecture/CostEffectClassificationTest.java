@@ -75,6 +75,7 @@ class CostEffectClassificationTest {
             "RemoveAllCountersAsCostEffect",
             "RemoveCounterFromControlledCreatureCost",
             "RemoveCounterFromControlledPermanentCost",
+            "RemoveTimeCounterFromPermanentOrSuspendedCardCost",
             "RemoveCounterFromGrantingPermanentCost",
             "RemoveCounterFromSourceCost",
             "RemoveOneOrMoreCountersFromControlledCreaturesCost",

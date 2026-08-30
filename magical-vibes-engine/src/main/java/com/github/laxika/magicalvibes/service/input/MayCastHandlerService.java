@@ -246,7 +246,7 @@ public class MayCastHandlerService {
                 if (validTargets.isEmpty()) {
                     switch (notPlayedDestination) {
                         case HAND -> {
-                            gameData.playerHands.get(player.getId()).add(cardToPlay);
+                            gameData.addCardToHand(player.getId(), cardToPlay);
                             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                                     " can't be cast and is put into " + playerName + "'s hand."));
                         }
@@ -477,7 +477,7 @@ public class MayCastHandlerService {
                                     Card card, String playerName) {
         if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
-            gameData.playerHands.get(playerId).add(card);
+            gameData.addCardToHand(playerId, card);
         }
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is put into " + playerName + "'s hand."));

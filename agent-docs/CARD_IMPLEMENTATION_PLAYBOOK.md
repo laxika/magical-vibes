@@ -589,6 +589,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `DRAW_TRIGGERED` deals 1 damage to controller only while tapped |
+| `ConditionalEffect(new SourceStartedTurnUntapped(), wrapped)` | - | yes | - | intervening-if "if this permanent started the turn untapped" — reads the source's status before its controller's untap step; use for Rasputin Dreamweaver's upkeep trigger |
 | `ConditionalEffect(new SourceIsCreature(), wrapped)` | - | yes | - | intervening-if "if this permanent is a creature" — reads the source's effective creature type |
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
@@ -605,6 +606,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
 | `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
 | `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |
+| `ConditionalEffect(new SourceBlocksWithAtLeastAndOnlyMatchingBlockers(minimumBlockers, blockerPredicate), wrapped)` | - | yes | yes (block) | retains the blocked attacker as trigger context, counts its complete blocking group, and requires every blocker to match the supplied predicate |
 | `ConditionalEffect(new OpponentPoisoned(), wrapped)` | yes | - | - |
 
 **Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`staticfx` `StaticEffectHandlerBean`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).

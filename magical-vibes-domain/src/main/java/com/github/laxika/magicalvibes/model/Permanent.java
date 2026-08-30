@@ -29,6 +29,8 @@ public class Permanent {
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
+    /** Whether this permanent was untapped before its controller's most recent untap step. */
+    @Setter private boolean untappedAtTurnStart;
     private int untapSequence;
     private int controlChangeSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
@@ -521,6 +523,8 @@ public class Permanent {
     @Setter private boolean escaped;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent was cast for its madness cost. */
+    @Setter private boolean madness;
     /** Whether this permanent was cast by paying an alternate cost. */
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
@@ -645,6 +649,7 @@ public class Permanent {
         this.originalCard = card;
         this.bestow = false;
         this.tapped = false;
+        this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
         this.attackedThisCombat = false;
         this.summoningSick = true;
@@ -667,6 +672,7 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
+        this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
         this.attacking = source.attacking;
@@ -846,6 +852,7 @@ public class Permanent {
         this.evoked = source.evoked;
         this.escaped = source.escaped;
         this.prowl = source.prowl;
+        this.madness = source.madness;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;

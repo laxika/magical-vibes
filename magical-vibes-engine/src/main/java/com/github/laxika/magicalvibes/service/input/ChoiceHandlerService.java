@@ -331,6 +331,10 @@ public class ChoiceHandlerService {
             handleMassProtectionColorChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ControllerProtectionColorChoice ctx) {
+            handleControllerProtectionColorChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ColorSetChoice ctx) {
             handleColorSetChoice(gameData, colorName, ctx);
             return;
@@ -920,7 +924,8 @@ public class ChoiceHandlerService {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice
                         .creatureSpellOrAbilityOnly(ctx.playerId(), remaining)
                         .withSnowSource(ctx.fromSnowSource())
-                        .withCaveSource(ctx.fromCaveSource());
+                        .withCaveSource(ctx.fromCaveSource())
+                        .withBasicLandSource(ctx.fromBasicLandSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors,
@@ -968,7 +973,9 @@ public class ChoiceHandlerService {
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype())
                         : ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
                         ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype());
-                nextCtx = nextCtx.withSnowSource(ctx.fromSnowSource()).withCaveSource(ctx.fromCaveSource());
+                nextCtx = nextCtx.withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource())
+                        .withBasicLandSource(ctx.fromBasicLandSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -992,7 +999,8 @@ public class ChoiceHandlerService {
                 ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(
                         ctx.playerId(), ctx.fromCreature(), remaining, null, true)
                         .withSnowSource(ctx.fromSnowSource())
-                        .withCaveSource(ctx.fromCaveSource());
+                        .withCaveSource(ctx.fromCaveSource())
+                        .withBasicLandSource(ctx.fromBasicLandSource());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add (flashback only)."));
@@ -1002,6 +1010,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsRiot()) {
             manaPool.add(manaColor, 1);
             manaPool.addRiotGrantingMana(manaColor, 1);
+            if (ctx.fromBasicLandSource()) {
+                manaPool.addBasicLandManaTag(manaColor, 1);
+            }
             if (ctx.fromCaveSource()) {
                 manaPool.addCaveManaTag(manaColor, 1);
             }
@@ -1021,7 +1032,8 @@ public class ChoiceHandlerService {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.riotColorCombination(
                         ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
                         .withSnowSource(ctx.fromSnowSource())
-                        .withCaveSource(ctx.fromCaveSource());
+                        .withCaveSource(ctx.fromCaveSource())
+                        .withBasicLandSource(ctx.fromBasicLandSource());
                 List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
@@ -1045,6 +1057,9 @@ public class ChoiceHandlerService {
                 if (ctx.fromCreature()) {
                     manaPool.addCreatureMana(manaColor, 1);
                 }
+                if (ctx.fromBasicLandSource()) {
+                    manaPool.addBasicLandManaTag(manaColor, 1);
+                }
             }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
@@ -1059,10 +1074,12 @@ public class ChoiceHandlerService {
                 ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
                         ctx.playerId(), ctx.fromCreature(), remaining, nextColors)
                         .withSnowSource(ctx.fromSnowSource())
-                        .withCaveSource(ctx.fromCaveSource());
+                        .withCaveSource(ctx.fromCaveSource())
+                        .withBasicLandSource(ctx.fromBasicLandSource());
                 if (ctx.differentColors()) {
                     nextCtx = ChoiceContext.ManaColorChoice.differentColors(
                             ctx.playerId(), ctx.fromCreature(), remaining, nextColors);
+                    nextCtx = nextCtx.withBasicLandSource(ctx.fromBasicLandSource());
                 }
                 if (ctx.planeswalkerSpellOnly()) {
                     nextCtx = nextCtx.withPlaneswalkerSpellOnly();
@@ -1125,6 +1142,9 @@ public class ChoiceHandlerService {
         } else if (ctx.grantsAdditionalPlusOneCounter()) {
             manaPool.add(manaColor, amount);
             manaPool.addAdditionalCounterGrantingMana(manaColor, amount);
+            if (ctx.fromBasicLandSource()) {
+                manaPool.addBasicLandManaTag(manaColor, amount);
+            }
             if (ctx.fromCaveSource()) {
                 manaPool.addCaveManaTag(manaColor, amount);
             }
@@ -1176,6 +1196,9 @@ public class ChoiceHandlerService {
             }
             if (ctx.fromCreature()) {
                 manaPool.addCreatureMana(manaColor, amount);
+            }
+            if (ctx.fromBasicLandSource()) {
+                manaPool.addBasicLandManaTag(manaColor, amount);
             }
             resolveProducedManaTriggers(gameData, manaColor);
             // The mana this activation owed has now landed, so the parked snapshot can become a
@@ -2608,6 +2631,26 @@ public class ChoiceHandlerService {
 
         // CR 704.5n/704.5q — the new protection can make attached auras or equipment illegal
         stateBasedActionService.performStateBasedActions(gameData);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleControllerProtectionColorChoice(GameData gameData, String chosenValue,
+            ChoiceContext.ControllerProtectionColorChoice ctx) {
+        CardColor color = CardColor.valueOf(chosenValue);
+
+        gameData.interaction.clearAwaitingInput();
+
+        gameData.playerProtectionFromColorsUntilEndOfTurn
+                .computeIfAbsent(ctx.controllerId(), ignored -> new java.util.HashSet<>())
+                .add(color);
+
+        String colorName = color.name().toLowerCase();
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        gameLogService.append(gameData, GameLog.text(playerName + " gains protection from "
+                + colorName + " until end of turn."));
+        log.info("Game {} - {} gains protection from {} until end of turn",
+                gameData.id, playerName, colorName);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

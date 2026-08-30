@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
@@ -84,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -694,6 +697,23 @@ class PredicateEvaluationServiceTest {
                     new CardTypePredicate(CardType.ARTIFACT),
                     new CardColorPredicate(CardColor.RED)
             )), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardDoesNotShareColorWithSourceControlledCreaturePredicate compares source controller creatures")
+        void cardDoesNotShareColorWithSourceControlledCreaturePredicateMatches() {
+            Card sourceCard = createEnchantment("Source");
+            addPermanent(player1Id, sourceCard);
+            addPermanent(player1Id, createCreature("Green Creature", 2, 2, CardColor.GREEN));
+            Card whiteCard = createCreature("White Creature", 1, 1, CardColor.WHITE);
+            Card greenCard = createCreature("Green Spell", 1, 1, CardColor.GREEN);
+
+            CardPredicate predicate = new CardDoesNotShareColorWithSourceControlledCreaturePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(whiteCard, predicate, sourceCard.getId(), gd, player2Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(greenCard, predicate, sourceCard.getId(), gd, player2Id))
+                    .isFalse();
         }
     }
 
@@ -1644,6 +1664,30 @@ class PredicateEvaluationServiceTest {
             FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
 
             assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentControlledBySourceControllerPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Aura attached to an attacking opponent creature matches")
+        void auraAttachedToAttackingOpponentCreatureMatches() {
+            Permanent attacker = addPermanent(player2Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1Id);
+
+            Card auraCard = new Card();
+            auraCard.setName("Aura");
+            auraCard.setType(CardType.ENCHANTMENT);
+            auraCard.setSubtypes(List.of(CardSubtype.AURA));
+            Permanent aura = addPermanent(player2Id, auraCard);
+            aura.setAttachedTo(attacker.getId());
+
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+            PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate predicate =
+                    new PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(aura, predicate, ctx)).isTrue();
+
+            attacker.setAttacking(false);
+            assertThat(evaluator.matchesPermanentPredicate(aura, predicate, ctx)).isFalse();
         }
 
         @Test

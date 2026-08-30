@@ -32,6 +32,9 @@ public enum PreventionScope {
      *  Non-targeting: every creature on the battlefield as the ability resolves gets its own next-N
      *  shield and every player gets one too; creatures entering later are unaffected. */
     NEXT_TO_EACH_CREATURE_AND_PLAYER,
+    /** "Prevent the next N damage that would be dealt to each creature you control this turn" (Samite Censer-Bearer).
+     *  Every creature controlled by the ability's controller as it resolves gets its own next-N shield. */
+    NEXT_TO_CONTROLLED_CREATURES,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
     /** "Prevent all combat damage that would be dealt this turn by attacking creatures" (Harmless Assault). */

@@ -353,6 +353,7 @@ public class PermanentCounterSupport {
             case CREDIT -> { target.setCounterCount(CounterType.CREDIT, target.getCounterCount(CounterType.CREDIT) + count); yield "credit"; }
             case CURRENCY -> { target.setCounterCount(CounterType.CURRENCY, target.getCounterCount(CounterType.CURRENCY) + count); yield "currency"; }
             case DOOM -> { target.setCounterCount(CounterType.DOOM, target.getCounterCount(CounterType.DOOM) + count); yield "doom"; }
+            case DREAM -> { target.setCounterCount(CounterType.DREAM, target.getCounterCount(CounterType.DREAM) + count); yield "dream"; }
             case CORPSE -> {
                 if (count <= 0) { yield null; }
                 target.setCounterCount(CounterType.CORPSE, target.getCounterCount(CounterType.CORPSE) + count);
