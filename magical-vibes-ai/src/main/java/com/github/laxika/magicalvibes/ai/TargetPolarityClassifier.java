@@ -448,9 +448,12 @@ public class TargetPolarityClassifier {
             // Arcbond's watched creature is a strategic choice: either player's creature may be
             // the best center for the later symmetric damage event.
             entry("RegisterDelayedWatchedCreatureDealtDamageEffect", TargetPolarity.NEUTRAL),
+            entry("RegisterDelayedWatchedCreatureDealtDamageByAttackingCreatureEffect", TargetPolarity.NEUTRAL),
             // The delayed combat-damage reward belongs to the effect's controller, but either
             // player's creature can be the strategically useful watched source.
             entry("RegisterDelayedWatchedCreaturesCombatDamageEffect", TargetPolarity.NEUTRAL),
+            // Feint can save either an attacker or its blockers depending on the combat state.
+            entry("TapAndPreventCombatDamageByTargetAndBlockersEffect", TargetPolarity.NEUTRAL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
@@ -461,6 +464,7 @@ public class TargetPolarityClassifier {
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
+            entry("DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
@@ -490,6 +494,7 @@ public class TargetPolarityClassifier {
             entry("TransformTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
+            entry("PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetFromChosenSourceEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDividedDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventNextDamageByTargetCreatureEffect", TargetPolarity.BENEFICIAL),
