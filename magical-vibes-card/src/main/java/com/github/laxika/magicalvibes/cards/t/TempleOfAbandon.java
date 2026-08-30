@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "224")
+@CardRegistration(set = "THB", collectorNumber = "244")
 public class TempleOfAbandon extends Card {
 
     public TempleOfAbandon() {

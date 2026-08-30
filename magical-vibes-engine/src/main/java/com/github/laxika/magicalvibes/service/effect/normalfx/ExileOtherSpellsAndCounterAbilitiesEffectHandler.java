@@ -77,7 +77,7 @@ public class ExileOtherSpellsAndCounterAbilitiesEffectHandler implements NormalE
             gameData.stack.remove(se);
             stateTriggerService.cleanupResolvedStateTrigger(gameData, se);
             if (!se.isCopy()) {
-                exileService.exileCard(gameData, se.getControllerId(), se.getCard());
+                exileService.exileCard(gameData, se.getControllerId(), se.getPhysicalCard());
             }
             gameLogService.append(gameData, GameLog.cardThen(se.getCard(), " is exiled."));
             log.info("Game {} - {} exiled from stack by {}",

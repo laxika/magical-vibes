@@ -10,7 +10,11 @@ import java.util.Objects;
  *
  * @param effect the effect of the reflexive triggered ability
  */
-public record QueueReflexiveAbilityEffect(CardEffect effect) implements CardEffect {
+public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget) implements CardEffect {
+
+    public QueueReflexiveAbilityEffect(CardEffect effect) {
+        this(effect, false);
+    }
 
     public QueueReflexiveAbilityEffect {
         Objects.requireNonNull(effect, "effect");

@@ -50,7 +50,7 @@ public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                 return;
             }
 
-            lifeSupport.applyLifeLoss(gameData, controllerId, chosenValue, cardName);
+            lifeSupport.applyLifePayment(gameData, controllerId, chosenValue, cardName);
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + chosenValue + " life for " + cardName + " and draws " + chosenValue + " cards."));
             log.info("Game {} - {} pays {} life and draws {} for {}", gameData.id, playerName,
                     chosenValue, chosenValue, cardName);

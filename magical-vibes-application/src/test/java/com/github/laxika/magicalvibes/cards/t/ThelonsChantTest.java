@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.DwarvenHold;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -7,12 +8,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThelonsChant.class, GrizzlyBears.class, Swamp.class})
 class ThelonsChantTest extends BaseCardTest {
 
     @Test
@@ -58,6 +61,20 @@ class ThelonsChantTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(DwarvenHold.class)
+    @DisplayName("A land without the Swamp subtype does not trigger Thelon's Chant")
+    void nonSwampLandDoesNotTrigger() {
+        harness.addToBattlefield(player2, new ThelonsChant());
+
+        harness.setHand(player1, List.of(new DwarvenHold()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("With multiple creatures, the Swamp's controller chooses one for the counter")
     void swampControllerChoosesCreature() {
         harness.addToBattlefield(player2, new ThelonsChant());
@@ -87,6 +104,18 @@ class ThelonsChantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.assertOnBattlefield(player1, "Thelon's Chant");
+    }
+
+    @Test
+    @DisplayName("Thelon's Chant does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotTriggerChant() {
+        harness.addToBattlefield(player1, new ThelonsChant());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Thelon's Chant");
     }
 

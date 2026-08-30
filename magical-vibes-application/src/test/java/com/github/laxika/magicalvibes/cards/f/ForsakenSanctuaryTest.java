@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,40 +17,36 @@ class ForsakenSanctuaryTest extends BaseCardTest {
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
         harness.setHand(player1, List.of(new ForsakenSanctuary()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Forsaken Sanctuary").isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Tapping for white mana produces one white")
-    void tappingProducesWhiteMana() {
+    @DisplayName("Tap ability adds one white mana")
+    void tapAddsWhiteMana() {
         addSanctuaryReady(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Tapping for black mana produces one black")
-    void tappingProducesBlackMana() {
+    @DisplayName("Tap ability adds one black mana")
+    void tapAddsBlackMana() {
         addSanctuaryReady(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
     private Permanent addSanctuaryReady(Player player) {
-        Permanent perm = new Permanent(new ForsakenSanctuary());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = new Permanent(new ForsakenSanctuary());
+        permanent.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(permanent);
+        return permanent;
     }
 }

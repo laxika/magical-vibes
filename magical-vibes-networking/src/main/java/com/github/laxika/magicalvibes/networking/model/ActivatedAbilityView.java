@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.networking.model;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+
 import java.util.List;
 
 /**
@@ -9,5 +11,5 @@ import java.util.List;
  *                                for X capped by that counter's count on the permanent, the way it
  *                                does for {@code variableLoyaltyCost}.
  */
-public record ActivatedAbilityView(String description, boolean requiresTap, boolean needsTarget, boolean needsSpellTarget, String manaCost, Integer loyaltyCost, int minTargets, int maxTargets, boolean isManaAbility, boolean variableLoyaltyCost, String variableCounterCostType, boolean requiresXValue, boolean xValueFromControlledCreatureCounters, int modalChoicesRequired, int modalChoicesMax, List<ModalOptionView> modalOptions, boolean allowsCreatureTapForMana) {
+public record ActivatedAbilityView(String description, boolean requiresTap, boolean needsTarget, boolean needsSpellTarget, String manaCost, Integer loyaltyCost, int minTargets, int maxTargets, boolean isManaAbility, boolean variableLoyaltyCost, String variableCounterCostType, boolean requiresXValue, boolean xValueFromControlledCreatureCounters, CardColor xValueFromCardsInHandColor, boolean xValueFromWaterbendCost, int xValueMin, int modalChoicesRequired, int modalChoicesMax, List<ModalOptionView> modalOptions) {
 }

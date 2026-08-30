@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "282")
 @CardRegistration(set = "5ED", collectorNumber = "366")
 @CardRegistration(set = "4ED", collectorNumber = "317")
+@CardRegistration(set = "SUM", collectorNumber = "246")
 public class DragonEngine extends Card {
 
     public DragonEngine() {

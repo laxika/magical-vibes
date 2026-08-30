@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.WormsOfTheEarthEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,6 +20,70 @@ import java.util.UUID;
  */
 public sealed interface MultiPermanentChoiceContext {
 
+    record RemoveCounterFromChosenPermanents(StackEntry resolvingEntry, CounterType counterType,
+                                             PermanentPredicate permanentFilter)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** The activating player chooses one or more other artifacts to exile as an ability cost. */
+    record ActivatedAbilityExileArtifactsCost(UUID playerId, UUID sourcePermanentId, int abilityIndex,
+                                               int xValue, UUID targetId, Zone targetZone,
+                                               List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                               ActivatedAbility ability, Permanent sourcePermanentSnapshot)
+            implements MultiPermanentChoiceContext {
+
+        public ActivatedAbilityExileArtifactsCost {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            damageAssignments = damageAssignments == null ? Map.of() : Map.copyOf(damageAssignments);
+        }
+    }
+
+    record SagaChapterCounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, String chapterName, CounterType counterType,
+                                          int total) implements MultiPermanentChoiceContext {
+
+        public SagaChapterCounterDistribution {
+            effects = List.copyOf(effects);
+        }
+    }
+
+    /** The controller selected any number of player targets for a Saga chapter. */
+    record SagaChapterTargetSelection(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      UUID sourcePermanentId, String chapterName, int minTargets)
+            implements MultiPermanentChoiceContext {
+
+        public SagaChapterTargetSelection {
+            effects = List.copyOf(effects);
+        }
+    }
+
+    /** Selects zero or more players for an upkeep trigger. */
+    record UpkeepAnyNumberPlayerTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+
+        public UpkeepAnyNumberPlayerTargets {
+            effects = List.copyOf(effects);
+        }
+    }
+
+    /** Selects zero or one permanent for an optional upkeep target. */
+    record UpkeepOptionalPermanentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+
+        public UpkeepOptionalPermanentTarget {
+            effects = List.copyOf(effects);
+        }
+    }
+
+    record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                UUID sourcePermanentId, CounterType counterType, int total)
+            implements MultiPermanentChoiceContext {
+
+        public CounterDistribution {
+            effects = List.copyOf(effects);
+        }
+    }
+
     /** Exile a permanent the damaged player controls (combat damage trigger). */
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }
@@ -29,6 +95,11 @@ public sealed interface MultiPermanentChoiceContext {
         public DealDamageToDamagedPlayerControls(StackEntry damageEntry, int damage) {
             this(damageEntry, new com.github.laxika.magicalvibes.model.amount.Fixed(damage));
         }
+    }
+
+    record DestroyUpToOneAttachedPermanent(UUID targetCreatureId, PermanentPredicate attachedFilter,
+                                           UUID sourceCardId, UUID sourceControllerId,
+                                           String sourceCardName) implements MultiPermanentChoiceContext {
     }
 
     /** Destroy a permanent the damaged player controls (mandatory combat damage trigger, e.g. Deus of Calamity). */
@@ -43,6 +114,11 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanent(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /** Choose a creature or planeswalker to receive redirected damage for the rest of the turn. */
+    record RedirectDamageToChosenPermanent(UUID protectedPlayerId, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Tap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
      * target — e.g. Thalakos Dreamsower's "tap target creature". When
@@ -51,11 +127,12 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record TapChosenPermanent(String sourceName, UUID sourcePermanentId,
                               boolean preventUntapWhileSourceTapped,
-                              boolean preventUntapWhileSourceOnBattlefield) implements MultiPermanentChoiceContext {
+                              boolean preventUntapWhileSourceOnBattlefield,
+                              boolean skipNextUntap) implements MultiPermanentChoiceContext {
 
         public TapChosenPermanent(String sourceName, UUID sourcePermanentId,
                                   boolean preventUntapWhileSourceTapped) {
-            this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false);
+            this(sourceName, sourcePermanentId, preventUntapWhileSourceTapped, false, false);
         }
     }
 
@@ -90,6 +167,16 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Transform [source] and attach it to a creature the damaged player controls. */
     record TransformAndAttach(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller transforms any number of matching permanents. */
+    record TransformAnyNumber(StackEntry resolvingEntry, PermanentPredicate filter)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller selected Equipment they control to attach to the targeted creature. */
+    record AttachAnyNumberOfControlledEquipmentToTargetCreature(UUID targetCreatureId)
+            implements MultiPermanentChoiceContext {
     }
 
     /** The defending player sacrifices the chosen attacking creatures. */
@@ -155,12 +242,52 @@ public sealed interface MultiPermanentChoiceContext {
     record UntapChosenPermanents(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /** The affected player chooses exactly the required number of permanents to untap. */
+    record UntapPermanentsForAmount(String sourceName, int requiredCount)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
+    record ReturnTargetPermanentsToHand(CardEffect thenEffect) implements MultiPermanentChoiceContext {
+        public ReturnTargetPermanentsToHand() {
+            this(null);
+        }
+    }
+
+    record PlayerChoosesUpToPermanentsThenSacrificesRestChoice(List<UUID> candidateIds)
+            implements MultiPermanentChoiceContext {
+        public PlayerChoosesUpToPermanentsThenSacrificesRestChoice {
+            candidateIds = List.copyOf(candidateIds);
+        }
     }
 
     /** Return the chosen permanents and record the number returned on the resolving stack entry. */
     record ReturnAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    }
+
+    /** Return exactly the required number of matching permanents, or all available if fewer exist. */
+    record ReturnNControlledPermanentsToHand(
+            com.github.laxika.magicalvibes.model.effect.ReturnNControlledPermanentsToHandEffect effect)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Resolve one choice in a repeated immediate controller-creature flicker. */
+    record FlickerAnyNumber(StackEntry resolvingEntry,
+                            com.github.laxika.magicalvibes.model.effect.FlickerEffect effect,
+                            int remainingIterations) implements MultiPermanentChoiceContext {
+    }
+
+    /** Exile the selected face-up creatures with disguise and cloak them. */
+    record RecloakDisguisedCreatures(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    }
+
+    /** Choose up to one creature that saddled the source this turn, then flicker the source and it. */
+    record ExileSelfAndSaddledCreature(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    }
+
+    /** Choose a saddler, create its tapped and attacking token copy, and repeat as needed. */
+    record CreateTokenCopiesOfSaddledCreature(StackEntry resolvingEntry, int remainingIterations)
+            implements MultiPermanentChoiceContext {
     }
 
     /**
@@ -170,19 +297,33 @@ public sealed interface MultiPermanentChoiceContext {
      * the players still to choose in APNAP order and {@code accumulatedSacrificeIds} the ids
      * chosen so far (including auto-picks made at begin time); each answered pick re-begins
      * with the head of the remainder. For the direct single-player flow both lists are empty
-     * and the chosen permanents are sacrificed immediately.
+     * and the chosen permanents are sacrificed immediately. {@code recordSacrificedCount} carries
+     * the actual number sacrificed back to the parked stack entry for a following effect.
      */
     record ForcedSacrifice(UUID sacrificingPlayerId,
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
                            java.util.List<UUID> accumulatedSacrificeIds,
-                           boolean simultaneousFlow)
+                           boolean simultaneousFlow,
+                           boolean recordSacrificedCount)
             implements MultiPermanentChoiceContext {
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false);
         }
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds,
+                               boolean simultaneousFlow) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false);
+        }
+    }
+
+    /** Worms of the Earth: choose exactly two lands to sacrifice for its upkeep choice. */
+    record WormsOfTheEarthSacrificeLands(UUID playerId, Card sourceCard, WormsOfTheEarthEffect effect)
+            implements MultiPermanentChoiceContext {
     }
 
     /** The target player chooses a creature and a planeswalker to sacrifice when possible. */
@@ -232,13 +373,15 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * "Each player chooses a creature to keep, the rest are destroyed" (destroy-rest flow).
+     * "Choose a matching permanent to keep, the rest are destroyed" (destroy-rest flow).
      * {@code remainingChoosers} and {@code protectedIds} advance across re-begins exactly as
-     * in {@link ForcedSacrifice}; after the last chooser, every creature not in
+     * in {@link ForcedSacrifice}; after the last chooser, every matching permanent not in
      * {@code protectedIds} is destroyed. {@code sourceName} is kept for the completion log.
      */
     record DestroyRestChoice(java.util.List<PendingForcedSacrifice> remainingChoosers,
-                             java.util.List<UUID> protectedIds, String sourceName)
+                             java.util.List<UUID> protectedIds, String sourceName,
+                             com.github.laxika.magicalvibes.model.filter.PermanentPredicate destructionFilter,
+                             String choicePrompt, boolean requiresChoice)
             implements MultiPermanentChoiceContext {
     }
 
@@ -269,6 +412,20 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each player chooses up to one qualifying permanent controlled by an opponent. */
+    record EachPlayerChoosesOpponentPermanentToExile(List<UUID> remainingPlayerIds,
+                                                     List<UUID> chosenIds,
+                                                     PermanentPredicate filter,
+                                                     UUID sourceCardId,
+                                                     UUID sourceControllerId,
+                                                     String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesOpponentPermanentToExile {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
     /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */
     record CombatDamageBounce(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
@@ -287,9 +444,19 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** Put one counter on an opponent's creature for each remaining cumulative-upkeep payment. */
+    record OpponentCreatureCounterPlacement(CounterType counterType, int remainingCount,
+                                             UUID placingPlayerId) implements MultiPermanentChoiceContext {
+    }
+
     /** Put counters on the chosen permanent and remember it for a following effect. */
-    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count)
+    record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count,
+                                                            boolean recordPlacement)
             implements MultiPermanentChoiceContext {
+
+        public OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count) {
+            this(counterType, count, false);
+        }
     }
 
     /** Put an awakening counter on each chosen land (they become 8/8 Elementals). */
@@ -310,6 +477,10 @@ public sealed interface MultiPermanentChoiceContext {
     /** Tap the chosen permanents to boost the source by the number tapped (Siege Striker). */
     record TapAnyNumberBoostSelf(UUID sourcePermanentId, int powerPerPermanent, int toughnessPerPermanent)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of untapped permanents to tap. */
+    record TapAnyNumberPermanents() implements MultiPermanentChoiceContext {
     }
 
     /**
@@ -349,6 +520,11 @@ public sealed interface MultiPermanentChoiceContext {
     record TapCreaturesBoostSelf(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
 
+    /** Tap exactly N other creatures, or decline, then make the source unblockable. */
+    record TapOtherCreaturesForUnblockable(UUID sourcePermanentId, int requiredCount)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Raiding Party's current player chooses any number of untapped white creatures to tap. */
     record RaidingPartyTapChoice(List<UUID> playerIds, int playerIndex, List<Integer> tappedCounts,
                                  String sourceName) implements MultiPermanentChoiceContext {
@@ -385,6 +561,12 @@ public sealed interface MultiPermanentChoiceContext {
                                     String sourceSetCode) implements MultiPermanentChoiceContext {
     }
 
+    /** Tap any number of creatures, then queue the target-dependent reflexive ability. */
+    record TapCreaturesThenQueueReflexiveAbility(StackEntry resolvingEntry,
+                                                 CardEffect reflexiveEffect)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Tap the chosen permanents, then draw a card for each permanent tapped (Guild Summit). */
     record TapPermanentsDrawPerTapped() implements MultiPermanentChoiceContext {
     }
@@ -408,7 +590,7 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificePermanentsDrawPerSacrificed() implements MultiPermanentChoiceContext {
     }
 
-    /** Sacrifice exactly the chosen permanents, then resolve the follow-up effect if all succeeded. */
+    /** Sacrifice exactly the chosen permanents, then resolve the follow-up effect. */
     record SacrificePermanentsThen(UUID controllerId, Card sourceCard, int requiredCount,
                                    CardEffect thenEffect) implements MultiPermanentChoiceContext {
     }
@@ -420,11 +602,30 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificePermanentsAddManaPerSacrificed(ManaColor color) implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses none or exactly {@code requiredCount} permanents to sacrifice. */
+    record SacrificePermanentsOrElse(int requiredCount, CardEffect sacrificedEffect,
+                                     CardEffect elseEffect) implements MultiPermanentChoiceContext {
+    }
+
     /**
-     * Sacrifice the chosen permanents and record the number actually sacrificed on the resolving
-     * stack entry for a following {@code EventValue} effect.
+     * Sacrifice the chosen permanents and record their count, and optionally their total power, on
+     * the resolving stack entry for a following effect.
      */
-    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    record SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry,
+                                            boolean recordSacrificedPower)
+            implements MultiPermanentChoiceContext {
+
+        public SacrificeAnyNumberAndRecordCount(StackEntry resolvingEntry) {
+            this(resolvingEntry, false);
+        }
+    }
+
+    /** The controller chose distinct artifact and/or creature tokens to copy. */
+    record CreateTokenCopiesOfChosenDistinctControlledTokens() implements MultiPermanentChoiceContext {
+    }
+
+    /** Exile any number of selected permanents until the source permanent leaves the battlefield. */
+    record ExileAnyNumberUntilSourceLeaves(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
 
     /**
@@ -514,6 +715,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chose other nontoken creatures to exile until the source leaves. */
+    record ExileOwnNontokenCreaturesUntilSourceLeaves(UUID sourcePermanentId)
+            implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Static Orb / Stoic Angel: the active player chose up to the cap of the permanents matching
      * {@code filter} that would otherwise untap; only those (plus any permanents the filter excludes)
@@ -535,6 +741,13 @@ public sealed interface MultiPermanentChoiceContext {
     record KillingWaveKeep(UUID choosingPlayerId, int xValue, String sourceName,
                            java.util.List<UUID> remainingPlayerIds,
                            java.util.List<UUID> accumulatedKeepIds)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /** Each player chose creatures to keep whose total power is at most a fixed limit. */
+    record EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice(
+            UUID choosingPlayerId, int maxPower, java.util.List<UUID> remainingPlayerIds,
+            java.util.List<UUID> accumulatedKeepIds, String sourceName)
             implements MultiPermanentChoiceContext {
     }
 
@@ -581,22 +794,45 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Krenko's Buzzcrusher: the controller chooses up to one nonbasic land for each player. */
+    record DestroyUpToOneNonbasicLandPerPlayerChoice(UUID controllerId, List<UUID> playerIds,
+                                                     int playerIndex, List<UUID> selectedIds,
+                                                     String sourceName)
+            implements MultiPermanentChoiceContext {
+
+        public DestroyUpToOneNonbasicLandPerPlayerChoice {
+            playerIds = List.copyOf(playerIds);
+            selectedIds = List.copyOf(selectedIds);
+        }
+    }
+
     /**
      * Release-style choice: the current player chooses one permanent for the current card type.
      * The current player's picks and the already completed players' picks are carried separately so
      * a multi-typed permanent can be chosen for more than one listed type.
      */
-    record EachPlayerSacrificeOneOfEachTypeChoice(java.util.List<UUID> playerIds, int playerIndex,
-                                                  int typeIndex, java.util.List<UUID> accumulatedIds,
-                                                  java.util.List<UUID> currentPlayerIds,
-                                                  String sourceName)
+      record EachPlayerSacrificeOneOfEachTypeChoice(java.util.List<UUID> playerIds, int playerIndex,
+                                                    int typeIndex, java.util.List<UUID> accumulatedIds,
+                                                    java.util.List<UUID> currentPlayerIds,
+                                                    String sourceName)
             implements MultiPermanentChoiceContext {
         public EachPlayerSacrificeOneOfEachTypeChoice {
             playerIds = java.util.List.copyOf(playerIds);
             accumulatedIds = java.util.List.copyOf(accumulatedIds);
             currentPlayerIds = java.util.List.copyOf(currentPlayerIds);
-        }
-    }
+          }
+      }
+
+      /** Deadly Brew: each player chooses a creature or planeswalker before all are sacrificed. */
+      record EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice(
+              UUID effectControllerId, java.util.List<UUID> playerIds, int playerIndex,
+              java.util.Map<UUID, UUID> chosenByPlayer,
+              String sourceName) implements MultiPermanentChoiceContext {
+          public EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice {
+              playerIds = java.util.List.copyOf(playerIds);
+              chosenByPlayer = java.util.Map.copyOf(chosenByPlayer);
+          }
+      }
 
     /**
      * Global Ruin: the current player chose a land for the current basic land type. The kept

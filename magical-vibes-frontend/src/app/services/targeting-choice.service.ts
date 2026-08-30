@@ -84,6 +84,12 @@ export class TargetingChoiceService {
     this.convokeSelectedCreatureIds.set([]);
     this.pendingMultiTargetIds = [];
     this.pendingConvokeCard = null;
+    this.harmonizing = false;
+    this.harmonizeCardIndex = -1;
+    this.harmonizeCardName = '';
+    this.harmonizeSelectedPermanentId.set(null);
+    this.pendingHarmonizeCard = null;
+    this.pendingHarmonizePermanentId = null;
     // Kicker
     this.choosingKicker = false;
     this.kickerCardIndex = -1;
@@ -101,12 +107,14 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
     this.pendingBuybackSacrificePermanentId = null;
+    this.pendingBuybackSacrificePermanentIds = [];
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -120,6 +128,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
@@ -129,6 +138,13 @@ export class TargetingChoiceService {
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
     this.pendingGraveyardCastDiscardHandIndex = null;
+    this.selectingGraveyardCastExile = false;
+    this.graveyardCastExileCardIndex = -1;
+    this.graveyardCastExileCardName = '';
+    this.graveyardCastExileCount = 0;
+    this.graveyardCastExileLabel = '';
+    this.graveyardCastExileSelectedIndices.set([]);
+    this.pendingGraveyardCastExileIndices = [];
     // Exile / library-top casting
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
@@ -149,11 +165,23 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostIsPlot = false;
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
+    this.alternateCostCollectEvidence = false;
+    this.alternateCostCollectEvidenceAmount = 0;
+    this.selectingAlternateCostGraveyardCards = false;
+    this.alternateCostSelectedGraveyardIndices.set([]);
+    this.pendingAlternateExileGraveyardIndices = [];
     this.alternateCostSelectedIds.set([]);
+    this.choosingAdditionalCost = false;
+    this.additionalCostCardIndex = -1;
+    this.additionalCostCardName = '';
+    this.additionalCostLifePayment = 0;
+    this.additionalCostManaCost = '';
+    this.pendingPayLifeForAdditionalCost = null;
     this.choosingBehold = false;
     this.selectingBeholdPermanent = false;
     this.selectingBeholdHandCard = false;
@@ -221,7 +249,8 @@ export class TargetingChoiceService {
    */
   get selectingCastTarget(): boolean {
     return this.selectingTarget || this.targetingSpell || this.multiTargeting
-      || this.targetingGraveyard || this.targetingExile;
+      || this.targetingGraveyard || this.targetingExile || this.harmonizing
+      || this.selectingGraveyardCastExile;
   }
 
   // --- Ability picker state ---
@@ -247,6 +276,7 @@ export class TargetingChoiceService {
   modeChoicesRequired = 1;
   modeChoicesMax = 1;
   modeOptional = false;
+  modeModesMayRepeat = false;
   modeSelectedIndices: number[] = [];
   modeForAbility = false;
   modeAbilityPermanentIndex = -1;
@@ -296,8 +326,13 @@ export class TargetingChoiceService {
   convokeSelectedCreatureIds = signal<string[]>([]);
   private pendingMultiTargetIds: string[] = [];
   private pendingConvokeCard: Card | null = null;
-  private pendingCreatureManaAbility = false;
-  private pendingCreatureManaAbilityIndex = -1;
+
+  harmonizing = false;
+  harmonizeCardIndex = -1;
+  harmonizeCardName = '';
+  harmonizeSelectedPermanentId = signal<string | null>(null);
+  private pendingHarmonizeCard: Card | null = null;
+  private pendingHarmonizePermanentId: string | null = null;
 
   // --- Kicker state ---
   choosingKicker = false;
@@ -316,12 +351,14 @@ export class TargetingChoiceService {
   buybackCardName = '';
   buybackCost = '';
   buybackRequiresSacrifice = false;
+  buybackSacrificeCount = 0;
   buybackDiscardCount = 0;
   choosingBuybackSacrifice = false;
   buybackSacrificeCardIndex = -1;
   buybackSacrificeDescription = '';
-  buybackSacrificeSelectedId = signal<string | null>(null);
+  buybackSacrificeSelectedIds = signal<string[]>([]);
   private pendingBuybackSacrificePermanentId: string | null = null;
+  private pendingBuybackSacrificePermanentIds: string[] = [];
   choosingBuybackDiscard = false;
   buybackDiscardCardIndex = -1;
   buybackDiscardSelectedIndices = signal<number[]>([]);
@@ -334,6 +371,22 @@ export class TargetingChoiceService {
   graveyardCastDiscardCardIndex = -1;
   graveyardCastDiscardCardName = '';
   private pendingGraveyardCastDiscardHandIndex: number | null = null;
+  selectingGraveyardCastExile = false;
+  graveyardCastExileCardIndex = -1;
+  graveyardCastExileCardName = '';
+  graveyardCastExileCount = 0;
+  graveyardCastExileLabel = '';
+  graveyardCastExileSelectedIndices = signal<number[]>([]);
+  private pendingGraveyardCastExileIndices: number[] = [];
+
+  get graveyardCastExileChoices(): { card: Card; index: number }[] {
+    const game = this.gameSignal?.();
+    const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+    const graveyard = playerIndex >= 0 ? game?.graveyards[playerIndex] ?? [] : [];
+    return graveyard
+      .map((card, index) => ({ card, index }))
+      .filter(entry => entry.index !== this.graveyardCastExileCardIndex);
+  }
 
   // --- Exile / library-top casting state ---
   private pendingFromExileCardId: string | null = null;
@@ -355,17 +408,32 @@ export class TargetingChoiceService {
   alternateCostTapCount = 0;
   alternateCostReturnCount = 0;
   alternateCostManaCost = '';
+  alternateCostIsPlot = false;
   alternateCostExileHandCount = 0;
   alternateCostExileHandLabel = '';
   alternateCostRevealsHandCard = false;
   alternateCostDiscardsHandCard = false;
   alternateCostRequiresTarget = false;
+  alternateCostCollectEvidence = false;
+  alternateCostCollectEvidenceAmount = 0;
+  selectingAlternateCostGraveyardCards = false;
+  alternateCostSelectedGraveyardIndices = signal<number[]>([]);
   alternateCostSelectedIds = signal<string[]>([]);
+  alternateCostSelectedHandIndices = signal<number[]>([]);
   selectingAlternateCostHandCard = false;
   /** Hand index to exile when confirming an exile-from-hand alternate cast (pre-removal index). */
   private pendingAlternateExileHandIndex: number | null = null;
   private pendingAlternateHandCardIndices: number[] = [];
   private pendingAlternateHandCardDiscards = false;
+  private pendingAlternateExileHandIndices: number[] = [];
+  private pendingAlternateExileGraveyardIndices: number[] = [];
+
+  choosingAdditionalCost = false;
+  additionalCostCardIndex = -1;
+  additionalCostCardName = '';
+  additionalCostLifePayment = 0;
+  additionalCostManaCost = '';
+  private pendingPayLifeForAdditionalCost: boolean | null = null;
 
   choosingBehold = false;
   selectingBeholdPermanent = false;
@@ -558,15 +626,27 @@ export class TargetingChoiceService {
         this.alternateCostTapCount = card.alternateCostTapCount;
         this.alternateCostReturnCount = card.alternateCostReturnCount;
         this.alternateCostManaCost = card.alternateCostManaCost ?? '';
+        this.alternateCostIsPlot = card.keywords.includes('PLOT');
         this.alternateCostExileHandCount = card.alternateCostExileHandCount ?? 0;
         this.alternateCostExileHandLabel = card.alternateCostExileHandLabel ?? '';
         this.alternateCostRevealsHandCard = card.alternateCostRevealsHandCard ?? false;
         this.alternateCostDiscardsHandCard = card.alternateCostDiscardsHandCard ?? false;
         this.alternateCostRequiresTarget = card.alternateCostRequiresTarget ?? false;
+        this.alternateCostCollectEvidence = card.alternateCostCollectEvidence ?? false;
+        this.alternateCostCollectEvidenceAmount = card.alternateCostCollectEvidenceAmount ?? 0;
         return;
       }
 
       // Check for Phyrexian mana — show chooser before anything else
+      if ((card.additionalCostLifePayment ?? 0) > 0 && card.additionalCostManaCost) {
+        this.choosingAdditionalCost = true;
+        this.additionalCostCardIndex = index;
+        this.additionalCostCardName = card.name;
+        this.additionalCostLifePayment = card.additionalCostLifePayment ?? 0;
+        this.additionalCostManaCost = card.additionalCostManaCost;
+        return;
+      }
+
       if (card.hasPhyrexianMana && card.phyrexianManaCount > 0) {
         this.choosingPhyrexianPayment = true;
         this.phyrexianCardIndex = index;
@@ -592,6 +672,7 @@ export class TargetingChoiceService {
         this.buybackCardName = card.name;
         this.buybackCost = card.buybackCost;
         this.buybackRequiresSacrifice = card.buybackRequiresSacrifice ?? false;
+        this.buybackSacrificeCount = card.buybackSacrificeCount ?? 1;
         this.buybackDiscardCount = card.buybackDiscardCount ?? 0;
         return;
       }
@@ -624,6 +705,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -778,8 +860,9 @@ export class TargetingChoiceService {
     this.pendingBuyback = true;
     const savedIndex = this.buybackCardIndex;
     const requiresSacrifice = this.buybackRequiresSacrifice;
+    const sacrificeCount = this.buybackSacrificeCount;
     const discardCount = this.buybackDiscardCount;
-    const sacrificeDescription = this.buybackCost;
+    const sacrificeDescription = this.buybackCost.replace(/^Sacrifice /, '');
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
@@ -788,7 +871,8 @@ export class TargetingChoiceService {
       this.choosingBuybackSacrifice = true;
       this.buybackSacrificeCardIndex = savedIndex;
       this.buybackSacrificeDescription = sacrificeDescription;
-      this.buybackSacrificeSelectedId.set(null);
+      this.buybackSacrificeCount = sacrificeCount;
+      this.buybackSacrificeSelectedIds.set([]);
       return;
     }
     if (discardCount > 0) {
@@ -808,6 +892,7 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.buybackDiscardSelectedIndices.set([]);
     this.pendingBuybackDiscardHandIndices = null;
@@ -820,6 +905,7 @@ export class TargetingChoiceService {
     this.buybackCardName = '';
     this.buybackCost = '';
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.buybackDiscardCount = 0;
     this.buybackDiscardSelectedIndices.set([]);
     this.pendingBuybackDiscardHandIndices = null;
@@ -828,20 +914,35 @@ export class TargetingChoiceService {
 
   toggleBuybackSacrifice(permanentId: string): void {
     if (!this.choosingBuybackSacrifice) return;
-    this.buybackSacrificeSelectedId.set(
-      this.buybackSacrificeSelectedId() === permanentId ? null : permanentId);
+    const selected = this.buybackSacrificeSelectedIds();
+    if (selected.includes(permanentId)) {
+      this.buybackSacrificeSelectedIds.set(selected.filter(id => id !== permanentId));
+    } else if (selected.length < this.buybackSacrificeCount) {
+      this.buybackSacrificeSelectedIds.set([...selected, permanentId]);
+    }
+  }
+
+  isBuybackSacrificeSelected(permanentId: string): boolean {
+    return this.choosingBuybackSacrifice && this.buybackSacrificeSelectedIds().includes(permanentId);
   }
 
   confirmBuybackSacrifice(): void {
-    const selectedId = this.buybackSacrificeSelectedId();
-    if (!this.choosingBuybackSacrifice || selectedId == null) return;
+    const selectedIds = this.buybackSacrificeSelectedIds();
+    if (!this.choosingBuybackSacrifice || selectedIds.length !== this.buybackSacrificeCount) return;
     const savedIndex = this.buybackSacrificeCardIndex;
-    this.pendingBuybackSacrificePermanentId = selectedId;
+    if (this.buybackSacrificeCount === 1) {
+      this.pendingBuybackSacrificePermanentId = selectedIds[0];
+      this.pendingBuybackSacrificePermanentIds = [];
+    } else {
+      this.pendingBuybackSacrificePermanentId = null;
+      this.pendingBuybackSacrificePermanentIds = [...selectedIds];
+    }
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
     this.buybackRequiresSacrifice = false;
+    this.buybackSacrificeCount = 0;
     this.continuePlayCard(savedIndex);
   }
 
@@ -888,9 +989,11 @@ export class TargetingChoiceService {
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
-    this.buybackSacrificeSelectedId.set(null);
+    this.buybackSacrificeSelectedIds.set([]);
+    this.buybackSacrificeCount = 0;
     this.pendingBuyback = false;
     this.pendingBuybackSacrificePermanentId = null;
+    this.pendingBuybackSacrificePermanentIds = [];
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -905,6 +1008,15 @@ export class TargetingChoiceService {
       this.modeSelectedIndices = [optionIndex];
       return;
     }
+    if (this.modeModesMayRepeat) {
+      const count = this.modeSelectedIndices.filter(i => i === optionIndex).length;
+      this.modeSelectedIndices = this.modeSelectedIndices.length >= this.modeChoicesMax
+        ? count === 0
+          ? this.modeSelectedIndices
+          : this.modeSelectedIndices.filter(i => i !== optionIndex)
+        : [...this.modeSelectedIndices, optionIndex];
+      return;
+    }
     if (this.modeSelectedIndices.includes(optionIndex)) {
       this.modeSelectedIndices = this.modeSelectedIndices.filter(i => i !== optionIndex);
     } else if (this.modeSelectedIndices.length < this.modeChoicesMax) {
@@ -916,14 +1028,26 @@ export class TargetingChoiceService {
     return this.modeSelectedIndices.includes(optionIndex);
   }
 
+  modeSelectionCount(optionIndex: number): number {
+    return this.modeSelectedIndices.filter(i => i === optionIndex).length;
+  }
+
   /**
    * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
-   * does: exact choose-one uses the 0-based mode index; choose-two / one-or-more use a
-   * negative bitmask (including selecting a single mode of a one-or-more spell).
+   * does: exact choose-one uses the 0-based mode index; ordinary multi-mode spells use a
+   * negative bitmask, while repeatable modes use a positional encoding.
    */
   private encodeModeSelection(indices: number[]): number {
     if (this.modeChoicesRequired === 1 && this.modeChoicesMax === 1) {
       return indices[0];
+    }
+    if (this.modeModesMayRepeat) {
+      const base = this.modeOptions.length + 1;
+      let encoded = 0;
+      for (const i of indices) {
+        encoded = encoded * base + i + 1;
+      }
+      return -encoded;
     }
     let mask = 0;
     for (const i of indices) {
@@ -1035,6 +1159,7 @@ export class TargetingChoiceService {
     this.modeChoicesRequired = 1;
     this.modeChoicesMax = 1;
     this.modeOptional = false;
+    this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
     this.modeForAbility = false;
     this.modeAbilityPermanentIndex = -1;
@@ -1043,13 +1168,82 @@ export class TargetingChoiceService {
 
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
     this.pendingFlashback = true;
+    if ((card.graveyardCastExileCount ?? 0) > 0) {
+      this.selectingGraveyardCastExile = true;
+      this.graveyardCastExileCardIndex = graveyardIndex;
+      this.graveyardCastExileCardName = card.name;
+      this.graveyardCastExileCount = card.graveyardCastExileCount ?? 0;
+      this.graveyardCastExileLabel = card.graveyardCastExileLabel ?? 'other cards';
+      this.graveyardCastExileSelectedIndices.set([]);
+      return;
+    }
     if (card.graveyardCastRequiresDiscard) {
       this.selectingGraveyardCastDiscard = true;
       this.graveyardCastDiscardCardIndex = graveyardIndex;
       this.graveyardCastDiscardCardName = card.name;
       return;
     }
+    if (card.hasHarmonize) {
+      this.startHarmonizeSelection(graveyardIndex, card);
+      return;
+    }
     this.continueFlashbackPlay(graveyardIndex, card);
+  }
+
+  toggleGraveyardCastExile(index: number): void {
+    if (!this.selectingGraveyardCastExile || index === this.graveyardCastExileCardIndex) return;
+    const selected = this.graveyardCastExileSelectedIndices();
+    if (selected.includes(index)) {
+      this.graveyardCastExileSelectedIndices.set(selected.filter(i => i !== index));
+    } else if (selected.length < this.graveyardCastExileCount) {
+      this.graveyardCastExileSelectedIndices.set([...selected, index]);
+    }
+  }
+
+  isGraveyardCastExileSelected(index: number): boolean {
+    return this.selectingGraveyardCastExile && this.graveyardCastExileSelectedIndices().includes(index);
+  }
+
+  confirmGraveyardCastExile(): void {
+    if (!this.selectingGraveyardCastExile
+        || this.graveyardCastExileSelectedIndices().length !== this.graveyardCastExileCount) return;
+    const graveyardIndex = this.graveyardCastExileCardIndex;
+    const game = this.gameSignal();
+    const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+    const card = playerIndex >= 0 ? game?.graveyards[playerIndex]?.[graveyardIndex] : undefined;
+    if (!card) return;
+    // Graveyard cast requests use indices after the spell itself is removed. The selection UI
+    // displays the original graveyard, so shift choices that were below the spell down by one.
+    this.pendingGraveyardCastExileIndices = this.graveyardCastExileSelectedIndices()
+      .map(index => index > graveyardIndex ? index - 1 : index);
+    this.selectingGraveyardCastExile = false;
+    this.graveyardCastExileCardIndex = -1;
+    this.graveyardCastExileCardName = '';
+    this.graveyardCastExileCount = 0;
+    this.graveyardCastExileLabel = '';
+    this.graveyardCastExileSelectedIndices.set([]);
+    if (card.graveyardCastRequiresDiscard) {
+      this.selectingGraveyardCastDiscard = true;
+      this.graveyardCastDiscardCardIndex = graveyardIndex;
+      this.graveyardCastDiscardCardName = card.name;
+    } else if (card.hasHarmonize) {
+      this.startHarmonizeSelection(graveyardIndex, card);
+    } else if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
+      this.continueFlashbackPlay(graveyardIndex, card);
+    } else {
+      this.sendPlayCardMessage(graveyardIndex, null);
+    }
+  }
+
+  cancelGraveyardCastExile(): void {
+    this.selectingGraveyardCastExile = false;
+    this.graveyardCastExileCardIndex = -1;
+    this.graveyardCastExileCardName = '';
+    this.graveyardCastExileCount = 0;
+    this.graveyardCastExileLabel = '';
+    this.graveyardCastExileSelectedIndices.set([]);
+    this.pendingGraveyardCastExileIndices = [];
+    this.pendingFlashback = false;
   }
 
   selectGraveyardCastDiscardHandCard(handIndex: number): void {
@@ -1063,7 +1257,9 @@ export class TargetingChoiceService {
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
-    if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
+    if (card.hasHarmonize) {
+      this.startHarmonizeSelection(graveyardIndex, card);
+    } else if (card.needsTarget || card.additionalBeholdFlashbackOnly) {
       this.continueFlashbackPlay(graveyardIndex, card);
     } else {
       this.sendPlayCardMessage(graveyardIndex, null);
@@ -1102,6 +1298,66 @@ export class TargetingChoiceService {
     this.validTargetIds.set(allIds);
     this.validTargetPlayerIds.set(new Set());
     this.targetingPrompt = 'Choose a target for ' + card.name + ' (flashback).';
+  }
+
+  startHarmonizeSelection(graveyardIndex: number, card: Card): void {
+    this.pendingFlashback = true;
+    this.harmonizing = true;
+    this.harmonizeCardIndex = graveyardIndex;
+    this.harmonizeCardName = card.name;
+    this.harmonizeSelectedPermanentId.set(null);
+    this.pendingHarmonizeCard = card;
+  }
+
+  toggleHarmonizeCreature(permanentId: string): void {
+    if (!this.harmonizing) return;
+    this.harmonizeSelectedPermanentId.set(
+      this.harmonizeSelectedPermanentId() === permanentId ? null : permanentId);
+  }
+
+  isHarmonizeSelected(permanentId: string): boolean {
+    return this.harmonizeSelectedPermanentId() === permanentId;
+  }
+
+  confirmHarmonize(): void {
+    if (!this.harmonizing) return;
+    const card = this.pendingHarmonizeCard;
+    const cardIndex = this.harmonizeCardIndex;
+    this.pendingHarmonizePermanentId = this.harmonizeSelectedPermanentId();
+    this.clearHarmonizeState();
+    if (card?.needsTarget) {
+      this.continueFlashbackPlay(cardIndex, card);
+    } else {
+      this.sendPlayCardMessage(cardIndex, null);
+    }
+  }
+
+  skipHarmonize(): void {
+    if (!this.harmonizing) return;
+    const card = this.pendingHarmonizeCard;
+    const cardIndex = this.harmonizeCardIndex;
+    this.pendingHarmonizePermanentId = null;
+    this.clearHarmonizeState();
+    if (card?.needsTarget) {
+      this.continueFlashbackPlay(cardIndex, card);
+    } else {
+      this.sendPlayCardMessage(cardIndex, null);
+    }
+  }
+
+  cancelHarmonize(): void {
+    if (!this.harmonizing) return;
+    this.clearHarmonizeState();
+    this.pendingFlashback = false;
+    this.pendingHarmonizePermanentId = null;
+  }
+
+  private clearHarmonizeState(): void {
+    this.harmonizing = false;
+    this.harmonizeCardIndex = -1;
+    this.harmonizeCardName = '';
+    this.harmonizeSelectedPermanentId.set(null);
+    this.pendingHarmonizeCard = null;
   }
 
   // ========== Casting from exile / top of library ==========
@@ -1144,6 +1400,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = card.modalChoicesRequired;
       this.modeChoicesMax = card.modalChoicesMax > 0 ? card.modalChoicesMax : card.modalChoicesRequired;
       this.modeOptional = card.modalOptional;
+      this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
       return;
     }
@@ -1245,6 +1502,9 @@ export class TargetingChoiceService {
         }
       } else {
         msg.discardHandCardIndex = alternateHandCardIndices[0];
+        if (this.pendingAlternateExileHandIndices.length > 1) {
+          msg.discardHandCardIndices = this.pendingAlternateExileHandIndices;
+        }
       }
       if (this.gameSignal()?.hand?.[cardIndex]?.keywords?.includes('MORPH')) {
         msg.morph = true;
@@ -1252,10 +1512,19 @@ export class TargetingChoiceService {
       this.pendingAlternateExileHandIndex = null;
       this.pendingAlternateHandCardIndices = [];
       this.pendingAlternateHandCardDiscards = false;
+      this.pendingAlternateExileHandIndices = [];
+    }
+    if (this.pendingAlternateExileGraveyardIndices.length > 0) {
+      msg.exileGraveyardCardIndices = this.pendingAlternateExileGraveyardIndices;
+      this.pendingAlternateExileGraveyardIndices = [];
     }
     if (this.pendingGraveyardCastDiscardHandIndex != null) {
       msg.discardHandCardIndex = this.pendingGraveyardCastDiscardHandIndex;
       this.pendingGraveyardCastDiscardHandIndex = null;
+    }
+    if (this.pendingGraveyardCastExileIndices.length > 0) {
+      msg.exileGraveyardCardIndices = this.pendingGraveyardCastExileIndices;
+      this.pendingGraveyardCastExileIndices = [];
     }
     if (this.pendingBeholdPermanentId != null) {
       msg.beholdPermanentId = this.pendingBeholdPermanentId;
@@ -1280,9 +1549,17 @@ export class TargetingChoiceService {
     if (this.pendingPhyrexianLifeCount != null) {
       msg.phyrexianLifeCount = this.pendingPhyrexianLifeCount;
     }
+    if (this.pendingPayLifeForAdditionalCost != null) {
+      msg.payLifeForAdditionalCost = this.pendingPayLifeForAdditionalCost;
+      this.pendingPayLifeForAdditionalCost = null;
+    }
     if (this.pendingFlashback) {
       msg.flashback = true;
       this.pendingFlashback = false;
+    }
+    if (this.pendingHarmonizePermanentId != null) {
+      msg.alternateCostSacrificePermanentIds = [this.pendingHarmonizePermanentId];
+      this.pendingHarmonizePermanentId = null;
     }
     if (this.pendingFromExileCardId != null) {
       msg.fromExileCardId = this.pendingFromExileCardId;
@@ -1316,6 +1593,10 @@ export class TargetingChoiceService {
     if (this.pendingBuybackSacrificePermanentId != null) {
       msg.sacrificePermanentId = this.pendingBuybackSacrificePermanentId;
       this.pendingBuybackSacrificePermanentId = null;
+    }
+    if (this.pendingBuybackSacrificePermanentIds.length > 0) {
+      msg.additionalCostSacrificePermanentIds = this.pendingBuybackSacrificePermanentIds;
+      this.pendingBuybackSacrificePermanentIds = [];
     }
     if (extra) {
       Object.assign(msg, extra);
@@ -1481,10 +1762,7 @@ export class TargetingChoiceService {
     if (!perm || !ability?.manaCost) return false;
     const hasX = ability.manaCost.includes('{X}');
     const xGeneric = hasX && typeof msg.xValue === 'number' && msg.xValue > 0 ? msg.xValue : 0;
-    const creatureTapCount = ability.allowsCreatureTapForMana === true
-      ? (Array.isArray(msg.targetIds) ? msg.targetIds.length : 0)
-      : 0;
-    if (this.canPayManaCost(ability.manaCost, xGeneric - creatureTapCount)) return false;
+    if (this.canPayManaCost(ability.manaCost, xGeneric)) return false;
 
     this.payingForAbility = true;
     this.pendingActivationSourceName = perm.card.name;
@@ -1504,15 +1782,8 @@ export class TargetingChoiceService {
       this.clearAbilityPayment();
       return;
     }
-    const pendingAbility = this.myBattlefieldFn()[index]?.card.activatedAbilities?.[
-      this.pendingActivationMessage?.abilityIndex ?? -1];
-    const creatureTapCount = pendingAbility?.allowsCreatureTapForMana === true
-      ? (Array.isArray(this.pendingActivationMessage?.targetIds)
-        ? this.pendingActivationMessage.targetIds.length : 0)
-      : 0;
     if (this.pendingActivationManaCost != null
-        && this.canPayManaCost(this.pendingActivationManaCost,
-          this.pendingActivationXValue - creatureTapCount)) {
+        && this.canPayManaCost(this.pendingActivationManaCost, this.pendingActivationXValue)) {
       const msg = this.pendingActivationMessage;
       msg.permanentIndex = index; // battlefield order may have changed while paying
       this.clearAbilityPayment();
@@ -1843,9 +2114,17 @@ export class TargetingChoiceService {
     // A completed cast consumes these in sendPlayCardMessage before we get here;
     // clearing them covers the cancel paths so the flags can't leak into a later cast.
     this.pendingFlashback = false;
+    this.pendingHarmonizePermanentId = null;
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
+    this.selectingGraveyardCastExile = false;
+    this.graveyardCastExileCardIndex = -1;
+    this.graveyardCastExileCardName = '';
+    this.graveyardCastExileCount = 0;
+    this.graveyardCastExileLabel = '';
+    this.graveyardCastExileSelectedIndices.set([]);
+    this.pendingGraveyardCastExileIndices = [];
     this.pendingFromExileCardId = null;
     this.pendingFromLibraryTop = false;
     this.pendingZoneCard = null;
@@ -1856,6 +2135,7 @@ export class TargetingChoiceService {
   cancelTargeting(): void {
     this.resetTargetingState();
     this.pendingGraveyardCastDiscardHandIndex = null;
+    this.pendingGraveyardCastExileIndices = [];
     this.pendingPhyrexianLifeCount = null;
   }
 
@@ -2053,24 +2333,11 @@ export class TargetingChoiceService {
     this.convokeCardIndex = cardIndex;
     this.convokeCardName = card.name;
     this.pendingConvokeCard = card;
-    this.pendingCreatureManaAbility = false;
-    this.pendingCreatureManaAbilityIndex = -1;
-    this.convokeSelectedCreatureIds.set([]);
-  }
-
-  private enterCreatureManaAbilityMode(permanentIndex: number, abilityIndex: number, perm: Permanent): void {
-    this.convoking = true;
-    this.convokeCardIndex = permanentIndex;
-    this.convokeCardName = perm.card.name;
-    this.pendingConvokeCard = null;
-    this.pendingCreatureManaAbility = true;
-    this.pendingCreatureManaAbilityIndex = abilityIndex;
     this.convokeSelectedCreatureIds.set([]);
   }
 
   canSelectCastingAssistance(permanent: Permanent): boolean {
     if (!this.convoking || !permanent || permanent.tapped) return false;
-    if (this.pendingCreatureManaAbility) return isPermanentCreature(permanent);
     const card = this.pendingConvokeCard;
     const canConvoke = card?.keywords.includes('CONVOKE') ?? false;
     const canImprovise = card?.keywords.includes('IMPROVISE') ?? false;
@@ -2079,26 +2346,11 @@ export class TargetingChoiceService {
   }
 
   castingAssistancePermanentLabel(): string {
-    if (this.pendingCreatureManaAbility) return 'creatures';
     const card = this.pendingConvokeCard;
     const canConvoke = card?.keywords.includes('CONVOKE') ?? false;
     const canImprovise = card?.keywords.includes('IMPROVISE') ?? false;
     return canConvoke && canImprovise ? 'creatures or artifacts'
       : canImprovise ? 'artifacts' : 'creatures';
-  }
-
-  castingAssistancePrompt(): string {
-    return this.pendingCreatureManaAbility
-      ? `Tap creatures to help pay ${this.convokeCardName}'s ability cost`
-      : `Tap ${this.castingAssistancePermanentLabel()} to help cast ${this.convokeCardName}`;
-  }
-
-  castingAssistanceConfirmLabel(): string {
-    return this.pendingCreatureManaAbility ? 'Activate' : 'Cast';
-  }
-
-  castingAssistanceSkipLabel(): string {
-    return this.pendingCreatureManaAbility ? 'Skip creature tapping' : 'Skip Convoke';
   }
 
   toggleConvokeCreature(permanentId: string): void {
@@ -2117,17 +2369,6 @@ export class TargetingChoiceService {
 
   confirmConvoke(): void {
     if (!this.convoking) return;
-    if (this.pendingCreatureManaAbility) {
-      const msg: any = {
-        type: MessageType.ACTIVATE_ABILITY,
-        permanentIndex: this.convokeCardIndex,
-        abilityIndex: this.pendingCreatureManaAbilityIndex,
-        targetIds: this.convokeSelectedCreatureIds()
-      };
-      this.sendActivateAbilityMessage(msg);
-      this.cancelConvoke();
-      return;
-    }
     const msg: any = {
       type: MessageType.PLAY_CARD,
       cardIndex: this.convokeCardIndex,
@@ -2146,15 +2387,6 @@ export class TargetingChoiceService {
 
   skipConvoke(): void {
     if (!this.convoking) return;
-    if (this.pendingCreatureManaAbility) {
-      this.sendActivateAbilityMessage({
-        type: MessageType.ACTIVATE_ABILITY,
-        permanentIndex: this.convokeCardIndex,
-        abilityIndex: this.pendingCreatureManaAbilityIndex
-      });
-      this.cancelConvoke();
-      return;
-    }
     const msg: any = {
       type: MessageType.PLAY_CARD,
       cardIndex: this.convokeCardIndex
@@ -2221,8 +2453,6 @@ export class TargetingChoiceService {
     this.convokeCardIndex = -1;
     this.convokeCardName = '';
     this.convokeSelectedCreatureIds.set([]);
-    this.pendingCreatureManaAbility = false;
-    this.pendingCreatureManaAbilityIndex = -1;
     this.pendingPhyrexianLifeCount = null;
   }
 
@@ -2402,8 +2632,42 @@ export class TargetingChoiceService {
     this.continuePlayCard(savedIndex);
   }
 
+  choosePayLifeForAdditionalCost(): void {
+    if (!this.choosingAdditionalCost) return;
+    const savedIndex = this.additionalCostCardIndex;
+    this.pendingPayLifeForAdditionalCost = true;
+    this.resetAdditionalCostState();
+    this.continuePlayCard(savedIndex);
+  }
+
+  choosePayManaForAdditionalCost(): void {
+    if (!this.choosingAdditionalCost) return;
+    const savedIndex = this.additionalCostCardIndex;
+    this.pendingPayLifeForAdditionalCost = false;
+    this.resetAdditionalCostState();
+    this.continuePlayCard(savedIndex);
+  }
+
+  cancelAdditionalCost(): void {
+    this.resetAdditionalCostState();
+    this.pendingPayLifeForAdditionalCost = null;
+  }
+
+  private resetAdditionalCostState(): void {
+    this.choosingAdditionalCost = false;
+    this.additionalCostCardIndex = -1;
+    this.additionalCostCardName = '';
+    this.additionalCostLifePayment = 0;
+    this.additionalCostManaCost = '';
+  }
+
   choosePayAlternateCost(): void {
     this.choosingAlternateCost = false;
+    if (this.alternateCostCollectEvidence) {
+      this.selectingAlternateCostGraveyardCards = true;
+      this.alternateCostSelectedGraveyardIndices.set([]);
+      return;
+    }
     const battlefieldNeeded = this.alternateCostSacrificeCount + this.alternateCostTapCount + this.alternateCostReturnCount;
     if (battlefieldNeeded > 0) {
       this.selectingAlternateCostCreatures = true;
@@ -2424,11 +2688,12 @@ export class TargetingChoiceService {
       }
       return;
     }
-    // Free / condition-only alternate cost (no permanent or hand payment)
+    // Alternate cost with no permanent or hand payment
     this.websocketService.send({
       type: MessageType.PLAY_CARD,
       cardIndex: this.alternateCostCardIndex,
       alternateCostSacrificePermanentIds: [],
+      alternateCost: true,
       morph: this.gameSignal()?.hand?.[this.alternateCostCardIndex]?.keywords?.includes('MORPH') ?? false
     });
     this.resetAlternateCostState();
@@ -2438,6 +2703,16 @@ export class TargetingChoiceService {
   selectAlternateCostHandCard(handIndex: number): void {
     if (!this.selectingAlternateCostHandCard) return;
     if (handIndex === this.alternateCostCardIndex) return;
+    if (this.pendingAlternateHandCardIndices.includes(handIndex)) return;
+    if (!this.alternateCostDiscardsHandCard && this.alternateCostExileHandCount > 1) {
+      const selected = this.alternateCostSelectedHandIndices();
+      if (selected.includes(handIndex)) {
+        this.alternateCostSelectedHandIndices.set(selected.filter(index => index !== handIndex));
+      } else if (selected.length < this.alternateCostExileHandCount) {
+        this.alternateCostSelectedHandIndices.set([...selected, handIndex]);
+      }
+      return;
+    }
     if (this.pendingAlternateHandCardIndices.includes(handIndex)) return;
     const spellIndex = this.alternateCostCardIndex;
     this.pendingAlternateHandCardIndices.push(handIndex);
@@ -2465,6 +2740,69 @@ export class TargetingChoiceService {
     this.alternateCostRequiresTarget = false;
     this.alternateCostSelectedIds.set([]);
     this.continuePlayCard(spellIndex);
+  }
+
+  isAlternateCostHandCardSelected(handIndex: number): boolean {
+    return this.alternateCostSelectedHandIndices().includes(handIndex);
+  }
+
+  confirmAlternateCostHandCards(): void {
+    if (!this.selectingAlternateCostHandCard || this.alternateCostExileHandCount <= 1) return;
+    const selected = this.alternateCostSelectedHandIndices();
+    if (selected.length !== this.alternateCostExileHandCount) return;
+    const spellIndex = this.alternateCostCardIndex;
+    this.resetAlternateCostState();
+    this.pendingAlternateExileHandIndex = selected[0];
+    this.pendingAlternateExileHandIndices = selected;
+    this.continuePlayCard(spellIndex);
+  }
+
+  get alternateCostGraveyardCards(): Card[] {
+    const game = this.gameSignal();
+    const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
+    return playerIndex >= 0 ? game?.graveyards[playerIndex] ?? [] : [];
+  }
+
+  toggleAlternateCostGraveyardCard(graveyardIndex: number): void {
+    if (!this.selectingAlternateCostGraveyardCards) return;
+    if (!this.alternateCostGraveyardCards[graveyardIndex]) return;
+    const selected = this.alternateCostSelectedGraveyardIndices();
+    this.alternateCostSelectedGraveyardIndices.set(
+      selected.includes(graveyardIndex)
+        ? selected.filter(index => index !== graveyardIndex)
+        : [...selected, graveyardIndex]);
+  }
+
+  isAlternateCostGraveyardCardSelected(graveyardIndex: number): boolean {
+    return this.alternateCostSelectedGraveyardIndices().includes(graveyardIndex);
+  }
+
+  alternateCostSelectedGraveyardManaValue(): number {
+    return this.alternateCostSelectedGraveyardIndices()
+      .reduce((total, index) => total + this.cardManaValue(this.alternateCostGraveyardCards[index]), 0);
+  }
+
+  confirmAlternateCostGraveyardCards(): void {
+    if (!this.selectingAlternateCostGraveyardCards
+        || this.alternateCostSelectedGraveyardManaValue() < this.alternateCostCollectEvidenceAmount) return;
+    const spellIndex = this.alternateCostCardIndex;
+    const selected = [...this.alternateCostSelectedGraveyardIndices()];
+    this.resetAlternateCostState();
+    this.pendingAlternateExileGraveyardIndices = selected;
+    this.continuePlayCard(spellIndex);
+  }
+
+  cancelAlternateCostGraveyardCards(): void {
+    this.resetAlternateCostState();
+  }
+
+  private cardManaValue(card: Card | undefined): number {
+    if (!card?.manaCost) return 0;
+    return (card.manaCost.match(/\{([^}]+)\}/g) ?? []).reduce((total, symbol) => {
+      const value = symbol.slice(1, -1);
+      const numeric = Number.parseInt(value, 10);
+      return total + (Number.isNaN(numeric) ? value === 'X' ? 0 : 1 : numeric);
+    }, 0);
   }
 
   toggleAlternateCostCreature(permanentId: string): void {
@@ -2504,6 +2842,7 @@ export class TargetingChoiceService {
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
     this.selectingAlternateCostHandCard = false;
+    this.selectingAlternateCostGraveyardCards = false;
     this.alternateCostCardIndex = -1;
     this.alternateCostCardName = '';
     this.alternateCostSacrificeCount = 0;
@@ -2511,15 +2850,21 @@ export class TargetingChoiceService {
     this.alternateCostTapCount = 0;
     this.alternateCostReturnCount = 0;
     this.alternateCostManaCost = '';
+    this.alternateCostIsPlot = false;
     this.alternateCostExileHandCount = 0;
     this.alternateCostExileHandLabel = '';
     this.alternateCostRevealsHandCard = false;
     this.alternateCostDiscardsHandCard = false;
     this.alternateCostRequiresTarget = false;
+    this.alternateCostCollectEvidence = false;
+    this.alternateCostCollectEvidenceAmount = 0;
     this.alternateCostSelectedIds.set([]);
+    this.alternateCostSelectedHandIndices.set([]);
+    this.alternateCostSelectedGraveyardIndices.set([]);
     this.pendingAlternateExileHandIndex = null;
     this.pendingAlternateHandCardIndices = [];
     this.pendingAlternateHandCardDiscards = false;
+    this.pendingAlternateExileHandIndices = [];
   }
 
   toggleExileCounterCostPermanent(permanentId: string): void {
@@ -2679,11 +3024,15 @@ export class TargetingChoiceService {
       if (perm.tapped) return false;
       if (perm.summoningSick && isPermanentCreature(perm)) return false;
     }
-    if (ability.requiresXValue && this.availableXCounters(perm, ability) < 1) return false;
-    const canHelpWithCreatureTaps = ability.allowsCreatureTapForMana === true
-      && this.myBattlefieldFn().some(p => !p.tapped && isPermanentCreature(p));
+    if (ability.requiresXValue) {
+      const available = ability.xValueFromWaterbendCost
+        ? this.availableWaterbendXValue(perm, ability)
+        : this.availableXValue(perm, ability);
+      const minimum = ability.xValueMin
+        ?? (ability.xValueFromCardsInHandColor ? 0 : 1);
+      if (available < minimum) return false;
+    }
     if (ability.manaCost && !this.canPayManaCost(ability.manaCost)
-        && !canHelpWithCreatureTaps
         && !(allowPotentialMana && this.isPotentiallyPayableAbility(perm, ability))) return false;
     return true;
   }
@@ -2695,6 +3044,23 @@ export class TargetingChoiceService {
     return this.myBattlefieldFn()
       .filter(p => isPermanentCreature(p))
       .reduce((sum, p) => sum + (p.counters?.['PLUS_ONE_PLUS_ONE'] ?? 0), 0);
+  }
+
+  private availableXValue(perm: Permanent, ability: ActivatedAbilityView): number {
+    if (ability.xValueFromCardsInHandColor) {
+      return this.gameSignal()?.hand?.filter(card =>
+        card.colors?.includes(ability.xValueFromCardsInHandColor!)).length ?? 0;
+    }
+    return this.availableXCounters(perm, ability);
+  }
+
+  private availableWaterbendXValue(perm: Permanent, ability: ActivatedAbilityView): number {
+    const eligiblePermanents = this.myBattlefieldFn().filter(permanent =>
+      !permanent.tapped
+      && (!ability.requiresTap || permanent.id !== perm.id)
+      && (isPermanentArtifact(permanent) || isPermanentCreature(permanent))
+    ).length;
+    return this.totalManaFn() + eligiblePermanents;
   }
 
   /** MTGO-style: an ability whose cost exceeds the floating pool is still activatable when
@@ -2754,6 +3120,7 @@ export class TargetingChoiceService {
       this.modeChoicesRequired = ability.modalChoicesRequired ?? 1;
       this.modeChoicesMax = ability.modalChoicesMax ?? this.modeChoicesRequired;
       this.modeOptional = false;
+      this.modeModesMayRepeat = false;
       this.modeSelectedIndices = [];
       return;
     }
@@ -2762,8 +3129,10 @@ export class TargetingChoiceService {
       this.choosingXValue = true;
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
-      this.xValueInput = 1;
-      this.xValueMaximum = this.availableXCounters(perm, ability);
+      this.xValueInput = ability.xValueFromCardsInHandColor ? 0 : (ability.xValueMin ?? 1);
+      this.xValueMaximum = ability.xValueFromWaterbendCost
+        ? this.availableWaterbendXValue(perm, ability)
+        : this.availableXValue(perm, ability);
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;
@@ -2841,10 +3210,6 @@ export class TargetingChoiceService {
     }
 
     // No target or X needed — send immediately (or enter payment mode if unaffordable)
-    if (ability.allowsCreatureTapForMana === true) {
-      this.enterCreatureManaAbilityMode(permanentIndex, abilityIndex, perm);
-      return;
-    }
     this.sendActivateAbilityMessage({
       type: MessageType.ACTIVATE_ABILITY,
       permanentIndex,

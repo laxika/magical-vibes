@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -38,6 +40,8 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final CloneService cloneService;
+    private final AmountEvaluationService amountEvaluationService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +57,8 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                 // (CR 608.2b: abilities resolve even if the source has left the zone).
                 Card sourceCard;
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                Permanent sourceForRelativeValues = sourcePermanent != null
+                        ? sourcePermanent : entry.getSourcePermanentSnapshot();
                 if (sourcePermanent != null) {
                     sourceCard = sourcePermanent.getCard();
                 } else {
@@ -63,14 +69,24 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
                 }
 
-                int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
+                int tokenMultiplier = gameQueryService.getTokenMultiplier(
+                        gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
                 int totalAmount = e.amount() * tokenMultiplier;
                 for (int copy = 0; copy < totalAmount; copy++) {
                     // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
                     Card tokenCard = new Card();
                     tokenCard.setName(sourceCard.getName());
                     tokenCard.setType(sourceCard.getType());
-                    tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+                    EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+                    if (sourceCard.getAdditionalTypes() != null) {
+                        additionalTypes.addAll(sourceCard.getAdditionalTypes());
+                    }
+                    if (e.additionalTypes() != null) {
+                        e.additionalTypes().stream()
+                                .filter(type -> type != sourceCard.getType())
+                                .forEach(additionalTypes::add);
+                    }
+                    tokenCard.setAdditionalTypes(additionalTypes);
                     // Embalm / Eternalize copies have no mana cost.
                     tokenCard.setManaCost(!e.removeManaCost() && sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
                     tokenCard.setToken(true);
@@ -154,6 +170,14 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
                     entry.getCreatedPermanentIds().add(tokenPermanent.getId());
 
+                    if (e.tappedAndAttacking()) {
+                        tokenPermanent.tap();
+                        tokenPermanent.setAttacking(true);
+                        if (sourceForRelativeValues != null) {
+                            tokenPermanent.setAttackTarget(sourceForRelativeValues.getAttackTarget());
+                        }
+                    }
+
                     if (e.exileAtEndStep()) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(
                                 tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
@@ -171,6 +195,19 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
                     // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
+
+                    if (e.initialCounters() != null && !e.initialCounters().isEmpty()
+                            && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
+                        AmountContext amountContext = AmountContext.forStackEntry(entry, sourceForRelativeValues);
+                        for (var counterEntry : e.initialCounters().entrySet()) {
+                            int count = amountEvaluationService.evaluate(
+                                    gameData, counterEntry.getValue(), amountContext);
+                            if (count > 0) {
+                                permanentCounterSupport.placeCounterOnPermanent(
+                                        gameData, entry, tokenPermanent, counterEntry.getKey(), count);
+                            }
+                        }
+                    }
                 }
     
     }

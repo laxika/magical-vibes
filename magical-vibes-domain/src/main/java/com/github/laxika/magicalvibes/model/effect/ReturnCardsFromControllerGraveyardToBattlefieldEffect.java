@@ -15,15 +15,39 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>When {@code manaValueEqualsX} is set, matching cards are additionally restricted to those
  * whose mana value equals the spell's paid X, and {@code maxCount} is normally
  * {@link Integer#MAX_VALUE} so that every match is returned — Immortal Servitude's "return each
- * creature card with mana value X from your graveyard to the battlefield."
+ * creature card with mana value X from your graveyard to the battlefield." When
+ * {@code maxTotalManaValue} is set, the controller chooses up to {@code maxCount} matching cards
+ * at resolution, subject to their aggregate mana value not exceeding the cap. Cards returned by
+ * the automatic path enter tapped when {@code enterTapped} is true.
  */
 public record ReturnCardsFromControllerGraveyardToBattlefieldEffect(
         CardPredicate filter,
         int maxCount,
-        boolean manaValueEqualsX
+        boolean manaValueEqualsX,
+        Integer maxTotalManaValue,
+        boolean enterTapped
 ) implements CardEffect {
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount) {
-        this(filter, maxCount, false);
+        this(filter, maxCount, false, null, false);
+    }
+
+    public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
+                                                                  int maxTotalManaValue) {
+        this(filter, maxCount, false, maxTotalManaValue, false);
+    }
+
+    public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
+                                                                  boolean manaValueEqualsX) {
+        this(filter, maxCount, manaValueEqualsX, null, false);
+    }
+
+    public ReturnCardsFromControllerGraveyardToBattlefieldEffect {
+        if (maxCount < 0) {
+            throw new IllegalArgumentException("maxCount cannot be negative");
+        }
+        if (maxTotalManaValue != null && maxTotalManaValue < 0) {
+            throw new IllegalArgumentException("maxTotalManaValue cannot be negative");
+        }
     }
 }

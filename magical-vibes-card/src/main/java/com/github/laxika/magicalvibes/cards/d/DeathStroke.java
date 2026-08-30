@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "STH", collectorNumber = "57")
 @CardRegistration(set = "TPR", collectorNumber = "100")
+@CardRegistration(set = "BTD", collectorNumber = "22")
 public class DeathStroke extends Card {
 
     public DeathStroke() {

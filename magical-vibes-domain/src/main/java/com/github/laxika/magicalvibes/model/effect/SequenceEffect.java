@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Resolves several {@link CardEffect} steps in order, as if they were consecutive effects on the
@@ -42,11 +43,17 @@ import java.util.List;
  * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
  * "that player".</p>
  */
-public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
-        implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
+public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed)
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect,
+        CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
-        this(steps, 0);
+        this(steps, 0, false);
+    }
+
+    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount) {
+        this(steps, controllerDrawCount, false);
     }
 
     public SequenceEffect {
@@ -70,10 +77,47 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
         return new SequenceEffect(List.of(steps), 2);
     }
 
+    /** Creates a sequence that triggers only when its source permanent was sacrificed. */
+    public static SequenceEffect sacrificeOnly(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 0, true);
+    }
+
     @Override
     public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
         return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
     }
+
+    @Override
+    public boolean hasAbilityResolutionCondition() {
+        return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return onlyIfSacrificed;
+    }
+
+    @Override
+    public CardEffect boundToDyingCard(UUID dyingCardId) {
+        if (steps.stream().noneMatch(DyingCreatureCardAwareEffect.class::isInstance)) {
+            return this;
+        }
+        List<CardEffect> boundSteps = steps.stream()
+                .map(step -> step instanceof DyingCreatureCardAwareEffect aware
+                        ? aware.boundToDyingCard(dyingCardId) : step)
+                .toList();
+        return new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed);
+    }
+
+    @Override
+    public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof DamageSourceControllerAwareEffect aware
+                        ? aware.bindDamageSourceController(controllerId, damageDealt)
+                        : step)
+                 .toList(), controllerDrawCount, onlyIfSacrificed);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         TargetSpec implicitSourceSpec = TargetSpec.NONE;
@@ -87,6 +131,14 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
             }
         }
         return implicitSourceSpec;
+    }
+
+    @Override
+    public boolean referencesCombatOpponent() {
+        return steps.stream()
+                .filter(effect -> effect instanceof CombatOpponentReferencingEffect)
+                .map(effect -> (CombatOpponentReferencingEffect) effect)
+                .anyMatch(CombatOpponentReferencingEffect::referencesCombatOpponent);
     }
 
     /**
@@ -116,5 +168,14 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount)
             }
         }
         return result;
+    }
+
+    @Override
+    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
+        return new SequenceEffect(steps.stream()
+                .map(step -> step instanceof CombatDamageDealerAwareEffect aware
+                        ? aware.withCombatDamageDealerIds(dealerIds)
+                        : step)
+                .toList(), controllerDrawCount, onlyIfSacrificed);
     }
 }

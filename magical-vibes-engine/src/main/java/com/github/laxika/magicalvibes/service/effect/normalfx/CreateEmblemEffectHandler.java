@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawOnControlledCreatureEntersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,11 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
             String playerName = gameData.playerIdToName.get(recipientId);
 
             gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), entry.getCard()));
+            if (emblemEffect.staticEffects().stream().anyMatch(DrawOnControlledCreatureEntersEffect.class::isInstance)) {
+                gameData.creatureEntersDrawSources
+                        .computeIfAbsent(recipientId, ignored -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))
+                        .add(entry.getCard());
+            }
 
             gameLogService.append(gameData, GameLog.text(
                     playerName + " gets an emblem with \"" + emblemEffect.reminderText() + "\"."));

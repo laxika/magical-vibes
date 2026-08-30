@@ -34,6 +34,7 @@ public class RemoveAllCountersFromAllPermanentsEffectHandler implements NormalEf
         for (var battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 int removedFromPermanent = 0;
+                int oilRemoved = permanent.getCounterCount(CounterType.OIL);
                 for (CounterType counterType : CounterType.values()) {
                     if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                         continue;
@@ -41,6 +42,7 @@ public class RemoveAllCountersFromAllPermanentsEffectHandler implements NormalEf
                     removedFromPermanent += permanent.getCounterCount(counterType);
                     permanent.setCounterCount(counterType, 0);
                 }
+                gameData.recordOilCounterRemoved(permanent, oilRemoved);
                 if (removedFromPermanent > 0) {
                     affected++;
                     removed += removedFromPermanent;

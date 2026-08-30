@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "VIS", collectorNumber = "70")
+@CardRegistration(set = "BTD", collectorNumber = "32")
 public class TarPitWarrior extends Card {
 
     public TarPitWarrior() {

@@ -27,10 +27,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param lifeLoss  life lost when the player neither sacrifices a nonland permanent nor discards a card
  * @param recipient how the affected player is derived from the stack entry
- * @param targetsPlayer whether the stack entry's player is a declared target
  */
-public record LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, LoseLifeRecipient recipient,
-                                                            boolean targetsPlayer)
+public record LoseLifeUnlessSacrificeNonlandOrDiscardEffect(
+        int lifeLoss, LoseLifeRecipient recipient, boolean targetsPlayer)
         implements CardEffect {
 
     /** Acts on the player carried on the stack entry's {@code targetId} (Torment of Scarabs). */
@@ -38,12 +37,10 @@ public record LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, LoseLi
         this(lifeLoss, LoseLifeRecipient.TARGET_PLAYER, false);
     }
 
-    /** Preserves the non-targeting recipient form used by Torment of Scarabs and Torment of Venom. */
     public LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, LoseLifeRecipient recipient) {
         this(lifeLoss, recipient, false);
     }
 
-    /** Declares the stack entry's player target for targeted ETB abilities such as Thornplate Intimidator. */
     public LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, boolean targetsPlayer) {
         this(lifeLoss, LoseLifeRecipient.TARGET_PLAYER, targetsPlayer);
     }

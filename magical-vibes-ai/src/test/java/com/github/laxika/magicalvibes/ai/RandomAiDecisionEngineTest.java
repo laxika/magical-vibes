@@ -6,24 +6,36 @@ import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BackFromTheBrink;
 import com.github.laxika.magicalvibes.cards.b.BalmOfRestoration;
+import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
+import com.github.laxika.magicalvibes.cards.c.ChokingVines;
+import com.github.laxika.magicalvibes.cards.c.Cooperation;
+import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.c.CulturalExchange;
 import com.github.laxika.magicalvibes.cards.d.DigThroughTime;
 import com.github.laxika.magicalvibes.cards.d.DerangedAssistant;
+import com.github.laxika.magicalvibes.cards.d.Derelor;
 import com.github.laxika.magicalvibes.cards.d.DeathsDuet;
 import com.github.laxika.magicalvibes.cards.d.DuelingGrounds;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
+import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinBarrage;
 import com.github.laxika.magicalvibes.cards.g.GroundSeal;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
+import com.github.laxika.magicalvibes.cards.h.HollowWarrior;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
@@ -33,17 +45,28 @@ import com.github.laxika.magicalvibes.cards.j.JacesSanctum;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
+import com.github.laxika.magicalvibes.cards.l.LonghornSharpshooter;
 import com.github.laxika.magicalvibes.cards.l.LuminousRebuke;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LilianasIndignation;
 import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.m.Mathemagics;
+import com.github.laxika.magicalvibes.cards.m.MagmaOpus;
+import com.github.laxika.magicalvibes.cards.m.MasumaroFirstToLive;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
+import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MogissMarauder;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MultanisHarmony;
+import com.github.laxika.magicalvibes.cards.n.NahirisWarcrafting;
 import com.github.laxika.magicalvibes.cards.o.Okk;
+import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PullFromTheDeep;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTribute;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianPurge;
@@ -51,20 +74,34 @@ import com.github.laxika.magicalvibes.cards.p.PedanticLearning;
 import com.github.laxika.magicalvibes.cards.p.PrimitiveJustice;
 import com.github.laxika.magicalvibes.cards.p.Pyrokinesis;
 import com.github.laxika.magicalvibes.cards.p.PyrrhicStrike;
+import com.github.laxika.magicalvibes.cards.q.QuandrixCommand;
 import com.github.laxika.magicalvibes.cards.r.ReturnToTheRanks;
 import com.github.laxika.magicalvibes.cards.r.Ramroller;
+import com.github.laxika.magicalvibes.cards.r.RatsFeast;
+import com.github.laxika.magicalvibes.cards.r.RazorGolem;
 import com.github.laxika.magicalvibes.cards.r.RiskFactor;
+import com.github.laxika.magicalvibes.cards.r.RiseFromTheWreck;
 import com.github.laxika.magicalvibes.cards.s.SchemingSymmetry;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SetessanTactics;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
+import com.github.laxika.magicalvibes.cards.s.SoulsOfTheLost;
+import com.github.laxika.magicalvibes.cards.s.SpiritFlare;
+import com.github.laxika.magicalvibes.cards.s.StandardBearer;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StormCauldron;
 import com.github.laxika.magicalvibes.cards.s.StirTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SufferThePast;
 import com.github.laxika.magicalvibes.cards.s.StrengthOfTheTajuru;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfSouls;
+import com.github.laxika.magicalvibes.cards.t.TilonallisSummoner;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
+import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
+import com.github.laxika.magicalvibes.cards.t.TheSkullsporeNexus;
+import com.github.laxika.magicalvibes.cards.u.UrgentNecropsy;
+import com.github.laxika.magicalvibes.cards.v.VanishIntoEternity;
 import com.github.laxika.magicalvibes.cards.v.Victimize;
 import com.github.laxika.magicalvibes.cards.w.WintersChill;
 import com.github.laxika.magicalvibes.model.Card;
@@ -88,8 +125,9 @@ import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -99,6 +137,607 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
 class RandomAiDecisionEngineTest {
+
+    @Test
+    void paysForDynamicReductionAfterSpellLeavesHand() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Card uncastableCard = new Card();
+        uncastableCard.setName("Uncastable test card");
+        uncastableCard.setType(CardType.CREATURE);
+
+        harness.addToBattlefield(aiPlayer, new MasumaroFirstToLive());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(aiPlayer, new Forest());
+            harness.addToBattlefield(aiPlayer, new Mountain());
+        }
+        TheSkullsporeNexus nexus = new TheSkullsporeNexus();
+        harness.setHand(aiPlayer, List.of(nexus, uncastableCard));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getCard()).isSameAs(nexus));
+            assertThat(gameData.playerBattlefields.get(aiPlayer.getId()))
+                    .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
+                    .hasSize(6)
+                    .allMatch(Permanent::isTapped);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsSpellUsingManaColorReplacedForItsLandsThisTurn() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Card blueSpell = new Card();
+        blueSpell.setName("Blue test spell");
+        blueSpell.setType(CardType.CREATURE);
+        blueSpell.setManaCost("{U}");
+
+        Permanent swamp = harness.addToBattlefieldAndReturn(aiPlayer, new Swamp());
+        harness.setHand(aiPlayer, List.of(blueSpell));
+        gameData.landManaFixedColorThisTurn.put(aiPlayer.getId(), ManaColor.BLUE);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getCard()).isSameAs(blueSpell));
+            assertThat(swamp.isTapped()).isTrue();
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void preservesUntappedSpellTargetWhilePayingMana() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent clearcutter = harness.addToBattlefieldAndReturn(aiPlayer, new CradleClearcutter());
+        clearcutter.setSummoningSick(false);
+        List<Permanent> plains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            plains.add(harness.addToBattlefieldAndReturn(aiPlayer, new Plains()));
+        }
+        Permanent attacker = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        SpiritFlare spiritFlare = new SpiritFlare();
+        harness.setHand(aiPlayer, List.of(spiritFlare));
+
+        harness.forceActivePlayer(opponent);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gameData.priorityPassedBy.add(opponent.getId());
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getCard()).isSameAs(spiritFlare);
+        assertThat(gameData.stack.getFirst().getTargetIds())
+                .containsExactly(clearcutter.getId(), attacker.getId());
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(plains).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    void castsFireWithModalDamageAssignments() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        FireIce fireIce = new FireIce();
+
+        harness.setHand(aiPlayer, List.of(fireIce));
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(fireIce.getId());
+            assertThat(gameData.stack.getFirst().getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(opponent.getId(), 2));
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsFieryJusticeWithOpponentAsBothTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        FieryJustice fieryJustice = new FieryJustice();
+
+        harness.setHand(aiPlayer, List.of(fieryJustice));
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int lifeBefore = gameData.getLife(opponent.getId());
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            StackEntry entry = gameData.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(fieryJustice);
+            assertThat(entry.getTargetId()).isEqualTo(opponent.getId());
+            assertThat(entry.getDamageAssignments())
+                    .containsExactlyEntriesOf(java.util.Map.of(opponent.getId(), 5));
+
+            harness.passBothPriorities();
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.getLife(opponent.getId())).isEqualTo(lifeBefore);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void paysAffordableTilonallisSummonerXWhileHoldingCastableSpell() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent summoner = harness.addToBattlefieldAndReturn(aiPlayer, new TilonallisSummoner());
+        summoner.setSummoningSick(false);
+        List<Permanent> mountains = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            mountains.add(harness.addToBattlefieldAndReturn(aiPlayer, new Mountain()));
+        }
+        LightningBolt heldSpell = new LightningBolt();
+        harness.setHand(aiPlayer, List.of(heldSpell));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        int summonerIndex = gameData.playerBattlefields.get(aiPlayer.getId()).indexOf(summoner);
+        harness.getGameService().declareAttackers(gameData, aiPlayer, List.of(summonerIndex));
+        harness.passBothPriorities();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+            assertThat(gameData.playerBattlefields.get(aiPlayer.getId()))
+                    .filteredOn(permanent -> "Elemental".equals(permanent.getCard().getName()))
+                    .hasSize(2);
+            assertThat(mountains).filteredOn(Permanent::isTapped).hasSize(3);
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(heldSpell);
+            assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void leavesManaUnspentWhenChosenTargetAddsOwnSurcharge() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Card relicCard = new Card();
+        relicCard.setName("Relic");
+        relicCard.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(opponent, relicCard);
+        harness.addToBattlefield(opponent, new SerraAngel());
+        VanishIntoEternity vanish = new VanishIntoEternity();
+
+        harness.setHand(aiPlayer, List.of(vanish));
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(vanish);
+            assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotalAllMana()).isEqualTo(3);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsNahirisWarcraftingAtPermanentInsteadOfPlayer() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent target = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        NahirisWarcrafting warcrafting = new NahirisWarcrafting();
+
+        harness.setHand(aiPlayer, List.of(warcrafting));
+        harness.addMana(aiPlayer, ManaColor.RED, 3);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(warcrafting);
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsNonKickedGoblinBarrageAtCreature() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent target = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        GoblinBarrage barrage = new GoblinBarrage();
+
+        harness.setHand(aiPlayer, List.of(barrage));
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(barrage);
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void paysColoredSpellCostIncrease() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(aiPlayer, new Derelor());
+        List<Permanent> manaSources = List.of(
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()),
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()),
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()),
+                harness.addToBattlefieldAndReturn(aiPlayer, new Swamp()));
+        FaithOfTheDevoted faith = new FaithOfTheDevoted();
+        harness.setHand(aiPlayer, List.of(faith));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(faith);
+            assertThat(manaSources).allMatch(Permanent::isTapped);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void startsEvangelizeByChoosingTheOpponent() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new GrizzlyBears());
+        Evangelize evangelize = new Evangelize();
+        harness.setHand(aiPlayer, List.of(evangelize));
+        harness.addMana(aiPlayer, ManaColor.WHITE, 5);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            PendingInteraction.PermanentChoice choice =
+                    gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice.playerId()).isEqualTo(aiPlayer.getId());
+            assertThat(choice.validIds()).containsExactly(opponent.getId());
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(evangelize);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsQuandrixCommandWithOneCreatureForTwoTargetedModes() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent target = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        QuandrixCommand command = new QuandrixCommand();
+        harness.setHand(aiPlayer, List.of(command));
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(command.getId());
+            assertThat(gameData.stack.getFirst().getTargetIds())
+                    .containsExactly(target.getId(), target.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsFinaleOfPromiseWithTargetsLegalForItsRandomX() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        Opportunity tooExpensive = new Opportunity();
+        Shock affordable = new Shock();
+        harness.setGraveyard(aiPlayer, List.of(tooExpensive, affordable));
+        FinaleOfPromise finale = new FinaleOfPromise();
+        harness.setHand(aiPlayer, List.of(finale));
+        harness.addMana(aiPlayer, ManaColor.RED, 4);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(finale);
+            assertThat(gameData.stack.getFirst().getXValue()).isBetween(1, 2);
+            assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+            assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(affordable.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void targetsOpposingFlagbearerWhenCastingAura() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent flagbearer = harness.addToBattlefieldAndReturn(opponent, new StandardBearer());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        Cooperation cooperation = new Cooperation();
+        harness.setHand(aiPlayer, List.of(cooperation));
+        harness.addMana(aiPlayer, ManaColor.WHITE, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(cooperation);
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(flagbearer.getId());
+            assertThat(gameData.stack.getFirst().getTargetId()).isNotEqualTo(ownCreature.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void reducesUrgentNecropsyTargetsToAvailableEvidence() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.addToBattlefield(opponent, new HillGiant());
+        GrizzlyBears insufficientEvidence = new GrizzlyBears();
+        harness.setGraveyard(aiPlayer, List.of(insufficientEvidence));
+        UrgentNecropsy necropsy = new UrgentNecropsy();
+        harness.setHand(aiPlayer, List.of(necropsy));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(necropsy);
+            assertThat(gameData.stack.getFirst().getTargetIds()).isEmpty();
+            assertThat(gameData.playerGraveyards.get(aiPlayer.getId()))
+                    .containsExactly(insufficientEvidence);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsTargetlessModalDoubleFacedCardFace() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.RED, 4);
+        ToralfGodOfFury toralf = new ToralfGodOfFury();
+        harness.setHand(aiPlayer, List.of(toralf));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard().getId()).isEqualTo(toralf.getId());
+            assertThat(gameData.stack.getFirst().getXValue()).isZero();
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsPlotCardNormallyWhenOnlyManaCostIsAffordable() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.GREEN, 2);
+        LonghornSharpshooter sharpshooter = new LonghornSharpshooter();
+        harness.setHand(aiPlayer, List.of(sharpshooter));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(sharpshooter);
+            assertThat(gameData.playerHands.get(aiPlayer.getId())).isEmpty();
+            assertThat(gameData.getPlayerExiledCards(aiPlayer.getId())).isEmpty();
+            assertThat(gameData.plottedCardIds).doesNotContain(sharpshooter.getId());
+            assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isZero();
+        } finally {
+            watcher.uninstall();
+        }
+    }
 
     @Test
     void suppliesTargetForNestedMillFollowUpSpell() {
@@ -135,6 +774,105 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void castsMagmaOpusWithSeparateDamageAndTapTargets() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefield(opponent, new GrizzlyBears());
+        }
+        harness.addMana(aiPlayer, ManaColor.BLUE, 1);
+        harness.addMana(aiPlayer, ManaColor.RED, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 6);
+        MagmaOpus magmaOpus = new MagmaOpus();
+        harness.setHand(aiPlayer, List.of(magmaOpus));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        StackEntry entry = gameData.stack.getFirst();
+        assertThat(entry.getCard()).isSameAs(magmaOpus);
+        assertThat(entry.getDamageAssignments()).hasSize(2);
+        assertThat(entry.getTargetGroupSizes()).containsExactly(2, 2);
+        assertThat(entry.getTargetIds()).hasSize(4);
+        assertThat(entry.targetsForGroup(0)).hasSize(2).doesNotHaveDuplicates();
+        assertThat(entry.targetsForGroup(1)).hasSize(2).doesNotHaveDuplicates();
+    }
+
+    @Test
+    void suppliesTargetForFilterOnlyActivatedAbility() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent bauble = harness.addToBattlefieldAndReturn(aiPlayer, new MishrasBauble());
+        bauble.setSummoningSick(false);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(opponent.getId());
+    }
+
+    @Test
+    void skipsActivatedAbilityThatRequiresDamageAssignments() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        Permanent inferno = harness.addToBattlefieldAndReturn(aiPlayer, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(opponent, new GrizzlyBears());
+        harness.setHand(aiPlayer, List.of());
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(inferno.isTapped()).isFalse();
+        assertThat(gameData.priorityPassedBy).containsExactly(aiPlayer.getId());
     }
 
     @Test
@@ -348,7 +1086,8 @@ class RandomAiDecisionEngineTest {
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getCard()).isSameAs(strengthOfTheTajuru);
         assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(1);
-        assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
+        assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+        assertThat(gameData.stack.getFirst().getTargetIds()).containsExactly(creature.getId());
         assertThat(gameData.stack.getFirst().getRepeatedAdditionalCosts()).isEmpty();
     }
 
@@ -894,7 +1633,7 @@ class RandomAiDecisionEngineTest {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService().handleDeclareAttackersStep(gameData));
 
         RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
         FuzzLogWatcher watcher = FuzzLogWatcher.install();
@@ -947,6 +1686,44 @@ class RandomAiDecisionEngineTest {
         assertThat(List.of(first, second).stream().filter(Permanent::isAttacking).count()).isEqualTo(1);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class))
                 .isNull();
+    }
+
+    @Test
+    void preservesAttackerPromptWhenGrantedManaAbilityRequiresColorChoice() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player opponent = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(opponent, new BairdStewardOfArgive());
+        Card batCard = new Card();
+        batCard.setName("Bat");
+        batCard.setType(CardType.CREATURE);
+        batCard.setPower(1);
+        batCard.setToughness(1);
+        Permanent bat = harness.addToBattlefieldAndReturn(aiPlayer, batCard);
+        bat.setSummoningSick(false);
+        Permanent harmony = harness.addToBattlefieldAndReturn(aiPlayer, new MultanisHarmony());
+        harmony.setAttachedTo(bat.getId());
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(bat.isTapped()).isFalse();
+        assertThat(gameData.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -1225,15 +2002,16 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
-    void reselectsSpellTargetRemovedWhileTappingMana() {
+    void keepsSpellTargetWhileStormCauldronTriggersWaitForTheCast() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();
         GameData gameData = harness.getGameData();
         Player opponent = harness.getPlayer1();
         Player aiPlayer = harness.getPlayer2();
 
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+        harness.addToBattlefield(opponent, new GrizzlyBears());
         harness.addToBattlefield(aiPlayer, new StormCauldron());
+        harness.addToBattlefield(aiPlayer, new Island());
         harness.addToBattlefield(aiPlayer, new Island());
         harness.addToBattlefield(aiPlayer, new Island());
         for (int i = 0; i < 4; i++) {
@@ -1270,9 +2048,12 @@ class RandomAiDecisionEngineTest {
             engine.handleEvent(AiDecisionKind.GAME_STATE);
 
             assertThat(watcher.drainFailures()).isEmpty();
-            assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getCard().getName()).isEqualTo("Confiscate");
-            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(opponentCreature.getId());
+            assertThat(gameData.stack).hasSizeGreaterThan(1);
+            assertThat(gameData.stack)
+                    .filteredOn(entry -> entry.getCard().getName().equals("Confiscate"))
+                    .singleElement()
+                    .satisfies(entry -> assertThat(harness.getGameQueryService()
+                            .findPermanentById(gameData, entry.getTargetId())).isNotNull());
         } finally {
             watcher.uninstall();
         }
@@ -1526,6 +2307,64 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    void castsAffinitySpellBeforeStormCauldronReturnsTappedPlains() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addToBattlefield(aiPlayer, new StormCauldron());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(aiPlayer, new Plains());
+        }
+        harness.setHand(aiPlayer, List.of(new RazorGolem()));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).anySatisfy(entry ->
+                    assertThat(entry.getCard().getName()).isEqualTo("Razor Golem"));
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void doesNotCastRatsFeastWithPositiveXWhenGraveyardsAreEmpty() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        RatsFeast ratsFeast = new RatsFeast();
+
+        harness.setHand(aiPlayer, List.of(ratsFeast));
+        harness.addMana(aiPlayer, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(gameData.stack).isEmpty();
+        assertThat(gameData.playerHands.get(aiPlayer.getId())).containsExactly(ratsFeast);
+        assertThat(gameData.playerManaPools.get(aiPlayer.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
     void suppliesUntappedCreaturesForConvokeSpell() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();
@@ -1642,6 +2481,44 @@ class RandomAiDecisionEngineTest {
     }
 
     @Test
+    void capsOpenTheWayAtTheNumberOfPlayers() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.GREEN, 4);
+        OpenTheWay openTheWay = new OpenTheWay();
+        harness.setHand(aiPlayer, List.of(openTheWay));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(openTheWay);
+            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(2);
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
     void coSelectsStirTheGraveTargetAndX() {
         GameTestHarness harness = new GameTestHarness();
         harness.skipMulligan();
@@ -1735,6 +2612,38 @@ class RandomAiDecisionEngineTest {
                 .extracting(Card::getId)
                 .doesNotContain(affordableCreature.getId());
         assertThat(gameData.stack).hasSize(1);
+    }
+
+    @Test
+    void castsSoulsOfTheLostByDiscardingWithoutAlsoSacrificing() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+
+        harness.addMana(aiPlayer, ManaColor.BLACK, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 1);
+        Permanent permanent = harness.addToBattlefieldAndReturn(aiPlayer, new HowlingMine());
+        SoulsOfTheLost soulsOfTheLost = new SoulsOfTheLost();
+        GrizzlyBears discardedCard = new GrizzlyBears();
+        harness.setHand(aiPlayer, List.of(soulsOfTheLost, discardedCard));
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getCard()).isSameAs(soulsOfTheLost);
+            assertThat(gameData.playerGraveyards.get(aiPlayer.getId())).containsExactly(discardedCard);
+            assertThat(gameData.playerBattlefields.get(aiPlayer.getId())).contains(permanent);
+        } finally {
+            watcher.uninstall();
+        }
     }
 
     @Test
@@ -1858,6 +2767,91 @@ class RandomAiDecisionEngineTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    void assignsRiseFromTheWreckCardsToDistinctTargetGroups() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Card firstCreature = new GrizzlyBears();
+        Card secondCreature = new HillGiant();
+        Card thirdCreature = new TolarianScholar();
+        RiseFromTheWreck spell = new RiseFromTheWreck();
+
+        harness.setGraveyard(aiPlayer, List.of(firstCreature, secondCreature, thirdCreature));
+        harness.setHand(aiPlayer, List.of(spell));
+        harness.addMana(aiPlayer, ManaColor.GREEN, 1);
+        harness.addMana(aiPlayer, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+            engine.handleEvent(AiDecisionKind.INTERACTION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.interaction.isAwaitingInput()).isFalse();
+            assertThat(gameData.stack).hasSize(1);
+            StackEntry entry = gameData.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(spell);
+            assertThat(entry.getTargetCardIds())
+                    .hasSize(2)
+                    .isSubsetOf(firstCreature.getId(), secondCreature.getId(), thirdCreature.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
+    @Test
+    void castsChokingVinesAtAlreadyBlockedAttackerWithGroupedTarget() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player defender = harness.getPlayer1();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent attacker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(defender, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTargetId(attacker.getId());
+
+        ChokingVines chokingVines = new ChokingVines();
+        harness.setHand(aiPlayer, List.of(chokingVines));
+        harness.addMana(aiPlayer, ManaColor.GREEN, 3);
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        RandomAiDecisionEngine engine = createEngine(harness, aiPlayer, new Random() {
+            @Override
+            public boolean nextBoolean() {
+                return true;
+            }
+
+            @Override
+            public int nextInt(int bound) {
+                return bound - 1;
+            }
+        });
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.GAME_STATE);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+            assertThat(gameData.stack).hasSize(1);
+            StackEntry entry = gameData.stack.getFirst();
+            assertThat(entry.getCard()).isSameAs(chokingVines);
+            assertThat(entry.getXValue()).isEqualTo(1);
+            assertThat(entry.getTargetId()).isNull();
+            assertThat(entry.getTargetIds()).containsExactly(attacker.getId());
+        } finally {
+            watcher.uninstall();
+        }
+    }
+
     /**
      * Hands the AI seat control of player1's turn through a real Mindslaver activation and stops in
      * that turn's declare-attackers step, returning the controlled player's must-attack creature.
@@ -1956,6 +2950,37 @@ class RandomAiDecisionEngineTest {
         } finally {
             watcher.uninstall();
         }
+    }
+
+    @Test
+    void keepsRandomAttackerGroupPayableWhenOneAttackerHasCreatureTapCost() {
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        GameData gameData = harness.getGameData();
+        Player aiPlayer = harness.getPlayer2();
+        Permanent support = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        support.setSummoningSick(false);
+        Permanent warrior = harness.addToBattlefieldAndReturn(aiPlayer, new HollowWarrior());
+        warrior.setSummoningSick(false);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        RandomAiDecisionEngine engine = createAlwaysActivateEngine(harness, aiPlayer);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            engine.handleEvent(AiDecisionKind.ATTACKER_DECLARATION);
+
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(support.isAttackedThisTurn()).isTrue();
+        assertThat(warrior.isAttackedThisTurn()).isFalse();
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     private RandomAiDecisionEngine createAlwaysActivateEngine(

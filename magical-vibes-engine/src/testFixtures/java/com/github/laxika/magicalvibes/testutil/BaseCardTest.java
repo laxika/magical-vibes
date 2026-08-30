@@ -127,7 +127,7 @@ public abstract class BaseCardTest {
      * are reached by a single priority round-trip.
      */
     protected void advanceToUpkeep(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
+        harness.performUntapStep(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.UPKEEP);

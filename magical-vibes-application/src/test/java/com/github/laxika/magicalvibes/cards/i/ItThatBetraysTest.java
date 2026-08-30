@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({ItThatBetrays.class, KuldothaRebirth.class, Spellbook.class})
 class ItThatBetraysTest extends BaseCardTest {
 
     @Test

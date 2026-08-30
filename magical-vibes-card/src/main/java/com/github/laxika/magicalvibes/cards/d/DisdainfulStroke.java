@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 
 @CardRegistration(set = "KTK", collectorNumber = "37")
 @CardRegistration(set = "GRN", collectorNumber = "37")
+@CardRegistration(set = "KHM", collectorNumber = "54")
 public class DisdainfulStroke extends Card {
 
     public DisdainfulStroke() {

@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
+import java.util.UUID;
 
 /**
  * A cost paid by choosing card(s) from the payer's hand and moving them to another zone.
@@ -34,6 +38,16 @@ public interface HandCardCost extends CostEffect {
      */
     default int requiredCount(int xValue) {
         return count();
+    }
+
+    /**
+     * Additional game-state-aware restriction for cards that can pay this cost.
+     *
+     * <p>The ordinary predicate remains card-local; this hook covers costs whose legal cards also
+     * depend on the current game state, such as the most recently drawn card.
+     */
+    default boolean isEligible(GameData gameData, UUID playerId, Card card) {
+        return true;
     }
 
     /**

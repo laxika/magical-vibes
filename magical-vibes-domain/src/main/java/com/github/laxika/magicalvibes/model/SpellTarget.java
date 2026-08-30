@@ -62,6 +62,13 @@ public class SpellTarget {
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets,
                 int kickedMinTargets, int kickedMaxTargets, int index,
+                boolean xScaled, DynamicAmount dynamicMinTargets, DynamicAmount dynamicMaxTargets) {
+        this(card, filter, minTargets, maxTargets, kickedMinTargets, kickedMaxTargets, index,
+                xScaled, dynamicMinTargets, dynamicMaxTargets, minTargets);
+    }
+
+    SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets,
+                int kickedMinTargets, int kickedMaxTargets, int index,
                 boolean xScaled, DynamicAmount dynamicMinTargets, DynamicAmount dynamicMaxTargets,
                 int giftPromisedMinTargets) {
         this.card = card;

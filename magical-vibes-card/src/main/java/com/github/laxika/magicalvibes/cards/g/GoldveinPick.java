@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "253")
+@CardRegistration(set = "KHM", collectorNumber = "239")
 public class GoldveinPick extends Card {
 
     public GoldveinPick() {

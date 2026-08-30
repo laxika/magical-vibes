@@ -45,7 +45,10 @@ public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements N
         }
 
         var attachmentFilter = ((AttachMatchingEquipmentToCreatedPermanentEffect) effect).equipmentFilter();
-        FilterContext context = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourceControllerId(entry.getControllerId());
         List<Permanent> equipmentPermanents = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
             if (GameQueryService.permanentHasSubtype(permanent, CardSubtype.EQUIPMENT)
@@ -61,10 +64,11 @@ public class AttachMatchingEquipmentToCreatedPermanentEffectHandler implements N
             }
 
             var oldAttachedTo = equipment.getAttachedTo();
-            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+            equipSupport.expireAttachedCopyEffects(gameData, equipment);
             equipment.setAttachedTo(host.getId());
             equipment.setTimestamp(gameData.nextTimestamp());
             equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());
+            equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
 
             gameLogService.append(gameData,
                     GameLog.cardTextCard(equipment.getCard(), " is now attached to ", host.getCard(), "."));

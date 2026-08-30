@@ -61,6 +61,9 @@ public class UntapLockReleaseService {
                     continue;
                 }
                 p.setCounterCount(counterType, 0);
+                if (counterType == CounterType.OIL) {
+                    gameData.recordOilCounterRemoved(p, removed);
+                }
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         source.getCard(), " removes all counters it placed on ", p.getCard(), "."));
                 log.info("Game {} - {} removes {} {} counters from {}", gameData.id,

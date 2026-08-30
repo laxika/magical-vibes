@@ -21,9 +21,10 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThan
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughHasteUnlessEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -78,6 +79,9 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
+        if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
@@ -141,8 +145,7 @@ public class AttackLegalityService {
         // stored as floating effects affecting this creature.
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (floating.effect() instanceof NoDefenderAttackPermissionEffect permission
-                        && permission.grantsCarrierAttackAsThoughNoDefender()
+                if (floating.effect() instanceof NoDefenderAttackPermissionEffect
                         && creature.getId().equals(floating.affectedPermanentId())) {
                     return true;
                 }
@@ -228,8 +231,11 @@ public class AttackLegalityService {
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (restriction.restrictedAttackerId() == null
+                            || restriction.restrictedAttackerId().equals(
+                            gameData.findControllerOf(attacker)))
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                                    attacker, restriction.exemptionPredicate(), context)) {
+                            attacker, restriction.exemptionPredicate(), context)) {
                         return false;
                     }
                 }
@@ -241,8 +247,11 @@ public class AttackLegalityService {
                     CardEffect effect = fe.effect();
                     if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
                             && (targetIsPlayer || restriction.protectsPlaneswalkers())
+                            && (restriction.restrictedAttackerId() == null
+                            || restriction.restrictedAttackerId().equals(
+                            gameData.findControllerOf(attacker)))
                             && !predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, attacker, restriction.exemptionPredicate())) {
+                            gameData, attacker, restriction.exemptionPredicate())) {
                         return false;
                     }
                 }
@@ -419,6 +428,17 @@ public class AttackLegalityService {
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
 
+        List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
+        if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {
+            UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, creatureControllerId);
+            if (defendingPlayerId != null && canAttackDefender(gameData, creature, defendingPlayerId)) {
+                count[0]++;
+            }
+        }
+        count[0] += (int) grantedEffects.stream()
+                .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
+                .count();
+
         // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
         // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement
         // lapses once that permanent is no longer a legal attack target.
@@ -474,14 +494,63 @@ public class AttackLegalityService {
                     .withSourceCardId(permanent.getOriginalCard().getId())
                     .withSourceControllerId(playerId);
             count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .filter(MatchingCreaturesMustAttackEffect.class::isInstance)
-                    .map(MatchingCreaturesMustAttackEffect.class::cast)
+                    .filter(CombatAttackRequirementEffect.class::isInstance)
+                    .map(CombatAttackRequirementEffect.class::cast)
                     .filter(e -> predicateEvaluationService.matchesPermanentPredicate(
-                            creature, e.matcher(), matcherContext))
+                            creature, e.affectedPredicate(), matcherContext))
                     .count();
         });
 
+        for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
+            if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
+                    && predicateEvaluationService.matchesPermanentPredicate(creature,
+                    requirement.affectedPredicate(), FilterContext.of(gameData)
+                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                count[0]++;
+            }
+        }
+
         return count[0];
+    }
+
+    /**
+     * Returns whether a matching goaded creature selected a target that is not an alternate legal
+     * player. A planeswalker remains a legal fallback target when no alternate player can be
+     * attacked.
+     */
+    public boolean mustAttackOtherPlayerIfAble(GameData gameData, Permanent creature, UUID targetId) {
+        UUID creatureControllerId = gameData.findControllerOf(creature);
+        if (creatureControllerId == null || targetId == null) {
+            return false;
+        }
+
+        Set<UUID> validTargetIds = getValidAttackTargetIds(gameData, creatureControllerId);
+        for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
+            if (!(floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement)
+                    || !requirement.requiresAttackAtOtherPlayerIfAble()
+                    || !predicateEvaluationService.matchesPermanentPredicate(creature,
+                    requirement.affectedPredicate(), FilterContext.of(gameData)
+                            .withSourceControllerId(floatingEffect.controllerId()))) {
+                continue;
+            }
+
+            boolean canAttackOtherPlayer = validTargetIds.stream()
+                    .filter(gameData.playerIds::contains)
+                    .filter(id -> !id.equals(floatingEffect.controllerId()))
+                    .anyMatch(id -> canAttackDefender(gameData, creature, id));
+            if (canAttackOtherPlayer
+                    && (!gameData.playerIds.contains(targetId)
+                    || targetId.equals(floatingEffect.controllerId()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<FloatingContinuousEffect> floatingAttackRequirements(GameData gameData) {
+        synchronized (gameData.floatingEffects) {
+            return List.copyOf(gameData.floatingEffects);
+        }
     }
 
     /**

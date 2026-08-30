@@ -55,16 +55,17 @@ public class EvolveTriggerEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        int before = source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
-        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, source, 1);
-        if (source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > before) {
+        EvolveTriggerEffect evolve = (EvolveTriggerEffect) effect;
+        int before = source.getCounterCount(evolve.counterType());
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, source, evolve.counterType(), 1);
+        if (source.getCounterCount(evolve.counterType()) > before
+                && evolve.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
             fireEvolvesTriggers(gameData, source);
         }
     }
 
     /**
-     * "Whenever this creature evolves" (CR 702.100a): the ability triggers only when the evolve
-     * trigger resolves and a +1/+1 counter is actually put on the creature.
+     * The keyword-based evolve ability triggers only when its counter is actually placed.
      */
     private void fireEvolvesTriggers(GameData gameData, Permanent source) {
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_SELF_EVOLVES);

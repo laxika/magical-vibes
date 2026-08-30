@@ -115,7 +115,6 @@ public final class TargetFilters {
                 "Target must be a noncreature permanent an opponent controls");
     }
 
-    /** "Target must be a creature an opponent controls", or a nonland permanent an opponent controls with Gift. */
     public static PermanentPredicateTargetFilter withGift(PermanentPredicateTargetFilter withoutGift,
                                                            PermanentPredicateTargetFilter withGift) {
         return new PermanentPredicateTargetFilter(

@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -97,7 +99,8 @@ public class ETBTokenTargetService {
                 StackEntryType type = se.getEntryType();
                 boolean isSpell = type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
                         || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
-                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL;
+                        || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL
+                        || type == StackEntryType.BATTLE_SPELL;
                 boolean isAbility = type == StackEntryType.ACTIVATED_ABILITY
                         || type == StackEntryType.TRIGGERED_ABILITY;
                 if (!isSpell && !(pending.includeAbilities() && isAbility)) {
@@ -135,14 +138,22 @@ public class ETBTokenTargetService {
 
             TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
                     gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
-                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK);
+                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
+                    pending.sourcePermanentId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+            List<UUID> validSpellTargets = validMixedEtbSpellTargets(gameData, pending);
             List<UUID> validPlayerTargets = targets.validTargets().stream()
                     .filter(gameData.playerIds::contains)
                     .toList();
             List<UUID> validPermanentTargets = targets.validTargets().stream()
                     .filter(id -> !gameData.playerIds.contains(id))
                     .toList();
-            if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
+            List<UUID> validTargetObjects = new ArrayList<>(validPermanentTargets);
+            validSpellTargets.stream()
+                    .filter(id -> !validTargetObjects.contains(id))
+                    .forEach(validTargetObjects::add);
+            if (validPlayerTargets.isEmpty() && validTargetObjects.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
                 log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",
@@ -152,14 +163,51 @@ public class ETBTokenTargetService {
 
             gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
             gameData.interaction.setPermanentChoiceContext(pending);
+            String targetDescription = validSpellTargets.isEmpty()
+                    ? "Choose a target."
+                    : "Choose a target creature or spell.";
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validPermanentTargets, validPlayerTargets,
-                    pending.sourceCard().getName() + "'s ability — Choose a target.");
+                    validTargetObjects, validPlayerTargets,
+                    pending.sourceCard().getName() + "'s ability — " + targetDescription);
 
             log.info("Game {} - {} ETB token-target trigger awaiting target selection",
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    private List<UUID> validMixedEtbSpellTargets(GameData gameData,
+                                                   PermanentChoiceContext.ETBTokenTargetTrigger pending) {
+        return validMixedEtbSpellTargets(gameData, pending.effects(), pending.controllerId());
+    }
+
+    private List<UUID> validMixedEtbSpellTargets(GameData gameData, List<CardEffect> effects,
+                                                   UUID controllerId) {
+        List<UUID> validTargets = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            TargetSpec targetSpec = effect.targetSpec();
+            if (!targetSpec.admits(TargetPredicate.Kind.SPELL)) {
+                continue;
+            }
+            TargetPredicate.Spells spells = (TargetPredicate.Spells) targetSpec.declaredTarget()
+                    .leaf(TargetPredicate.Kind.SPELL).orElseThrow();
+            for (StackEntry stackEntry : gameData.stack) {
+                if (isSpell(stackEntry)
+                        && targetLegalityService.matchesStackEntryPredicate(
+                        gameData, stackEntry, spells.inner(), controllerId)) {
+                    validTargets.add(stackEntry.getCard().getId());
+                }
+            }
+        }
+        return validTargets;
+    }
+
+    private static boolean isSpell(StackEntry stackEntry) {
+        StackEntryType type = stackEntry.getEntryType();
+        return type == StackEntryType.INSTANT_SPELL || type == StackEntryType.SORCERY_SPELL
+                || type == StackEntryType.CREATURE_SPELL || type == StackEntryType.ENCHANTMENT_SPELL
+                || type == StackEntryType.ARTIFACT_SPELL || type == StackEntryType.PLANESWALKER_SPELL
+                || type == StackEntryType.BATTLE_SPELL;
     }
 
     /**
@@ -169,7 +217,8 @@ public class ETBTokenTargetService {
     public boolean handleETBTokenTargetChosen(GameData gameData, UUID targetId,
             PermanentChoiceContext.ETBTokenTargetTrigger pending) {
         GraveyardCardChoosingEffect choosingEffect = pending.effects().stream()
-                .filter(e -> e instanceof GraveyardCardChoosingEffect
+                .filter(e -> e instanceof GraveyardCardChoosingEffect candidate
+                        && candidate.choosesGraveyardCards()
                         && e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
                 .map(GraveyardCardChoosingEffect.class::cast)
                 .findFirst()
@@ -211,7 +260,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -228,7 +277,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -245,7 +294,7 @@ public class ETBTokenTargetService {
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (pending.chosenTargetsSoFar().contains(pid)) continue;
+                    if (targetAlreadyChosen(pending, pid)) continue;
                     if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, group.getFilter())) {
                         validPlayerTargets.add(pid);
                     }
@@ -258,7 +307,7 @@ public class ETBTokenTargetService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
+                        if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
                                 pending.controllerId(), card, pending.sourcePermanentId())) {
                             validPermanentTargets.add(p.getId());
@@ -266,6 +315,12 @@ public class ETBTokenTargetService {
                     }
                 }
             }
+
+            List<UUID> validSpellTargets = validMixedEtbSpellTargets(
+                    gameData, groupEffects, pending.controllerId());
+            validSpellTargets.stream()
+                    .filter(id -> !validPermanentTargets.contains(id))
+                    .forEach(validPermanentTargets::add);
 
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE
                     && !pending.chosenTargetsSoFar().isEmpty()) {
@@ -306,7 +361,7 @@ public class ETBTokenTargetService {
                         pending.chosenTargetsSoFar(), idx + 1, 0,
                         withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
                         pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution()));
+                        pending.resumePendingMayResolution(), pending.triggeringCardId()));
                 continue;
             }
 
@@ -331,6 +386,18 @@ public class ETBTokenTargetService {
                     gameData.id, card.getName(), idx, chosenInGroup);
             return;
         }
+    }
+
+    private boolean targetAlreadyChosen(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                        UUID candidateId) {
+        List<UUID> chosenTargets = pending.chosenTargetsSoFar();
+        int currentGroupStart = pending.groupSizes().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        boolean chosenInCurrentGroup = chosenTargets.subList(currentGroupStart, chosenTargets.size())
+                .contains(candidateId);
+        return chosenInCurrentGroup
+                || (!pending.sourceCard().isAllowSharedTargets() && chosenTargets.contains(candidateId));
     }
 
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
@@ -390,6 +457,10 @@ public class ETBTokenTargetService {
         Card card = pending.sourceCard();
         // Shared by ETB token copies, ON_SELF_CAST, and multi-target ON_ATTACK — keep the label generic.
         String abilityLabel = card.getName() + "'s ability";
+        Zone targetZone = pending.chosenTargetsSoFar().stream()
+                .map(id -> gameQueryService.findStackEntryByCardId(gameData, id))
+                .anyMatch(stackEntry -> stackEntry != null && isSpell(stackEntry))
+                ? Zone.STACK : null;
         StackEntry etbEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
@@ -400,14 +471,16 @@ public class ETBTokenTargetService {
                 null,
                 pending.sourcePermanentId(),
                 Map.of(),
-                null,
+                targetZone,
                 List.of(),
                 new ArrayList<>(pending.chosenTargetsSoFar())
         );
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
+        etbEntry.setTriggeringCardId(pending.triggeringCardId());
         if (pending.sourcePermanentId() != null) {
             etbEntry.setTriggeringPermanentId(pending.sourcePermanentId());
-            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            Permanent sourcePermanent = gameQueryService.findPermanentById(
+                    gameData, pending.sourcePermanentId());
             if (sourcePermanent != null) {
                 etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
             }

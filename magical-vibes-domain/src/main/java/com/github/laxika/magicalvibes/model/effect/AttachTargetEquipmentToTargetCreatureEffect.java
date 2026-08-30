@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/**
- * Attaches a target Equipment to a target creature.
- * Used by cards like Brass Squire that can move equipment at instant speed.
- * Reads targetIds[0] as the equipment and [1] as the creature.
- */
-public record AttachTargetEquipmentToTargetCreatureEffect() implements CardEffect {
+/** Attaches a target Equipment to a target creature. */
+public record AttachTargetEquipmentToTargetCreatureEffect(boolean equipmentFirst) implements CardEffect {
+
+    public AttachTargetEquipmentToTargetCreatureEffect() {
+        this(true);
+    }
+
+    public static AttachTargetEquipmentToTargetCreatureEffect creatureFirst() {
+        return new AttachTargetEquipmentToTargetCreatureEffect(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

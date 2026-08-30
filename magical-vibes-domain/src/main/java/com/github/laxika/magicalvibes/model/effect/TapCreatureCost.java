@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -19,6 +21,8 @@ public record TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
                               boolean trackTappedCreaturePower,
                               boolean trackTappedCreatureForSourceAbility) implements CostEffect {
 
+    private static final DynamicAmount ONE = new Fixed(1);
+
     public TapCreatureCost(PermanentPredicate predicate) {
         this(predicate, false, false, false);
     }
@@ -26,5 +30,25 @@ public record TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
     public TapCreatureCost(PermanentPredicate predicate, boolean excludeSelf,
                            boolean trackTappedCreaturePower) {
         this(predicate, excludeSelf, trackTappedCreaturePower, false);
+    }
+
+    @Override
+    public PermanentPredicate consumedPermanentFilter() {
+        return predicate;
+    }
+
+    @Override
+    public DynamicAmount tappedPermanentCount() {
+        return ONE;
+    }
+
+    @Override
+    public boolean tappedPermanentMustBeCreature() {
+        return true;
+    }
+
+    @Override
+    public boolean excludesSourceFromConsumedPermanents() {
+        return excludeSelf;
     }
 }

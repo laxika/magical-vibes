@@ -44,7 +44,7 @@ class DazzlingDenialTest extends BaseCardTest {
         AngelsMercy angelsMercy = new AngelsMercy();
         harness.setHand(player1, List.of(angelsMercy));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castInstant(player1, 0);
         harness.passPriority(player1);
         return angelsMercy;

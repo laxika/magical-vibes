@@ -94,7 +94,6 @@ if ($Runner -eq "muse") {
 $systemPrompt = "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and review the card immediately. Be thorough in the review. Implementation is read-only: do not edit card classes, effects, predicates, or docs - only delete a stale pass result file when required. Review every existing test for the card under review for rules accuracy and correctness. Ensure every test class for the card under review has @CardUsed({...}) listing every concrete card class it constructs, including support cards; add or correct class- and method-level annotations as needed. This annotation maintenance is required and is an exception to the read-only and test-modification restrictions. Make sure that only one set's cards are used in the test (preferably the set where the tested card is from). If it is not possible, then the test could use other ones as well, but we should try to stick to a limited number of sets if possible. Fix or otherwise modify an existing test only when it is wrong. Also inspect the current test harness for higher-level helpers. When an existing helper can replace multiple lines in the card's tests without changing their behavior or coverage, refactor those tests to use it instead of duplicating lower-level steps; this cleanup is an exception to the preceding restriction. Tests are encouraged: when oracle coverage is below 100% or you spot realistic edge cases, ADD focused harness tests. Always look up cards used for testing. Verify their real mana costs and other parameters using the MCP. Whenever possible, use real cards for testing. New failing tests that confirm a bug are good - leave them and report FAIL. Write scripts/result/{SET}/{collectorNumber}.txt only when there are real issues; on a clean pass delete any stale result file and write nothing."
 
 $total = $To - $From + 1
-$index = 0
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 if ($Runner -eq "codex") {
@@ -112,31 +111,73 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-for ($cardId = $From; $cardId -le $To; $cardId++) {
+$reviewJob = {
+    param(
+        [string] $JobRunner,
+        [string] $JobModel,
+        [string] $JobEffort,
+        [string] $JobRepositoryRoot,
+        [string] $JobSetCode,
+        [int] $JobCardId,
+        [string] $JobSystemPrompt
+    )
+
+    try {
+        Set-Location -LiteralPath $JobRepositoryRoot
+        $prompt = "/review-card $JobSetCode $JobCardId"
+        $commandOutput = @()
+
+        if ($JobRunner -eq "grok") {
+            $commandOutput = @(& agent -p --force --trust --model $JobModel "$prompt`n`n$JobSystemPrompt" 2>&1)
+            $exitCode = $LASTEXITCODE
+        }
+        elseif ($JobRunner -eq "codex") {
+            # A non-Stop EAP prevents native stderr from aborting or deadlocking
+            # under Windows PowerShell 5.1. Codex output is intentionally quiet.
+            $ErrorActionPreference = "Continue"
+            $reasoningConfig = "model_reasoning_effort=`"$JobEffort`""
+            & codex --search --ask-for-approval never exec --model $JobModel --config $reasoningConfig --cd $JobRepositoryRoot "$prompt`n`n$JobSystemPrompt" *>$null
+            $exitCode = $LASTEXITCODE
+        }
+        else {
+            $commandOutput = @(& claude --permission-mode auto --model $JobModel -p $prompt --append-system-prompt $JobSystemPrompt 2>&1)
+            $exitCode = $LASTEXITCODE
+        }
+
+        [pscustomobject] @{
+            CardId = $JobCardId
+            ExitCode = $exitCode
+            Output = @($commandOutput | ForEach-Object { $_.ToString() })
+        }
+    }
+    catch {
+        [pscustomobject] @{
+            CardId = $JobCardId
+            ExitCode = 1
+            Output = @($_.Exception.Message)
+        }
+    }
+}
+
+$index = 0
+
+foreach ($cardId in $From..$To) {
     $index++
+    $startedAt = Get-Date -Format "yyyy-MM-dd HH:mm"
     Write-Host ""
     Write-Host "############################################################"
-    Write-Host "# [$index/$total] review-card $SetCode $cardId"
+    Write-Host "# [$startedAt] [$index/$total] review-card $SetCode $cardId"
     Write-Host "############################################################"
 
-    $prompt = "/review-card $SetCode $cardId"
+    $result = & $reviewJob $Runner $Model $Effort $repositoryRoot $SetCode $cardId $systemPrompt
 
-    if ($Runner -eq "grok") {
-        & agent -p --force --trust --model $Model "$prompt`n`n$systemPrompt"
-    }
-    elseif ($Runner -eq "codex") {
-        # *>$null needs a non-Stop EAP on Windows PowerShell 5.1, or native stderr
-        # aborts/deadlocks under the script-level $ErrorActionPreference=Stop.
-        $reasoningConfig = "model_reasoning_effort=`"$Effort`""
-        & { $ErrorActionPreference = "Ignore"; & codex --search --ask-for-approval never exec --model $Model --config $reasoningConfig --cd $repositoryRoot "$prompt`n`n$systemPrompt" *>$null }
-    }
-    else {
-        & claude --permission-mode auto --model $Model -p $prompt --append-system-prompt $systemPrompt
+    foreach ($line in @($result.Output)) {
+        Write-Host $line
     }
 
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "$cliName exited with code $LASTEXITCODE for $SetCode $cardId. Stopping."
-        exit $LASTEXITCODE
+    if ($result.ExitCode -ne 0) {
+        Write-Error "Review failed for $SetCode $($result.CardId) with exit code $($result.ExitCode)."
+        exit $result.ExitCode
     }
 }
 

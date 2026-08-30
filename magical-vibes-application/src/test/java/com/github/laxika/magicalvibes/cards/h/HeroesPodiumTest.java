@@ -6,18 +6,23 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HeroesPodium.class, EmpressGalina.class, FountainOfYouth.class, GrizzlyBears.class,
+        MarchOfTheMachines.class, TsaboTavoc.class})
 class HeroesPodiumTest extends BaseCardTest {
 
     @Test
@@ -42,12 +47,13 @@ class HeroesPodiumTest extends BaseCardTest {
     @Test
     @DisplayName("The source receives the bonus if it is also made into a legendary creature")
     void animatedSourceReceivesBonus() {
-        Permanent podium = addPermanent(player1, new HeroesPodium());
+        Card podiumCard = new HeroesPodium();
+        podiumCard.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        Permanent podium = addPermanent(player1, podiumCard);
         addPermanent(player1, new MarchOfTheMachines());
         int podiumPowerBeforeAnotherLegend = gqs.getEffectivePower(gd, podium);
-        Permanent otherLegend = new Permanent(new TsaboTavoc());
+        Permanent otherLegend = harness.addToBattlefieldAndReturn(player1, new TsaboTavoc());
         int otherLegendPower = otherLegend.getEffectivePower();
-        gd.playerBattlefields.get(player1.getId()).add(otherLegend);
 
         assertThat(gqs.getEffectivePower(gd, podium)).isEqualTo(podiumPowerBeforeAnotherLegend + 1);
         assertThat(gqs.getEffectivePower(gd, otherLegend)).isEqualTo(otherLegendPower + 1);

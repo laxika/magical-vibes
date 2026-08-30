@@ -1,30 +1,59 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
+import java.util.List;
 import java.util.Map;
 
 /**
- * Death trigger for "When this creature dies, if it had counters on it, put those counters on up to
- * one target creature" (e.g. Scolding Administrator).
+ * Death trigger for "When this creature dies / whenever an ally creature dies, if it had counters
+ * on it, put those counters on up to one target creature" (e.g. Scolding Administrator and Host of
+ * the Hereafter).
  * <p>
- * Placed on the {@code ON_DEATH} slot. The death-trigger collector snapshots the dying permanent's
- * counters into {@code counters}; if the map is empty the trigger does not fire (the intervening-if
- * condition). When it fires, the collector queues a targeted death trigger carrying the snapshot, and
- * resolution places each counter on the chosen creature.
+ * On {@code ON_DEATH}, the death-trigger collector snapshots the dying permanent's counters into
+ * {@code counters}; if the map is empty the trigger does not fire. On
+ * {@code ON_ALLY_CREATURE_DIES}, the ally-death pipeline binds the same snapshot through
+ * {@link DyingCreatureCountersAwareEffect}. Resolution places each counter on the chosen creature.
  *
  * @param counters snapshot of the dying creature's counters, keyed by type (empty on the marker
  *                 instance placed on the card; filled in by the collector)
  */
-public record MoveDyingSourceCountersToTargetCreatureEffect(Map<CounterType, Integer> counters) implements CardEffect {
+public record MoveDyingSourceCountersToTargetCreatureEffect(
+        Map<CounterType, Integer> counters,
+        boolean controllerOnly
+)
+        implements CardEffect, DyingCreatureCountersAwareEffect {
+
+    public MoveDyingSourceCountersToTargetCreatureEffect {
+        counters = Map.copyOf(counters);
+    }
 
     public MoveDyingSourceCountersToTargetCreatureEffect() {
-        this(Map.of());
+        this(Map.of(), false);
+    }
+
+    public MoveDyingSourceCountersToTargetCreatureEffect(Map<CounterType, Integer> counters) {
+        this(counters, false);
+    }
+
+    public MoveDyingSourceCountersToTargetCreatureEffect(boolean controllerOnly) {
+        this(Map.of(), controllerOnly);
+    }
+
+    @Override
+    public CardEffect boundToDyingCreatureCounters(Map<CounterType, Integer> counters) {
+        return new MoveDyingSourceCountersToTargetCreatureEffect(counters, controllerOnly);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent(), new PermanentIsCreaturePredicate());
+        return TargetSpec.benign(TargetPredicates.permanent(), controllerOnly
+                ? new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentControlledBySourceControllerPredicate()))
+                : new PermanentIsCreaturePredicate());
     }
 }

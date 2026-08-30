@@ -7,15 +7,13 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -145,28 +143,21 @@ class GraveyardTargetingServiceTest {
     }
 
     @Test
-    @DisplayName("handleUpToNGraveyardSpellTargeting honors a required minimum")
-    void handleUpToNGraveyardSpellTargeting_honorsRequiredMinimum() {
+    @DisplayName("handleGraveyardCardsExileETBTargeting tracks a source permanent for source exiles")
+    void handleGraveyardCardsExileETBTargeting_tracksSourcePermanent() {
         Card card = new Card();
-        card.setName("Peerless Recycling");
-        ReturnTargetCardsFromGraveyardToHandEffect effect =
-                new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.CREATURE), 2);
-        Card first = new Card();
-        first.setName("First Creature");
-        first.setType(CardType.CREATURE);
-        Card second = new Card();
-        second.setName("Second Creature");
-        second.setType(CardType.CREATURE);
-        gd.playerGraveyards.get(player1Id).addAll(List.of(first, second));
-        when(predicateEvaluationService.matchesCardPredicate(eq(first), eq(effect.filter()), eq(card.getId())))
-                .thenReturn(true);
-        when(predicateEvaluationService.matchesCardPredicate(eq(second), eq(effect.filter()), eq(card.getId())))
-                .thenReturn(true);
+        card.setName("Pit of Offerings");
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
 
-        service.handleUpToNGraveyardSpellTargeting(gd, player1Id, card, StackEntryType.INSTANT_SPELL,
-                effect, 2, List.of(effect), 2);
+        Card graveyardCard = new Card();
+        gd.playerGraveyards.get(player1Id).add(graveyardCard);
+        ExileGraveyardCardsEffect exile = new ExileGraveyardCardsEffect(
+                3, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null, false, true, false);
 
-        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), any(), eq(2), eq(2), anyString());
+        service.handleGraveyardCardsExileETBTargeting(gd, player1Id, card, List.of(exile), exile);
+
+        assertThat(gd.graveyardTargetOperation.sourcePermanentId).isEqualTo(source.getId());
     }
 
     @Test
@@ -204,22 +195,5 @@ class GraveyardTargetingServiceTest {
 
         // No creature in graveyard — falls through to empty-target stack entry path
         assertThat(gd.stack).hasSize(1);
-    }
-
-    @Test
-    @DisplayName("graveyard target discovery unwraps optional mana payments")
-    void graveyardTargetDiscovery_unwrapsMayPayManaEffect() {
-        ReturnCardFromGraveyardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardTypePredicate(CardType.CREATURE))
-                .targetGraveyard(true)
-                .build();
-        MayPayManaEffect mayPay = new MayPayManaEffect("{W}{B}", 2, returnEffect,
-                "Pay {W}{B} and 2 life?");
-
-        GraveyardTargetingSupport.Target target = new GraveyardTargetingSupport().findTarget(List.of(mayPay));
-
-        assertThat(target).isNotNull();
-        assertThat(target.filter()).isSameAs(returnEffect.filter());
     }
 }

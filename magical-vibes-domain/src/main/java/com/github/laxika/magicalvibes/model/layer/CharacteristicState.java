@@ -56,6 +56,8 @@ public class CharacteristicState {
     private final Set<Keyword> seededKeywords = new HashSet<>();
     /** Protection-from-color abilities (own printed protection plus layer-6 grants). */
     private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
+    /** Colors from which protection has been removed by a later layer-6 effect. */
+    private final Set<CardColor> removedProtectionColors = EnumSet.noneOf(CardColor.class);
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedStaticEffects = new ArrayList<>();
     @Setter private int basePower;
@@ -69,6 +71,10 @@ public class CharacteristicState {
     private boolean losesAllAbilities;
     /** CR 613.7 timestamp of the lose-all effect; only meaningful while {@link #losesAllAbilities}. */
     private long losesAllAbilitiesTimestamp;
+    /** True once a layer-6 effect has removed all non-mana abilities. */
+    private boolean losesAllNonManaAbilities;
+    /** Timestamp of the non-mana ability removal. */
+    private long losesAllNonManaAbilitiesTimestamp;
     /**
      * True once a land-type-setting effect (Blood Moon, Sea's Claim, ...) removed the object's
      * printed abilities as part of setting its land types (CR 305.7). Unlike
@@ -85,7 +91,8 @@ public class CharacteristicState {
      * pass.
      */
     public CharacteristicState(Card card, Permanent permanent) {
-        this.name = permanent.isFaceDown() ? null : card.getName();
+        this.name = permanent.isFaceDown() ? null
+                : permanent.getPersistentName() != null ? permanent.getPersistentName() : card.getName();
         if (permanent.isFaceDown()) {
             this.cardTypes.addAll(permanent.getFaceDownCardTypes());
         } else {
@@ -117,6 +124,9 @@ public class CharacteristicState {
         if (!permanent.isFaceDown()) {
             this.keywords.addAll(card.getKeywords());
         }
+        if (permanent.isSuspected()) {
+            this.keywords.add(Keyword.MENACE);
+        }
         this.grantedActivatedAbilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         this.basePower = permanent.isFaceDown() ? permanent.getFaceDownPower()
                 : card.getPower() != null ? card.getPower() : 0;
@@ -135,14 +145,16 @@ public class CharacteristicState {
         this.powerDelta = counterDelta + plusOnePlusTwo + permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ZERO)
                 - 2 * minusTwoMinusOne
-                - 2 * minusTwoMinusTwo;
+                - 2 * minusTwoMinusTwo
+                + 2 * permanent.getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO);
         // +0/+1 counters (e.g. Sacred Boon) add toughness only; -0/-1 (Essence Flare) and
         // -0/-2 (Greater Werewolf / Spirit Shackle) subtract toughness only.
         this.toughnessDelta = counterDelta + 2 * plusOnePlusTwo + permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
                 - permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)
                 - 2 * permanent.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)
                 - minusTwoMinusOne
-                - 2 * minusTwoMinusTwo;
+                - 2 * minusTwoMinusTwo
+                + 2 * permanent.getCounterCount(CounterType.PLUS_ZERO_PLUS_TWO);
     }
 
     /**
@@ -163,6 +175,7 @@ public class CharacteristicState {
         this.blockedKeywords.addAll(source.blockedKeywords);
         this.seededKeywords.addAll(source.seededKeywords);
         this.protectionColors.addAll(source.protectionColors);
+        this.removedProtectionColors.addAll(source.removedProtectionColors);
         this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
         this.grantedStaticEffects.addAll(source.grantedStaticEffects);
         this.basePower = source.basePower;
@@ -172,6 +185,8 @@ public class CharacteristicState {
         this.switchCount = source.switchCount;
         this.losesAllAbilities = source.losesAllAbilities;
         this.losesAllAbilitiesTimestamp = source.losesAllAbilitiesTimestamp;
+        this.losesAllNonManaAbilities = source.losesAllNonManaAbilities;
+        this.losesAllNonManaAbilitiesTimestamp = source.losesAllNonManaAbilitiesTimestamp;
         this.printedAbilitiesRemoved = source.printedAbilitiesRemoved;
     }
 
@@ -200,6 +215,10 @@ public class CharacteristicState {
 
     public void addSupertype(CardSupertype supertype) {
         supertypes.add(supertype);
+    }
+
+    public void removeSupertype(CardSupertype supertype) {
+        supertypes.remove(supertype);
     }
 
     public void addSubtype(CardSubtype subtype) {
@@ -285,7 +304,13 @@ public class CharacteristicState {
     }
 
     public void addProtectionColors(Collection<CardColor> colors) {
+        removedProtectionColors.removeAll(colors);
         protectionColors.addAll(colors);
+    }
+
+    public void removeProtectionColors(Collection<CardColor> colors) {
+        protectionColors.removeAll(colors);
+        removedProtectionColors.addAll(colors);
     }
 
     /** Whether the layer-6 state so far gives this permanent protection from the given color. */
@@ -315,6 +340,20 @@ public class CharacteristicState {
         grantedStaticEffects.clear();
         this.losesAllAbilities = true;
         this.losesAllAbilitiesTimestamp = timestamp;
+    }
+
+    /**
+     * Applies an ability-removal effect that preserves activated mana abilities already present.
+     * Abilities granted by later timestamps are added normally by the layered pass.
+     */
+    public void loseAllNonManaAbilities(long timestamp) {
+        keywords.clear();
+        blockedKeywords.clear();
+        protectionColors.clear();
+        grantedActivatedAbilities.removeIf(ability -> !ability.isManaAbility());
+        grantedStaticEffects.clear();
+        this.losesAllNonManaAbilities = true;
+        this.losesAllNonManaAbilitiesTimestamp = timestamp;
     }
 
     /**

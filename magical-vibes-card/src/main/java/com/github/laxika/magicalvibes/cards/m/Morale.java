@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "4ED", collectorNumber = "36")
+@CardRegistration(set = "DRK", collectorNumber = "14")
 public class Morale extends Card {
 
     public Morale() {

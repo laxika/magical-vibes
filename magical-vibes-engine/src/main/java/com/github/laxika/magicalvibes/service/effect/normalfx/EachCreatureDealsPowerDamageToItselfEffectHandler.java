@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageT
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,6 +35,7 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (EachCreatureDealsPowerDamageToItselfEffect) effect;
         List<Permanent> creatures = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -40,9 +43,11 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
-                    creatures.add(permanent);
-                }
+                if (!gameQueryService.isCreature(gameData, permanent)
+                        || (e.predicate() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, e.predicate()))) continue;
+                creatures.add(permanent);
             }
         }
 

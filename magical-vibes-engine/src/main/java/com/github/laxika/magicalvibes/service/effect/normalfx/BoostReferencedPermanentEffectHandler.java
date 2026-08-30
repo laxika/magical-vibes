@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -64,10 +65,30 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
                         ? null
                         : findPermanent(gameData, source.getAttachedTo());
             }
+            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
         };
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {
         return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        if (cardId == null) {
+            return null;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (cardId.equals(permanent.getCard().getId())
+                        || (permanent.getOriginalCard() != null
+                        && cardId.equals(permanent.getOriginalCard().getId()))) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 }

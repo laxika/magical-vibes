@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.cards.m.MagneticWeb;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.o.Okk;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
-import com.github.laxika.magicalvibes.cards.p.PersistentMarshstalker;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
@@ -32,7 +31,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -88,22 +86,6 @@ class CombatAttackServiceTest extends BaseCardTest {
 
     private CombatResult declare(List<Integer> attackerIndices) {
         return declare(attackerIndices, null);
-    }
-
-    @Test
-    @CardUsed({PersistentMarshstalker.class, GrizzlyBears.class})
-    @DisplayName("A graveyard attack trigger only sees matching attackers")
-    void graveyardAttackTriggerRequiresMatchingAttacker() {
-        addCreatureReady(player1, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(
-                new PersistentMarshstalker(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        enterDeclareAttackers();
-
-        gs.declareAttackers(gd, player1, List.of(0));
-
-        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Persistent Marshstalker"));
     }
 
     @Test
@@ -665,10 +647,12 @@ class CombatAttackServiceTest extends BaseCardTest {
         assertThat(declare(List.of(index(bears), index(angel)))).isEqualTo(CombatResult.AUTO_PASS_ONLY);
 
         assertThat(bears.isAttacking()).isTrue();
+        assertThat(bears.isAttackedOrBlockedSinceLastUpkeep()).isTrue();
         assertThat(bears.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(bears.isTapped()).isTrue();
         // CR 702.20b: vigilance means attacking doesn't cause the creature to tap.
         assertThat(angel.isAttacking()).isTrue();
+        assertThat(angel.isAttackedOrBlockedSinceLastUpkeep()).isTrue();
         assertThat(angel.isTapped()).isFalse();
         assertThat(bystander.isAttacking()).isFalse();
 

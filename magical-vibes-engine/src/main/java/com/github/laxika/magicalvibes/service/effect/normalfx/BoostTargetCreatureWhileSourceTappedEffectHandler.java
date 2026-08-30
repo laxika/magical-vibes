@@ -45,6 +45,12 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostTargetCreatureWhileSourceTappedEffect) effect;
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null || !source.isTapped()) {
+            return;
+        }
 
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {

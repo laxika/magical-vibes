@@ -80,6 +80,7 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 Permanent permanent = new Permanent(card);
+                permanent.setEnteredFromExile(true);
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, playerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);

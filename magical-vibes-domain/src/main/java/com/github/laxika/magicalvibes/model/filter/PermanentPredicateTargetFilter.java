@@ -18,11 +18,6 @@ public record PermanentPredicateTargetFilter(
         this(predicate, errorMessage, kickedPredicate, null, null);
     }
 
-    public PermanentPredicateTargetFilter(PermanentPredicate predicate, String errorMessage,
-                                          PermanentPredicate giftPredicate, String giftErrorMessage) {
-        this(predicate, errorMessage, null, giftPredicate, giftErrorMessage);
-    }
-
     public PermanentPredicate predicateFor(boolean kicked) {
         return kicked && kickedPredicate != null ? kickedPredicate : predicate;
     }
@@ -33,10 +28,5 @@ public record PermanentPredicateTargetFilter(
 
     public String errorMessageFor(boolean giftPromised) {
         return giftPromised && giftErrorMessage != null ? giftErrorMessage : errorMessage;
-    }
-
-    public PermanentPredicateTargetFilter forCast(boolean kicked, boolean giftPromised) {
-        return new PermanentPredicateTargetFilter(
-                predicateFor(kicked, giftPromised), errorMessageFor(giftPromised));
     }
 }

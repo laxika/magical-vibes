@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -17,11 +16,10 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Resolves {@link SacrificeSelfAtEndStepEffect} by scheduling the source permanent for sacrifice at
- * the beginning of the next end step (a {@link DelayedPermanentAction} with kind
- * {@link DelayedPermanentActionKind#SACRIFICE_AT_END_STEP}, drained by
- * {@code StepTriggerService.handleEndStepTriggers}). Used by Brackwater Elemental's attack/block
- * trigger.
+ * Resolves {@link SacrificeSelfAtEndStepEffect} by scheduling the source permanent, or the
+ * attached permanent for its attached form, for sacrifice at the beginning of the next end step.
+ * The delayed ability is put on the stack by {@code StepTriggerService.handleEndStepTriggers}.
+ * Used by Brackwater Elemental's attack/block trigger.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,7 +36,10 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        var sacrifice = (SacrificeSelfAtEndStepEffect) effect;
+        UUID sourceId = sacrifice.attachedPermanent()
+                ? entry.getTargetId()
+                : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         if (sourceId == null) {
             return;
         }
@@ -48,7 +49,8 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
+                sourceId, entry.getControllerId(), entry.getCard()));
 
         String logEntry = source.getCard().getName() + " will be sacrificed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));

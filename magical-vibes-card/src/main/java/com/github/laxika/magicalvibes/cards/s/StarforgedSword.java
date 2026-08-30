@@ -25,7 +25,7 @@ import java.util.Set;
 public class StarforgedSword extends Card {
 
     public StarforgedSword() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addEffect(EffectSlot.STATIC, new GiftEffect(0));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new GiftPromised(),

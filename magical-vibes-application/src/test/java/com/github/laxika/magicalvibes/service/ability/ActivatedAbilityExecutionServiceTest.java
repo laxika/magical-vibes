@@ -39,12 +39,14 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -54,9 +56,11 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -76,6 +80,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
@@ -93,6 +99,8 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private GameLogService gameLogService;
@@ -147,6 +155,13 @@ class ActivatedAbilityExecutionServiceTest {
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
+        lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
+                        - (int) invocation.getArgument(2));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
+        lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
+                        eq(gameData), anyInt(), any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(1));
     }
 
     // =========================================================================
@@ -265,6 +280,22 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
             verify(drawService, never()).resolveDrawCard(gameData, player1Id);
+        }
+
+        @Test
+        @DisplayName("Activated ability pays X life after activation")
+        void payXLifeCostPaysTheAnnouncedX() {
+            Card card = createCard("Krumar Initiate", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new PayXLifeCost());
+            ActivatedAbility ability = new ActivatedAbility(false, "{X}{B}", effects,
+                    "{X}{B}: Pay X life.").withXValue();
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
+                    3, null, null, false);
+
+            verify(lifeSupport).applyLifeLoss(gameData, player1Id, 3, "Krumar Initiate");
+            assertThat(gameData.stack).hasSize(1);
         }
 
         @Test
@@ -965,6 +996,27 @@ class ActivatedAbilityExecutionServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("put self on bottom of library cost")
+    class PutSelfOnBottomOfOwnersLibraryCostFlow {
+
+        @Test
+        @DisplayName("moves the source permanent to the bottom of its owner's library")
+        void putsSourceOnLibraryBottom() {
+            Card card = createCard("Test Navigator", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new PutSelfOnBottomOfOwnersLibraryCost(), new DrawCardEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Put self on bottom: draw a card");
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            verify(permanentRemovalService).removePermanentToLibraryBottom(gameData, perm);
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+                    .noneMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryCost);
+        }
+    }
+
     // =========================================================================
     // Death trigger ordering after sacrifice-as-cost (CR 603.3)
     // =========================================================================
@@ -1109,7 +1161,9 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getSourcePermanentSnapshot()).isSameAs(perm);
+            Permanent snapshot = gameData.stack.getFirst().getSourcePermanentSnapshot();
+            assertThat(snapshot).isNotSameAs(perm);
+            assertThat(snapshot.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
         }
 
@@ -1126,7 +1180,9 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getSourcePermanentSnapshot()).isSameAs(perm);
+            Permanent snapshot = gameData.stack.getFirst().getSourcePermanentSnapshot();
+            assertThat(snapshot).isNotSameAs(perm);
+            assertThat(snapshot.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
         }
 
         @Test
@@ -1317,7 +1373,8 @@ class ActivatedAbilityExecutionServiceTest {
                     .thenReturn(1);
             // Shield absorbs all 1 damage
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(0), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player1Id), eq(0), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(0);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -1348,7 +1405,8 @@ class ActivatedAbilityExecutionServiceTest {
             when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 2))
                     .thenReturn(1);
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(1), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player1Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
             when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
@@ -1380,7 +1438,8 @@ class ActivatedAbilityExecutionServiceTest {
             when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player2Id, perm.getId(), 2))
                     .thenReturn(1);
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player2Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player2Id), eq(1), anyString()))
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                    eq(gameData), eq(player2Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
                     .thenReturn(1);
             when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player2Id)).thenReturn(false);
             when(gameQueryService.canPlayerLifeChange(gameData, player2Id)).thenReturn(true);
@@ -1587,7 +1646,8 @@ class ActivatedAbilityExecutionServiceTest {
         when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), damage))
                 .thenReturn(damage);
         when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, damage)).thenReturn(damage);
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(damage), anyString()))
+        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+                eq(gameData), eq(player1Id), eq(damage), anyString(), anyBoolean(), eq(perm.getId())))
                 .thenReturn(damage);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
         when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);

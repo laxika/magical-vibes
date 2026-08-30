@@ -453,7 +453,9 @@ class CombatBlockServiceTest extends BaseCardTest {
                 new BlockerAssignment(defenderIndex(blocker), attackerIndex(attacker))));
 
         assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.isAttackedOrBlockedSinceLastUpkeep()).isTrue();
         assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(attacker.isAttackedOrBlockedSinceLastUpkeep()).isTrue();
         assertThat(bystander.isBlocking()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
         assertThat(gameLogContains("declares 1 blocker.")).isTrue();

@@ -87,6 +87,24 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
         }
 
         @Test
+        @DisplayName("Carries an exile-play tax through the hand choice")
+        void carriesExilePlayTax() {
+            Card card = createCard("Elite Spellbinder");
+            var effect = ChooseCardsFromTargetHandEffect.exileAndGrantPlayPermission(
+                    1, List.of(CardType.LAND), 2);
+            StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+            Card targetCard = createCard("Lightning Bolt");
+            targetCard.setType(CardType.INSTANT);
+            gd.playerHands.get(player2Id).add(targetCard);
+
+            resolveEffect(gd, entry, effect);
+
+            verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                    i instanceof PendingInteraction.RevealedHandChoice rhc
+                            && rhc.exilePlayOpponentTax() == 2));
+        }
+
+        @Test
         @DisplayName("Forwards source permanent id when returnOnSourceLeave")
         void forwardsSourcePermanentIdForReturnOnLeave() {
             Card card = createCard("Kitesail Freebooter");

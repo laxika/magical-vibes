@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,17 @@ public class EquipSupport {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
+    private final TriggerCollectionService triggerCollectionService;
+    private final AuraCopyService auraCopyService;
+
+    public void expireAttachedCopyEffects(GameData gameData, Permanent equipment) {
+        auraCopyService.expireAttachedCopyEffects(gameData, equipment.getId());
+    }
+
+    public void notifyEquipmentAttached(GameData gameData, Permanent equipment, UUID oldAttachedTo) {
+        triggerCollectionService.checkEquipmentAttachedTriggers(gameData, equipment, oldAttachedTo);
+    }
 
     public Permanent findEquipmentByCardId(GameData gameData, UUID cardId) {
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -59,8 +72,30 @@ public class EquipSupport {
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, host, attachRestriction);
     }
 
+    public boolean attachEquipment(GameData gameData, Permanent equipment, Permanent host) {
+        if (!canAttachEquipment(gameData, equipment, host)) {
+            return false;
+        }
+
+        UUID oldAttachedTo = equipment.getAttachedTo();
+        if (host.getId().equals(oldAttachedTo)) {
+            return true;
+        }
+        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        expireAttachedCopyEffects(gameData, equipment);
+        equipment.setAttachedTo(host.getId());
+        equipment.setTimestamp(gameData.nextTimestamp());
+        applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, host.getId());
+        notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
+        return true;
+    }
+
     public void applySacrificeOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                 UUID oldAttachedTo, UUID newAttachedTo) {
+        if (oldAttachedTo != null && !oldAttachedTo.equals(newAttachedTo)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, equipment, oldAttachedTo);
+        }
+
         boolean hasSacrificeOnUnattach = equipment.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
 

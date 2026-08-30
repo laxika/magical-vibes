@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,6 +81,21 @@ class LayeredBoardCacheTest extends BaseCardTest {
     }
 
     @Test
+    void directMutableCardFieldMutationInvalidates() {
+        add(player1, new ElvishChampion());
+        Permanent bear = add(player1, new GrizzlyBears());
+        Card mutableBear = TestCards.mutableCard(bear);
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isFalse();
+
+        mutableBear.setSubtypes(List.of(CardSubtype.ELF));
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
     void directAttachmentMutationInvalidates() {
         Permanent bear = add(player1, new GrizzlyBears());
         Permanent dub = add(player1, new Dub());
@@ -105,12 +122,7 @@ class LayeredBoardCacheTest extends BaseCardTest {
     }
 
     @Test
-    void conditionalStaticGrantsToggleWithoutInvalidatingTheBoard() {
-        // Conditional wrappers are excluded from the board computation (LayerSystemService
-        // skips them in collectInstances): their conditions read volatile inputs — life
-        // totals here — that the board fingerprint deliberately does not cover, and the
-        // static-bonus assembly evaluates them fresh on every query. The cached board entry
-        // must therefore be REUSED across the toggle while the answer still changes.
+    void conditionalStaticGrantsToggleWhenLifeTotalInvalidatesTheBoard() {
         Permanent ascendant = add(player1, new com.github.laxika.magicalvibes.cards.s.SerraAscendant());
 
         gd.playerLifeTotals.put(player1.getId(), 30);
@@ -122,7 +134,7 @@ class LayeredBoardCacheTest extends BaseCardTest {
         gd.playerLifeTotals.put(player1.getId(), 20);
         assertThat(gqs.hasKeyword(gd, ascendant, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectivePower(gd, ascendant)).isEqualTo(1);
-        assertThat(gd.layeredBoardCache).isSameAs(cachedBoard);
+        assertThat(gd.layeredBoardCache).isNotSameAs(cachedBoard);
     }
 
     @Test

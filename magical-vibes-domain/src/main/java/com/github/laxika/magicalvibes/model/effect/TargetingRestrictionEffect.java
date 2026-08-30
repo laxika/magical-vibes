@@ -87,6 +87,13 @@ public record TargetingRestrictionEffect(
                 TargetColorMode.ALLOWED_COLORS_ONLY, false);
     }
 
+    /** Can't be the target of spells or abilities from disallowed-color sources controlled by opponents. */
+    public static TargetingRestrictionEffect fromOpponentNonColorSources(CardColor allowedColor) {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS_AND_ABILITIES, true, Set.of(allowedColor),
+                TargetColorMode.ALLOWED_COLORS_ONLY, false);
+    }
+
     /** Can't be the target of spells (any color, any controller); abilities still can. Dense Foliage. */
     public static TargetingRestrictionEffect spells() {
         return new TargetingRestrictionEffect(
@@ -113,6 +120,12 @@ public record TargetingRestrictionEffect(
     public static TargetingRestrictionEffect hexproofFromColors(Set<CardColor> colors) {
         return new TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, true, colors, TargetColorMode.BLOCKED_COLORS, true);
+    }
+
+    /** Hexproof from monocolored sources â€” opponents' monocolored spells and abilities can't target. */
+    public static TargetingRestrictionEffect hexproofFromMonocolored() {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS_AND_ABILITIES, true, Set.of(), TargetColorMode.MONOCOLORED, true);
     }
 
     /**

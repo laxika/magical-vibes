@@ -39,7 +39,6 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        // Re-entry after player chose X value
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
             gameData.chosenXValue = null;
@@ -50,53 +49,42 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
                 return;
             }
 
-            // Cap was based on potential mana so the player could tap lands during the
-            // prompt; re-check the actual pool before charging.
             ManaPool pool = gameData.playerManaPools.get(controllerId);
-            if (payableFromPool(pool) < chosenValue) {
+            ManaCost cost = new ManaCost(e.manaCost());
+            if (!cost.canPay(pool, chosenValue)) {
                 gameLogService.append(gameData, GameLog.text(
-                        playerName + " can't pay {" + chosenValue + "} for " + cardName
-                                + " (tap mana sources, then choose X again)."));
+                        playerName + " can't pay " + e.manaCost().replace("{X}", "{" + chosenValue + "}")
+                                + " for " + cardName + " (tap mana sources, then choose X again)."));
                 log.info("Game {} - {} cannot yet pay X={} for {} — re-prompting",
                         gameData.id, playerName, chosenValue, cardName);
-                beginXPrompt(gameData, controllerId, cardName);
+                beginXPrompt(gameData, controllerId, cost, cardName, e.manaCost());
                 return;
             }
-            new ManaCost("{X}").pay(pool, chosenValue);
+            cost.pay(pool, chosenValue);
 
-            gameLogService.append(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
-            log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
-            permanentControlSupport.applyCreateToken(
-                    gameData, controllerId, e.token(), chosenValue, entry.getCard().getSetCode());
+            gameLogService.append(gameData, GameLog.text(playerName + " pays "
+                    + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
+            log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
+            entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
+                    gameData, controllerId, e.token(), chosenValue, entry.getCard().getSetCode()));
             return;
         }
 
-        // First call: cap includes untapped mana sources so an empty pool with untapped
-        // lands still opens the prompt (CR 605.3a — mana abilities during the payment).
-        if (maxPotentialX(gameData, controllerId) <= 0) {
+        ManaCost cost = new ManaCost(e.manaCost());
+        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
+        if (maxX <= 0) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no mana to pay for " + cardName + "'s ability."));
             log.info("Game {} - {} has no mana for {}'s pay-X token ability", gameData.id, playerName, cardName);
             return;
         }
-        beginXPrompt(gameData, controllerId, cardName);
+        beginXPrompt(gameData, controllerId, cost, cardName, e.manaCost());
     }
 
-    private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {
-        int maxX = maxPotentialX(gameData, controllerId);
-        String prompt = "Pay {X} for " + cardName + "? Create X tokens.";
+    private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost, String cardName, String manaCost) {
+        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
+        String prompt = "You may pay " + manaCost + " for " + cardName
+                + ". Choose X (0 = don't pay). Create X tokens.";
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true));
-    }
-
-    private int maxPotentialX(GameData gameData, UUID controllerId) {
-        int untappedSources = potentialManaService.buildVirtualManaPool(gameData, controllerId).getTotal()
-                - gameData.playerManaPools.get(controllerId).getTotal();
-        return payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources;
-    }
-
-    /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
-    private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true, manaCost));
     }
 }

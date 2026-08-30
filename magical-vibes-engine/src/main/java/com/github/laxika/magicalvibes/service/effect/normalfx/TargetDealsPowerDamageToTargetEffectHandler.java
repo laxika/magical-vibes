@@ -57,7 +57,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
 
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
         int rawDamage = gameQueryService.applyDamageMultiplier(
-                gameData, power * e.powerMultiplier(), entry);
+                gameData, Math.multiplyExact(power, e.powerMultiplier()), entry);
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, biter);
     }
 }

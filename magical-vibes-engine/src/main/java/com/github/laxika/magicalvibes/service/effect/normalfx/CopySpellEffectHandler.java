@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
+import java.util.EnumSet;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +34,8 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopySpellEffect copyEffect = (CopySpellEffect) effect;
-        UUID targetCardId = entry.getTargetId();
+        UUID targetCardId = entry.getTriggeringCardId() != null
+                ? entry.getTriggeringCardId() : entry.getTargetId();
         if (targetCardId == null) return;
 
         StackEntry targetEntry = null;
@@ -58,9 +62,20 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
                 ? targetEntry.getControllerId()
                 : entry.getControllerId();
         Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
+        if (copyEffect.removeLegendary()) {
+            var supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(copyCard.getSupertypes());
+            supertypes.remove(CardSupertype.LEGENDARY);
+            copyCard.setSupertypes(supertypes);
+        }
+        if (copyEffect.colorOverride() != null) {
+            copyCard.setColor(copyEffect.colorOverride());
+            copyCard.setColors(List.of(copyEffect.colorOverride()));
+        }
         // Token-copy modes mark the copy before it resolves into a permanent. The creature-copy
         // mode additionally grants haste and may register a delayed sacrifice.
-        if (copyEffect.tokenCopy() || copyEffect.tokenWithHaste()) {
+        if (copyEffect.tokenCopy() || copyEffect.tokenWithHaste()
+                || (copyEffect.permanentSpellToken() && isPermanentSpell(targetEntry))) {
             copyCard.setToken(true);
         }
         if (copyEffect.tokenWithHaste()) {
@@ -74,7 +89,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 
-        gameData.stack.add(copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
@@ -90,5 +105,12 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
         }
+    }
+
+    private static boolean isPermanentSpell(StackEntry entry) {
+        return switch (entry.getEntryType()) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            default -> false;
+        };
     }
 }

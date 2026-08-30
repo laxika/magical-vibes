@@ -79,7 +79,8 @@ public class RevealTopCardsForEachCardTypeMayExileEffectHandler implements Norma
             }
 
             LibrarySearchFollowUp followUp = LibrarySearchFollowUp.forCardTypeBoundedPick(
-                    Arrays.asList(cardTypes).subList(i + 1, cardTypes.length), false);
+                    Arrays.asList(cardTypes).subList(i + 1, cardTypes.length),
+                    LibrarySearchDestination.EXILE);
             String prompt = "You may reveal a " + type.getDisplayName().toLowerCase()
                     + " card from among them and exile it.";
             LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(eligible))

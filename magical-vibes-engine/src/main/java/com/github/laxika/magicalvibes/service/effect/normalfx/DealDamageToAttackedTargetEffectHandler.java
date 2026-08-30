@@ -2,19 +2,22 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.UUID;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +41,15 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         UUID targetId = entry.getAttackedTargetId();
         if (targetId == null) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourcePermanent == null) {
+            sourcePermanent = entry.getSourcePermanentSnapshot();
+        }
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, sourcePermanent));
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
         if (gameData.playerIds.contains(targetId)) {
             if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);

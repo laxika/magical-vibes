@@ -42,6 +42,7 @@ public class RemoveAllCountersAndLockPermanentEffectHandler implements NormalEff
         }
 
         int removed = 0;
+        int oilRemoved = target.getCounterCount(CounterType.OIL);
         for (CounterType counterType : CounterType.values()) {
             // ANY and SILVER are wildcard categories, not concrete stored counters.
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
@@ -50,6 +51,7 @@ public class RemoveAllCountersAndLockPermanentEffectHandler implements NormalEff
             removed += target.getCounterCount(counterType);
             target.setCounterCount(counterType, 0);
         }
+        gameData.recordOilCounterRemoved(target, oilRemoved);
 
         UUID sourceId = entry.getSourcePermanentId();
         if (sourceId != null) {

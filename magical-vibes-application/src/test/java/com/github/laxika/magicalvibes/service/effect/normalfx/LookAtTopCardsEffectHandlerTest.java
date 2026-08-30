@@ -688,5 +688,48 @@ class LookAtTopCardsEffectHandlerTest {
             assertThat(search.params().reorderRemainingToBottom()).isFalse();
             assertThat(search.params().sourceCards()).containsExactly(first, second, third);
         }
+
+        @Test
+        @DisplayName("Optional filtered top pick offers only matching cards and randomizes the rest")
+        void optionalFilteredTopPickRandomizesRest() {
+            stubCardViewFactory();
+            Card land = createCard("Forest");
+            Card spell = createCard("Shock");
+            Card creature = createCard("Llanowar Elves");
+            gd.playerDecks.get(player1Id).addAll(List.of(land, spell, creature));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == land);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOnTopRestOnBottomRandom(
+                    3, new CardTypePredicate(CardType.LAND));
+            handler.resolve(gd, entryFor("Silhana Wayfinder", effect), effect);
+
+            PendingInteraction.LibrarySearch search =
+                    gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+            assertThat(search).isNotNull();
+            assertThat(search.params().cards()).containsExactly(land);
+            assertThat(search.params().sourceCards()).containsExactly(land, spell, creature);
+            assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.TOP_OF_LIBRARY);
+            assertThat(search.params().canFailToFind()).isTrue();
+            assertThat(search.params().reveals()).isTrue();
+            assertThat(search.params().followUp().secondBoundedPick().randomRest()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Optional filtered top pick bottoms all cards randomly when nothing matches")
+        void optionalFilteredTopPickNoMatchBottomsAllRandomly() {
+            Card first = createCard("Shock");
+            Card second = createCard("Giant Growth");
+            gd.playerDecks.get(player1Id).addAll(List.of(first, second));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenReturn(false);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayPutMatchingOnTopRestOnBottomRandom(
+                    2, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Silhana Wayfinder", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerDecks.get(player1Id)).containsExactlyInAnyOrder(first, second);
+        }
     }
 }

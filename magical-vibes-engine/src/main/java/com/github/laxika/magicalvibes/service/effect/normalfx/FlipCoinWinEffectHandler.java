@@ -48,6 +48,8 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
 
         if (wonFlip) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
         }
 
         CardEffect branch = wonFlip ? e.wrapped() : e.lost();

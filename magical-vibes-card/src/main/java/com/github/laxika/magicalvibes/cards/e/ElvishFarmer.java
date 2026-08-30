@@ -52,7 +52,8 @@ public class ElvishFarmer extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
                                 )),
-                                "a Saproling"
+                                "a Saproling",
+                                false
                         ),
                         new GainLifeEffect(2)
                 ),

@@ -19,7 +19,7 @@ public class Polliwallop extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FROG), CountScope.CONTROLLER)));
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, TargetDealsPowerDamageToTargetEffect.withPowerMultiplier(2));
+                .addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect(2));
         target(TargetFilters.creatureAnOpponentControls(), 0, 1);
     }
 }

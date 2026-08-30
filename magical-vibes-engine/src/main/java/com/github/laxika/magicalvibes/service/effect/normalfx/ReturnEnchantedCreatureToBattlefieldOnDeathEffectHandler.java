@@ -64,12 +64,12 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
 
         if (controllerId == null || controllerId.equals(ownerId)) {
             graveyardReturnSupport.putCardOntoBattlefield(gameData, ownerId, creatureCard,
-                    null, null, false, false, e.enterWithCounter());
+                    null, null, e.enterTapped(), false, e.enterWithCounter());
             return;
         }
 
         Permanent permanent = graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, creatureCard,
-                null, null, false, false, e.enterWithCounter());
+                null, null, e.enterTapped(), false, e.enterWithCounter());
         if (permanent == null) {
             return;
         }

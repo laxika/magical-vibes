@@ -6,25 +6,22 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeartWolf.class, DwarvenSoldier.class, GrizzlyBears.class})
 class HeartWolfTest extends BaseCardTest {
 
     private Permanent addWolfReady() {
-        Permanent wolf = new Permanent(new HeartWolf());
-        wolf.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(wolf);
-        return wolf;
+        return addCreatureReady(player1, new HeartWolf());
     }
 
     private Permanent addDwarf() {
-        Permanent dwarf = new Permanent(new DwarvenSoldier());
-        gd.playerBattlefields.get(player1.getId()).add(dwarf);
-        return dwarf;
+        return harness.addToBattlefieldAndReturn(player1, new DwarvenSoldier());
     }
 
     private void enterCombat() {
@@ -71,8 +68,7 @@ class HeartWolfTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Dwarf creature")
     void cannotTargetNonDwarf() {
         Permanent wolf = addWolfReady();
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         enterCombat();
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(wolf), 0, null, bears.getId()))

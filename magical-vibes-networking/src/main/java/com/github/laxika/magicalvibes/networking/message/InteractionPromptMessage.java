@@ -99,10 +99,22 @@ public record InteractionPromptMessage(
                 null, maxCount, null, null, null, null, null, null);
     }
 
+    public static InteractionPromptMessage multiCardPick(List<UUID> cardIds, List<CardView> cards,
+                                                         int minCount, int maxCount, String prompt) {
+        return of(InteractionShape.MULTI_CARD_PICK, prompt, null, cards, cardIds, null, null,
+                null, maxCount, null, null, null, null, null, null, minCount, null);
+    }
+
     public static InteractionPromptMessage multiPermanentPick(List<UUID> permanentIds, int maxCount,
                                                               String prompt) {
+        return multiPermanentPick(permanentIds, null, maxCount, prompt);
+    }
+
+    public static InteractionPromptMessage multiPermanentPick(List<UUID> permanentIds,
+                                                              List<UUID> playerIds, int maxCount,
+                                                              String prompt) {
         return of(InteractionShape.MULTI_PERMANENT_PICK, prompt, null, null, null, permanentIds,
-                null, null, maxCount, null, null, null, null, null, null);
+                playerIds, null, maxCount, null, null, null, null, null, null);
     }
 
     public static InteractionPromptMessage listPick(List<String> options, String prompt,
@@ -160,6 +172,11 @@ public record InteractionPromptMessage(
 
     public static InteractionPromptMessage handTopBottom(List<CardView> cards, String prompt) {
         return of(InteractionShape.HAND_TOP_BOTTOM, prompt, null, cards, null, null, null, null,
+                null, null, null, null, null, null, null);
+    }
+
+    public static InteractionPromptMessage handBottomExile(List<CardView> cards, String prompt) {
+        return of(InteractionShape.HAND_BOTTOM_EXILE, prompt, null, cards, null, null, null, null,
                 null, null, null, null, null, null, null);
     }
 }

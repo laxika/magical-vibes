@@ -13,6 +13,8 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "242")
 @CardRegistration(set = "5ED", collectorNumber = "294")
 @CardRegistration(set = "4ED", collectorNumber = "245")
+@CardRegistration(set = "BTD", collectorNumber = "56")
+@CardRegistration(set = "SUM", collectorNumber = "196")
 public class ForceOfNature extends Card {
 
     public ForceOfNature() {

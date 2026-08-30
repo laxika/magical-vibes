@@ -80,11 +80,14 @@ public class StaticEffectSupport {
             CardSubtype.LOCUS,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
-            CardSubtype.FOOD,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
             CardSubtype.BOLAS
     );
+
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
 
     /**
      * Returns true if the target matches the given creature-centric scope.
@@ -125,6 +128,10 @@ public class StaticEffectSupport {
         if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES
                 || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            if ((scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_CREATURES)
+                    && context.target().getId().equals(context.source().getId())) {
+                return false;
+            }
             boolean ownCheck = scope == GrantScope.ALL_CREATURES
                     || scope == GrantScope.ALL_CREATURES_INCLUDING_SELF
                     || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())
@@ -161,10 +168,12 @@ public class StaticEffectSupport {
     }
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
+        if (permanent.isFaceDown()) return true;
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
+        if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null && permanent.getCard().hasType(CardType.LAND)
@@ -177,8 +186,13 @@ public class StaticEffectSupport {
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
             if (selfInScope(context, boost.scope(), boost.filter())) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
+                int multiplier = boost.scalingCounter() == null
+                        ? 1
+                        : (boost.scalingCounterOnTarget()
+                                ? context.target().getCounterCount(boost.scalingCounter())
+                                : context.source().getCounterCount(boost.scalingCounter()));
+                accumulator.addPower(boost.powerBoost() * multiplier);
+                accumulator.addToughness(boost.toughnessBoost() * multiplier);
                 accumulator.addKeywords(boost.grantedKeywords());
             }
         } else if (wrapped instanceof BoostSelfEffect boost) {
@@ -220,7 +234,8 @@ public class StaticEffectSupport {
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
         } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
-                && setPT.scope() == GrantScope.SELF) {
+                && setPT.scope() == GrantScope.SELF
+                && matchesStaticFilter(context, context.target(), setPT.filter())) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         } else if (wrapped instanceof GrantEffectEffect grant) {
             if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED

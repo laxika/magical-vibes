@@ -41,7 +41,8 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
         String playerName = gameData.playerIdToName.get(controllerId);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
 
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -63,7 +64,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificePermanentThen(
-                        controllerId, entry.getCard(), e.thenEffect()));
+                        controllerId, entry.getCard(), e.thenEffect(), entry.getSourcePermanentId(), e.reflexive()));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose " + e.permanentDescription() + " to sacrifice.");
 

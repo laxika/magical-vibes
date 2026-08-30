@@ -21,8 +21,14 @@ public enum LibrarySearchDestination {
     EXILE_FACE_DOWN_PILE,
     /** Exile one card face down with a source while returning a preselected remainder to the bottom randomly. */
     EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /** Exile two cards face down with a source while returning a preselected remainder to the bottom randomly. */
+    EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
+    /** Exile one card face down with a source while putting a preselected remainder on the bottom in any order. */
+    EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM,
     /** Exile one card face down with a source while putting a preselected remainder into the target player's graveyard. */
     EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
+    /** Exile one card face up with permission to play it this turn, putting the rest on the bottom randomly. */
+    EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM,
     EXILE_PLAYABLE,
     /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
      *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */
@@ -37,11 +43,25 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Offer the chosen exiled card for a free cast, or put it into its controller's hand. */
+    CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND,
+    /** Cast the chosen revealed card without paying, then shuffle the rest into the library. */
+    CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY,
+    /** Discover a qualifying card: cast it for free or put it into its controller's hand. */
+    DISCOVER,
+    CAST_ONE_AND_PUT_OTHER_INTO_HAND,
+    PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
+    /** Exile one chosen card, then offer it for casting without paying its mana cost. */
+    EXILE_AND_MAY_CAST_WITHOUT_PAYING,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
-     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
+    *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,
+    /** Exile the chosen card face up and offer its controller a one-time free cast. */
+    EXILE_FOR_MAY_CAST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
+    /** Put the chosen card onto the battlefield tapped under a specified player's control. */
+    BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER,
     /** Gifts Ungiven — the chosen cards are held out of every zone until an opponent has chosen
      *  which two of them go to the graveyard; the rest then go to the searcher's hand. The pool is
      *  carried in {@link LibrarySearchParams#accumulatedCards()} and handed to the opponent as a

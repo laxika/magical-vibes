@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * When resolved, grants every creature the controller currently controls a temporary triggered
@@ -13,9 +14,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  *
  * @param slot          the trigger slot to grant (e.g. {@link EffectSlot#ON_COMBAT_DAMAGE_TO_PLAYER})
  * @param grantedEffect the effect to fire when the trigger condition is met
+ * @param filter        optional filter limiting the snapshot of creatures receiving the trigger
  */
 public record GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
         EffectSlot slot,
-        CardEffect grantedEffect
+        CardEffect grantedEffect,
+        PermanentPredicate filter
 ) implements CardEffect {
+
+    public GrantEffectToOwnCreaturesUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect) {
+        this(slot, grantedEffect, null);
+    }
 }

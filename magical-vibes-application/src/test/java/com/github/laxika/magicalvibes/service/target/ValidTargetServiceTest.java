@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -31,6 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -77,6 +80,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -136,6 +140,20 @@ class ValidTargetServiceTest {
                 .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
         // Ground Seal gate — default open so graveyard enumeration tests are not emptied by the mock.
         lenient().when(gameQueryService.canGraveyardCardsBeTargeted(any())).thenReturn(true);
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                        any(Card.class), any(CardPredicate.class), nullable(UUID.class), eq(gameData),
+                        any(UUID.class), nullable(UUID.class), nullable(Integer.class), nullable(Integer.class)))
+                .thenAnswer(invocation -> new PredicateEvaluationService(gameQueryService)
+                        .matchesCardPredicate(
+                                invocation.getArgument(0), invocation.getArgument(1), invocation.getArgument(2),
+                                invocation.getArgument(3), invocation.getArgument(4), invocation.getArgument(5),
+                                invocation.getArgument(6), invocation.getArgument(7)));
+        lenient().when(gameQueryService.isArtifact(eq(gameData), any(Permanent.class)))
+                .thenAnswer(invocation -> invocation.<Permanent>getArgument(1).getCard().hasType(CardType.ARTIFACT));
+        lenient().when(gameQueryService.isLand(eq(gameData), any(Permanent.class)))
+                .thenAnswer(invocation -> invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
+        lenient().when(gameQueryService.cardHasType(any(Card.class), any(CardType.class), eq(gameData), any(UUID.class)))
+                .thenAnswer(invocation -> invocation.<Card>getArgument(0).hasType(invocation.getArgument(1)));
     }
 
     private static Set<CardColor> effectiveColors(Card card) {
@@ -346,7 +364,7 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spell)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spell, player1Id)).thenReturn(true);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
 
@@ -453,6 +471,38 @@ class ValidTargetServiceTest {
                     gameData, spell, player1Id, null);
 
             assertThat(response.validPermanentIds()).contains(creature.getId());
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("permanent target filter excludes players admitted by an any-target effect")
+        void permanentFilterOverridesEffectPlayerCapability() {
+            Card spell = createCard();
+            spell.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Target must be a creature"))
+                    .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(3));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of());
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("explicit permanent target group excludes players allowed by a bound effect")
+        void explicitPermanentGroupOverridesBoundEffectPlayerCapability() {
+            Card spell = createCard();
+            spell.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
+                    .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of());
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
             assertThat(response.validPlayerIds()).isEmpty();
         }
 
@@ -845,6 +895,23 @@ class ValidTargetServiceTest {
         }
 
         @Test
+        @DisplayName("returns player targets when only the ability filter declares targeting")
+        void returnsPlayerTargets_forFilterOnlyTargetingAbility() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, null,
+                    List.of(new LookAtTopCardsOfTargetLibraryEffect(1, TargetLibraryAction.LOOK_ONLY)),
+                    "Look at the top card of target player's library",
+                    new PlayerPredicateTargetFilter(
+                            new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPermanentIds()).isEmpty();
+            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+        }
+
+        @Test
         @DisplayName("'dealt damage by this creature this turn' offers only the players that source damaged")
         void offersOnlySourceDamagedPlayers() {
             Card sourceCard = createCreatureCard();
@@ -1071,7 +1138,7 @@ class ValidTargetServiceTest {
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
-            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, sourceCard)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedByNonColorSources(gameData, creature, sourceCard, player1Id)).thenReturn(true);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
@@ -1183,9 +1250,6 @@ class ValidTargetServiceTest {
                     List.of(new DealDamageToTargetCreatureEffect(2)), "Deal 2 damage", filter);
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
-
-            doThrow(new IllegalStateException("invalid"))
-                    .when(predicateEvaluationService).validateTargetFilter(eq(filter), eq(creature), any(FilterContext.class));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
@@ -1310,9 +1374,8 @@ class ValidTargetServiceTest {
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0, List.of());
 
-            // Position filter determines this position targets players, but
-            // isValidAbilityPlayerTarget uses ability.getTargetFilter() (null) — both players valid
-            assertThat(response.validPlayerIds()).containsExactlyInAnyOrder(player1Id, player2Id);
+            // The position-specific opponent filter excludes the ability controller.
+            assertThat(response.validPlayerIds()).containsExactly(player2Id);
             assertThat(response.validPermanentIds()).isEmpty();
             assertThat(response.prompt()).isEqualTo("Select targets for Test Creature ability");
         }
@@ -1369,6 +1432,55 @@ class ValidTargetServiceTest {
 
             assertThat(response.minTargets()).isEqualTo(2);
             assertThat(response.maxTargets()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("multi-target ability keeps candidates that fit independent artifact, creature, and land slots")
+        void multiTarget_filtersArtifactCreatureAndLandAssignments() {
+            Card sourceCard = createCreatureCard();
+            Card artifactCard = createCard();
+            artifactCard.setType(CardType.ARTIFACT);
+            Permanent artifact = addPermanentToBattlefield(player2Id, artifactCard);
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+            Card landCard = createCard();
+            landCard.setType(CardType.LAND);
+            Permanent land = addPermanentToBattlefield(player2Id, landCard);
+            ActivatedAbility ability = new ActivatedAbility(true, "{1}",
+                    List.of(new DestroyTargetPermanentEffect()),
+                    "Destroy up to three targets", List.of(), 0, 3)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint
+                                    .AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0,
+                    List.of(land.getId(), creature.getId()));
+
+            assertThat(response.validPermanentIds()).containsExactly(artifact.getId());
+        }
+
+        @Test
+        @DisplayName("multi-target ability keeps only creatures sharing a type with the first target")
+        void multiTarget_filtersToSharedCreatureType() {
+            Card sourceCard = createCreatureCard();
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}",
+                    List.of(new DealDamageToTargetCreatureEffect(2)),
+                    "Deal 2 damage to two creatures", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+
+            Permanent first = addPermanentToBattlefield(player1Id, createCreatureCard());
+            Permanent shared = addPermanentToBattlefield(player1Id, createCreatureCard());
+            Permanent different = addPermanentToBattlefield(player1Id, createCreatureCard());
+            when(gameQueryService.findPermanentById(gameData, first.getId())).thenReturn(first);
+            when(gameQueryService.findPermanentById(gameData, shared.getId())).thenReturn(shared);
+            when(gameQueryService.findPermanentById(gameData, different.getId())).thenReturn(different);
+            when(gameQueryService.shareCreatureType(gameData, first, shared)).thenReturn(true);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0, List.of(first.getId()));
+
+            assertThat(response.validPermanentIds()).contains(shared.getId()).doesNotContain(different.getId());
         }
 
         @Test
@@ -1495,6 +1607,8 @@ class ValidTargetServiceTest {
         void returnsTrue_forGraveyardTargetingSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
+            gameData.playerGraveyards.put(player1Id, new ArrayList<>());
+            gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(createCreatureCard())));
             CardEffect graveyardEffect = new CardEffect() {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD)); }
@@ -1511,6 +1625,8 @@ class ValidTargetServiceTest {
         void returnsTrue_forExileTargetingSpell() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
+            Card exiledCard = createCard();
+            gameData.exiledCards.add(new ExiledCardEntry(exiledCard, player2Id, null));
             CardEffect exileEffect = new CardEffect() {
                 @Override
                 public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.exileCard()); }
@@ -1785,7 +1901,7 @@ class ValidTargetServiceTest {
                         return true;
                     });
             lenient().when(predicateEvaluationService.matchesCardPredicate(
-                            any(Card.class), any(CardPredicate.class), any(), eq(gameData), eq(player2Id)))
+                            any(Card.class), any(CardPredicate.class), any(), eq(gameData), any(UUID.class)))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardPredicate p = inv.getArgument(1);

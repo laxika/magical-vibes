@@ -18,6 +18,7 @@ public class LoseSubtypesUntilEndOfTurnEffectHandler implements NormalEffectHand
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,6 +41,7 @@ public class LoseSubtypesUntilEndOfTurnEffectHandler implements NormalEffectHand
         if (self.isAttached() && lose.subtypes().contains(CardSubtype.EQUIPMENT)
                 && !GameQueryService.permanentHasSubtype(self, CardSubtype.EQUIPMENT)
                 && !GameQueryService.permanentHasSubtype(self, CardSubtype.AURA)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
             gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " becomes unattached."));

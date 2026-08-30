@@ -21,7 +21,7 @@ public final class OncePerTurnTriggerSupport {
     }
 
     public static void markIfNeeded(GameData gameData, Permanent source, CardEffect effect) {
-        if (effect instanceof OncePerTurnTriggerEffect) {
+        if (effect instanceof OncePerTurnTriggerEffect once && !once.markOnAcceptance()) {
             gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
         }
     }

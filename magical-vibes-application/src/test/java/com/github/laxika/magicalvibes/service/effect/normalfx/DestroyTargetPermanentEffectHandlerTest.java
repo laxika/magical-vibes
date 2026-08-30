@@ -250,7 +250,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
                 when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
                 when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenMultiplier(gd, player2Id)).thenReturn(1);
+                when(gameQueryService.getTokenMultiplier(gd, player2Id, true)).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
@@ -274,11 +274,34 @@ class DestroyTargetPermanentEffectHandlerTest {
                 when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
                 when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
                 when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
-                when(gameQueryService.getTokenMultiplier(gd, player2Id)).thenReturn(1);
+                when(gameQueryService.getTokenMultiplier(gd, player2Id, false)).thenReturn(1);
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(
                         eq(gd), eq(player2Id), argThat(Permanent::isTapped), any());
+            }
+
+            @Test
+            @DisplayName("Creates the conditional token only when the source controller controlled the target")
+            void createsConditionalTokenOnlyForSourceController() {
+                Permanent bears = addCreature(player1Id, "Grizzly Bears");
+
+                Card demolitionCard = createCard("Gleeful Demolition");
+                StackEntry entry = sorceryEntry(demolitionCard, player1Id, bears.getId());
+                CreateTokenEffect token = new CreateTokenEffect(
+                        "Phyrexian Goblin", 1, 1, CardColor.RED,
+                        List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN), Set.of(), Set.of());
+                DestroyTargetPermanentEffect effect = new DestroyTargetPermanentEffect(false, token, true);
+
+                when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
+                when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
+                when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
+
+                destroyTargetPermanentHandler.resolve(gd, entry, effect);
+
+                verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
+                verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
+                        any(), any(), any(), any());
             }
 }

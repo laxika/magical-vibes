@@ -1,24 +1,45 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+
 /**
  * Exile the top {@code count} cards of the controller's library. Until end of turn, the controller
  * may play those cards (any type, lands included). When {@code withoutPayingManaCost} is
- * {@code true} the play is free — the controller casts it without paying its mana cost (Oracle's
- * Vault's second ability); otherwise it is played at its normal costs and timing (Oracle's Vault's
- * first ability, Act on Impulse with {@code count} 3).
+ * {@code true} the play is free; otherwise it is played at its normal costs and timing. When
+ * {@code freeCastFilter} is non-null, only matching cards are free; all other exiled cards retain
+ * normal play permission (Nahiri, Forged in Fury).
  * <p>
  * Grants {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn} (and, for the
- * free variant, {@code exilePlayWithoutPayingManaCost}). The permission is granted unconditionally,
- * for lands as well as nonland cards; use
- * {@link ExileTopCardsMayCastMatchingThisTurnEffect} when only cards matching a filter become
- * castable (Vance's Blasting Cannons, Chandra, Dressed to Kill). That effect covers this one's
- * unfiltered case too — this record stays separate only for {@code withoutPayingManaCost}.
+ * free variant, {@code exilePlayWithoutPayingManaCost}). The filter is used for mixed normal/free
+ * permission effects; use {@link ExileTopCardsMayCastMatchingThisTurnEffect} when non-matching
+ * cards should not receive play permission at all.
  */
-public record ExileTopCardMayPlayThisTurnEffect(int count, boolean withoutPayingManaCost)
-        implements CardEffect {
+public record ExileTopCardMayPlayThisTurnEffect(
+        DynamicAmount count,
+        boolean withoutPayingManaCost,
+        CardPredicate freeCastFilter
+) implements CardEffect {
 
     /** Single-card variant (Oracle's Vault). */
     public ExileTopCardMayPlayThisTurnEffect(boolean withoutPayingManaCost) {
-        this(1, withoutPayingManaCost);
+        this(new Fixed(1), withoutPayingManaCost, null);
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(int count, boolean withoutPayingManaCost) {
+        this(new Fixed(count), withoutPayingManaCost, null);
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(DynamicAmount count, boolean withoutPayingManaCost) {
+        this(count, withoutPayingManaCost, null);
+    }
+
+    public ExileTopCardMayPlayThisTurnEffect(
+            int count,
+            boolean withoutPayingManaCost,
+            CardPredicate freeCastFilter
+    ) {
+        this(new Fixed(count), withoutPayingManaCost, freeCastFilter);
     }
 }

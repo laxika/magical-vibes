@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -57,6 +59,8 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 
 @ExtendWith(MockitoExtension.class)
 class MayCastHandlerServiceTest {
@@ -75,6 +79,7 @@ class MayCastHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     @Mock private SpellCastingService spellCastingService;
     @Mock private TargetLegalityService targetLegalityService;
+    @Mock private ValidTargetService validTargetService;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -244,6 +249,25 @@ class MayCastHandlerServiceTest {
         }
 
         @Test
+        @DisplayName("Includes graveyard-card targets for alternate casts")
+        void includesGraveyardCardTargets() {
+            Card card = createSorcery("Call to the Netherworld");
+            Card graveyardCard = createCreature("Walking Corpse");
+            gd.playerGraveyards.get(PLAYER1_ID).add(graveyardCard);
+            CardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.HAND)
+                    .targetGraveyard(true)
+                    .build();
+            when(validTargetService.computeValidTargetsForSpell(
+                    eq(gd), eq(card), eq(PLAYER1_ID), eq(List.of()), eq(0), eq(null)))
+                    .thenReturn(new ValidTargetsResponse(
+                            List.of(), List.of(), List.of(graveyardCard.getId()), List.of(), 1, 1, ""));
+
+            assertThat(svc.buildValidSpellTargets(gd, card, List.of(effect), PLAYER1_ID))
+                    .containsExactly(graveyardCard.getId());
+        }
+
+        @Test
         @DisplayName("Only adds creatures in default fallback (no target filter)")
         void onlyAddsCreaturesInDefaultFallback() {
             Card card = createInstant("Bolt");
@@ -371,6 +395,21 @@ class MayCastHandlerServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
+        }
+
+        @Test
+        @DisplayName("Non-targeted creature uses CREATURE_SPELL type without spell effects")
+        void nonTargetedCreatureUsesCreatureType() {
+            Card card = createCreature("Grizzly Bears");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+
+            svc.handleCastFromLibraryChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).isEmpty();
         }
 
         @Test
@@ -578,7 +617,9 @@ class MayCastHandlerServiceTest {
         }
 
         private void allowGraveyardCasting() {
-            when(gameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)).thenReturn(true);
+            when(gameQueryService.canCastSpellFromZone(
+                    eq(gd), any(Card.class), eq(Zone.GRAVEYARD), eq(PLAYER1_ID)))
+                    .thenReturn(true);
         }
 
         @Test
@@ -600,7 +641,8 @@ class MayCastHandlerServiceTest {
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
-            when(gameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)).thenReturn(false);
+            when(gameQueryService.canCastSpellFromZone(
+                    gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(false);
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
 
@@ -875,6 +917,31 @@ class MayCastHandlerServiceTest {
             assertThat(gd.playerManaPools.get(PLAYER1_ID).getTotal()).isEqualTo(2);
             verify(interactionHandlerRegistry, never()).begin(any(), any());
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+        }
+    }
+
+    @Nested
+    @DisplayName("Casting a card from a specific graveyard")
+    class SpecificGraveyardCast {
+
+        @Test
+        @DisplayName("Casts an opponent's non-targeted spell for free with exile replacement")
+        void castsOpponentSpellWithExileReplacement() {
+            Card card = createSorcery("Borrowed Spell");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+            PendingMayAbility ability = abilityFor(card);
+            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(true);
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
+
+            svc.handleCastFromSpecificGraveyardChoice(gd, player1, true, ability, PLAYER2_ID);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry stackEntry = gd.stack.getFirst();
+            assertThat(stackEntry.isExileInsteadOfGraveyard()).isTrue();
+            assertThat(stackEntry.getOwnerIdOverride()).isEqualTo(PLAYER2_ID);
+            assertThat(stackEntry.getSourceZone()).isEqualTo(Zone.GRAVEYARD);
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, card.getId());
         }
     }
 }

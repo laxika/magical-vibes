@@ -33,6 +33,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              +1/+1 counter from that creature at the beginning of the next
  *                              cleanup step" — Bounty of the Hunt), making the boost effectively
  *                              last only for the turn.
+ * @param removeAtNextEndStep   when {@code true}, every counter placed creates a delayed trigger
+ *                              to remove a counter of the same type from that creature at the
+ *                              beginning of the next end step.
  * @param etbAssignments        when {@code true}, read the target-to-counter mapping from the ETB
  *                              assignment buffer.
  * @param targetRestriction      optional narrowing predicate for ETB targets whose target group is
@@ -44,6 +47,7 @@ public record DistributeCountersAmongTargetsEffect(
         DynamicAmount total,
         DivisionMode mode,
         boolean removeAtNextCleanup,
+        boolean removeAtNextEndStep,
         boolean etbAssignments,
         PermanentPredicate targetRestriction)
         implements CardEffect {
@@ -51,7 +55,7 @@ public record DistributeCountersAmongTargetsEffect(
     /** Fixed total split evenly across a {@code target(filter, 1, 2)} group (Splendid Agony). */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargets(CounterType counterType, int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.EVEN, false, false, null);
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false, false, null);
     }
 
     /**
@@ -61,7 +65,17 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenUntilNextCleanup(CounterType counterType, int total) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false, null);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, true, false, false, null);
+    }
+
+    /**
+     * Fixed total distributed as the controller chooses among target creatures, with one counter
+     * removed from each creature for each counter placed at the beginning of the next end step.
+     */
+    public static DistributeCountersAmongTargetsEffect chosenUntilNextEndStep(CounterType counterType,
+                                                                                 int total) {
+        return new DistributeCountersAmongTargetsEffect(
+                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true, false, null);
     }
 
     /**
@@ -71,8 +85,14 @@ public record DistributeCountersAmongTargetsEffect(
      */
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
             CounterType counterType, DynamicAmount total) {
+        return chosenAmongTargetCreatures(counterType, total, null);
+    }
+
+    /** Chosen counter distribution narrowed by a permanent predicate. */
+    public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreatures(
+            CounterType counterType, DynamicAmount total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, total, DivisionMode.CHOSEN, false, false, null);
+                counterType, total, DivisionMode.CHOSEN, false, false, false, targetRestriction);
     }
 
     /**
@@ -91,14 +111,14 @@ public record DistributeCountersAmongTargetsEffect(
     public static DistributeCountersAmongTargetsEffect chosenAmongTargetCreaturesEtb(
             CounterType counterType, int total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.CHOSEN, false, true, targetRestriction);
+                counterType, new Fixed(total), DivisionMode.CHOSEN, false, false, true, targetRestriction);
     }
 
     /** Fixed total split evenly across a target group narrowed by a permanent predicate. */
     public static DistributeCountersAmongTargetsEffect evenlyAmongTargetPermanents(
             CounterType counterType, int total, PermanentPredicate targetRestriction) {
         return new DistributeCountersAmongTargetsEffect(
-                counterType, new Fixed(total), DivisionMode.EVEN, false, false, targetRestriction);
+                counterType, new Fixed(total), DivisionMode.EVEN, false, false, false, targetRestriction);
     }
 
     @Override

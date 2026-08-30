@@ -61,7 +61,8 @@ public class EachPlayerExilesPermanentsOrCardsFromHandEffectHandler implements N
         }
 
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "the source";
-        beginNextPlayer(gameData, apnapOrder(gameData), List.of(), count, sourceName);
+        UUID excludedPlayerId = e.opponentsOnly() ? entry.getControllerId() : null;
+        beginNextPlayer(gameData, apnapOrder(gameData, excludedPlayerId), List.of(), count, sourceName);
     }
 
     /**
@@ -172,8 +173,10 @@ public class EachPlayerExilesPermanentsOrCardsFromHandEffectHandler implements N
     }
 
     /** Every player, active player first (CR 101.4). */
-    private List<UUID> apnapOrder(GameData gameData) {
-        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
+    private List<UUID> apnapOrder(GameData gameData, UUID excludedPlayerId) {
+        List<UUID> ordered = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> excludedPlayerId == null || !playerId.equals(excludedPlayerId))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         int activeIndex = ordered.indexOf(gameData.activePlayerId);
         if (activeIndex <= 0) {
             return ordered;

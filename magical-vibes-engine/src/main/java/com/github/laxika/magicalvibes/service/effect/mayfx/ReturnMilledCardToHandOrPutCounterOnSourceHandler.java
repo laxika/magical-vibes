@@ -49,7 +49,7 @@ public class ReturnMilledCardToHandOrPutCounterOnSourceHandler implements MayEff
             UUID ownerId = card == null ? null : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
             if (card != null && ownerId != null) {
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-                gameData.addCardToHand(ownerId, card);
+                permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
             } else {
                 putCounterOnSource(gameData, ability);
             }

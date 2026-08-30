@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
@@ -59,19 +62,31 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         // Snapshot everything read from the destroyed permanent BEFORE it leaves the battlefield.
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
+        boolean wasLand = e.stat() == EventStat.BASIC_LAND_SEARCH_COUNT
+                && predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, target, new PermanentIsLandPredicate());
         int statValue = switch (e.stat()) {
             case NONE -> 0;
             case MANA_VALUE -> target.getCard().getManaValue();
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+            case BASIC_LAND_SEARCH_COUNT -> 0;
         };
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId());
         boolean thenApplies = e.thenCondition() == null
-                || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
+                || predicateEvaluationService.matchesPermanentPredicate(
+                        target, e.thenCondition(), filterContext);
 
         // Unless the card says "dies this way", the then-effect happens regardless of whether
         // destruction succeeds (indestructible / regeneration).
         boolean destroyed = destructionSupport.tryDestroyAndLog(
                 gameData, target, entry.getCard().getName(), e.cannotBeRegenerated());
+        if (e.stat() == EventStat.BASIC_LAND_SEARCH_COUNT) {
+            statValue = wasLand && destroyed ? 2 : 1;
+        }
 
         if (!thenApplies || (e.requiresDestruction() && !destroyed)) {
             return;

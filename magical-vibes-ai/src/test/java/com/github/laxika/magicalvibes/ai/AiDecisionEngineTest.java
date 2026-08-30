@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -1557,6 +1558,22 @@ class AiDecisionEngineTest {
         assertThat(chooseTwo.decodeModeIndices(plan.modeIndex())).containsExactly(1, 2);
         assertThat(plan.targetId()).isEqualTo(target.getId());
         assertThat(plan.targetIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("prepareModalSpellCast supplies one target for each targeted choose-two mode")
+    void prepareModalSpellCastSuppliesTargetsForChooseTwoModes() {
+        Permanent elemental = new Permanent(new AirElemental());
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elemental);
+
+        AshlingsCommand ashlingCommand = new AshlingsCommand();
+        var plan = ai.prepareModalSpellCast(gd, ashlingCommand);
+
+        assertThat(plan).isNotNull();
+        ChooseOneEffect chooseTwo = ai.findChooseOneEffect(ashlingCommand);
+        assertThat(chooseTwo.decodeModeIndices(plan.modeIndex())).containsExactly(0, 1);
+        assertThat(plan.targetId()).isNull();
+        assertThat(plan.targetIds()).containsExactly(elemental.getId(), human.getId());
     }
 
     @Test

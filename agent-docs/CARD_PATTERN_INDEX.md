@@ -25,31 +25,41 @@ This index has been split into smaller files for faster lookup. Each file is und
 | pump, boost, giant growth, overrun | CARD_PATTERNS_LANDS_SPELLS.md |
 | destroy, terror, wrath, board wipe | CARD_PATTERNS_LANDS_SPELLS.md |
 | draw, mill, discard, tutor, search | CARD_PATTERNS_LANDS_SPELLS.md |
+| look at top cards, plot from library | CARD_PATTERNS_LANDS_SPELLS.md |
 | counter, counterspell, cancel | CARD_PATTERNS_LANDS_SPELLS.md |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | modal, choose one, fight, bite | CARD_PATTERNS_LANDS_SPELLS.md |
+| Case, solve, solved | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | steal, threaten, extra turn | CARD_PATTERNS_LANDS_SPELLS.md |
 | auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
+| first matching spell cast each turn costs less | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
+| airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
+| airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | kicker, alternate casting cost | CARD_PATTERNS_CREATURES_ETB.md |
 | buyback, return spell to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| face-down permanent turns face up | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| suspect a creature / clear suspected creatures | `SuspectEffect(GrantScope.TARGET)` + `UnsuspectAllCreaturesEffect`; for optional non-targeted selection use `MayEffect(SuspectChosenOtherCreatureEffect())` |
 | combat damage trigger, block trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | graveyard trigger, graveyard ability | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | spell cast trigger, opponent spell | CARD_PATTERNS_CREATURES_TRIGGERED.md |
+| global spell-cast exile/copy trigger | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
+| hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | lord, anthem, static boost | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | aura, enchant creature, pacifism | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | curse, enchant player | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | metalcraft, morbid, conditional | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | quest counter, opponent end step trigger, life-loss condition | CARD_PATTERNS_PERMANENTS_STATIC.md |
+| pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
-| activated ability, tap ability, sacrifice ability, ability cost paid with creatures | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
+| activated ability, tap ability, sacrifice ability | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | mana ability, mana dork | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | planeswalker, loyalty | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
@@ -73,3 +83,4 @@ When implementing a card, use these as the **best** test file to read for each c
 | Equipment | `LeoninScimitarTest.java` | Covers equip + boost + unequip |
 | Lord/anthem | `GloriousAnthemTest.java` | Covers static boost + removal |
 | Vanilla creature | (no test needed) | Empty body, no engine logic |
+| Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `ON_ENTER_BATTLEFIELD`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |

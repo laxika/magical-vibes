@@ -70,7 +70,7 @@ class HeirloomEpicTest extends BaseCardTest {
                 .toList();
     }
 
-    private void setLibrary(List<? extends Card> cards) {
+    private void setLibrary(List<Card> cards) {
         harness.setLibrary(player1, cards);
     }
 }

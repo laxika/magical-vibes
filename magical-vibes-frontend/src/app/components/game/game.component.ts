@@ -93,6 +93,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameOverWinnerId.set(null);
     this.declaringAttackers.set(false);
     this.declaringBlockers.set(false);
+    this.choosingAttackersForOpponent.set(false);
     this.choosingBlocksForOpponent.set(false);
     this.attackTaxPerCreature.set(0);
     this.mustAttackWithAtLeastOne.set(false);
@@ -514,6 +515,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
 
     this.playableCardIndices.set(new Set(state.playableCardIndices));
+    this.playableForetellIndices.set(new Set(state.playableForetellIndices ?? []));
     this.potentialPlayableCardIndices.set(new Set(state.potentialPlayableCardIndices ?? []));
     this.potentialManaTotal.set(state.potentialManaTotal ?? 0);
     this.potentialPayableAbilityIndices.set(state.potentialPayableAbilityIndices ?? {});
@@ -573,6 +575,7 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Priority & playability ==========
 
   playableCardIndices = signal(new Set<number>());
+  playableForetellIndices = signal(new Set<number>());
   potentialPlayableCardIndices = signal(new Set<number>());
   potentialManaTotal = signal(0);
   potentialPayableAbilityIndices = signal<Record<string, number[]>>({});
@@ -587,6 +590,10 @@ export class GameComponent implements OnInit, OnDestroy {
       player taps their mana sources (MTGO-style — clicking enters the payment flow). */
   isCardPlayable(index: number): boolean {
     return this.playableCardIndices().has(index) || this.potentialPlayableCardIndices().has(index);
+  }
+
+  isForetellPlayable(index: number): boolean {
+    return this.playableForetellIndices().has(index);
   }
 
   isGraveyardLandPlayable(index: number): boolean {
@@ -604,6 +611,10 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.targeting.selectingBeholdHandCard) {
       this.choice.targeting.selectBeholdHandCard(index);
+      return;
+    }
+    if (!this.isCardPlayable(index) && this.isForetellPlayable(index)) {
+      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, foretell: true });
       return;
     }
     this.choice.targeting.playCard(index, (i) => this.isCardPlayable(i));
@@ -644,7 +655,8 @@ export class GameComponent implements OnInit, OnDestroy {
   playFlashback(index: number): void {
     if (this.isFlashbackPlayable(index)) {
       const card = this.myGraveyard[index];
-      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard) {
+      if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard
+          || (card?.graveyardCastExileCount ?? 0) > 0 || card?.hasHarmonize) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
         this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
@@ -654,6 +666,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playExileCard(card: Card): void {
     if (card.id) {
+      const exileAbility = card.exileActivatedAbilities?.[0];
+      if (exileAbility && this.hasPriority) {
+        this.websocketService.send({
+          type: MessageType.ACTIVATE_EXILED_ABILITY,
+          exiledCardId: card.id,
+          abilityIndex: 0,
+          targetId: null
+        });
+        return;
+      }
       this.choice.targeting.startExilePlay(card);
     }
   }
@@ -712,6 +734,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   declaringAttackers = signal(false);
   declaringBlockers = signal(false);
+  /** True while this player is declaring attackers for the active player's creatures. */
+  choosingAttackersForOpponent = signal(false);
   /** True while this player is declaring blocks for creatures they do NOT control
       (Melee: "you choose which creatures block this combat"). Inverts which side of the
       board holds the blockers and which holds the attackers. */
@@ -740,6 +764,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private handleAvailableAttackers(msg: AvailableAttackersNotification): void {
     this.declaringAttackers.set(true);
+    this.choosingAttackersForOpponent.set(msg.choosingForOpponent === true);
     this.availableAttackerIndices.set(new Set(msg.attackerIndices));
     this.mustAttackIndices.set(new Set(msg.mustAttackIndices));
     this.selectedAttackerIndices.set(new Set(msg.mustAttackIndices));
@@ -830,7 +855,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   canDeclareBand(): boolean {
-    return canFormAttackingBand(this.myBattlefield, this.selectedAttackerIndices());
+    return canFormAttackingBand(this.attackerSelectionBattlefield, this.selectedAttackerIndices());
   }
 
   /** Badge text for an attacker's band: "+ Band" when ungrouped, "Band A"/"Band B"/… when grouped. */
@@ -897,6 +922,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     this.websocketService.send(msg as unknown as WebSocketMessage);
     this.declaringAttackers.set(false);
+    this.choosingAttackersForOpponent.set(false);
     this.availableAttackerIndices.set(new Set());
     this.mustAttackIndices.set(new Set());
     this.availableAttackTargets.set([]);
@@ -921,12 +947,20 @@ export class GameComponent implements OnInit, OnDestroy {
     return !this.isBlockerSide(isMine);
   }
 
+  isAttackerSelectionSide(isMine: boolean): boolean {
+    return isMine !== this.choosingAttackersForOpponent();
+  }
+
   private get blockerSideBattlefield(): Permanent[] {
     return this.choosingBlocksForOpponent() ? this.opponentBattlefield : this.myBattlefield;
   }
 
   private get attackerSideBattlefield(): Permanent[] {
     return this.choosingBlocksForOpponent() ? this.myBattlefield : this.opponentBattlefield;
+  }
+
+  private get attackerSelectionBattlefield(): Permanent[] {
+    return this.choosingAttackersForOpponent() ? this.opponentBattlefield : this.myBattlefield;
   }
 
   isAssignedBlocker(index: number): boolean {
@@ -1339,6 +1373,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    if (this.choice.targeting.harmonizing) {
+      if (perm && isPermanentCreature(perm) && !perm.tapped) {
+        this.choice.targeting.toggleHarmonizeCreature(perm.id);
+      }
+      return;
+    }
     if (this.choice.targeting.choosingKickerPermanent) {
       if (perm && this.choice.targeting.canSelectKickerPermanent(perm)) {
         this.choice.targeting.toggleKickerPermanent(perm.id);
@@ -1375,6 +1415,7 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.declaringAttackers()) {
+      if (!this.isAttackerSelectionSide(true)) return;
       // CR 508.1i: allow tapping mana sources to pay attack tax
       if (this.attackTaxPerCreature() > 0 && perm && !this.canAttack(index) && this.canTapPermanentForMana(perm)) {
         this.tapPermanentForMana(index, perm);
@@ -1404,6 +1445,8 @@ export class GameComponent implements OnInit, OnDestroy {
       } else {
         this.assignBlock(index);
       }
+    } else if (this.declaringAttackers() && this.isAttackerSelectionSide(false)) {
+      this.toggleAttacker(index);
     }
   }
 
@@ -1443,7 +1486,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
   onPlayerBadgeClick(playerIndex: number): void {
     const playerId = this.getPlayerId(playerIndex);
-    if (this.choice.choosingPermanent && (this.choice.choosablePermanentIds().has(playerId) || this.choice.choosablePlayerIds().has(playerId))) {
+    if (this.choice.choosingMultiplePermanents && this.choice.multiPermanentChoiceIds().has(playerId)) {
+      this.choice.toggleMultiPermanentSelection(playerId);
+    } else if (this.choice.choosingPermanent && (this.choice.choosablePermanentIds().has(playerId) || this.choice.choosablePlayerIds().has(playerId))) {
       this.choice.choosePermanent(playerId);
     } else if (this.choice.targeting.multiTargeting && this.choice.targeting.validTargetPlayerIds().size > 0) {
       if (this.choice.targeting.isMultiTargetSelected(playerId)) {
@@ -1634,14 +1679,19 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKickerPermanent) { t.cancelKickerPermanent(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
+    if (t.choosingBuybackSacrifice) { t.cancelBuybackSacrifice(); return true; }
+    if (t.choosingBuybackDiscard) { t.cancelBuybackDiscard(); return true; }
     if (t.choosingBuyback) { t.cancelBuyback(); return true; }
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
     if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
     if (t.selectingGraveyardCastDiscard) { t.cancelGraveyardCastDiscard(); return true; }
-    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
+    if (t.selectingGraveyardCastExile) { t.cancelGraveyardCastExile(); return true; }
+    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard
+        || t.selectingAlternateCostGraveyardCards) { t.cancelAlternateCost(); return true; }
     if (t.selectingExileCounterCost) { t.cancelExileCounterCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
+    if (t.harmonizing) { t.cancelHarmonize(); return true; }
     if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
     if (t.targetingExile) { t.cancelExileTargeting(); return true; }
     if (t.multiTargeting) { t.cancelMultiTargeting(); return true; }
@@ -1659,12 +1709,17 @@ export class GameComponent implements OnInit, OnDestroy {
     return c.choosingFromHand || c.choosingFromList || c.awaitingMayAbility
       || c.choosingPermanent || c.choosingMultiplePermanents || c.choosingGraveyardCards
       || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
-      || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
+      || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary
+      || c.library.choosingHandTopBottom || c.library.choosingHandBottomExile
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
-      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.harmonizing || t.payingForCast || t.payingForAbility
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent || t.choosingBuyback
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast || t.payingForAbility
+      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent
+      || t.choosingBuyback || t.choosingBuybackSacrifice || t.choosingBuybackDiscard
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
-      || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingExileCounterCost
+      || t.selectingAlternateCostHandCard || t.selectingAlternateCostGraveyardCards
+      || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
       || t.targetingGraveyard || t.targetingExile;
   }

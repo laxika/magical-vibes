@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PendingIntuitionRevealChoice;
+import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
@@ -17,10 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Handles Intuition's search: the controller picks exactly the required number of library cards
- * and reveals them, then the targeted opponent is prompted to choose which of them goes into the
- * controller's hand ({@link PendingIntuitionRevealChoice} routes that answer). The picked cards
- * leave the library here; the shuffle happens once the opponent has chosen.
+ * Handles Intuition and Burning-Rune Demon's searches: the controller picks exactly the required
+ * number of library cards and reveals them, then the opponent is prompted to choose which of them
+ * goes into the controller's hand ({@link PendingOpponentChoosesCardToHandRestToGraveyard} routes
+ * that answer). The picked cards leave the library here; the shuffle happens once the opponent has
+ * chosen.
  */
 @Slf4j
 @Component
@@ -58,12 +59,22 @@ public class IntuitionSearchChoiceInteractionHandler
 
         List<UUID> validIds = interaction.validCardIds();
         Set<UUID> chosenIds = new HashSet<>();
+        Set<String> chosenNames = new HashSet<>();
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
             }
             if (!chosenIds.add(id)) {
                 throw new IllegalStateException("Duplicate card ID: " + id);
+            }
+            if (interaction.requireDifferentNames()) {
+                Card card = interaction.pool().stream()
+                        .filter(candidate -> candidate.getId().equals(id))
+                        .findFirst()
+                        .orElseThrow();
+                if (!chosenNames.add(card.getName())) {
+                    throw new IllegalStateException("Must choose cards with different names");
+                }
             }
         }
 
@@ -90,14 +101,14 @@ public class IntuitionSearchChoiceInteractionHandler
         revealBuilder.text(".");
         gameLogService.append(gameData, revealBuilder.build());
 
-        gameData.queueInteraction(new PendingIntuitionRevealChoice(controllerId));
+        gameData.queueInteraction(new PendingOpponentChoosesCardToHandRestToGraveyard(controllerId));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 interaction.opponentId(), chosen, chosen.stream().map(Card::getId).toList(),
                 false, true, false, false, false, 0, null, 1,
                 "Choose a card to put into " + controllerName
-                        + "'s hand. The rest go into their graveyard."));
+                        + "'s hand. The rest go into their graveyard.", 1, false));
 
-        log.info("Game {} - Intuition: {} revealed {} cards, opponent must choose",
+        log.info("Game {} - library search: {} revealed {} cards, opponent must choose",
                 gameData.id, controllerName, chosen.size());
     }
 }

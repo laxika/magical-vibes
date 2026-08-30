@@ -16,11 +16,14 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherMulticoloredCreaturesByColorCountEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostNonHumanCreaturesByCreatureTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostCreaturesSharingColorWithTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
@@ -36,40 +39,56 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCrea
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseDevotionEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantHexproofToChosenPlaneswalkerTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
@@ -82,16 +101,22 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromImprintedCardTy
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromMulticoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ShrinkEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
 
@@ -214,15 +239,20 @@ public final class LayerClassifier {
 
         // Layer 4 — type-changing effects (card types, subtypes, supertypes).
         map.put(GrantSubtypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCardTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(RemoveCardTypeFromTargetPermanentEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSupertypeToEnchantedPermanentEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantSupertypeToAllNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));
+        map.put(GrantSupertypeToPermanentsWithCountersEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantSupertypeUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantChosenSubtypeToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantChosenBasicLandTypeToOwnLandsEffect.class, fixed(Layer.L4_TYPE, Layer.L6_ABILITIES));
         map.put(EnchantedPermanentBecomesTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(EnchantedPermanentBecomesChosenTypeEffect.class, fixed(Layer.L4_TYPE));
+        map.put(SourceBecomesChosenBasicLandTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(EnchantedPermanentBecomesOnlyLandEffect.class, fixed(Layer.L4_TYPE));
         // Aura animates the enchanted permanent (Living Terrain): the creature type is added in
         // layer 4; the handler fills colour (5) and base P/T (7b) in the accumulator pass.
@@ -243,8 +273,28 @@ public final class LayerClassifier {
         // the same split AllLandsAreCreaturesEffect and EnchantedPermanentBecomesCreatureEffect
         // use. Outside a STATIC slot this effect is a one-shot resolution (manlands, Crew) that
         // registers its own floating 7b entry and never reaches classification.
-        map.put(AnimatePermanentsEffect.class, fixed(Layer.L4_TYPE));
+        map.put(PlaneswalkersWithLoyaltyBecomeCreaturesEffect.class,
+                fixed(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT));
+        map.put(AnimatePermanentsEffect.class,
+                new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L6_ABILITIES, Layer.L7B_SET_PT),
+                        (effect, fromOwnStaticSlot) -> {
+                            AnimatePermanentsEffect animate = (AnimatePermanentsEffect) effect;
+                            if (animate.scope() != GrantScope.ALL_PERMANENTS) {
+                                return new LayerClassification(Set.of(Layer.L4_TYPE), false, false);
+                            }
+                            EnumSet<Layer> layers = EnumSet.of(Layer.L4_TYPE, Layer.L7B_SET_PT);
+                            boolean colorSetting = animate.animatedColor() != null
+                                    || !animate.animatedColors().isEmpty();
+                            if (colorSetting) {
+                                layers.add(Layer.L5_COLOR);
+                            }
+                            if (!animate.grantedKeywords().isEmpty()) {
+                                layers.add(Layer.L6_ABILITIES);
+                            }
+                            return new LayerClassification(Set.copyOf(layers), false, colorSetting);
+                        }));
         map.put(SetCardTypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
+        map.put(SetCardTypesUntilYourNextTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(BecomeEnchantmentUntilCreatureSpellCastEffect.class,
                 fixed(Layer.L4_TYPE, Layer.L6_ABILITIES));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
@@ -319,11 +369,20 @@ public final class LayerClassifier {
                 (effect, fromOwnStaticSlot) -> ((GrantKeywordEffect) effect).keywords().contains(Keyword.CHANGELING)
                         ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES), false, false)
                         : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false)));
+        map.put(GrantKeywordToOwnCreaturesFromGraveyardEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GainKeywordsOfCardsExiledWithSourceEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(RemoveProtectionFromColorUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(LosesAllNonManaAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantActivatedAbilityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantEffectEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(IncreaseDevotionEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(SuspectedEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantStaticEffectToSourceEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantHexproofFromOwnColorsEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantHexproofToChosenPlaneswalkerTypeEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantTriggeredAbilityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantEquipByManaValueEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(ProtectionFromColorsEffect.class, fixed(Layer.L6_ABILITIES));
@@ -339,12 +398,17 @@ public final class LayerClassifier {
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainKeywordsOfCreatureCardsExiledWithSourceEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
-        map.put(GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect.class,
+        map.put(GainActivatedAbilitiesOfCardsInAllGraveyardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainAbilitiesOfLastChosenExiledCardEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
 
         // Sublayers 7a/7b — P/T setting. A "P/T equal to [amount]" static in the creature's
         // own STATIC slot is the characteristic-defining */* ability (7a, CR 613.4a); the same
@@ -355,6 +419,7 @@ public final class LayerClassifier {
                                 ? new LayerClassification(Set.of(Layer.L7A_CDA), true, false)
                                 : new LayerClassification(Set.of(Layer.L7B_SET_PT), false, false)));
         map.put(SetBasePowerToughnessEffect.class, fixed(Layer.L7B_SET_PT));
+        map.put(SetBasePowerToughnessToAmountEffect.class, fixed(Layer.L7B_SET_PT));
 
         // Sublayer 7c — P/T additions.
         map.put(StaticBoostEffect.class, new Entry(Set.of(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT),
@@ -375,10 +440,13 @@ public final class LayerClassifier {
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByBushidoEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostEquippedCreatureOfEnchantedEquipmentEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostCreaturesSharingColorWithTopCardEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenSubtypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
 
         // Sublayer 7d — P/T switching.
@@ -390,6 +458,8 @@ public final class LayerClassifier {
                 EnumSet.range(Layer.L4_TYPE, Layer.L7D_SWITCH_PT));
         map.put(ConditionalEffect.class, new Entry(anyWrappedLayer, (effect, fromOwnStaticSlot) ->
                 classify(((ConditionalEffect) effect).wrapped(), fromOwnStaticSlot)));
+        map.put(WrappedGraveyardStaticEffect.class, new Entry(anyWrappedLayer, (effect, fromOwnStaticSlot) ->
+                classify(((WrappedGraveyardStaticEffect) effect).wrapped(), fromOwnStaticSlot)));
         map.put(EnchantedPermanentConditionalEffect.class, new Entry(anyWrappedLayer,
                 (effect, fromOwnStaticSlot) -> {
                     EnchantedPermanentConditionalEffect conditional = (EnchantedPermanentConditionalEffect) effect;

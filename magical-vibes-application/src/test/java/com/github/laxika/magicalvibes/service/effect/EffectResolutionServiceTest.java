@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -105,7 +106,9 @@ class EffectResolutionServiceTest {
         lenient().when(stackResolutionServiceProvider.getObject()).thenReturn(stackResolutionService);
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
-                registry, gameLogService, permanentRemovalService, damageSupport, gameOutcomeService,
+                registry, gameLogService, permanentRemovalService, damageSupport,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler.class),
+                gameOutcomeService,
                 stateBasedActionServiceProvider, stackResolutionServiceProvider);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -152,6 +155,20 @@ class EffectResolutionServiceTest {
         Card card = createCard("Color-spent creature");
         CardEffect wrapped = new DrawCardEffect();
         CardEffect conditional = new ConditionalEffect(new ColorSpentToCast(ManaColor.BLUE, 2), wrapped);
+        StackEntry entry = createTriggeredEntry(card, player1Id, List.of(conditional), UUID.randomUUID());
+        EffectHandler handler = stubHandler(wrapped);
+
+        effectResolutionService.resolveEffects(gd, entry);
+
+        verify(handler).resolve(gd, entry, wrapped);
+    }
+
+    @Test
+    @DisplayName("An ETB snow-mana condition already accepted at trigger time resolves its effect")
+    void etbSnowManaConditionIsNotRecheckedAfterCastSnapshotClears() {
+        Card card = createCard("Snow-mana creature");
+        CardEffect wrapped = new DrawCardEffect();
+        CardEffect conditional = new ConditionalEffect(new SnowManaSpentToCast(), wrapped);
         StackEntry entry = createTriggeredEntry(card, player1Id, List.of(conditional), UUID.randomUUID());
         EffectHandler handler = stubHandler(wrapped);
 

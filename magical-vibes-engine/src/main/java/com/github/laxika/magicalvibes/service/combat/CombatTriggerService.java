@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -22,8 +23,10 @@ import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,8 @@ public class CombatTriggerService {
 
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final GameQueryService gameQueryService;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -105,6 +110,14 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                             // If subtype doesn't match, skip this effect
+                        } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
+                                && conditional.combatOpponent()) {
+                            if (combatOpponent != null
+                                    && predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, combatOpponent, conditional.predicate())) {
+                                effectsForStack.add(conditional.wrapped());
+                                autoTargetOpponent = true;
+                            }
                         } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                             // "blocks or becomes blocked by a [filter] creature, ... that creature"
                             // (e.g. Venom). Auto-target the combat opponent; the effect's handler
@@ -133,67 +146,85 @@ public class CombatTriggerService {
 
                     if (effectsForStack.isEmpty()) return;
 
-                    if (autoTargetOpponent) {
-                        // Auto-targeted combat trigger — goes directly on the stack
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                auraOwnerId,
-                                perm.getCard().getName() + "'s triggered ability",
-                                effectsForStack,
-                                combatOpponent.getId(),
-                                perm.getId()
-                        );
-                        trigger.setNonTargeting(true);
-                        trigger.setTriggeringPermanentId(creature.getId());
-                        // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
-                        // (e.g. equipment-granted Afflict) can resolve.
-                        trigger.setAttackedTargetId(creature.getAttackTarget());
-                        gameData.stack.add(trigger);
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
-                                gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                    } else {
-                        // Check if any effect needs a permanent target — queue for target selection
-                        boolean needsTarget = effectsForStack.stream()
-                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                        if (needsTarget) {
-                            gameData.queueInteraction(
-                                    new PermanentChoiceContext.AttackTriggerTarget(
-                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
-                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                            log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
-                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                        } else {
-                            UUID triggeringPlayerId = effectsForStack.stream()
-                                    .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
-                                    ? finalCreatureControllerId
-                                    : null;
+                    int previousCopies = slot == EffectSlot.ON_ATTACK
+                            ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
+                            : -1;
+                    try {
+                        if (autoTargetOpponent) {
+                            // Auto-targeted combat trigger — goes directly on the stack
                             StackEntry trigger = new StackEntry(
                                     StackEntryType.TRIGGERED_ABILITY,
                                     perm.getCard(),
                                     auraOwnerId,
                                     perm.getCard().getName() + "'s triggered ability",
                                     effectsForStack,
-                                    triggeringPlayerId,
+                                    combatOpponent.getId(),
                                     perm.getId()
                             );
-                            if (triggeringPlayerId != null) {
-                                trigger.setNonTargeting(true);
-                            }
+                            trigger.setNonTargeting(true);
+                            trigger.setTriggeringPermanentId(creature.getId());
                             // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
                             trigger.setTriggeringPermanentId(creature.getId());
+                            captureEquippedCreatureDamageSource(trigger, creature, finalCreatureControllerId, effectsForStack);
                             gameData.stack.add(trigger);
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                            log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                            log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                        } else {
+                            // Check if any effect needs a permanent target — queue for target selection
+                            boolean needsTarget = effectsForStack.stream()
+                                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                            if (needsTarget) {
+                                gameData.queueInteraction(
+                                        new PermanentChoiceContext.AttackTriggerTarget(
+                                                perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                auraOwnerId, null));
+                                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                                log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
+                                        gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                            } else {
+                                UUID triggeringPlayerId = effectsForStack.stream()
+                                        .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
+                                        ? finalCreatureControllerId
+                                        : null;
+                                StackEntry trigger = new StackEntry(
+                                        StackEntryType.TRIGGERED_ABILITY,
+                                        perm.getCard(),
+                                        auraOwnerId,
+                                        perm.getCard().getName() + "'s triggered ability",
+                                        effectsForStack,
+                                        triggeringPlayerId,
+                                        perm.getId()
+                                );
+                                if (triggeringPlayerId != null) {
+                                    trigger.setNonTargeting(true);
+                                }
+                                // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
+                                // (e.g. equipment-granted Afflict) can resolve.
+                                trigger.setAttackedTargetId(creature.getAttackTarget());
+                                trigger.setTriggeringPermanentId(creature.getId());
+                                gameData.stack.add(trigger);
+                                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                                log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
+                                        gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                            }
+                        }
+                    } finally {
+                        if (previousCopies >= 0) {
+                            gameData.restoreTriggeredAbilityCopies(previousCopies);
                         }
                     }
                 }
             }
         });
+    }
+
+    private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {
+        return gameData.beginTriggeredAbilityCopies(1 +
+                gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                        gameData, controllerId, source, true));
     }
 
     /**
@@ -235,6 +266,13 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                                 // If subtype doesn't match, skip this effect for this blocker
+                            } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
+                                    && conditional.combatOpponent()) {
+                                if (predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, conditional.predicate())) {
+                                    transformedEffects.add(conditional.wrapped());
+                                    autoTargetBlocker = true;
+                                }
                             } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
                                 // Auto-target this blocker; the handler re-checks the filter (Venom).
                                 transformedEffects.add(effect);
@@ -258,6 +296,7 @@ public class CombatTriggerService {
                             trigger.setNonTargeting(true);
                         }
                         trigger.setTriggeringPermanentId(attacker.getId());
+                        captureEquippedCreatureDamageSource(trigger, attacker, finalControllerId, transformedEffects);
                         gameData.stack.add(trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
@@ -266,6 +305,14 @@ public class CombatTriggerService {
                 }
             }
         });
+    }
+
+    private static void captureEquippedCreatureDamageSource(StackEntry trigger, Permanent creature,
+                                                             UUID controllerId, List<CardEffect> effects) {
+        if (effects.stream().anyMatch(EquippedCreatureDealsDamageToDefendingPlayerEffect.class::isInstance)) {
+            trigger.setDamageSourceCard(creature.getCard());
+            trigger.setTriggeringPermanentControllerId(controllerId);
+        }
     }
 
     /**

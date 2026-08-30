@@ -56,6 +56,8 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         List<UUID> validNewTargets = targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
         if (creatureTargetsOnly) {
             validNewTargets = validNewTargets.stream().filter(id -> isCreatureId(gameData, id)).toList();
+        } else if (((ChangeTargetOfTargetSpellWithSingleTargetEffect) effect).playerTargetsOnly()) {
+            validNewTargets = validNewTargets.stream().filter(gameData.orderedPlayerIds::contains).toList();
         }
         if (validNewTargets.isEmpty()) {
             gameLogService.append(gameData, GameLog.textCardText("No legal new target for ", targetSpell.getCard(), "."));

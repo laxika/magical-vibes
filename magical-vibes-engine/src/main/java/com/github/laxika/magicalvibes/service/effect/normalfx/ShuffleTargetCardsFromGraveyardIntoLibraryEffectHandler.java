@@ -34,7 +34,13 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID targetPlayerId = entry.getTargetId();
-        List<UUID> targetCardIds = entry.getTargetCardIds();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            targetPlayerId = entry.targetsForEffect(effect).stream()
+                    .filter(gameData.playerIds::contains)
+                    .findFirst()
+                    .orElse(null);
+        }
+        List<UUID> targetCardIds = entry.getTargetCardIdsForEffect(effect);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         if (targetPlayerId == null || targetCardIds == null || targetCardIds.isEmpty()) {

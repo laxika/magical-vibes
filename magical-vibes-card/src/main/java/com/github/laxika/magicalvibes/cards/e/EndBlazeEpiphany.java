@@ -16,8 +16,8 @@ public class EndBlazeEpiphany extends Card {
 
     public EndBlazeEpiphany() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))
                 .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
-                        new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(new EventValue())));
+                        new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(new EventValue())))
+                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()));
     }
 }

@@ -57,7 +57,7 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffectHan
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, artifactId);
-        gameData.playerHands.get(ownerId).add(artifact);
+        permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, artifact);
         gameLogService.append(gameData, GameLog.builder()
                 .card(artifact)
                 .text(" returns from graveyard to " + gameData.playerIdToName.get(ownerId) + "'s hand.")

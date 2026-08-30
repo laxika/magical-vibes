@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,15 +46,15 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
+                    if (matchesFilter(gameData, entry, e, permanent)
+                            && gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
                     }
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" makes " + count + " creature(s) lose all abilities "
-                            + durationLabel(e.duration()) + ".").build());
+                    .text(" makes " + count + " creature(s) lose all abilities until end of turn.").build());
             return;
         }
 
@@ -60,64 +63,119 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
+                    if (matchesFilter(gameData, entry, e, permanent)
+                            && gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
                     }
                 }
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" makes " + count + " creature(s) lose all abilities "
-                            + durationLabel(e.duration()) + ".").build());
+                    .text(" makes " + count + " creature(s) lose all abilities until end of turn.").build());
             return;
         }
 
-        UUID targetId = switch (e.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
-            default -> null;
-        };
-        if (targetId == null) {
+        if (e.scope() == GrantScope.ALL_CREATURES
+                || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            final int[] count = {0};
+            gameData.forEachPermanent((playerId, permanent) -> {
+                if (matchesFilter(gameData, entry, e, permanent)
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && (e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
+                        || entry.getSourcePermanentId() == null
+                        || !permanent.getId().equals(entry.getSourcePermanentId()))
+                        && applyEffect(gameData, entry, e, permanent)) {
+                    count[0]++;
+                }
+            });
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count[0] + " creature(s) lose all abilities until end of turn.").build());
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
+        List<UUID> targetIds;
+        if (e.scope() == GrantScope.SELF) {
+            UUID sourceId = entry.getSourcePermanentId() != null
+                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            targetIds = sourceId == null ? List.of() : List.of(sourceId);
+        } else if (e.scope() == GrantScope.TARGET) {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
+        } else {
             return;
         }
 
-        applyEffect(gameData, entry, e, target);
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " loses all abilities "
-                + durationLabel(e.duration()) + "."));
-        log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(),
-                durationLabel(e.duration()));
+            if (!applyEffect(gameData, entry, e, target)) {
+                continue;
+            }
+
+            String durationText = switch (e.duration()) {
+                case CONTINUOUS, PERMANENT -> "indefinitely";
+                case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+                case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
+                        WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
+                        "for as long as its source remains on the battlefield";
+                default -> "until end of turn";
+            };
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " loses all abilities " + durationText + "."));
+            log.info("Game {} - {} loses all abilities {}", gameData.id, target.getCard().getName(), durationText);
+        }
     }
 
-    private void applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
+    private boolean applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
+        if (e.duration() == EffectDuration.PERMANENT) {
+            target.setLosesAllAbilitiesPermanently(true);
+        } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+            target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        } else if (e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+            target.addLosesAllAbilitiesUntilNextTurnController(entry.getControllerId());
+        }
+
         // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk
         // Trickster) is a floating layer-6 effect with its own timestamp — a later-timestamp
         // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
         // direct Permanent.hasKeyword/flag readers; the layered pass treats the flag as a
         // seed-time removal and then replays this effect at its real timestamp.
-        switch (e.duration()) {
-            case UNTIL_END_OF_TURN -> target.setLosesAllAbilitiesUntilEndOfTurn(true);
-            case UNTIL_YOUR_NEXT_TURN -> target.setLosesAllAbilitiesUntilNextTurn(true);
-            case PERMANENT -> target.setLosesAllAbilitiesPermanently(true);
-            default -> {
+        boolean sourceLinked = e.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                || e.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || e.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
+                || e.duration() == EffectDuration.WHILE_ATTACHED;
+        UUID sourcePermanentId = sourceLinked ? entry.getSourcePermanentId() : null;
+        if (sourceLinked) {
+            if (sourcePermanentId == null
+                    || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+                return false;
             }
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), e,
-                target.getId(), null, null, e.duration(), 0));
+                entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), e,
+                target.getId(), null, null,
+                e.duration() == EffectDuration.CONTINUOUS
+                        ? EffectDuration.PERMANENT : e.duration(),
+                0));
+        return true;
     }
 
-    private String durationLabel(EffectDuration duration) {
-        return switch (duration) {
-            case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
-            case PERMANENT -> "indefinitely";
-            case CONTINUOUS -> "continuously";
-            default -> "until end of turn";
-        };
+    private boolean matchesFilter(GameData gameData, StackEntry entry,
+                                  LosesAllAbilitiesEffect effect, Permanent permanent) {
+        return effect.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                permanent,
+                effect.filter(),
+                FilterContext.of(gameData)
+                        .withSourceCardId(entry.getCard().getId())
+                        .withSourceControllerId(entry.getControllerId())
+                        .withSourcePermanentId(entry.getSourcePermanentId())
+                        .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                        .withXValue(entry.getXValue()));
     }
 }

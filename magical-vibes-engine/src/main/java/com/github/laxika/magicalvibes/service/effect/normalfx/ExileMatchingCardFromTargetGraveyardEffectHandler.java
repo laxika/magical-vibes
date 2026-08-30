@@ -53,7 +53,11 @@ public class ExileMatchingCardFromTargetGraveyardEffectHandler implements Normal
         }
 
         gameData.graveyardTargetOperation.resolutionTimeExileResume = true;
-        playerInputService.beginMultiGraveyardChoice(gameData, entry.getControllerId(), candidates, 1, 1,
-                "Choose a matching card from the target player's graveyard to exile.");
+        gameData.graveyardTargetOperation.sourcePermanentId = exileEffect.trackWithSource()
+                ? entry.getSourcePermanentId() : null;
+        int minimumCards = exileEffect.mayChooseNone() ? 0 : 1;
+        playerInputService.beginMultiGraveyardChoice(gameData, entry.getControllerId(), candidates, 1,
+                minimumCards, "Choose " + (minimumCards == 0 ? "up to one" : "a matching")
+                        + " card from the target player's graveyard to exile.");
     }
 }

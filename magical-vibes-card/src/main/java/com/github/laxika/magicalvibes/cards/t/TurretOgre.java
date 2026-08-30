@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "169")
+@CardRegistration(set = "WAR", collectorNumber = "148")
 public class TurretOgre extends Card {
 
     public TurretOgre() {

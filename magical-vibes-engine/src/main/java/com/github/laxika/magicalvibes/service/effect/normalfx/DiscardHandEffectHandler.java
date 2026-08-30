@@ -74,14 +74,15 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         return order;
     }
 
-    private void discardHand(GameData gameData, UUID playerId, UUID controllerId, String cardName) {
+    /** Discards one player's entire hand and returns the number of cards discarded. */
+    public int discardHand(GameData gameData, UUID playerId, UUID controllerId, String cardName) {
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
 
         if (hand == null || hand.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));
             log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
-            return;
+            return 0;
         }
 
         List<Card> discarded = new ArrayList<>(hand);
@@ -98,5 +99,6 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(playerName + " discards their hand ("
                 + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ")."));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discarded.size(), cardName);
+        return discarded.size();
     }
 }

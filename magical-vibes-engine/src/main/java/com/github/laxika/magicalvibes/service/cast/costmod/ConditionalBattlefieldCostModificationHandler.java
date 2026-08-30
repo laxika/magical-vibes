@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.cast.costmod;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerRegistry;
@@ -43,25 +42,5 @@ public class ConditionalBattlefieldCostModificationHandler implements CostModifi
         CardEffect wrapped = ((ConditionalEffect) effect).wrapped();
         CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(wrapped);
         return handler == null ? 0 : handler.modifyCost(context, wrapped, source);
-    }
-
-    @Override
-    public ManaCost coloredManaCostReduction(CostModificationContext context, CardEffect effect,
-                                             CostModificationSource source) {
-        if (source.sourcePermanent() == null
-                || !conditionEvaluationService.isMet(context.gameData(), ((ConditionalEffect) effect).condition(),
-                ConditionContext.forStaticEffect(source.sourcePermanent(), source.controllerId()))) {
-            return null;
-        }
-        CardEffect wrapped = ((ConditionalEffect) effect).wrapped();
-        CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(wrapped);
-        return handler == null ? null : handler.coloredManaCostReduction(context, wrapped, source);
-    }
-
-    @Override
-    public boolean coloredReductionCanReduceGeneric(CardEffect effect) {
-        CardEffect wrapped = ((ConditionalEffect) effect).wrapped();
-        CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(wrapped);
-        return handler != null && handler.coloredReductionCanReduceGeneric(wrapped);
     }
 }

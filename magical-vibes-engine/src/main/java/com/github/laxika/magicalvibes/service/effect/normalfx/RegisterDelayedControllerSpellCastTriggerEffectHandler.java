@@ -22,7 +22,7 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedControllerSpellCastTriggerEffect) effect;
-        if (entry.getSourcePermanentId() == null) {
+        if (entry.getSourcePermanentId() == null && e.sourceMustRemainOnBattlefield()) {
             return;
         }
         gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
@@ -30,7 +30,10 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
                 entry.getSourcePermanentId(),
                 entry.getCard(),
                 e.spellFilter(),
-                e.resolvedEffects()));
+                e.resolvedEffects(),
+                e.oneShot(),
+                e.sourceMustRemainOnBattlefield(),
+                e.targetFilter()));
         log.info("Game {} - {} registers a delayed spell-cast trigger for this turn",
                 gameData.id, entry.getCard().getName());
     }

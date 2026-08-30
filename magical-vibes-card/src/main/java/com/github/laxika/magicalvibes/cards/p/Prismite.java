@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "235")
 @CardRegistration(set = "M21", collectorNumber = "235")
+@CardRegistration(set = "WAR", collectorNumber = "242")
 public class Prismite extends Card {
 
     public Prismite() {

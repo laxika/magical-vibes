@@ -25,6 +25,8 @@ import java.util.UUID;
  *   <li>{@link #permanentsTargetPlayerOwns(PermanentPredicate)} — bounce every permanent the target
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
  *   <li>{@link #enchanted()} — bounce the permanent the source Aura is attached to (Sun Clasp).</li>
+ *   <li>{@link #enchantedAndAuras()} — bounce the permanent the source Aura is attached to and
+ *       every Aura attached to that permanent (Mark of Eviction).</li>
  *   <li>{@link #grantingEquipment()} — bounce the Equipment that granted the resolving ability,
  *       captured at activation time.</li>
  * </ul>
@@ -153,6 +155,23 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     }
 
     /**
+     * Returns the permanent the source Aura is attached to and every Aura attached to that
+     * permanent, with the Auras returned first so they do not become orphaned.
+     */
+    public static ReturnToHandEffect enchantedAndAuras() {
+        return new ReturnToHandEffect(BounceScope.ENCHANTED_AND_AURAS, null, 0, 0);
+    }
+
+    /**
+     * {@link #enchantedAndAuras()} with the host permanent already resolved, used as last known
+     * information when the Aura is no longer on the battlefield at resolution.
+     */
+    public static ReturnToHandEffect enchantedAndAurasSnapshot(UUID enchantedPermanentId) {
+        return new ReturnToHandEffect(BounceScope.ENCHANTED_AND_AURAS, null, 0, 0,
+                enchantedPermanentId);
+    }
+
+    /**
      * {@link #enchanted()} with the host permanent already resolved, used as last known information
      * when the Aura is no longer on the battlefield at resolution (Phantom Wings sacrifices itself
      * as the activation cost). Bound at activation time by {@code ActivatedAbilityExecutionService}.
@@ -244,7 +263,7 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == BounceScope.ENCHANTED;
+        return scope == BounceScope.ENCHANTED || scope == BounceScope.ENCHANTED_AND_AURAS;
     }
 
     @Override

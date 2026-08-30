@@ -22,31 +22,47 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                            resolution (recorded on {@code StackEntry.createdPermanentIds}) are
  *                                            excluded, implementing "destroy all <em>other</em> creatures" where
  *                                            "other" means other than the tokens this spell just made (Martial Coup)
+ * @param destroyedCountScope                 which destroyed permanents contribute to the rider's {@code eventValue}
  */
 public record DestroyAllPermanentsEffect(
         PermanentPredicate filter,
         boolean cannotBeRegenerated,
         EachPermanentScope scope,
         CardEffect thenEffect,
-        boolean sparesPermanentsCreatedThisResolution
+        boolean sparesPermanentsCreatedThisResolution,
+        DestroyedPermanentCountScope destroyedCountScope
 ) implements BoardWipeEffect {
 
+    public DestroyAllPermanentsEffect(PermanentPredicate filter, boolean cannotBeRegenerated,
+                                      EachPermanentScope scope, CardEffect thenEffect,
+                                      boolean sparesPermanentsCreatedThisResolution) {
+        this(filter, cannotBeRegenerated, scope, thenEffect, sparesPermanentsCreatedThisResolution,
+                DestroyedPermanentCountScope.ALL);
+    }
+
     public DestroyAllPermanentsEffect(PermanentPredicate filter) {
-        this(filter, false, EachPermanentScope.ALL_PLAYERS, null, false);
+        this(filter, false, EachPermanentScope.ALL_PLAYERS, null, false, DestroyedPermanentCountScope.ALL);
     }
 
     public DestroyAllPermanentsEffect(PermanentPredicate filter, boolean cannotBeRegenerated) {
-        this(filter, cannotBeRegenerated, EachPermanentScope.ALL_PLAYERS, null, false);
+        this(filter, cannotBeRegenerated, EachPermanentScope.ALL_PLAYERS, null, false,
+                DestroyedPermanentCountScope.ALL);
     }
 
     /** Board wipe with a per-destroyed-count rider ("You gain 2 life for each permanent destroyed this way"). */
     public DestroyAllPermanentsEffect(PermanentPredicate filter, CardEffect thenEffect) {
-        this(filter, false, EachPermanentScope.ALL_PLAYERS, thenEffect, false);
+        this(filter, false, EachPermanentScope.ALL_PLAYERS, thenEffect, false, DestroyedPermanentCountScope.ALL);
+    }
+
+    /** Board wipe with a rider whose destroyed-count event value is scoped to one controller. */
+    public DestroyAllPermanentsEffect(PermanentPredicate filter, CardEffect thenEffect,
+                                      DestroyedPermanentCountScope destroyedCountScope) {
+        this(filter, false, EachPermanentScope.ALL_PLAYERS, thenEffect, false, destroyedCountScope);
     }
 
     /** Scoped destroy-all with a per-destroyed-count rider ("Destroy all creatures target player controls. …"). */
     public DestroyAllPermanentsEffect(PermanentPredicate filter, EachPermanentScope scope, CardEffect thenEffect) {
-        this(filter, false, scope, thenEffect, false);
+        this(filter, false, scope, thenEffect, false, DestroyedPermanentCountScope.ALL);
     }
 
     /**
@@ -55,7 +71,8 @@ public record DestroyAllPermanentsEffect(
      * <em>other</em> creature. Pair with an unconditional {@code CreateTokenEffect} resolving before it.
      */
     public static DestroyAllPermanentsEffect sparingPermanentsCreatedThisResolution(PermanentPredicate filter) {
-        return new DestroyAllPermanentsEffect(filter, false, EachPermanentScope.ALL_PLAYERS, null, true);
+        return new DestroyAllPermanentsEffect(filter, false, EachPermanentScope.ALL_PLAYERS, null, true,
+                DestroyedPermanentCountScope.ALL);
     }
 
     /** Destroy-all always sweeps the board. */

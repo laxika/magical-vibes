@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfComb
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
+import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -87,6 +89,7 @@ public class CombatService {
     private final GameQueryService gameQueryService;
     private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final TriggerCollectionService triggerCollectionService;
     private final PermanentControlSupport permanentControlSupport;
     private final DamageSupport damageSupport;
     private final StateBasedActionService stateBasedActionService;
@@ -183,6 +186,7 @@ public class CombatService {
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
         // Melee's two combat-scoped delayed abilities ("this combat") expire here.
+        gameData.clearDelayedActions(DelayedAttackerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedBlockerDeclarationControl.class);
         gameData.clearDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class);
     }
@@ -411,14 +415,15 @@ public class CombatService {
             }
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
                     perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+            UUID counterPlacerId = gameQueryService.findPermanentController(gameData, perm.getId());
+            triggerCollectionService.checkYouPutCountersTriggers(gameData, counterPlacerId, counters);
             permanentCounterSupport.recordCounterPlacedOnCreature(gameData, perm,
-                    gameQueryService.findPermanentController(gameData, perm.getId()));
+                    counterPlacerId);
             gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                     " gets " + counters + " -1/-1 counter(s)."));
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), counters);
             // The permanent's controller is the player putting these self-counters (Nest of Scarabs).
-            UUID counterPlacerId = gameQueryService.findPermanentController(gameData, perm.getId());
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, counters, counterPlacerId);
         }
     }
@@ -531,6 +536,9 @@ public class CombatService {
             }
             int removed = Math.min(action.amount(), current);
             perm.setCounterCount(action.counterType(), current - removed);
+            if (action.counterType() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(perm, removed);
+            }
             gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                     " loses " + removed + " counter(s)."));
             log.info("Game {} - {} loses {} {} counter(s) at end of combat",

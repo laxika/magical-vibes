@@ -7,20 +7,27 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -39,6 +46,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -62,6 +70,8 @@ public class AnimationSupport {
     private final TriggerTargetCollector triggerTargetCollector;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerCollectionService triggerCollectionService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
+    private final LudevicCopySupport ludevicCopySupport;
 
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
@@ -78,6 +88,15 @@ public class AnimationSupport {
                 duration, 0));
     }
 
+    private void addDynamicAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry,
+                                                         Permanent target,
+                                                         AnimatePermanentsEffect effect) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()), target.getId(),
+                null, null, effect.duration(), 0));
+    }
+
     private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
                                                  CardColor color,
                                                  EffectDuration duration) {
@@ -86,6 +105,14 @@ public class AnimationSupport {
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantColorEffect(color, GrantScope.SELF, true), target.getId(), null, null,
                 duration, 0));
+    }
+
+    private void addAnimationCardTypeOverrideFloatingEffect(GameData gameData, StackEntry entry,
+                                                            Permanent target, Set<CardType> cardTypes) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetCardTypesEffect(cardTypes, GrantScope.TARGET), target.getId(), null, null,
+                EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 
     /**
@@ -121,10 +148,11 @@ public class AnimationSupport {
             return;
         }
         for (UUID targetId : targetIds) {
-            if (effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
-                animateOneUntilNextTurn(gameData, entry, effect, targetId);
-            } else {
-                animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
+            switch (effect.duration()) {
+                case UNTIL_YOUR_NEXT_TURN -> animateOneUntilNextTurn(gameData, entry, effect, targetId);
+                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED ->
+                        animateOneWhileSourceTapped(gameData, entry, effect, targetId);
+                default -> animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
         }
     }
@@ -198,7 +226,12 @@ public class AnimationSupport {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+            if (effect.dynamicPowerToughness()) {
+                addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
+            } else {
+                addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
+                        EffectDuration.UNTIL_END_OF_TURN);
+            }
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
@@ -211,6 +244,7 @@ public class AnimationSupport {
 
         // CR 301.5c — Equipment that's also a creature can't stay attached
         if (self.isAttached() && self.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
             gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " becomes unattached."));
@@ -221,6 +255,61 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
+    }
+
+    private void animateOneWhileSourceTapped(GameData gameData, StackEntry entry,
+                                             AnimatePermanentsEffect effect, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null || entry.getSourcePermanentId() == null) {
+            return;
+        }
+
+        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        EffectDuration duration = effect.duration();
+
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, duration);
+        addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(), duration);
+
+        if (effect.cardTypeOverriding()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new SetCardTypesEffect(effect.grantedCardTypes(), GrantScope.TARGET),
+                    target.getId(), null, null, duration, 0));
+        } else {
+            addAnimationCardTypeFloatingEffect(gameData, entry, target, CardType.CREATURE, duration);
+            for (CardType cardType : effect.grantedCardTypes()) {
+                addAnimationCardTypeFloatingEffect(gameData, entry, target, cardType, duration);
+            }
+        }
+        for (CardSubtype subtype : effect.grantedSubtypes()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,
+                    duration, 0));
+        }
+        if (!effect.grantedKeywords().isEmpty()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
+                    target.getId(), null, null, duration, 0));
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                " becomes a " + power + "/" + toughness + " creature for as long as "
+                        + entry.getCard().getName() + " remains tapped."));
+        log.info("Game {} - {} becomes a {}/{} creature while {} remains tapped",
+                gameData.id, target.getCard().getName(), power, toughness, entry.getCard().getName());
+    }
+
+    private void addAnimationCardTypeFloatingEffect(GameData gameData, StackEntry entry,
+                                                    Permanent target, CardType cardType,
+                                                    EffectDuration duration) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
+                duration, 0));
     }
 
     private void applyAnimatedColors(Permanent permanent, AnimatePermanentsEffect effect) {
@@ -379,11 +468,23 @@ public class AnimationSupport {
                 permanent.setAnimatedUntilEndOfTurn(true);
                 permanent.setAnimatedPower(power);
                 permanent.setAnimatedToughness(toughness);
-                permanent.getGrantedCardTypes().add(CardType.CREATURE);
+                permanent.setAnimatedColor(effect.animatedColor());
+                applyAnimatedColors(permanent, effect);
+                permanent.getTransientSubtypes().clear();
+                permanent.getTransientSubtypes().addAll(effect.grantedSubtypes());
+                permanent.getGrantedKeywords().addAll(effect.grantedKeywords());
+                if (effect.cardTypeOverriding()) {
+                    addAnimationCardTypeOverrideFloatingEffect(gameData, entry, permanent,
+                            effect.grantedCardTypes());
+                } else {
+                    permanent.getGrantedCardTypes().add(CardType.CREATURE);
+                    permanent.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+                }
                 addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
 
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, permanent, permanent.getAttachedTo());
                     permanent.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
                     gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " becomes unattached."));
@@ -392,18 +493,18 @@ public class AnimationSupport {
             }
         }
 
-        String logEntry = count + " artifact(s) become " + power + "/" + toughness + " creature(s) until end of turn.";
+        String logEntry = count + " permanent(s) become " + power + "/" + toughness + " creature(s) until end of turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
 
-        log.info("Game {} - {} artifacts animated as {}/{} creatures until end of turn",
+        log.info("Game {} - {} permanents animated as {}/{} creatures until end of turn",
                 gameData.id, count, power, toughness);
     }
 
     /**
-     * TARGET scope, PERMANENT duration — the targeted permanent(s) become creatures with no wear-off
-     * (Tezzeret, Waker). Multi-target abilities animate every permanent in the target group, mirroring
-     * {@link #animateSingle} (Nissa, Sage Animist's "Untap up to six target lands. They become 6/6
-     * Elemental creatures.").
+     * TARGET or SELF scope, PERMANENT duration — the permanent(s) become creatures with no wear-off
+     * (Tezzeret, Waker, and triggered self-animations). Multi-target abilities animate every
+     * permanent in the target group, mirroring {@link #animateSingle} (Nissa, Sage Animist's
+     * "Untap up to six target lands. They become 6/6 Elemental creatures.").
      */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
@@ -412,6 +513,8 @@ public class AnimationSupport {
             targetIds = entry.getTargetIds();
         } else if (entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
+        } else if (effect.scope() == GrantScope.SELF && entry.getSourcePermanentId() != null) {
+            targetIds = List.of(entry.getSourcePermanentId());
         } else {
             return;
         }
@@ -429,6 +532,21 @@ public class AnimationSupport {
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
         }
+    }
+
+    public void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        if (entry.getChosenPermanentId() == null) {
+            return;
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (chosen == null) {
+            return;
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        animatePermanently(gameData, chosen, effect, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }
 
     /**
@@ -464,9 +582,11 @@ public class AnimationSupport {
         if (effect.animatedColor() != null) {
             target.getGrantedColors().add(effect.animatedColor());
         }
+        target.getGrantedColors().addAll(effect.animatedColors());
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo());
             target.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(target.getId());
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " becomes unattached."));
@@ -567,10 +687,23 @@ public class AnimationSupport {
     }
 
     public boolean transformToBackFace(GameData gameData, Permanent self) {
+        return transformToBackFace(gameData, self, false);
+    }
+
+    public boolean transformToBackFaceForDayNight(GameData gameData, Permanent self) {
+        return transformToBackFace(gameData, self, true);
+    }
+
+    private boolean transformToBackFace(GameData gameData, Permanent self, boolean dayNightTransition) {
         Card originalCard = self.getOriginalCard();
         Card backFace = originalCard.getBackFaceCard();
         if (backFace == null) {
             log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+            return false;
+        }
+
+        if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
+                && isDayNightBound(self)) {
             return false;
         }
 
@@ -582,6 +715,7 @@ public class AnimationSupport {
         Card frontCard = self.getCard();
         String frontName = frontCard.getName();
         if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(self.getId());
             gameLogService.append(gameData, GameLog.cardThen(frontCard, " becomes unattached."));
@@ -599,7 +733,20 @@ public class AnimationSupport {
         return true;
     }
 
-    public void transformToFrontFace(GameData gameData, Permanent self) {
+    public boolean transformToFrontFace(GameData gameData, Permanent self) {
+        return transformToFrontFace(gameData, self, false);
+    }
+
+    public boolean transformToFrontFaceForDayNight(GameData gameData, Permanent self) {
+        return transformToFrontFace(gameData, self, true);
+    }
+
+    private boolean transformToFrontFace(GameData gameData, Permanent self, boolean dayNightTransition) {
+        if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
+                && isDayNightBound(self)) {
+            return false;
+        }
+
         Card originalCard = self.getOriginalCard();
         Card backCard = self.getCard();
         String backName = backCard.getName();
@@ -611,6 +758,12 @@ public class AnimationSupport {
         fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
         fireEquipmentTransformTriggers(gameData, self);
         fireAllyPermanentTransformTriggers(gameData, self, originalCard);
+        return true;
+    }
+
+    private boolean isDayNightBound(Permanent permanent) {
+        return permanent.getCard().getKeywords().contains(Keyword.DAYBOUND)
+                || permanent.getCard().getKeywords().contains(Keyword.NIGHTBOUND);
     }
 
     private void fireAllyPermanentTransformTriggers(GameData gameData, Permanent transformed, Card transformedCard) {
@@ -668,6 +821,10 @@ public class AnimationSupport {
         }
 
         for (CardEffect e : effects) {
+            if (e instanceof ApplyLudevicCopyEffect) {
+                ludevicCopySupport.resolveAfterTransform(gameData, self);
+                continue;
+            }
             if (e instanceof MayEffect may) {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));

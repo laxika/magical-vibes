@@ -9,6 +9,8 @@ package com.github.laxika.magicalvibes.model;
 public enum MultiTargetConstraint {
     /** The chosen creatures must share no creature types (e.g. Rivals' Duel). */
     SHARE_NO_CREATURE_TYPES,
+    /** The chosen creatures must share at least one creature type. */
+    SHARE_CREATURE_TYPES,
     /**
      * The chosen permanents must share at least one of the card types artifact, creature, or land
      * (e.g. Gauntlets of Chaos: the opponent's permanent must share one of those types with your
@@ -38,6 +40,10 @@ public enum MultiTargetConstraint {
      * Dual-typed permanents (creature lands) may be assigned to either quota.
      */
     AT_MOST_TWO_CREATURES_AND_TWO_LANDS,
+    /** At most one chosen target may be assigned to each of the artifact, creature, and land slots. */
+    AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
+    /** At most one chosen target may be assigned to each of the artifact, creature, enchantment, and planeswalker slots. */
+    AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
     /** At most one chosen target may belong to each player. */
     AT_MOST_ONE_PER_CONTROLLER,
     /** One target must be chosen for each player who controls at least one legal target. */
@@ -49,5 +55,7 @@ public enum MultiTargetConstraint {
     /** The second target must be another creature or land of the Aura's current host type. */
     SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST,
     /** At most one selected card may be assigned to each color. */
-    AT_MOST_ONE_PER_COLOR
+    AT_MOST_ONE_PER_COLOR,
+    /** The chosen targets must have different names. */
+    DIFFERENT_NAMES
 }

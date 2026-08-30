@@ -3,14 +3,21 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ForetellCast;
+import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ForetellCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -19,6 +26,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -63,6 +73,10 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 @ExtendWith(MockitoExtension.class)
 class GameActionAvailabilityServiceTest {
 
+    private static final GameQueryService.StaticBonus NO_BONUS = new GameQueryService.StaticBonus(
+            0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(),
+            false, false, false, false, Set.of(), false, 0, 0, false, false);
+
     @Mock private CardViewFactory cardViewFactory;
     @Mock private PermanentViewFactory permanentViewFactory;
     @Mock private StackEntryViewFactory stackEntryViewFactory;
@@ -82,6 +96,11 @@ class GameActionAvailabilityServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
+                        invocation.getArgument(1)).get());
+        lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(NO_BONUS);
+
         // Real casting services (with the real handler registry) over the mocked collaborators,
         // so the playable-index computation exercises the same cost/permission code paths as production.
         CostModificationSupport support = new CostModificationSupport(gameQueryService, predicateEvaluationService);
@@ -128,6 +147,29 @@ class GameActionAvailabilityServiceTest {
     }
 
     @Nested
+    @DisplayName("layer query scopes")
+    class LayerQueryScopes {
+
+        @Test
+        @DisplayName("Playable-card hand scan runs in one shared query scope")
+        void playableCardScanUsesSharedQueryScope() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+
+            assertThat(svc.getPlayableCardIndices(gd, player1Id)).isEmpty();
+
+            verify(gameQueryService).withQueryScope(same(gd), any());
+        }
+
+        @Test
+        @DisplayName("Complete game-state projection runs in one shared query scope")
+        void gameStateProjectionUsesSharedQueryScope() {
+            assertThat(projectionFactory.createGameStateMessages(gd, List.of(), List.of())).isEmpty();
+
+            verify(gameQueryService).withQueryScope(same(gd), any());
+        }
+    }
+
+    @Nested
     @DisplayName("isCardPlayable — pure single-card query")
     class IsCardPlayableTests {
 
@@ -170,6 +212,41 @@ class GameActionAvailabilityServiceTest {
         }
 
         @Test
+        @DisplayName("Includes a target-dependent surcharge when the legal target is a creature")
+        void targetBasedCostIncreaseApplies() {
+            Card spell = new Card();
+            spell.setName("Vanish into Eternity");
+            spell.setType(CardType.INSTANT);
+            spell.setManaCost("{2}{W}");
+            var creaturePredicate = new PermanentIsCreaturePredicate();
+            spell.addEffect(EffectSlot.STATIC,
+                    new IncreaseOwnCastCostIfTargetingPermanentEffect(creaturePredicate, 3));
+            spell.target(TargetFilters.nonlandPermanent())
+                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+
+            Card creatureCard = new Card();
+            creatureCard.setName("Creature");
+            creatureCard.setType(CardType.CREATURE);
+            Permanent creature = new Permanent(creatureCard);
+            gd.playerBattlefields.get(player2Id).add(creature);
+            when(validTargetService.computeValidTargetsForSpell(gd, spell, player1Id, List.of()))
+                    .thenReturn(new ValidTargetsResponse(List.of(creature.getId()), List.of(), 1, 1,
+                            "Target must be a nonland permanent"));
+            when(validTargetService.hasValidTargetsForSpell(gd, spell, player1Id, null)).thenReturn(true);
+            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, creaturePredicate))
+                    .thenReturn(true);
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE);
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+            assertThat(svc.isCardPlayable(gd, player1Id, spell, pool, 0)).isFalse();
+
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 3);
+            assertThat(svc.isCardPlayable(gd, player1Id, spell, pool, 0)).isTrue();
+        }
+
+        @Test
         @DisplayName("Does not apply priority gating — callers evaluate hypothetical states")
         void noPriorityGating() {
             // getPriorityPlayerId is never stubbed: the single-card query must not consult it
@@ -196,6 +273,24 @@ class GameActionAvailabilityServiceTest {
             ManaPool pool = new ManaPool();
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLUE);
             pool.add(com.github.laxika.magicalvibes.model.ManaColor.BLACK);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Exact-X target group with discard-X cost is playable at X=0 without a legal target")
+        void exactXTargetGroupWithDiscardCostIsPlayableAtZero() {
+            Card card = new Card();
+            card.setName("Discard X exact spell");
+            card.setType(CardType.INSTANT);
+            card.setManaCost("{W}{W}");
+            card.addEffect(EffectSlot.SPELL, new DiscardXCardsCost());
+            card.targetExactlyX(new PermanentPredicateTargetFilter(
+                    new PermanentTruePredicate(), "Target must be a permanent"), 100)
+                    .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);
 
             assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
         }
@@ -252,6 +347,28 @@ class GameActionAvailabilityServiceTest {
             List<Integer> playable = svc.getPlayableCardIndices(gd, player1Id, 0);
 
             assertThat(playable).contains(0);
+        }
+
+        @Test
+        @DisplayName("Foretell reduction makes the action available on an opponent's turn")
+        void foretellReductionMakesActionAvailableOnOpponentsTurn() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            gd.activePlayerId = player2Id;
+
+            Card reducer = new Card();
+            reducer.setName("Cosmos Charger");
+            reducer.setType(CardType.CREATURE);
+            reducer.addEffect(EffectSlot.STATIC, new ForetellCostReductionEffect(1, true));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card foretellCard = new Card();
+            foretellCard.setName("Foretell Card");
+            foretellCard.setType(CardType.INSTANT);
+            foretellCard.addCastingOption(new ForetellCast("{1}{U}"));
+            gd.playerHands.get(player1Id).add(foretellCard);
+            gd.playerManaPools.get(player1Id).add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS);
+
+            assertThat(svc.getPlayableForetellIndices(gd, player1Id)).containsExactly(0);
         }
 
         @Test
@@ -331,6 +448,26 @@ class GameActionAvailabilityServiceTest {
 
     @Nested
     @DisplayName("getPotentialPayableAbilityIndices — abilities payable after tapping mana sources")
+    class GetPlayableGraveyardLandIndicesTests {
+
+        @Test
+        @DisplayName("Recognizes a Mayhem land after it was discarded this turn")
+        void recognizesMayhemLand() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
+
+            Card land = new Card();
+            land.setName("Mayhem Land");
+            land.setType(CardType.LAND);
+            land.addCastingOption(new GraveyardCast(new CardDiscardedThisTurn()));
+            gd.playerGraveyards.get(player1Id).add(land);
+
+            assertThat(svc.getPlayableGraveyardLandIndices(gd, player1Id)).containsExactly(0);
+        }
+    }
+
+    @Nested
+    @DisplayName("getPlayableGraveyardLandIndices")
     class GetPotentialPayableAbilityIndicesTests {
 
         private Permanent manaLand(com.github.laxika.magicalvibes.model.ManaColor color) {
@@ -633,7 +770,7 @@ class GameActionAvailabilityServiceTest {
                     .thenReturn(new GameQueryService.ExplainedBonus(noBonus, List.of(), List.of()));
             when(permanentViewFactory.create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
                     anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
-                    anyBoolean(), any(), anyList(), anyList(), eq(1), any()))
+                    anyBoolean(), anyBoolean(), any(), anyList(), anyList(), eq(1), any()))
                     .thenReturn(permanentView(sourcePermanent.getId(), 1));
 
             projectionFactory.getBattlefields(gd);
@@ -642,7 +779,7 @@ class GameActionAvailabilityServiceTest {
             ArgumentCaptor<List<Card>> faceUpCaptor = ArgumentCaptor.forClass(List.class);
             verify(permanentViewFactory).create(same(sourcePermanent), anyInt(), anyInt(), any(), anyBoolean(),
                     anyList(), any(), anyList(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(),
-                    anyBoolean(), any(), anyList(), faceUpCaptor.capture(), eq(1), any());
+                    anyBoolean(), anyBoolean(), any(), anyList(), faceUpCaptor.capture(), eq(1), any());
             assertThat(faceUpCaptor.getValue()).containsExactly(faceUpCard);
         }
     }
@@ -655,6 +792,9 @@ class GameActionAvailabilityServiceTest {
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                        any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
     }
 

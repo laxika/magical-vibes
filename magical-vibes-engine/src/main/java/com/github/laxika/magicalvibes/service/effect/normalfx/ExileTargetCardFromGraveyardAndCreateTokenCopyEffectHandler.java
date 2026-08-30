@@ -61,7 +61,9 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             return;
         }
 
-        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
+        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                targetCard, e.filter(), entry.getCard().getId(), gameData,
+                gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId()))) {
             String filterLabel = CardPredicateUtils.describeFilter(e.filter());
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ")."));
             return;
@@ -93,8 +95,9 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
 
         int createdPermanentCount = entry.getCreatedPermanentIds().size();
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                e.additionalKeywords(), e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
-                e.powerOverride(), e.toughnessOverride());
+                e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
+                e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
+                new ArrayList<>(), e.additionalKeywords());
 
         if (e.exileOtherControlledTokensOfSubtype() != null) {
             Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()

@@ -19,6 +19,7 @@ class DevouringSwarmTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

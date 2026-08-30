@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
  */
 @CardRegistration(set = "4ED", collectorNumber = "235")
 @CardRegistration(set = "ATH", collectorNumber = "53")
+@CardRegistration(set = "DRK", collectorNumber = "75")
 public class CarnivorousPlant extends Card {
 
     public CarnivorousPlant() {

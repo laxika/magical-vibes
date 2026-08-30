@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "272")
+@CardRegistration(set = "CSP", collectorNumber = "112")
 public class KarplusanStrider extends Card {
 
     public KarplusanStrider() {

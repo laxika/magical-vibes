@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "TMP", collectorNumber = "187")
 @CardRegistration(set = "TPR", collectorNumber = "139")
+@CardRegistration(set = "BTD", collectorNumber = "42")
 public class LowlandGiant extends Card {
 
     public LowlandGiant() {

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnAllPermanentsAndPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -59,6 +59,6 @@ public class InnkeepersTalent extends Card {
                         new PermanentHasCountersPredicate(CounterType.ANY))));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
-                new DoubleCountersOnAllPermanentsAndPlayersEffect()));
+                new DoubleCountersOnPermanentsOrPlayersEffect()));
     }
 }

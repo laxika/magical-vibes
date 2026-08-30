@@ -231,7 +231,8 @@ export class SidePanelComponent implements OnChanges, OnDestroy, AfterViewChecke
   }
 
   onPlayerBadgeClick(event: MouseEvent, playerIndex: number): void {
-    const isTargeting = this.choice.targeting.selectingTarget || this.choice.targeting.multiTargeting || this.choice.choosingPermanent;
+    const isTargeting = this.choice.targeting.selectingTarget || this.choice.targeting.multiTargeting
+      || this.choice.choosingPermanent || this.choice.choosingMultiplePermanents;
     if (playerIndex === this.myPlayerIndex && !isTargeting) {
       event.stopPropagation();
       this.showPlayerMenu.update(v => !v);

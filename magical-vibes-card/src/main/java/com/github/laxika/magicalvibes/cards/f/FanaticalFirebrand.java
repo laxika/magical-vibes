@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "195")
+@CardRegistration(set = "RIX", collectorNumber = "101")
 public class FanaticalFirebrand extends Card {
 
     public FanaticalFirebrand() {

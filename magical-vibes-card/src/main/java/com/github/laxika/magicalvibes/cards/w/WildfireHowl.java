@@ -23,7 +23,7 @@ import java.util.List;
 public class WildfireHowl extends Card {
 
     public WildfireHowl() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addEffect(EffectSlot.STATIC, new GiftEffect(0));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
         targetWhenGiftPromised(anyTarget(), 0, 1, 1)

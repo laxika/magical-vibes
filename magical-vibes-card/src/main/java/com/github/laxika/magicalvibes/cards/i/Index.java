@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "84")
 @CardRegistration(set = "M13", collectorNumber = "55")
+@CardRegistration(set = "APC", collectorNumber = "25")
 public class Index extends Card {
 
     public Index() {

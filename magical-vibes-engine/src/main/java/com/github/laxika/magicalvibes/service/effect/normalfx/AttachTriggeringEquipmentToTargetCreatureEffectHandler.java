@@ -47,10 +47,11 @@ public class AttachTriggeringEquipmentToTargetCreatureEffectHandler implements N
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
-        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(creature.getId());
         equipment.setTimestamp(gameData.nextTimestamp());
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, creature.getId());
+        equipSupport.notifyEquipmentAttached(gameData, equipment, oldAttachedTo);
 
         gameLogService.append(gameData, GameLog.cardTextCard(equipment.getCard(), " is now attached to ",
                 creature.getCard(), "."));

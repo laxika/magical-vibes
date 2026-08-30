@@ -13,5 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "16")
 @CardRegistration(set = "RQS", collectorNumber = "15")
 @CardRegistration(set = "S99", collectorNumber = "65")
+@CardRegistration(set = "DRK", collectorNumber = "41")
 public class BogImp extends Card {
 }

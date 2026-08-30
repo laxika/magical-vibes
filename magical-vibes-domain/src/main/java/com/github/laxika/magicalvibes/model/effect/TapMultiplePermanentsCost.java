@@ -34,4 +34,14 @@ public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate 
     public PermanentPredicate consumedPermanentFilter() {
         return filter;
     }
+
+    @Override
+    public DynamicAmount tappedPermanentCount() {
+        return count;
+    }
+
+    @Override
+    public boolean excludesSourceFromConsumedPermanents() {
+        return excludeSource;
+    }
 }

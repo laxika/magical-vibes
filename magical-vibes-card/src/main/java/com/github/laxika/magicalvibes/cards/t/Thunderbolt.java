@@ -7,21 +7,26 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "159")
 @CardRegistration(set = "WTH", collectorNumber = "115")
+@CardRegistration(set = "BTD", collectorNumber = "48")
 public class Thunderbolt extends Card {
 
     public Thunderbolt() {
-        var playerOrPlaneswalkerFilter = new PermanentPredicateTargetFilter(
+        var playerOrPlaneswalkerFilter = new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker.");
         var creatureWithFlyingFilter = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

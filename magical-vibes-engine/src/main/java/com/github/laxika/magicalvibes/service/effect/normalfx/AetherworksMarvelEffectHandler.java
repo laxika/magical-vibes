@@ -36,13 +36,17 @@ public class AetherworksMarvelEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        AetherworksMarvelEffect aetherworksEffect = (AetherworksMarvelEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             return;
         }
 
-        int count = Math.min(6, deck.size());
+        int count = Math.min(Math.max(0, aetherworksEffect.lookCount()), deck.size());
+        if (count == 0) {
+            return;
+        }
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, count);
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " looks at the top " + count + " cards of their library ("

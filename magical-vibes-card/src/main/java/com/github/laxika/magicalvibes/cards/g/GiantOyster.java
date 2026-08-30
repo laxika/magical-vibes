@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "28")
+@CardRegistration(set = "TSB", collectorNumber = "22")
 public class GiantOyster extends Card {
 
     public GiantOyster() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbrightFlamekinEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -51,10 +52,11 @@ public class SoulbrightFlamekinEffectHandler implements NormalEffectHandlerBean 
 
         UUID controllerId = entry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(controllerId);
-        pool.add(ManaColor.RED, MANA_AMOUNT);
+        ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, controllerId, ManaColor.RED);
+        pool.add(effectiveColor, MANA_AMOUNT);
         Permanent source = gameQueryService.findPermanentById(gameData, selfId);
         if (source != null && gameQueryService.isCreature(gameData, source)) {
-            pool.addCreatureMana(ManaColor.RED, MANA_AMOUNT);
+            pool.addCreatureMana(effectiveColor, MANA_AMOUNT);
         }
 
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + ".").build());

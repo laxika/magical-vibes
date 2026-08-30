@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "176")
+@CardRegistration(set = "TSB", collectorNumber = "70")
 public class TribalFlames extends Card {
 
     public TribalFlames() {

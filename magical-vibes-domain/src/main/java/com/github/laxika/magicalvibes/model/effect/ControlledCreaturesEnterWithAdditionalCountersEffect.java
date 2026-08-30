@@ -24,8 +24,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * — the effect then reads the source permanent's {@code chosenSubtype} and applies to
  * nothing while no type has been chosen. Pair it with a
  * {@link ChooseSubtypeOnEnterEffect} in {@code ON_ENTER_BATTLEFIELD} (Metallic Mimic).
- * When {@code allCreatures} is true, the effect applies to every other creature controlled by
- * the source's controller instead of filtering by subtype.
  */
 public record ControlledCreaturesEnterWithAdditionalCountersEffect(
         CardSubtype subtype,
@@ -46,12 +44,9 @@ public record ControlledCreaturesEnterWithAdditionalCountersEffect(
      * additional +1/+1 counters on it."
      */
     public static ControlledCreaturesEnterWithAdditionalCountersEffect ofChosenSubtype(int count) {
-        return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, new Fixed(count), false);
+        return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count);
     }
 
-    /**
-     * "Each other creature you control enters with {@code count} additional +1/+1 counters on it."
-     */
     public static ControlledCreaturesEnterWithAdditionalCountersEffect forAllCreatures(DynamicAmount count) {
         return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count, true);
     }

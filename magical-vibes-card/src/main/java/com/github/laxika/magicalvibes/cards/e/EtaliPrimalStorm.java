@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfEachLibraryAndMayCastSpellsEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "194")
+@CardRegistration(set = "RIX", collectorNumber = "100")
 public class EtaliPrimalStorm extends Card {
 
     public EtaliPrimalStorm() {

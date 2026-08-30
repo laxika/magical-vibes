@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * "You may [wrapped]" — the choice is made at resolution time (by the controller by default).
  *
@@ -13,7 +16,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
  * @param choicePlayer identifies the player who makes the choice
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect, CombatOpponentReferencingEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -33,9 +36,27 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
+    public boolean referencesCombatOpponent() {
+        return referencesCombatOpponent(wrapped) || referencesCombatOpponent(elseEffect);
+    }
+
+    private static boolean referencesCombatOpponent(CardEffect effect) {
+        return effect instanceof CombatOpponentReferencingEffect combatOpponent
+                && combatOpponent.referencesCombatOpponent();
+    }
+
+    @Override
     public TriggerContext combatDamageTriggerContext() {
         return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
                 ? contextEffect.combatDamageTriggerContext()
                 : null;
+    }
+
+    @Override
+    public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
+        CardEffect boundWrapped = wrapped instanceof CombatDamageDealerAwareEffect aware
+                ? aware.withCombatDamageDealerIds(dealerIds)
+                : wrapped;
+        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,7 +23,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves the whole discard family via {@link DiscardEffect}: the {@link DiscardRecipient} routes
  * who discards and {@code random} chooses between chosen and random discard. Single-player
- * recipients (controller / target player) evaluate the amount and discard directly; each-player
+ * recipients (controller / target player) evaluate the amount and discard directly; multiple
+ * target-player recipients continue in APNAP order; each-player
  * recipients iterate in APNAP order — chosen discards ride a {@link DiscardFollowUp} queue (each
  * player picks sequentially), random discards run inline. The {@code discardCausedByOpponent} flag
  * — read by discard-punisher triggers (e.g. Raider's Wake) — is set exactly as before: {@code true}
@@ -50,6 +52,8 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         // Clear the last-discarded snapshot so a trailing LastDiscardedCardManaValue on the same
         // spell reads this discard only, and stays 0 when nothing is discarded (empty hand).
         gameData.lastDiscardedCardManaValue = 0;
+        gameData.greatestDiscardedCardManaValue = 0;
+        gameData.lastDiscardedCardTypes = Set.of();
 
         // Source-relative amounts (e.g. CountersOnSource for Shrine of Limitless Power) use the
         // live source permanent when still on the battlefield, else the last-known snapshot
@@ -64,19 +68,61 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, source));
 
         switch (e.recipient()) {
-            case CONTROLLER, TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER, TARGET_PERMANENT_CONTROLLER,
+            case TARGET_PLAYER -> resolveTargetPlayers(gameData, entry, e, amount);
+            case CONTROLLER, TRIGGERING_PLAYER, ACTIVE_PLAYER, TARGET_PERMANENT_CONTROLLER,
                     TARGET_PLAYER_OR_PERMANENT_CONTROLLER, DEFENDING_PLAYER ->
                     resolveSinglePlayer(gameData, entry, e, amount);
             case EACH_PLAYER, EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, amount);
         }
     }
 
+    private void resolveTargetPlayers(GameData gameData, StackEntry entry, DiscardEffect e, int amount) {
+        List<UUID> targetPlayers = new ArrayList<>(entry.targetsForEffect(e));
+        if (targetPlayers.isEmpty() && entry.getTargetId() != null) {
+            targetPlayers.add(entry.getTargetId());
+        }
+        targetPlayers.removeIf(playerId -> !gameData.playerIds.contains(playerId));
+        if (targetPlayers.isEmpty()) {
+            return;
+        }
+        if (targetPlayers.size() == 1) {
+            resolveSinglePlayer(gameData, entry, e, amount, targetPlayers.get(0));
+            return;
+        }
+
+        if (e.random()) {
+            for (UUID playerId : targetPlayers) {
+                gameData.discardCausedByOpponent = true;
+                playerInteractionSupport.resolveRandomDiscardCards(
+                        gameData, playerId, entry.getCard().getName(), amount);
+            }
+            return;
+        }
+
+        List<UUID> choosers = new ArrayList<>();
+        if (targetPlayers.contains(gameData.activePlayerId)) {
+            choosers.add(gameData.activePlayerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(gameData.activePlayerId) && targetPlayers.contains(playerId)) {
+                choosers.add(playerId);
+            }
+        }
+        playerInteractionSupport.startNextEachPlayerDiscard(
+                gameData, DiscardFollowUp.eachPlayer(choosers, entry.getControllerId(), amount));
+    }
+
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount) {
+        resolveSinglePlayer(gameData, entry, e, amount, null);
+    }
+
+    private void resolveSinglePlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount,
+                                     UUID targetPlayerOverride) {
         UUID playerId;
         boolean opponentCaused;
         switch (e.recipient()) {
             case TARGET_PLAYER -> {
-                playerId = entry.getTargetId();
+                playerId = targetPlayerOverride != null ? targetPlayerOverride : entry.getTargetId();
                 opponentCaused = true;
             }
             case TRIGGERING_PLAYER -> {

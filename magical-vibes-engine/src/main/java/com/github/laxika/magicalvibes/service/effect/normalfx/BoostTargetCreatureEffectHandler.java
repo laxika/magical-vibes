@@ -51,7 +51,9 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
 
         // Multi-target: apply boost to each valid target of this effect's target group
         // (the whole flat list when the effect isn't bound to a group).
-        List<UUID> targetIds = entry.targetsForEffect(effect);
+        List<UUID> targetIds = boost.targetGroup() >= 0
+                ? entry.targetsForGroup(boost.targetGroup())
+                : entry.targetsForEffect(effect);
         if (!targetIds.isEmpty()) {
             for (UUID targetId : targetIds) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -63,11 +65,27 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (boost.targetGroup() >= 0) {
+            return;
+        }
+
         // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
+        applyBoost(gameData, entry, target, powerBoost, toughnessBoost, boost.duration());
+    }
+
+    void resolveForTarget(GameData gameData, StackEntry entry, Permanent target,
+                          BoostTargetCreatureEffect boost) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
+        int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         applyBoost(gameData, entry, target, powerBoost, toughnessBoost, boost.duration());
     }
 

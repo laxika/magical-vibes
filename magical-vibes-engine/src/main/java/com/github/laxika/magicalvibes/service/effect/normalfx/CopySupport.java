@@ -2,9 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,6 +23,24 @@ import java.util.UUID;
  */
 @Component
 public class CopySupport {
+
+    private final TriggerCollectionService triggerCollectionService;
+
+    public CopySupport() {
+        this.triggerCollectionService = null;
+    }
+
+    @Autowired
+    public CopySupport(TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public void addCopyToStack(GameData gameData, StackEntry copyEntry) {
+        gameData.stack.add(copyEntry);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
+        }
+    }
 
     public StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetId) {
         StackEntry copy = new StackEntry(
@@ -36,6 +58,8 @@ public class CopySupport {
                 source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
         copy.setCopy(true);
+        copy.setKicked(source.isKicked());
+        copy.setTargetFilters(source.getTargetFilters());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
         return copy;
     }
@@ -44,8 +68,23 @@ public class CopySupport {
         return createCopyCard(original, false);
     }
 
+    public Card createTokenCopyCard(Card original) {
+        Card copy = createCopyCard(original, false);
+        copy.setToken(true);
+        return copy;
+    }
+
     public Card createCopyCardWithoutEpic(Card original) {
         return createCopyCard(original, true);
+    }
+
+    public void checkSpellCopyTriggers(GameData gameData, StackEntry copyEntry) {
+        if (triggerCollectionService == null || copyEntry == null || !copyEntry.isCopy()) return;
+        if (copyEntry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && copyEntry.getEntryType() != StackEntryType.SORCERY_SPELL) {
+            return;
+        }
+        triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
     }
 
     private Card createCopyCard(Card original, boolean withoutEpic) {

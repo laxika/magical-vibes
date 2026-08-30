@@ -42,7 +42,7 @@ public class AwardManaOfChosenSubtypeCreatureCountEffectHandler implements ManaA
 
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
-                        int manaMultiplier, boolean creatureSource) {
+                        CardEffect effect, int manaMultiplier, boolean creatureSource) {
         int amount = amountEvaluationService.evaluate(gameData,
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

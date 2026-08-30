@@ -520,6 +520,17 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears allDamagePreventionPredicatesByController")
+        void clearsAllDamagePreventionPredicatesByController() {
+            gd.allDamagePreventionPredicatesByController.put(player1Id,
+                    java.util.Set.of(new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.allDamagePreventionPredicatesByController).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears combatDamagePreventionPredicatesByController")
         void clearsCombatDamagePreventionPredicatesByController() {
             gd.combatDamagePreventionPredicatesByController.put(player1Id,
@@ -583,6 +594,16 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears playersWithAllCreatureDamagePrevented")
+        void clearsPlayersWithAllCreatureDamagePrevented() {
+            gd.playersWithAllCreatureDamagePrevented.add(player1Id);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playersWithAllCreatureDamagePrevented).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears drawReplacementTargetToController")
         void clearsDrawReplacementTargetToController() {
             gd.drawReplacementTargetToController.put(player1Id, player2Id);
@@ -600,6 +621,16 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.playerSpellsCantBeCounteredByColorsThisTurn).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Clears playersCreatureSpellsCantBeCounteredThisTurn")
+        void clearsCreatureSpellCounterProtection() {
+            gd.playersCreatureSpellsCantBeCounteredThisTurn.add(player1Id);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playersCreatureSpellsCantBeCounteredThisTurn).isEmpty();
         }
 
         @Test
@@ -740,6 +771,22 @@ class TurnCleanupServiceTest {
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(3);
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isZero();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
+        }
+
+        @Test
+        @DisplayName("Preserves a color from a player-scoped floating effect")
+        void preservesPlayerScopedFloatingColor() {
+            gd.playerManaPools.get(player1Id).add(ManaColor.RED, 3);
+            gd.playerManaPools.get(player2Id).add(ManaColor.RED, 2);
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "The Last Agni Kai", null, player1Id,
+                    new PreventManaDrainEffect(ManaColor.RED), null, player1Id, null,
+                    EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            sut.drainManaPools(gd);
+
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isEqualTo(3);
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isZero();
         }
 
         @Test

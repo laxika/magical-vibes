@@ -77,7 +77,7 @@ public class LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHa
                         || card.getAdditionalTypes().contains(CardType.CREATURE))
                 .filter(card -> {
                     List<CardSubtype> cardTypes = card.getSubtypes();
-                    boolean cardIsChangeling = card.getKeywords().contains(Keyword.CHANGELING);
+                    boolean cardIsChangeling = card.hasKeyword(Keyword.CHANGELING);
 
                     return (enchantedIsChangeling && (cardIsChangeling || !cardTypes.isEmpty()))
                             || (cardIsChangeling && !enchantedTypes.isEmpty())

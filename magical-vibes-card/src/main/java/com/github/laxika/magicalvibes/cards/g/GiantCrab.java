@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "66")
+@CardRegistration(set = "BTD", collectorNumber = "9")
 public class GiantCrab extends Card {
 
     public GiantCrab() {

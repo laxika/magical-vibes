@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "PTK", collectorNumber = "53")
 @CardRegistration(set = "HOU", collectorNumber = "47")
 @CardRegistration(set = "AKR", collectorNumber = "81")
+@CardRegistration(set = "KHM", collectorNumber = "77")
 public class StrategicPlanning extends Card {
 
     public StrategicPlanning() {

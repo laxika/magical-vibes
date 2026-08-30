@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -111,6 +114,7 @@ class CombatDamageServiceTest {
                                 gameLogService, gameQueryService),
                         new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameLogService,
                                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class)),
+                        triggerCollectionService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
         combatDamageService = new CombatDamageService(gameQueryService,
@@ -124,6 +128,7 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
                 combatAttackService, combatTriggerService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class),
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
 
@@ -149,6 +154,7 @@ class CombatDamageServiceTest {
         // withQueryScope is a passthrough on the mock: run the supplied queries directly
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(inv -> inv.getArgument(1, java.util.function.Supplier.class).get());
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
     }
 
     // ===== Stub helpers =====
@@ -208,10 +214,25 @@ class CombatDamageServiceTest {
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(
                 eq(gameData), any(UUID.class), any()))
                 .thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(
+                eq(gameData), any(UUID.class), any(), anyBoolean()))
+                .thenReturn(1);
+        lenient().when(gameQueryService.getDamageToRecipientMultiplier(
+                eq(gameData), any(UUID.class), org.mockito.ArgumentMatchers.nullable(UUID.class), any(UUID.class)))
+                .thenReturn(1);
+        lenient().when(damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
+                        eq(gameData), any(UUID.class), any(Permanent.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(4));
         // Lenient: only consulted for creatures that actually took damage this step.
         lenient().when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyCreaturePreventionShield(
+                eq(gameData), any(Permanent.class), anyInt(), anyBoolean(), any(Permanent.class)))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
+                eq(gameData), any(Permanent.class), any(Permanent.class), anyInt(), eq(true)))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         // The SBA check decides deaths from the live battlefield, so the removal mock must
         // actually remove — otherwise the casualty diff and the SBA repeat passes see ghosts.
         lenient().doAnswer(inv -> {
@@ -277,8 +298,8 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         // Martyrdom redirect is likewise a pass-through here — no player redirect shields are set up.
         lenient().when(damagePreventionService.applyPlayerNextDamageRedirectShields(
-                eq(gameData), any(UUID.class), anyInt()))
-                .thenAnswer(inv -> (int) inv.getArgument(2));
+                eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyCreatureRedirectShields(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
@@ -363,6 +384,8 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.canPlayerGetPoisonCounters(eq(gameData), any(UUID.class)))
                 .thenReturn(true);
+        when(gameQueryService.applyPoisonCounterReplacement(eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameQueryService.replacePoisonCounters(eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
     }
@@ -1016,6 +1039,20 @@ class CombatDamageServiceTest {
         }
 
         @Test
+        @DisplayName("Trample deals damage when the creature that blocked it has left combat")
+        void trampleDealsDamageWhenBlockerHasLeftCombat() {
+            stubDamageResolution();
+            stubRegularPlayerDamage();
+
+            Permanent attacker = addAttacker("Trampler", 4, 4, Keyword.TRAMPLE);
+            attacker.setBlockedWithoutBlockers(true);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(16);
+        }
+
+        @Test
         @DisplayName("Trample with deathtouch: only 1 damage needed per blocker to be lethal")
         void trampleDeathtouchOnlyNeedsOnePerBlocker() {
             Permanent attacker = addAttacker("Avatar", 8, 8, Keyword.TRAMPLE, Keyword.DEATHTOUCH);
@@ -1216,6 +1253,28 @@ class CombatDamageServiceTest {
         }
 
         @Test
+        @DisplayName("Attached triggering-player token effect uses the enchanted creature controller")
+        void attachedTriggeringPlayerTokenEffectUsesEnchantedCreatureController() {
+            Permanent creature = addAttacker("Enchanted creature", 3, 3);
+            Card auraCard = createCard("Curious Inquiry", 1, 1);
+            auraCard.setType(CardType.ENCHANTMENT);
+            auraCard.addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofClueToken(1)));
+            Permanent aura = new Permanent(auraCard);
+            aura.setAttachedTo(creature.getId());
+            gameData.playerBattlefields.get(player2Id).add(aura);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream()
+                            .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player1Id);
+        }
+
+        @Test
         @DisplayName("Delayed combat-damage draw checks the source predicate and player-only damage")
         void delayedDrawFiltersDamageSources() {
             stubbedDelayedDrawPredicate();
@@ -1230,6 +1289,26 @@ class CombatDamageServiceTest {
                     .filter(se -> se.getEffectsToResolve().stream().anyMatch(DrawCardEffect.class::isInstance))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Batched ally creature player-or-battle trigger fires once and keeps its watcher as source")
+        void batchedAllyCreaturePlayerOrBattleTriggerFiresOnce() {
+            Card watcherCard = createCard("Dragon watcher", 2, 2);
+            watcherCard.addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
+                    new AllyCombatDamageTriggerEffect(null, new DrawCardEffect(1), false, true));
+            Permanent watcher = new Permanent(watcherCard);
+            gameData.playerBattlefields.get(player1Id).add(watcher);
+            addAttacker("Dragon one", 2, 2);
+            addAttacker("Dragon two", 2, 2);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(DrawCardEffect.class::isInstance))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getSourcePermanentId()).isEqualTo(watcher.getId());
         }
 
         private void stubbedDelayedDrawPredicate() {

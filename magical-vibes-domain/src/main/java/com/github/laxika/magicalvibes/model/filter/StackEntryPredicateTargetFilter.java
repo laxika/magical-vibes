@@ -34,9 +34,4 @@ public record StackEntryPredicateTargetFilter(
     public String errorMessageFor(boolean giftPromised) {
         return giftPromised && giftErrorMessage != null ? giftErrorMessage : errorMessage;
     }
-
-    public StackEntryPredicateTargetFilter forCast(boolean kicked, boolean giftPromised) {
-        return new StackEntryPredicateTargetFilter(
-                predicateFor(kicked, giftPromised), errorMessageFor(giftPromised));
-    }
 }

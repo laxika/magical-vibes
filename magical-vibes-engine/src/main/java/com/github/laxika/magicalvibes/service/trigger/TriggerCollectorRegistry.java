@@ -22,9 +22,14 @@ public class TriggerCollectorRegistry {
     private record TriggerKey(EffectSlot slot, Class<? extends CardEffect> effectClass) {}
 
     private final Map<TriggerKey, TriggerCollectorHandler> handlers = new LinkedHashMap<>();
+    private final Map<Class<? extends CardEffect>, EmblemTriggerCollectorHandler> emblemHandlers = new LinkedHashMap<>();
 
     public void register(EffectSlot slot, Class<? extends CardEffect> effectClass, TriggerCollectorHandler handler) {
         handlers.put(new TriggerKey(slot, effectClass), handler);
+    }
+
+    public void registerEmblem(Class<? extends CardEffect> effectClass, EmblemTriggerCollectorHandler handler) {
+        emblemHandlers.put(effectClass, handler);
     }
 
     /**
@@ -82,6 +87,15 @@ public class TriggerCollectorRegistry {
         return false;
     }
 
+    /** Dispatches an effect stored on an emblem to its class-keyed handler. */
+    public boolean dispatchEmblem(EmblemTriggerMatchContext match, CardEffect effect, TriggerContext context) {
+        EmblemTriggerCollectorHandler handler = emblemHandlers.get(effect.getClass());
+        if (handler != null) {
+            return handler.handle(match, effect, context);
+        }
+        return false;
+    }
+
     public int size() {
         return handlers.size();
     }
@@ -101,6 +115,17 @@ public class TriggerCollectorRegistry {
             if (container != null) {
                 for (CollectsTrigger ct : container.value()) {
                     registerMethod(bean, method, ct, registry);
+                }
+            }
+
+            CollectsEmblemTrigger singleEmblem = method.getAnnotation(CollectsEmblemTrigger.class);
+            if (singleEmblem != null) {
+                registerEmblemMethod(bean, method, singleEmblem, registry);
+            }
+            CollectsEmblemTriggers emblemContainer = method.getAnnotation(CollectsEmblemTriggers.class);
+            if (emblemContainer != null) {
+                for (CollectsEmblemTrigger cet : emblemContainer.value()) {
+                    registerEmblemMethod(bean, method, cet, registry);
                 }
             }
         }
@@ -124,6 +149,37 @@ public class TriggerCollectorRegistry {
             Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
 
             registry.register(annotation.slot(), annotation.value(), (match, innerEffect, context) -> {
+                try {
+                    return (boolean) handle.invoke(match, effectParam.cast(innerEffect), context);
+                } catch (RuntimeException re) {
+                    throw re;
+                } catch (Throwable t) {
+                    throw new RuntimeException(t);
+                }
+            });
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void registerEmblemMethod(Object bean, Method method, CollectsEmblemTrigger annotation,
+                                              TriggerCollectorRegistry registry) {
+        method.setAccessible(true);
+        Class<?>[] params = method.getParameterTypes();
+
+        if (params.length != 3
+                || params[0] != EmblemTriggerMatchContext.class
+                || !CardEffect.class.isAssignableFrom(params[1])
+                || !TriggerContext.class.isAssignableFrom(params[2])) {
+            return;
+        }
+
+        try {
+            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
+            Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
+
+            registry.emblemHandlers.put(annotation.value(), (match, innerEffect, context) -> {
                 try {
                     return (boolean) handle.invoke(match, effectParam.cast(innerEffect), context);
                 } catch (RuntimeException re) {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "176")
+@CardRegistration(set = "WAR", collectorNumber = "97")
 public class LilianaDreadhordeGeneral extends Card {
 
     public LilianaDreadhordeGeneral() {

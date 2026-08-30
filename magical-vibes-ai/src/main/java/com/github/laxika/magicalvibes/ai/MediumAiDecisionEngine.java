@@ -151,7 +151,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Build damage assignments for divided damage spells
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) {
@@ -159,12 +159,19 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        // Determine target if needed (skip for modal and damage distribution spells)
+        // Determine any targets not already selected by a modal plan.
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                && targetSelector.hasSeparateGraveyardTarget(card)) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) {
+                return false;
+            }
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
             AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                     gameData, card, aiPlayer.getId());
             if (selection == null) {
@@ -179,6 +186,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
                 && !hasPermanentManaValueEqualsXTarget(card)
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
@@ -188,8 +196,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Check targeting tax (e.g. Kopala, Warden of Waves)
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return false;
         }
 
@@ -203,9 +212,6 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
-        }
-        if (sacrificePermanentId != null && hasAlternativePermanentAndGraveyardCost(card)) {
-            exileGraveyardCardIndices = null;
         }
 
         // Calculate X value (for modal spells, xValue is the mode index)
@@ -244,6 +250,24 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return false;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return false;
+            }
+        }
+
         if (exileXCost != null && castCost.hasX() && modalPlan == null) {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost, xValue);
             if (exileGraveyardCardIndices == null) {
@@ -277,14 +301,15 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Medium): Casting {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", best.value), gameId);
-        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                card, targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return false;
         }
         if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -321,7 +346,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(card)) {
+        if (!spellCastStarted(gameData, hand, card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("AI (Medium): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
                     gameId, card.getName(), cardIndex,
@@ -409,7 +434,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             return false;
         }
 
-        Map<UUID, Integer> damageAssignments = null;
+        Map<UUID, Integer> damageAssignments = modalPlan != null ? modalPlan.damageAssignments() : null;
         if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
             damageAssignments = targetSelector.buildDamageAssignments(gameData, card, aiPlayer.getId());
             if (damageAssignments == null) return false;
@@ -418,8 +443,13 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         UUID targetId = modalPlan != null ? modalPlan.targetId() : null;
         List<UUID> multiTargetIds = modalPlan != null ? modalPlan.targetIds() : null;
         boolean isMultiTarget = targetSelector.needsMultiTargetSelection(card);
-        if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
-                && targetSelector.hasSeparateGraveyardTarget(card)) {
+        if (modalPlan == null && EffectResolution.needsDamageDistribution(card)) {
+            AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseTargetsAfterDistribution(
+                    gameData, card, aiPlayer.getId(), damageAssignments);
+            if (selection == null) return false;
+            targetId = selection.targetId();
+            multiTargetIds = selection.targetIds();
+        } else if (modalPlan == null && targetSelector.hasSeparateGraveyardTarget(card)) {
             AiTargetSelector.SpellTargetSelection selection = targetSelector.chooseSeparateGraveyardTargets(
                     gameData, card, aiPlayer.getId());
             if (selection == null) return false;
@@ -430,6 +460,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             if (multiTargetIds == null) return false;
         } else if (modalPlan == null && !EffectResolution.needsDamageDistribution(card)
                 && (EffectResolution.needsTarget(card) || card.isAura())
+                && !targetSelector.needsXScaledTargetSelection(card)
                 && !hasPermanentManaValueEqualsXTarget(card)
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
@@ -437,8 +468,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Check targeting tax (e.g. Kopala, Warden of Waves)
-        int targetingTax = computeTargetingTax(gameData, targetId, multiTargetIds);
-        if (targetingTax > 0 && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
+        int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
+        if (targetingTax > 0 && !castingCostService.hasTargetBasedCostIncrease(card)
+                && !canAffordSpell(gameData, card, virtualPool, targetingTax)) {
             return false;
         }
 
@@ -450,9 +482,6 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
             exileGraveyardCardIndices = selectExileXGraveyardIndices(gameData, exileXCost);
         } else if (findExileNGraveyardCost(card) != null) {
             exileGraveyardCardIndices = selectNGraveyardIndicesToExile(gameData, findExileNGraveyardCost(card));
-        }
-        if (sacrificePermanentId != null && hasAlternativePermanentAndGraveyardCost(card)) {
-            exileGraveyardCardIndices = null;
         }
 
         ManaCost castCost = new ManaCost(card.getManaCost());
@@ -481,6 +510,24 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 smartX = Math.min(smartX, getMaxXForDiscardCost(gameData, card));
                 if (smartX <= 0) return false;
                 xValue = smartX;
+            }
+        }
+
+        if (xValue != null && targetSelector.needsXScaledTargetSelection(card)) {
+            AiTargetSelector.XScaledTargetSelection selection = targetSelector.chooseXScaledTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (selection == null) {
+                return false;
+            }
+            xValue = selection.xValue();
+            targetId = null;
+            multiTargetIds = selection.targetIds();
+            targetingTax = computeTargetingTax(gameData, card, null, multiTargetIds);
+        } else if (xValue != null && targetSelector.hasOnlyGroupedGraveyardTargets(card)) {
+            multiTargetIds = targetSelector.chooseMultiTargets(
+                    gameData, card, aiPlayer.getId(), xValue);
+            if (multiTargetIds == null) {
+                return false;
             }
         }
 
@@ -517,14 +564,15 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Medium): Casting instant {}{} (value={}) in game {}", card.getName(),
                 xValue != null ? " (X=" + xValue + ")" : "",
                 String.format("%.1f", value), gameId);
-        Set<UUID> reservedCostPermanentIds = reservedSpellCostPermanentIds(
+        Set<UUID> reservedPaymentPermanentIds = reservedSpellPaymentPermanentIds(
+                card, targetId, multiTargetIds, damageAssignments,
                 sacrificePermanentId, beholdSelection, costReductionPlan);
         if (!canPayManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return false;
         }
         if (tapManaForSpell(gameData, card, xValue, targetingTax, delveReduction,
-                costReductionPlan.reduction(), reservedCostPermanentIds)) {
+                costReductionPlan.reduction(), reservedPaymentPermanentIds)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
         List<UUID> convokeCreatureIds = selectConvokeCreatureIds(
@@ -558,7 +606,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                         finalBeholdSelection)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
-        if (hand.contains(card)) {
+        if (!spellCastStarted(gameData, hand, card)) {
             log.warn("AI (Medium): Instant cast failed silently in game {}", gameId);
             return false;
         }
@@ -568,8 +616,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
     @Override
     protected void handleAttackers(GameData gameData) {
         UUID actingPlayerId = activeDecisionPlayerId(gameData);
-        List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, actingPlayerId);
-        List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, actingPlayerId, availableIndices);
+        List<Integer> availableIndices = getAttackableIndicesForDecision(gameData, actingPlayerId);
+        List<Integer> mustAttackIndices = getMustAttackIndicesForDecision(
+                gameData, actingPlayerId, availableIndices);
 
         List<Integer> attackerIndices = combatSimulator.findBestAttackers(
                 gameData, actingPlayerId, availableIndices, mustAttackIndices);

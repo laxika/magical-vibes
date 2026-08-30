@@ -49,6 +49,7 @@ public class FlipCoinDestroyTargetOrRepeatEffectHandler implements NormalEffectH
                     gameData, entry, DestroyTargetPermanentEffect.forTargetGroup(1));
             return;
         }
+        triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
 
         MayPayManaEffect repeat = new MayPayManaEffect(
                 "{3}",

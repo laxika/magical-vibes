@@ -47,6 +47,7 @@ class SomberwaldSageTest extends BaseCardTest {
     void choosingColorAddsThreeCreatureSpellMana() {
         Permanent sage = harness.addToBattlefieldAndReturn(player1, new SomberwaldSage());
         sage.setSummoningSick(false);
+        harness.setHand(player1, List.of(createCreature("Test Beast", "{2}{G}", CardColor.GREEN)));
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "GREEN");

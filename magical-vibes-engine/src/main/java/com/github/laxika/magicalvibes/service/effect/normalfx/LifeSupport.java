@@ -142,8 +142,10 @@ public class LifeSupport {
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
-            gameData.playerLifeTotals.put(playerId, newLife);
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - newLife);
+            int lifeLoss = (currentLife - newLife)
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
+            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
         return true;
     }
@@ -154,6 +156,7 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
+        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
 
@@ -165,10 +168,39 @@ public class LifeSupport {
         triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
     }
 
-    public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {
-        if (!gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) return;
+    /** Applies a life payment and fires both life-loss and life-payment triggers. */
+    public void applyLifePayment(GameData gameData, UUID playerId, int amount, String sourceName) {
+        if (amount <= 0) return;
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+            return;
+        }
 
-        amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount);
+        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        int currentLife = gameData.getLife(playerId);
+        gameData.playerLifeTotals.put(playerId, currentLife - amount);
+        gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(
+                playerName + " loses " + amount + " life (" + sourceName + ")."));
+        log.info("Game {} - {} loses {} life from paying for {}", gameData.id, playerName, amount, sourceName);
+
+        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
+        triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+    }
+
+    public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {
+        applyPoisonCounters(gameData, playerId, amount, sourceName, gameData.currentlyResolvingControllerId);
+    }
+
+    public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName,
+                                    UUID placingPlayerId) {
+        amount = gameQueryService.applyPoisonCounterReplacement(gameData, playerId, amount);
+        if (amount <= 0) return;
+
+        amount = gameQueryService.replacePoisonCounters(gameData, playerId, amount, placingPlayerId);
         if (amount <= 0) return;
 
         int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
@@ -180,6 +212,7 @@ public class LifeSupport {
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
+        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
     }
 
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {

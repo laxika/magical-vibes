@@ -11,6 +11,6 @@ public class CurseOfTheBloodyTome extends Card {
 
     public CurseOfTheBloodyTome() {
         // At the beginning of enchanted player's upkeep, that player mills two cards.
-        addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED, new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED, new MillEffect(2, MillRecipient.ACTIVE_PLAYER));
     }
 }

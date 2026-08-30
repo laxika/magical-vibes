@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopOrBottomEffect;
 
 @CardRegistration(set = "ECL", collectorNumber = "78")
+@CardRegistration(set = "MOM", collectorNumber = "80")
 public class TemporalCleansing extends Card {
 
     public TemporalCleansing() {

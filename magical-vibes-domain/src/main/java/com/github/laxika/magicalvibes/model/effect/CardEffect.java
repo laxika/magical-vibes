@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+
+import java.util.UUID;
 
 public interface CardEffect {
 
@@ -20,6 +24,19 @@ public interface CardEffect {
      * so the component is honoured.</p>
      */
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
+
+    /**
+     * Returns whether this effect reads the numeric value captured from the event that triggered
+     * its stack entry. Death-trigger collectors use this to snapshot last-known information before
+     * the triggering permanent leaves the battlefield.
+     */
+    default boolean referencesEventValue() { return false; }
+
+    /**
+     * Returns {@code true} when an activated ability with this effect may target cards anywhere in
+     * exile rather than only cards exiled with its source permanent.
+     */
+    default boolean targetsAllExiledCardsInAbility() { return false; }
 
     /**
      * Which players this effect may target, for the effects whose wording narrows the player half
@@ -53,6 +70,12 @@ public interface CardEffect {
     default boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) { return true; }
 
     /**
+     * Returns {@code true} when this effect's declared target may be omitted, such as an
+     * "up to one target" choice made while a triggered ability is put on the stack.
+     */
+    default boolean hasOptionalTarget() { return false; }
+
+    /**
      * Returns {@code true} if this effect resolves against the permanent its source Aura/Equipment
      * is attached to rather than against a chosen target. The activation path captures that attached
      * permanent as the ability's target before any sacrifice cost severs the attachment, so the
@@ -66,4 +89,35 @@ public interface CardEffect {
      * targets have become illegal, so its handler can apply a separate resolution clause.
      */
     default boolean resolvesWhenTargetIllegal() { return false; }
+
+    /**
+     * Returns whether an enter-trigger collector should bind the entering permanent as the
+     * hidden reference used by this effect.
+     */
+    default boolean usesEnteringPermanentReference() { return false; }
+
+    /**
+     * Returns whether this effect or one of its nested effects branches on the source ability's
+     * resolution count for the current turn.
+     */
+    default boolean hasAbilityResolutionCondition() { return false; }
+
+    /**
+     * Resolves a trigger-only condition that depends on the activated ability that caused the
+     * trigger. Effects without such a condition remain unchanged.
+     */
+    default CardEffect resolveForActivatedAbility(ActivatedAbility ability) { return this; }
+
+    /**
+     * Resolves a trigger-only condition that depends on the ability that caused a creature to
+     * become the target of a spell or ability. Effects without such a condition remain unchanged.
+     */
+    default CardEffect resolveForBecomesTargetOfSpellOrAbility(
+            StackEntry triggeringEntry,
+            UUID watcherPermanentId,
+            UUID targetedPermanentId,
+            UUID watcherControllerId,
+            UUID triggeringSourceControllerId) {
+        return this;
+    }
 }

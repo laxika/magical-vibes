@@ -35,7 +35,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -46,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -566,6 +569,7 @@ public class GameSimulator {
                 ActivatedAbility ability = abilities.get(abilityIndex);
                 if (AbilityActivationService.isManaAbility(ability)
                         || ability.isVariableLoyaltyCost()
+                        || EffectResolution.needsDamageDistribution(ability.getEffects())
                         || ability.isMultiTarget()
                         || ability.isNeedsSpellTarget()) {
                     continue;
@@ -1177,23 +1181,18 @@ public class GameSimulator {
     private List<Integer> computeExileNGraveyardIndices(GameData gd, UUID playerId, Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof CostEffect cost && cost.consumedGraveyardCardCount() > 0) {
-                PermanentPredicate permanentFilter = cost.consumedPermanentFilter();
-                if (permanentFilter != null
-                        && gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(
-                                gd, p, permanentFilter))) {
-                    return null;
-                }
                 int count = cost.consumedGraveyardCardCount();
                 CardType requiredType = cost.consumedGraveyardCardType();
+                ExileNCardsFromGraveyardCost exactCost = effect instanceof ExileNCardsFromGraveyardCost e
+                        ? e : null;
                 List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
                 List<Integer> matchingIndices = new ArrayList<>();
                 for (int i = 0; i < graveyard.size(); i++) {
                     Card c = graveyard.get(i);
                     if ((requiredType == null || c.hasType(requiredType))
-                            && (cost.consumedGraveyardCardPredicate() == null
+                            && (exactCost == null || exactCost.predicate() == null
                             || predicateEvaluationService.matchesCardPredicate(
-                            c, cost.consumedGraveyardCardPredicate(), null))) {
+                            c, exactCost.predicate(), c.getId()))) {
                         matchingIndices.add(i);
                     }
                 }
@@ -1294,10 +1293,15 @@ public class GameSimulator {
                     || effect instanceof SacrificeAnyNumberOfPermanentsCost
                     || effect instanceof TapAnyNumberOfPermanentsCost
                     || effect instanceof TapMultiplePermanentsCost
+                    || effect instanceof WaterbendCost
                     || effect instanceof ReturnAnyNumberOfPermanentsToHandCost) {
                 continue;
             }
             if (effect instanceof CostEffect cost) {
+                if (effect instanceof DiscardCardOrSacrificePermanentCost
+                        && !castingCostService.validDiscardCostIndices(gd, playerId, card).isEmpty()) {
+                    continue;
+                }
                 PermanentPredicate filter = cost.consumedPermanentFilter();
                 if (filter != null) {
                     return battlefield.stream()
@@ -1336,6 +1340,15 @@ public class GameSimulator {
                         .map(Permanent::getId)
                         .toList();
                 return chosen.size() == fixed.value() ? chosen : List.of();
+            }
+            if (effect instanceof WaterbendCost cost) {
+                return battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> gameQueryService.isArtifact(gd, p)
+                                || gameQueryService.isCreature(gd, p))
+                        .limit(cost.amount())
+                        .map(Permanent::getId)
+                        .toList();
             }
             if (effect instanceof SacrificeAnyNumberOfPermanentsCost cost) {
                 return battlefield.stream()
@@ -1451,19 +1464,7 @@ public class GameSimulator {
         } else {
             maxX = cost.calculateMaxX(virtualPool, costModifier);
         }
-        if (card.getXValueCap() != null) {
-            // Cap announced X (e.g. Winter's Chill: snow lands you control).
-            if (card.getXValueCap() instanceof com.github.laxika.magicalvibes.model.amount.PermanentCount pc
-                    && pc.scope() == com.github.laxika.magicalvibes.model.amount.CountScope.CONTROLLER) {
-                int cap = 0;
-                for (Permanent p : gd.playerBattlefields.getOrDefault(gd.activePlayerId, List.of())) {
-                    if (predicateEvaluationService.matchesPermanentPredicate(gd, p, pc.filter())) {
-                        cap++;
-                    }
-                }
-                maxX = Math.min(maxX, cap);
-            }
-        }
+        maxX = manaManager.clampByXValueCap(gd, gd.activePlayerId, card, maxX);
         if (maxX <= 0) {
             return 0;
         }

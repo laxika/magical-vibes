@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                           boolean toGraveyardOnControlLoss, LibraryScope scope,
                                           boolean targetedOpponent, DynamicAmount dynamicCount)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     /** Face-down exile from the controller's own library (Colfenor's Plans). */
     public ExileTopCardsToSourceEffect(int count) {
@@ -63,6 +63,11 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
     public TargetSpec targetSpec() {
         return targetedOpponent || scope == LibraryScope.TARGET_PLAYER
                 ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return dynamicCount;
     }
 
     /**

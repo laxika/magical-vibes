@@ -102,13 +102,17 @@ public class LandManaTypeSupport {
             } else if (effect instanceof AwardHasteGrantingManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardManaToChosenPlayerEffect mana) {
-                addIfNonNull(types, mana.color());
+                if (mana.anyColor()) {
+                    types.addAll(ManaColor.COLORS);
+                } else {
+                    addIfNonNull(types, mana.color());
+                }
             } else if (effect instanceof AwardRestrictedManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardUncounterableGrantingManaEffect mana) {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof RemoveCountersForManaEffect mana) {
-                addIfNonNull(types, mana.color());
+                types.addAll(mana.colors());
             } else if (effect instanceof ManaProducingEffect mana) {
                 if (mana.estimatedCountsAllColors()) {
                     types.addAll(ManaColor.COLORS);

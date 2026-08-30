@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Makes one or more players lose life. A single record covers the whole life-loss family: the
- * {@link LoseLifeRecipient} routes who loses life (controller / target player / each player / each
- * opponent) and the {@link DynamicAmount} covers fixed amounts ("loses 3 life"), an X value
+ * {@link LoseLifeRecipient} routes who loses life (controller / target player / triggering player /
+ * each player / each opponent) and the {@link DynamicAmount} covers fixed amounts ("loses 3 life"), an X value
  * (Exsanguinate), or a relational amount such as {@code PermanentCount} ("1 life for each Vampire
  * you control", Bishop of the Bloodstained) or {@code EventValue} ("equal to the life you gained",
  * Sanguine Bond). When {@code controllerGainsLifeLost} is set the controller then gains life equal

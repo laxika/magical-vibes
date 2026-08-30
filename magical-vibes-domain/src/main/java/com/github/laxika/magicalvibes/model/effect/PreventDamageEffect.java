@@ -20,14 +20,18 @@ import java.util.Set;
  * @param scope           which shield-state slot to write
  * @param amount          the shield size for {@code NEXT_*} scopes ({@code null} for ALL-style scopes)
      * @param combatOnly      combat-only window for the controller, target-creature, and matching-permanent scopes
- * @param sourceColors    the prevented source colors for {@link PreventionScope#ALL_FROM_COLORS}
+ * @param sourceColors    the prevented source colors for color-based prevention scopes
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
      * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
+     *                        or {@link PreventionScope#ALL_TO_CONTROLLED_MATCHING_PERMANENTS}
      *                        or all combat damage to which is prevented for
      *                        {@link PreventionScope#ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS};
  *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE} an optional narrowing of the legal target
  * @param gainLife        whether the controller gains life equal to damage prevented by a
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
+ * @param sourcePredicate damage sources matching this predicate for
+ *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -36,7 +40,8 @@ public record PreventDamageEffect(
         Set<CardColor> sourceColors,
         PermanentPredicate exemptPredicate,
         PermanentPredicate victimPredicate,
-        boolean gainLife
+        boolean gainLife,
+        PermanentPredicate sourcePredicate
 ) implements CardEffect {
 
     public PreventDamageEffect(PreventionScope scope,
@@ -45,7 +50,17 @@ public record PreventDamageEffect(
                                Set<CardColor> sourceColors,
                                PermanentPredicate exemptPredicate,
                                PermanentPredicate victimPredicate) {
-        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, false);
+        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, false, null);
+    }
+
+    public PreventDamageEffect(PreventionScope scope,
+                               DynamicAmount amount,
+                               boolean combatOnly,
+                               Set<CardColor> sourceColors,
+                               PermanentPredicate exemptPredicate,
+                               PermanentPredicate victimPredicate,
+                               boolean gainLife) {
+        this(scope, amount, combatOnly, sourceColors, exemptPredicate, victimPredicate, gainLife, null);
     }
 
     public PreventDamageEffect {
@@ -55,6 +70,7 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_ENCHANTED
                 || scope == PreventionScope.NEXT_TO_TARGET
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
+                || scope == PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES
                 || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER
                 || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER;
         if (needsAmount && amount == null) {
@@ -63,13 +79,16 @@ public record PreventDamageEffect(
         if (!needsAmount && amount != null) {
             throw new IllegalArgumentException("ALL-style prevention scopes take no amount: " + scope);
         }
-        if ((sourceColors != null) != (scope == PreventionScope.ALL_FROM_COLORS)) {
-            throw new IllegalArgumentException("sourceColors is exactly the ALL_FROM_COLORS parameter: " + scope);
+        boolean colorSourceScope = scope == PreventionScope.ALL_FROM_COLORS
+                || scope == PreventionScope.ALL_FROM_COLORS_TO_CONTROLLED_CREATURES;
+        if ((sourceColors != null) != colorSourceScope) {
+            throw new IllegalArgumentException("sourceColors is exactly a color-based prevention parameter: " + scope);
         }
         if ((exemptPredicate != null) != (scope == PreventionScope.ALL_COMBAT_EXCEPT)) {
             throw new IllegalArgumentException("exemptPredicate is exactly the ALL_COMBAT_EXCEPT parameter: " + scope);
         }
         boolean acceptsVictimPredicate = scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
         if (victimPredicate != null && !acceptsVictimPredicate) {
@@ -77,11 +96,19 @@ public record PreventDamageEffect(
                     "victimPredicate is only a matching-permanent or NEXT_TO_TARGET_CREATURE parameter: " + scope);
         }
         if (victimPredicate == null && (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS)) {
             throw new IllegalArgumentException(scope + " requires a victimPredicate");
         }
-        if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
-            throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
+        if (gainLife && scope != PreventionScope.NEXT_TO_TARGET && scope != PreventionScope.ALL_BY_CREATURES) {
+            throw new IllegalArgumentException(
+                    "gainLife is exactly the NEXT_TO_TARGET or ALL_BY_CREATURES parameter: " + scope);
+        }
+        boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
+        if ((sourcePredicate != null) != acceptsSourcePredicate) {
+            throw new IllegalArgumentException(
+                    "sourcePredicate is exactly a matching-source prevention parameter: " + scope);
         }
     }
 
@@ -140,6 +167,13 @@ public record PreventDamageEffect(
                 PreventionScope.NEXT_TO_TARGET_CREATURE, new Fixed(amount), false, null, null, victimPredicate);
     }
 
+    /** "Prevent the next {@code amount} damage that would be dealt to target creature and each other creature that shares a color with it." */
+    public static PreventDamageEffect nextToTargetAndSharingCreatures(int amount) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES,
+                new Fixed(amount), false, null, null, null);
+    }
+
     /** "Prevent the next {@code amount} damage that would be dealt to target player or planeswalker" (Wandering Mage). */
     public static PreventDamageEffect nextToTargetPlayerOrPlaneswalker(int amount) {
         return new PreventDamageEffect(PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER, new Fixed(amount), false, null, null, null);
@@ -176,9 +210,21 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt to creatures you control this turn" (Divine Light). */
+    public static PreventDamageEffect allToControlledCreatures() {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLED_CREATURES, null, false, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt to [permanents matching {@code victimPredicate}] this turn" (Ethersworn Shieldmage). */
     public static PreventDamageEffect allToMatchingPermanents(PermanentPredicate victimPredicate) {
         return new PreventDamageEffect(PreventionScope.ALL_TO_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
+    }
+
+    /** "Prevent all damage that would be dealt this turn to matching permanents you control." */
+    public static PreventDamageEffect allToControlledMatchingPermanents(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
     }
 
     /** "Prevent all combat damage that would be dealt this turn to matching permanents you control." */
@@ -210,6 +256,11 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt by creatures this turn" (Ethereal Haze). */
     public static PreventDamageEffect allByCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt by creatures this turn; you gain life equal to damage prevented this way." */
+    public static PreventDamageEffect allByCreaturesAndGainLife() {
+        return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null, true);
     }
 
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1). */
@@ -260,9 +311,34 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_FROM_ATTACKERS, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt to you this turn by sources matching {@code sourcePredicate}." */
+    public static PreventDamageEffect allToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
+    }
+
+    /** "Prevent all damage that would be dealt to players this turn by matching sources." */
+    public static PreventDamageEffect allToPlayersFromMatchingSources(PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
+    }
+
     /** "Prevent all damage that sources of the given colors would deal this turn" (Luminesce). */
     public static PreventDamageEffect fromColors(Set<CardColor> colors) {
         return new PreventDamageEffect(PreventionScope.ALL_FROM_COLORS, null, false, colors, null, null);
+    }
+
+    /** "Prevent all damage that black and/or red sources would deal to creatures you control this turn." */
+    public static PreventDamageEffect fromColorsToControlledCreatures(Set<CardColor> colors) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_FROM_COLORS_TO_CONTROLLED_CREATURES, null, false, colors, null, null);
+    }
+
+    /** "Prevent all damage that sources of the color of your choice would deal this turn" (Prismatic Strands). */
+    public static PreventDamageEffect fromChosenColor() {
+        return new PreventDamageEffect(PreventionScope.ALL_FROM_CHOSEN_COLOR, null, false, null, null, null);
     }
 
     /** "Prevent all damage that would be dealt this turn by non-Human sources" (Repel the Abominable). */
@@ -288,7 +364,7 @@ public record PreventDamageEffect(
         return switch (scope) {
             case NEXT_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
             case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetPredicates.creature());
-            case NEXT_TO_TARGET_CREATURE -> TargetSpec.benign(victimPredicate == null
+            case NEXT_TO_TARGET_CREATURE, NEXT_TO_TARGET_AND_SHARING_CREATURES -> TargetSpec.benign(victimPredicate == null
                     ? TargetPredicates.creature()
                     : TargetPredicates.narrowPermanents(TargetPredicates.creature(), victimPredicate));
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "72")
+@CardRegistration(set = "FRF", collectorNumber = "48")
 public class RenownedWeaponsmith extends Card {
 
     public RenownedWeaponsmith() {

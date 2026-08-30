@@ -66,4 +66,27 @@ class GixYawgmothPraetorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Choosing zero for X requires no discard and exiles no cards")
+    void zeroXRequiresNoDiscardAndExilesNoCards() {
+        harness.addToBattlefield(player1, new GixYawgmothPraetor());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, 0, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingAbilityActivation).isNull();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+    }
 }

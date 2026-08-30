@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -8,7 +7,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +26,9 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,34 +39,54 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
 
-        // Collect all permanents with counters (any player's battlefield)
+        ProliferateEffect typedEffect = (ProliferateEffect) effect;
+        // A null amount is the ordinary single event. The dynamic form is used when a preceding
+        // resolution step records a variable number of proliferates on the stack entry.
+        int totalProliferates = typedEffect.amount() == null
+                ? Math.max(1, (int) entry.getEffectsToResolve().stream()
+                        .filter(e -> e instanceof ProliferateEffect)
+                        .count())
+                : Math.max(0, amountEvaluationService.evaluate(gameData, typedEffect.amount(),
+                        AmountContext.forStackEntry(entry, null)));
+        totalProliferates = gameQueryService.replaceProliferateCount(
+                gameData, controllerId, totalProliferates);
+        if (totalProliferates <= 0) {
+            return;
+        }
+        triggerCollectionService.checkProliferateTriggers(gameData, controllerId, totalProliferates);
+
+        // Collect all permanents with counters (any player's battlefield).
         List<UUID> eligiblePermanentIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                    || p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                    || p.getCounterCount(CounterType.LOYALTY) > 0
-                    || p.getCounterCount(CounterType.SLIME) > 0
-                    || p.getCounterCount(CounterType.HATCHLING) > 0
-                    || p.getCounterCount(CounterType.AIM) > 0) {
+            if (p.getCounters().values().stream().anyMatch(count -> count > 0)) {
                 eligiblePermanentIds.add(p.getId());
             }
         });
 
-        if (eligiblePermanentIds.isEmpty()) {
-            String logEntry = "Proliferate: no permanents with counters to choose.";
+        List<UUID> eligiblePlayerIds = new ArrayList<>();
+        for (UUID playerId : gameData.playerIds) {
+            if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0) {
+                eligiblePlayerIds.add(playerId);
+            }
+        }
+
+        if (eligiblePermanentIds.isEmpty() && eligiblePlayerIds.isEmpty()) {
+            String logEntry = "Proliferate: no permanents or players with counters to choose.";
             gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - Proliferate: no eligible permanents", gameData.id);
+            log.info("Game {} - Proliferate: no eligible permanents or players", gameData.id);
             return;
         }
 
-        // Count total proliferate effects in this stack entry (e.g. "proliferate, then proliferate again")
-        // so the handler knows how many rounds of choices remain after this one.
-        long totalProliferates = entry.getEffectsToResolve().stream()
-                .filter(e -> e instanceof ProliferateEffect)
-                .count();
-        playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
-                eligiblePermanentIds.size(),
-                new MultiPermanentChoiceContext.Proliferate((int) totalProliferates),
-                "Proliferate: Choose permanents to add counters to.");
+        MultiPermanentChoiceContext.Proliferate context =
+                new MultiPermanentChoiceContext.Proliferate(totalProliferates);
+        int maxCount = eligiblePermanentIds.size() + eligiblePlayerIds.size();
+        if (eligiblePlayerIds.isEmpty()) {
+            playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
+                    maxCount, context, "Proliferate: Choose permanents to add counters to.");
+        } else {
+            playerInputService.beginMultiPermanentOrPlayerChoice(gameData, controllerId,
+                    eligiblePermanentIds, eligiblePlayerIds, maxCount, context,
+                    "Proliferate: Choose permanents and/or players to add counters to.");
+        }
     }
 }

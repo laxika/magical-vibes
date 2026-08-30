@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayExileOneAndPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -37,7 +41,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         // Group-aimed damage (e.g. Goblin Barrage's kicked "4 damage to target player or
         // planeswalker"): resolve against the declared target group's chosen target rather
         // than the entry's single target.
-        UUID targetId = e.targetGroup() >= 0
+        UUID targetId = entry.isTargetIdOverriddenForEffectResolution()
+                ? entry.getTargetId()
+                : e.targetGroup() >= 0
                 ? entry.targetsForGroup(e.targetGroup()).stream().findFirst().orElse(null)
                 : entry.getTargetId();
         if (targetId == null) return;
@@ -67,22 +73,58 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
 
+        boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(nextEffect ->
+                nextEffect instanceof LookAtTopCardsMayExileOneAndPlayThisTurnEffect look
+                        && amountEvaluationService.referencesEventValue(look.count()));
+        Permanent excessTarget = null;
+        boolean targetIsCreature = false;
+        boolean targetIsPlaneswalker = false;
+        boolean targetIsBattle = false;
+        int toughnessBefore = 0;
+        int markedDamageBefore = 0;
+        int loyaltyBefore = 0;
+        int defenseBefore = 0;
+        boolean sourceHasDeathtouch = false;
+        if (tracksExcess && !gameData.playerIds.contains(targetId)) {
+            excessTarget = gameQueryService.findPermanentById(gameData, targetId);
+            if (excessTarget != null) {
+                targetIsCreature = gameQueryService.isCreature(gameData, excessTarget);
+                targetIsPlaneswalker = excessTarget.getCard().hasType(CardType.PLANESWALKER);
+                targetIsBattle = excessTarget.getCard().hasType(CardType.BATTLE);
+                toughnessBefore = targetIsCreature
+                        ? gameQueryService.getEffectiveToughness(gameData, excessTarget)
+                        : 0;
+                markedDamageBefore = excessTarget.getMarkedDamage();
+                loyaltyBefore = excessTarget.getCounterCount(CounterType.LOYALTY);
+                defenseBefore = excessTarget.getCounterCount(CounterType.DEFENSE);
+                sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
+            }
+        }
+
         // "If X is 5 or more, … the damage can't be prevented" (Banefire): while the gate holds,
         // suppress every prevention path (all guarded by isDamagePreventable) for the duration of
         // this one damage event, then restore. Reuses the whole any-target damage pipeline.
         boolean unpreventable = e.unpreventableWhen() != null
                 && conditionEvaluationService.isMet(gameData, e.unpreventableWhen(), ConditionContext.forStackEntry(entry));
+        int damageDealt;
         if (unpreventable) {
             boolean previous = gameData.damageCantBePreventedThisTurn;
             gameData.damageCantBePreventedThisTurn = true;
             try {
-                damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage,
+                damageDealt = damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage,
                         e.cantRegenerate(), e.cantBeRedirectedWhenUnpreventable());
             } finally {
                 gameData.damageCantBePreventedThisTurn = previous;
             }
         } else {
-            damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+            damageDealt = damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, e.cantRegenerate());
+        }
+        if (tracksExcess) {
+            entry.setEventValue(excessTarget == null
+                    ? 0
+                    : damageSupport.computeExcessDamageToAnyTarget(damageDealt, targetIsCreature,
+                    toughnessBefore, markedDamageBefore, sourceHasDeathtouch,
+                    targetIsPlaneswalker, loyaltyBefore, targetIsBattle, defenseBefore));
         }
         gameOutcomeService.checkWinCondition(gameData);
 

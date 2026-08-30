@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(FeralThallid.class)
 class FeralThallidTest extends BaseCardTest {
 
     @Test
@@ -17,10 +18,7 @@ class FeralThallidTest extends BaseCardTest {
     void upkeepTriggerAddsSporeCounter() {
         Permanent thallid = addThallid();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
@@ -40,6 +38,19 @@ class FeralThallidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing three spore counters leaves any additional spore counters")
+    void removesExactlyThreeSporeCounters() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
+        assertThat(thallid.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The regeneration ability requires three spore counters")
     void regenerationAbilityRequiresThreeSporeCounters() {
         Permanent thallid = addThallid();
@@ -50,8 +61,6 @@ class FeralThallidTest extends BaseCardTest {
     }
 
     private Permanent addThallid() {
-        Permanent thallid = harness.addToBattlefieldAndReturn(player1, new FeralThallid());
-        thallid.setSummoningSick(false);
-        return thallid;
+        return addCreatureReady(player1, new FeralThallid());
     }
 }

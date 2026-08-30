@@ -46,7 +46,7 @@ public class DoublePlusOneCountersOnControlledCreaturesEffectHandler implements 
 
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current * 2);
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                    gameData, permanent, entry.getControllerId());
+                    gameData, permanent, current);
             doubled.add(permanent);
         }
 

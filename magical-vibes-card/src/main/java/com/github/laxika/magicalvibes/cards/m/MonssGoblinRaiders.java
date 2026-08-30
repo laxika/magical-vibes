@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "ITP", collectorNumber = "35")
 @CardRegistration(set = "RQS", collectorNumber = "34")
 @CardRegistration(set = "S99", collectorNumber = "112")
+@CardRegistration(set = "SUM", collectorNumber = "167")
 public class MonssGoblinRaiders extends Card {
 }

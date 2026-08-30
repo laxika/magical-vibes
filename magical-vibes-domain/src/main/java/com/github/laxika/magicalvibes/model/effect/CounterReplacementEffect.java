@@ -1,22 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 
-/**
- * Replacement behavior for counters put on permanents controlled by the effect's controller.
- */
+/** Replacement behavior for counters put on permanents or players. */
 public interface CounterReplacementEffect extends CardEffect {
 
     int replace(CounterType counterType, int count);
-
-    /**
-     * Whether this replacement applies to counters put on permanents regardless of who controls
-     * the affected permanent. The default preserves the controller-scoped behavior of existing
-     * replacement effects such as Doubling Season.
-     */
-    default boolean appliesToAllPermanents() {
-        return false;
-    }
 
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature) {
         return true;
@@ -25,5 +15,26 @@ public interface CounterReplacementEffect extends CardEffect {
     default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
                               boolean affectedPermanentIsArtifact) {
         return appliesTo(counterType, affectedPermanentIsCreature);
+    }
+
+    default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
+                              boolean affectedPermanentIsArtifact, Permanent sourcePermanent,
+                              Permanent affectedPermanent) {
+        return appliesTo(counterType, affectedPermanentIsCreature, affectedPermanentIsArtifact);
+    }
+
+    default boolean appliesToWhenEntering(CounterType counterType,
+                                          boolean enteringPermanentIsCreature,
+                                          boolean enteringPermanentIsArtifact,
+                                          Permanent enteringPermanent) {
+        return false;
+    }
+
+    default boolean appliesTo(CounterType counterType, boolean affectedPermanentIsCreature,
+                              boolean sourceControlsAffectedPermanent,
+                              boolean sourceControllerIsPlacingPlayer,
+                              boolean affectedObjectIsPlayer) {
+        return sourceControlsAffectedPermanent
+                && appliesTo(counterType, affectedPermanentIsCreature, false);
     }
 }

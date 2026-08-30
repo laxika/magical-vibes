@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "100")
+@CardRegistration(set = "ONE", collectorNumber = "155")
 public class VoltCharge extends Card {
 
     public VoltCharge() {

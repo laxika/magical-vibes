@@ -1,0 +1,17 @@
+package com.github.laxika.magicalvibes.cards.n;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+@CardRegistration(set = "WAR", collectorNumber = "139")
+public class NahirisStoneblades extends Card {
+
+    public NahirisStoneblades() {
+        // Up to two target creatures each get +2/+0 until end of turn.
+        target(TargetFilters.creature(), 0, 2)
+                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0));
+    }
+}

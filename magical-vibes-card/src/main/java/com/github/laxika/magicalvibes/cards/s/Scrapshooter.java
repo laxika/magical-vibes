@@ -22,7 +22,7 @@ import java.util.List;
 public class Scrapshooter extends Card {
 
     public Scrapshooter() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addEffect(EffectSlot.STATIC, new GiftEffect(0));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
 

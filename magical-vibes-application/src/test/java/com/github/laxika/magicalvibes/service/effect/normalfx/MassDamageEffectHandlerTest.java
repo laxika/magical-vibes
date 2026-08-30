@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,8 +42,12 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Inline creature stubs â€” controllers differ from the default player2Id
                 when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
                 when(gameQueryService.findPermanentController(eq(gd), eq(elves.getId()))).thenReturn(player2Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(elves), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(bears), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(elves), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
 
                 massDamageHandler.resolve(gd, entry, effect);
@@ -67,7 +73,9 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
                 // Inline creature stubs â€” controller is player1Id, not the default player2Id
                 when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player1Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(angel), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(angel), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
 
                 massDamageHandler.resolve(gd, entry, effect);
@@ -94,8 +102,12 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Inline creature stubs â€” controllers differ from the default player2Id
                 when(gameQueryService.findPermanentController(eq(gd), eq(angel.getId()))).thenReturn(player2Id);
                 when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(angel), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-                when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(bears), anyInt())).thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(angel), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(bears), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
                 stubNoKeywordsOnSource(entry);
                 stubPlayerDamageCore(player1Id);
                 stubPlayerDamageCore(player2Id);
@@ -115,5 +127,32 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                         eq(gd), eq(player1Id), any(), eq(4));
                 verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
                         eq(gd), eq(player2Id), any(), eq(4));
+            }
+
+            @Test
+            @DisplayName("Deals damage to battles when configured")
+            void damagesBattles() {
+                Card intoTheFireCard = createCard("Into the Fire");
+                Card battleCard = createCard("Battle");
+                battleCard.setType(CardType.BATTLE);
+                Permanent battle = addPermanent(player1Id, battleCard);
+                battle.setCounterCount(CounterType.DEFENSE, 5);
+                StackEntry entry = createEntry(intoTheFireCard, player1Id, null);
+                MassDamageEffect effect = MassDamageEffect.damageToEachCreaturePlaneswalkerAndBattle(2);
+
+                stubDamagePreventable();
+                stubDamageFromSourceNotPrevented();
+                stubNoDamageMultiplier();
+                when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(false);
+                when(gameQueryService.findPermanentController(eq(gd), eq(battle.getId()))).thenReturn(player1Id);
+                when(damagePreventionService.applyCreaturePreventionShield(
+                        eq(gd), eq(battle), anyInt(), eq(false), nullable(Permanent.class)))
+                        .thenAnswer(inv -> inv.getArgument(2));
+                stubNoKeywordsOnSource(entry);
+
+                massDamageHandler.resolve(gd, entry, effect);
+
+                assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+                verify(battleDefeatSupport).checkAfterDefenseRemoved(gd, battle);
             }
 }

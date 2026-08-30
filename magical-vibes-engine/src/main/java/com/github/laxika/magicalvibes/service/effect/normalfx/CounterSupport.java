@@ -64,8 +64,21 @@ public class CounterSupport {
     }
 
     public StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource) {
+        return findCounterTarget(gameData, targetCardId, counterSource, false);
+    }
+
+    public StackEntry findCounterTargetExcludingSource(GameData gameData, UUID targetCardId,
+                                                        StackEntry counterSource) {
+        return findCounterTarget(gameData, targetCardId, counterSource, true);
+    }
+
+    private StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource,
+                                         boolean excludeSource) {
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
+            if (excludeSource && se == counterSource) {
+                continue;
+            }
             if (se.getCard().getId().equals(targetCardId)) {
                 targetEntry = se;
                 break;
@@ -106,7 +119,9 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return false;
             }
-            if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
+            if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
+                gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+            } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
                 exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
             } else {
                 graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getPhysicalCard());
@@ -123,6 +138,39 @@ public class CounterSupport {
                     GameLog.cardThen(target.getCard(), " is countered."));
         }
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+        return true;
+    }
+
+    public boolean counterSpellAndPutInHand(GameData gameData, StackEntry source, StackEntry target) {
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        boolean isAbility = target.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+
+        if (!target.isCopy() && !isAbility) {
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return false;
+            }
+            if (target.isCastWithFlashback()) {
+                exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
+            } else {
+                gameData.addCardToHand(target.getOwnerId(), target.getPhysicalCard());
+            }
+        }
+
+        notifyCounteredSpell(gameData, source.getControllerId(), target);
+
+        if (isAbility) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(target.getCard(), "'s ability is countered."));
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(target.getCard(), " is countered and returned to its owner's hand."));
+        }
+        log.info("Game {} - {} countered {} into its owner's hand", gameData.id,
+                source.getCard().getName(), target.getCard().getName());
         return true;
     }
 
@@ -287,12 +335,22 @@ public class CounterSupport {
      */
     public void resolveNotPaidRider(GameData gameData, Card sourceCard, UUID notPayingPlayerId,
                                     List<CardEffect> onNotPaidEffects) {
-        if (onNotPaidEffects == null || onNotPaidEffects.isEmpty()) {
+        resolveRider(gameData, sourceCard, notPayingPlayerId, notPayingPlayerId, onNotPaidEffects);
+    }
+
+    public void resolvePaidRider(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                 List<CardEffect> onPaidEffects) {
+        resolveRider(gameData, sourceCard, sourceControllerId, null, onPaidEffects);
+    }
+
+    private void resolveRider(GameData gameData, Card sourceCard, UUID controllerId, UUID targetId,
+                              List<CardEffect> riderEffects) {
+        if (controllerId == null || riderEffects == null || riderEffects.isEmpty()) {
             return;
         }
-        StackEntry riderEntry = new StackEntry(StackEntryType.INSTANT_SPELL, sourceCard, notPayingPlayerId,
-                sourceCard.getName(), new ArrayList<>(onNotPaidEffects), 0);
-        riderEntry.setTargetId(notPayingPlayerId);
+        StackEntry riderEntry = new StackEntry(StackEntryType.INSTANT_SPELL, sourceCard, controllerId,
+                sourceCard.getName(), new ArrayList<>(riderEffects), 0);
+        riderEntry.setTargetId(targetId);
         effectResolutionService.resolveEffects(gameData, riderEntry);
     }
 

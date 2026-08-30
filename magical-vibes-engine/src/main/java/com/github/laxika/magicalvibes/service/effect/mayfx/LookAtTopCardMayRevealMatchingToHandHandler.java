@@ -22,8 +22,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * May-ability follow-ups for {@link LookAtTopCardMayRevealMatchingToHandEffect}: matching card →
- * may reveal to hand; a declined (or non-matching) card may be put into the graveyard when the
- * effect declares that fallback, and otherwise stays on top of the library.
+ * may reveal to hand; a declined card may be put into the graveyard or on the library bottom when
+ * the effect declares that fallback, and otherwise stays on top of the library.
  */
 @Slf4j
 @Component
@@ -61,13 +61,30 @@ public class LookAtTopCardMayRevealMatchingToHandHandler implements MayEffectHan
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", topCard, " and puts it into their hand."));
                 gameData.addCardToHand(controllerId, topCard);
+                if (!effect.effectsIfCardPutIntoHand().isEmpty()
+                        && gameData.pendingEffectResolutionEntry != null) {
+                    gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                            gameData.pendingEffectResolutionIndex,
+                            effect.effectsIfCardPutIntoHand());
+                }
                 log.info("Game {} - {} reveals {} to hand", gameData.id, player.getUsername(), topCard.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
 
             // Declined hand — offer the graveyard may when the effect has that fallback.
-            if (effect.mayGraveyardOtherwise() && deck != null && !deck.isEmpty()) {
+            if (effect.otherwiseDestination()
+                    == LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.BOTTOM
+                    && deck != null && !deck.isEmpty()) {
+                Card bottomCard = deck.removeFirst();
+                deck.addLast(bottomCard);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " puts ", bottomCard, " on the bottom of their library."));
+                log.info("Game {} - {} declines hand; puts {} on the bottom of their library",
+                        gameData.id, player.getUsername(), bottomCard.getName());
+            } else if (effect.otherwiseDestination()
+                    == LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.GRAVEYARD
+                    && deck != null && !deck.isEmpty()) {
                 Card topCard = deck.getFirst();
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         ability.sourceCard(),
@@ -78,7 +95,8 @@ public class LookAtTopCardMayRevealMatchingToHandHandler implements MayEffectHan
                 ));
                 log.info("Game {} - {} declines hand; may put {} to graveyard",
                         gameData.id, player.getUsername(), topCard.getName());
-            } else {
+            } else if (effect.otherwiseDestination()
+                    == LookAtTopCardMayRevealMatchingToHandEffect.OtherwiseDestination.TOP) {
                 gameLogService.append(gameData, GameLog.text(
                         player.getUsername() + " leaves the card on top of their library."));
                 log.info("Game {} - {} declines hand; card stays on top", gameData.id, player.getUsername());

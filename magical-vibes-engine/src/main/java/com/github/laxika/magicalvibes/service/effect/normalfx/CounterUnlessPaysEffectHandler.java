@@ -32,7 +32,10 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CounterUnlessPaysEffect) effect;
-        UUID targetCardId = entry.getTargetId();
+        List<UUID> boundTargets = entry.targetsForBoundEffectGroup(effect);
+        UUID targetCardId = boundTargets == null
+                ? entry.getTargetId()
+                : boundTargets.stream().findFirst().orElse(null);
         if (targetCardId == null) return;
 
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
@@ -79,8 +82,8 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId,
                     List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(),
-                            null, e.onNotPaidEffects(), lifeCost, e.manaCost())),
-                    prompt, targetCardId
+                            null, e.onNotPaidEffects(), lifeCost, e.manaCost(), e.onPaidEffects())),
+                    prompt, targetCardId, entry.getControllerId()
             ));
         }
     }

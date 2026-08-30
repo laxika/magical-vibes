@@ -60,6 +60,8 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
             permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
+        entry.setEventValue(toExile.size());
+
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

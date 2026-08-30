@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "5")
+@CardRegistration(set = "TSB", collectorNumber = "60")
 public class Dragonstorm extends Card {
 
     public Dragonstorm() {

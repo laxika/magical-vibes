@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -21,6 +24,8 @@ public final class PendingSourceDamage {
     private int amount;
     private final Map<UUID, Integer> damageToPlayers = new LinkedHashMap<>();
     private final Set<UUID> damageToPermanentControllers = new LinkedHashSet<>();
+    private final List<DamageRecipient> damageRecipients = new java.util.ArrayList<>();
+    private final List<CardEffect> selfDealsDamageEffects;
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
         this(sourceCard, controllerId, sourcePermanentId, amount, null);
@@ -33,12 +38,28 @@ public final class PendingSourceDamage {
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
                                UUID damagedPlayerId, UUID damagedPermanentControllerId) {
+        this(sourceCard, controllerId, sourcePermanentId, amount, damagedPlayerId,
+                damagedPermanentControllerId, null);
+    }
+
+    public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
+                               UUID damagedPlayerId, UUID damagedPermanentControllerId,
+                               List<CardEffect> selfDealsDamageEffects) {
+        this(sourceCard, controllerId, sourcePermanentId, amount, damagedPlayerId,
+                damagedPermanentControllerId, null, selfDealsDamageEffects);
+    }
+
+    public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
+                               UUID damagedPlayerId, UUID damagedPermanentControllerId,
+                               UUID damagedPermanentId, List<CardEffect> selfDealsDamageEffects) {
         this.sourceCard = sourceCard;
         this.controllerId = controllerId;
         this.sourcePermanentId = sourcePermanentId;
         this.amount = amount;
+        this.selfDealsDamageEffects = selfDealsDamageEffects == null ? null : List.copyOf(selfDealsDamageEffects);
         addToPlayer(damagedPlayerId, amount);
         addToPermanentController(damagedPermanentControllerId);
+        addDamageRecipient(damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
     }
 
     public Card getSourceCard() {
@@ -65,6 +86,14 @@ public final class PendingSourceDamage {
         return Set.copyOf(damageToPermanentControllers);
     }
 
+    public List<DamageRecipient> getDamageRecipients() {
+        return List.copyOf(damageRecipients);
+    }
+
+    public List<CardEffect> getSelfDealsDamageEffects() {
+        return selfDealsDamageEffects;
+    }
+
     public void add(int extra) {
         this.amount += extra;
     }
@@ -72,12 +101,19 @@ public final class PendingSourceDamage {
     public void add(int extra, UUID damagedPlayerId) {
         this.amount += extra;
         addToPlayer(damagedPlayerId, extra);
+        addDamageRecipient(damagedPlayerId, null, null);
     }
 
     public void add(int extra, UUID damagedPlayerId, UUID damagedPermanentControllerId) {
+        add(extra, damagedPlayerId, damagedPermanentControllerId, null);
+    }
+
+    public void add(int extra, UUID damagedPlayerId, UUID damagedPermanentControllerId,
+                    UUID damagedPermanentId) {
         this.amount += extra;
         addToPlayer(damagedPlayerId, extra);
         addToPermanentController(damagedPermanentControllerId);
+        addDamageRecipient(damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
     }
 
     private void addToPlayer(UUID damagedPlayerId, int amount) {
@@ -93,9 +129,23 @@ public final class PendingSourceDamage {
     }
 
     public PendingSourceDamage copy() {
-        PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount);
+        PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount,
+                null, null, selfDealsDamageEffects);
         damageToPlayers.forEach((playerId, playerDamage) -> copy.damageToPlayers.put(playerId, playerDamage));
         copy.damageToPermanentControllers.addAll(damageToPermanentControllers);
+        copy.damageRecipients.addAll(damageRecipients);
         return copy;
+    }
+
+    private void addDamageRecipient(UUID damagedPlayerId, UUID damagedPermanentControllerId,
+                                    UUID damagedPermanentId) {
+        if (damagedPlayerId != null) {
+            damageRecipients.add(new DamageRecipient(damagedPlayerId, null));
+        } else if (damagedPermanentControllerId != null) {
+            damageRecipients.add(new DamageRecipient(damagedPermanentControllerId, damagedPermanentId));
+        }
+    }
+
+    public record DamageRecipient(UUID playerId, UUID permanentId) {
     }
 }

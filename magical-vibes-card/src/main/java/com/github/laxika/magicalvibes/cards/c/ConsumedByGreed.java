@@ -30,7 +30,7 @@ public class ConsumedByGreed extends Card {
     public ConsumedByGreed() {
         CardTypePredicate creatureCards = new CardTypePredicate(CardType.CREATURE);
 
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addEffect(EffectSlot.STATIC, new GiftEffect(1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

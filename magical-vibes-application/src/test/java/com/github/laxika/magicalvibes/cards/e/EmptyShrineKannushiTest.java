@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EmptyShrineKannushi.class, EagerFirstYear.class})
 class EmptyShrineKannushiTest extends BaseCardTest {
 
     private static Card createCreature(String name, CardColor color, String manaCost) {
@@ -100,5 +102,48 @@ class EmptyShrineKannushiTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can die simultaneously with another creature without reevaluating protection off the battlefield")
+    void canDieSimultaneouslyWithAnotherCreature() {
+        Permanent kannushi = harness.addToBattlefieldAndReturn(player1, new EmptyShrineKannushi());
+        Permanent eagerFirstYear = harness.addToBattlefieldAndReturn(player1, new EagerFirstYear());
+        kannushi.setMarkedDamage(1);
+        eagerFirstYear.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Empty-Shrine Kannushi", "Eager First-Year");
+    }
+
+    @Test
+    @DisplayName("Can die in combat while damage triggers are collected")
+    void canDieInCombatWhileDamageTriggersAreCollected() {
+        Permanent kannushi = harness.addToBattlefieldAndReturn(player1, new EmptyShrineKannushi());
+        kannushi.setSummoningSick(false);
+        kannushi.setAttacking(true);
+
+        Permanent blocker = new Permanent(createCreature("Red Bear", CardColor.RED, "{1}{R}"));
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Empty-Shrine Kannushi");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getMarkedDamage()).isEqualTo(1));
     }
 }

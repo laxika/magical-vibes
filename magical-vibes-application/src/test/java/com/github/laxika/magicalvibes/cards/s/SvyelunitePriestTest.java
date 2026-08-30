@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SvyelunitePriest.class, GrizzlyBears.class, Forest.class})
 class SvyelunitePriestTest extends BaseCardTest {
 
     @Test
@@ -27,6 +29,19 @@ class SvyelunitePriestTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
         assertThat(priest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can target an opponent's creature")
+    void grantsShroudToOpponentsCreature() {
+        addCreatureReady(player1, new SvyelunitePriest());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        prepareUpkeep();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -61,6 +76,49 @@ class SvyelunitePriestTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new SvyelunitePriest());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("The ability requires two blue mana")
+    void requiresTwoBlueMana() {
+        addCreatureReady(player1, new SvyelunitePriest());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated while the priest is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent priest = addCreatureReady(player1, new SvyelunitePriest());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        priest.tap();
+        prepareUpkeep();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

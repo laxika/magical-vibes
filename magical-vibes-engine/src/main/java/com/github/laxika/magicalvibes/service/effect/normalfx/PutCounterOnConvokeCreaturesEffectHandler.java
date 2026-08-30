@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,33 +31,22 @@ public class PutCounterOnConvokeCreaturesEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PutCounterOnConvokeCreaturesEffect e = (PutCounterOnConvokeCreaturesEffect) effect;
-        if (e.counterType() != CounterType.PLUS_ONE_PLUS_ONE) {
-            throw new IllegalStateException("Convoke counter placement only supports +1/+1 counters");
-        }
 
         List<Permanent> targets = new ArrayList<>();
         for (var permanentId : entry.getConvokeCreatureIds()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
-                int placed = gameQueryService.replaceCounters(gameData, permanent,
-                        CounterType.PLUS_ONE_PLUS_ONE, 1);
-                if (placed > 0) {
-                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                            permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                            gameData, permanent, entry.getControllerId());
-                    targets.add(permanent);
-                }
+            if (permanent != null
+                    && permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, entry, permanent, e.counterType(), 1) > 0) {
+                targets.add(permanent);
             }
         }
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " puts a +1/+1 counter on " + targets.size() + " creature(s) that convoked it."));
-        log.info("Game {} - {} puts +1/+1 counters on {} convoking creature(s)", gameData.id,
-                entry.getCard().getName(), targets.size());
+                " puts a " + permanentCounterSupport.counterTypeName(e.counterType()) + " counter on "
+                        + targets.size() + " creature(s) that convoked it."));
+        log.info("Game {} - {} puts {} counters on {} convoking creature(s)", gameData.id,
+                entry.getCard().getName(), e.counterType(), targets.size());
 
-        for (Permanent target : targets) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, target);
-        }
     }
 }

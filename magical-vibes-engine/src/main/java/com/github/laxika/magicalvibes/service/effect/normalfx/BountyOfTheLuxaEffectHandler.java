@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +58,7 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
             // No counters removed: put a flood counter on the enchantment and draw a card.
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                 source.setCounterCount(CounterType.FLOOD, source.getCounterCount(CounterType.FLOOD) + 1);
+                permanentCounterSupport.notifyCountersPlaced(gameData, entry, source, 1);
                 gameLogService.append(gameData,
                         GameLog.builder().card(source.getCard()).text(" gets a flood counter.").build());
             }
@@ -63,9 +66,9 @@ public class BountyOfTheLuxaEffectHandler implements NormalEffectHandlerBean {
         } else {
             // Counters removed: add {C}{G}{U}.
             ManaPool pool = gameData.playerManaPools.get(controllerId);
-            pool.add(ManaColor.COLORLESS, 1);
-            pool.add(ManaColor.GREEN, 1);
-            pool.add(ManaColor.BLUE, 1);
+            ManaProductionSupport.add(gameData, controllerId, pool, ManaColor.COLORLESS, 1);
+            ManaProductionSupport.add(gameData, controllerId, pool, ManaColor.GREEN, 1);
+            ManaProductionSupport.add(gameData, controllerId, pool, ManaColor.BLUE, 1);
             String playerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " adds {C}{G}{U}."));
             log.info("Game {} - {} adds C/G/U from Bounty of the Luxa", gameData.id, playerName);

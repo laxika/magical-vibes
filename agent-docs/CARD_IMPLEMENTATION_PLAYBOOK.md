@@ -85,6 +85,7 @@ public class ExampleCard extends Card {
 
 - Upkeep sacrifice-unless-discard (any card):
   - `addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null))`
+  - For a reflexive post-discard effect, use `new SacrificeUnlessDiscardCardTypeEffect(null, thenEffect)`; target filters on `thenEffect` receive the discarded card's mana value as X.
   - Pass `CardType.X` instead of `null` to restrict to a specific card type
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
@@ -123,12 +124,18 @@ public class ExampleCard extends Card {
   - TriggerMode is on the registration, not the effect — keeps effects pure and reusable
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 
+- One trigger for several permanents tapped as one event:
+  - `addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, effect, TriggerMode.ONCE_PER_BATCH)`
+  - The tap-payment path brackets multi-permanent tap events so the registration fires once
+
 - Predicate-based targeting:
   - prefer `setTargetFilter(new PermanentPredicateTargetFilter(...))` over ad-hoc `TargetFilter` permutations
   - compose with `PermanentAllOfPredicate`, `PermanentAnyOfPredicate`, and atoms like `PermanentIsCreaturePredicate`, `PermanentIsTappedPredicate`, `PermanentColorInPredicate`, `PermanentHasSubtypePredicate`, `PermanentHasSupertypePredicate`
 
 - Flashback spell (cast from graveyard for alternate cost, then exile):
   - `addCastingOption(new FlashbackCast("{cost}"))` + normal effects/targeting
+  - Variable counter costs use `new RemoveXCountersFromControlledPermanentsCastingCost(counterType, predicate)` in the `FlashbackCast` cost list; pass the selected permanent IDs through the flashback additional-cost selection field
+  - For "Exile X [quality] cards from your graveyard" in the flashback cost, compose `new ManaCastingCost("{cost}")` with `new ExileXCardsFromGraveyardCastingCost(new CardColorPredicate(COLOR), "label")`; the graveyard cast path validates and pays the selected indices against the announced X
   - Card is cast as a spell from the graveyard (counterable, triggers "whenever you cast"), then exiled whether it resolves or fizzles
   - Distinct from graveyard activated abilities (which put ABILITIES on stack, not spells)
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`
@@ -146,8 +153,11 @@ public class ExampleCard extends Card {
 
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
-  - `addCastingOption(new AlternateHandCast(List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(COLOR), "label"))))` — exile a matching card from hand rather than pay mana (Scars of the Veteran). Paid via cast-request `discardHandCardIndex` (exiled, no discard triggers)
+  - `addCastingOption(new AlternateHandCast(List.of(new ExileCardsFromHandCastingCost(new CardColorPredicate(COLOR), "label"))))` — exile a matching card from hand rather than pay mana (Scars of the Veteran). Paid via cast-request `discardHandCardIndex`; multi-card costs use `discardHandCardIndices` alongside the first index (exiled, no discard triggers)
   - `addCastingOption(new AlternateHandCast(List.of(new ExileTopCardsFromGraveyardCastingCost(new CardColorPredicate(COLOR), "label", N))))` — exile the top N matching cards of **your graveyard** rather than pay mana (Spinning Darkness, `BLACK`/3). The cards are determined, not chosen: `SpellCastingService.findTopMatchingGraveyardCards` walks the graveyard from the top (the list's tail) and takes the first N matches, skipping non-matching cards. No cast-request payload, so — like evoke/prowl/overload — it must be forced explicitly via `GameService.playCardWithAlternateCost` (harness `castWithAlternateCost(player, cardIndex, targetId)`)
+- Chosen graveyard-card alternate cost:
+  - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"), new ExileCardFromGraveyardCastingCost(new CardTypePredicate(CardType.CREATURE), "creature"))))` — pay mana and exile a chosen matching card from your graveyard rather than pay the spell's mana cost. The choice uses `exileGraveyardCardIndex` in `PlayCardRequest` (harness `castCreatureWithGraveyardExile`)
+
 - Emerge (sacrifice a creature; pay emerge mana cost reduced by its mana value):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"), new SacrificePermanentsCost(1, PermanentIsCreaturePredicate())), true))` — trailing `true` = `reduceManaBySacrificedManaValue` (generic only)
   - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`, `ExileCardsFromHandCastingCost`, `ExileTopCardsFromGraveyardCastingCost`)
@@ -196,13 +206,14 @@ public class ExampleCard extends Card {
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):
   - `addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, new EnterBattlefieldOnDiscardEffect())` — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. Filtered out from triggered ability processing in `TriggerCollectionService`. ETB triggers still fire normally.
+  - For the variant that enters with counters, use `new EnterBattlefieldOnDiscardEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)`; the counters are applied during battlefield entry only for the discard replacement.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/ObstinateBaloth.java`
 
 ## Targeting checklist
 
-- Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
+- Targeting is computed automatically from effects — and from an activated ability's `TargetFilter` — for both spells (`Card`) and activated abilities (`ActivatedAbility`).
 - Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` built from a `TargetPredicates` factory — `TargetSpec.harmful(TargetPredicates.creature())`, `benign(TargetPredicates.permanent())`, `harmful(TargetPredicates.anyTarget())`, `benign(TargetPredicates.spellOnStack())`, `benign(TargetPredicates.graveyardCard())`, etc. (`harmful` = damage/fight/destroy/exile/sacrifice; add a `PermanentPredicate` argument to narrow). This is the ONE targeting declaration; the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations" for the factory table and a worked example.
-- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute targeting from effects. `ActivatedAbility.isNeedsTarget()` and `ActivatedAbility.isNeedsSpellTarget()` are derived getters on the ability.
+- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute spell targeting from effects. `ActivatedAbility.isNeedsTarget()` also considers the ability's `TargetFilter` and `isNeedsSpellTarget()` remains effect-derived.
 - For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` to get the resolved effect list before computing targets.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.
@@ -278,6 +289,7 @@ Then do all of:
   Add the `@Component` handler in `service/effect/normalfx/`. Spring auto-discovers it via `GameEngineConfig`; card tests and MCTS simulation reuse the same graph through `GameTestEngineContext` / `HeadlessSimulationContext`.
 - For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
 - For cast-cost modifiers (cost reductions/taxes), create a `@Component` implementing `CostModificationHandlerBean` in `service/cast/costmod/`. See **COST_MODIFICATION_HANDLERS.md** for the `onSpellItself` (spell-carried) vs battlefield-permanent split, scoping via `CostModificationSource`, and registration. `CastingCostService` is the single source of truth — never re-add `instanceof` cost chains in `GameActionAvailabilityService`/`SpellCastingService`.
+- Foretell special-action modifiers use `ForetellCostReductionEffect` and its `CostModificationHandlerBean`; route both the action-cost preview/payment and any-player-turn permission through `CastingCostService`.
 - Structural targeting (category + predicate) needs NO validator — the `targetSpec()` interpreter handles it. Add a `@ValidatesTarget`-annotated method under `service/validate/` (see `EFFECTS_INDEX.md` target validator map) ONLY as an escape hatch for a non-structural rule the spec cannot express (opponent-relation, controller/owner compare, chosen-source, null-target tolerance) — and still declare the structural `targetSpec()`:
   ```java
   @ValidatesTarget(YourNewEffect.class)
@@ -536,9 +548,11 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
 | `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CreatureDiedUnderYourControlThisTurn(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new CreatureDiedUnderOpponentControlThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CardsLeftGraveyardThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new DidntActivateLoyaltyAbilityThisTurn(), wrapped)` | - | yes | yes (controller end step) | controller activated no planeswalker loyalty ability this turn (The Chain Veil) — reads `GameData.playersWhoActivatedLoyaltyAbilityThisTurn`, recorded when the loyalty cost is paid |
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
+| `ConditionalReplacementEffect(new ControlledMountAsCast(), base, upgraded)` | - | yes | - | cast-time snapshot for "if you controlled a Mount as you cast this spell"; the snapshot is retained even if the Mount leaves before resolution |
 | `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new SelfDealtDamageThisTurn(n), wrapped)` | - | yes | yes (end step) | source has dealt **n or more** damage this turn to *any* recipient — players, planeswalkers, battles, creatures; combat and noncombat alike (Chandra, Fire of Kaladesh). Reads `damageDealtThisTurnBySource`, accumulated in `DamageSupport` (noncombat) and `CombatDamageService` (combat). Damage dealt earlier in the same resolution already counts |
@@ -551,7 +565,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |
-| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (upkeep, end step) |
+| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (attack, upkeep, end step) | attack-time count gates are checked when attackers are declared and the surviving effect is unwrapped |
 | `ConditionalEffect(new NoOtherPermanent(filter), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new AttachedPermanentControllerControlsNoOther(filter), wrapped)` | yes | yes | - | same as above but relative to the controller of the permanent the source Aura/Equipment is attached to, excluding that permanent (Predator's Gambit "as long as its controller controls no other creatures"); never met while the source is unattached |
 | `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
@@ -569,6 +583,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | yes (upkeep) | counts **nontoken** cards only — a token that reaches a graveyard ceases to exist, so it can never be one of the "N or more … cards". Mortal Combat: `(20, new CardTypePredicate(CardType.CREATURE))` + `WinGameEffect()` |
 | `ConditionalEffect(new SourceCardInGraveyard(), wrapped)` | - | yes | yes (graveyard triggers) | intervening-if for abilities that trigger from a graveyard ("... if this card is in your graveyard, ..."): true while the source card object is still in its controller's graveyard. Vengeful Pharaoh |
+| `ConditionalEffect(new SourceCardSuspended(), wrapped)` | - | yes | yes (suspended-card triggers) | intervening-if for abilities that require the source card to remain exiled with a positive time-counter entry. Curse of the Cabal |
 | `ConditionalEffect(new CardsAboveSelfInGraveyard(threshold, filter), wrapped)` | - | yes | yes (graveyard upkeep) | source's controller graveyard is ordered; counts filter-matching cards positioned *above* self (higher index). Nether Shadow: `(3, new CardTypePredicate(CardType.CREATURE))` |
 | `ConditionalEffect(new CardDirectlyAboveSelfInGraveyard(filter), wrapped)` | - | yes | yes (graveyard upkeep / graveyard end step) | like the above but matches only the single card *immediately* above self in the ordered graveyard. Krovikan Horror: `new CardTypePredicate(CardType.CREATURE)` |
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
@@ -578,6 +593,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |
+| `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |

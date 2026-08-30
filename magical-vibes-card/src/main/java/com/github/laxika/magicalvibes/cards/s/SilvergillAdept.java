@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
 
 @CardRegistration(set = "LRW", collectorNumber = "86")
+@CardRegistration(set = "RIX", collectorNumber = "53")
 public class SilvergillAdept extends Card {
 
     public SilvergillAdept() {

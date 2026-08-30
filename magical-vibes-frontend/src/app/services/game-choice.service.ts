@@ -69,6 +69,7 @@ export class GameChoiceService {
     this.multiGraveyardCards = [];
     this.graveyardChoiceCardIds = [];
     this.graveyardChoiceSelectedIds.set(new Set());
+    this.graveyardChoiceMinCount = 0;
     this.graveyardChoiceMaxCount = 0;
     this.multiGraveyardPrompt = '';
     // Reveal hand
@@ -159,6 +160,7 @@ export class GameChoiceService {
   multiGraveyardCards: Card[] = [];
   graveyardChoiceCardIds: string[] = [];
   graveyardChoiceSelectedIds = signal(new Set<string>());
+  graveyardChoiceMinCount = 0;
   graveyardChoiceMaxCount = 0;
   multiGraveyardPrompt = '';
 
@@ -244,7 +246,10 @@ export class GameChoiceService {
         break;
       case 'MULTI_PERMANENT_PICK':
         this.choosingMultiplePermanents = true;
-        this.multiPermanentChoiceIds.set(new Set(msg.permanentIds ?? []));
+        this.multiPermanentChoiceIds.set(new Set([
+          ...(msg.permanentIds ?? []),
+          ...(msg.playerIds ?? [])
+        ]));
         this.multiPermanentSelectedIds.set(new Set());
         this.multiPermanentMaxCount = msg.maxCount ?? 0;
         this.multiPermanentChoicePrompt = msg.prompt;
@@ -254,6 +259,7 @@ export class GameChoiceService {
         this.multiGraveyardCards = msg.cards ?? [];
         this.graveyardChoiceCardIds = msg.cardIds ?? [];
         this.graveyardChoiceSelectedIds.set(new Set());
+        this.graveyardChoiceMinCount = msg.minCount ?? 0;
         this.graveyardChoiceMaxCount = msg.maxCount ?? 0;
         this.multiGraveyardPrompt = msg.prompt;
         break;
@@ -282,6 +288,9 @@ export class GameChoiceService {
         break;
       case 'HAND_TOP_BOTTOM':
         this.library.handleChooseHandTopBottom(msg);
+        break;
+      case 'HAND_BOTTOM_EXILE':
+        this.library.handleChooseHandBottomExile(msg);
         break;
     }
   }
@@ -470,7 +479,8 @@ export class GameChoiceService {
   }
 
   confirmGraveyardCardChoice(): void {
-    if (!this.choosingGraveyardCards) return;
+    if (!this.choosingGraveyardCards
+      || this.graveyardChoiceSelectedIds().size < this.graveyardChoiceMinCount) return;
     this.websocketService.send({
       type: MessageType.INTERACTION_ANSWER,
       shape: 'MULTI_CARD_PICK',
@@ -480,6 +490,7 @@ export class GameChoiceService {
     this.multiGraveyardCards = [];
     this.graveyardChoiceCardIds = [];
     this.graveyardChoiceSelectedIds.set(new Set());
+    this.graveyardChoiceMinCount = 0;
     this.graveyardChoiceMaxCount = 0;
     this.multiGraveyardPrompt = '';
   }

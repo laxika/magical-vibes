@@ -14,5 +14,7 @@ public enum GainLifeRecipient {
     OPPONENT,
     /** The player whose action caused the trigger ("that player"; Aven Shrine). */
     /** The player recorded as the trigger's target channel, without making the effect targeted. */
-    TRIGGERING_PLAYER
+    TRIGGERING_PLAYER,
+    /** Every player in the game. */
+    EACH_PLAYER
 }

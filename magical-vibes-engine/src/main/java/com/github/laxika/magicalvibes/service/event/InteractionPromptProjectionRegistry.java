@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -52,19 +53,36 @@ public class InteractionPromptProjectionRegistry {
 
         register(PendingInteraction.XValueChoice.class, this::projectXValueChoice);
         register(PendingInteraction.AlternateCastXValueChoice.class, this::projectAlternateCastXValueChoice);
+        register(PendingInteraction.TurnFaceUpXValueChoice.class, this::projectTurnFaceUpXValueChoice);
         register(PendingInteraction.Scry.class, this::projectScry);
         register(PendingInteraction.HandTopBottomChoice.class, this::projectHandTopBottomChoice);
+        register(PendingInteraction.HandBottomExileChoice.class, this::projectHandBottomExileChoice);
         register(PendingInteraction.LibraryReorder.class, this::projectLibraryReorder);
         register(PendingInteraction.MayAbilityChoice.class, this::projectMayAbilityChoice);
         register(PendingInteraction.KnowledgePoolCastChoice.class, this::projectKnowledgePoolCastChoice);
         register(PendingInteraction.ImprovisationCapstoneCastChoice.class,
                 this::projectImprovisationCapstoneCastChoice);
+        register(PendingInteraction.PlarggAndNassariOpponentChoice.class,
+                this::projectPlarggAndNassariOpponentChoice);
+        register(PendingInteraction.PlarggAndNassariCardChoice.class,
+                this::projectPlarggAndNassariCardChoice);
+        register(PendingInteraction.EyeOfTheStormCastChoice.class,
+                this::projectEyeOfTheStormCastChoice);
         register(PendingInteraction.ExiledSpellCopyChoice.class, this::projectExiledSpellCopyChoice);
+        register(PendingInteraction.AssimilationAegisCopyChoice.class,
+                this::projectAssimilationAegisCopyChoice);
+        register(PendingInteraction.ExiledCreatureCopyChoice.class,
+                this::projectExiledCreatureCopyChoice);
         register(PendingInteraction.TargetHandSpellCopyChoice.class,
                 this::projectTargetHandSpellCopyChoice);
         register(PendingInteraction.ExiledCardMayPlayChoice.class, this::projectExiledCardMayPlayChoice);
+        register(PendingInteraction.LudevicCopyChoice.class, this::projectLudevicCopyChoice);
+        register(PendingInteraction.KohExiledCreatureChoice.class,
+                this::projectKohExiledCreatureChoice);
         register(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class,
                 this::projectExileInstantOrSorcerySpellCostChoice);
+        register(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class,
+                this::projectPutCardExiledWithSourceIntoGraveyardCostChoice);
         register(PendingInteraction.BrilliantUltimatumPileSeparationChoice.class,
                 this::projectBrilliantUltimatumPileSeparationChoice);
         register(PendingInteraction.BrilliantUltimatumPileChoice.class,
@@ -90,6 +108,15 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
+        register(PendingInteraction.EcologicalAppreciationSearchChoice.class,
+                this::projectEcologicalAppreciationSearchChoice);
+        register(PendingInteraction.EcologicalAppreciationOpponentChoice.class,
+                this::projectEcologicalAppreciationOpponentChoice);
+        register(PendingInteraction.VerdantMasterySearchChoice.class,
+                this::projectVerdantMasterySearchChoice);
+        register(PendingInteraction.VerdantMasteryLandChoice.class,
+                this::projectVerdantMasteryLandChoice);
+        register(PendingInteraction.GuidedPassageChoice.class, this::projectGuidedPassageChoice);
         register(PendingInteraction.PermanentAuctionChoice.class, this::projectPermanentAuctionChoice);
         register(PendingInteraction.IllicitAuctionBidChoice.class, this::projectIllicitAuctionBidChoice);
         register(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
@@ -99,15 +126,22 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiZoneExileChoice.class, this::projectMultiZoneExileChoice);
         register(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class,
                 this::projectPutUpToCardsFromHandOntoBattlefieldChoice);
-        register(PendingInteraction.PutCardFromHandOrGraveyardOntoBattlefieldChoice.class,
-                this::projectPutCardFromHandOrGraveyardOntoBattlefieldChoice);
+        register(PendingInteraction.PutCardFromHandOrGraveyardChoice.class,
+                this::projectPutCardFromHandOrGraveyardChoice);
         register(PendingInteraction.ExilePermanentsOrHandCardsChoice.class,
                 this::projectExilePermanentsOrHandCardsChoice);
+        register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
+        register(PendingInteraction.ReturnAurasFromGraveyardChoice.class,
+                this::projectReturnAurasFromGraveyardChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
+        register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
+        register(PendingInteraction.TargetedHandBattlefieldChoice.class,
+                this::projectTargetedHandBattlefieldChoice);
+        register(PendingInteraction.SpectersShriekChoice.class, this::projectSpectersShriekChoice);
         register(PendingInteraction.RevealCardsDiscardChoice.class,
                 this::projectRevealCardsDiscardChoice);
         register(PendingInteraction.AlternatingHandExileChoice.class,
@@ -117,8 +151,13 @@ public class InteractionPromptProjectionRegistry {
                 this::projectGraveyardExileCostChoice);
         register(PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 this::projectActivatedAbilityGraveyardExileCostChoice);
+        register(PendingInteraction.CraftMaterialChoice.class, this::projectCraftMaterialChoice);
+        register(PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice.class,
+                this::projectActivatedAbilityGraveyardLibraryCostChoice);
         register(PendingInteraction.HandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.RetracedImageCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.MasterOfPredicamentsCardChoice.class,
@@ -130,7 +169,11 @@ public class InteractionPromptProjectionRegistry {
                         ((PendingInteraction.DiscardChoice) interaction).declinable()));
         register(PendingInteraction.ExileFromHandChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ImprintFromHandChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.DiscardCostChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
@@ -145,9 +188,12 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SylvanLibraryChoice.class, this::projectSylvanLibraryChoice);
         register(PendingInteraction.LibraryRevealChoice.class, this::projectLibraryRevealChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
+        register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
+        register(PendingInteraction.FaceUpExiledCardChoice.class,
+                this::projectFaceUpExiledCardChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
@@ -194,6 +240,12 @@ public class InteractionPromptProjectionRegistry {
                 interaction.prompt(), 0, interaction.maxValue(), interaction.cardName(), true);
     }
 
+    private InteractionPromptMessage projectTurnFaceUpXValueChoice(
+            GameData gameData, PendingInteraction.TurnFaceUpXValueChoice interaction) {
+        return InteractionPromptMessage.numberPick(
+                interaction.prompt(), 0, interaction.maxValue(), interaction.cardName(), true);
+    }
+
     private InteractionPromptMessage projectScry(
             GameData gameData, PendingInteraction.Scry interaction) {
         int count = interaction.cards().size();
@@ -226,6 +278,15 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 "Look at the top " + interaction.cards().size()
                         + " cards of your library. Choose one to put into your hand.");
+    }
+
+    private InteractionPromptMessage projectHandBottomExileChoice(
+            GameData gameData, PendingInteraction.HandBottomExileChoice interaction) {
+        return InteractionPromptMessage.handBottomExile(
+                cardViews(interaction.cards()),
+                "Look at the top " + interaction.cards().size()
+                        + " cards of your library. Choose one to put into your hand and one to put"
+                        + " on the bottom of your library. Exile the rest.");
     }
 
     private InteractionPromptMessage projectLibraryReorder(
@@ -270,10 +331,31 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 interaction.maxCount(),
-                interaction.maxCount() == 1
-                        ? "You may cast a spell from among the exiled cards without paying its mana cost."
-                        : "You may cast any number of spells from among the exiled cards without paying "
-                                + "their mana costs.");
+                interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectPlarggAndNassariOpponentChoice(
+            GameData gameData, PendingInteraction.PlarggAndNassariOpponentChoice interaction) {
+        return InteractionPromptMessage.multiPermanentPick(
+                List.of(), new ArrayList<>(interaction.opponentIds()), 1,
+                "Choose an opponent to choose a nonland card exiled with Plargg and Nassari.");
+    }
+
+    private InteractionPromptMessage projectPlarggAndNassariCardChoice(
+            GameData gameData, PendingInteraction.PlarggAndNassariCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()), 1,
+                "Choose a nonland card exiled with Plargg and Nassari.");
+    }
+
+    private InteractionPromptMessage projectEyeOfTheStormCastChoice(
+            GameData gameData, PendingInteraction.EyeOfTheStormCastChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCopyIds()),
+                exiledCardViews(gameData, interaction.validCopyIds()),
+                interaction.validCopyIds().size(),
+                "Choose any number of Eye of the Storm copies to cast without paying their mana costs.");
     }
 
     private InteractionPromptMessage projectExiledSpellCopyChoice(
@@ -282,8 +364,17 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
-                "Choose an instant or sorcery card exiled this way to copy "
+                "Choose " + interaction.choiceDescription() + " exiled this way to copy "
                         + interaction.copies() + " times.");
+    }
+
+    private InteractionPromptMessage projectExiledCreatureCopyChoice(
+            GameData gameData, PendingInteraction.ExiledCreatureCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a creature card exiled with Lazav to copy until end of turn.");
     }
 
     private InteractionPromptMessage projectTargetHandSpellCopyChoice(
@@ -304,6 +395,24 @@ public class InteractionPromptProjectionRegistry {
                 "Choose a card exiled this way to play until the end of your next turn.");
     }
 
+    private InteractionPromptMessage projectLudevicCopyChoice(
+            GameData gameData, PendingInteraction.LudevicCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose a creature card exiled with Ludevic to copy.");
+    }
+
+    private InteractionPromptMessage projectKohExiledCreatureChoice(
+            GameData gameData, PendingInteraction.KohExiledCreatureChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a creature card exiled with Koh to copy.");
+    }
+
     private InteractionPromptMessage projectExileInstantOrSorcerySpellCostChoice(
             GameData gameData, PendingInteraction.ExileInstantOrSorcerySpellCostChoice interaction) {
         List<CardView> cards = gameData.stack.stream()
@@ -314,6 +423,16 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cards, 1,
                 "Choose an instant or sorcery spell you control to exile as an activation cost.");
+    }
+
+    private InteractionPromptMessage projectPutCardExiledWithSourceIntoGraveyardCostChoice(
+            GameData gameData,
+            PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a card exiled with this permanent to put into its owner's graveyard as an activation cost.");
     }
 
     private InteractionPromptMessage projectBrilliantUltimatumPileSeparationChoice(
@@ -445,8 +564,13 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews,
-                interaction.validCardIds().size(),
-                "Choose any number of cards to reveal from your hand for "
+                interaction.activatedAbilityContext() == null
+                        ? interaction.validCardIds().size()
+                        : interaction.activatedAbilityContext().xValue(),
+                interaction.activatedAbilityContext() == null
+                        ? "Choose any number of cards to reveal from your hand for "
+                        : "Choose " + interaction.activatedAbilityContext().xValue()
+                                + " cards to reveal from your hand for "
                         + interaction.cardName() + ".");
     }
 
@@ -462,12 +586,13 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectSearchLibraryAndOrGraveyardChoice(
             GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
+        boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
                 1,
-                "Choose a " + interaction.cardLabel()
-                        + " from your library or graveyard to reveal and put into your hand.");
+                "Choose a " + interaction.cardLabel() + " from your library or graveyard to reveal and put it "
+                        + (toBattlefield ? "onto the battlefield." : "into your hand."));
     }
 
     private InteractionPromptMessage projectSearchLibraryToTopChoice(
@@ -475,9 +600,13 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews(interaction.pool()),
-                interaction.pool().size(),
-                "Choose any number of " + interaction.cardLabel()
-                        + " cards to reveal and put on top of your library.");
+                interaction.maximumSelectionCount(),
+                interaction.requiredCount() < 0
+                        ? "Choose " + (interaction.maximumSelectionCount() < interaction.pool().size()
+                                ? "up to " + interaction.maximumSelectionCount()
+                                : "any number of") + " " + interaction.cardLabel()
+                                + " cards to reveal and put on top of your library."
+                        : "Choose " + interaction.minimumSelectionCount() + " cards to put on top of your library.");
     }
 
     private InteractionPromptMessage projectIntuitionSearchChoice(
@@ -489,6 +618,59 @@ public class InteractionPromptProjectionRegistry {
                 "Search your library for " + interaction.count()
                         + " cards to reveal. Your opponent chooses one of them for your hand; "
                         + "the rest go into your graveyard.");
+    }
+
+    private InteractionPromptMessage projectEcologicalAppreciationSearchChoice(
+            GameData gameData, PendingInteraction.EcologicalAppreciationSearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                Math.min(4, interaction.pool().size()),
+                "Choose up to four creature cards with different names and mana value "
+                        + interaction.maxManaValue() + " or less to reveal.");
+    }
+
+    private InteractionPromptMessage projectEcologicalAppreciationOpponentChoice(
+            GameData gameData, PendingInteraction.EcologicalAppreciationOpponentChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                2,
+                "Choose two cards to shuffle into the library. Put the rest onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectVerdantMasterySearchChoice(
+            GameData gameData, PendingInteraction.VerdantMasterySearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                Math.min(4, interaction.pool().size()),
+                "Choose up to four basic land cards to reveal for Verdant Mastery.");
+    }
+
+    private InteractionPromptMessage projectVerdantMasteryLandChoice(
+            GameData gameData, PendingInteraction.VerdantMasteryLandChoice interaction) {
+        if (interaction.chooseForOpponent()) {
+            return InteractionPromptMessage.multiCardPick(
+                    new ArrayList<>(interaction.validCardIds()),
+                    cardViews(interaction.cards()),
+                    1,
+                    "Choose one basic land card to put onto the battlefield tapped under an opponent's control.");
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                2,
+                "Choose two basic land cards to put onto the battlefield tapped under your control.");
+    }
+
+    private InteractionPromptMessage projectGuidedPassageChoice(
+            GameData gameData, PendingInteraction.GuidedPassageChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                3,
+                "Choose a creature card, a land card, and a noncreature, nonland card for Guided Passage.");
     }
 
     private InteractionPromptMessage projectPermanentAuctionChoice(
@@ -578,10 +760,35 @@ public class InteractionPromptProjectionRegistry {
                 .filter(card -> interaction.validCardIds().contains(card.getId()))
                 .map(cardViewFactory::create)
                 .toList();
+        if (interaction.includeGraveyard()) {
+            cardViews = new ArrayList<>(cardViews);
+            addMatchingCardViews(cardViews,
+                    gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
+                    interaction.validCardIds());
+        }
+        String zoneDescription = interaction.includeGraveyard()
+                ? "from your hand and/or graveyard" : "from your hand";
+        String tappedDescription = interaction.enterTapped() ? " tapped" : "";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose up to " + interaction.maxCount()
-                        + " permanent cards from your hand to put onto the battlefield.");
+                        + " permanent cards " + zoneDescription + " to put onto the battlefield"
+                        + tappedDescription + ".");
+    }
+
+    private InteractionPromptMessage projectPutCardFromHandOrGraveyardChoice(
+            GameData gameData, PendingInteraction.PutCardFromHandOrGraveyardChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerGraveyards.getOrDefault(interaction.playerId(), List.of()),
+                interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "Choose up to one " + interaction.label()
+                        + " card from your hand or graveyard to put onto the battlefield.");
     }
 
     private InteractionPromptMessage projectExileNonlandCardFromTargetHandOrGraveyardChoice(
@@ -595,19 +802,6 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "Choose a nonland card from that player's hand or graveyard to exile.");
-    }
-
-    private InteractionPromptMessage projectPutCardFromHandOrGraveyardOntoBattlefieldChoice(
-            GameData gameData, PendingInteraction.PutCardFromHandOrGraveyardOntoBattlefieldChoice interaction) {
-        UUID playerId = interaction.playerId();
-        List<CardView> cardViews = new ArrayList<>();
-        addMatchingCardViews(cardViews,
-                gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
-        addMatchingCardViews(cardViews,
-                gameData.playerGraveyards.getOrDefault(playerId, List.of()), interaction.validCardIds());
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
-                "Choose a " + interaction.label() + " card from your hand or graveyard to put onto the battlefield.");
     }
 
     private InteractionPromptMessage projectExilePermanentsOrHandCardsChoice(
@@ -631,6 +825,19 @@ public class InteractionPromptProjectionRegistry {
                         + (required == 1 ? "" : "s") + " you control and/or cards from your hand.");
     }
 
+    private InteractionPromptMessage projectBeholdChoice(
+            GameData gameData, PendingInteraction.BeholdChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .map(Permanent::getCard).toList(), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
+    }
+
     private InteractionPromptMessage projectAttachAurasChoice(
             GameData gameData, PendingInteraction.AttachAurasChoice interaction) {
         UUID playerId = interaction.playerId();
@@ -651,10 +858,18 @@ public class InteractionPromptProjectionRegistry {
                         : "Choose any number of Auras to attach to " + interaction.sourceName() + ".");
     }
 
+    private InteractionPromptMessage projectReturnAurasFromGraveyardChoice(
+            GameData gameData, PendingInteraction.ReturnAurasFromGraveyardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.validCardIds().size(),
+                "Choose any number of Auras to return attached to creatures you control.");
+    }
+
     private InteractionPromptMessage projectMultiPermanentChoice(
             GameData gameData, PendingInteraction.MultiPermanentChoice interaction) {
         return InteractionPromptMessage.multiPermanentPick(
-                new ArrayList<>(interaction.validIds()), interaction.maxCount(), interaction.prompt());
+                new ArrayList<>(interaction.validIds()), new ArrayList<>(interaction.validPlayerIds()),
+                interaction.maxCount(), interaction.prompt());
     }
 
     private InteractionPromptMessage projectMultiGraveyardChoice(
@@ -664,6 +879,16 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 interaction.maxCount(),
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectExiledCardChoice(
+            GameData gameData, PendingInteraction.ExiledCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose an exiled card named \"" + interaction.cardName()
+                        + "\" to return to the battlefield.");
     }
 
     private InteractionPromptMessage projectColorChoice(
@@ -684,6 +909,22 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(),
                 interaction.prompt(),
                 interaction.optional());
+    }
+
+    private InteractionPromptMessage projectTargetedHandBattlefieldChoice(
+            GameData gameData, PendingInteraction.TargetedHandBattlefieldChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), interaction.prompt(), true);
+    }
+
+    private InteractionPromptMessage projectSpectersShriekChoice(
+            GameData gameData, PendingInteraction.SpectersShriekChoice interaction) {
+        List<CardView> cardViews =
+                cardViews(gameData.playerHands.getOrDefault(interaction.targetPlayerId(), List.of()));
+        return InteractionPromptMessage.cardIndexPick(
+                cardViews, interaction.validIndices(), interaction.prompt(), true);
     }
 
     private InteractionPromptMessage projectAlternatingHandExileChoice(
@@ -737,6 +978,20 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectActivatedAbilityGraveyardExileCostChoice(
             GameData gameData, PendingInteraction.ActivatedAbilityGraveyardExileCostChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.minimumCards(),
+                interaction.maximumCards(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectCraftMaterialChoice(
+            GameData gameData, PendingInteraction.CraftMaterialChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cardViews(interaction.cards()), interaction.minimumCards(),
+                interaction.maximumCards(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectActivatedAbilityGraveyardLibraryCostChoice(
+            GameData gameData, PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.cards()), interaction.cards().size(), interaction.prompt());
     }
@@ -853,6 +1108,19 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
+    private InteractionPromptMessage projectNivMizzetColorPairChoice(
+            GameData gameData, PendingInteraction.NivMizzetColorPairChoice interaction) {
+        Map<UUID, Card> cardsById = interaction.revealedCards().stream()
+                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
+        List<CardView> cardViews = interaction.validCardIds().stream()
+                .map(cardsById::get)
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews,
+                interaction.requiredPairCount(), interaction.prompt());
+    }
+
     private InteractionPromptMessage projectLibrarySearch(
             GameData gameData, PendingInteraction.LibrarySearch interaction) {
         return InteractionPromptMessage.libraryIndexPick(
@@ -879,6 +1147,31 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may reveal a " + interaction.cardLabel()
                         + " from outside the game or choose one in face-up exile.");
+    }
+
+    private InteractionPromptMessage projectAssimilationAegisCopyChoice(
+            GameData gameData, PendingInteraction.AssimilationAegisCopyChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                "Choose a creature card exiled with Assimilation Aegis to copy.");
+    }
+
+    private InteractionPromptMessage projectFaceUpExiledCardChoice(
+            GameData gameData, PendingInteraction.FaceUpExiledCardChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        synchronized (gameData.exiledCards) {
+            gameData.exiledCards.stream()
+                    .filter(entry -> interaction.ownerId().equals(entry.ownerId()) && !entry.faceDown())
+                    .filter(entry -> interaction.validCardIds().contains(entry.card().getId()))
+                    .map(ExiledCardEntry::card)
+                    .map(cardViewFactory::create)
+                    .forEach(cardViews::add);
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
+                "You may put a face-up exiled card they own into their graveyard.");
     }
 
     private InteractionPromptMessage projectPermanentChoice(
@@ -946,7 +1239,8 @@ public class InteractionPromptProjectionRegistry {
                 interaction.mustAttackIndices(),
                 targets,
                 interaction.taxPerCreature(),
-                interaction.mustAttackWithAtLeastOne());
+                interaction.mustAttackWithAtLeastOne(),
+                interaction.choosingForOpponent());
     }
 
     private AvailableBlockersMessage projectBlockerDeclaration(
@@ -1064,10 +1358,13 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
+                || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
                 || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
                 || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
+                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
+                || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
                 || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice;
     }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+
 /**
  * Destroys each permanent targeted by the spell/ability (all of {@code entry.getTargetIds()}).
  * Bound to a single multi-target group, so it destroys every chosen target — used by
@@ -13,11 +15,21 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link DealDamageToEachDestroyedPermanentControllerEffect} (Builder's Bane).
  *
  * @param cannotBeRegenerated whether the destroyed permanents cannot be regenerated
+ * @param filter optional resolution-time filter; nonmatching targets are left untouched
  */
-public record DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated) implements CardEffect {
+public record DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated,
+                                               PermanentPredicate filter) implements CardEffect {
 
     public DestroyEachTargetPermanentEffect() {
-        this(false);
+        this(false, null);
+    }
+
+    public DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated) {
+        this(cannotBeRegenerated, null);
+    }
+
+    public DestroyEachTargetPermanentEffect(PermanentPredicate filter) {
+        this(false, filter);
     }
 
     @Override

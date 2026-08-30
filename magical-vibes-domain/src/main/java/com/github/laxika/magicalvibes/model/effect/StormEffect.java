@@ -8,22 +8,25 @@ import java.util.UUID;
 
 /**
  * Trigger descriptor for {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_SELF_CAST}
- * implementing the Storm keyword (CR 702.40): "When you cast this spell, copy it for each spell cast
- * before it this turn. You may choose new targets for the copies."
+ * implementing the Storm keyword: "When you cast this spell, copy it for each spell cast before it
+ * this turn. You may choose new targets for the copies."
  *
  * <p>At cast time {@code TriggerCollectionService.checkSpellCastTriggers} snapshots the just-cast
- * spell, counts the spells cast before it this turn (all players), and queues a triggered ability
- * wrapping a {@link StormCopyEffect} that creates that many copies at resolution.
+ * spell, counts the spells cast before it this turn, and queues a triggered ability wrapping a
+ * {@link StormCopyEffect} that creates that many copies at resolution.</p>
+ *
+ * @param tokenCopy whether the copies enter the battlefield as tokens when they resolve
+ * @param instantOrSorceryOnly whether to count only instant and sorcery spells cast by the
+ *                             spell's controller, as used by Show of Confidence
  */
-public record StormEffect(boolean instantOrSorceryOnly) implements SpellCastCopyTrigger {
+public record StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly) implements SpellCastCopyTrigger {
 
     public StormEffect() {
-        this(false);
+        this(false, false);
     }
 
-    /** Storm granted to instant and sorcery spells by Ral, Crackling Wit's emblem. */
     public static StormEffect forInstantOrSorcery() {
-        return new StormEffect(true);
+        return new StormEffect(false, true);
     }
 
     @Override
@@ -35,6 +38,6 @@ public record StormEffect(boolean instantOrSorceryOnly) implements SpellCastCopy
 
     @Override
     public CardEffect createCopyEffect(StackEntry spellSnapshot, UUID castingPlayerId, int copies) {
-        return new StormCopyEffect(spellSnapshot, castingPlayerId, copies);
+        return new StormCopyEffect(spellSnapshot, castingPlayerId, copies, tokenCopy);
     }
 }

@@ -57,7 +57,8 @@ class PlayCardRequestDispatchServiceTest {
         verify(gameService).playCard(eq(gameData), eq(player), eq(3), isNull(), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
-                eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull());
+                eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull(), isNull(),
+                eq(false), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -84,7 +85,7 @@ class PlayCardRequestDispatchServiceTest {
                 8, List.of(9, 10), List.of(imposedSacrifice), List.of(multiSacrifice),
                 List.of("{1}{G}"), true, null,
                 beholdPermanent, 11, List.of(multiBeholdPermanent), List.of(12, 13),
-                null, "ELF", false, "GOBLIN");
+                null, "ELF", false, "GOBLIN", null, true, true, false, null);
 
         dispatchService.dispatch(gameData, player, request);
 
@@ -94,7 +95,7 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of(9, 10)), eq(List.of(imposedSacrifice)), eq(List.of(multiSacrifice)),
                 eq(List.of("{1}{G}")), eq(true), eq(beholdPermanent), eq(11),
                 eq(List.of(multiBeholdPermanent)), eq(List.of(12, 13)), eq(CardSubtype.ELF),
-                eq(CardSubtype.GOBLIN));
+                eq(CardSubtype.GOBLIN), eq(true), eq(true));
         verifyNoMoreInteractions(gameService);
     }
 
@@ -110,7 +111,24 @@ class PlayCardRequestDispatchServiceTest {
         verify(gameService).playCard(eq(gameData), eq(player), eq(0), isNull(), isNull(), isNull(),
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
-                eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull());
+                eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull(), isNull(),
+                eq(false), isNull());
+        verifyNoMoreInteractions(gameService);
+    }
+
+    @Test
+    @DisplayName("Explicit alternate cost routes to playCardWithAlternateCost")
+    void alternateCostRoutes() {
+        PlayCardRequest request = new PlayCardRequest(
+                2, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, true);
+
+        dispatchService.dispatch(gameData, player, request);
+
+        verify(gameService).playCardWithAlternateCost(
+                eq(gameData), eq(player), eq(2), isNull(), isNull(), isNull(), eq(List.of()));
         verifyNoMoreInteractions(gameService);
     }
 
@@ -128,7 +146,8 @@ class PlayCardRequestDispatchServiceTest {
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playFlashbackSpell(eq(gameData), eq(player), eq(2), eq(1), eq(targetId),
-                eq(List.of()), eq(List.of(4)), eq(CardType.CREATURE), eq(List.of(tapPayment)), eq(3), isNull(), isNull());
+                eq(List.of()), eq(List.of(4)), eq(CardType.CREATURE), eq(List.of(tapPayment)), eq(3), isNull(),
+                eq(List.of()), isNull(), eq(List.of()), eq(List.of()), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -148,13 +167,20 @@ class PlayCardRequestDispatchServiceTest {
     @DisplayName("Cast from exile routes to playCardFromExile")
     void fromExileRoutes() {
         UUID exileCardId = UUID.randomUUID();
-        PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
-                null, null, exileCardId, null, null, null, null, null, null, null, null, null, null, null);
+        UUID convokeCreatureId = UUID.randomUUID();
+        PlayCardRequest request = new PlayCardRequest(
+                0, null, null, null,
+                null, List.of(convokeCreatureId), null, null,
+                null, exileCardId, null, null,
+                null, null, null, null,
+                null, null, null, null,
+                null);
 
         dispatchService.dispatch(gameData, player, request);
 
         verify(gameService).playCardFromExile(
-                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()));
+                eq(gameData), eq(player), eq(exileCardId), isNull(), isNull(), eq(List.of()),
+                eq(List.of(convokeCreatureId)));
         verifyNoMoreInteractions(gameService);
     }
 }

@@ -4,15 +4,16 @@ import java.util.UUID;
 
 /**
  * A one-shot damage prevention shield: the next time the chosen source would deal damage to the
- * given player this turn, that entire damage event is prevented and the shield is consumed
- * (Circle of Protection cycle). Distinct from the whole-turn {@code playerSourceDamagePreventionIds}
+ * given player this turn, the event is prevented and the shield is consumed (Circle of Protection
+ * cycle). A half-damage shield leaves half the event, rounded down (Dark Sphere). Distinct from the
+ * whole-turn {@code playerSourceDamagePreventionIds}
  * shield, which keeps preventing every subsequent event from the source.
  *
  * <p>When {@code gainLife} is true, the protected player also gains life equal to the damage
  * prevented this way (Reverse Damage).
  *
  * @param playerId the protected player
- * @param sourceId the chosen source permanent
+ * @param sourceId the chosen source permanent or spell card
  * @param gainLife whether the protected player gains life equal to the prevented damage
  * @param coversControlledCreatures also shield creatures the protected player controls, so the
  *                 shield is consumed by the chosen source's next damage to the player <em>or</em>
@@ -23,24 +24,40 @@ import java.util.UUID;
  *                 once the shield prevents damage (Bone Mask)
  * @param damageSourceControllerCard card that deals prevented damage to the chosen source's controller
  *                 (Deflecting Palm)
+ * @param preventHalfDamage whether to prevent only half the damage, rounded down (Dark Sphere)
+ * @param drawCards                 the protected player draws cards equal to the prevented damage
+ *                 (New Way Forward)
+ * @param sourceControllerId        fallback controller for a chosen spell source, which is not a battlefield permanent
  */
 public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                            boolean coversControlledCreatures,
                                            boolean gainLifeOnlyFromBlackSource,
                                            boolean exileFromLibrary,
-                                           Card damageSourceControllerCard) {
+                                           Card damageSourceControllerCard,
+                                           boolean preventHalfDamage,
+                                           boolean drawCards,
+                                           UUID sourceControllerId) {
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures,
                                         boolean gainLifeOnlyFromBlackSource,
                                         boolean exileFromLibrary) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, null);
+                exileFromLibrary, null, false, false, null);
+    }
+
+    public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
+                                        boolean coversControlledCreatures,
+                                        boolean gainLifeOnlyFromBlackSource,
+                                        boolean exileFromLibrary,
+                                        Card damageSourceControllerCard) {
+        this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
+                exileFromLibrary, damageSourceControllerCard, false, false, null);
     }
 
     /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
-        this(playerId, sourceId, gainLife, false, false, false, null);
+        this(playerId, sourceId, gainLife, false, false, false, null, false, false, null);
     }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */

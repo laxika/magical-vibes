@@ -24,7 +24,7 @@ import java.util.List;
 public class ValleyRally extends Card {
 
     public ValleyRally() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addEffect(EffectSlot.STATIC, new GiftEffect(0));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(foodToken())));
         addEffect(EffectSlot.SPELL, new BoostAllOwnCreaturesEffect(2, 0));

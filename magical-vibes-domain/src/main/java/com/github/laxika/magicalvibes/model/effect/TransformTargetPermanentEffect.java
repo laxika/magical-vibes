@@ -7,4 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * face) are a no-op; transform-prevention is respected.
  */
 public record TransformTargetPermanentEffect() implements CardEffect {
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.permanent());
+    }
 }

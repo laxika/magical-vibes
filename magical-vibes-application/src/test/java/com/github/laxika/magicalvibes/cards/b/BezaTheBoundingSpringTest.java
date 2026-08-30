@@ -33,6 +33,7 @@ class BezaTheBoundingSpringTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
         harness.addToBattlefield(player2, new Forest());
         harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Treasure");

@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -20,7 +22,15 @@ public class CopyNextInstantOrSorceryCastThisTurnEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
+        CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
+                (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
+        if (copyEffect.maxManaValue() == null) {
+            gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
+        } else {
+            gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues
+                    .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
+                    .add(copyEffect.maxManaValue());
+        }
         log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
                 gameData.id, entry.getControllerId());
     }

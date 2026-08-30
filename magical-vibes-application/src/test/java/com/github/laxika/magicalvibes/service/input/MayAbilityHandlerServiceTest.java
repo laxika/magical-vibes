@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -107,7 +108,8 @@ class MayAbilityHandlerServiceTest {
                 mock(InteractionHandlerRegistry.class),
                 validTargetService,
                 targetPredicateEvaluationService,
-                mayEffectHandlerRegistry);
+                mayEffectHandlerRegistry,
+                mock(TriggerCollectionService.class));
 
         player1 = new Player(PLAYER1_ID, "Alice");
 
@@ -193,6 +195,29 @@ class MayAbilityHandlerServiceTest {
 
         verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
         verify(mayEffectHandlerRegistry, org.mockito.Mockito.never()).getHandler(any());
+    }
+
+    @Test
+    @DisplayName("An accepted spell-cast may ability preserves the triggering card ID")
+    void acceptedSpellCastMayAbilityPreservesTriggeringCardId() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        sourceCard.setType(CardType.ENCHANTMENT);
+        UUID sourcePermanentId = UUID.randomUUID();
+        UUID triggeringCardId = UUID.randomUUID();
+        CardEffect effect = new CardEffect() { };
+
+        gd.pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
+                sourceCard, PLAYER1_ID, List.of(effect), "Test Source — effect?", null,
+                sourcePermanentId, triggeringCardId));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Test Source — effect?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .extracting(StackEntry::getTriggeringCardId)
+                .isEqualTo(triggeringCardId);
     }
 
     private void acceptMayAbility(CardEffect effect) {

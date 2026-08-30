@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Optional;
@@ -113,5 +114,13 @@ public record TargetSpec(
      */
     public Optional<GraveyardSearchScope> graveyardScope() {
         return declaredTarget == null ? Optional.empty() : declaredTarget.graveyardScope();
+    }
+
+    /**
+     * The card predicate applied within a graveyard-card target, or empty when this spec does not
+     * target a graveyard card.
+     */
+    public Optional<CardPredicate> graveyardCardPredicate() {
+        return declaredTarget == null ? Optional.empty() : declaredTarget.graveyardCardPredicate();
     }
 }

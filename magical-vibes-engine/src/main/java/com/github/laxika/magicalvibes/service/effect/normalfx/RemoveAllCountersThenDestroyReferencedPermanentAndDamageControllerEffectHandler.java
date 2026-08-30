@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,6 +55,9 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
         if (referenced != null) {
             int removed = referenced.getCounterCount(e.counterType());
             referenced.setCounterCount(e.counterType(), 0);
+            if (e.counterType() == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(referenced, removed);
+            }
             if (removed > 0) {
                 String counterName = permanentCounterSupport.counterTypeName(e.counterType());
                 gameLogService.append(gameData, GameLog.builder().card(damageSourceCard)
@@ -91,10 +95,25 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
                         ? null
                         : findPermanent(gameData, source.getAttachedTo());
             }
+            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
         };
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {
         return permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        if (cardId == null) {
+            return null;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(java.util.Collection::stream)
+                .filter(permanent -> cardId.equals(permanent.getCard().getId())
+                        || (permanent.getOriginalCard() != null
+                        && cardId.equals(permanent.getOriginalCard().getId())))
+                .findFirst()
+                .orElse(null);
     }
 }

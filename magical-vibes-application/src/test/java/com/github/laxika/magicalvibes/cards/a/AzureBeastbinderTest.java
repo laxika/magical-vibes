@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +46,9 @@ class AzureBeastbinderTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(elemental.getId());
+        assertThat(choice.validIds())
+                .containsExactlyInAnyOrder(elemental.getId(), player1.getId())
+                .doesNotContain(player2.getId());
 
         harness.handlePermanentChosen(player1, elemental.getId());
         resolveAllTriggers();
@@ -54,7 +57,11 @@ class AzureBeastbinderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
 
-        advanceToUpkeep(player1);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);

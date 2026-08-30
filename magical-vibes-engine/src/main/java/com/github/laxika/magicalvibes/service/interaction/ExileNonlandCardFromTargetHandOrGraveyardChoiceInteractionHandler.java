@@ -56,9 +56,6 @@ public class ExileNonlandCardFromTargetHandOrGraveyardChoiceInteractionHandler
         Card chosenCard = findCard(hand, chosenCardId);
         boolean fromHand = chosenCard != null;
         if (chosenCard == null) {
-            if (interaction.handOnly()) {
-                throw new IllegalStateException("Chosen card is no longer in the target player's hand");
-            }
             chosenCard = findCard(graveyard, chosenCardId);
         }
         if (chosenCard == null || chosenCard.hasType(com.github.laxika.magicalvibes.model.CardType.LAND)) {

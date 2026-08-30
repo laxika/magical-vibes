@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
@@ -120,14 +119,6 @@ public class ExileSupport {
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped,
                                         TurnStep returnStep, int plusOnePlusOneCounters) {
-        exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, returnStep,
-                plusOnePlusOneCounters, null, 0);
-    }
-
-    public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
-                                        Permanent permanent, UUID ownerId, boolean returnTapped,
-                                        TurnStep returnStep, int plusOnePlusOneCounters,
-                                        CounterType counterTypeOnReturn, int counterAmountOnReturn) {
         List<Card> cards = permanent.cardsLeavingBattlefield();
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
@@ -139,7 +130,6 @@ public class ExileSupport {
 
         gameData.queueDelayedAction(new PendingExileReturn(
                 card, ownerId, returnTapped, false, returnStep, plusOnePlusOneCounters,
-                counterTypeOnReturn, counterAmountOnReturn,
                 cards.size() == 1 ? List.of() : cards.subList(1, cards.size())));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -162,6 +152,15 @@ public class ExileSupport {
     /** Grants an owner permission to play a card from exile for as long as it remains exiled. */
     public void grantPlayWhileExiled(GameData gameData, UUID cardId, UUID ownerId) {
         gameData.exilePlayPermissions.put(cardId, ownerId);
+    }
+
+    /** Grants an owner permission to cast a card from exile for a fixed generic alternative cost. */
+    public void grantCastWhileExiledForGenericCost(GameData gameData, UUID cardId, UUID ownerId,
+                                                   int genericCost) {
+        grantPlayWhileExiled(gameData, cardId, ownerId);
+        gameData.exilePlayWithoutPayingManaCost.add(cardId);
+        gameData.exilePlayCostModifiers.put(cardId,
+                new ExilePlayCostModifier(ownerId, null, genericCost));
     }
 
     /**
@@ -187,6 +186,19 @@ public class ExileSupport {
                 ? currentEndStepHasBegun ? 2 : 0
                 : 1);
         gameData.exilePlayPermissions.put(cardId, ownerId);
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+    }
+
+    /** Grants {@code permissionPlayerId} permission until {@code endStepPlayerId}'s next end step. */
+    public void grantPlayUntilNextEndStepOfPlayer(GameData gameData, UUID cardId,
+                                                   UUID permissionPlayerId, UUID endStepPlayerId) {
+        boolean endStepPlayerIsActive = endStepPlayerId.equals(gameData.activePlayerId);
+        boolean currentEndStepHasBegun = gameData.currentStep != null
+                && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
+        int expireTurn = gameData.turnNumber + (endStepPlayerIsActive
+                ? currentEndStepHasBegun ? 2 : 0
+                : 1);
+        gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 
@@ -252,6 +264,13 @@ public class ExileSupport {
 
         if (chosenCard == null) {
             log.warn("Game {} - Chosen card {} not found in Knowledge Pool", gameData.id, chosenCardId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (chosenCard.isCastOnlyFromGraveyard()) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                    " cannot be cast from exile and stays exiled."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.condition;
 
-/** The source permanent has effective power {@code threshold} or greater. */
+/** True when the source permanent's effective power is at least {@code threshold}. */
 public record SourcePowerAtLeast(int threshold) implements Condition {
 
     @Override

@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -39,25 +39,29 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             return;
         }
 
-        // The stack entry identifies the source object that created the ability. If that object
-        // has already left the battlefield, this effect does nothing: the "until this leaves"
-        // duration has already ended. The card-reference fallback is retained for older callers
-        // that do not stamp a source permanent id.
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent sourcePermanent = sourcePermanentId == null
-                ? findSourceByCardReference(gameData, entry.getControllerId(), entry.getCard())
+                ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (sourcePermanentId != null && sourcePermanent == null) {
-            return;
-        }
-        if (sourcePermanentId == null && sourcePermanent != null) {
-            sourcePermanentId = sourcePermanent.getId();
+        if (sourcePermanent == null) {
+            sourcePermanentId = null;
+            UUID controllerId = entry.getControllerId();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard() == entry.getCard()) {
+                        sourcePermanentId = p.getId();
+                        sourcePermanent = p;
+                        break;
+                    }
+                }
+            }
         }
 
         if (sourcePermanentId == null) {
-            // Source already left the battlefield — exile still happens but no return tracking
-            log.info("Game {} - Source permanent for {} no longer on battlefield, exile without return tracking",
+            log.info("Game {} - Source permanent for {} no longer on battlefield, effect does nothing",
                     gameData.id, entry.getCard().getName());
+            return;
         }
 
         Card card = target.getOriginalCard();
@@ -66,20 +70,17 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
 
         permanentRemovalService.removePermanentToExile(gameData, target);
 
-        // Imprint the exiled card onto the source (e.g. Ixalan's Binding)
-        if (e.imprint() && sourcePermanent != null) {
+        if (e.imprint()) {
             gameData.setImprintedCard(sourcePermanent.getCard(), card);
         }
 
-        
         gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
         log.info("Game {} - {} exiles {} until it leaves the battlefield",
                 gameData.id, entry.getCard().getName(), card.getName());
 
-        if (sourcePermanentId != null) {
+        if (!card.isToken()) {
             gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
 
-            // Also add source tracking so AllowCastFromCardsExiledWithSourceEffect can find it
             var exiledEntry = gameData.findExiledCard(card.getId());
             if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
                 gameData.removeFromExile(card.getId());
@@ -88,16 +89,5 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-    }
-
-    private Permanent findSourceByCardReference(GameData gameData, UUID controllerId, Card card) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return null;
-        }
-        return battlefield.stream()
-                .filter(permanent -> permanent.getCard() == card)
-                .findFirst()
-                .orElse(null);
     }
 }

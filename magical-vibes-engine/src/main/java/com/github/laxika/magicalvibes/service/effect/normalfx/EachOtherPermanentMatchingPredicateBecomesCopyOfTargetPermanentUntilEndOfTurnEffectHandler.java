@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +42,8 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
+        List<UUID> targets = entry.targetsForEffect(effect);
+        UUID targetId = targets.isEmpty() ? entry.getTargetId() : targets.getFirst();
         if (targetId == null) {
             return;
         }
@@ -76,6 +79,12 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
                 permanent.setPreCopyCard(permanent.getCard());
             }
             permanentCopierService.applyCloneCopy(permanent, targetPermanent, null, null);
+            if (copyEffect.removeLegendary()) {
+                var supertypes = EnumSet.noneOf(CardSupertype.class);
+                supertypes.addAll(permanent.getCard().getSupertypes());
+                supertypes.remove(CardSupertype.LEGENDARY);
+                permanent.getCard().setSupertypes(supertypes);
+            }
             permanent.setCopyUntilEndOfTurn(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(),

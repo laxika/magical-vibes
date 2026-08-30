@@ -101,6 +101,9 @@ public class GrantedAbilityViewFactory {
         if (!remainingProtection.isEmpty()) {
             result.add(new GrantedAbilityView(formatProtectionColors(remainingProtection), null));
         }
+        if (permanent.isProtectionFromColorlessUntilEndOfTurn()) {
+            result.add(new GrantedAbilityView("Protection from colorless", null));
+        }
         if (permanent.isCantBeBlocked()) {
             result.add(new GrantedAbilityView("Can't be blocked", null));
         }
@@ -218,6 +221,11 @@ public class GrantedAbilityViewFactory {
                 return "Abilities your opponents control can't target this permanent";
             }
             return "Can't be targeted by spells or abilities";
+        }
+        if (restriction.mode() == TargetColorMode.MONOCOLORED) {
+            return restriction.opponentOnly() && restriction.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                    ? "Hexproof from monocolored"
+                    : "Can't be the target of monocolored spells or abilities";
         }
         String colors = enumPhrase(restriction.colors());
         if (restriction.mode() == TargetColorMode.BLOCKED_COLORS) {

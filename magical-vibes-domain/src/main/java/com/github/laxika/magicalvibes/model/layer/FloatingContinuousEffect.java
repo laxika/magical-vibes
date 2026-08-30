@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfAuraAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
@@ -50,7 +51,8 @@ public record FloatingContinuousEffect(
         return effect instanceof GainControlOfTargetEffect
                 || effect instanceof ControlEnchantedCreatureEffect
                 || effect instanceof GainControlOfEnchantedTargetEffect
-                || effect instanceof GainControlOfEnchantedPermanentEffect;
+                || effect instanceof GainControlOfEnchantedPermanentEffect
+                || effect instanceof GainControlOfAuraAttachedPermanentEffect;
     }
 
     /** Returns a copy of this effect carrying the given CR 613.7 timestamp (used by

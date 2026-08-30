@@ -62,7 +62,7 @@ public class PutTargetPlayerHandOnLibraryThenSearchThatManyToHandEffectHandler i
         }
 
         // A prevented search still leaves the hand on the library — the player finds nothing.
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, targetPlayerId, true, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             return;
         }

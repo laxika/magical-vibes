@@ -84,10 +84,18 @@ subprojects {
             maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
             jvmArgs("-Xmx1g", "-XX:+UseParallelGC")
             forkEvery = 2000
+            systemProperty(
+                "oracle.data-provider",
+                System.getProperty("oracle.data-provider") ?: "MTGJSON"
+            )
+            systemProperty(
+                "card-data.cache-dir",
+                rootProject.layout.projectDirectory.dir("card-data-cache").asFile.absolutePath
+            )
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
-                    "layerBench", "mctsBench", "disableLayerBoardCache", "oracle.data-provider").forEach { prop ->
+                    "layerBench", "mctsBench", "disableLayerBoardCache").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
             }
             testLogging {

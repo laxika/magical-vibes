@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DefendingPlayerChoosesCreatur
 
 @CardRegistration(set = "EXO", collectorNumber = "108")
 @CardRegistration(set = "TPR", collectorNumber = "168")
+@CardRegistration(set = "BTD", collectorNumber = "52")
 public class CrashingBoars extends Card {
 
     public CrashingBoars() {

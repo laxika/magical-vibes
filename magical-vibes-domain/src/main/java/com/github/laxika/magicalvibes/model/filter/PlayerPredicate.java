@@ -6,6 +6,7 @@ package com.github.laxika.magicalvibes.model.filter;
  */
 public sealed interface PlayerPredicate permits
         PlayerDamagedBySourceCombatThisTurnPredicate,
+        PlayerAttackedThisTurnPredicate,
         PlayerDamagedBySourceThisTurnPredicate,
         PlayerDealtDamageThisTurnPredicate,
         PlayerControlsMoreCreaturesThanControllerPredicate,
