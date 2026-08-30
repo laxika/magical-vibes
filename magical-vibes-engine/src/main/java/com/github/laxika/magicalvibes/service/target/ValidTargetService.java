@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -45,8 +46,10 @@ import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -187,6 +190,17 @@ public class ValidTargetService {
                     Permanent perm = gameQueryService.findPermanentById(gameData, id);
                     return perm != null && selected.stream()
                             .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
+                });
+            }
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CREATURE_TYPES && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
                 });
             }
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE && !excludeIds.isEmpty()) {
@@ -509,10 +523,15 @@ public class ValidTargetService {
                 // (CR 115.4), so it offers players alongside creatures and planeswalkers and never
                 // another permanent type.
                 boolean unfiltered = positionFilter == null;
+                boolean effectsDeclareTarget = targetingEffects.stream()
+                        .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
                 PermanentPredicate declared = unfiltered
                         ? EffectResolution.declaredPermanentRestriction(targetingEffects).orElse(null)
                         : null;
-                if (unfiltered && EffectResolution.allowsPlayerTargets(targetingEffects)
+                boolean effectAllowsPlayerTargets = EffectResolution.allowsPlayerTargets(targetingEffects);
+                boolean filterAllowsPlayerTargets = targetFilterAllowsPlayer(ability.getTargetFilter());
+                if (unfiltered && (effectAllowsPlayerTargets
+                        || filterAllowsPlayerTargets && !effectsDeclareTarget)
                         && !gameQueryService.isPeaceTalksActive(gameData)) {
                     for (UUID playerId : gameData.playerIds) {
                         if (excludeIds.contains(playerId)) continue;
@@ -567,6 +586,18 @@ public class ValidTargetService {
                 validPermanentIds.removeIf(id -> !wasBlockedByFirstTargetThisTurn(
                         gameData, alreadySelectedIds.getFirst(), id));
             }
+            if (ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CREATURE_TYPES
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                List<Permanent> selected = alreadySelectedIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream()
+                            .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
+                });
+            }
 
             // "Up to two creatures and up to two lands" (Nissa, Genesis Mage +2): drop candidates
             // that would make a legal assignment to the two quotas impossible.
@@ -594,10 +625,20 @@ public class ValidTargetService {
                     ability.getEffectiveMaxTargets(effectiveTargetScalingValue), prompt);
         }
 
-        boolean targetsPlayer = targetingEffects.stream()
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean targetsPermanent = targetingEffects.stream()
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean effectsDeclareTarget = targetingEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+        boolean effectsAllowPlayerTargets = targetingEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean effectsAllowPermanentTargets = targetingEffects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean filterAllowsPlayerTargets = targetFilterAllowsPlayer(ability.getTargetFilter());
+        boolean filterAllowsPermanentTargets = targetFilterAllowsPermanent(ability.getTargetFilter());
+        boolean targetsPlayer = ability.getTargetFilter() == null
+                ? effectsAllowPlayerTargets
+                : filterAllowsPlayerTargets && (effectsAllowPlayerTargets || !effectsDeclareTarget);
+        boolean targetsPermanent = ability.getTargetFilter() == null
+                ? effectsAllowPermanentTargets
+                : filterAllowsPermanentTargets && (effectsAllowPermanentTargets || !effectsDeclareTarget);
         boolean targetsGraveyard = targetingEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean targetsBlockingThis = targetingEffects.stream()
@@ -901,7 +942,7 @@ public class ValidTargetService {
         if (positionFilter == null && !isMultiTarget
                 && targetValidationService.checkEffectTargets(spellEffects,
                         new TargetValidationContext(gameData, perm.getId(), null, card,
-                                xValue != null ? xValue : 0)).isPresent()) {
+                                xValue != null ? xValue : 0, controllerId, null)).isPresent()) {
             return false;
         }
 
@@ -973,6 +1014,10 @@ public class ValidTargetService {
 
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId,
                                         UUID sourcePermanentId, Card sourceCard) {
+        if (targetFilter != null && !targetFilterAllowsPlayer(targetFilter)) {
+            return false;
+        }
+
         // Player shroud
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
             return false;
@@ -1006,6 +1051,18 @@ public class ValidTargetService {
         }
 
         return true;
+    }
+
+    private boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof PlayerPredicateTargetFilter;
+    }
+
+    private boolean targetFilterAllowsPermanent(TargetFilter targetFilter) {
+        return targetFilter instanceof AnyTargetPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter
+                || targetFilter instanceof OwnedPermanentPredicateTargetFilter
+                || targetFilter instanceof PermanentPredicateTargetFilter;
     }
 
     public boolean isValidAbilityPermanentTargetForPosition(GameData gameData, Card sourceCard,
@@ -1114,7 +1171,8 @@ public class ValidTargetService {
         // ability positions are governed by their per-position TargetFilter.
         if (!ability.isMultiTarget()
                 && targetValidationService.checkEffectTargets(ability.getEffects(),
-                        new TargetValidationContext(gameData, perm.getId(), null, sourceCard)).isPresent()) {
+                        new TargetValidationContext(gameData, perm.getId(), null, sourceCard,
+                                0, controllerId, null)).isPresent()) {
             return false;
         }
 
@@ -1560,6 +1618,8 @@ public class ValidTargetService {
                 && (e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
                 || e.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
                 && e.filter() != null) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+        } else if (effect instanceof ExileGraveyardCardWithConditionalBonusEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);

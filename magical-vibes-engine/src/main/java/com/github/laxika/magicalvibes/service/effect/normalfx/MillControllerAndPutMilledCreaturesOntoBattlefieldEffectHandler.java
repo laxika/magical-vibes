@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCre
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -27,6 +29,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
 
@@ -47,7 +50,9 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
         }
 
         List<Card> milled = graveyardService.resolveMillPlayer(
-                gameData, entry.getControllerId(), millEffect.count());
+                gameData, entry.getControllerId(), Math.max(0, amountEvaluationService.evaluate(
+                        gameData, millEffect.count(), AmountContext.forStackEntry(
+                                entry, entry.getSourcePermanentSnapshot()))));
         CardTypePredicate creaturePredicate = new CardTypePredicate(CardType.CREATURE);
         List<Card> eligibleCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(

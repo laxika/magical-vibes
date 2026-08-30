@@ -22,7 +22,7 @@ import java.util.UUID;
  * {@code remainingTargetPlayerTopSearches} is the remainder of a search where each of several
  * targeted players searches their own library for a card and puts it on top (Scheming Symmetry);
  * {@code opponentExileChoice} prompts the opponent after the Distant Memories exile;
- * {@code imprintSourcePermanentId} receives the imprinted card at EXILE_IMPRINT completion;
+ * {@code imprintSourcePermanentId} receives the imprinted card when the face-down exile completes;
      * {@code secondBoundedPick} begins the next bounded pick (may reveal a card of its type or
      * subtype from the same looked-at cards to hand, then dispose the rest) after the prior pick
      * resolves — Gift of the Gargantuan, Benefaction of Rhonas, and Kaalia, Zenith Seeker;
@@ -69,7 +69,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     List<UUID> remainingEachPlayerLandToBattlefieldSearches,
                                     SelectedCardFollowUp selectedCardFollowUp) {
 
-    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
+                                       boolean useSelectedCardManaValue) {
+
+        public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+            this(predicate, effect, false);
+        }
     }
 
     /** Completion data for Grim Reminder's reveal-only library search. */
@@ -358,6 +363,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
                 false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
                 new SelectedCardFollowUp(predicate, effect));
+    }
+
+    public static LibrarySearchFollowUp forSelectedCardWithManaValue(
+            CardPredicate predicate, CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(predicate, effect, true));
     }
 
     /** Runs a selected-card follow-up before putting the unchosen bounded-pick cards back randomly. */

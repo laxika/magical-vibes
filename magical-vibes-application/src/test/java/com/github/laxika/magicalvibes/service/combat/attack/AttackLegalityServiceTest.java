@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.cards.s.StormtideLeviathan;
 import com.github.laxika.magicalvibes.cards.t.TrainingDrone;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
@@ -88,7 +90,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         StormtideLeviathan.class,
         TrainingDrone.class,
         WallOfWood.class,
-        WindDrake.class
+        WindDrake.class,
+        WakestoneGargoyle.class
 })
 class AttackLegalityServiceTest extends BaseCardTest {
 
@@ -190,6 +193,21 @@ class AttackLegalityServiceTest extends BaseCardTest {
 
         assertThat(als.canAttack(gd, wall, player1.getId())).isTrue();
         assertThat(als.canAttack(gd, bears, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A temporary static grant lifts defender for the controller's creatures")
+    void temporaryStaticGrantCanLiftDefender() {
+        Permanent gargoyle = addCreatureReady(player1, new WakestoneGargoyle());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(als.canAttack(gd, gargoyle, player1.getId())).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, gargoyle, player1.getId())).isTrue();
     }
 
     @Test

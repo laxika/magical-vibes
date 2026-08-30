@@ -72,12 +72,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -107,12 +109,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -736,6 +740,42 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("Name predicates reject face-down permanents with no name")
+        void namePredicatesRejectFaceDownPermanents() {
+            Permanent faceDownWirefly = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+            faceDownWirefly.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            Permanent faceUpWirefly = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+
+            PermanentNamedPredicate namedWirefly = new PermanentNamedPredicate("Wirefly");
+            assertThat(evaluator.matchesPermanentPredicate(gd, faceDownWirefly, namedWirefly)).isFalse();
+            CharacteristicState faceDownState = new CharacteristicState(
+                    faceDownWirefly.getCard(), faceDownWirefly);
+            assertThat(evaluator.matchesPermanentPredicate(
+                    faceDownState, faceDownWirefly, namedWirefly, FilterContext.of(gd))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, faceUpWirefly, namedWirefly)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Two face-down permanents without names do not share a name")
+        void namelessPermanentsDoNotShareAName() {
+            Permanent first = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+            first.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            Permanent second = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+            second.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+            FilterContext sourceContext = FilterContext.of(gd)
+                    .withSourceCardId(first.getCard().getId());
+            assertThat(evaluator.matchesPermanentPredicate(
+                    second, new PermanentHasSameNameAsSourcePredicate(), sourceContext)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, first,
+                    new PermanentSharesNameWithAnotherPermanentPredicate())).isFalse();
+        }
+
+        @Test
         @DisplayName("PermanentIsSuspectedPredicate matches only suspected permanents")
         void suspectedPredicateMatchesOnlySuspectedPermanents() {
             Permanent suspected = addPermanent(player1Id,
@@ -920,6 +960,24 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(
                     gd, perm, new PermanentHasNonManaActivatedAbilityPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasTapActivatedAbilityPredicate matches only abilities with a tap cost")
+        void tapActivatedAbilityPredicateMatchesOnlyTapAbilities() {
+            Card tapCard = createCreature("Tap Creature", 1, 1, CardColor.GREEN);
+            tapCard.addActivatedAbility(new ActivatedAbility(true, null,
+                    List.of(new DrawCardEffect()), "{T}: Draw a card."));
+            Permanent tapPermanent = addPermanent(player1Id, tapCard);
+
+            Card noTapCard = createCreature("No Tap Creature", 1, 1, CardColor.GREEN);
+            noTapCard.addActivatedAbility(new ActivatedAbility(false, "{1}",
+                    List.of(new DrawCardEffect()), "{1}: Draw a card."));
+            Permanent noTapPermanent = addPermanent(player1Id, noTapCard);
+
+            PermanentHasTapActivatedAbilityPredicate predicate = new PermanentHasTapActivatedAbilityPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, tapPermanent, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, noTapPermanent, predicate)).isFalse();
         }
 
         @Test

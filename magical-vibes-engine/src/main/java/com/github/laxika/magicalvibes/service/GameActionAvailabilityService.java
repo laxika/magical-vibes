@@ -363,6 +363,12 @@ public class GameActionAvailabilityService {
             flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
         }
+        if (gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                && pool.getMulticoloredSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteMulticoloredSpellOnlyMana();
+        }
         if (!card.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
@@ -717,7 +723,8 @@ public class GameActionAvailabilityService {
                 && candidateCosts.stream()
                 .map(c -> castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, c, ctx.costSnapshot(), false))
-                .anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost))) {
+                .anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost)
+                        && canPayWaterbendCost(gameData, playerId, card, pool, c, effectiveAdditionalCost))) {
             return true;
         }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
@@ -792,7 +799,8 @@ public class GameActionAvailabilityService {
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
             }
-            if (canAfford) {
+            if (canAfford && canPayWaterbendCost(
+                    gameData, playerId, card, paymentPool, cost, effectiveAdditionalCost)) {
                 return true;
             }
         }
@@ -936,6 +944,33 @@ public class GameActionAvailabilityService {
             return false;
         }
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
+    }
+
+    /** Checks the mana plus artifact/creature contributions for a spell's Waterbend cost. */
+    private boolean canPayWaterbendCost(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                         ManaCost spellCost, int additionalGenericCost) {
+        WaterbendCost waterbend = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(WaterbendCost.class::isInstance)
+                .map(WaterbendCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (waterbend == null) {
+            return true;
+        }
+        if (waterbend.optional()) {
+            return true;
+        }
+        int amount = waterbend.effectiveAmount(0);
+        int eligibleCount = (int) gameData.playerBattlefields
+                .getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
+                        || gameQueryService.isCreature(gameData, permanent))
+                .count();
+        List<ManaColor> contributions = Collections.nCopies(
+                Math.min(amount, eligibleCount), null);
+        return spellCost.canPayWithConvoke(pool,
+                additionalGenericCost + amount, contributions);
     }
 
     private boolean hasMatchingGraveyardTarget(GameData gameData, Card card, UUID playerId,
@@ -1116,6 +1151,9 @@ public class GameActionAvailabilityService {
                 graveyardCast = castingPermissionService.findMayhemCastOption(gameData, playerId, card);
             }
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
+            Optional<FlashbackCast> grantedFlashbackOption = flashback.isEmpty() && !isDisturb
+                    ? castingPermissionService.findGrantedFlashback(gameData, playerId, card)
+                    : Optional.empty();
             boolean grantedHarmonize = harmonize.isEmpty() && flashback.isEmpty() && !isDisturb
                     && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
             boolean isHarmonize = (harmonize.isPresent() && flashback.isEmpty() && !isDisturb) || grantedHarmonize;
@@ -1124,7 +1162,7 @@ public class GameActionAvailabilityService {
                     && !isHarmonize
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback
-                    && castingPermissionService.hasGrantedFlashback(gameData, playerId, card);
+                    && grantedFlashbackOption.isPresent();
             boolean grantedGraveyardCardCast = flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
@@ -1243,6 +1281,9 @@ public class GameActionAvailabilityService {
                 manaCostStr = harmonize.map(h -> h.getCost(ManaCastingCost.class)
                                 .map(ManaCastingCost::manaCost).orElse(null))
                         .orElse(castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost());
+            } else if (emblemFlashback) {
+                manaCostStr = grantedFlashbackOption.get()
+                        .getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
                     || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
@@ -1293,6 +1334,14 @@ public class GameActionAvailabilityService {
             }
             if (!canPayMana) {
                 continue;
+            }
+
+            if (isGrantedCyclingGraveyardCast) {
+                int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+                long availableCards = graveyard.stream().filter(c -> c != card).count();
+                if (availableCards < escapeExileCount) {
+                    continue;
+                }
             }
 
             if (flashback.isPresent() && !castingCostService.canPayFlashbackPermanentCosts(

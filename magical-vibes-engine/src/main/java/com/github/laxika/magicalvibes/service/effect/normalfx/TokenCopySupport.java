@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -54,15 +55,33 @@ public class TokenCopySupport {
         }
 
         List<Permanent> tokens = new ArrayList<>();
+        Card artifactTokenTemplate = null;
         for (Card sourceCard : sourceCards) {
+            Card tokenTemplate = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
             int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                    gameData, tokenControllerId, sourceCard.hasType(CardType.CREATURE));
+                    gameData, tokenControllerId, tokenTemplate.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
+                Card tokenCard = copy == 0
+                        ? tokenTemplate
+                        : buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
+                if (artifactTokenTemplate == null && tokenCard.hasType(CardType.ARTIFACT)) {
+                    artifactTokenTemplate = tokenCard;
+                }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 tokens.add(new Permanent(tokenCard));
             }
+        }
+        int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
+                gameData, tokenControllerId, artifactTokenTemplate, 1);
+        for (int map = 0; map < additionalMapTokenCount; map++) {
+            Card mapTokenCard = TokenCardFactory.create(
+                    TokenCreationReplacementSupport.additionalMapToken(
+                            effect.tapped(), effect.tappedAndAttacking()),
+                    0,
+                    0,
+                    entry.getCard() == null ? null : entry.getCard().getSetCode());
+            tokens.add(new Permanent(mapTokenCard));
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
@@ -90,6 +109,10 @@ public class TokenCopySupport {
             if (effect.exileAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+            }
+            if (effect.exileAtEndOfCombat()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
             }
             if (effect.sacrificeAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -143,7 +166,16 @@ public class TokenCopySupport {
         tokenCard.setColors(effect.colorOverride() != null
                 ? List.of(effect.colorOverride())
                 : sourceCard.getColors());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
+        if (effect.removeLegendary()) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            if (sourceCard.getSupertypes() != null) {
+                supertypes.addAll(sourceCard.getSupertypes());
+            }
+            supertypes.remove(CardSupertype.LEGENDARY);
+            tokenCard.setSupertypes(supertypes);
+        } else {
+            tokenCard.setSupertypes(sourceCard.getSupertypes());
+        }
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
         tokenCard.setCardText(sourceCard.getCardText());

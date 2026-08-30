@@ -173,7 +173,7 @@ public class Card {
      */
     private int additionalLifeCostPerTarget;
     /**
-     * When true, the same permanent may be chosen for different target groups (CR 114.6c).
+     * When true, the same permanent may be chosen for different target groups (CR 601.2c).
      * By default, targets across groups must be distinct — matching the common MTG pattern
      * where separate "target" instances imply "another". Set this for cards whose oracle text
      * does NOT use "another" and whose target filters can overlap (e.g. "target creature" +
@@ -560,6 +560,15 @@ public class Card {
         return st;
     }
 
+    public SpellTarget targetWhenGiftPromised(TargetFilter filter, int minTargets, int maxTargets,
+                                              int giftPromisedMinTargets) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets, minTargets, maxTargets,
+                spellTargets.size(), false, null, null, giftPromisedMinTargets);
+        spellTargets.add(st);
+        return st;
+    }
+
     /**
      * Declares a target group whose bounds change when the spell is kicked.
      * The ordinary bounds apply when the spell is not kicked; the kicker bounds apply when it is.
@@ -697,7 +706,8 @@ public class Card {
                     targetIndexOffset + sourceTarget.getIndex(),
                     sourceTarget.isXScaled(),
                     sourceTarget.getDynamicMinTargets(),
-                    sourceTarget.getDynamicMaxTargets());
+                    sourceTarget.getDynamicMaxTargets(),
+                    sourceTarget.getGiftPromisedMinTargets());
             spellTargets.add(target);
         }
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
@@ -791,9 +801,15 @@ public class Card {
 
     /** Returns the minimum total number of targets for the given X value and kicker state. */
     public int getEffectiveMinTargets(int xValue, boolean kicked) {
+        return getEffectiveMinTargets(xValue, kicked, false);
+    }
+
+    public int getEffectiveMinTargets(int xValue, boolean kicked, boolean giftPromised) {
         return spellTargets.stream()
                 .mapToInt(st -> {
-                    int min = kicked ? st.getKickedMinTargets() : st.getMinTargets();
+                    int min = giftPromised
+                            ? st.getGiftPromisedMinTargets()
+                            : kicked ? st.getKickedMinTargets() : st.getMinTargets();
                     return st.isXScaled() ? Math.min(xValue, min) : min;
                 })
                 .sum();
@@ -867,9 +883,8 @@ public class Card {
      * Returns true if the target group at the given expanded position allows player targets.
      * Used by the valid target service to determine per-position player targeting in multi-target spells.
      *
-     * <p>Bound effects win when their {@code targetSpec()} includes players. Bare positional groups
-     * (no bound effect — e.g. Injury's creature + player/planeswalker slots feeding
-     * {@code DealDamageToEachTargetEffect}) fall back to the group's declared filter.
+     * <p>An explicit group filter defines the legal target kind. Only an unfiltered group inherits
+     * player targeting from the effects bound to it.
      */
     public boolean doesPositionAllowPlayerTargets(int expandedPosition) {
         if (spellTargets.isEmpty()) return false;
@@ -877,6 +892,11 @@ public class Card {
         for (SpellTarget st : spellTargets) {
             cumulative += st.getMaxTargets();
             if (expandedPosition < cumulative) {
+                TargetFilter filter = st.getFilter();
+                if (filter != null) {
+                    return filter instanceof PlayerPredicateTargetFilter
+                            || filter instanceof AnyTargetPredicateTargetFilter;
+                }
                 int groupIndex = st.getIndex();
                 for (Map.Entry<CardEffect, List<Integer>> entry : effectTargetIndexMap.entrySet()) {
                     if (entry.getValue().contains(groupIndex)
@@ -884,9 +904,7 @@ public class Card {
                         return true;
                     }
                 }
-                TargetFilter filter = st.getFilter();
-                return filter instanceof PlayerPredicateTargetFilter
-                        || filter instanceof AnyTargetPredicateTargetFilter;
+                return false;
             }
         }
         return false;
@@ -900,7 +918,8 @@ public class Card {
         for (SpellTarget st : original.spellTargets) {
             spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(),
                     st.getKickedMinTargets(), st.getKickedMaxTargets(), st.getIndex(), st.isXScaled(),
-                    st.getDynamicMinTargets(), st.getDynamicMaxTargets()));
+                    st.getDynamicMinTargets(), st.getDynamicMaxTargets(),
+                    st.getGiftPromisedMinTargets()));
         }
         original.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));

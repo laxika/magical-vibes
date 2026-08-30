@@ -108,6 +108,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
 
         Card meldResult = instantiateMeldResult(meldResultTemplate, sourceCard.getSetCode());
         Permanent melded = new Permanent(meldResult);
+        melded.setEnteredFromExile(true);
         melded.getMeldComponentCards().add(sourceCard);
         melded.getMeldComponentCards().add(partnerCard);
         if (e.entersTappedAndAttacking()) {

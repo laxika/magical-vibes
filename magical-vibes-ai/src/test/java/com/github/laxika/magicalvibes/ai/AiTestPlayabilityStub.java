@@ -83,6 +83,9 @@ final class AiTestPlayabilityStub {
                     }
                     return indices;
                 });
+        Mockito.lenient().when(castingCostService.applyColoredManaCostReductions(
+                        any(GameData.class), any(UUID.class), any(Card.class), any(ManaCost.class)))
+                .thenAnswer(inv -> inv.getArgument(3));
         Mockito.lenient().when(actionAvailabilityService.isCardPlayable(
                         any(GameData.class), any(UUID.class), any(Card.class), any(ManaPool.class), anyInt()))
                 .thenAnswer(inv -> {
@@ -91,7 +94,8 @@ final class AiTestPlayabilityStub {
                     Card card = inv.getArgument(2);
                     ManaPool pool = inv.getArgument(3);
                     int additionalGenericCost = inv.getArgument(4);
-                    ManaCost cost = new ManaCost(card.getManaCost());
+                    ManaCost cost = castingCostService.applyColoredManaCostReductions(
+                            gameData, playerId, card, new ManaCost(card.getManaCost()));
                     int modifier = castingCostService.getCastCostModifier(gameData, playerId, card)
                             + additionalGenericCost;
                     if (!cost.canPay(pool, modifier)) {

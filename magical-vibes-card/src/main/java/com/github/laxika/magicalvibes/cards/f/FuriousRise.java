@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayUntilAnoth
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "144")
+@CardRegistration(set = "THB", collectorNumber = "136")
 public class FuriousRise extends Card {
 
     public FuriousRise() {

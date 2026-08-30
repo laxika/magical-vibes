@@ -13,20 +13,22 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param filter predicate restricting valid targets; {@code null} allows any card
  * @param graveyardScope graveyard from which the target may be chosen
  * @param tokenTemplate token created when the exiled card was a creature
+ * @param upToOne whether choosing a target is optional
  */
 public record ExileGraveyardCardCreateTokenIfCreatureEffect(
         CardPredicate filter,
         GraveyardSearchScope graveyardScope,
-        CreateTokenEffect tokenTemplate
+        CreateTokenEffect tokenTemplate,
+        boolean upToOne
 )
         implements CardEffect, TokenCreatingEffect {
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect() {
-        this(null, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1));
+        this(null, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1), false);
     }
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter) {
-        this(filter, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1));
+        this(filter, GraveyardSearchScope.ALL_GRAVEYARDS, CreateTokenEffect.blackZombie(1), false);
     }
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect(CreateTokenEffect tokenTemplate) {
@@ -40,7 +42,19 @@ public record ExileGraveyardCardCreateTokenIfCreatureEffect(
 
     public ExileGraveyardCardCreateTokenIfCreatureEffect(GraveyardSearchScope graveyardScope,
                                                          CreateTokenEffect tokenTemplate) {
-        this(null, graveyardScope, tokenTemplate);
+        this(null, graveyardScope, tokenTemplate, false);
+    }
+
+    public ExileGraveyardCardCreateTokenIfCreatureEffect(CardPredicate filter,
+                                                         GraveyardSearchScope graveyardScope,
+                                                         CreateTokenEffect tokenTemplate) {
+        this(filter, graveyardScope, tokenTemplate, false);
+    }
+
+    /** Creates an optional "up to one" graveyard-card choice with the supplied creature bonus. */
+    public static ExileGraveyardCardCreateTokenIfCreatureEffect upToOne(CreateTokenEffect tokenTemplate) {
+        return new ExileGraveyardCardCreateTokenIfCreatureEffect(
+                null, GraveyardSearchScope.ALL_GRAVEYARDS, tokenTemplate, true);
     }
 
     @Override
@@ -53,6 +67,11 @@ public record ExileGraveyardCardCreateTokenIfCreatureEffect(
     @Override
     public DynamicAmount tokenAmount() {
         return tokenTemplate.amount();
+    }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        return upToOne;
     }
 
     @Override

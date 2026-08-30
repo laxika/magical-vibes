@@ -282,13 +282,21 @@ public class StateBasedActionService {
 
         try {
             for (DeathEntry entry : toDie) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                if (controllerId != null) {
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
+                }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -321,7 +329,10 @@ public class StateBasedActionService {
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanentControllers.clear();
             gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {

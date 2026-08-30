@@ -100,7 +100,9 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
     /** TARGET_PERMANENT_CONTROLLER: victim = the controller of the targeted permanent. */
     private void resolveTargetPermanentController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        java.util.List<UUID> effectTargets = entry.targetsForEffect(e);
+        UUID targetId = effectTargets.isEmpty() ? entry.getTargetId() : effectTargets.getFirst();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());

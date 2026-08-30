@@ -86,6 +86,25 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
+        if (e.scope() == GrantScope.ALL_CREATURES || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+            int count = 0;
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    if (e.scope() == GrantScope.ALL_CREATURES
+                            && permanent.getId().equals(entry.getSourcePermanentId())) {
+                        continue;
+                    }
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        applyEffect(gameData, entry, e, permanent);
+                        count++;
+                    }
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " creature(s) " + colorName(e) + " until end of turn.").build());
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             if (e.canTargetSpell()) {

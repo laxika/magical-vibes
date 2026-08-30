@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * +1/+1 counters. It can also make the card's graveyard owner lose
  * {@code creatureLifeLossToGraveyardOwner} life. If the exiled card is a noncreature card, the
  * source permanent gets +{@code noncreaturePowerBoost}/+{@code noncreatureToughnessBoost} until end
- * of turn.
+ * of turn and/or its controller draws {@code noncreatureCardsToDraw} cards.
  * <p>Used by Deathgorge Scavenger and Scavenging Ooze and similar cards that provide conditional
  * bonuses based on the type of card exiled from a graveyard. The target scope defaults to all
  * graveyards for the existing constructors.</p>
@@ -23,6 +23,7 @@ public record ExileGraveyardCardWithConditionalBonusEffect(
         int creatureCountersOnSource,
         int noncreaturePowerBoost,
         int noncreatureToughnessBoost,
+        int noncreatureCardsToDraw,
         int creatureLifeLossToGraveyardOwner,
         GraveyardSearchScope graveyardScope,
         CardPredicate filter
@@ -35,7 +36,7 @@ public record ExileGraveyardCardWithConditionalBonusEffect(
             int noncreatureToughnessBoost
     ) {
         this(creatureLifeGain, creatureCountersOnSource, noncreaturePowerBoost,
-                noncreatureToughnessBoost, 0, GraveyardSearchScope.ALL_GRAVEYARDS, null);
+                noncreatureToughnessBoost, 0, 0, GraveyardSearchScope.ALL_GRAVEYARDS, null);
     }
 
     /**
@@ -47,13 +48,24 @@ public record ExileGraveyardCardWithConditionalBonusEffect(
 
     public static ExileGraveyardCardWithConditionalBonusEffect creatureCardOwnerLosesLife(int amount) {
         return new ExileGraveyardCardWithConditionalBonusEffect(
-                0, 0, 0, 0, amount, GraveyardSearchScope.OPPONENT_GRAVEYARD, null);
+                0, 0, 0, 0, 0, amount, GraveyardSearchScope.OPPONENT_GRAVEYARD, null);
     }
 
     public static ExileGraveyardCardWithConditionalBonusEffect creatureCardOnly(int lifeGain) {
         return new ExileGraveyardCardWithConditionalBonusEffect(
-                lifeGain, 0, 0, 0, 0, GraveyardSearchScope.ALL_GRAVEYARDS,
+                lifeGain, 0, 0, 0, 0, 0, GraveyardSearchScope.ALL_GRAVEYARDS,
                 new CardTypePredicate(CardType.CREATURE));
+    }
+
+    /**
+     * Convenience constructor for a card whose creature-card branch gains life and whose
+     * noncreature-card branch draws cards.
+     */
+    public static ExileGraveyardCardWithConditionalBonusEffect creatureCardGainsLifeElseDraw(
+            int creatureLifeGain, int noncreatureCardsToDraw) {
+        return new ExileGraveyardCardWithConditionalBonusEffect(
+                creatureLifeGain, 0, 0, 0, noncreatureCardsToDraw, 0,
+                GraveyardSearchScope.ALL_GRAVEYARDS, null);
     }
 
     @Override

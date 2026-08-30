@@ -129,6 +129,13 @@ public record ExchangeControlOfTargetPermanentsEffect(
                 false, false, true, false, false, false, false, true, targetPredicate, false);
     }
 
+    public static ExchangeControlOfTargetPermanentsEffect withSharedCardType(
+            PermanentPredicate targetPredicate) {
+        return new ExchangeControlOfTargetPermanentsEffect(
+                targetPredicate, false, false, false, false, false, false,
+                false, true, null, false);
+    }
+
     public static ExchangeControlOfTargetPermanentsEffect forTriggeringPermanentAndSacrificeIfNoExchange(
             PermanentPredicate targetPredicate) {
         return new ExchangeControlOfTargetPermanentsEffect(

@@ -23,6 +23,7 @@ class CullingDaisTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities(); // resolve ability
 
         // Grizzly Bears should be sacrificed

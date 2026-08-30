@@ -496,6 +496,12 @@ Reasoning behind the non-obvious mappings:
 - **Ability grants are L6 regardless of the granted ability's content**:
   `GrantEffectEffect`, `GrantActivatedAbilityEffect`, `GrantEquipByManaValueEffect` add an
   ability to the object; what that ability later does is the ability's business.
+- **Devotion modifiers use a special board-wide query value**: `IncreaseDevotionEffect` is
+  classified with the static-effect registry so its self handler is collected after text changes,
+  then its controller modifier is stored on `LayeredBoardState` before other characteristic
+  changes are evaluated. `GameQueryService.getDevotionToColor` and
+  `getDevotionToColors` are the only devotion reads that add this modifier; dynamic amounts and
+  devotion conditions must use those helpers.
 - **Wrappers classify by what they wrap.** `ConditionalEffect` delegates to `wrapped()`
   (passing `fromOwnStaticSlot` through); `EnchantedPermanentConditionalEffect` unions both
   branches, since which branch applies is game-state-dependent. Their declared
@@ -595,6 +601,10 @@ one-shot results of already-resolved spells/abilities and exist independently of
 per the engine's 613.2 modeling (§7), NOT via dependency — reading out-of-battlefield zones is
 not a same-layer dependency on anything, so the CDA prefix stays outside the dependency
 relation entirely.
+
+The counter-gated battlefield ability scan used by Experiment Kraj is a normal timestamp-ordered
+layer-6 effect rather than a characteristic-defining scan: its applicability depends on the current
+battlefield creature characteristics and counters, and its source must still retain the static ability.
 
 Graveyard static effects that modify other battlefield permanents implement
 `GraveyardStaticEffect`. The layered pass collects those effects from the controller's graveyard

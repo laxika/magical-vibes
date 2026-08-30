@@ -80,6 +80,9 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
+        if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
@@ -137,6 +140,11 @@ public class AttackLegalityService {
         }
         // An Aura attached to this creature that grants the permission (e.g. Animate Wall).
         if (gameQueryService.hasAuraWithEffect(gameData, creature, CanAttackAsThoughNoDefenderEffect.class)) {
+            return true;
+        }
+        if (gameQueryService.getGrantedEffects(gameData, creature).stream()
+                .anyMatch(effect -> effect instanceof NoDefenderAttackPermissionEffect permission
+                        && permission.grantsCarrierAttackAsThoughNoDefender())) {
             return true;
         }
         // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),

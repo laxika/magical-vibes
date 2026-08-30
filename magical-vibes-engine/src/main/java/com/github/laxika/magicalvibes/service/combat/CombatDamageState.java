@@ -66,6 +66,7 @@ class CombatDamageState {
     final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToPlaneswalkers = new HashMap<>();
     final Map<Permanent, Set<UUID>> combatDamageRecipientControllers = new HashMap<>();
     final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
+    final Set<UUID> combatDamageToBlockingCreatureSources = new HashSet<>();
     final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
     final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();

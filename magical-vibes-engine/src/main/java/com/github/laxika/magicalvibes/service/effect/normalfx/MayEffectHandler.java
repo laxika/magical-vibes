@@ -91,7 +91,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getTriggeringCardId(),
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId(),
-                null,
+                entry.getTriggeringPermanentPowerAtTrigger(),
                 null
         ));
     }

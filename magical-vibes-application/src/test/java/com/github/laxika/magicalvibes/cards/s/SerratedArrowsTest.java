@@ -1,19 +1,21 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SerratedArrows.class, AnabaBodyguard.class})
 class SerratedArrowsTest extends BaseCardTest {
 
     @Test
@@ -25,11 +27,7 @@ class SerratedArrowsTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        UUID arrowsId = harness.getPermanentId(player1, "Serrated Arrows");
-        Permanent arrows = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(arrowsId))
-                .findFirst()
-                .orElseThrow();
+        Permanent arrows = findPermanent(player1, "Serrated Arrows");
         assertThat(arrows.getCounterCount(CounterType.ARROWHEAD)).isEqualTo(3);
     }
 
@@ -37,14 +35,41 @@ class SerratedArrowsTest extends BaseCardTest {
     @DisplayName("Ability removes an arrowhead counter and puts a -1/-1 counter on target creature")
     void abilityMovesCounterToTargetCreature() {
         Permanent arrows = addArrows(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AnabaBodyguard());
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(arrows.getCounterCount(CounterType.ARROWHEAD)).isEqualTo(2);
         assertThat(arrows.isTapped()).isTrue();
-        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability cannot target a noncreature permanent")
+    void abilityCannotTargetNoncreaturePermanent() {
+        Permanent arrows = addArrows(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, arrows.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+
+        assertThat(arrows.getCounterCount(CounterType.ARROWHEAD)).isEqualTo(3);
+        assertThat(arrows.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability cannot be activated without an arrowhead counter")
+    void abilityCannotActivateWithoutArrowheadCounter() {
+        Permanent arrows = addArrows(player1);
+        arrows.setCounterCount(CounterType.ARROWHEAD, 0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AnabaBodyguard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(arrows.isTapped()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test
@@ -73,10 +98,21 @@ class SerratedArrowsTest extends BaseCardTest {
         assertThat(arrows.getCounterCount(CounterType.ARROWHEAD)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Upkeep trigger does not apply during an opponent's upkeep")
+    void upkeepDoesNotTriggerDuringOpponentsUpkeep() {
+        Permanent arrows = addArrows(player1);
+        arrows.setCounterCount(CounterType.ARROWHEAD, 0);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arrows);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Serrated Arrows"));
+    }
+
     private Permanent addArrows(Player owner) {
-        Permanent perm = new Permanent(new SerratedArrows());
-        perm.setCounterCount(CounterType.ARROWHEAD, 3);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return harness.enterBattlefieldAndReturn(owner, new SerratedArrows());
     }
 }

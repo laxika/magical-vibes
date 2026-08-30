@@ -177,6 +177,9 @@ public class GrantedAbilityViewFactory {
         if (protection.protectionFromMulticolored()) {
             return "Protection from multicolored";
         }
+        if (protection.protectionFromMonocolored()) {
+            return "Protection from monocolored";
+        }
         if (!protection.protectionFromColors().isEmpty()) {
             return formatProtectionColors(protection.protectionFromColors());
         }

@@ -184,6 +184,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .destination(e.chosenDestination())
                         .grantHaste(e.grantHaste())
                         .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                        .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep()
+                                ? entry.getControllerId() : null)
                         .build(),
                         prompt,
                         e.optional()));
@@ -200,6 +202,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .prompt("You may put one of these cards onto the battlefield.")
                     .grantHaste(e.grantHaste())
                     .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                    .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep()
+                            ? entry.getControllerId() : null)
                     .destination(e.chosenDestination())
                             .build(),
                     "You may put one of these cards onto the battlefield.",

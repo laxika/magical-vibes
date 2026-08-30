@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -268,19 +269,27 @@ public class DestructionSupport {
 
     private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {
         for (Permanent perm : dying) {
-            if (!gameQueryService.isCreature(gameData, perm)) continue;
             UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
             if (controllerId == null) continue;
+            gameData.simultaneousDyingPermanents.put(perm.getId(), perm);
+            gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
             gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
             gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                    perm.getId(), List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                            gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES)));
         }
     }
 
     private void endSimultaneousCreatureDeaths(GameData gameData) {
         gameData.simultaneousDyingCreatures.clear();
         gameData.simultaneousDyingControllers.clear();
+        gameData.simultaneousDyingPermanents.clear();
+        gameData.simultaneousDyingPermanentControllers.clear();
         gameData.simultaneousDyingPowers.clear();
+        gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {
@@ -875,6 +884,10 @@ public class DestructionSupport {
         }
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self == null) {
+            return;
+        }
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, self.getId());
+        if (!entry.getControllerId().equals(currentControllerId)) {
             return;
         }
         if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {

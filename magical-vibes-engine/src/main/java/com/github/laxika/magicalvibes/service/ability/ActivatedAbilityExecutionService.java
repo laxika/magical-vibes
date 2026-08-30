@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTri
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
@@ -273,7 +274,7 @@ public class ActivatedAbilityExecutionService {
                                              Map<UUID, Integer> damageAssignments) {
         completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue,
                 targetId, targetZone, markAsNonTargetingForSacCreatureCost, targetIds, damageAssignments,
-                List.of());
+                List.of(), null);
     }
 
     public void completeActivationAfterCosts(GameData gameData,
@@ -288,6 +289,41 @@ public class ActivatedAbilityExecutionService {
                                              List<UUID> targetIds,
                                              Map<UUID, Integer> damageAssignments,
                                              List<UUID> sacrificedCardIds) {
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue,
+                targetId, targetZone, markAsNonTargetingForSacCreatureCost, targetIds, damageAssignments,
+                sacrificedCardIds, null);
+    }
+
+    public void completeActivationAfterCosts(GameData gameData,
+                                             Player player,
+                                             Permanent permanent,
+                                             ActivatedAbility ability,
+                                             List<CardEffect> abilityEffects,
+                                             int effectiveXValue,
+                                             UUID targetId,
+                                             Zone targetZone,
+                                             boolean markAsNonTargetingForSacCreatureCost,
+                                             List<UUID> targetIds,
+                                             Map<UUID, Integer> damageAssignments,
+                                             Card discardedCardSnapshot) {
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue,
+                targetId, targetZone, markAsNonTargetingForSacCreatureCost, targetIds, damageAssignments,
+                List.of(), discardedCardSnapshot);
+    }
+
+    public void completeActivationAfterCosts(GameData gameData,
+                                             Player player,
+                                             Permanent permanent,
+                                             ActivatedAbility ability,
+                                             List<CardEffect> abilityEffects,
+                                             int effectiveXValue,
+                                             UUID targetId,
+                                             Zone targetZone,
+                                             boolean markAsNonTargetingForSacCreatureCost,
+                                             List<UUID> targetIds,
+                                             Map<UUID, Integer> damageAssignments,
+                                             List<UUID> sacrificedCardIds,
+                                             Card discardedCardSnapshot) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -638,7 +674,7 @@ public class ActivatedAbilityExecutionService {
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds,
-                sacrificedCardIds);
+                sacrificedCardIds, discardedCardSnapshot);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
         }
@@ -697,6 +733,9 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
                         gainControl.duration(), gainControl.excludedSourceSubtype(),
                         ability.getGrantSourcePermanentId(), sourceHadExcludedSubtype));
+            } else if (effect instanceof DestroyGrantingPermanentIfNoCountersEffect destroy) {
+                snapshotEffects.add(new DestroyGrantingPermanentIfNoCountersEffect(
+                        destroy.counterType(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof MustBlockSourceEffect) {
@@ -765,7 +804,7 @@ public class ActivatedAbilityExecutionService {
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
 
-        // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
+        // Static mana replacement effects multiply mana produced by tapping a permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
 
         boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
@@ -1213,7 +1252,8 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof GainLifeEffect gain) {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                lifeSupport.applyGainLife(gameData, playerId, amount);
+                lifeSupport.applyGainLife(gameData, playerId, amount, permanent.getCard().getName(),
+                        permanent.getCard(), StackEntryType.ACTIVATED_ABILITY, playerId);
             } else if (effect instanceof LoseLifeEffect loss && isNonTargetedLifeLoss(loss)) {
                 // Life loss riding along with mana production (Cryptolith Fragment: "Add one mana
                 // of any color. Each player loses 1 life."). Still a mana ability, so it resolves
@@ -1245,6 +1285,9 @@ public class ActivatedAbilityExecutionService {
                         // One-shot Circle-of-Protection shields may prevent only part of the damage
                         damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage);
                     }
+                }
+                if (damage > 0) {
+                    damage = damagePreventionService.applyChannelHarmPrevention(gameData, playerId, playerId, damage);
                 }
                 if (damage > 0) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
@@ -1286,7 +1329,8 @@ public class ActivatedAbilityExecutionService {
                         gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
                         gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
-                        triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
+                        triggerCollectionService.checkOpponentDealtDamageTriggers(
+                                gameData, playerId, permanent.getId(), effectiveDamage);
                         if (gameQueryService.isCreature(gameData, permanent)) {
                             gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
                         }
@@ -1422,6 +1466,9 @@ public class ActivatedAbilityExecutionService {
             }
         }
         if (damage > 0) {
+            damage = damagePreventionService.applyChannelHarmPrevention(gameData, playerId, playerId, damage);
+        }
+        if (damage > 0) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
                     gameData, playerId, effectiveDamage, cardName, false, permanent.getId());
@@ -1459,7 +1506,8 @@ public class ActivatedAbilityExecutionService {
                 gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
                 gameData.recordDamageRecipientBySource(permanent.getId(), playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, playerId, effectiveDamage);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(
+                        gameData, playerId, permanent.getId(), effectiveDamage);
                 if (gameQueryService.isCreature(gameData, permanent)) {
                     gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
                 }
@@ -1766,7 +1814,8 @@ public class ActivatedAbilityExecutionService {
                                     boolean recordsSacrificedPermanentSnapshot,
                                     Permanent sacrificedSourceSnapshot,
                                     List<UUID> sacrificedAttachedEquipmentIds,
-                                    List<UUID> sacrificedCardIds) {
+                                    List<UUID> sacrificedCardIds,
+                                    Card discardedCardSnapshot) {
         Zone effectiveTargetZone = targetZone;
         if (ability.targetsSpellOnStack(targetZone)) {
             effectiveTargetZone = Zone.STACK;
@@ -1830,11 +1879,15 @@ public class ActivatedAbilityExecutionService {
             }
             stackEntry.setTargetFilters(targetFilters);
         }
+        stackEntry.setMultiTargetConstraint(ability.getMultiTargetConstraint());
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         if (tracksSacrificedCard) {
             stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
+        }
+        if (discardedCardSnapshot != null) {
+            stackEntry.setDiscardedCardSnapshot(discardedCardSnapshot);
         }
         if (recordsSacrificedPermanentSnapshot) {
             stackEntry.setSacrificedPermanentSnapshot(permanent.getChosenSacrificedPermanentSnapshot());

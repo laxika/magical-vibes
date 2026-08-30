@@ -43,8 +43,9 @@ public class ExileAndReturnTransformedService {
      * Exiles the given permanent and immediately returns it transformed. No-op when the permanent
      * has already left the battlefield or its card has no back face.
      *
-     * @return {@code true} when the permanent was actually exiled and returned transformed — the
-     *         "if you do" condition callers such as Liliana, Heretical Healer hang their rider on
+     * @return {@code true} when the permanent was actually exiled — the "if you do" condition
+     *         callers such as Liliana, Heretical Healer hang their rider on. A replacement effect
+     *         may keep the physical card in exile instead of allowing it to return.
      */
     public boolean exileAndReturnTransformed(GameData gameData, UUID permanentId) {
         return exileAndReturn(gameData, permanentId, true);
@@ -89,6 +90,7 @@ public class ExileAndReturnTransformedService {
         newPerm.setCard(returningCard);
         newPerm.setTransformed(returningTransformed);
         newPerm.setSummoningSick(false);
+        newPerm.setEnteredFromExile(true);
         // A back face can be a planeswalker (Kytheon, Hero of Akros; Jace, Vryn's Prodigy): it
         // enters with its starting loyalty, otherwise the state-based check kills it immediately.
         if (returningCard.hasType(CardType.PLANESWALKER) && returningCard.getLoyalty() != null) {
@@ -98,6 +100,9 @@ public class ExileAndReturnTransformedService {
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {
+            return true;
+        }
 
         if (gameQueryService.isCreature(gameData, newPerm)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
@@ -118,7 +123,8 @@ public class ExileAndReturnTransformedService {
      * Exiles a graveyard-cast spell and immediately returns its physical card transformed under
      * its owner's control.
      *
-     * @return {@code true} when the spell had a back face and was returned transformed
+     * @return {@code true} when the spell had a back face and its physical card was exiled. A
+     *         replacement effect may prevent it from entering transformed.
      */
     public boolean exileSpellAndReturnTransformed(GameData gameData, StackEntry entry) {
         if (entry.getSourceZone() != Zone.GRAVEYARD) return false;
@@ -139,6 +145,9 @@ public class ExileAndReturnTransformedService {
         newPerm.setEnteredFromGraveyardOwnerId(ownerId);
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {
+            return true;
+        }
 
         if (gameQueryService.isCreature(gameData, newPerm)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
@@ -185,6 +194,9 @@ public class ExileAndReturnTransformedService {
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
+        if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {
+            return true;
+        }
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, ownerId, backFace, null, false);
         initializeReturnedSaga(gameData, ownerId, newPerm);

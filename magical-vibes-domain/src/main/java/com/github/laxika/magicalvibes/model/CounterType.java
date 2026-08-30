@@ -19,11 +19,13 @@ public enum CounterType {
     BRICK,
     CARRION,
     CHARGE,
+    CONQUEROR,
     CHORUS,
     CORPSE,
     CUBE,
     CREDIT,
     CURRENCY,
+    COIN,
     DEATH,
     DEVOTION,
     DELAY,
@@ -43,6 +45,7 @@ public enum CounterType {
     FILIBUSTER,
     FILM,
     FINALITY,
+    FIRE,
     FLAME,
     FLOOD,
     FUNGUS,
@@ -97,6 +100,7 @@ public enum CounterType {
     OIL,
     ORE,
     PAIN,
+    PALLIATION,
     PARALYZATION,
     PETAL,
     PETRIFICATION,
@@ -128,8 +132,11 @@ public enum CounterType {
     SHRED,
     SOOT,
     SOUL,
+    STASH,
+    SUPPLY,
     STORAGE,
     STUDY,
+    TASK,
     STUN,
     THEFT,
     TIDE,
@@ -154,6 +161,7 @@ public enum CounterType {
     DECAYED,
     FLYING,
     FIRST_STRIKE,
+    DOUBLE_STRIKE,
     HEXPROOF,
     INDESTRUCTIBLE,
     LIFELINK,
@@ -165,6 +173,7 @@ public enum CounterType {
         return switch (this) {
             case FLYING -> Keyword.FLYING;
             case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
+            case DOUBLE_STRIKE -> Keyword.DOUBLE_STRIKE;
             case DEATHTOUCH -> Keyword.DEATHTOUCH;
             case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;

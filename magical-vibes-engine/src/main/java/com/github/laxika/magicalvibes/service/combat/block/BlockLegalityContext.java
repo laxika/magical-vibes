@@ -149,7 +149,9 @@ public final class BlockLegalityContext {
                          boolean cantBeBlockedByPowerLessThanIslandCount,
                          Set<CardColor> colors,
                          List<BlockabilityRestrictionEffect> pairRestrictions,
-                         BlockDenial landwalkDenial) {
+                         BlockDenial landwalkDenial,
+                         boolean landwalkUnblockable,
+                         boolean unblockableForOtherReason) {
     }
 
     /**
@@ -168,6 +170,7 @@ public final class BlockLegalityContext {
                         boolean horsemanship,
                         boolean shadow,
                         boolean blocksShadowAsThoughShadow,
+                        boolean blocksLandwalkAsThoughNoLandwalk,
                         boolean artifact,
                         Set<CardColor> colors,
                         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,

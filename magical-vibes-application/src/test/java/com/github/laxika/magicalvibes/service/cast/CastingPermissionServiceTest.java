@@ -847,4 +847,14 @@ class CastingPermissionServiceTest {
             assertThat(svc.isGraveyardCastAvailable(gd, player1Id, new GraveyardCast(condition))).isTrue();
         }
     }
+
+    @Test
+    @DisplayName("A hand-wide restriction covers both land plays and spell casts")
+    void handWideRestrictionCoversLandsAndSpells() {
+        gd.playersCantPlayCardsFromHandUntilControllerNextTurn.put(
+                player1Id, Set.of(player1Id, player2Id));
+
+        assertThat(svc.isLandPlayFromHandRestricted(gd, player1Id)).isTrue();
+        assertThat(svc.isSpellCastingFromHandRestricted(gd, player2Id)).isTrue();
+    }
 }

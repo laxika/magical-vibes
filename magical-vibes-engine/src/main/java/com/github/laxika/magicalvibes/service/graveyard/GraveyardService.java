@@ -172,6 +172,11 @@ public class GraveyardService {
         int creatureCardsEntered = (int) cardsEnteredGraveyard.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
                 .count();
+        int cardsEntered = (int) cardsEnteredGraveyard.stream()
+                .filter(card -> !card.isToken())
+                .count();
+        triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
+                gameData, targetPlayerId, cardsEntered);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, targetPlayerId, creatureCardsEntered);
 
@@ -349,29 +354,29 @@ public class GraveyardService {
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
-                                       boolean suppressLibraryCreatureCardsTrigger) {
+                                       boolean suppressLibraryBatchTriggers) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, null, null, null, false, false, false);
+                suppressLibraryBatchTriggers, null, null, null, false, false, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
-                                       boolean suppressLibraryCreatureCardsTrigger,
+                                       boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId) {
         return addCardToGraveyard(gameData, ownerId, card, sourceZone,
-                suppressLibraryCreatureCardsTrigger, battlefieldControllerId, null, null, false, false, false);
+                suppressLibraryBatchTriggers, battlefieldControllerId, null, null, false, false, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
-                                       boolean suppressLibraryCreatureCardsTrigger,
+                                       boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
                                        Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed) {
-        return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryCreatureCardsTrigger,
+        return addCardToGraveyard(gameData, ownerId, card, sourceZone, suppressLibraryBatchTriggers,
                 battlefieldControllerId, battlefieldPermanentId, battlefieldSnapshot,
                 selfGraveyardTriggerSuppressed, false, false);
     }
 
     private boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
-                                       boolean suppressLibraryCreatureCardsTrigger,
+                                       boolean suppressLibraryBatchTriggers,
                                        UUID battlefieldControllerId, UUID battlefieldPermanentId,
                                        Permanent battlefieldSnapshot, boolean selfGraveyardTriggerSuppressed,
                                        boolean suppressLibraryMillTriggers,
@@ -566,7 +571,7 @@ public class GraveyardService {
             if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkAnyCreatureCardPutIntoGraveyardFromLibraryTriggers(
                         gameData, ownerId, card);
-                if (!suppressLibraryCreatureCardsTrigger) {
+                if (!suppressLibraryBatchTriggers) {
                     triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
                             gameData, ownerId, 1);
                 }
@@ -574,6 +579,9 @@ public class GraveyardService {
         }
         if (!card.isToken()) {
             triggerCollectionService.checkCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            if (sourceZone == Zone.LIBRARY && !suppressLibraryBatchTriggers) {
+                triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(gameData, ownerId, 1);
+            }
         }
         triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;
@@ -1198,15 +1206,19 @@ public class GraveyardService {
         // Tracks all non-token cards (any type) put into the graveyard from the battlefield this turn.
         Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                 .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
-        if (sourceZone == Zone.BATTLEFIELD && !card.isToken()) {
-            allTracked.add(card.getId());
-            if (card.hasType(CardType.CREATURE)) {
+        if (sourceZone == Zone.BATTLEFIELD) {
+            if (!card.isToken()) {
+                allTracked.add(card.getId());
+            } else {
+                allTracked.remove(card.getId());
+            }
+            if (card.hasType(CardType.CREATURE) && !card.isToken()) {
                 tracked.add(card.getId());
-                if (!creatureDeathTriggersSuppressed) {
-                    triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
-                }
             } else {
                 tracked.remove(card.getId());
+            }
+            if (card.hasType(CardType.CREATURE) && !creatureDeathTriggersSuppressed) {
+                triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
             }
         } else {
             tracked.remove(card.getId());
@@ -1470,9 +1482,14 @@ public class GraveyardService {
      * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
      */
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        notifyCardsLeftGraveyard(gameData, ownerId, 1);
+    }
+
+    private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count) {
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
+        gameData.cardsLeftGraveyardCountThisTurn.merge(ownerId, count, Integer::sum);
         // Krovikan Vampire: a card that leaves the graveyard is no longer returnable even if it
         // re-enters the graveyard later this turn (loses track).
         pruneDamagedCreatureDiedTrackingNotInGraveyard(gameData);
@@ -1487,7 +1504,7 @@ public class GraveyardService {
         if (leavingCard != null) {
             gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
         }
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, 1);
         if (leavingCard != null && !leavingCard.isToken() && leavingCard.hasType(CardType.CREATURE)) {
             notifyCreatureCardsLeftGraveyard(gameData, ownerId, 1);
         }
@@ -1501,7 +1518,7 @@ public class GraveyardService {
             return;
         }
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
-        notifyCardsLeftGraveyard(gameData, ownerId);
+        notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size());
         int creatureCardCount = (int) leavingCards.stream()
                 .filter(card -> !card.isToken() && card.hasType(CardType.CREATURE))
                 .count();
@@ -1710,6 +1727,11 @@ public class GraveyardService {
         int creatureCardsEntered = (int) entered.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
                 .count();
+        int cardsEntered = (int) entered.stream()
+                .filter(card -> !card.isToken())
+                .count();
+        triggerCollectionService.checkCardsPutIntoGraveyardFromLibraryTriggers(
+                gameData, ownerId, cardsEntered);
         triggerCollectionService.checkCreatureCardsPutIntoGraveyardFromLibraryTriggers(
                 gameData, ownerId, creatureCardsEntered);
         return entered;

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CastingOption;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
+import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -33,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
@@ -129,6 +132,11 @@ public class CardViewFactory {
                 .map(CardSubtype::getDisplayName)
                 .toList()
                 : List.of();
+        PayLifeOrPayManaCost additionalCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(PayLifeOrPayManaCost.class::isInstance)
+                .map(PayLifeOrPayManaCost.class::cast)
+                .findFirst()
+                .orElse(null);
 
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
         // so the spell is projected as a nested view rather than as a face the client flips to.
@@ -172,6 +180,10 @@ public class CardViewFactory {
         boolean graveyardCastRequiresDiscard = card.getCastingOption(GraveyardCast.class)
                 .flatMap(castingOption -> castingOption.getCost(DiscardCardCastingCost.class))
                 .isPresent();
+        var graveyardCastExileCost = card.getCastingOption(GraveyardCast.class)
+                .flatMap(castingOption -> castingOption.getCost(ExileNCardsFromGraveyardCastingCost.class));
+        int graveyardCastExileCount = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::count).orElse(0);
+        String graveyardCastExileLabel = graveyardCastExileCost.map(ExileNCardsFromGraveyardCastingCost::label).orElse(null);
 
         BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof BuybackEffect)
@@ -240,6 +252,8 @@ public class CardViewFactory {
                 alternateCostDiscardsHandCard,
                 alternateCostRevealsHandCard,
                 graveyardCastRequiresDiscard,
+                graveyardCastExileCount,
+                graveyardCastExileLabel,
                 graveyardAbilityViews,
                 handAbilityViews,
                 exileAbilityViews,
@@ -259,6 +273,8 @@ public class CardViewFactory {
                 0,
                 chooseCreatureTypeCost,
                 creatureTypeChoices,
+                additionalCost != null ? additionalCost.lifeAmount() : 0,
+                additionalCost != null ? additionalCost.manaCost() : null,
                 collectEvidenceAlternativeCost != null,
                 collectEvidenceAlternativeCost != null ? collectEvidenceAlternativeCost.minimumManaValue() : 0,
                 prepareSpellView);
@@ -275,6 +291,25 @@ public class CardViewFactory {
             return base;
         }
         return base.toBuilder().needsTarget(true).build();
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       int additionalGraveyardExileCount,
+                                       String additionalGraveyardExileLabel) {
+        CardView base = createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities);
+        if (additionalGraveyardExileCount <= 0) {
+            return base;
+        }
+        String label = base.graveyardCastExileCount() == 0
+                ? additionalGraveyardExileLabel
+                : base.graveyardCastExileLabel() == null
+                ? additionalGraveyardExileLabel
+                : base.graveyardCastExileLabel() + " and " + additionalGraveyardExileLabel;
+        return base.toBuilder()
+                .graveyardCastExileCount(base.graveyardCastExileCount() + additionalGraveyardExileCount)
+                .graveyardCastExileLabel(label)
+                .build();
     }
 
     private static boolean disturbBackFaceNeedsTarget(Card card) {
@@ -338,6 +373,11 @@ public class CardViewFactory {
                 ability.isRequiresXValue(),
                 ability.isXValueFromControlledCreatureCounters(),
                 ability.getXValueFromCardsInHandColor(),
+                ability.getEffects().stream()
+                        .filter(WaterbendCost.class::isInstance)
+                        .map(WaterbendCost.class::cast)
+                        .anyMatch(WaterbendCost::scalesWithX),
+                ability.getMinimumXValue(),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalOptions);

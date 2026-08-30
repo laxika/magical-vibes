@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BahamutWardenOfLight;
+import com.github.laxika.magicalvibes.cards.c.ContainmentPriest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DionBahamut.class, BahamutWardenOfLight.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({DionBahamut.class, BahamutWardenOfLight.class, ContainmentPriest.class,
+        FountainOfYouth.class, GrizzlyBears.class})
 class DionBahamutTest extends BaseCardTest {
 
     @Test
@@ -69,6 +72,26 @@ class DionBahamutTest extends BaseCardTest {
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isTrue();
         assertThat(bahamut.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void containmentPriestExilesDionInsteadOfReturningBahamut() {
+        harness.addToBattlefield(player1, new ContainmentPriest());
+        castDion();
+        Permanent dion = findPermanent(player1, DionBahamut.class);
+        Card physicalCard = dion.getOriginalCard();
+        dion.setSummoningSick(false);
+
+        addTransformMana();
+        harness.activateAbility(player1, indexOf(player1, dion), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getOriginalCard().getId().equals(physicalCard.getId()));
+        assertThat(gd.exiledCards)
+                .extracting(entry -> entry.card())
+                .containsExactly(physicalCard);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

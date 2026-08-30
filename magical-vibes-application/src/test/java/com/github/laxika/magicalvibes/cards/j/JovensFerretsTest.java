@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JovensFerrets.class, Roterothopter.class})
 class JovensFerretsTest extends BaseCardTest {
 
     @Test
@@ -29,23 +30,16 @@ class JovensFerretsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Becoming blocked schedules the blocker to be tapped at end of combat")
-    void becomingBlockedSchedulesTap() {
+    @DisplayName("The end-of-combat ability does not trigger during blocker declaration")
+    void endOfCombatAbilityDoesNotTriggerDuringBlockerDeclaration() {
         Permanent ferrets = addCreatureReady(player1, new JovensFerrets());
         ferrets.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player2, new Roterothopter());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.stack).anyMatch(e ->
-                e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && e.getCard().getName().equals("Joven's Ferrets")
-                        && spider.getId().equals(e.getTargetId()));
-
-        harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(TapAndSkipUntapAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -53,16 +47,44 @@ class JovensFerretsTest extends BaseCardTest {
     void blockerTappedAndUntapLockedAtEndOfCombat() {
         Permanent ferrets = addCreatureReady(player1, new JovensFerrets());
         ferrets.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        Permanent blocker = addCreatureReady(player2, new Roterothopter());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).isNotEmpty();
+
         harness.passBothPriorities();
 
-        assertThat(spider.isTapped()).isTrue();
-        assertThat(spider.getSkipUntapCount()).isEqualTo(1);
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getSkipUntapCount()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getSkipUntapCount()).isZero();
+
+        harness.performUntapStep(player2);
+        assertThat(blocker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger if Joven's Ferrets leaves before end of combat")
+    void doesNotTriggerIfSourceLeavesBeforeEndOfCombat() {
+        Permanent ferrets = addCreatureReady(player1, new JovensFerrets());
+        ferrets.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Roterothopter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ferrets));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(blocker.isTapped()).isFalse();
+        assertThat(blocker.getSkipUntapCount()).isZero();
     }
 
     @Test
@@ -73,8 +95,8 @@ class JovensFerretsTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
-        assertThat(gd.getDelayedActions(TapAndSkipUntapAtEndOfCombat.class)).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

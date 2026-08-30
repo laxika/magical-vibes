@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Forget.class, GrizzlyBears.class, Island.class, Dodecapod.class})
 class ForgetTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,13 @@ class ForgetTest extends BaseCardTest {
     @Test
     @DisplayName("Target discards two chosen cards, then draws two")
     void discardsTwoThenDrawsTwo() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Peek())));
-        harness.setLibrary(player2, new ArrayList<>(List.of(new Island(), new Island())));
+        GrizzlyBears discardedFirst = new GrizzlyBears();
+        GrizzlyBears discardedSecond = new GrizzlyBears();
+        GrizzlyBears retained = new GrizzlyBears();
+        Island islandFirst = new Island();
+        Island islandSecond = new Island();
+        harness.setHand(player2, new ArrayList<>(List.of(discardedFirst, discardedSecond, retained)));
+        harness.setLibrary(player2, new ArrayList<>(List.of(islandFirst, islandSecond)));
         harness.setHand(player1, List.of(new Forget()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -42,22 +49,26 @@ class ForgetTest extends BaseCardTest {
         // Target player (not the caster) chooses which two to discard.
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player2.getId());
-        harness.handleCardChosen(player2, 0); // discard Grizzly Bears
-        harness.handleCardChosen(player2, 0); // discard Peek
+        harness.handleCardChosen(player2, 0); // discard the first card
+        harness.handleCardChosen(player2, 0); // discard the second card
 
         // Discarded two, then drew two — hand is back to three, both Islands drawn.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
-        assertThat(gd.playerHands.get(player2.getId())).filteredOn(c -> c.getName().equals("Island")).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactlyInAnyOrder(retained, islandFirst, islandSecond);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(discardedFirst, discardedSecond);
     }
 
     @Test
     @DisplayName("Target holding one card discards it and draws only one")
     void oneCardDiscardsOneDrawsOne() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
-        harness.setLibrary(player2, new ArrayList<>(List.of(new Island(), new Island())));
+        GrizzlyBears discarded = new GrizzlyBears();
+        Island drawn = new Island();
+        Island remaining = new Island();
+        harness.setHand(player2, new ArrayList<>(List.of(discarded)));
+        harness.setLibrary(player2, new ArrayList<>(List.of(drawn, remaining)));
         harness.setHand(player1, List.of(new Forget()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -68,9 +79,9 @@ class ForgetTest extends BaseCardTest {
 
         // Discarded one, so draws only one (not two).
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Island");
-        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
     }
 
     @Test
@@ -81,11 +92,39 @@ class ForgetTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forget()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Targeting yourself does not make the discard opponent-caused")
+    void selfTargetDoesNotEnableOpponentDiscardReplacement() {
+        Forget forget = new Forget();
+        Dodecapod dodecapod = new Dodecapod();
+        GrizzlyBears grizzlyBears = new GrizzlyBears();
+        Island islandFirst = new Island();
+        Island islandSecond = new Island();
+        harness.setHand(player1, new ArrayList<>(List.of(forget, dodecapod, grizzlyBears)));
+        harness.setLibrary(player1, new ArrayList<>(List.of(islandFirst, islandSecond)));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0); // discard Dodecapod
+        harness.handleCardChosen(player1, 0); // discard Grizzly Bears
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == dodecapod);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(dodecapod, grizzlyBears);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(islandFirst, islandSecond);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

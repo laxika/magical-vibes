@@ -27,11 +27,16 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  */
 public record ControlledCreaturesEnterWithAdditionalCountersEffect(
         CardSubtype subtype,
-        DynamicAmount count
+        DynamicAmount count,
+        boolean allCreatures
 ) implements CardEffect {
 
+    public ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype subtype, DynamicAmount count) {
+        this(subtype, count, false);
+    }
+
     public ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype subtype, int count) {
-        this(subtype, new Fixed(count));
+        this(subtype, new Fixed(count), false);
     }
 
     /**
@@ -40,5 +45,9 @@ public record ControlledCreaturesEnterWithAdditionalCountersEffect(
      */
     public static ControlledCreaturesEnterWithAdditionalCountersEffect ofChosenSubtype(int count) {
         return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count);
+    }
+
+    public static ControlledCreaturesEnterWithAdditionalCountersEffect forAllCreatures(DynamicAmount count) {
+        return new ControlledCreaturesEnterWithAdditionalCountersEffect(null, count, true);
     }
 }

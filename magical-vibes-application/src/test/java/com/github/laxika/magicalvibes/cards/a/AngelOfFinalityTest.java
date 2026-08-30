@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,8 +22,9 @@ class AngelOfFinalityTest extends BaseCardTest {
         Card shock = new Shock();
         harness.setGraveyard(player2, new ArrayList<>(List.of(bears, shock)));
 
-        castAngelOfFinality(player2.getId());
+        castAngelOfFinality();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -39,8 +39,9 @@ class AngelOfFinalityTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
 
-        castAngelOfFinality(player1.getId());
+        castAngelOfFinality();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -49,11 +50,11 @@ class AngelOfFinalityTest extends BaseCardTest {
                 .contains(bears.getId());
     }
 
-    private void castAngelOfFinality(UUID targetPlayerId) {
+    private void castAngelOfFinality() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new AngelOfFinality()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0);
     }
 }

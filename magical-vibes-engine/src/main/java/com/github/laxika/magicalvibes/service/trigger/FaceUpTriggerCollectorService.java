@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -11,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +81,17 @@ public class FaceUpTriggerCollectorService {
             resolvedEffect = conditional.wrapped();
         }
         Card sourceCard = match.permanent().getCard();
+        boolean untapsTurnedPermanent = resolvedEffect instanceof UntapPermanentsEffect untap
+                && untap.scope() == TapUntapScope.TARGET;
+        if (!untapsTurnedPermanent && resolvedEffect.targetSpec().declaredTarget() != null) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
+                    match.permanent().getId(), faceUp.turnedPermanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers when {} is turned face up (awaiting target)",
+                    match.gameData().id, sourceCard.getName(), faceUp.turnedPermanent().getCard().getName());
+            return true;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -87,6 +101,9 @@ public class FaceUpTriggerCollectorService {
                 faceUp.turnedPermanent().getId(),
                 match.permanent().getId());
         entry.setTriggeringPermanentId(faceUp.turnedPermanent().getId());
+        if (untapsTurnedPermanent) {
+            entry.setNonTargeting(true);
+        }
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when {} is turned face up",

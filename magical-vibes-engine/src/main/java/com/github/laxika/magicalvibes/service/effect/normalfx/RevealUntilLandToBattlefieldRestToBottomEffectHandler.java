@@ -59,13 +59,20 @@ public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements No
         String revealedNames = revealed.stream().map(Card::getName).collect(Collectors.joining(", "));
         gameLogService.append(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
+        var typedEffect = (RevealUntilLandToBattlefieldRestToBottomEffect) effect;
+
         // The land (if any) enters the battlefield; the rest go on the bottom in any order.
         List<Card> rest = new ArrayList<>(revealed);
         if (land != null) {
             rest.remove(land);
             Permanent perm = new Permanent(land);
+            if (typedEffect.entersTapped()) {
+                perm.tap();
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(land, playerName));
+            gameLogService.append(gameData, typedEffect.entersTapped()
+                    ? GameLog.entersBattlefieldTappedUnder(land, playerName)
+                    : GameLog.entersBattlefieldUnder(land, playerName));
         } else {
             gameLogService.append(gameData, GameLog.text(playerName + " reveals their entire library — no land found."));
         }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
@@ -62,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -75,6 +78,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacementSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -100,6 +104,7 @@ public class DamagePreventionService {
     private final DamagePreventionReplacementSupport damagePreventionReplacementSupport;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
+    private final ObjectProvider<DestructionSupport> destructionSupportProvider;
     private final GameLogService gameLogService;
 
     public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
@@ -107,6 +112,7 @@ public class DamagePreventionService {
                                    DamagePreventionReplacementSupport damagePreventionReplacementSupport,
                                    StaticEffectConditionResolver staticEffectConditionResolver,
                                    ObjectProvider<PermanentControlSupport> permanentControlSupportProvider,
+                                   ObjectProvider<DestructionSupport> destructionSupportProvider,
                                    GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
@@ -115,7 +121,22 @@ public class DamagePreventionService {
         this.damagePreventionReplacementSupport = damagePreventionReplacementSupport;
         this.staticEffectConditionResolver = staticEffectConditionResolver;
         this.permanentControlSupportProvider = permanentControlSupportProvider;
+        this.destructionSupportProvider = destructionSupportProvider;
         this.gameLogService = gameLogService;
+    }
+
+    /** Applies a one-shot replacement that destroys a target creature instead of dealing damage. */
+    public boolean replaceNextDamageToTargetWithDestruction(GameData gameData, Permanent permanent, int damage) {
+        if (damage <= 0 || permanent == null || permanent.getDamageDestructionShield() <= 0
+                || !gameQueryService.isCreature(gameData, permanent)
+                || gameQueryService.findPermanentById(gameData, permanent.getId()) != permanent) {
+            return false;
+        }
+
+        permanent.setDamageDestructionShield(permanent.getDamageDestructionShield() - 1);
+        destructionSupportProvider.getObject().tryDestroyAndLog(
+                gameData, permanent, "a damage replacement effect");
+        return true;
     }
 
     public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
@@ -250,6 +271,7 @@ public class DamagePreventionService {
 
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
                                               boolean isCombatDamage, Permanent damageSource) {
+        if (replaceNextDamageToTargetWithDestruction(gameData, permanent, damage)) return 0;
         if (damage > 0 && gameQueryService.isCreature(gameData, permanent)) {
             damage = applyControlledCreaturesDamageReduction(gameData, permanent, damage);
             if (damage <= 0) return 0;
@@ -407,6 +429,17 @@ public class DamagePreventionService {
                     int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
                     if (counters > 0) {
                         permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+                        recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+                    }
+                }
+                return 0;
+            }
+            if (permanent.isAllDamageToPlusOnePlusOneCounterPreventionShield() && damage > 0) {
+                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                    int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
+                    if (counters > 0) {
+                        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                                permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
                         recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
                     }
                 }
@@ -713,6 +746,40 @@ public class DamagePreventionService {
         if (sourcePermanentId == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         return source != null && source.isAttacking();
+    }
+
+    public int applyChannelHarmPrevention(GameData gameData, UUID protectedPlayerId,
+                                          UUID sourceControllerId, int damage) {
+        return applyChannelHarmPrevention(gameData, protectedPlayerId, sourceControllerId, damage, true);
+    }
+
+    public int applyChannelHarmPreventionToPermanent(GameData gameData, Permanent target,
+                                                     UUID sourceControllerId, int damage) {
+        UUID protectedPlayerId = gameQueryService.findPermanentController(gameData, target.getId());
+        return applyChannelHarmPrevention(gameData, protectedPlayerId, sourceControllerId, damage, true);
+    }
+
+    private int applyChannelHarmPrevention(GameData gameData, UUID protectedPlayerId,
+                                           UUID sourceControllerId, int damage, boolean damagePreventable) {
+        if (damage <= 0 || !damagePreventable || !gameQueryService.isDamagePreventable(gameData)
+                || protectedPlayerId == null || sourceControllerId == null
+                || protectedPlayerId.equals(sourceControllerId)) {
+            return damage;
+        }
+
+        for (ChannelHarmShield shield : gameData.channelHarmShields) {
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())) {
+                continue;
+            }
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    shield.sourceCard(), protectedPlayerId,
+                    List.of(new DealDamageToTargetCreatureEffect(damage)),
+                    "Have " + shield.sourceCard().getName() + " deal " + damage
+                            + " damage to the target creature?",
+                    shield.targetCreatureId()));
+            return 0;
+        }
+        return damage;
     }
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
@@ -1274,6 +1341,11 @@ public class DamagePreventionService {
             if (shield.combatOnly() && !combatDamage) continue;
             // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
+            if (!gameData.playerIds.contains(shield.redirectTargetId())
+                    && gameQueryService.findPermanentById(gameData, shield.redirectTargetId()) == null) {
+                it.remove();
+                continue;
+            }
 
             if (shield.isNextEvent()) {
                 // Next-event (Jade Monolith, Mirrorwood Treefolk): redirect all of this one damage event,

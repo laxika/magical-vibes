@@ -115,6 +115,13 @@ public final class TargetFilters {
                 "Target must be a noncreature permanent an opponent controls");
     }
 
+    public static PermanentPredicateTargetFilter withGift(PermanentPredicateTargetFilter withoutGift,
+                                                           PermanentPredicateTargetFilter withGift) {
+        return new PermanentPredicateTargetFilter(
+                withoutGift.predicate(), withoutGift.errorMessage(), withoutGift.kickedPredicate(),
+                withGift.predicate(), withGift.errorMessage());
+    }
+
     /** "Target must be a permanent you control" */
     public static ControlledPermanentPredicateTargetFilter permanentYouControl() {
         return new ControlledPermanentPredicateTargetFilter(

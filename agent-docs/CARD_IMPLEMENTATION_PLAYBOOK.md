@@ -211,9 +211,9 @@ public class ExampleCard extends Card {
 
 ## Targeting checklist
 
-- Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
+- Targeting is computed automatically from effects — and from an activated ability's `TargetFilter` — for both spells (`Card`) and activated abilities (`ActivatedAbility`).
 - Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` built from a `TargetPredicates` factory — `TargetSpec.harmful(TargetPredicates.creature())`, `benign(TargetPredicates.permanent())`, `harmful(TargetPredicates.anyTarget())`, `benign(TargetPredicates.spellOnStack())`, `benign(TargetPredicates.graveyardCard())`, etc. (`harmful` = damage/fight/destroy/exile/sacrifice; add a `PermanentPredicate` argument to narrow). This is the ONE targeting declaration; the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations" for the factory table and a worked example.
-- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute targeting from effects. `ActivatedAbility.isNeedsTarget()` and `ActivatedAbility.isNeedsSpellTarget()` are derived getters on the ability.
+- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute spell targeting from effects. `ActivatedAbility.isNeedsTarget()` also considers the ability's `TargetFilter` and `isNeedsSpellTarget()` remains effect-derived.
 - For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` to get the resolved effect list before computing targets.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.

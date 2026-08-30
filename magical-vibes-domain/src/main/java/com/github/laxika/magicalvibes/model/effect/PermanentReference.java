@@ -19,8 +19,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *       Read from {@code StackEntry.triggeringPermanentId}, so an effect using this value belongs
  *       only on a trigger slot that populates it.</li>
  *   <li>{@link #RETURNED} — the permanent created by a preceding targeted graveyard return. Read
- *       from the graveyard card ID in {@code StackEntry.targetId}; the reference is unresolved when
- *       the card was not returned or has already left the battlefield.</li>
+ *       from the graveyard card ID in {@code StackEntry.targetId} or its targeted-card ID list;
+ *       the reference is unresolved when the card was not returned or has already left the
+ *       battlefield.</li>
  * </ul>
  *
  * <p>No value ever fizzles: if the referenced permanent has left the battlefield, nothing happens.

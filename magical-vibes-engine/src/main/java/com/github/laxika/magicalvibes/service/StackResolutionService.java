@@ -305,6 +305,10 @@ public class StackResolutionService {
         entry.getEnteringCounters().forEach((counterType, count) ->
                 perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
         perm.setAlternateCost(entry.isAlternateCost());
+        if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
+            perm.getGrantedKeywords().add(Keyword.HASTE);
+        }
+        perm.setEscaped(entry.isCastWithEscape());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         perm.setEnteredFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
@@ -399,7 +403,8 @@ public class StackResolutionService {
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             gameData.playerDecks.get(ownerId).add(physicalCard);
-        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb() || entry.isExileInsteadOfGraveyard()) {
+        } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb()
+                || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
             graveyardService.addCardToGraveyard(gameData, ownerId, physicalCard);
@@ -497,6 +502,7 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
         }
+        gameData.transferCardsExiledByPermanent(entry.getPhysicalCard().getId(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
@@ -606,7 +612,6 @@ public class StackResolutionService {
                 .build());
         log.info("Game {} - {} reanimates {} for {}", gameData.id, card.getName(), creature.getCard().getName(), playerName);
 
-        triggerCollectionService.checkAuraAttachedTriggers(gameData, auraPerm, creature.getId());
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
@@ -686,8 +691,6 @@ public class StackResolutionService {
                         .text(" under " + playerName + "'s control.")
                         .build());
                 log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, characteristics.getName(), target.getCard().getName(), playerName);
-
-                triggerCollectionService.checkAuraAttachedTriggers(gameData, perm, target.getId());
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
@@ -915,7 +918,7 @@ public class StackResolutionService {
                 .filter(e -> e instanceof NumberChoiceEffect)
                 .map(e -> (NumberChoiceEffect) e)
                 .findFirst().orElse(null);
-        if (numberChoice != null) {
+        if (numberChoice != null && !numberChoice.chooseRandomly()) {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginNumberChoice(gameData, controllerId, justEntered.getId(),
@@ -1016,7 +1019,8 @@ public class StackResolutionService {
                 Card dispositionCard = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.playerDecks.get(entry.getOwnerId()).add(dispositionCard);
-                } else if (entry.isCastWithFlashback() || entry.isExileInsteadOfGraveyard()) {
+                } else if (entry.isCastWithFlashback() || entry.isCastWithEscape()
+                        || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
                     gameLogService.append(gameData, GameLog.isExiled(dispositionCard));
                 } else {
@@ -1086,14 +1090,6 @@ public class StackResolutionService {
      * countered on the stack do not; fizzled abilities never reach this point. Incremented before
      * effect dispatch so the condition sees the count including the current resolution, and only
      * here (not on async resume) so each resolution counts exactly once.
-     * entry is an activated or triggered ability whose effects branch on
-     * {@code NthAbilityResolutionThisTurn} ("if this is the Nth time this ability has resolved this
-     * turn", e.g. Ashling the Pilgrim, Nissa, Resurgent Animist, and Vito, Fanatic of Aclazotz).
-     * Counted at resolution, so
-     * copies of the ability count but abilities countered on the stack do not; fizzled abilities
-     * never reach this point. Incremented before effect dispatch so the condition sees the count
-     * including the current resolution, and only here (not on async resume) so each resolution
-     * counts exactly once.
      */
     private void countAbilityResolution(GameData gameData, StackEntry entry) {
         if ((entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
@@ -1155,6 +1151,10 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
+        } else if (entry.isCastWithEscape()) {
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addToExile(ownerId, physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (escape)."));
         } else if (entry.isCastWithOmen()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.playerDecks.get(ownerId).add(physicalCard);
@@ -1166,6 +1166,16 @@ public class StackResolutionService {
             gameData.exilePlayPermissions.put(physicalCard.getId(), entry.getControllerId());
             gameLogService.append(gameData, GameLog.cardThen(physicalCard,
                     " is exiled with permission to cast its creature face."));
+        } else if (entry.getSourceZone() == Zone.HAND
+                && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
+                && gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
+                .getOrDefault(entry.getControllerId(), 0) > 0) {
+            gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.compute(
+                    entry.getControllerId(), (ignored, count) -> count == null || count <= 1 ? null : count - 1);
+            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
+            gameData.addCardToHand(ownerId, physicalCard);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " is returned to its owner's hand instead of going to the graveyard."));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
