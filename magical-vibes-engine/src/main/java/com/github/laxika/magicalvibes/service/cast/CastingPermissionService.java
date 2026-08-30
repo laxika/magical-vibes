@@ -1185,6 +1185,10 @@ public class CastingPermissionService {
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
+                if (permission.onlyDuringControllerTurn()
+                        && !playerId.equals(gameData.activePlayerId)) {
+                    continue;
+                }
                 if (permission.oncePerControllerTurn()
                         && (!playerId.equals(gameData.activePlayerId)
                             || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {

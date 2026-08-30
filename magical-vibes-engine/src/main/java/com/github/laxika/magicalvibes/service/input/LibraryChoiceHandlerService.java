@@ -635,6 +635,12 @@ public class LibraryChoiceHandlerService {
                 finishSearchAndResume(gameData);
                 return;
             }
+            if (followUp.secondBoundedPick() != null
+                    && startSecondBoundedPick(gameData, deckOwnerId,
+                            new ArrayList<>(librarySearch.sourceCards()), accumulatedCards,
+                            followUp.secondBoundedPick())) {
+                return;
+            }
             // CR 608.2f: Place any accumulated battlefield cards before finishing
             if (!accumulatedCards.isEmpty() && toBattlefield) {
                 placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
@@ -1664,6 +1670,9 @@ public class LibraryChoiceHandlerService {
     }
 
     private void finishSearchAndResume(GameData gameData) {
+        if (finishPortentOfCalamity(gameData)) {
+            return;
+        }
         StackEntry pending = gameData.pendingEffectResolutionEntry;
         if (pending != null) {
             effectResolutionService.resolveEffectsFrom(gameData, pending, gameData.pendingEffectResolutionIndex);
@@ -1676,6 +1685,48 @@ public class LibraryChoiceHandlerService {
             }
         }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private boolean finishPortentOfCalamity(GameData gameData) {
+        PendingInteraction.PortentOfCalamityState state =
+                gameData.peekPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
+        if (state == null) {
+            return false;
+        }
+
+        List<Card> selectedCards = state.revealedCardIds().stream()
+                .map(gameData::findExiledCard)
+                .filter(java.util.Objects::nonNull)
+                .map(com.github.laxika.magicalvibes.model.ExiledCardEntry::card)
+                .toList();
+        if (selectedCards.size() < 4) {
+            gameData.pollPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
+            for (Card card : selectedCards) {
+                gameData.removeFromExile(card.getId());
+                gameData.playerHands.get(state.playerId()).add(card);
+            }
+            return false;
+        }
+
+        List<UUID> castableIds = selectedCards.stream()
+                .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY)
+                        || card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)
+                        || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER))
+                .map(Card::getId)
+                .toList();
+        if (castableIds.isEmpty()) {
+            gameData.pollPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
+            for (Card card : selectedCards) {
+                gameData.removeFromExile(card.getId());
+                gameData.playerHands.get(state.playerId()).add(card);
+            }
+            return false;
+        }
+
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.ImprovisationCapstoneCastChoice(
+                        state.playerId(), castableIds, 1));
+        return true;
     }
 
     private void performStateBasedActionsIfResolutionComplete(GameData gameData) {
@@ -1876,7 +1927,7 @@ public class LibraryChoiceHandlerService {
                         LibrarySearchFollowUp.SecondBoundedPick.cardType(
                                 spec.remainingTypes().getFirst(),
                                 spec.remainingTypes().subList(1, spec.remainingTypes().size()),
-                                spec.randomRest(), spec.destination()));
+                                spec.restToGraveyard(), spec.randomRest(), spec.destination()));
             }
             return false;
         }
@@ -1895,7 +1946,8 @@ public class LibraryChoiceHandlerService {
             nextFollowUp = LibrarySearchFollowUp.forSubtypeBoundedPick(
                     spec.remainingSubtypes(), spec.randomRest(), spec.destination());
         } else if (!spec.remainingTypes().isEmpty()) {
-            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(spec.remainingTypes(), spec.destination());
+            nextFollowUp = LibrarySearchFollowUp.forCardTypeBoundedPick(
+                    spec.remainingTypes(), spec.destination(), spec.restToGraveyard());
         } else if (spec.randomRest()) {
             nextFollowUp = LibrarySearchFollowUp.forBoundedPick(
                     LibrarySearchFollowUp.SecondBoundedPick.terminal(true, spec.destination()));

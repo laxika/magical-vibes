@@ -44,6 +44,7 @@ class LilypadVillageTest extends BaseCardTest {
     void creatureOnlyBlueManaCastsCreatureSpells() {
         addVillage();
         harness.activateAbility(player1, 0, 1, null, null);
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         harness.castCreature(player1, 0);

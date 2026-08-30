@@ -2252,7 +2252,7 @@ public class CombatDamageService {
                         watch.sourceCard().getName() + "'s delayed trigger",
                         new ArrayList<>(watch.effects()),
                         (UUID) null,
-                        (UUID) null);
+                        entry.getKey().getId());
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));

@@ -19,11 +19,11 @@ class MahaItsFeathersNightTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new HillGiant());
         harness.addToBattlefield(player2, new GloriousAnthem());
 
-        assertThat(maha.getEffectivePower()).isEqualTo(6);
-        assertThat(maha.getEffectiveToughness()).isEqualTo(5);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, maha)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, maha)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 }

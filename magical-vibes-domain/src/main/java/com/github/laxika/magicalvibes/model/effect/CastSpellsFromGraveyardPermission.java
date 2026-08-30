@@ -25,6 +25,11 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
         return false;
     }
 
+    /** True if this permission applies only during its controller's turn. */
+    default boolean onlyDuringControllerTurn() {
+        return false;
+    }
+
     /** Number of additional cards the player must exile from their graveyard to cast the spell. */
     default int additionalGraveyardExileCount() {
         return 0;

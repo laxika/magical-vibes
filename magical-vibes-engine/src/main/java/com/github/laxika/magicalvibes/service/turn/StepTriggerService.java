@@ -3381,6 +3381,13 @@ public class StepTriggerService {
                         card.getLoyalty() + pending.loyaltyCountersOnPlaneswalkers(), isCreature);
                 perm.setCounterCount(CounterType.LOYALTY, loyalty);
             }
+            if (pending.counterTypeOnReturn() != null && pending.counterAmountOnReturn() > 0) {
+                int counters = gameQueryService.replaceCounters(gameData, perm, controllerId,
+                        pending.counterTypeOnReturn(), pending.counterAmountOnReturn(), controllerId);
+                if (counters > 0) {
+                    perm.setCounterCount(pending.counterTypeOnReturn(), counters);
+                }
+            }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
                 perm.getPersistentGrantedKeywords().add(Keyword.HASTE);

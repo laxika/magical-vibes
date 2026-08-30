@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGrav
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -60,10 +61,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -464,6 +467,19 @@ public class TriggeredAbilityQueueService {
                 .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
                 .findFirst()
                 .orElse(-1);
+        if (targetGroupIndex < 0) {
+            Set<Integer> compatibleTargetGroups = Arrays.stream(EffectSlot.values())
+                    .flatMap(slot -> sourceCard.getEffects(slot).stream())
+                    .filter(authored -> effects.stream()
+                            .anyMatch(queued -> authored.getClass().equals(queued.getClass())))
+                    .mapToInt(sourceCard::getEffectTargetIndex)
+                    .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
+                    .boxed()
+                    .collect(Collectors.toSet());
+            if (compatibleTargetGroups.size() == 1) {
+                targetGroupIndex = compatibleTargetGroups.iterator().next();
+            }
+        }
         return targetGroupIndex >= 0
                 ? sourceCard.getSpellTargets().get(targetGroupIndex).getFilter()
                 : sourceCard.getTargetFilter();

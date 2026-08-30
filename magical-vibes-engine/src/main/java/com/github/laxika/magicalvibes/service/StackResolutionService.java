@@ -362,6 +362,7 @@ public class StackResolutionService {
 
     private void handleResolvedPermanentEtb(GameData gameData, UUID controllerId, Card card,
                                             UUID targetId, int etbMode, StackEntry entry) {
+        int stackSizeBeforeEtb = gameData.stack.size();
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
                     targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
@@ -373,6 +374,14 @@ public class StackResolutionService {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card,
                     targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
                     entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
+        }
+        if (entry.isGiftPromised()) {
+            for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
+                StackEntry triggeredEntry = gameData.stack.get(i);
+                if (triggeredEntry.getCard().getId().equals(card.getId())) {
+                    triggeredEntry.setGiftPromised(true);
+                }
+            }
         }
     }
 

@@ -121,12 +121,13 @@ public class ValidTargetService {
     }
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
-        boolean isMultiTarget = card.getMaxTargets() > 1;
         int effectiveXValue = resolveCastTimeXValue(gameData, card, controllerId, xValue);
 
         // For modal spells (and modal ETB creatures) the request's xValue carries the encoded
         // mode selection; resolve to the chosen mode's effects so targeting reflects that mode.
         ChooseOneEffect.ChooseOneOption chosenMode = findChosenMode(card, xValue);
+        boolean isMultiTarget = card.getMaxTargets() > 1
+                || chosenMode != null && chosenMode.targetFilters() != null;
         Integer modeSelection = chosenMode != null || hasModalEffect(card) && xValue != null ? xValue : null;
 
         List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
@@ -140,7 +141,10 @@ public class ValidTargetService {
             return new ValidTargetsResponse(List.of(), validOpponentIds, List.of(), List.of(),
                     1, 1, "Choose an opponent for " + card.getName());
         }
-        TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter() : null;
+        TargetFilter modeFilter = chosenMode == null ? null
+                : chosenMode.targetFilters() != null && !chosenMode.targetFilters().isEmpty()
+                ? chosenMode.targetFilters().getFirst()
+                : chosenMode.targetFilter();
         Set<TargetType> allowedTargets;
         if (kicked != null || modeSelection != null) {
             spellEffects = EffectResolution.resolveEffects(spellEffects, kicked, modeSelection);
@@ -167,6 +171,9 @@ public class ValidTargetService {
             // filter override plays the same role for modal spells.
             TargetFilter positionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
                     ? card.getMultiTargetFilters().get(positionIndex)
+                    : chosenMode != null && chosenMode.targetFilters() != null
+                            && positionIndex < chosenMode.targetFilters().size()
+                    ? chosenMode.targetFilters().get(positionIndex)
                     : modeFilter;
 
             if (!gameQueryService.isPeaceTalksActive(gameData)) {
@@ -290,6 +297,9 @@ public class ValidTargetService {
             // opponent's). Groups that declare no graveyard filter keep the card-wide enumeration.
             TargetFilter graveyardPositionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
                     ? card.getMultiTargetFilters().get(positionIndex)
+                    : chosenMode != null && chosenMode.targetFilters() != null
+                            && positionIndex < chosenMode.targetFilters().size()
+                    ? chosenMode.targetFilters().get(positionIndex)
                     : null;
             if (graveyardPositionFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                 validGraveyardCardIds.addAll(
@@ -326,10 +336,24 @@ public class ValidTargetService {
         }
 
         boolean isKicked = Boolean.TRUE.equals(kicked);
-        int responseMinTargets = card.getEffectiveMinTargets(effectiveXValue, isKicked);
         int effectiveX = xValue != null ? xValue : 0;
-        int responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
-                gameData, card, controllerId, effectiveX, isKicked);
+        int responseMinTargets;
+        int responseMaxTargets;
+        if (chosenMode != null && chosenMode.targetFilters() != null) {
+            responseMinTargets = chosenMode.targetFilters().size();
+            responseMaxTargets = chosenMode.targetFilters().size();
+        } else if (chosenMode != null && chosenMode.targetFilter() != null) {
+            responseMinTargets = chosenMode.xScaledTargets()
+                    ? Math.min(effectiveX, chosenMode.minTargets())
+                    : chosenMode.minTargets();
+            responseMaxTargets = chosenMode.xScaledTargets()
+                    ? Math.min(effectiveX, chosenMode.maxTargets())
+                    : chosenMode.maxTargets();
+        } else {
+            responseMinTargets = card.getEffectiveMinTargets(effectiveXValue, isKicked);
+            responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
+                    gameData, card, controllerId, effectiveX, isKicked);
+        }
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, responseMinTargets, responseMaxTargets, prompt);
     }

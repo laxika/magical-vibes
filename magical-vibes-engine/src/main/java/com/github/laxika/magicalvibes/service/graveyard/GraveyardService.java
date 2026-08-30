@@ -522,7 +522,8 @@ public class GraveyardService {
         }
 
         // Forbidden Crypt / Abandoned Sarcophagus — controller's own cards matching a replacement
-        if (shouldExileOwnCardInsteadOfGraveyard(gameData, ownerId, card)) {
+        if (shouldExileOwnCardInsteadOfGraveyard(
+                gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
             exileService.exileCard(gameData, ownerId, card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of being put into a graveyard."));
             log.info("Game {} - {} replacement effect: exiled instead of graveyard (own)", gameData.id, card.getName());
@@ -1137,29 +1138,39 @@ public class GraveyardService {
         return false;
     }
 
-    private boolean shouldExileOwnCardInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card) {
+    private boolean shouldExileOwnCardInsteadOfGraveyard(GameData gameData, UUID ownerId, Card card,
+                                                          UUID battlefieldControllerId,
+                                                          Permanent battlefieldSnapshot) {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
-        if (bf == null) {
-            return false;
-        }
         boolean beingCycled = card.getId().equals(gameData.cardEnteringGraveyardByCycling);
-        for (Permanent p : bf) {
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (!(effect instanceof OwnGraveyardExileReplacement replacement)) {
-                    continue;
+        if (bf != null) {
+            for (Permanent permanent : bf) {
+                if (permanentExilesOwnCard(permanent, card, beingCycled)) {
+                    return true;
                 }
-                if (card.isToken() && !replacement.appliesToTokens()) {
-                    continue;
-                }
-                if (replacement.exemptWhenCycled() && beingCycled) {
-                    continue;
-                }
-                if (replacement.filter() != null
-                        && !predicateEvaluationService.matchesCardPredicate(card, replacement.filter(), null)) {
-                    continue;
-                }
-                return true;
             }
+        }
+        return battlefieldSnapshot != null
+                && ownerId.equals(battlefieldControllerId)
+                && permanentExilesOwnCard(battlefieldSnapshot, card, beingCycled);
+    }
+
+    private boolean permanentExilesOwnCard(Permanent permanent, Card card, boolean beingCycled) {
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (!(effect instanceof OwnGraveyardExileReplacement replacement)) {
+                continue;
+            }
+            if (card.isToken() && !replacement.appliesToTokens()) {
+                continue;
+            }
+            if (replacement.exemptWhenCycled() && beingCycled) {
+                continue;
+            }
+            if (replacement.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, replacement.filter(), null)) {
+                continue;
+            }
+            return true;
         }
         return false;
     }

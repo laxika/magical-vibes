@@ -137,6 +137,26 @@ class CastingPermissionServiceTest {
     }
 
     @Test
+    @DisplayName("controller-turn graveyard-spell permission does not apply on another player's turn")
+    void controllerTurnGraveyardSpellPermission() {
+        Card source = new Card();
+        source.addEffect(EffectSlot.STATIC,
+                new CastSpellsFromGraveyardEffect(new CardTruePredicate(), List.of(), true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card spell = new Card();
+        spell.setType(CardType.INSTANT);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null))
+                .thenReturn(true);
+
+        gd.activePlayerId = player2Id;
+        assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
+
+        gd.activePlayerId = player1Id;
+        assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isTrue();
+    }
+
+    @Test
     @DisplayName("conditional top-library permissions apply only when their condition is met")
     void conditionalTopLibraryPermissions() {
         Card whale = new Card();

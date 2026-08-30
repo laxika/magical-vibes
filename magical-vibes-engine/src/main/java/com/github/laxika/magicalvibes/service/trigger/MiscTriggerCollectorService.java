@@ -131,6 +131,22 @@ public class MiscTriggerCollectorService {
         this.permanentControlSupport = permanentControlSupport;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_GIVES_GIFT)
+    private boolean handleControllerGivesGift(
+            TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(),
+                GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_UNTAPPED)
     private boolean handleSelfBecomesUntapped(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;

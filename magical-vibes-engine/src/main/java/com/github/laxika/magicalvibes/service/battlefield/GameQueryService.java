@@ -2531,7 +2531,8 @@ public class GameQueryService {
         int result = count;
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : staticEffectsIncludingTemporary(permanent)) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, permanent, controllerId)) {
                     if (effect instanceof CounterReplacementEffect replacement
                             && replacement.appliesTo(counterType, affectedPermanentIsCreature,
                             affectedPermanentIsArtifact, permanent, affectedPermanent)) {
@@ -2591,7 +2592,8 @@ public class GameQueryService {
         int result = count;
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : staticEffectsIncludingTemporary(permanent)) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, permanent, controllerId)) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
                             && replacement.appliesToNonCreatureVehicles()) {
                         result = replacement.replace(result);
@@ -2610,10 +2612,29 @@ public class GameQueryService {
         return result;
     }
 
-    private List<CardEffect> staticEffectsIncludingTemporary(Permanent permanent) {
-        List<CardEffect> effects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.STATIC));
-        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
-        return effects;
+    private List<CardEffect> staticEffectsIncludingTemporary(
+            GameData gameData, Permanent permanent, UUID controllerId) {
+        List<CardEffect> declaredEffects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.STATIC));
+        declaredEffects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        List<CardEffect> activeEffects = new ArrayList<>();
+        for (CardEffect effect : declaredEffects) {
+            collectActiveStaticEffects(gameData, permanent, controllerId, effect, activeEffects);
+        }
+        return activeEffects;
+    }
+
+    private void collectActiveStaticEffects(GameData gameData, Permanent source, UUID controllerId,
+                                            CardEffect effect, List<CardEffect> activeEffects) {
+        if (effect instanceof ConditionalEffect conditional) {
+            if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(source, controllerId))) {
+                collectActiveStaticEffects(gameData, source, controllerId,
+                        conditional.wrapped(), activeEffects);
+            }
+            return;
+        }
+        activeEffects.add(effect);
     }
 
     /** Applies all counter replacements for a permanent already on the battlefield. */
@@ -2641,7 +2662,8 @@ public class GameQueryService {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, affectedControllerId);
             boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
             for (Permanent source : battlefield) {
-                for (CardEffect effect : staticEffectsIncludingTemporary(source)) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
                     if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
@@ -2707,7 +2729,8 @@ public class GameQueryService {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, controllerId);
             boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
             for (Permanent source : battlefield) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     boolean applies;
                     if (replacement instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect plusOneReplacement
@@ -2743,7 +2766,8 @@ public class GameQueryService {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, playerId);
             boolean sourceControllerIsPlacing = Objects.equals(sourceControllerId, placingPlayerId);
             for (Permanent source : battlefield) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : staticEffectsIncludingTemporary(
+                        gameData, source, sourceControllerId)) {
                     if (!(effect instanceof CounterReplacementEffect replacement)) continue;
                     if (!(replacement instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect)
                             && !(replacement instanceof com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect)) {
@@ -2774,7 +2798,8 @@ public class GameQueryService {
         }
         int result = count;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : staticEffectsIncludingTemporary(
+                    gameData, permanent, playerId)) {
                 if (effect instanceof PlayerCounterReplacementEffect replacement) {
                     result = replacement.replace(result);
                 }

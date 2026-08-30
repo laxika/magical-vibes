@@ -176,7 +176,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public static SecondBoundedPick cardType(CardType type, List<CardType> remaining,
                                                  boolean randomRest, LibrarySearchDestination destination) {
-            return new SecondBoundedPick(type, false, null, List.of(), randomRest, remaining, destination);
+            return cardType(type, remaining, false, randomRest, destination);
+        }
+
+        public static SecondBoundedPick cardType(CardType type, List<CardType> remaining,
+                                                 boolean restToGraveyard, boolean randomRest,
+                                                 LibrarySearchDestination destination) {
+            return new SecondBoundedPick(type, restToGraveyard, null, List.of(), randomRest,
+                    remaining, destination);
         }
 
         public static SecondBoundedPick terminal(boolean randomRest) {
@@ -438,11 +445,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /** Begins the next one-card pick for each remaining card type. */
     public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types,
                                                                LibrarySearchDestination destination) {
+        return forCardTypeBoundedPick(types, destination, false);
+    }
+
+    public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types,
+                                                               LibrarySearchDestination destination,
+                                                               boolean restToGraveyard) {
         if (types.isEmpty()) {
-            return forBoundedPick(SecondBoundedPick.terminal(true, destination));
+            return forBoundedPick(new SecondBoundedPick(null, restToGraveyard, null,
+                    List.of(), !restToGraveyard, List.of(), destination));
         }
         return forBoundedPick(SecondBoundedPick.cardType(
-                types.getFirst(), types.subList(1, types.size()), true, destination));
+                types.getFirst(), types.subList(1, types.size()), restToGraveyard,
+                !restToGraveyard, destination));
     }
 
     /** Begins a bounded subtype-pick flow, optionally randomizing the cards left on the bottom. */

@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
+import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -1220,20 +1221,25 @@ public class GameData {
     public record GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                                 boolean singleUse, CounterType entryCounterType,
                                                 CardSubtype grantedSubtype, boolean anyGraveyard,
-                                                boolean exileInsteadOfGraveyard) {
+                                                boolean exileInsteadOfGraveyard,
+                                                ForageOrPayManaCost additionalCost,
+                                                CounterType enterWithCounter,
+                                                int enterWithCounterCount) {
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {
-            this(playerId, filter, false, null, null, false, false);
+            this(playerId, filter, false, null, null, false, false, null, null, 0);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean singleUse, CounterType entryCounterType,
                                              CardSubtype grantedSubtype) {
-            this(playerId, filter, singleUse, entryCounterType, grantedSubtype, false, false);
+            this(playerId, filter, singleUse, entryCounterType, grantedSubtype,
+                    false, false, null, null, 0);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean anyGraveyard, boolean exileInsteadOfGraveyard) {
-            this(playerId, filter, false, null, null, anyGraveyard, exileInsteadOfGraveyard);
+            this(playerId, filter, false, null, null, anyGraveyard,
+                    exileInsteadOfGraveyard, null, null, 0);
         }
     }
 

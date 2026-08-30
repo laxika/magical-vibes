@@ -1539,16 +1539,17 @@ public class CombatAttackService {
                 for (CardEffect effect : gyAttackEffects) {
                     CardEffect innerEffect = effect;
 
+                    ConditionContext triggerContext = new ConditionContext(playerId, null, null, card,
+                            false, false, false, false, null, attackerIndices.size(), null, null, false);
+                    if (!graveyardAttackConditionsMet(gameData, innerEffect, triggerContext)) {
+                        log.info("Game {} - {} graveyard attack trigger skipped because its condition was not met",
+                                gameData.id, card.getName());
+                        continue;
+                    }
+
                     // Unwrap minimum-attackers conditionals — check minimum before offering the trigger
                     if (innerEffect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers mac) {
-                        ConditionContext ctx = new ConditionContext(playerId, null, null, card,
-                                false, false, false, false, null, attackerIndices.size(), null, null, false);
-                        if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
-                            log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
-                                    gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());
-                            continue;
-                        }
                         innerEffect = ce.wrapped();
                     }
 
@@ -2586,6 +2587,15 @@ public class CombatAttackService {
             }
         }
         return lifeCost;
+    }
+
+    private boolean graveyardAttackConditionsMet(
+            GameData gameData, CardEffect effect, ConditionContext context) {
+        if (!(effect instanceof ConditionalEffect conditional)) {
+            return true;
+        }
+        return conditionEvaluationService.isMet(gameData, conditional.condition(), context)
+                && graveyardAttackConditionsMet(gameData, conditional.wrapped(), context);
     }
 
     /**

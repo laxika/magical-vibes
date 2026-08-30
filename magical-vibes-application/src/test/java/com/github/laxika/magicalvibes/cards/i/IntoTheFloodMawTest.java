@@ -25,7 +25,7 @@ class IntoTheFloodMawTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(findPermanent(player2, "Fish")).isNull();
+        harness.assertNotOnBattlefield(player2, "Fish");
     }
 
     @Test

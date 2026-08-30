@@ -846,15 +846,16 @@ public class GameActionAvailabilityService {
             if (e instanceof SacrificeCreaturesForCostReductionEffect s) { sacReduce = s; break; }
         }
         if (sacReduce != null) {
-            int creatureCount = 0;
+            int eligiblePermanentCount = 0;
             if (ctx.battlefield() != null) {
                 for (Permanent perm : ctx.battlefield()) {
-                    if (gameQueryService.isCreature(gameData, perm)) {
-                        creatureCount++;
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, perm, sacReduce.filter())) {
+                        eligiblePermanentCount++;
                     }
                 }
             }
-            int maxReduction = creatureCount * sacReduce.reductionPerCreature();
+            int maxReduction = eligiblePermanentCount * sacReduce.reductionPerCreature();
             if (cost.canPay(pool, additionalCost - maxReduction)) {
                 return true;
             }

@@ -448,6 +448,9 @@ public class TargetPolarityClassifier {
             // Arcbond's watched creature is a strategic choice: either player's creature may be
             // the best center for the later symmetric damage event.
             entry("RegisterDelayedWatchedCreatureDealtDamageEffect", TargetPolarity.NEUTRAL),
+            // The delayed combat-damage reward belongs to the effect's controller, but either
+            // player's creature can be the strategically useful watched source.
+            entry("RegisterDelayedWatchedCreaturesCombatDamageEffect", TargetPolarity.NEUTRAL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),
