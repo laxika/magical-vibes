@@ -54,6 +54,9 @@ public enum ManaSpendRestriction {
     CREATURE_SPELL_ONLY,
     CREATURE_OR_ENCHANTMENT_SPELL_ONLY,
 
+    /** Spendable only to cast multicolored spells (Pillar of the Paruns). */
+    MULTICOLORED_SPELLS,
+
     /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
     SUBTYPE_CREATURE_SPELL,
 

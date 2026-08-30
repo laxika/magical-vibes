@@ -38,7 +38,8 @@ class BadgermoleCubTest extends BaseCardTest {
     @DisplayName("Adds an additional green mana when you tap a creature for mana")
     void creatureTapProducesAdditionalGreen() {
         harness.addToBattlefield(player1, new BadgermoleCub());
-        harness.addToBattlefield(player1, new ElvishMystic());
+        Permanent mystic = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
+        mystic.setSummoningSick(false);
 
         harness.tapPermanent(player1, 1);
 

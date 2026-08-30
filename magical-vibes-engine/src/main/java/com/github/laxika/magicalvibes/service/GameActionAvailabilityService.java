@@ -363,6 +363,12 @@ public class GameActionAvailabilityService {
             flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
         }
+        if (gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                && pool.getMulticoloredSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteMulticoloredSpellOnlyMana();
+        }
         if (!card.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);

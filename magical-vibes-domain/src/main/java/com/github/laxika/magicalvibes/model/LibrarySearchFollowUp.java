@@ -69,7 +69,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     List<UUID> remainingEachPlayerLandToBattlefieldSearches,
                                     SelectedCardFollowUp selectedCardFollowUp) {
 
-    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
+                                       boolean useSelectedCardManaValue) {
+
+        public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+            this(predicate, effect, false);
+        }
     }
 
     /** Completion data for Grim Reminder's reveal-only library search. */
@@ -358,6 +363,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
                 false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
                 new SelectedCardFollowUp(predicate, effect));
+    }
+
+    public static LibrarySearchFollowUp forSelectedCardWithManaValue(
+            CardPredicate predicate, CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(predicate, effect, true));
     }
 
     /** Runs a selected-card follow-up before putting the unchosen bounded-pick cards back randomly. */

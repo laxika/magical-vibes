@@ -26,7 +26,8 @@ class SandbenderScavengersTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CullingDais());
         Permanent sacrificedPermanent = addCreatureReady(player1, new GrizzlyBears());
 
-        harness.activateAbility(player1, 1, null, sacrificedPermanent.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificedPermanent.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -49,6 +50,7 @@ class SandbenderScavengersTest extends BaseCardTest {
         assertThat(choice.validCardIds()).doesNotContain(tooExpensiveTarget.getId(), nonCreatureTarget.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(validTarget.getId()));
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))

@@ -172,6 +172,7 @@ public class LibraryChoiceHandlerService {
         boolean requireDifferentNames = librarySearch.requireDifferentNames();
         Integer manaValueBoundValue = librarySearch.manaValueBoundValue();
         boolean manaValueExact = librarySearch.manaValueExact();
+        Integer totalManaValueBound = librarySearch.totalManaValueBound();
         List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
         boolean grantHaste = librarySearch.grantHaste();
         boolean exileAtEndStep = librarySearch.exileAtEndStep();
@@ -335,7 +336,9 @@ public class LibraryChoiceHandlerService {
                         gameData.pendingEffectResolutionEntry.setChosenPermanentId(perm.getId());
                     }
                     if (returnToHandAtEndStep) {
-                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+                        gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                                DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP,
+                                librarySearch.returnToHandAtControllerEndStepId()));
                     } else if (exileAtEndStep) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
                     }
@@ -1029,6 +1032,7 @@ public class LibraryChoiceHandlerService {
                     playerInputService.processNextMayAbility(gameData);
                 }
             } else {
+                insertSelectedCardFollowUp(gameData, followUp, chosenCard, playerId);
                 finishSearchAndResume(gameData);
             }
             return;
@@ -1306,6 +1310,15 @@ public class LibraryChoiceHandlerService {
                         .filter(c -> exact ? c.getManaValue() == bound : c.getManaValue() <= bound)
                         .toList();
             }
+            if (totalManaValueBound != null) {
+                int selectedManaValue = accumulatedCards.stream()
+                        .mapToInt(Card::getManaValue)
+                        .sum();
+                int remainingManaValue = totalManaValueBound - selectedManaValue;
+                newSearchCards = newSearchCards.stream()
+                        .filter(c -> c.getManaValue() <= remainingManaValue)
+                        .toList();
+            }
             if (requireDifferentNames && !excludedCardNames.isEmpty()) {
                 java.util.Set<String> excluded = java.util.Set.copyOf(excludedCardNames);
                 newSearchCards = newSearchCards.stream()
@@ -1365,6 +1378,7 @@ public class LibraryChoiceHandlerService {
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
                     .manaValueBound(manaValueBoundValue, manaValueExact)
+                    .totalManaValueBound(totalManaValueBound)
                     .excludedCardNames(excludedCardNames)
                     .grantHaste(grantHaste)
                     .exileAtEndStep(exileAtEndStep)
@@ -1499,6 +1513,9 @@ public class LibraryChoiceHandlerService {
                 && gameData.pendingEffectResolutionEntry != null
                 && predicateEvaluationService.matchesCardPredicate(
                         chosenCard, selectedCardFollowUp.predicate(), null, gameData, playerId)) {
+            if (selectedCardFollowUp.useSelectedCardManaValue()) {
+                gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
+            }
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
                     List.of(selectedCardFollowUp.effect()));

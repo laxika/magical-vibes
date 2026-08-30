@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasLeastPowerAmongAl
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
@@ -679,6 +680,8 @@ public class PredicateEvaluationService {
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentHasNonManaActivatedAbilityPredicate hasNonManaAbilityPredicate ->
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
+            case PermanentHasTapActivatedAbilityPredicate ignored ->
+                    hasTapActivatedAbility(gameData, permanent);
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
             case PermanentIsCreaturePredicate ignored -> {
@@ -2430,6 +2433,11 @@ public class PredicateEvaluationService {
         return effectiveActivatedAbilities(gameData, permanent).stream()
                 .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability)
                         && (!levelUpOnly || ability.isLevelUpAbility()));
+    }
+
+    private boolean hasTapActivatedAbility(GameData gameData, Permanent permanent) {
+        return effectiveActivatedAbilities(gameData, permanent).stream()
+                .anyMatch(ActivatedAbility::isRequiresTap);
     }
 
     private boolean hasManaAbility(GameData gameData, Permanent permanent) {

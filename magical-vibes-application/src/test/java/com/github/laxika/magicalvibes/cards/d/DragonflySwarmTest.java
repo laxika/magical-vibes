@@ -49,8 +49,10 @@ class DragonflySwarmTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new AirbendingLesson()));
         Card drawn = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new LightningStrike()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player2, 0, gd.playerBattlefields.get(player1.getId()).get(0).getId());
         harness.passBothPriorities();
@@ -65,8 +67,10 @@ class DragonflySwarmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DragonflySwarm());
         Card drawn = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new LightningStrike()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player2, 0, gd.playerBattlefields.get(player1.getId()).get(0).getId());
         harness.passBothPriorities();

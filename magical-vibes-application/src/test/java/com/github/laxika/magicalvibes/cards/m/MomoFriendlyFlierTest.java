@@ -24,7 +24,7 @@ class MomoFriendlyFlierTest extends BaseCardTest {
     void firstNonLemurFlyingCreatureSpellIsReduced() {
         addMomo();
         harness.setHand(player1, List.of(new SerraAngel()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
 
@@ -52,10 +52,9 @@ class MomoFriendlyFlierTest extends BaseCardTest {
         addMomo();
         harness.setHand(player1, List.of(new GrizzlyBears(), new SerraAngel()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.castCreature(player1, 0);
 
@@ -81,7 +80,7 @@ class MomoFriendlyFlierTest extends BaseCardTest {
     void flyingCreatureEnteringBoostsMomo() {
         Permanent momo = addMomo();
         harness.setHand(player1, List.of(new SerraAngel()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

@@ -51,7 +51,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        source.setSkipUntapCount(source.getSkipUntapCount() + 1);
+        source.setSkipUntapCount(Math.max(source.getSkipUntapCount(), 1));
 
         
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));
@@ -99,7 +99,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void lockTarget(GameData gameData, Permanent target) {
-        target.setSkipUntapCount(target.getSkipUntapCount() + 1);
+        target.setSkipUntapCount(Math.max(target.getSkipUntapCount(), 1));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
@@ -119,7 +119,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
-            p.setSkipUntapCount(p.getSkipUntapCount() + 1);
+            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), 1));
             count++;
         }
 
@@ -145,7 +145,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
-            p.setSkipUntapCount(p.getSkipUntapCount() + 1);
+            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), 1));
             count++;
         }
 
@@ -165,7 +165,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) return;
 
-            p.setSkipUntapCount(p.getSkipUntapCount() + 1);
+            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), 1));
             count[0]++;
         });
 

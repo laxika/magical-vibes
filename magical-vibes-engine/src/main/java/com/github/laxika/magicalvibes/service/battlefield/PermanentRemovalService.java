@@ -363,10 +363,10 @@ public class PermanentRemovalService {
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         UUID controllerIdBeforeRemoval = gameQueryService.findPermanentController(gameData, target.getId());
-        UUID ownerIdBeforeRemoval = gameData.stolenCreatures.getOrDefault(
-                target.getId(), controllerIdBeforeRemoval);
+        UUID ownerIdBeforeRemoval = resolvePermanentOwner(gameData, target, controllerIdBeforeRemoval);
         triggerCollectionService.checkControllerCreatureReturnedToHandTriggers(
                 gameData, target, wasCreature, ownerIdBeforeRemoval);
+        triggerCollectionService.checkControllerPermanentReturnedToHandTriggers(gameData, ownerIdBeforeRemoval);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -391,6 +391,7 @@ public class PermanentRemovalService {
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
         triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
+        target.setAttachedTo(null);
         return true;
     }
 
@@ -1117,7 +1118,7 @@ public class PermanentRemovalService {
         if (wasCreature) {
             gameData.creatureLeftBattlefieldCountThisTurn.merge(controllerId, 1, Integer::sum);
         }
-        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+        UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
         gameData.stolenCreatures.remove(target.getId());
         // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
         // WHILE_ATTACHED floating effect expires here and drives the enchanted creature's revert.
@@ -1131,6 +1132,15 @@ public class PermanentRemovalService {
         handlePreparedSpellCleanup(gameData, target);
         clearSoulbondPairing(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId);
+    }
+
+    private UUID resolvePermanentOwner(GameData gameData, Permanent permanent, UUID controllerId) {
+        UUID trackedOwnerId = gameData.stolenCreatures.get(permanent.getId());
+        if (trackedOwnerId != null) {
+            return trackedOwnerId;
+        }
+        UUID cardOwnerId = permanent.getOriginalCard().getOwnerId();
+        return cardOwnerId != null ? cardOwnerId : controllerId;
     }
 
     private void clearSoulbondPairing(GameData gameData, Permanent target) {

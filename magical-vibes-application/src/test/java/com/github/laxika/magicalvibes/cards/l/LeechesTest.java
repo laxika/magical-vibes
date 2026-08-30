@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.s.SerraPaladin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +12,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Leeches.class, SerraPaladin.class})
 class LeechesTest extends BaseCardTest {
+    @Test
+    void removesPoisonWhenDamageIsPrevented() {
+        harness.addToBattlefieldAndReturn(player1, new SerraPaladin()).setSummoningSick(false);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+        castLeechesTargeting(player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
 
     @Test
     @DisplayName("Removes all poison counters from target player and deals that much damage")

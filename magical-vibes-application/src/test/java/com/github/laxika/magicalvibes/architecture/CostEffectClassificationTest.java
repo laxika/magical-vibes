@@ -98,8 +98,7 @@ class CostEffectClassificationTest {
             "TapTwoCreaturesSharingTypeCost",
             "DiscardLastDrawnCardCost",
             "UnattachSourceEquipmentCost",
-                "UntapMultiplePermanentsCost",
-                "WaterbendCost");
+            "UntapMultiplePermanentsCost");
 
     /**
      * Spell-handled cost types that do not use the generic single-permanent payment field. These
@@ -133,7 +132,8 @@ class CostEffectClassificationTest {
             "BeholdCost",
             "BeholdAndExileCost",
             "RevealCardFromHandCost",
-            "DelveCost");
+            "DelveCost",
+            "WaterbendCost");
 
     private static final String EFFECT_PKG_PATH =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";

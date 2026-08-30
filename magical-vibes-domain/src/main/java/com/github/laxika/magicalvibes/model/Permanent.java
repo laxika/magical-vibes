@@ -93,6 +93,12 @@ public class Permanent {
     /** Temper-style shield: damage prevented by this shield is converted into +1/+1 counters on this
      *  permanent as the damage is prevented. Reset at turn cleanup. */
     @Setter private int damageToPlusOnePlusOneCounterPreventionShield;
+    /** Brace for Impact-style shield: prevent all damage to this permanent and convert it into +1/+1
+     *  counters as the damage is prevented. Reset at turn cleanup. */
+    @Setter private boolean allDamageToPlusOnePlusOneCounterPreventionShield;
+    /** Kill-Suit Cultist-style shield: destroy this creature instead of dealing the next damage to it.
+     *  Reset at turn cleanup. */
+    @Setter private int damageDestructionShield;
     @Setter private int regenerationShield;
     /** How many of this permanent's {@link #regenerationShield}s carry Soldevi Sentry's rider — when
      *  such a shield is actually used, the controller's opponent may draw a card. Plain shields are
@@ -688,6 +694,8 @@ public class Permanent {
         this.damagePreventionShield = source.damagePreventionShield;
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.damageToPlusOnePlusOneCounterPreventionShield = source.damageToPlusOnePlusOneCounterPreventionShield;
+        this.allDamageToPlusOnePlusOneCounterPreventionShield = source.allDamageToPlusOnePlusOneCounterPreventionShield;
+        this.damageDestructionShield = source.damageDestructionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;

@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,18 +11,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Truce.class})
 class TruceTest extends BaseCardTest {
 
     private void castTruce() {
-        harness.setHand(player1, List.of(new Truce()));
         harness.setHand(player2, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Truce(), new Truce(), new Truce()));
+        harness.setLibrary(player2, List.of(new Truce(), new Truce(), new Truce()));
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Truce(), "{2}{W}");
         harness.passBothPriorities();
     }
 
@@ -58,6 +55,25 @@ class TruceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         harness.assertLife(player1, 24);
         harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Active player chooses first even when the nonactive player casts Truce")
+    void activePlayerChoosesFirstWhenNonactivePlayerCasts() {
+        harness.forceActivePlayer(player2);
+        castTruce();
+
+        PendingInteraction.XValueChoice choice = gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+
+        harness.handleXValueChosen(player2, 0);
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
     }
 
     @Test

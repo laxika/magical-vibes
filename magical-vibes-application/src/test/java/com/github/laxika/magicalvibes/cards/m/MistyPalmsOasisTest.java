@@ -45,7 +45,7 @@ class MistyPalmsOasisTest extends BaseCardTest {
     void tappingProducesBlackMana() {
         Permanent oasis = addOasisReady(player1);
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
@@ -60,7 +60,7 @@ class MistyPalmsOasisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.activateAbility(player1, 2, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(oasis);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(oasis.getCard());

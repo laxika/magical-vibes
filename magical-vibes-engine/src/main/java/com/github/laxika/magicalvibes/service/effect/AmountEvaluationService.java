@@ -137,6 +137,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.WebSlingingReturnedCreatureManaValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.SourceCardPower;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
@@ -255,6 +256,8 @@ public class AmountEvaluationService {
                             ? 0 : Math.max(0, ctx.stackEntry().getSacrificedPermanentSnapshot().getCard().getManaValue());
             case SacrificedPermanentPower ignored ->
                     Math.max(0, ctx.sacrificedPower());
+            case SacrificedPermanentColorCount ignored ->
+                    Math.max(0, ctx.stackEntry() == null ? 0 : ctx.stackEntry().getSacrificedColorCount());
             case SacrificedPermanentToughness ignored ->
                     Math.max(0, ctx.sacrificedToughness());
             case Divided d ->

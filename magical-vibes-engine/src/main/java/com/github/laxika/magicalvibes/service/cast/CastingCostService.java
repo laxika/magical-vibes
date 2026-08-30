@@ -352,9 +352,14 @@ public class CastingCostService {
             int handIndex = plottingFromHand || (sourceZone != null && sourceZone != Zone.HAND)
                     ? -1 : findPhysicalHandCardIndex(hand, card);
             Object layeredBoardCache = gameData.layeredBoardCache;
-            Card physicalCard = handIndex >= 0 ? hand.remove(handIndex) : null;
+            List<Card> previewHand = null;
+            if (handIndex >= 0) {
+                previewHand = new ArrayList<>(hand);
+                previewHand.remove(handIndex);
+                gameData.playerHands.put(playerId, previewHand);
+            }
             try {
-                if (physicalCard != null) {
+                if (previewHand != null) {
                     // A proposed spell has left its hand before its total cost is determined.
                     // Preview that state so hand-dependent layered values cannot over-reduce it.
                     return gameQueryService.withFreshQueryScope(gameData,
@@ -366,8 +371,8 @@ public class CastingCostService {
                         flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
                         collectEvidenceCostPaid);
             } finally {
-                if (physicalCard != null) {
-                    hand.add(handIndex, physicalCard);
+                if (previewHand != null) {
+                    gameData.playerHands.put(playerId, hand);
                     gameData.layeredBoardCache = layeredBoardCache;
                 }
             }

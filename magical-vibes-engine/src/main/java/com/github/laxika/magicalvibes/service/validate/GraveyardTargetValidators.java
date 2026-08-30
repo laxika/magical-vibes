@@ -99,7 +99,8 @@ public class GraveyardTargetValidators {
         if (effect.filter() != null
                 && !(effect.filter() instanceof CardSharesCardTypeWithImprintedCardPredicate)
                 && !predicateEvaluationService.matchesCardPredicate(
-                graveyardCard, effect.filter(), sourceCardId, ctx.gameData(), graveyardOwnerId)) {
+                graveyardCard, effect.filter(), sourceCardId, ctx.gameData(), graveyardOwnerId,
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }

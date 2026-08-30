@@ -784,6 +784,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToHand(gd, token);
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
+            verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
             verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
         }
     }

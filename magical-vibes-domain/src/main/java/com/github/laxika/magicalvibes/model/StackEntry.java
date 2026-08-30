@@ -61,6 +61,8 @@ public class StackEntry {
     @Setter private TargetFilter targetFilter;
     /** Per-position filters declared by a multi-target activated ability. */
     @Setter private List<TargetFilter> targetFilters = List.of();
+    /** Cross-target restriction declared by a multi-target activated ability. */
+    @Setter private MultiTargetConstraint multiTargetConstraint;
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
     /** Whether an effect already placed the physical spell card in its final zone. */
@@ -248,9 +250,13 @@ public class StackEntry {
     @Setter private UUID sacrificedCardId;
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
+    /** Last-known card discarded as an activation cost, when an effect refers to that card. */
+    @Setter private Card discardedCardSnapshot;
     @Setter private Permanent sacrificedPermanentSnapshot;
     /** Effective power of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedPower;
+    /** Effective color count of the permanent sacrificed during resolution, when snapshotted. */
+    @Setter private int sacrificedColorCount;
     /** Effective toughness of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
@@ -656,9 +662,11 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
+        this.discardedCardSnapshot = source.discardedCardSnapshot;
         this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.sacrificedPermanentSnapshot);
         this.sacrificedPower = source.sacrificedPower;
+        this.sacrificedColorCount = source.sacrificedColorCount;
         this.sacrificedToughness = source.sacrificedToughness;
         this.sacrificedCard = source.sacrificedCard;
         this.exiledCostCardId = source.exiledCostCardId;
@@ -671,6 +679,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetFilters = source.targetFilters.isEmpty() ? List.of() : new ArrayList<>(source.targetFilters);
+        this.multiTargetConstraint = source.multiTargetConstraint;
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;

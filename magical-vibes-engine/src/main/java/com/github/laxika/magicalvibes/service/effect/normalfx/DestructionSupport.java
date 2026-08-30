@@ -886,6 +886,10 @@ public class DestructionSupport {
         if (self == null) {
             return;
         }
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, self.getId());
+        if (!entry.getControllerId().equals(currentControllerId)) {
+            return;
+        }
         if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
             gameLogService.append(gameData, GameLog.isSacrificed(self.getCard()));

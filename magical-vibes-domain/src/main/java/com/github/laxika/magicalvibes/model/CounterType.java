@@ -96,6 +96,7 @@ public enum CounterType {
     OIL,
     ORE,
     PAIN,
+    PALLIATION,
     PARALYZATION,
     PETAL,
     PETRIFICATION,

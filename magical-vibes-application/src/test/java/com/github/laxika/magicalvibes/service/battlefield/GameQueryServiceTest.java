@@ -78,9 +78,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -106,6 +108,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -2285,6 +2288,28 @@ class GameQueryServiceTest {
                     new DoubleControllerDamageEffect(null, true)));
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 2 for a conditional controller damage multiplier when its condition is met")
+        void returnsTwoForConditionalControllerDamageMultiplier() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Anthem of Rakdos", 0, 0, CardColor.RED,
+                    new ConditionalEffect(new ControllerHandEmpty(), new DoubleControllerDamageEffect(null, true))));
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerHandEmpty.class), any(ConditionContext.class)))
+                    .thenReturn(true);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("does not apply a conditional controller damage multiplier when its condition is not met")
+        void doesNotApplyConditionalControllerDamageMultiplierWhenConditionIsNotMet() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Anthem of Rakdos", 0, 0, CardColor.RED,
+                    new ConditionalEffect(new ControllerHandEmpty(), new DoubleControllerDamageEffect(null, true))));
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerHandEmpty.class), any(ConditionContext.class)))
+                    .thenReturn(false);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(1);
         }
 
         @Test

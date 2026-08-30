@@ -18,6 +18,7 @@ class BarrelsOfBlastingJellyTest extends BaseCardTest {
     @DisplayName("Mana ability adds one mana of the chosen color and can be activated only once each turn")
     void manaAbilityAddsManaOnlyOnceEachTurn() {
         Permanent jelly = harness.addToBattlefieldAndReturn(player1, new BarrelsOfBlastingJelly());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "BLUE");

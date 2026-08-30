@@ -595,19 +595,20 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> validIndices = new ArrayList<>();
             if (hand != null) {
                 for (int i = 0; i < hand.size(); i++) {
-                    if (effect.requiredType() == null || hand.get(i).getType() == effect.requiredType()) {
+                    if (predicateEvaluationService.matchesCardPredicate(hand.get(i), effect.discardPredicate(),
+                            sourceCard.getId(), gameData, controllerId)) {
                         validIndices.add(i);
                     }
                 }
             }
 
-            if (!validIndices.isEmpty()) {
-                String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
+            if (validIndices.size() >= effect.discardCount()) {
+                String typeName = effect.discardDescription();
                 gameData.discardCausedByOpponent = false;
 
                 if (effect.random()) {
                     // Pillaging Horde: the discard is at random, so no player choice is needed.
-                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), 1);
+                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), effect.discardCount());
                     log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
@@ -616,10 +617,13 @@ public class MayPenaltyChoiceHandlerService {
                 DiscardFollowUp followUp = effect.thenEffect() == null
                         ? DiscardFollowUp.NONE
                         : DiscardFollowUp.thenEffectWithDiscardedManaValue(sourceCard, effect.thenEffect());
+                String discardDescription = effect.discardCount() == 1
+                        ? "a " + typeName
+                        : effect.discardCount() + " " + typeName + "s";
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.", 1, followUp);
+                        "Choose " + discardDescription + " to discard.", effect.discardCount(), followUp);
 
-                String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
+                String logEntry = player.getUsername() + " chooses to discard " + discardDescription + ".";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
                 return;

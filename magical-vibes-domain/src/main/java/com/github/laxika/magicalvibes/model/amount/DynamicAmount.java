@@ -126,6 +126,7 @@ public sealed interface DynamicAmount permits
         PlayersWithCardsInHandAtMost,
         RepeatedAdditionalCostCount,
         Scaled,
+        SacrificedPermanentColorCount,
         SacrificedPermanentManaValue,
         SacrificedPermanentPower,
         SacrificedPermanentToughness,

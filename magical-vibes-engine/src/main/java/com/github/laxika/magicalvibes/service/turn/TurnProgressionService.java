@@ -93,40 +93,8 @@ public class TurnProgressionService {
         gameData.revertableManaActivations.clear();
 
         // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
-        if (gameData.currentStep == TurnStep.END_OF_COMBAT
-                && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(DelayedPermanentAction.class,
-                            a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                                    || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
-                                    || a.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT
-                                    || a.kind() == DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT)
-                    || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)
-                    || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class))) {
-            combatService.processEndOfCombatSacrifices(gameData);
-            combatService.processEndOfCombatTaps(gameData);
-            combatService.processEndOfCombatCombatOpponentTaps(gameData);
-            combatService.processEndOfCombatExiles(gameData);
-            combatService.processEndOfCombatEquipmentDestruction(gameData);
-            combatService.processEndOfCombatDestructions(gameData);
-            combatService.processEndOfCombatCombatOpponentDestructions(gameData);
-            combatService.processEndOfCombatSourceCounters(gameData);
-            combatService.processEndOfCombatOpponentCounters(gameData);
-            combatService.processEndOfCombatCounterRemovals(gameData);
-            combatService.processEndOfCombatDamage(gameData);
-            combatService.processEndOfCombatControlGains(gameData);
-            combatService.processEndOfCombatExileAndReturnTransformed(gameData);
-            combatService.processEndOfCombatPhaseOuts(gameData);
-            combatService.processEndOfCombatReturnsToHand(gameData);
-            combatService.processEndOfCombatLibraryTucks(gameData);
+        if (gameData.currentStep == TurnStep.END_OF_COMBAT && hasEndOfCombatActions(gameData)) {
+            processEndOfCombatActions(gameData);
             gameData.priorityPassedBy.clear();
             return;
         }
@@ -331,6 +299,7 @@ public class TurnProgressionService {
             } else if (next == TurnStep.COMBAT_DAMAGE) {
                 handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
+                processEndOfCombatActions(gameData);
                 combatService.clearCombatState(gameData);
                 stepTriggerService.handleEndOfCombatTriggers(gameData);
             } else if (next == TurnStep.END_STEP) {
@@ -353,6 +322,45 @@ public class TurnProgressionService {
         } else {
             advanceTurn(gameData);
         }
+    }
+
+    private boolean hasEndOfCombatActions(GameData gameData) {
+        return gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
+                || gameData.hasDelayedAction(DelayedPermanentAction.class,
+                        action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                                || action.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
+                                || action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT
+                                || action.kind() == DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT)
+                || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
+                || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
+                || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
+                || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)
+                || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
+                || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
+                || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
+                || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
+                || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
+                || gameData.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)
+                || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class);
+    }
+
+    private void processEndOfCombatActions(GameData gameData) {
+        combatService.processEndOfCombatSacrifices(gameData);
+        combatService.processEndOfCombatTaps(gameData);
+        combatService.processEndOfCombatCombatOpponentTaps(gameData);
+        combatService.processEndOfCombatExiles(gameData);
+        combatService.processEndOfCombatEquipmentDestruction(gameData);
+        combatService.processEndOfCombatDestructions(gameData);
+        combatService.processEndOfCombatCombatOpponentDestructions(gameData);
+        combatService.processEndOfCombatSourceCounters(gameData);
+        combatService.processEndOfCombatOpponentCounters(gameData);
+        combatService.processEndOfCombatCounterRemovals(gameData);
+        combatService.processEndOfCombatDamage(gameData);
+        combatService.processEndOfCombatControlGains(gameData);
+        combatService.processEndOfCombatExileAndReturnTransformed(gameData);
+        combatService.processEndOfCombatPhaseOuts(gameData);
+        combatService.processEndOfCombatReturnsToHand(gameData);
+        combatService.processEndOfCombatLibraryTucks(gameData);
     }
 
     private void processAdditionalCombatBeginningEffects(GameData gameData) {

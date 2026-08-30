@@ -31,8 +31,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.UnattachTriggerSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -58,8 +58,8 @@ public class AuraAttachmentService {
     private final GraveyardService graveyardService;
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final UnattachTriggerSupport unattachTriggerSupport;
     private final TargetLegalityService targetLegalityService;
+    private final UnattachTriggerSupport unattachTriggerSupport;
 
     /**
      * A card that was put into the graveyard as an orphaned aura, along with the controller
@@ -303,6 +303,12 @@ public class AuraAttachmentService {
     private String illegalAttachmentReason(GameData gameData, Permanent attachment, UUID controllerId, boolean isAura) {
         UUID attachedTo = attachment.getAttachedTo();
         if (gameData.playerIds.contains(attachedTo)) {
+            TargetFilter filter = attachment.getCard().getDeclaredTargetFilter();
+            if (isAura && filter instanceof PlayerPredicateTargetFilter playerFilter
+                    && !targetLegalityService.matchesPlayerPredicate(
+                    gameData, controllerId, attachedTo, playerFilter.predicate())) {
+                return "it can no longer enchant that player";
+            }
             // Aura enchanting a player (curse-style): illegal while the player has protection
             // from one of the aura's colors
             if (isAura) {

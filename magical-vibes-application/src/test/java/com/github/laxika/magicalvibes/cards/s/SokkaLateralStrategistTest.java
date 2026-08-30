@@ -18,6 +18,7 @@ class SokkaLateralStrategistTest extends BaseCardTest {
     void attackingWithAnotherCreatureDrawsACard() {
         Forest drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         addReadySokka();
         addCreatureReady(player1, new GrizzlyBears());
 
@@ -31,6 +32,7 @@ class SokkaLateralStrategistTest extends BaseCardTest {
     void attackingAloneDoesNotDraw() {
         Forest drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         addReadySokka();
 
         declareAttackers(List.of(0));
@@ -44,6 +46,7 @@ class SokkaLateralStrategistTest extends BaseCardTest {
     void attackingWithoutSokkaDoesNotTriggerItsAbility() {
         Forest drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         addReadySokka();
         addCreatureReady(player1, new GrizzlyBears());
 

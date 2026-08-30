@@ -46,11 +46,12 @@ class DaiLiAgentsTest extends BaseCardTest {
 
     @Test
     void attackDrainsEachOpponentAndGainsLifeForEachControlledCreatureWithCounters() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Permanent agents = addCreatureReady(player1, new DaiLiAgents());
         Permanent firstCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent secondCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent creatureWithoutCounter = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         firstCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         secondCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setLife(player1, 20);
@@ -58,10 +59,6 @@ class DaiLiAgentsTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(agents)));
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(land.getId());
-        harness.handlePermanentChosen(player1, land.getId());
         creatureWithoutCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 

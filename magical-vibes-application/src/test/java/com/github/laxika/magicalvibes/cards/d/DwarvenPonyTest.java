@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WillowFaerie;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,11 +13,11 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DwarvenPony.class, DwarvenSoldier.class, GrizzlyBears.class})
+@CardUsed({DwarvenPony.class, DwarvenSeaClan.class, WillowFaerie.class})
 class DwarvenPonyTest extends BaseCardTest {
 
-    private void addPony() {
-        addCreatureReady(player1, new DwarvenPony());
+    private Permanent addPony() {
+        return addCreatureReady(player1, new DwarvenPony());
     }
 
     private void addManaForAbility() {
@@ -28,11 +28,12 @@ class DwarvenPonyTest extends BaseCardTest {
     @Test
     @DisplayName("Grants mountainwalk to a Dwarf, then it wears off at end of turn")
     void grantsMountainwalkToDwarf() {
-        addPony();
-        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new DwarvenSoldier());
+        Permanent pony = addPony();
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
         addManaForAbility();
 
         harness.activateAbility(player1, 0, 0, null, dwarf.getId());
+        assertThat(pony.isTapped()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, dwarf, Keyword.MOUNTAINWALK)).isTrue();
@@ -48,10 +49,23 @@ class DwarvenPonyTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Dwarf creature")
     void cannotTargetNonDwarf() {
         addPony();
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent faerie = addCreatureReady(player1, new WillowFaerie());
         addManaForAbility();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bear.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, faerie.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target a Dwarf creature an opponent controls")
+    void canTargetOpponentsDwarf() {
+        addPony();
+        Permanent opponentDwarf = addCreatureReady(player2, new DwarvenSeaClan());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 0, null, opponentDwarf.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, opponentDwarf, Keyword.MOUNTAINWALK)).isTrue();
     }
 }

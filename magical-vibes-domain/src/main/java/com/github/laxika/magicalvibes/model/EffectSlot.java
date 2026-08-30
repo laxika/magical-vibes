@@ -151,6 +151,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  their graveyard. Checked in {@code DrawService}. */
     GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
     ON_OPPONENT_DRAWS,
+    /** Triggers whenever the player enchanted by this Aura draws a card. */
+    ON_ENCHANTED_PLAYER_DRAWS,
     ON_OPPONENT_DISCARDS,
     ON_CONTROLLER_FORAGES,
     /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
@@ -1091,6 +1093,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_PERMANENT_RETURNED_TO_HAND,
     /** Triggers whenever a creature is returned from the battlefield to this permanent's controller's hand. */
     ON_CONTROLLER_CREATURE_RETURNED_TO_HAND,
+    /** Triggers whenever a permanent is returned from the battlefield to this permanent's controller's hand. */
+    ON_CONTROLLER_PERMANENT_RETURNED_TO_HAND,
     /** Global watcher: triggers whenever any source (creature or spell) deals damage, regardless of
      *  who controls it or what it damages. Holds a {@code ReflectSourceDamageToItsControllerEffect}
      *  carrying the color the watcher reacts to. Fires on every permanent with this slot across all

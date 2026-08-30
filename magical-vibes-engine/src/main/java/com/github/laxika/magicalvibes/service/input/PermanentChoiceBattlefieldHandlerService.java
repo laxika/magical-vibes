@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokensAndAtt
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureThenMassDamageEqualToPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
@@ -75,6 +76,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TransformChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
@@ -145,6 +147,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
     private final TargetPlayerSacrificesCreatureThenDrawsPowerEffectHandler targetPlayerSacrificesCreatureThenDrawsPowerHandler;
+    private final TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler targetPlayerSacrificesPermanentThenDealsManaValueDamageHandler;
     private final SacrificeCreatureThenMassDamageEqualToPowerEffectHandler sacrificeCreatureThenMassDamageHandler;
     private final SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler sacrificeOtherCreatureThenRevealHandler;
     private final SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler sacrificeAnotherCreatureDrawAndMayPutPermanentHandler;
@@ -156,6 +159,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler patternMatcherHandler;
     private final BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler deepfathomEchoHandler;
     private final AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler attachTargetAuraHandler;
+    private final AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler attachTargetAuraWithSameControllerHandler;
     private final PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler guardDogsHandler;
     private final TransformChosenPermanentEffectHandler transformChosenPermanentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
@@ -552,6 +556,13 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleAttachTargetAuraToAnotherPermanentWithSameController(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.AttachTargetAuraToAnotherPermanentWithSameController ctx) {
+        attachTargetAuraWithSameControllerHandler.attachChosen(gameData, permanentId, ctx);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleLegendRule(GameData gameData, UUID playerId, UUID permanentId, PermanentChoiceContext.LegendRule legendRule) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toRemove = new ArrayList<>();
@@ -609,6 +620,19 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         targetPlayerSacrificesCreatureThenDrawsPowerHandler.sacrificeAndDraw(
                 gameData, target, context.sacrificingPlayerId(), context.drawingPlayerId(), context.sourceCard());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleTargetPlayerSacrificesPermanentThenDealsManaValueDamage(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.TargetPlayerSacrificesPermanentThenDealsManaValueDamage context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        targetPlayerSacrificesPermanentThenDealsManaValueDamageHandler.sacrificeAndDealDamage(
+                gameData, target, context.sacrificingPlayerId(), context.resolvingEntry(), context.filter());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1939,12 +1963,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent sourcePermanentSnapshot = sourcePermanent == null ? null : new Permanent(sourcePermanent);
 
         int sacrificedPower = gameQueryService.getEffectivePower(gameData, toSacrifice);
+        int sacrificedColorCount = gameQueryService.getEffectiveColors(gameData, toSacrifice).size();
         int sacrificedToughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         Permanent sacrificedSnapshot = new Permanent(toSacrifice);
         StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
         if (originalEntry != null) {
             originalEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
             originalEntry.setSacrificedPower(sacrificedPower);
+            originalEntry.setSacrificedColorCount(sacrificedColorCount);
             originalEntry.setSacrificedToughness(sacrificedToughness);
         }
 
@@ -2067,6 +2093,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 );
                 triggeredEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
                 triggeredEntry.setSacrificedPower(sacrificedPower);
+                triggeredEntry.setSacrificedColorCount(sacrificedColorCount);
                 triggeredEntry.setSacrificedToughness(sacrificedToughness);
                 gameData.stack.add(triggeredEntry);
             }

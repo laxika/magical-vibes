@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
@@ -939,6 +940,24 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(
                     gd, perm, new PermanentHasNonManaActivatedAbilityPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasTapActivatedAbilityPredicate matches only abilities with a tap cost")
+        void tapActivatedAbilityPredicateMatchesOnlyTapAbilities() {
+            Card tapCard = createCreature("Tap Creature", 1, 1, CardColor.GREEN);
+            tapCard.addActivatedAbility(new ActivatedAbility(true, null,
+                    List.of(new DrawCardEffect()), "{T}: Draw a card."));
+            Permanent tapPermanent = addPermanent(player1Id, tapCard);
+
+            Card noTapCard = createCreature("No Tap Creature", 1, 1, CardColor.GREEN);
+            noTapCard.addActivatedAbility(new ActivatedAbility(false, "{1}",
+                    List.of(new DrawCardEffect()), "{1}: Draw a card."));
+            Permanent noTapPermanent = addPermanent(player1Id, noTapCard);
+
+            PermanentHasTapActivatedAbilityPredicate predicate = new PermanentHasTapActivatedAbilityPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, tapPermanent, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, noTapPermanent, predicate)).isFalse();
         }
 
         @Test

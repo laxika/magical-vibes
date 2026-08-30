@@ -48,7 +48,7 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PlanetariumOfWanShiTong());
         Permanent firstVillage = addReadyVillage();
         Permanent secondVillage = addReadyVillage();
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Forest()));
         addVillageMana(2);
 
         surveilWith(firstVillage);
@@ -99,5 +99,6 @@ class PlanetariumOfWanShiTongTest extends BaseCardTest {
     private void answerScry(List<Integer> topOrder, List<Integer> graveyardOrder) {
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(topOrder, graveyardOrder));
+        harness.passBothPriorities();
     }
 }

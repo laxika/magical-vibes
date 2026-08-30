@@ -602,6 +602,10 @@ per the engine's 613.2 modeling (§7), NOT via dependency — reading out-of-bat
 not a same-layer dependency on anything, so the CDA prefix stays outside the dependency
 relation entirely.
 
+The counter-gated battlefield ability scan used by Experiment Kraj is a normal timestamp-ordered
+layer-6 effect rather than a characteristic-defining scan: its applicability depends on the current
+battlefield creature characteristics and counters, and its source must still retain the static ability.
+
 Graveyard static effects that modify other battlefield permanents implement
 `GraveyardStaticEffect`. The layered pass collects those effects from the controller's graveyard
 as synthetic source instances, so their ordinary static handlers can evaluate battlefield scope
