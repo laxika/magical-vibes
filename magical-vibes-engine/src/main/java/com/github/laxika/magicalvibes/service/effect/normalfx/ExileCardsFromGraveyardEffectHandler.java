@@ -47,8 +47,9 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         if (targetCardIds != null && !targetCardIds.isEmpty()) {
             List<String> exiledNames = new ArrayList<>();
             for (UUID cardId : targetCardIds) {
-                Card card = gameData.playerIds.contains(entry.getTargetId())
-                        ? gameData.playerGraveyards.getOrDefault(entry.getTargetId(), List.of()).stream()
+                UUID targetPlayerId = entry.getTargetId();
+                Card card = targetPlayerId != null && gameData.playerIds.contains(targetPlayerId)
+                        ? gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
                                 .filter(candidate -> candidate.getId().equals(cardId))
                                 .findFirst()
                                 .orElse(null)

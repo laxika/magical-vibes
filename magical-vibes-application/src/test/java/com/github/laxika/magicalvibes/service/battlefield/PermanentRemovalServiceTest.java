@@ -780,6 +780,7 @@ class PermanentRemovalServiceTest {
             Card tokenCard = createCreature("Saproling");
             tokenCard.setToken(true);
             Permanent token = addPermanent(player1Id, tokenCard);
+            when(gameQueryService.findPermanentController(gd, token.getId())).thenReturn(player1Id);
 
             prs.removePermanentToHand(gd, token);
 

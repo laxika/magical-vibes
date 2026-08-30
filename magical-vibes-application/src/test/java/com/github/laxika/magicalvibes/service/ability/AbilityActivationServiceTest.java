@@ -544,7 +544,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test
@@ -572,7 +572,7 @@ class AbilityActivationServiceTest {
 
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
             verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
-                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any());
+                    any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any(), any());
         }
 
         @Test
@@ -599,7 +599,7 @@ class AbilityActivationServiceTest {
 
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test
@@ -793,7 +793,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test
@@ -849,7 +849,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test
@@ -901,7 +901,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test
@@ -934,7 +934,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test
@@ -967,7 +967,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
     }
 
@@ -1204,7 +1204,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
-                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any());
+                    eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(), any());
         }
 
         @Test

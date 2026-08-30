@@ -263,6 +263,12 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
                         eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
+                        eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         // Soltari Guerrillas' "next combat damage to an opponent hits a creature instead" redirect is
         // a pass-through here — no such shield is set up. Only the player-damage path calls it.
         lenient().when(damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(

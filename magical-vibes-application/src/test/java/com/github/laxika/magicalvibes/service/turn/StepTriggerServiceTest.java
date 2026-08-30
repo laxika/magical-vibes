@@ -2016,7 +2016,8 @@ class StepTriggerServiceTest {
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, target);
             verify(lifeSupport).applyGainLife(
-                    gd, player1Id, 4, "Spinal Embrace", sourceCard, StackEntryType.TRIGGERED_ABILITY);
+                    gd, player1Id, 4, "Spinal Embrace", sourceCard,
+                    StackEntryType.TRIGGERED_ABILITY, player1Id);
             assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class)).isEmpty();
         }
 

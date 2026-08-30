@@ -1081,6 +1081,11 @@ public class PermanentRemovalService {
             if (battlefield != null && battlefield.contains(target)) {
                 boolean wasCreature = gameQueryService.isCreature(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
+                for (StackEntry entry : gameData.stack) {
+                    if (target.getId().equals(entry.getSourcePermanentId())) {
+                        entry.setSourcePermanentSnapshot(new Permanent(target));
+                    }
+                }
                 battlefield.remove(target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
                 return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature));

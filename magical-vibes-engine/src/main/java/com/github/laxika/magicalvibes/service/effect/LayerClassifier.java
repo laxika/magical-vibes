@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSame
 import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureByColorCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
@@ -449,6 +450,7 @@ public final class LayerClassifier {
         map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostEnchantedCreatureByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesSharingColorWithTopCardEffect.class, fixed(Layer.L7C_MODIFY_PT));

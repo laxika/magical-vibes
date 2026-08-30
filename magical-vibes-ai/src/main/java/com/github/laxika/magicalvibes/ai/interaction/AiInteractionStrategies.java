@@ -93,6 +93,7 @@ public final class AiInteractionStrategies {
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
+        register(new ShuffleCardsFromOutsideGameChoiceAiStrategy());
         register(new PermanentChoiceAiStrategy());
         register(new SylvanLibraryChoiceAiStrategy());
         register(new AdNauseamRepeatChoiceAiStrategy());

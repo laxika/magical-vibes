@@ -119,6 +119,7 @@ public class AuraAttachmentService {
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
+                        snapshotDepartingSource(gameData, p);
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
@@ -140,6 +141,14 @@ public class AuraAttachmentService {
         }
         creatureControlService.reconcileControl(gameData);
         return new AttachmentSweepResult(removals, anyUnattached);
+    }
+
+    private void snapshotDepartingSource(GameData gameData, Permanent permanent) {
+        for (var entry : gameData.stack) {
+            if (permanent.getId().equals(entry.getSourcePermanentId())) {
+                entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            }
+        }
     }
 
     private boolean isAwaitingDayNightAttachment(GameData gameData, UUID permanentId) {
@@ -222,6 +231,7 @@ public class AuraAttachmentService {
                 } else {
                     // CR 704.5m — an illegally attached aura is put into its owner's graveyard
                     boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
+                    snapshotDepartingSource(gameData, p);
                     it.remove();
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(
