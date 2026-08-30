@@ -129,6 +129,8 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellweaverHelixTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellweaverVoluteTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyEnchantedInstantAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
@@ -265,6 +267,43 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(new MayEffect(
                         CopyImprintedCardAndMayCastCopyEffect.otherExiledCard(sc.spellCard().getId()),
                         "You may copy the other exiled card and cast it without paying its mana cost?"
+                ))),
+                null,
+                match.permanent().getId()
+        );
+        triggerEntry.setNonTargeting(true);
+        match.gameData().stack.add(triggerEntry);
+        return true;
+    }
+
+    @CollectsTrigger(value = SpellweaverVoluteTriggerEffect.class,
+            slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleSpellweaverVoluteTrigger(TriggerMatchContext match,
+                                                    SpellweaverVoluteTriggerEffect trigger,
+                                                    TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!sc.spellCard().hasType(CardType.SORCERY)) {
+            return false;
+        }
+        StackEntry castEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
+        if (castEntry == null || castEntry.isCopy()) {
+            return false;
+        }
+        UUID enchantedCardId = match.permanent().getAttachedTo();
+        Card enchantedCard = enchantedCardId == null
+                ? null : gameQueryService.findCardInGraveyardById(match.gameData(), enchantedCardId);
+        if (enchantedCard == null || !enchantedCard.hasType(CardType.INSTANT)) {
+            return false;
+        }
+
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(
+                        new CopyEnchantedInstantAndMayCastCopyEffect(enchantedCardId),
+                        "You may cast a copy of the enchanted instant without paying its mana cost?"
                 ))),
                 null,
                 match.permanent().getId()

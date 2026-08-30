@@ -44,6 +44,7 @@ public sealed interface PermanentPredicate permits
         PermanentHasAtLeastCountersPredicate,
         PermanentHasManaAbilityPredicate,
         PermanentHasNonManaActivatedAbilityPredicate,
+        PermanentHasNoAbilitiesPredicate,
         PermanentHasCountersPredicate,
         PermanentHasCumulativeUpkeepPredicate,
         PermanentHasExactlyTwoColorsPredicate,

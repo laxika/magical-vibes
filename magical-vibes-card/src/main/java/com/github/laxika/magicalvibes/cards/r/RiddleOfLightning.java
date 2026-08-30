@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDam
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "107")
+@CardRegistration(set = "FUT", collectorNumber = "105")
 public class RiddleOfLightning extends Card {
 
     public RiddleOfLightning() {

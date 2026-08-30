@@ -291,6 +291,8 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /** Keywords this spell gains while it is on the stack. */
+    private final Set<Keyword> grantedKeywordsWhileOnStack = EnumSet.noneOf(Keyword.class);
     /**
      * Bloodthirst granted to this creature spell while it is on the stack (Bloodlord of Vaasgoth:
      * "it gains bloodthirst 3"). Per CR 702.54c each instance of bloodthirst applies separately, so
@@ -647,6 +649,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
@@ -734,6 +737,12 @@ public class StackEntry {
 
     public Card getCard() {
         return castCard != null ? castCard : card;
+    }
+
+    /** Whether this stack object has the given printed or cast-time-granted keyword. */
+    public boolean hasKeyword(Keyword keyword) {
+        return getCard() != null && (getCard().getKeywords().contains(keyword)
+                || grantedKeywordsWhileOnStack.contains(keyword));
     }
 
     public void setCastCard(Card castCard) {

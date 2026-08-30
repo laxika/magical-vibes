@@ -101,7 +101,9 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             for (int idx : bottomCardOrder) {
                 deck.add(scryCards.get(idx));
             }
-            triggerCollectionService.checkScryTriggers(gameData, player.getId(), bottomCardOrder.size());
+            if (interaction.causesScryTriggers()) {
+                triggerCollectionService.checkScryTriggers(gameData, player.getId(), bottomCardOrder.size());
+            }
         }
 
         // Clear awaiting state
@@ -136,8 +138,11 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
                             + bottomCardOrder.size() + " on the bottom of it.";
         }
         gameLogService.append(gameData, GameLog.text(logMsg));
+        String operation = interaction.toGraveyard()
+                ? "surveil"
+                : interaction.causesScryTriggers() ? "scry" : "fateseal";
         log.info("Game {} - {} {} completed: {} top, {} reject", gameData.id, player.getUsername(),
-                interaction.toGraveyard() ? "surveil" : "scry", topCardOrder.size(), bottomCardOrder.size());
+                operation, topCardOrder.size(), bottomCardOrder.size());
 
         // Resumes the remaining effects on the same spell/ability (e.g. Foresee: "Scry 4, then draw
         // two cards.") before auto-passing. The hand-rolled version this replaced auto-passed even

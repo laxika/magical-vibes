@@ -944,6 +944,45 @@ class AbilityActivationServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("activateHandAbility — timing restrictions")
+    class ActivateHandAbilityTimingRestrictions {
+
+        @Test
+        @DisplayName("ONLY_DURING_YOUR_UPKEEP: wrong step throws")
+        void upkeepOnlyWrongStepThrows() {
+            Card card = createGenericArtifact("Test Hand Artifact");
+            card.addHandActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    "Test hand ability", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
+            gameData.playerHands.get(player1Id).add(card);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            assertThatThrownBy(() -> service.activateHandAbility(gameData, player1, 0, 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("upkeep");
+        }
+
+        @Test
+        @DisplayName("ONLY_DURING_YOUR_UPKEEP: opponent's upkeep throws")
+        void upkeepOnlyOpponentTurnThrows() {
+            Card card = createGenericArtifact("Test Hand Artifact");
+            card.addHandActivatedAbility(new ActivatedAbility(
+                    false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
+                    "Test hand ability", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
+            gameData.playerHands.get(player1Id).add(card);
+
+            gameData.activePlayerId = player2Id;
+            gameData.currentStep = TurnStep.UPKEEP;
+
+            assertThatThrownBy(() -> service.activateHandAbility(gameData, player1, 0, 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("upkeep");
+        }
+    }
+
     // =========================================================================
     // activateAbility — loyalty abilities
     // =========================================================================

@@ -1730,7 +1730,8 @@ public class CombatDamageService {
         List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
         if (graveyard == null) return;
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     if (trigger.dealerPredicate() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
@@ -1786,8 +1787,8 @@ public class CombatDamageService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(
-                        EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER);
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER);
                 if (effects.isEmpty()) continue;
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                         card, playerId, new ArrayList<>(effects), null));
@@ -2598,17 +2599,21 @@ public class CombatDamageService {
                 for (var sourceEntry : bySource.entrySet()) {
                     Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceEntry.getKey());
                     int sourceDamage = sourceEntry.getValue();
-                    if (damageSource == null
-                            || gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true)) {
-                        sourceSpecificDamage += sourceDamage;
-                    } else {
-                        sourceSpecificDamage += damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
+                    boolean sourceDamagePreventable = damageSource == null
+                            || !gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true);
+                    if (damageSource != null && sourceDamagePreventable) {
+                        sourceDamage = damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                                 gameData, perm, damageSource, sourceDamage, true);
                     }
+                    sourceSpecificDamage += sourceDamagePreventable
+                            ? damagePreventionService.applySelfDamagePreventionShield(gameData, perm, sourceDamage)
+                            : sourceDamage;
                 }
             }
-            int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
-                    gameData, perm, sourceSpecificDamage, true);
+            int effectiveDamage = bySource.isEmpty()
+                    ? damagePreventionService.applyCreaturePreventionShield(gameData, perm, sourceSpecificDamage, true)
+                    : damagePreventionService.applyCreaturePreventionShieldWithoutSelfDamagePrevention(
+                            gameData, perm, sourceSpecificDamage, true);
             int dmg = perm.isDamageCantBePreventedOrRedirectedThisTurn()
                     || damagePreventionService.hasDamageToPlusOnePlusOneCounterReplacement(perm)
                     ? effectiveDamage

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -658,7 +660,11 @@ public class ActivatedAbilityExecutionService {
             if (effect instanceof CostEffect) {
                 continue;
             }
-            if (effect instanceof PutCountersOnGrantingEquipmentEffect grantCounters) {
+            if (effect instanceof ActivationCostCardReferenceEffect referenceEffect) {
+                Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
+                snapshotEffects.add(referenceEffect.bindToCard(imprintedCard != null ? imprintedCard.getId() : null));
+                gameData.setImprintedCard(permanent.getCard(), null);
+            } else if (effect instanceof PutCountersOnGrantingEquipmentEffect grantCounters) {
                 // Bind the granting Equipment now (Hankyu): at resolution the ability's source is the
                 // equipped creature, and the Equipment may no longer be attached to it.
                 snapshotEffects.add(new PutCountersOnGrantingEquipmentEffect(grantCounters.counterType(),
@@ -1165,10 +1171,12 @@ public class ActivatedAbilityExecutionService {
                             .text(" but produces no mana (the sacrificed land could produce none).")
                             .build());
                 }
-            } else if (effect instanceof GainLifeEffect gain) {
+            } else if (effect instanceof GainLifeEffect gain && isNonTargetedLifeGain(gain)) {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
-                lifeSupport.applyGainLife(gameData, playerId, amount);
+                for (UUID recipientId : lifeGainRecipients(gameData, playerId, gain.recipient())) {
+                    lifeSupport.applyGainLife(gameData, recipientId, amount);
+                }
             } else if (effect instanceof LoseLifeEffect loss && isNonTargetedLifeLoss(loss)) {
                 // Life loss riding along with mana production (Cryptolith Fragment: "Add one mana
                 // of any color. Each player loses 1 life."). Still a mana ability, so it resolves
@@ -1447,6 +1455,12 @@ public class ActivatedAbilityExecutionService {
                 || effect.recipient() == LoseLifeRecipient.EACH_OPPONENT;
     }
 
+    private static boolean isNonTargetedLifeGain(GainLifeEffect effect) {
+        return effect.recipient() == GainLifeRecipient.CONTROLLER
+                || effect.recipient() == GainLifeRecipient.OPPONENT
+                || effect.recipient() == GainLifeRecipient.EACH_PLAYER;
+    }
+
     /** The players losing life, in turn order, for a non-targeted {@link LoseLifeRecipient}. */
     private static List<UUID> lifeLossRecipients(GameData gameData, UUID controllerId, LoseLifeRecipient recipient) {
         return switch (recipient) {
@@ -1455,6 +1469,18 @@ public class ActivatedAbilityExecutionService {
             case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
                     .filter(pid -> !pid.equals(controllerId))
                     .toList();
+            default -> List.of();
+        };
+    }
+
+    private List<UUID> lifeGainRecipients(GameData gameData, UUID controllerId, GainLifeRecipient recipient) {
+        return switch (recipient) {
+            case CONTROLLER -> List.of(controllerId);
+            case OPPONENT -> {
+                UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+                yield opponentId == null ? List.of() : List.of(opponentId);
+            }
+            case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);
             default -> List.of();
         };
     }
@@ -1505,6 +1531,11 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof DoubleManaPoolEffect) {
                 total += gameData.playerManaPools.get(playerId).getTotal();
+            } else {
+                ManaAbilityEffectHandler handler = manaAbilityEffectHandlerRegistry.getHandler(effect);
+                if (handler != null) {
+                    total += handler.calculateManaProduction(gameData, playerId, permanent, effect, xValue);
+                }
             }
         }
         return total;

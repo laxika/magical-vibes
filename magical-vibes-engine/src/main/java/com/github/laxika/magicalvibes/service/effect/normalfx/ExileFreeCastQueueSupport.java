@@ -44,6 +44,7 @@ public class ExileFreeCastQueueSupport {
     private final InputCompletionService inputCompletionService;
     private final GraveyardService graveyardService;
     private final CopySupport copySupport;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -52,7 +53,8 @@ public class ExileFreeCastQueueSupport {
                                             ExileCastTargetSupport exileCastTargetSupport,
                                             @Lazy InputCompletionService inputCompletionService,
                                             GraveyardService graveyardService,
-                                            CopySupport copySupport) {
+                                            CopySupport copySupport,
+                                            @Lazy SpellweaverVoluteSupport spellweaverVoluteSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
@@ -60,6 +62,7 @@ public class ExileFreeCastQueueSupport {
         this.inputCompletionService = inputCompletionService;
         this.graveyardService = graveyardService;
         this.copySupport = copySupport;
+        this.spellweaverVoluteSupport = spellweaverVoluteSupport;
     }
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
@@ -210,6 +213,9 @@ public class ExileFreeCastQueueSupport {
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, playerId, false);
+        if (asCopy && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, cardId)) {
+            return;
+        }
         castNextFromQueue(gameData, playerId);
     }
 
@@ -222,6 +228,7 @@ public class ExileFreeCastQueueSupport {
      * active frame completes the resolution itself, so skip the epilogue while one is running.
      */
     private void finishFreeCastProcess(GameData gameData) {
+        spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
             return;

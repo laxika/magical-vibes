@@ -247,8 +247,19 @@ public class DamagePreventionService {
         return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, null);
     }
 
+    public int applyCreaturePreventionShieldWithoutSelfDamagePrevention(
+            GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
+        return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, null, false);
+    }
+
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
                                               boolean isCombatDamage, Permanent damageSource) {
+        return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, damageSource, true);
+    }
+
+    private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
+                                              boolean isCombatDamage, Permanent damageSource,
+                                              boolean applySelfDamagePrevention) {
         if (damage > 0 && gameQueryService.isCreature(gameData, permanent)) {
             damage = applyControlledCreaturesDamageReduction(gameData, permanent, damage);
             if (damage <= 0) return 0;
@@ -331,14 +342,8 @@ public class DamagePreventionService {
             return damage;
         }
         if (gameQueryService.isDamagePreventable(gameData)) {
-            int incomingDamage = damage;
-            int selfDamagePrevented = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .filter(SelfDamagePreventionEffect.class::isInstance)
-                    .map(SelfDamagePreventionEffect.class::cast)
-                    .mapToInt(effect -> effect.preventedDamage(incomingDamage))
-                    .sum();
-            if (selfDamagePrevented > 0) {
-                damage -= Math.min(damage, selfDamagePrevented);
+            if (applySelfDamagePrevention) {
+                damage = applySelfDamagePreventionShield(gameData, permanent, damage);
                 if (damage <= 0) return 0;
             }
             if (gameQueryService.isCreature(gameData, permanent)) {
@@ -458,6 +463,28 @@ public class DamagePreventionService {
             return applyPermanentDamagePreventionShield(gameData, permanent, damage);
         }
         return damage;
+    }
+
+    public int applySelfDamagePreventionShield(GameData gameData, Permanent permanent, int damage) {
+        if (damage <= 0 || permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                || !gameQueryService.isDamagePreventable(gameData)) {
+            return damage;
+        }
+        int prevented = selfDamagePrevented(gameData, permanent, damage);
+        return damage - Math.min(damage, prevented);
+    }
+
+    private int selfDamagePrevented(GameData gameData, Permanent permanent, int damage) {
+        int prevented = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(SelfDamagePreventionEffect.class::isInstance)
+                .map(SelfDamagePreventionEffect.class::cast)
+                .mapToInt(effect -> effect.preventedDamage(damage))
+                .sum();
+        return prevented + gameQueryService.getGrantedEffects(gameData, permanent).stream()
+                .filter(SelfDamagePreventionEffect.class::isInstance)
+                .map(SelfDamagePreventionEffect.class::cast)
+                .mapToInt(effect -> effect.preventedDamage(damage))
+                .sum();
     }
 
     /**

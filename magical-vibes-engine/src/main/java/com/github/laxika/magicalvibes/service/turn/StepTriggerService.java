@@ -509,9 +509,9 @@ public class StepTriggerService {
                     echoCost = "{" + Math.max(0, amount) + "}";
                 }
                 ForcedCostOrElseEffect payEchoOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayEchoCost(echoCost),
+                        new PayEchoCost(echoCost, action.handCardCost(), action.cost()),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
-                        true);
+                        true, action.paidEffects());
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         action.sourceCard(),
@@ -1289,7 +1289,8 @@ public class StepTriggerService {
         List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> upkeepEffects = card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED);
+                List<CardEffect> upkeepEffects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED);
                 if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : upkeepEffects) {
@@ -1365,8 +1366,11 @@ public class StepTriggerService {
                         gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
                     }
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                    UUID choosingPlayerId = effect.targetChosenByActivePlayer()
+                            ? activePlayerId : playerId;
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
-                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
+                            perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
+                            choosingPlayerId));
                 } else {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -2082,7 +2086,7 @@ public class StepTriggerService {
             targetDescription = "target permanent";
         }
 
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+        playerInputService.beginPermanentChoice(gameData, trigger.choosingPlayerId(), validTargets,
                 trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
 
         gameLogService.append(gameData,
@@ -2542,9 +2546,19 @@ public class StepTriggerService {
     }
 
     public boolean playersSkipUpkeepStepApplies(GameData gameData) {
-        return gameData.anyPermanentMatches(permanent ->
+        boolean globalSkip = gameData.anyPermanentMatches(permanent ->
                 permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(PlayersSkipUpkeepStepEffect.class::isInstance));
+                        .anyMatch(PlayersSkipUpkeepStepEffect::isGlobal));
+        if (globalSkip) {
+            return true;
+        }
+
+        if (!gameData.playerHands.getOrDefault(gameData.activePlayerId, List.of()).isEmpty()) {
+            return false;
+        }
+        return gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of()).stream()
+                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(PlayersSkipUpkeepStepEffect::isControllerScoped);
     }
 
     public void handleDrawStepTriggers(GameData gameData) {
@@ -4639,10 +4653,12 @@ public class StepTriggerService {
 
             for (Card card : new ArrayList<>(playerGraveyard)) {
                 List<CardEffect> graveyardEndStepEffects = new ArrayList<>(
-                        card.getEffects(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED));
+                        gameQueryService.getEffectiveGraveyardEffects(
+                                gameData, card, EffectSlot.GRAVEYARD_END_STEP_TRIGGERED));
                 if (playerId.equals(activePlayerId)) {
                     graveyardEndStepEffects.addAll(
-                            card.getEffects(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED));
+                            gameQueryService.getEffectiveGraveyardEffects(
+                                    gameData, card, EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED));
                 }
                 if (graveyardEndStepEffects == null || graveyardEndStepEffects.isEmpty()) continue;
 
@@ -5210,7 +5226,8 @@ public class StepTriggerService {
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
                 queueGraveyardBeginningOfCombatTriggers(gameData, activePlayerId, card,
-                        card.getEffects(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED));
+                        gameQueryService.getEffectiveGraveyardEffects(
+                                gameData, card, EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED));
             }
         }
 

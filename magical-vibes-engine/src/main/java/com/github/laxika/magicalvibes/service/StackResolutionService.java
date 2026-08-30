@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -97,6 +98,7 @@ public class StackResolutionService {
     private final GameMutationCoordinator mutationCoordinator;
     private final CardRevealService cardRevealService;
     private final AuraCopyService auraCopyService;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
                                   CloneService cloneService,
@@ -117,6 +119,7 @@ public class StackResolutionService {
                                   GameMutationCoordinator mutationCoordinator,
                                   CardRevealService cardRevealService,
                                   AuraCopyService auraCopyService,
+                                  SpellweaverVoluteSupport spellweaverVoluteSupport,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
         this.cloneService = cloneService;
@@ -137,6 +140,7 @@ public class StackResolutionService {
         this.mutationCoordinator = mutationCoordinator;
         this.cardRevealService = cardRevealService;
         this.auraCopyService = auraCopyService;
+        this.spellweaverVoluteSupport = spellweaverVoluteSupport;
         this.paradigmService = paradigmService;
     }
 
@@ -291,6 +295,7 @@ public class StackResolutionService {
         }
         perm.setCastFromZone(entry.getSourceZone());
         perm.setAlternateCost(entry.isAlternateCost());
+        perm.setMadness(entry.isMadness());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         perm.setEnteredFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
@@ -487,6 +492,7 @@ public class StackResolutionService {
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
         perm.setProwl(entry.isProwl());
+        perm.setMadness(entry.isMadness());
         // Carry spectacle cast context so spectacle-dependent ETB effects can select their branch.
         perm.setSpectacle(entry.isSpectacle());
 
@@ -594,6 +600,34 @@ public class StackResolutionService {
         triggerCollectionService.checkAuraAttachedTriggers(gameData, auraPerm, creature.getId());
     }
 
+    private void resolveSpellweaverVoluteAura(GameData gameData, StackEntry entry,
+                                              Card card, Card characteristics, UUID controllerId) {
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (graveyardCard == null || !graveyardCard.hasType(CardType.INSTANT)) {
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(characteristics)
+                    .text(" fizzles (enchanted instant card is no longer in a graveyard).")
+                    .build());
+            disposeFizzledPermanentSpell(gameData, entry, card);
+            return;
+        }
+
+        Permanent aura = createEnteringPermanent(entry, card, characteristics);
+        aura.setAttachedTo(graveyardCard.getId());
+        putResolvedPermanentOntoBattlefield(gameData, controllerId, aura, entry);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.builder()
+                .card(characteristics)
+                .text(" enters the battlefield attached to ")
+                .card(graveyardCard)
+                .text(" in a graveyard under " + playerName + "'s control.")
+                .build());
+        log.info("Game {} - {} enters attached to {} in a graveyard for {}",
+                gameData.id, characteristics.getName(), graveyardCard.getName(), playerName);
+        processResolvedPermanentEtb(gameData, controllerId, characteristics, entry.getTargetId(), entry);
+    }
+
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
@@ -608,7 +642,11 @@ public class StackResolutionService {
         // Reanimation Aura that enchants a creature card in a graveyard (e.g. Animate Dead): return
         // the enchanted card to the battlefield under the Aura's controller and attach the Aura to it.
         if (characteristics.isAura() && entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
-            resolveReanimationAura(gameData, entry, card, controllerId);
+            if (spellweaverVoluteSupport.isSpellweaverVolute(characteristics)) {
+                resolveSpellweaverVoluteAura(gameData, entry, card, characteristics, controllerId);
+            } else {
+                resolveReanimationAura(gameData, entry, card, controllerId);
+            }
             return;
         }
 
@@ -843,6 +881,7 @@ public class StackResolutionService {
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
         perm.setProwl(entry.isProwl());
+        perm.setMadness(entry.isMadness());
         perm.setSpectacle(entry.isSpectacle());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
@@ -1150,6 +1189,14 @@ public class StackResolutionService {
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
+            entry.getEffectsToResolve().stream()
+                    .filter(ExileSpellEffect.class::isInstance)
+                    .map(ExileSpellEffect.class::cast)
+                    .mapToInt(ExileSpellEffect::suspendTimeCounters)
+                    .filter(counters -> counters > 0)
+                    .findFirst()
+                    .ifPresent(counters -> gameData.suspendedSpellExiles.add(
+                            new GameData.SuspendedSpellExile(physicalCard.getId(), ownerId, counters)));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {

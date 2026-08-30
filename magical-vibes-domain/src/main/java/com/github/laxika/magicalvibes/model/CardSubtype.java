@@ -173,6 +173,7 @@ public enum CardSubtype {
     THOPTER("Thopter"),
     THRULL("Thrull"),
     EQUIPMENT("Equipment"),
+    FORTIFICATION("Fortification"),
     LIZARD("Lizard"),
     LLAMA("Llama"),
     LHURGOYF("Lhurgoyf"),
@@ -269,7 +270,8 @@ public enum CardSubtype {
     MITE("Mite"),
     OMEN("Omen"),
     FLAGBEARER("Flagbearer"),
-    ROBOT("Robot");
+    ROBOT("Robot"),
+    RIGGER("Rigger");
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,

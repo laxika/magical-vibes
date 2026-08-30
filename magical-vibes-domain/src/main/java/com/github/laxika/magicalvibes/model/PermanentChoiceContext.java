@@ -811,11 +811,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                        UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {
+                                        UUID sourcePermanentId, TargetFilter targetFilter,
+                                        UUID choosingPlayerId) implements PermanentChoiceContext {
 
         public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                             UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, controllerId);
+        }
+
+        public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                            UUID sourcePermanentId, TargetFilter targetFilter) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, controllerId);
         }
     }
 

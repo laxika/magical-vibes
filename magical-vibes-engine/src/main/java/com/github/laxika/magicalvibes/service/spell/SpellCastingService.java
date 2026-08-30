@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -1651,6 +1652,32 @@ public class SpellCastingService {
         }
     }
 
+    /** Validates the discard component of a morph face-up cost before any cost is paid. */
+    public void validateMorphDiscardCost(GameData gameData, Player player, Card card,
+                                         DiscardCardTypeCost cost, Integer discardHandCardIndex) {
+        additionalSpellCostService.validateDiscardCost(
+                gameData, player, card, cost, discardHandCardIndex, -1);
+    }
+
+    /** Pays the already-validated discard component of a morph face-up cost. */
+    public void payMorphDiscardCost(GameData gameData, Player player, Card card,
+                                    DiscardCardTypeCost cost, Integer discardHandCardIndex) {
+        int effectiveIndex = additionalSpellCostService.validateDiscardCost(
+                gameData, player, card, cost, discardHandCardIndex, -1);
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card toDiscard = hand.remove(effectiveIndex);
+        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+        gameLogService.append(gameData, GameLog.builder()
+                .text(player.getUsername() + " discards ")
+                .card(toDiscard)
+                .text(" to turn ")
+                .card(card)
+                .text(" face up.")
+                .build());
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
     /**
      * Casts a card for its prowl cost (CR 702.75). Like evoke, prowl is a pure-mana alternate hand
      * cost that must be forced explicitly. The prowl availability condition (dealt combat damage
@@ -2386,6 +2413,15 @@ public class SpellCastingService {
                         throw new IllegalStateException("Can only spend mana produced by creatures to cast this spell");
                     }
                 }
+                if (card.isRequiresBasicLandMana()) {
+                    ManaCost basicLandCost = castingCostService.applyColoredManaCostReductions(
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateManaSuffix));
+                    int additionalCostForBasicLand = castingCostService.getCastCostModifier(
+                            gameData, playerId, card, effectiveXValue);
+                    if (!basicLandCost.canPayBasicLandOnly(pool, effectiveXValue, additionalCostForBasicLand)) {
+                        throw new IllegalStateException("Can only spend mana produced by basic lands to cast this spell");
+                    }
+                }
             }
         } else if (!usingAlternateCost && !escalateManaSuffix.isEmpty()) {
             // Free cast from battlefield (e.g. As Foretold): mana cost is waived, but escalate is still paid.
@@ -2950,7 +2986,7 @@ public class SpellCastingService {
             }
             deferSpellCastCostTriggers(gameData, stackBeforeCastingCosts);
             StackEntry entry;
-            if (card.isAura() && needsSingleGraveyardTargeting) {
+            if (card.isAura() && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting)) {
                 // Reanimation Aura (e.g. Animate Dead): the target is a creature card in a graveyard.
                 // Mark the stack entry's target zone as GRAVEYARD so resolution reanimates the enchanted
                 // card and attaches the Aura to it (StackResolutionService.resolveEnchantmentSpell), and
@@ -5450,6 +5486,7 @@ public class SpellCastingService {
 
         Card card = graveyard.get(graveyardCardIndex);
         UUID graveyardOwnerId = resolveGraveyardOwner(gameData, graveyard, card.getId());
+        boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
         if (!card.hasType(CardType.LAND)
                 && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.GRAVEYARD, playerId)) {
             throw new IllegalStateException("Card can't be cast from the graveyard");
@@ -5465,32 +5502,45 @@ public class SpellCastingService {
         }
         // Aftermath splits: FlashbackCast lives on the back face; effects/type come from that half,
         // but the physical parent card stays on the stack so exile disposition moves the whole card.
-        var flashbackOpt = card.effectiveFlashbackCast();
+        var flashbackOpt = graveyardAbilitiesSuppressed
+                ? Optional.<FlashbackCast>empty()
+                : card.effectiveFlashbackCast();
         if (flashbackOpt.isPresent()
                 && !castingPermissionService.canUseFlashback(gameData, playerId, flashbackOpt.get())) {
             flashbackOpt = Optional.empty();
         }
         Card castHalf = flashbackOpt.isPresent() ? card.graveyardCastHalf() : card;
-        var disturbOpt = card.getCastingOption(DisturbCast.class);
+        var disturbOpt = graveyardAbilitiesSuppressed
+                ? Optional.<DisturbCast>empty()
+                : card.getCastingOption(DisturbCast.class);
         var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
-        if (graveyardCastOpt.isEmpty()) {
+        if (graveyardAbilitiesSuppressed) {
+            graveyardCastOpt = Optional.empty();
+        } else if (graveyardCastOpt.isEmpty()) {
             graveyardCastOpt = castingPermissionService.findMayhemCastOption(gameData, playerId, card);
         }
-        var harmonizeOpt = card.getCastingOption(HarmonizeCast.class);
+        var harmonizeOpt = graveyardAbilitiesSuppressed
+                ? Optional.<HarmonizeCast>empty()
+                : card.getCastingOption(HarmonizeCast.class);
         boolean isDisturb = disturbOpt.isPresent() && flashbackOpt.isEmpty();
-        boolean grantedHarmonize = harmonizeOpt.isEmpty() && flashbackOpt.isEmpty() && !isDisturb
+        boolean grantedHarmonize = !graveyardAbilitiesSuppressed
+                && harmonizeOpt.isEmpty() && flashbackOpt.isEmpty() && !isDisturb
                 && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
         boolean isHarmonize = (harmonizeOpt.isPresent() && flashbackOpt.isEmpty() && !isDisturb) || grantedHarmonize;
-        boolean isJumpStart = (card.getCastingOption(JumpStartCast.class).isPresent()
+        boolean isJumpStart = !graveyardAbilitiesSuppressed
+                && (card.getCastingOption(JumpStartCast.class).isPresent()
                 || hasSpellCastingAbilityGrantForCard(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize;
-        boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
+        boolean isRetrace = !graveyardAbilitiesSuppressed
+                && card.getCastingOption(Retrace.class).isPresent()
                 && flashbackOpt.isEmpty() && !isDisturb && !isHarmonize && !isJumpStart;
-        boolean grantedFlashback = flashbackOpt.isEmpty()
+        boolean grantedFlashback = !graveyardAbilitiesSuppressed
+                && flashbackOpt.isEmpty()
                 && !isDisturb
                 && !isHarmonize
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
-        boolean emblemFlashback = flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback
+        boolean emblemFlashback = !graveyardAbilitiesSuppressed
+                && flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback
                 && !isHarmonize
                 && castingPermissionService.hasGrantedFlashback(gameData, playerId, card);
         boolean grantedGraveyardCardCast = flashbackOpt.isEmpty()
@@ -7569,6 +7619,14 @@ public class SpellCastingService {
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
                 gameData, playerId, card, new ManaCost(totalMana));
 
+        if (card.isRequiresBasicLandMana()) {
+            if (!cost.canPayBasicLandOnly(pool, effectiveXValue, additionalCost)) {
+                throw new IllegalStateException("Can only spend mana produced by basic lands to cast this spell");
+            }
+            cost.payBasicLandOnly(pool, effectiveXValue, additionalCost);
+            return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
+        }
+
         // Vizier of the Menagerie: eligible spells (e.g. creature spells) may be paid with mana of any
         // type — pay the whole cost as generic. Convoke handles its own colour selection, so defer to
         // the normal path when creatures were tapped for it.
@@ -9454,6 +9512,14 @@ public class SpellCastingService {
                 || castEntry.isCastWithDisturb() || castEntry.isCastTransformed())) {
             castCharacteristics = card.createRuntimeCopyWithFace(card.getBackFaceCard());
             castCharacteristics.freeze();
+        }
+
+        if (castEntry != null && castEntry.wasKicked()) {
+            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+                if (staticEffect instanceof GrantKeywordsToKickedSpellEffect marker) {
+                    castEntry.getGrantedKeywordsWhileOnStack().addAll(marker.keywords());
+                }
+            }
         }
 
         stampLatestCastDuringMainPhase(gameData, playerId, card);

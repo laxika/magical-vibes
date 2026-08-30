@@ -102,7 +102,7 @@ import com.github.laxika.magicalvibes.model.effect.BatchedCreatureDeathTriggerEf
 import com.github.laxika.magicalvibes.model.effect.LeavingCreatureNameAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.StormEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
@@ -339,7 +339,8 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(committingPlayerId);
         if (graveyard != null) {
             for (Card card : List.copyOf(graveyard)) {
-                for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME)) {
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME)) {
                     queueGraveyardCrimeTrigger(gameData, card, committingPlayerId, effect);
                 }
             }
@@ -628,7 +629,8 @@ public class TriggerCollectionService {
         List<Card> castingPlayerGraveyard = gameData.playerGraveyards.get(castingPlayerId);
         if (castingPlayerGraveyard != null) {
             for (Card card : new ArrayList<>(castingPlayerGraveyard)) {
-                List<CardEffect> graveyardEffects = card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL);
+                List<CardEffect> graveyardEffects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL);
                 if (graveyardEffects == null || graveyardEffects.isEmpty()) continue;
 
                 for (CardEffect effect : graveyardEffects) {
@@ -1024,7 +1026,7 @@ public class TriggerCollectionService {
                 ));
                 log.info("Game {} - {} self-cast trigger queued ({} copies) for {}",
                         gameData.id, spellCard.getName(), copies, castingPlayerId);
-            } else if (effect instanceof StormEffect storm) {
+            } else if (effect instanceof SpellCastCopyTriggerEffect copyTrigger) {
                 StackEntry spellEntry = null;
                 for (StackEntry se : gameData.stack) {
                     if (se.getCard().getId().equals(spellCard.getId())) {
@@ -1034,13 +1036,7 @@ public class TriggerCollectionService {
                 }
                 if (spellEntry == null) continue;
 
-                // "for each spell cast before it this turn" — this spell is already recorded, so
-                // subtract it out. Count is fixed here (spells cast after can't precede this one).
-                int copies = storm.instantOrSorceryOnly()
-                        ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
-                                .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                                .count() - 1
-                        : gameData.getTotalSpellsCastThisTurnCount() - 1;
+                int copies = copyTrigger.copyCount(gameData, castingPlayerId);
                 StackEntry snapshot = new StackEntry(spellEntry);
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -1048,9 +1044,9 @@ public class TriggerCollectionService {
                         castingPlayerId,
                         spellCard.getName() + "'s ability",
                         new ArrayList<>(List.of(new StormCopyEffect(
-                                snapshot, castingPlayerId, copies, storm.tokenCopy())))
+                                snapshot, castingPlayerId, copies, copyTrigger.tokenCopy())))
                 ));
-                log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
+                log.info("Game {} - {} spell-copy trigger queued ({} copies) for {}",
                         gameData.id, spellCard.getName(), copies, castingPlayerId);
             } else {
                 selfCastTriggeredEffects.add(effect);
@@ -1503,7 +1499,8 @@ public class TriggerCollectionService {
         }
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_SURVEILS)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_SURVEILS)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -4681,7 +4678,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -5171,7 +5169,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_PROLIFERATES);
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_PROLIFERATES);
             if (effects == null || effects.isEmpty()) continue;
 
             for (int i = 0; i < proliferateCount; i++) {
@@ -5199,7 +5198,8 @@ public class TriggerCollectionService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_GAINS_LIFE)) {
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_OPPONENT_GAINS_LIFE)) {
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -5337,7 +5337,8 @@ public class TriggerCollectionService {
 
         for (Card card : new ArrayList<>(graveyard)) {
             List<CardEffect> effects =
-                    card.getEffects(EffectSlot.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER);
+                    gameQueryService.getEffectiveGraveyardEffects(
+                            gameData, card, EffectSlot.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -5412,8 +5413,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = card.getEffects(
-                    EffectSlot.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE);
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -5507,7 +5508,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE)) {
                 CardEffect resolved = effect;
                 boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
                 if (oncePerTurn) {
@@ -6078,7 +6080,8 @@ public class TriggerCollectionService {
                     .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
             if (diedAtTheSameTime) continue;
 
-            List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_DIES);
+            List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_DIES);
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
@@ -6443,6 +6446,20 @@ public class TriggerCollectionService {
             dispatchSlot(gameData, perm, playerId,
                     EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
         });
+
+        for (ExiledCardEntry exiledEntry : new ArrayList<>(gameData.exiledCards)) {
+            UUID ownerId = exiledEntry.ownerId();
+            if (ownerId.equals(graveyardOwnerId)) continue;
+            Integer timeCounters = gameData.exiledCardTimeCounters.get(exiledEntry.card().getId());
+            if (timeCounters == null || timeCounters <= 0) continue;
+
+            Card sourceCard = exiledEntry.card();
+            for (CardEffect effect : sourceCard.getEffects(
+                    EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)) {
+                registry.dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, sourceCard),
+                        EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+            }
+        }
     }
 
     public void checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(GameData gameData,
@@ -6583,26 +6600,65 @@ public class TriggerCollectionService {
             if (card.getId().equals(dyingCard.getId())) {
                 continue;
             }
-            for (CardEffect effect : card.getEffects(
-                    EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)) {
-                if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.queueMayAbility(card, graveyardOwnerId, mayPay, null);
-                } else if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(card, graveyardOwnerId, may);
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            graveyardOwnerId,
-                            card.getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
-                    ));
-                }
-                gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                log.info("Game {} - {} graveyard trigger fires when a creature enters its owner's graveyard",
-                        gameData.id, card.getName());
+            boolean diedAtTheSameTime = gameData.simultaneousDyingCreatures.values().stream()
+                    .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+            if (diedAtTheSameTime) {
+                continue;
+            }
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)) {
+                queueGraveyardCreaturePutTrigger(gameData, card, graveyardOwnerId, effect,
+                        dyingCard);
             }
         }
+
+        for (UUID opponentId : gameData.playerGraveyards.keySet()) {
+            if (opponentId.equals(graveyardOwnerId)) {
+                continue;
+            }
+            List<Card> opponentGraveyard = gameData.playerGraveyards.get(opponentId);
+            if (opponentGraveyard == null) {
+                continue;
+            }
+            for (Card card : new ArrayList<>(opponentGraveyard)) {
+                if (card.getId().equals(dyingCard.getId())) {
+                    continue;
+                }
+                boolean diedAtTheSameTime = gameData.simultaneousDyingCreatures.values().stream()
+                        .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+                if (diedAtTheSameTime) {
+                    continue;
+                }
+                for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)) {
+                    queueGraveyardCreaturePutTrigger(gameData, card, opponentId, effect, dyingCard);
+                }
+            }
+        }
+    }
+
+    private void queueGraveyardCreaturePutTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+                                                   CardEffect effect, Card dyingCard) {
+        CardEffect resolved = unwrapTriggeringCardConditional(effect, dyingCard, gameData, controllerId);
+        if (resolved == null) {
+            return;
+        }
+        if (resolved instanceof MayPayManaEffect mayPay) {
+            gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
+        } else if (resolved instanceof MayEffect may) {
+            gameData.queueMayAbility(sourceCard, controllerId, may);
+        } else {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(resolved))
+            ));
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} graveyard trigger fires when a creature enters a graveyard",
+                gameData.id, sourceCard.getName());
     }
 
     /** Fires "whenever you lose a coin flip" triggers for the losing player's battlefield. */
@@ -7192,7 +7248,8 @@ public class TriggerCollectionService {
             if (graveyard == null) continue;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD);
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
@@ -7218,7 +7275,8 @@ public class TriggerCollectionService {
             return;
         }
 
-        for (CardEffect effect : returnedCard.getEffects(EffectSlot.GRAVEYARD_ON_SELF_RETURNED_TO_HAND)) {
+        for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                gameData, returnedCard, EffectSlot.GRAVEYARD_ON_SELF_RETURNED_TO_HAND)) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     returnedCard,
@@ -7363,6 +7421,25 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires "whenever this permanent or another permanent is turned face up" triggers. */
+    public void checkSelfOrAnyPermanentTurnsFaceUpTriggers(GameData gameData, UUID controllerId,
+                                                            Permanent turnedPermanent) {
+        TriggerContext.PermanentTurnsFaceUp ctx = new TriggerContext.PermanentTurnsFaceUp(turnedPermanent, controllerId);
+        gameData.forEachBattlefield((ownerId, battlefield) -> {
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                if (perm.isFaceDown() || perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    registry.dispatch(new TriggerMatchContext(gameData, perm, ownerId, effect),
+                            EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP, effect, ctx);
+                }
+            }
+        });
+    }
+
     /** Fires non-targeting triggers watching a permanent controlled by {@code controllerId} transform. */
     public void checkAllyPermanentTransformsTriggers(GameData gameData, UUID controllerId,
                                                       Permanent transformedPermanent, Card transformedCard) {
@@ -7402,7 +7479,8 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
+            for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
+                    gameData, card, EffectSlot.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
@@ -7533,23 +7611,45 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
                     CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, controllerId);
                     if (resolved == null) continue;
 
+                    if (resolved instanceof TriggeringPermanentConditionalEffect conditional) {
+                        if (enteringPermanent == null) continue;
+                        FilterContext filterContext = FilterContext.of(gameData)
+                                .withSourceCardId(card.getId())
+                                .withSourceControllerId(controllerId);
+                        if (!predicateEvaluationService.matchesPermanentPredicate(
+                                enteringPermanent, conditional.predicate(), filterContext)) {
+                            continue;
+                        }
+                        resolved = conditional.wrapped();
+                    }
+
                     if (resolved instanceof MayEffect may) {
-                        gameData.queueMayAbility(card, controllerId, may);
+                        if (may.usesEnteringPermanentReference() && enteringPermanent != null) {
+                            gameData.queueMayAbility(card, controllerId, may, enteringPermanent.getId(), null);
+                        } else {
+                            gameData.queueMayAbility(card, controllerId, may);
+                        }
                     } else {
-                        gameData.stack.add(new StackEntry(
+                        StackEntry entry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
                                 controllerId,
                                 card.getName() + "'s ability",
                                 new ArrayList<>(List.of(resolved))
-                        ));
+                        );
+                        if (resolved.usesEnteringPermanentReference()) {
+                            entry.setTargetId(enteringPermanent != null ? enteringPermanent.getId() : null);
+                            entry.setNonTargeting(true);
+                        }
+                        gameData.stack.add(entry);
                     }
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
                     log.info("Game {} - {} graveyard creature-enters trigger queued", gameData.id, card.getName());
@@ -7949,7 +8049,8 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
@@ -8490,7 +8591,8 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(landControllerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD);
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
@@ -8748,8 +8850,8 @@ public class TriggerCollectionService {
             if (!enteredFromThisGraveyard) return;
 
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> effects = card.getEffects(
-                        EffectSlot.GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD);
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {

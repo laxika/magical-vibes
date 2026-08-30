@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFromExileThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsFewerCreaturesThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
@@ -280,6 +281,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreCreaturesThanTargetSpellController;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellNoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellSharesColorWithControlledCreature;
 import com.github.laxika.magicalvibes.model.condition.TargetToughnessAtMostControllerGraveyardCount;
 import com.github.laxika.magicalvibes.model.condition.TotalCreatureCardsInGraveyardsAtLeast;
@@ -524,6 +526,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && gameData.playersWithCityBlessing.contains(ctx.controllerId());
             case ControllerHasMoreCardsInHandThanEachOpponent ignored ->
                     controllerHasMoreCardsInHandThanEachOpponent(gameData, ctx.controllerId());
+            case ControllerControlsFewerCreaturesThanEachOpponent ignored ->
+                    controllerControlsFewerCreaturesThanEachOpponent(gameData, ctx.controllerId());
             case AnOpponentHasMoreCardsInHandThanController ignored ->
                     anOpponentHasMoreCardsInHandThanController(gameData, ctx.controllerId());
             case AnOpponentHasMoreLifeThanController ignored ->
@@ -925,6 +929,11 @@ public class ConditionEvaluationService {
                                 .findFirst().orElse(null);
                 yield targetSpell != null
                         && predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
+            }
+            case TargetSpellNoManaSpentToCast ignored -> {
+                com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameQueryService
+                        .findStackEntryByCardId(gameData, ctx.targetId());
+                yield targetSpell != null && targetSpell.getManaSpentToCast() == 0;
             }
             case TargetSpellSharesColorWithControlledCreature ignored ->
                     targetSpellSharesColorWithControlledCreature(gameData, ctx);
@@ -1337,6 +1346,18 @@ public class ConditionEvaluationService {
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         return countCreaturesControlled(gameData, controllerId)
                 > countCreaturesControlled(gameData, opponentId);
+    }
+
+    private boolean controllerControlsFewerCreaturesThanEachOpponent(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int controllerCreatureCount = countCreaturesControlled(gameData, controllerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId)
+                    && controllerCreatureCount >= countCreaturesControlled(gameData, playerId)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean controllerControlsMoreCreaturesThanTargetSpellController(

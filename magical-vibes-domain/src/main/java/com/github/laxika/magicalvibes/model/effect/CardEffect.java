@@ -23,6 +23,12 @@ public interface CardEffect {
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
 
     /**
+     * Returns whether an upkeep trigger using this effect has its permanent target chosen by the
+     * active player rather than by the ability's controller.
+     */
+    default boolean targetChosenByActivePlayer() { return false; }
+
+    /**
      * Returns {@code true} when an activated ability with this effect may target cards anywhere in
      * exile rather than only cards exiled with its source permanent.
      */

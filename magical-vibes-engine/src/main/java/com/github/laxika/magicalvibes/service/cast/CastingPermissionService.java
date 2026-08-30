@@ -732,8 +732,7 @@ public class CastingPermissionService {
 
     public boolean isSplitSecondActive(GameData gameData) {
         return gameData.stack.stream()
-                .anyMatch(entry -> entry.getCard() != null
-                        && entry.getCard().getKeywords().contains(Keyword.SPLIT_SECOND));
+                .anyMatch(entry -> entry.hasKeyword(Keyword.SPLIT_SECOND));
     }
 
     public boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {

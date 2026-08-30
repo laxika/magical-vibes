@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
@@ -1022,6 +1023,11 @@ public class GameService {
                 spellCastingService.validateMorphAdditionalCost(
                         gameData, player, morphAdditionalCost, additionalCostPermanentIds);
             }
+            DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
+            if (morphDiscardCost != null) {
+                spellCastingService.validateMorphDiscardCost(
+                        gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
+            }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
             if (morphRevealCost != null) {
                 List<Card> hand = gameData.playerHands.get(player.getId());
@@ -1040,7 +1046,7 @@ public class GameService {
                         GameEventFact.RevealZone.HAND, List.of(toReveal));
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
-            } else {
+            } else if (morphDiscardCost == null) {
                 ManaCost cost = new ManaCost(morphCost);
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (pool == null || !cost.canPay(pool)) {
@@ -1051,6 +1057,10 @@ public class GameService {
             if (morphAdditionalCost != null) {
                 spellCastingService.payMorphAdditionalCost(
                         gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
+            }
+            if (morphDiscardCost != null) {
+                spellCastingService.payMorphDiscardCost(
+                        gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
             }
             permanent.turnFaceUp();
             List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()

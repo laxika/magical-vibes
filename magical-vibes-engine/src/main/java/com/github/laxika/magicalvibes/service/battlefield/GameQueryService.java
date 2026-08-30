@@ -182,7 +182,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCre
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.HandAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MadnessGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -267,6 +269,7 @@ public class GameQueryService {
             CardSubtype.LOCUS,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
+            CardSubtype.FORTIFICATION,
             CardSubtype.AJANI,
             CardSubtype.KOTH,
             CardSubtype.BOLAS
@@ -821,6 +824,7 @@ public class GameQueryService {
     public List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCard(GameData gameData, UUID ownerId,
                                                                                 Card card) {
         List<ActivatedAbility> result = new ArrayList<>();
+        if (graveyardCardsHaveLostAllAbilities(gameData)) return result;
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) return result;
         for (Permanent perm : bf) {
@@ -837,6 +841,31 @@ public class GameQueryService {
         if (card != null && gameData.cardsGrantedEmbalmUntilEndOfTurn.contains(card.getId())
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {
             result.add(Card.embalmAbility(card.getManaCost()));
+        }
+        return result;
+    }
+
+    /**
+     * Computes hand-activated abilities granted to a card by face-up permanents on any
+     * battlefield. This supports effects worded as applying to cards in each player's hand.
+     */
+    public List<ActivatedAbility> computeGrantedHandAbilitiesForOwnedCard(GameData gameData, UUID ownerId,
+                                                                           Card card) {
+        List<ActivatedAbility> result = new ArrayList<>();
+        if (card == null) return result;
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown()) continue;
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof HandAbilityGrantingEffect grant
+                            && predicateEvaluationService.matchesCardPredicate(
+                            card, grant.filter(), null, gameData, ownerId)) {
+                        result.add(grant.grantedAbility().withGrantSource(permanent.getId()));
+                    }
+                }
+            }
         }
         return result;
     }
@@ -1247,6 +1276,19 @@ public class GameQueryService {
      */
     public boolean canPlayersActivateGraveyardAbilities(GameData gameData) {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantActivateAbilitiesOfGraveyardCardsEffect.class);
+    }
+
+    /** Returns whether cards in graveyards currently have all of their abilities removed. */
+    public boolean graveyardCardsHaveLostAllAbilities(GameData gameData) {
+        return gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
+                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance));
+    }
+
+    /** Returns a graveyard card's effects in the given slot, respecting global ability loss. */
+    public List<CardEffect> getEffectiveGraveyardEffects(GameData gameData, Card card, EffectSlot slot) {
+        return graveyardCardsHaveLostAllAbilities(gameData) ? List.of() : card.getEffects(slot);
     }
 
     /**
@@ -3474,7 +3516,7 @@ public class GameQueryService {
                         source, playerId, targetOnSameBattlefield, source.getTimestamp(), position++, false));
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard != null) {
+            if (graveyard != null && !graveyardCardsHaveLostAllAbilities(gameData)) {
                 for (Card card : graveyard) {
                     if (card.getEffects(EffectSlot.STATIC).stream()
                             .noneMatch(GraveyardStaticEffect.class::isInstance)) {

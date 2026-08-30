@@ -13,6 +13,8 @@ public enum Keyword {
     SPLIT_SECOND,
     FADING,
     VANISHING,
+    GRAFT,
+    FORTIFY,
     VIGILANCE,
     BACKUP,
     SHROUD,
@@ -34,6 +36,7 @@ public enum Keyword {
     PLAINSWALK,
     HEXPROOF,
     INFECT,
+    POISONOUS,
     WITHER,
     INTIMIDATE,
     METALCRAFT,
@@ -104,7 +107,8 @@ public enum Keyword {
     CAMOUFLAGE,
     DOUBLE,
     PLOT,
-    AMASS;
+    AMASS,
+    ASSEMBLE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

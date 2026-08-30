@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueue
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -67,6 +68,7 @@ public class PermanentChoiceSpellHandlerService {
     private final CopySupport copySupport;
     private final LifeSupport lifeSupport;
     private final DealDividedDamageSupport dealDividedDamageSupport;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -83,7 +85,8 @@ public class PermanentChoiceSpellHandlerService {
                                               InteractionHandlerRegistry interactionHandlerRegistry,
                                               CopySupport copySupport,
                                               LifeSupport lifeSupport,
-                                              DealDividedDamageSupport dealDividedDamageSupport) {
+                                              DealDividedDamageSupport dealDividedDamageSupport,
+                                              SpellweaverVoluteSupport spellweaverVoluteSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameLogService = gameLogService;
@@ -100,6 +103,7 @@ public class PermanentChoiceSpellHandlerService {
         this.copySupport = copySupport;
         this.lifeSupport = lifeSupport;
         this.dealDividedDamageSupport = dealDividedDamageSupport;
+        this.spellweaverVoluteSupport = spellweaverVoluteSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -333,6 +337,10 @@ public class PermanentChoiceSpellHandlerService {
 
             triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), Zone.EXILE);
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+            if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
+                    gameData, ect.cardToCast().getId())) {
+                return;
+            }
         } else {
             gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
             if (ect.genericCostReduction() > 0) {
@@ -437,6 +445,9 @@ public class PermanentChoiceSpellHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), Zone.EXILE);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        if (ect.copy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, card.getId())) {
+            return;
+        }
 
         resumeAfterExileCast(gameData, ect.controllerId());
     }

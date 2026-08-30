@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterSer
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExileGraveyardCardsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +98,7 @@ public class GraveyardChoiceHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
     private final DredgeSupport dredgeSupport;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -594,6 +596,14 @@ public class GraveyardChoiceHandlerService {
                         + ", greater than the maximum total mana value "
                         + multiGraveyardChoice.maxTotalManaValue());
             }
+        }
+
+        if (gameData.pendingSpellweaverVoluteReattachment != null
+                && gameData.pendingSpellweaverVoluteReattachment.copyCardId() == null) {
+            gameData.interaction.clearAwaitingInput();
+            spellweaverVoluteSupport.completeAttachmentChoice(gameData, cardIds.getFirst());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         if (gameData.cloneOperation.copyCardFilter != null) {

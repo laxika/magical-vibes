@@ -307,7 +307,8 @@ public class GameViewProjectionFactory {
                         cardGranted.addAll(gameQueryService.computeGrantedGraveyardSubtypesForOwnedCreatureCard(
                                 data, pid, c));
                         return cardViewFactory.createForGraveyard(c, cardGranted,
-                                gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c));
+                                gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
+                                gameQueryService.graveyardCardsHaveLostAllAbilities(data));
                     }).toList()
                     : new ArrayList<>());
         }
@@ -365,7 +366,8 @@ public class GameViewProjectionFactory {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
                 return gameData.playerHands.getOrDefault(opponentId, List.of())
-                        .stream().map(c -> cardViewFactory.create(c, granted)).toList();
+                        .stream().map(c -> cardViewFactory.create(c, granted, List.of(),
+                                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, opponentId, c))).toList();
             }
         }
         return List.of();
@@ -800,7 +802,8 @@ public class GameViewProjectionFactory {
     }
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
-        CardView view = cardViewFactory.create(card, grantedSubtypes);
+        CardView view = cardViewFactory.create(card, grantedSubtypes, List.of(),
+                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, playerId, card));
         if (view.hasAlternateCastingCost()) {
             return view;
         }

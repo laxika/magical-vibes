@@ -71,13 +71,34 @@ public class CardViewFactory {
      * ability list.
      */
     public CardView create(Card card, List<CardSubtype> grantedSubtypes, List<ActivatedAbility> grantedGraveyardAbilities) {
+        return create(card, grantedSubtypes, grantedGraveyardAbilities, List.of());
+    }
+
+    /**
+     * Creates a CardView with granted subtypes and additional zone-specific activated abilities.
+     * Granted hand abilities are appended after the card's own abilities so their indices match
+     * the effective server-side hand ability list.
+     */
+    public CardView create(Card card, List<CardSubtype> grantedSubtypes,
+                           List<ActivatedAbility> grantedGraveyardAbilities,
+                           List<ActivatedAbility> grantedHandAbilities) {
         CardView base = create(card, grantedSubtypes);
-        if (grantedGraveyardAbilities.isEmpty()) return base;
-        List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
-        for (ActivatedAbility ability : grantedGraveyardAbilities) {
-            mergedGraveyard.add(createAbilityView(ability));
+        CardView result = base;
+        if (!grantedGraveyardAbilities.isEmpty()) {
+            List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
+            for (ActivatedAbility ability : grantedGraveyardAbilities) {
+                mergedGraveyard.add(createAbilityView(ability));
+            }
+            result = result.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
         }
-        return base.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
+        if (!grantedHandAbilities.isEmpty()) {
+            List<ActivatedAbilityView> mergedHand = new ArrayList<>(result.handActivatedAbilities());
+            for (ActivatedAbility ability : grantedHandAbilities) {
+                mergedHand.add(createAbilityView(ability));
+            }
+            result = result.toBuilder().handActivatedAbilities(mergedHand).build();
+        }
+        return result;
     }
 
     public CardView create(Card card) {
@@ -255,7 +276,26 @@ public class CardViewFactory {
      */
     public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
                                        List<ActivatedAbility> grantedGraveyardAbilities) {
+        return createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities, false);
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       boolean graveyardAbilitiesSuppressed) {
         CardView base = create(card, grantedSubtypes, grantedGraveyardAbilities);
+        if (graveyardAbilitiesSuppressed) {
+            return base.toBuilder()
+                    .keywords(Set.of())
+                    .hasTapAbility(false)
+                    .hasConvoke(false)
+                    .hasHarmonize(false)
+                    .activatedAbilities(List.of())
+                    .graveyardActivatedAbilities(List.of())
+                    .handActivatedAbilities(List.of())
+                    .exileActivatedAbilities(List.of())
+                    .graveyardCastRequiresDiscard(false)
+                    .build();
+        }
         if (base.needsTarget() || !disturbBackFaceNeedsTarget(card)) {
             return base;
         }

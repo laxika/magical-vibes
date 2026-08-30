@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -59,6 +60,8 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         var e = (ReturnToHandEffect) effect;
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
+            case TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD ->
+                    resolveTargetNonlandPermanentOrSuspendedCard(gameData, entry, e);
             case TARGET_CHOSEN_CREATURE_TYPE -> resolveTargetChosenCreatureType(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
             case TRIGGERING -> resolveTriggering(gameData, entry, e);
@@ -172,6 +175,32 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         if (e.lifeLoss() > 0) {
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    private void resolveTargetNonlandPermanentOrSuspendedCard(
+            GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        if (entry.getTargetZone() != Zone.EXILE) {
+            resolveTarget(gameData, entry, e);
+            return;
+        }
+
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
+            return;
+        }
+
+        var exiled = gameData.findExiledCard(targetId);
+        Integer timeCounters = gameData.exiledCardTimeCounters.get(targetId);
+        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                    + " fizzles (target card is no longer suspended)."));
+            return;
+        }
+
+        gameData.removeFromExile(targetId);
+        gameData.addCardToHand(exiled.ownerId(), exiled.card());
+        gameLogService.append(gameData, GameLog.textCardText(
+                entry.getDescription() + " returns ", exiled.card(), " from exile to its owner's hand."));
     }
 
     private void resolveTargetChosenCreatureType(GameData gameData, StackEntry entry, ReturnToHandEffect e) {

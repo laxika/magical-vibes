@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.Map;
 
@@ -19,7 +20,7 @@ import java.util.Map;
  * {@code null}); Eternalize sets a fixed base P/T (e.g. a 4/4 black Zombie).
  *
  * @param removeLegendary  if true, the token is not legendary (removes LEGENDARY supertype)
- * @param amount           number of token copies to create
+ * @param amount           number of token copies to create, evaluated when the effect resolves
  * @param colorOverride    if non-null, the token's color is set to exactly this color
  * @param addedSubtype     if non-null, this creature subtype is added to the copy (e.g. Zombie)
  * @param removeManaCost   if true, the token has no mana cost
@@ -30,7 +31,7 @@ import java.util.Map;
  * @param initialCounters  counters placed on each token after it enters
  * @param tappedAndAttacking if true, the token enters tapped and attacking the same target as the source
  */
-public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
+public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
                                             CardColor colorOverride, CardSubtype addedSubtype,
                                             boolean removeManaCost,
                                             Integer powerOverride, Integer toughnessOverride,
@@ -41,19 +42,38 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
 
     /** Backward-compatible: single copy, keeps legendary status, no transformation. */
     public CreateTokenCopyOfSourceEffect() {
-        this(false, 1, null, null, false, null, null, false, false, Map.of(), false);
+        this(false, new Fixed(1), null, null, false, null, null, false, false, Map.of(), false);
     }
 
     /** Backward-compatible: copies with an optional non-legendary flag and count, no transformation. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount) {
+        this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false, Map.of(), false);
+    }
+
+    /** Source copy with a dynamically evaluated count. */
+    public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount) {
         this(removeLegendary, amount, null, null, false, null, null, false, false, Map.of(), false);
     }
 
     /** Plain source copy with optional haste and exile at the next end step. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          boolean grantHaste, boolean exileAtEndStep) {
+        this(removeLegendary, new Fixed(amount), null, null, false, null, null, grantHaste, exileAtEndStep,
+                Map.of(), false);
+    }
+
+    /** Source copy with a dynamically evaluated count, optional haste, and next-end-step exile. */
+    public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
+                                         boolean grantHaste, boolean exileAtEndStep) {
         this(removeLegendary, amount, null, null, false, null, null, grantHaste, exileAtEndStep,
                 Map.of(), false);
+    }
+
+    /** Creates a dynamic number of source copies that enter tapped and attacking. */
+    public static CreateTokenCopyOfSourceEffect tappedAndAttacking(DynamicAmount amount,
+                                                                    boolean exileAtEndStep) {
+        return new CreateTokenCopyOfSourceEffect(
+                false, amount, null, null, false, null, null, false, exileAtEndStep, Map.of(), true);
     }
 
     /** Embalm/Eternalize-style source copy with explicit power/toughness overrides. */
@@ -61,7 +81,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          CardColor colorOverride, CardSubtype addedSubtype,
                                          boolean removeManaCost, Integer powerOverride,
                                          Integer toughnessOverride) {
-        this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
+        this(removeLegendary, new Fixed(amount), colorOverride, addedSubtype, removeManaCost,
                 powerOverride, toughnessOverride, false, false, Map.of(), false);
     }
 
@@ -69,14 +89,14 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
                                          CardColor colorOverride, CardSubtype addedSubtype,
                                          boolean removeManaCost) {
-        this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost, null, null,
+        this(removeLegendary, new Fixed(amount), colorOverride, addedSubtype, removeManaCost, null, null,
                 false, false, Map.of(), false);
     }
 
     /** Plain source copy that enters tapped and attacking with counters copied from the source. */
     public static CreateTokenCopyOfSourceEffect tappedAndAttackingWithSourceCounters() {
         return new CreateTokenCopyOfSourceEffect(
-                false, 1, null, null, false, null, null, false, false,
+                false, new Fixed(1), null, null, false, null, null, false, false,
                 Map.of(CounterType.PLUS_ONE_PLUS_ONE, new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
                 true);
     }

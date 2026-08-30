@@ -1368,7 +1368,8 @@ public class CombatAttackService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
+                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
                 if (gyAttackEffects.isEmpty()) continue;
 
                 for (CardEffect effect : gyAttackEffects) {

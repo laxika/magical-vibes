@@ -18,6 +18,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> snowMana = new EnumMap<>(ManaColor.class);
     /** Mana produced by a Cave source, tracked as a tag for cast-time effects. */
     private final EnumMap<ManaColor, Integer> caveMana = new EnumMap<>(ManaColor.class);
+    /** Mana produced by a basic land, tracked as a tag on regular mana. */
+    private final EnumMap<ManaColor, Integer> basicLandMana = new EnumMap<>(ManaColor.class);
     /** Mana tagged with the permanent that produced it for source-specific spell-cast triggers. */
     private final Map<UUID, EnumMap<ManaColor, Integer>> spellCastTriggerMana = new LinkedHashMap<>();
     private boolean snowManaSpendableAsAnyColor;
@@ -182,6 +184,7 @@ public class ManaPool {
             pool.put(color, 0);
             snowMana.put(color, 0);
             caveMana.put(color, 0);
+            basicLandMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
@@ -217,6 +220,7 @@ public class ManaPool {
         pool.putAll(source.pool);
         snowMana.putAll(source.snowMana);
         caveMana.putAll(source.caveMana);
+        basicLandMana.putAll(source.basicLandMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : source.spellCastTriggerMana.entrySet()) {
             spellCastTriggerMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -366,6 +370,53 @@ public class ManaPool {
         pool.merge(color, amount, Integer::sum);
     }
 
+    /** Copies a basic-land provenance tag onto mana already present in this pool. */
+    public void addBasicLandManaTag(ManaColor color, int amount) {
+        if (amount > 0) {
+            basicLandMana.merge(color, amount, Integer::sum);
+        }
+    }
+
+    public int getBasicLandMana(ManaColor color) {
+        return basicLandMana.getOrDefault(color, 0);
+    }
+
+    public int getBasicLandManaTotal() {
+        return basicLandMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /** Returns a defensive snapshot of basic-land provenance tags currently available by color. */
+    public EnumMap<ManaColor, Integer> getBasicLandManaTotals() {
+        return new EnumMap<>(basicLandMana);
+    }
+
+    /** Removes up to {@code amount} mana carrying a basic-land provenance tag. */
+    public void removeBasicLandMana(ManaColor color, int amount) {
+        int toRemove = Math.min(Math.max(0, amount), getBasicLandMana(color));
+        for (int i = 0; i < toRemove; i++) {
+            remove(color);
+        }
+    }
+
+    /** Creates a pool containing only regular mana carrying a basic-land provenance tag. */
+    public ManaPool copyBasicLandMana() {
+        ManaPool copy = new ManaPool();
+        for (ManaColor color : ManaColor.values()) {
+            int amount = getBasicLandMana(color);
+            copy.add(color, amount);
+            copy.addBasicLandManaTag(color, amount);
+            copy.addSnowManaTag(color, Math.min(amount, getSnowMana(color)));
+        }
+        copy.setWhiteSpendableAsRed(isWhiteSpendableAsRed());
+        copy.setWhiteSpendableAsAnyColor(isWhiteSpendableAsAnyColor());
+        copy.setWhiteSpendableAsAnyColorWithoutRestriction(isWhiteSpendableAsAnyColorWithoutRestriction());
+        copy.setAllManaSpendableAsAnyColor(isAllManaSpendableAsAnyColor());
+        copy.setSnowManaSpendableAsAnyColor(isSnowManaSpendableAsAnyColor());
+        copy.setBlueSpendableAsAnyColorForActivatedAbilities(isBlueSpendableAsAnyColorForActivatedAbilities());
+        copy.setAllManaSpendableAsAnyColorForActivatedAbilities(isAllManaSpendableAsAnyColorForActivatedAbilities());
+        return copy;
+    }
+
     /** Adds mana produced by a snow source. The mana keeps its normal color and gains the snow tag. */
     public void addSnowMana(ManaColor color, int amount) {
         add(color, amount);
@@ -441,9 +492,13 @@ public class ManaPool {
         if (from == to || getSnowMana(from) <= 0) {
             return false;
         }
+        boolean basicLandSource = getBasicLandMana(from) > 0;
         remove(from);
         add(to);
         addSnowManaTag(to, 1);
+        if (basicLandSource) {
+            addBasicLandManaTag(to, 1);
+        }
         return true;
     }
 
@@ -473,6 +528,7 @@ public class ManaPool {
             pool.put(color, 0);
             snowMana.put(color, 0);
             caveMana.put(color, 0);
+            basicLandMana.put(color, 0);
             creatureMana.put(color, 0);
             spellOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
@@ -763,6 +819,10 @@ public class ManaPool {
         if (cave > 0) {
             caveMana.put(color, cave - 1);
         }
+        int basicLand = basicLandMana.getOrDefault(color, 0);
+        if (basicLand > 0) {
+            basicLandMana.put(color, basicLand - 1);
+        }
         removeTaggedMana(spellCastTriggerMana, color);
         int promotedLandAbilityOnly = promotedLandAbilityOnlyMana.getOrDefault(color, 0);
         if (promotedLandAbilityOnly > 0) {
@@ -805,6 +865,9 @@ public class ManaPool {
         int spellOnly = spellOnlyMana.getOrDefault(color, 0);
         if (spellOnly > total) {
             spellOnlyMana.put(color, total);
+        }
+        if (basicLandMana.getOrDefault(color, 0) > total) {
+            basicLandMana.put(color, total);
         }
         if (hasteGrantingMana.getOrDefault(color, 0) > total) {
             hasteGrantingMana.put(color, total);
@@ -927,6 +990,8 @@ public class ManaPool {
                 pool.merge(color, -amount, Integer::sum);
                 spellOnlyMana.put(color, 0);
                 int total = pool.getOrDefault(color, 0);
+                int basicLand = basicLandMana.getOrDefault(color, 0);
+                basicLandMana.put(color, Math.min(basicLand, total));
                 if (creatureMana.getOrDefault(color, 0) > total) {
                     creatureMana.put(color, total);
                 }
@@ -940,6 +1005,7 @@ public class ManaPool {
         for (Map.Entry<ManaColor, Integer> entry : withdrawn.entrySet()) {
             pool.merge(entry.getKey(), entry.getValue(), Integer::sum);
             spellOnlyMana.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            basicLandMana.merge(entry.getKey(), entry.getValue(), Integer::sum);
         }
     }
 
@@ -2383,6 +2449,7 @@ public class ManaPool {
             pool.merge(ManaColor.COLORLESS, amount, Integer::sum);
             moveTaggedManaToColorless(snowMana, color, amount);
             moveTaggedManaToColorless(caveMana, color, amount);
+            moveTaggedManaToColorless(basicLandMana, color, amount);
             moveTaggedManaToColorless(creatureMana, color, amount);
             moveTaggedManaToColorless(spellOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedAbilityOnlyMana, color, amount);
@@ -2445,6 +2512,7 @@ public class ManaPool {
             pool.put(color, current - amount);
             pool.merge(replacementColor, amount, Integer::sum);
             moveTaggedMana(snowMana, color, replacementColor, amount);
+            moveTaggedMana(basicLandMana, color, replacementColor, amount);
             moveTaggedMana(creatureMana, color, replacementColor, amount);
             moveTaggedMana(spellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedAbilityOnlyMana, color, replacementColor, amount);
@@ -2631,6 +2699,7 @@ public class ManaPool {
         clampColorTag(creatureMana, protectedColors);
         clampColorTag(snowMana, protectedColors);
         clampColorTag(caveMana, protectedColors);
+        clampColorTag(basicLandMana, protectedColors);
         clampColorTag(spellOnlyMana, protectedColors);
         clampColorTag(hasteGrantingMana, protectedColors);
         clampColorTag(uncounterableGrantingMana, protectedColors);

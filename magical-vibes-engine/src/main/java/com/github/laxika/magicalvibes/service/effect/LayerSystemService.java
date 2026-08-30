@@ -799,6 +799,13 @@ public class LayerSystemService {
         h = mix(h, card.getEffects(EffectSlot.STATIC).size());
         // Chosen-as-enters protection is seeded from this slot in layer 6.
         h = mix(h, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).size());
+        for (EffectSlot slot : EffectSlot.values()) {
+            h = mix(h, card.getEffects(slot).size());
+        }
+        h = mix(h, card.getActivatedAbilities().size());
+        h = mix(h, card.getGraveyardActivatedAbilities().size());
+        h = mix(h, card.getHandActivatedAbilities().size());
+        h = mix(h, card.getStackActivatedAbilities().size());
         return h;
     }
 
@@ -1035,7 +1042,8 @@ public class LayerSystemService {
             }
         }
         int graveyardPosition = slots.size();
-        for (UUID controllerId : gameData.orderedPlayerIds) {
+        if (!gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+            for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
             if (graveyard == null) {
                 continue;
@@ -1061,6 +1069,7 @@ public class LayerSystemService {
                     instances.add(new EffectInstance(source, rewritten, effect, null,
                             classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
                 }
+            }
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -2067,7 +2076,8 @@ public class LayerSystemService {
                                     Permanent sourcePermanent, UUID sourceControllerId,
                                     UUID sourcePermanentId) {
         if (filter == null) return true;
-        FilterContext context = sourcePermanent == null ? null
+        FilterContext context = gameData == null && sourceControllerId == null && sourcePermanentId == null
+                ? null
                 : (gameData == null ? FilterContext.empty() : FilterContext.of(gameData))
                 .withSourceControllerId(sourceControllerId)
                 .withSourcePermanentSnapshot(sourcePermanent)

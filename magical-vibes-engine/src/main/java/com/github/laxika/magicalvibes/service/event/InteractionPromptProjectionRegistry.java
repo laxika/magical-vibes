@@ -130,6 +130,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
         register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
+        register(PendingInteraction.RemoveTimeCounterCostChoice.class,
+                this::projectRemoveTimeCounterCostChoice);
         register(PendingInteraction.ColorChoice.class, this::projectColorChoice);
         register(PendingInteraction.RevealedHandChoice.class, this::projectRevealedHandChoice);
         register(PendingInteraction.TargetedHandBattlefieldChoice.class,
@@ -185,6 +187,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectSearchOutsideGameOrExileCardChoice);
         register(PendingInteraction.FaceUpExiledCardChoice.class,
                 this::projectFaceUpExiledCardChoice);
+        register(PendingInteraction.ETBExiledCardTargetChoice.class,
+                this::projectETBExiledCardTargetChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
@@ -841,6 +845,31 @@ public class InteractionPromptProjectionRegistry {
                         + "\" to return to the battlefield.");
     }
 
+    private InteractionPromptMessage projectRemoveTimeCounterCostChoice(
+            GameData gameData, PendingInteraction.RemoveTimeCounterCostChoice interaction) {
+        List<CardView> cardViews = new ArrayList<>();
+        List<Card> battlefieldCards = gameData.playerBattlefields
+                .getOrDefault(interaction.playerId(), List.of())
+                .stream()
+                .filter(permanent -> permanent.getCounterCount(
+                        com.github.laxika.magicalvibes.model.CounterType.TIME) > 0)
+                .map(Permanent::getCard)
+                .toList();
+        addMatchingCardViews(cardViews, battlefieldCards, interaction.validCardIds());
+        synchronized (gameData.exiledCards) {
+            gameData.exiledCards.stream()
+                    .filter(entry -> interaction.playerId().equals(entry.ownerId()))
+                    .filter(entry -> interaction.validCardIds().contains(entry.card().getId()))
+                    .filter(entry -> gameData.exiledCardTimeCounters.getOrDefault(
+                            entry.card().getId(), 0) > 0)
+                    .map(ExiledCardEntry::card)
+                    .map(cardViewFactory::create)
+                    .forEach(cardViews::add);
+        }
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
+    }
+
     private InteractionPromptMessage projectColorChoice(
             GameData gameData, PendingInteraction.ColorChoice interaction) {
         return InteractionPromptMessage.listPick(
@@ -1121,6 +1150,15 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1,
                 "You may put a face-up exiled card they own into their graveyard.");
+    }
+
+    private InteractionPromptMessage projectETBExiledCardTargetChoice(
+            GameData gameData, PendingInteraction.ETBExiledCardTargetChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.validCardIds()),
+                1,
+                interaction.sourceCard().getName() + "'s ability — Choose a face-up exiled card.");
     }
 
     private InteractionPromptMessage projectPermanentChoice(

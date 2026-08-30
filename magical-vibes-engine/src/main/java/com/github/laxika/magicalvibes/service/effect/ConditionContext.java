@@ -200,14 +200,14 @@ public record ConditionContext(
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
         return new ConditionContext(controllerId, permanent.getId(), permanent,
-                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), false, false, false,
+                permanent.getCard(), permanent.isKicked(), false, permanent.isProwl(), permanent.isMadness(), false, false,
                 null, 0, null, null, false, false, false, null, null, null,
                 permanent.getRepeatedAdditionalCosts(), permanent.isAlternateCost(), permanent.isSpectacle());
     }
 
     public static ConditionContext forStaticEffect(Permanent source, UUID controllerId) {
         return new ConditionContext(controllerId, source.getId(), source,
-                source.getCard(), source.isKicked(), false, source.isProwl(), false, false, false,
+                source.getCard(), source.isKicked(), false, source.isProwl(), source.isMadness(), false, false,
                 null, 0, null, null, true, false, false, null, null, null,
                 source.getRepeatedAdditionalCosts(), source.isAlternateCost(), source.isSpectacle());
     }

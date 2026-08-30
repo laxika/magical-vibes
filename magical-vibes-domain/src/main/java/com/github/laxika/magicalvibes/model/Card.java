@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
@@ -158,6 +159,7 @@ public class Card {
      */
     private boolean sacrificeAtEndStep;
     private boolean requiresCreatureMana;
+    private boolean requiresBasicLandMana;
     /**
      * When true, this Aura enchants a player even though it isn't a Curse (e.g. Wheel of Sun and
      * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
@@ -208,6 +210,8 @@ public class Card {
     private RevealCardsFromHandCastingCost morphRevealCost;
     /** Optional permanent-return component of a morph face-up cost. */
     private ReturnPermanentsCost morphAdditionalCost;
+    /** Optional discard component of a morph face-up cost. */
+    private DiscardCardTypeCost morphDiscardCost;
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
@@ -320,6 +324,7 @@ public class Card {
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
         this.requiresCreatureMana = source.requiresCreatureMana;
+        this.requiresBasicLandMana = source.requiresBasicLandMana;
         this.enchantPlayer = source.enchantPlayer;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
@@ -338,6 +343,7 @@ public class Card {
         this.morphCost = source.morphCost;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
+        this.morphDiscardCost = source.morphDiscardCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
@@ -401,6 +407,7 @@ public class Card {
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
         this.requiresCreatureMana = face.requiresCreatureMana;
+        this.requiresBasicLandMana = face.requiresBasicLandMana;
         this.enchantPlayer = face.enchantPlayer;
         this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
@@ -417,6 +424,8 @@ public class Card {
         this.castingOptions = new ArrayList<>(face.castingOptions);
         this.morphCost = face.morphCost;
         this.morphRevealCost = face.morphRevealCost;
+        this.morphAdditionalCost = face.morphAdditionalCost;
+        this.morphDiscardCost = face.morphDiscardCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
         this.castCondition = face.castCondition;
         this.flashCastCondition = face.flashCastCondition;
@@ -501,6 +510,7 @@ public class Card {
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
+    public void setRequiresBasicLandMana(boolean requiresBasicLandMana) { assertMutable(); this.requiresBasicLandMana = requiresBasicLandMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
@@ -962,6 +972,7 @@ public class Card {
         this.morphCost = morphCost;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphDiscardCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -971,6 +982,7 @@ public class Card {
         this.morphCost = morphCost;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphDiscardCost = null;
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{3}"),
                 new RevealCardsFromHandCastingCost(revealPredicate, revealLabel))));
@@ -982,6 +994,17 @@ public class Card {
         this.morphCost = morphCost;
         this.morphRevealCost = null;
         this.morphAdditionalCost = additionalCost;
+        this.morphDiscardCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph whose face-up cost is discarding a card matching the supplied cost. */
+    public void addMorph(String morphCost, DiscardCardTypeCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphDiscardCost = additionalCost;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -991,6 +1014,7 @@ public class Card {
         this.morphCost = "{0}";
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
         this.morphAdditionalCost = null;
+        this.morphDiscardCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 

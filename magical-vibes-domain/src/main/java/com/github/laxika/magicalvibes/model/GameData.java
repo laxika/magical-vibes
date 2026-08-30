@@ -184,6 +184,8 @@ public class GameData {
     public boolean permanentWithOilCounterPutIntoGraveyardThisTurn;
     public boolean artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
     public boolean permanentPutIntoGraveyardFromBattlefieldThisTurn;
+    /** Number of permanents put into graveyards from the battlefield this turn, including tokens. */
+    public int permanentsPutIntoGraveyardFromBattlefieldThisTurn;
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
@@ -1296,6 +1298,9 @@ public class GameData {
      * and cease to exist on resolution (CR 707.10a) instead of being put into a graveyard.
      */
     public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
+
+    /** Spellweaver Volute copy state waiting for the copied spell to be cast and the Aura reattached. */
+    public PendingSpellweaverVoluteReattachment pendingSpellweaverVoluteReattachment;
 
     /**
      * Cards exiled by a free-cast process that should go to their owners' graveyards when casting
@@ -3650,6 +3655,8 @@ public class GameData {
                 this.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn;
         copy.permanentPutIntoGraveyardFromBattlefieldThisTurn =
                 this.permanentPutIntoGraveyardFromBattlefieldThisTurn;
+        copy.permanentsPutIntoGraveyardFromBattlefieldThisTurn =
+                this.permanentsPutIntoGraveyardFromBattlefieldThisTurn;
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.globalDamagePreventionShield = this.globalDamagePreventionShield;
@@ -4520,6 +4527,7 @@ public class GameData {
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
+        copy.pendingSpellweaverVoluteReattachment = this.pendingSpellweaverVoluteReattachment;
 
         // --- Turn-scoped counters ---
         // Read by ConditionEvaluationService / AmountEvaluationService / TurnProgressionService and

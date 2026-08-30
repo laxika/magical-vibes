@@ -10,7 +10,7 @@ For an ETB that pays X and then offers a free cast of an instant or sorcery with
 from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
 `h/HaloForager.java`.
 
-Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep. The registrar creates a one-shot echo trigger for the source permanent's current controller.
+Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep; `d/DeepcavernImp.java` uses the `(HandCardCost)` overload for echo—discard a card; `s/ShahOfNaarIsle.java` passes a `List<CardEffect>` as the second argument for effects that resolve when echo is paid. The registrar creates a one-shot echo trigger for the source permanent's current controller.
 
 ## Vanilla creatures (empty body, all from Scryfall)
 
@@ -121,6 +121,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB copy (Clone) + Embalm | `v/VizierOfManyFaces.java` | CopyPermanentOnEnterEffect(filter, typeLabel, CardColor.WHITE, CardSubtype.ZOMBIE, true) + Embalm CreateTokenCopyOfSourceEffect(false,1,WHITE,ZOMBIE,true). The embalm token is itself a Clone: it re-clones a chosen creature, and the white/no-mana-cost/added-Zombie transformation is re-applied to the final copy **only when the entering permanent is a token** (a hard-cast copy stays plain). A copying token also stays a token (ceases to exist on death). |
 | ETB token copy bonded to the source (enchantment) | `d/DanceOfMany.java` | target(nontoken creature) + ON_ENTER_BATTLEFIELD CreateTokenCopyAndLinkToSourceEffect + ON_SELF_LEAVES_BATTLEFIELD RemoveLinkedPermanentEffect(EXILE) + UPKEEP_TRIGGERED ForcedCostOrElseEffect(PayManaCost("{U}{U}"), List.of(SacrificeSelfEffect()), true) — creates a token copy and forges a two-way `chosenPermanentId` bond; the token carries a RemoveLinkedPermanentEffect(SACRIFICE) leaves-trigger. Enchantment leaves → exile token; token leaves → sacrifice enchantment |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
+| ETB choose color + controller protection | `s/SehtsTiger.java` | ON_ENTER_BATTLEFIELD `GrantProtectionChoiceToControllerUntilEndOfTurnEffect` — the controller chooses a color on resolution and gains protection from it until end of turn |
 | ETB choose color + chosen-color mana ability | `q/QuirionElves.java` | ON_ENTER_BATTLEFIELD ChooseColorOnEnterEffect + two `{T}` ActivatedAbilities: AwardManaEffect(GREEN) and AwardChosenColorManaEffect |
 | ETB choose name | `p/PithingNeedle.java` | ChooseCardNameOnEnterEffect + static lock |
 | ETB choose nonland name | `p/PhyrexianRevoker.java` | ChooseCardNameOnEnterEffect(List.of(LAND)) + static lock — artifact creature variant |

@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerMayDrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -61,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsC
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -80,6 +83,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -435,6 +439,60 @@ class StepTriggerServiceTest {
             ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
                     gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(((PayEchoCost) echo.forcedCost()).echoCost()).isEqualTo("{13}");
+        }
+
+        @Test
+        @DisplayName("Discard echo cost is carried into the upkeep trigger")
+        void discardEchoCostIsCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Discard Echo");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            DiscardCardTypeCost discardCost = new DiscardCardTypeCost(null, null);
+            gd.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(), discardCost, card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(((PayEchoCost) echo.forcedCost()).handCardCost()).isSameAs(discardCost);
+        }
+
+        @Test
+        @DisplayName("Echo paid effects are carried into the upkeep trigger")
+        void echoPaidEffectsAreCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Echo Payment Trigger");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            EachOtherPlayerMayDrawUpToNCardsEffect paidEffect =
+                    new EachOtherPlayerMayDrawUpToNCardsEffect(3);
+            gd.queueDelayedAction(new EchoAtNextUpkeep(
+                    permanent.getId(), "{0}", List.of(paidEffect), card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(echo.paidEffects()).containsExactly(paidEffect);
+        }
+
+        @Test
+        @DisplayName("Non-mana echo cost is carried into the upkeep trigger")
+        void nonManaEchoCostIsCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Sacrifice Echo");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            SacrificeMultiplePermanentsCost sacrificeCost =
+                    new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate());
+            gd.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(), sacrificeCost, card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(((PayEchoCost) echo.forcedCost()).cost()).isSameAs(sacrificeCost);
         }
 
         @Test

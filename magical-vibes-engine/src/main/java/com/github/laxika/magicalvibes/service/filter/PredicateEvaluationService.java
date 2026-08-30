@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsPredicate;
@@ -679,6 +680,8 @@ public class PredicateEvaluationService {
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
+            case PermanentHasNoAbilitiesPredicate ignored ->
+                    !hasAnyEffectiveAbility(gameData, permanent);
             case PermanentIsCreaturePredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
@@ -1896,6 +1899,9 @@ public class PredicateEvaluationService {
             case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasNoAbilitiesPredicate ignored ->
+                    !hasAnyEffectiveAbilityFromLayeredState(permanent,
+                            LayerSystemService.activeStateFor(permanent.getId()), context);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAdventurePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSupertypePredicate p -> gameQueryService.hasEffectiveSupertype(
@@ -1994,7 +2000,7 @@ public class PredicateEvaluationService {
             }
             case PermanentSharesCreatureTypeWithEquippedCreaturePredicate ignored -> {
                 Permanent equipped = equippedCreatureStatic(context);
-                yield equipped != null && recursionSafeSharesCreatureType(permanent, equipped);
+                yield equipped != null && sharesCreatureType(permanent, equipped);
             }
             case PermanentIsLandPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsMulticoloredPredicate ignored -> matchesStaticLeaf(permanent, predicate);
@@ -2199,10 +2205,11 @@ public class PredicateEvaluationService {
     }
 
     /**
-     * Recursion-safe counterpart of {@code GameQueryService.shareCreatureType}: Changeling counts
-     * as every creature type, and a permanent with no creature types shares none.
+     * Returns whether two permanents share a creature type without re-entering static-bonus
+     * assembly while a layered characteristic pass is in progress. Changeling counts as every
+     * creature type, and a permanent with no creature types shares none.
      */
-    private boolean recursionSafeSharesCreatureType(Permanent a, Permanent b) {
+    public boolean sharesCreatureType(Permanent a, Permanent b) {
         boolean aChangeling = matchesStaticLeaf(a, CHANGELING_PREDICATE);
         boolean bChangeling = matchesStaticLeaf(b, CHANGELING_PREDICATE);
         Set<CardSubtype> aTypes = recursionSafeCreatureSubtypes(a);
@@ -2361,6 +2368,120 @@ public class PredicateEvaluationService {
         return PotentialManaService.hasOnTapManaEffects(permanent.getCard())
                 || effectiveActivatedAbilities(gameData, permanent).stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
+    }
+
+    private boolean hasAnyEffectiveAbility(GameData gameData, Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return hasAnyEffectiveAbilityFromLayeredState(permanent, layered,
+                    FilterContext.of(gameData));
+        }
+
+        GameQueryService.StaticBonus bonus = gameData == null
+                ? null
+                : gameQueryService.computeStaticBonus(gameData, permanent);
+        if (bonus != null) {
+            if (!bonus.keywords().isEmpty()
+                    || !bonus.grantedActivatedAbilities().isEmpty()
+                    || !bonus.grantedEffects().isEmpty()) {
+                return true;
+            }
+            if (bonus.losesAllAbilities()) {
+                return false;
+            }
+            if (bonus.losesAllNonManaAbilities()) {
+                return hasOutOfBandGrantedAbility(permanent)
+                        || hasOutOfBandManaAbility(permanent)
+                        || hasPrintedManaAbility(permanent.getCard());
+            }
+        }
+        return hasOutOfBandGrantedAbility(permanent)
+                || hasAnyPrintedAbility(permanent.getCard());
+    }
+
+    private boolean hasAnyEffectiveAbilityFromLayeredState(Permanent permanent,
+                                                            CharacteristicState state,
+                                                            FilterContext context) {
+        if (state == null) {
+            return hasAnyEffectiveAbility(context == null ? null : context.gameData(), permanent);
+        }
+
+        Set<Keyword> effectiveKeywords = new java.util.HashSet<>(state.getKeywords());
+        if (state.isPrintedAbilitiesRemoved()) {
+            effectiveKeywords.removeAll(permanent.getCard().getKeywords());
+        }
+        if (!effectiveKeywords.isEmpty()
+                || !state.getGrantedActivatedAbilities().isEmpty()
+                || !state.getGrantedStaticEffects().isEmpty()) {
+            return true;
+        }
+        if (state.isLosesAllAbilities()) {
+            return false;
+        }
+        if (state.isLosesAllNonManaAbilities()) {
+            return hasPrintedManaAbility(permanent.getCard())
+                    || hasOutOfBandManaAbility(permanent)
+                    || hasBasicLandIntrinsicManaAbility(state);
+        }
+        if (hasOutOfBandGrantedAbility(permanent)) {
+            return true;
+        }
+        if (state.isPrintedAbilitiesRemoved()) {
+            return hasBasicLandIntrinsicManaAbility(state);
+        }
+        return hasAnyPrintedAbility(permanent.getCard());
+    }
+
+    private boolean hasOutOfBandGrantedAbility(Permanent permanent) {
+        if (!permanent.getPersistentGrantedActivatedAbilities().isEmpty()
+                || !permanent.getTemporaryActivatedAbilities().isEmpty()
+                || !permanent.getUntilNextTurnActivatedAbilities().isEmpty()) {
+            return true;
+        }
+        for (EffectSlot slot : EffectSlot.values()) {
+            if (!permanent.getPersistentTriggeredEffects(slot).isEmpty()
+                    || !permanent.getTemporaryTriggeredEffects(slot).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasOutOfBandManaAbility(Permanent permanent) {
+        return permanent.getPersistentGrantedActivatedAbilities().stream()
+                .anyMatch(AbilityActivationService::isManaAbility)
+                || permanent.getTemporaryActivatedAbilities().stream()
+                .anyMatch(AbilityActivationService::isManaAbility)
+                || permanent.getUntilNextTurnActivatedAbilities().stream()
+                .anyMatch(AbilityActivationService::isManaAbility);
+    }
+
+    private static boolean hasAnyPrintedAbility(Card card) {
+        if (card.getCardText() != null || !card.getKeywords().isEmpty()
+                || !card.getActivatedAbilities().isEmpty()
+                || !card.getGraveyardActivatedAbilities().isEmpty()
+                || !card.getHandActivatedAbilities().isEmpty()
+                || !card.getStackActivatedAbilities().isEmpty()) {
+            return true;
+        }
+        return java.util.Arrays.stream(EffectSlot.values())
+                .filter(slot -> slot != EffectSlot.SPELL)
+                .anyMatch(slot -> !card.getEffects(slot).isEmpty());
+    }
+
+    private static boolean hasPrintedManaAbility(Card card) {
+        return PotentialManaService.hasOnTapManaEffects(card)
+                || card.getActivatedAbilities().stream()
+                .anyMatch(AbilityActivationService::isManaAbility);
+    }
+
+    private static boolean hasBasicLandIntrinsicManaAbility(CharacteristicState state) {
+        return state.hasCardType(CardType.LAND)
+                && (state.hasSubtype(CardSubtype.PLAINS)
+                || state.hasSubtype(CardSubtype.ISLAND)
+                || state.hasSubtype(CardSubtype.SWAMP)
+                || state.hasSubtype(CardSubtype.MOUNTAIN)
+                || state.hasSubtype(CardSubtype.FOREST));
     }
 
     private List<ActivatedAbility> effectiveActivatedAbilities(GameData gameData, Permanent permanent) {

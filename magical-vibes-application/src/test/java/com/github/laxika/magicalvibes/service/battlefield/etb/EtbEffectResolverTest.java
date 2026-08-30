@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
@@ -181,6 +182,20 @@ class EtbEffectResolverTest {
 
         assertThat(resolver.resolve(ctx(true, 0, true), kicked)).isSameAs(wrapped);
         assertThat(resolver.resolve(ctx(true, 0, false), kicked)).isNull();
+    }
+
+    @Test
+    @DisplayName("CastForMadnessCost: unwraps only when madness was paid")
+    void castForMadnessCostConditional() {
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        ConditionalEffect madness = new ConditionalEffect(new CastForMadnessCost(), wrapped);
+
+        EtbEffectContext madnessContext = new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, true, false, null, List.of());
+        EtbEffectContext normalContext = new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, false, false, null, List.of());
+        assertThat(resolver.resolve(madnessContext, madness)).isSameAs(wrapped);
+        assertThat(resolver.resolve(normalContext, madness)).isNull();
     }
 
     @Test

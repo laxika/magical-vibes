@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameData;
+
+import java.util.UUID;
+
 /**
  * Trigger descriptor for {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_SELF_CAST}
  * implementing the Storm keyword: "When you cast this spell, copy it for each spell cast before it
@@ -13,9 +18,18 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param instantOrSorceryOnly whether to count only instant and sorcery spells cast by the
  *                             spell's controller, as used by Show of Confidence
  */
-public record StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly) implements CardEffect {
+public record StormEffect(boolean tokenCopy, boolean instantOrSorceryOnly) implements SpellCastCopyTriggerEffect {
 
     public StormEffect() {
         this(false, false);
+    }
+
+    @Override
+    public int copyCount(GameData gameData, UUID castingPlayerId) {
+        return instantOrSorceryOnly
+                ? (int) gameData.getSpellsCastThisTurn(castingPlayerId).stream()
+                        .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                        .count() - 1
+                : gameData.getTotalSpellsCastThisTurnCount() - 1;
     }
 }

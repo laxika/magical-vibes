@@ -123,6 +123,7 @@ public enum CardSet {
     SET_TPR("TPR"),
     SET_TSP("TSP"),
     SET_TSB("TSB"),
+    SET_FUT("FUT"),
     SET_ATH("ATH"),
     SET_FDN("FDN"),
     SET_ULG("ULG"),
