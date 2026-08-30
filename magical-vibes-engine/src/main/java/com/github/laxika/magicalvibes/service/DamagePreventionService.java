@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
+import com.github.laxika.magicalvibes.model.TargetSorceryDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.TurnSourceDamageRedirectToControllerShield;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -385,6 +386,8 @@ public class DamagePreventionService {
                     && gameQueryService.isDamageFromPermanentSourceToCreaturePrevented(gameData, damageSource, permanent)) {
                 return 0;
             }
+            if (gameQueryService.isCreatureSourceDamageToSelfPrevented(
+                    gameData, permanent, null, damageSource, isCombatDamage)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
             // General's Kabuto: "Prevent all combat damage that would be dealt to equipped creature."
@@ -404,14 +407,6 @@ public class DamagePreventionService {
             if (controlledCreatureDamageLimit < damage) return controlledCreatureDamageLimit;
             if (isCombatDamage
                     && gameQueryService.isAllCombatDamageToControlledCreaturePrevented(gameData, permanent)) return 0;
-            // Uncle Istvan: "Prevent all damage that would be dealt to this creature by creatures." Combat
-            // damage is always dealt by a creature (CR 510.1c), so all combat damage to such a permanent is
-            // prevented. Noncombat creature-sourced damage is handled in DamageSupport.dealCreatureDamage,
-            // where the source is known.
-            if (isCombatDamage && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .filter(PreventDamageToSelfFromCreaturesEffect.class::isInstance)
-                    .map(PreventDamageToSelfFromCreaturesEffect.class::cast)
-                    .anyMatch(effect -> effect.sourcePredicate() == null)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
             // Gisela, Blade of Goldnight: prevent half the damage dealt to a permanent her controller
             // controls, rounded up.
@@ -1210,6 +1205,24 @@ public class DamagePreventionService {
             return null;
         }
         return entry.getControllerId();
+    }
+
+    /** Returns the controller receiving damage redirected from a targeted sorcery, if any. */
+    public UUID getTargetSorceryDamageRedirectController(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getSourcePermanentId() != null
+                || entry.getEntryType() != StackEntryType.SORCERY_SPELL
+                || entry.getCard() == null
+                || gameData.targetSorceryDamageRedirectShields.isEmpty()) {
+            return null;
+        }
+        UUID sorceryCardId = entry.getCard().getId();
+        synchronized (gameData.targetSorceryDamageRedirectShields) {
+            return gameData.targetSorceryDamageRedirectShields.stream()
+                    .filter(shield -> sorceryCardId.equals(shield.sorceryCardId()))
+                    .map(TargetSorceryDamageRedirectShield::controllerId)
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     /**

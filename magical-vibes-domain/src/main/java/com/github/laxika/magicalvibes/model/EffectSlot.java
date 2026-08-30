@@ -50,6 +50,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     GRAVEYARD_UPKEEP_TRIGGERED,
     EACH_UPKEEP_TRIGGERED,
     SUSPENDED_EACH_UPKEEP_TRIGGERED,
+    /** Triggers at the beginning of its owner's upkeep while this card is exiled with scream counters. */
+    EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
     OPPONENT_UPKEEP_TRIGGERED,

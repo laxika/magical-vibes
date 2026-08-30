@@ -80,6 +80,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsAuraAttachedToCreaturePredicate,
         PermanentIsAuraAttachedToLandPredicate,
         PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate,
+        PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate,
         PermanentIsAuraAttachedToSourcePredicate,
         PermanentIsBattlePredicate,
         PermanentIsColorlessPredicate,

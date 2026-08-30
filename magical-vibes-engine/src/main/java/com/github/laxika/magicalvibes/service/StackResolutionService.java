@@ -1169,6 +1169,11 @@ public class StackResolutionService {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
         boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
+        ExileSpellEffect exileSpellEffect = entry.getEffectsToResolve().stream()
+                .filter(ExileSpellEffect.class::isInstance)
+                .map(ExileSpellEffect.class::cast)
+                .findFirst()
+                .orElse(null);
 
         // Feather's replacement is chosen first when it is available; otherwise flashback's
         // replacement exiles the spell instead of letting it go anywhere else.
@@ -1226,8 +1231,7 @@ public class StackResolutionService {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
             // otherwise to graveyard).
-        } else if (entry.getEffectsToResolve().stream()
-                .anyMatch(e -> e instanceof ExileSpellEffect)) {
+        } else if (exileSpellEffect != null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             entry.getEffectsToResolve().stream()
@@ -1238,6 +1242,9 @@ public class StackResolutionService {
                     .findFirst()
                     .ifPresent(counters -> gameData.suspendedSpellExiles.add(
                             new GameData.SuspendedSpellExile(physicalCard.getId(), ownerId, counters)));
+            if (exileSpellEffect.screamCounterCount() > 0) {
+                gameData.exiledCardScreamCounters.put(physicalCard.getId(), exileSpellEffect.screamCounterCount());
+            }
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {

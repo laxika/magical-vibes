@@ -2249,7 +2249,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
                            boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
                            Set<CounterType> enterWithCounters, boolean exileIfLeavesBattlefield,
-                           boolean mandatory, String prompt)
+                           UUID destinationControllerId, boolean mandatory, String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -2299,6 +2299,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private int enterWithCounterCount;
             private Set<CounterType> enterWithCounters = Set.of();
             private boolean exileIfLeavesBattlefield;
+            private UUID destinationControllerId;
             private boolean mandatory;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -2386,6 +2387,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder destinationControllerId(UUID destinationControllerId) {
+                this.destinationControllerId = destinationControllerId;
+                return this;
+            }
+
             public Builder mandatory(boolean mandatory) {
                 this.mandatory = mandatory;
                 return this;
@@ -2399,7 +2405,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
                         enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters,
-                        exileIfLeavesBattlefield, mandatory, prompt);
+                        exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt);
             }
         }
     }

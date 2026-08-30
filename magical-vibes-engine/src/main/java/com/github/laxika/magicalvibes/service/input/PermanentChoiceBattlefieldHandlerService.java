@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
@@ -136,6 +137,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PopulateSupport populateSupport;
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
+    private final LandEquilibriumSupport landEquilibriumSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport exileSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
@@ -172,6 +174,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffectHandler tapAndChooseOpponentGainsControlHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
     private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
@@ -764,6 +767,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleTapAndChooseOpponentGainsControl(GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseOpponentGainsControlOfSourceAndMatchingPermanents context) {
+        tapAndChooseOpponentGainsControlHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleChooseOpponentForSelfFlicker(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentForSelfFlicker context) {
         exileSelfAndReturnUnderOpponentControlHandler.completeChoice(gameData, playerId, context);
@@ -848,6 +857,35 @@ public class PermanentChoiceBattlefieldHandlerService {
         chooseOpponentCreatureThenBoostOthersEffectHandler.completeChoice(gameData, permanentId, context);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleLandEquilibriumSacrifice(
+            GameData gameData, UUID permanentId, PermanentChoiceContext.LandEquilibriumSacrifice context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null
+                || !gameData.playerBattlefields.getOrDefault(context.sacrificingPlayerId(), List.of())
+                .contains(target)
+                || !gameQueryService.isLand(gameData, target)) {
+            throw new IllegalStateException("Chosen land no longer exists");
+        }
+
+        destructionSupport.sacrificeAndLog(gameData, target, context.sacrificingPlayerId());
+        if (landEquilibriumSupport.beginNext(gameData, context.sacrificingPlayerId(),
+                context.enteringCard(), context.landPlayZone(), context.remainingReplacements() - 1)) {
+            return;
+        }
+
+        if (context.landPlayZone() != null) {
+            battlefieldEntryService.processLandETBEffects(
+                    gameData, context.sacrificingPlayerId(), context.enteringCard());
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.checkControllerPlaysLandTriggers(
+                        gameData, context.sacrificingPlayerId(), context.enteringCard(), context.landPlayZone());
+            }
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public void handleAwakenTheMaelstromPermanentCopyChoice(GameData gameData, UUID permanentId,

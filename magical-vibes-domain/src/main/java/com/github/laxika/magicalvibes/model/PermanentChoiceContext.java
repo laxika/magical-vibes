@@ -130,6 +130,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
+    record LandEquilibriumSacrifice(UUID sacrificingPlayerId, Card enteringCard,
+                                    Zone landPlayZone, int remainingReplacements)
+            implements PermanentChoiceContext {}
+
     record TargetPlayerSacrificesCreatureThenDrawsPower(
             UUID sacrificingPlayerId, UUID drawingPlayerId, Card sourceCard) implements PermanentChoiceContext {}
 
@@ -228,6 +232,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Goblin Festival: the ability controller chooses which opponent gains control of the source. */
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
+
+    /** Rohgahh of Kher Keep: the ability controller chooses which opponent gains the tapped permanents. */
+    record ChooseOpponentGainsControlOfSourceAndMatchingPermanents(
+            UUID choosingPlayerId,
+            String sourceCardName,
+            List<UUID> affectedPermanentIds
+    ) implements PermanentChoiceContext {
+        public ChooseOpponentGainsControlOfSourceAndMatchingPermanents {
+            affectedPermanentIds = List.copyOf(affectedPermanentIds);
+        }
+    }
 
     /** Murmurs from Beyond: the controller chooses which opponent makes the revealed-card choice. */
     record MurmursFromBeyondOpponentChoice(UUID controllerId, List<Card> revealedCards)
@@ -440,6 +455,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           Integer xValue,
                                           UUID firstTargetId,
                                           Zone targetZone) implements PermanentChoiceContext {}
+
+    /** An activated ability whose sole target is chosen by an opponent selected by its controller. */
+    record ActivatedAbilitySoleOpponentTarget(UUID activatingPlayerId,
+                                              UUID choosingPlayerId,
+                                              UUID sourcePermanentId,
+                                              Integer abilityIndex,
+                                              Integer xValue,
+                                              Zone targetZone) implements PermanentChoiceContext {}
 
     /**
      * Targeted death trigger awaiting its target choice (CR 603.3d).
@@ -986,12 +1009,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
         public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                             UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, controllerId);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, null);
         }
 
         public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                             UUID sourcePermanentId, TargetFilter targetFilter) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, controllerId);
+            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, null);
         }
     }
 

@@ -136,6 +136,7 @@ public class CastingPermissionService {
      * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
      */
     public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
+        if (isCardPlayRestrictedInHand(gameData, playerId, card)) return false;
         if (isSplitSecondActive(gameData)) return false;
         if (isSpellLimitReached(gameData, playerId, card)) return false;
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
@@ -775,6 +776,7 @@ public class CastingPermissionService {
      */
     public boolean isSpellRestricted(GameData gameData, UUID playerId, Card card,
                                      Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
+        if (isCardPlayRestrictedInHand(gameData, playerId, card)) return true;
         if (isSplitSecondActive(gameData)) return true;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
@@ -784,6 +786,16 @@ public class CastingPermissionService {
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
+    }
+
+    /** Returns whether this player's copy of a hand card is temporarily barred from being played. */
+    public boolean isCardPlayRestrictedInHand(GameData gameData, UUID playerId, Card card) {
+        UUID ownerId = gameData.cardsCantBePlayedInHandUntilOwnerNextTurn.get(card.getId());
+        if (ownerId == null || !ownerId.equals(playerId)) {
+            return false;
+        }
+        return gameData.playerHands.getOrDefault(ownerId, List.of()).stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
     }
 
     public boolean isSplitSecondActive(GameData gameData) {
@@ -955,6 +967,8 @@ public class CastingPermissionService {
             case DECLARE_ATTACKERS -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS;
             case BEFORE_ATTACKERS_DECLARED -> gameData.currentStep.isBeforeAttackersDeclared()
                     && gameData.combatPhasesThisTurn <= 1;
+            case BEFORE_BLOCKERS_DECLARED -> gameData.currentStep.isBeforeBlockersDeclared()
+                    && gameData.combatPhasesThisTurn <= 1;
             case DECLARE_ATTACKERS_IF_ATTACKED ->
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                             && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
@@ -981,6 +995,9 @@ public class CastingPermissionService {
                     !playerId.equals(gameData.activePlayerId)
                             && gameData.currentStep.isBeforeAttackersDeclared();
             case OPPONENTS_TURN -> !playerId.equals(gameData.activePlayerId);
+            case OPPONENTS_TURN_AFTER_UPKEEP ->
+                    !playerId.equals(gameData.activePlayerId)
+                            && gameData.currentStep.ordinal() > TurnStep.UPKEEP.ordinal();
             case OPPONENTS_UPKEEP ->
                     gameData.currentStep == TurnStep.UPKEEP
                             && !playerId.equals(gameData.activePlayerId);
@@ -1139,7 +1156,8 @@ public class CastingPermissionService {
                 && gameData.stack.isEmpty()
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !isLandPlayRestricted(gameData, playerId)
-                && !isLandPlayForbiddenByChosenName(gameData, card);
+                && !isLandPlayForbiddenByChosenName(gameData, card)
+                && !isCardPlayRestrictedInHand(gameData, playerId, card);
     }
 
     public boolean canPlayLandFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
@@ -1577,6 +1595,13 @@ public class CastingPermissionService {
      * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
      */
     public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
+        if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+            return true;
+        }
+        return canSpendAnyManaTypeFromBattlefield(gameData, playerId, card);
+    }
+
+    public boolean canSpendAnyManaTypeFromBattlefield(GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -1913,6 +1938,9 @@ public class CastingPermissionService {
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+            return true;
+        }
         GameData.GraveyardCardCastPermission graveyardPermission =
                 gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(cardId);
         if (graveyardPermission != null && graveyardPermission.anyManaType()

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "69")
+@CardRegistration(set = "LEG", collectorNumber = "54")
 public class EnergyTap extends Card {
 
     public EnergyTap() {

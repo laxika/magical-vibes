@@ -469,7 +469,7 @@ public class CombatBlockService {
                 for (CardEffect e : blockEffects) {
                     if (e instanceof ConditionalEffect conditional
                             && !conditionEvaluationService.isInterveningIfMet(
-                            gameData, conditional, blocker, defenderId)) {
+                            gameData, conditional, blocker, defenderId, attacker.getId())) {
                         continue;
                     } else if (e instanceof BoostSelfWhenBlockingKeywordEffect kwEffect) {
                         if (gameQueryService.hasKeyword(gameData, attacker, kwEffect.requiredKeyword())) {
@@ -534,6 +534,7 @@ public class CombatBlockService {
                         blocker.getId()
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
+                blockTrigger.setTriggeringPermanentId(attacker.getId());
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(),
@@ -863,7 +864,7 @@ public class CombatBlockService {
         for (CardEffect effect : blockEffects) {
             if (effect instanceof ConditionalEffect conditional
                     && !conditionEvaluationService.isInterveningIfMet(
-                    gameData, conditional, blocker, defenderId)) {
+                    gameData, conditional, blocker, defenderId, attacker.getId())) {
                 continue;
             } else if (effect instanceof BoostSelfWhenBlockingKeywordEffect keywordEffect) {
                 if (gameQueryService.hasKeyword(gameData, attacker, keywordEffect.requiredKeyword())) {
@@ -918,6 +919,7 @@ public class CombatBlockService {
                 resolvedEffects,
                 needsAttackerTarget ? attacker.getId() : blocker.getId(),
                 blocker.getId());
+        trigger.setTriggeringPermanentId(attacker.getId());
         trigger.setNonTargeting(true);
         gameData.stack.add(trigger);
     }
@@ -2765,6 +2767,12 @@ public class CombatBlockService {
         gameData.combatBlockOpponentIdsThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(opponent.getId());
+        UUID opponentControllerId = gameQueryService.findPermanentController(gameData, opponent.getId());
+        if (opponentControllerId != null) {
+            gameData.combatBlockOpponentControllerIdsThisTurn
+                    .computeIfAbsent(creature.getId(), k -> new ConcurrentHashMap<>())
+                    .put(opponent.getId(), opponentControllerId);
+        }
         gameData.combatBlockOpponentIdsThisCombat
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(opponent.getId());

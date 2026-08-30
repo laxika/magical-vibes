@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -515,7 +516,8 @@ public class PotentialManaService {
             if (effect instanceof AwardManaEffect manaEffect) {
                 int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
                 if (amount > 0) {
-                    fixed.merge(manaEffect.color(), amount, Integer::sum);
+                    fixed.merge(ManaProductionSupport.effectiveColor(gameData, null, permanent,
+                            manaEffect.color()), amount, Integer::sum);
                 }
             } else if (effect instanceof ManaProducingEffect mana
                     && !mana.estimatedMutuallyExclusiveManaColors().isEmpty()) {
@@ -609,6 +611,7 @@ public class PotentialManaService {
 
     private void addManaToVirtualPool(ManaPool virtual, GameData gameData, Permanent source,
                                       ManaColor color, int amount) {
+        color = ManaProductionSupport.effectiveColor(gameData, null, source, color);
         if (source != null && gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.SNOW)) {
             virtual.addSnowMana(color, amount);
         } else {

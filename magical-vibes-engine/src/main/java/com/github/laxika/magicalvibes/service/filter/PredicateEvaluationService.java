@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasDisturbPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasCyclingPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
@@ -144,6 +145,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMos
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
@@ -400,6 +402,25 @@ public class PredicateEvaluationService {
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
                     card.getColors().contains(p.color());
+            case CardDoesNotShareColorWithSourceControlledCreaturePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                if (source == null) {
+                    yield false;
+                }
+                UUID sourceControllerId = gameData.findControllerOf(source);
+                if (sourceControllerId == null) {
+                    yield false;
+                }
+                Set<CardColor> cardColors = gameQueryService.getEffectiveCardColors(gameData, card);
+                List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
+                yield battlefield != null && battlefield.stream()
+                        .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                        .map(permanent -> gameQueryService.getEffectiveColors(gameData, permanent))
+                        .noneMatch(creatureColors -> creatureColors.stream().anyMatch(cardColors::contains));
+            }
             case CardHasExactlyTwoColorsPredicate ignored ->
                     card.getColors().size() == 2;
             case CardIsMulticoloredPredicate ignored ->
@@ -822,6 +843,18 @@ public class PredicateEvaluationService {
                 }
                 Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
                 yield host != null && sourceControllerId.equals(gameData.findControllerOf(host));
+            }
+            case PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null
+                        || !permanent.getCard().isAura() || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                UUID hostControllerId = host == null ? null : gameData.findControllerOf(host);
+                yield host != null && gameQueryService.isCreature(gameData, host)
+                        && host.isAttacking()
+                        && hostControllerId != null
+                        && !sourceControllerId.equals(hostControllerId);
             }
             case PermanentIsEnchantmentPredicate ignored -> {
                 if (gameData == null) {

@@ -133,6 +133,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeOneOfTwoThenReturnOtherToHand(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreature sacrificeCreature) {
             battlefieldHandler.handleSacrificeCreature(gameData, permanentId, sacrificeCreature);
+        } else if (context instanceof PermanentChoiceContext.LandEquilibriumSacrifice landEquilibrium) {
+            battlefieldHandler.handleLandEquilibriumSacrifice(gameData, permanentId, landEquilibrium);
         } else if (context instanceof PermanentChoiceContext.TargetPlayerSacrificesCreatureThenDrawsPower targetPlayerSacrifice) {
             battlefieldHandler.handleTargetPlayerSacrificesCreatureThenDrawsPower(
                     gameData, permanentId, targetPlayerSacrifice);
@@ -155,6 +157,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleOpponentChoosesCreatureYouGainControl(gameData, permanentId, richesChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSourceAndMatchingPermanents chooseOpponent) {
+            battlefieldHandler.handleTapAndChooseOpponentGainsControl(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForSelfFlicker chooseOpponent) {
             battlefieldHandler.handleChooseOpponentForSelfFlicker(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForPermanentSacrifice chooseOpponent) {
@@ -198,6 +202,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleActivatedAbilityCostChoice(gameData, player, permanentId, costChoice);
         } else if (context instanceof PermanentChoiceContext.ActivatedAbilityOpponentTarget opponentTarget) {
             abilityActivationService.handleOpponentChosenTarget(gameData, player, permanentId, opponentTarget);
+        } else if (context instanceof PermanentChoiceContext.ActivatedAbilitySoleOpponentTarget opponentTarget) {
+            abilityActivationService.handleSoleOpponentChosenTarget(gameData, player, permanentId, opponentTarget);
         } else if (context instanceof PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {
             battlefieldHandler.handleGraveyardAbilityCostChoice(gameData, player, permanentId, graveyardCostChoice);
         } else if (context instanceof PermanentChoiceContext.HandAbilityCostChoice handCostChoice) {

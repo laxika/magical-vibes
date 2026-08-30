@@ -3263,7 +3263,7 @@ public class SpellCastingService {
             // Lands bypass the stack — go directly onto battlefield
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
-                    true, false, null)) {
+                    true, false, null, Zone.HAND)) {
                 return;
             }
             Permanent permanent = new Permanent(card);
@@ -3274,7 +3274,7 @@ public class SpellCastingService {
             if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
                 return;
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+            battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.HAND);
 
             // A land whose entry is replaced by "sacrifice an untapped [land] instead" (Balduvian
             // Trading Post) parks the entry on a permanent choice; ETB effects and auto-pass must
@@ -7205,7 +7205,7 @@ public class SpellCastingService {
         gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
         gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
         if (landCopyOnEnterService.prepare(gameData, playerId, graveyardCard, landFace,
-                true, entersTapped, " from graveyard.")) {
+                true, entersTapped, " from graveyard.", Zone.GRAVEYARD)) {
             return;
         }
         Permanent permanent = new Permanent(graveyardCard);
@@ -7214,7 +7214,7 @@ public class SpellCastingService {
         if (entersTapped) {
             permanent.tap();
         }
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+        battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.GRAVEYARD);
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
         gameLogService.append(gameData,
@@ -7222,7 +7222,9 @@ public class SpellCastingService {
 
         log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), landFace.getName());
 
-        battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+        if (!gameData.interaction.isAwaitingInput()) {
+            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+        }
         if (!gameData.interaction.isAwaitingInput()) {
             triggerCollectionService.checkControllerPlaysLandTriggers(
                     gameData, playerId, landFace, Zone.GRAVEYARD);
@@ -7443,7 +7445,7 @@ public class SpellCastingService {
             commitExileCast(gameData, playerId, exileCardId, sourceFreeCast, copy);
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
-                    true, false, " from exile.")) {
+                    true, false, " from exile.", Zone.EXILE)) {
                 return;
             }
             Permanent permanent = new Permanent(card);
@@ -7456,9 +7458,11 @@ public class SpellCastingService {
             if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
                 return;
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+            battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.EXILE);
 
-            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+            if (!gameData.interaction.isAwaitingInput()) {
+                battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+            }
             if (!gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace, true);
                 turnProgressionService.resolveAutoPass(gameData);
@@ -7518,6 +7522,9 @@ public class SpellCastingService {
                         gameData, playerId, card, new ManaCost(card.getManaCost()));
                 cost.payAsGeneric(pool, effectiveXValue,
                         castingCostService.getCastCostModifier(gameData, playerId, card));
+                if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+                    gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
+                }
             } else {
                 phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
                         gameData, playerId, card, effectiveXValue, Zone.EXILE, convokeContributions);
@@ -7846,7 +7853,7 @@ public class SpellCastingService {
             }
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
             if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
-                    true, false, " from the top of their library.")) {
+                    true, false, " from the top of their library.", Zone.LIBRARY)) {
                 return;
             }
             Permanent permanent = new Permanent(card);
@@ -7858,8 +7865,10 @@ public class SpellCastingService {
             if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
                 return;
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
-            battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+            battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.LIBRARY);
+            if (!gameData.interaction.isAwaitingInput()) {
+                battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
+            }
             if (!gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
                         Zone.LIBRARY);
@@ -8676,14 +8685,26 @@ public class SpellCastingService {
         // Vizier of the Menagerie: eligible spells (e.g. creature spells) may be paid with mana of any
         // type — pay the whole cost as generic. Convoke handles its own colour selection, so defer to
         // the normal path when creatures were tapped for it.
+        boolean pendingAnyManaType = gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId);
+        boolean battlefieldAnyManaType = castingPermissionService.canSpendAnyManaTypeFromBattlefield(
+                gameData, playerId, card);
+        boolean usesPendingAnyManaType = pendingAnyManaType && !anyManaType && !battlefieldAnyManaType
+                && !baseMana.isEmpty();
         if ((convokeContributions == null || convokeContributions.isEmpty())
-                && (anyManaType || castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, card))) {
+                && (anyManaType || battlefieldAnyManaType || usesPendingAnyManaType)) {
+            if (usesPendingAnyManaType && !additionalCostsMana.isEmpty()) {
+                return payBaseManaCostWithPendingAnyManaType(gameData, playerId, card, baseMana,
+                        additionalCostsMana, effectiveXValue, additionalCost, before, pool);
+            }
             if (!cost.canPayAsGeneric(pool, effectiveXValue, additionalCost)) {
                 throw new IllegalStateException("Not enough mana to pay spell");
             }
             cost.payAsGeneric(pool, effectiveXValue, additionalCost);
-            return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
-        }
+            if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+                gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
+            }
+        return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
+    }
 
         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked);
         boolean powerstoneContext = gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)
@@ -8808,6 +8829,29 @@ public class SpellCastingService {
         int fromPool = before - pool.getTotalAllMana();
         int fromConvoke = convokeContributions != null ? convokeContributions.size() : 0;
         return new SpellManaPayment(fromPool + fromConvoke, phyrexianLifeCost / 2);
+    }
+
+    private SpellManaPayment payBaseManaCostWithPendingAnyManaType(
+            GameData gameData, UUID playerId, Card card, String baseMana, String additionalCostsMana,
+            int effectiveXValue, int additionalCost, int before, ManaPool pool) {
+        ManaCost baseCost = castingCostService.applyColoredManaCostReductions(
+                gameData, playerId, card, new ManaCost(baseMana));
+        ManaCost additionalCostMana = castingCostService.applyColoredManaCostReductions(
+                gameData, playerId, card, new ManaCost(additionalCostsMana));
+
+        ManaPool paymentPool = new ManaPool(pool);
+        if (!additionalCostMana.canPay(paymentPool, effectiveXValue)) {
+            throw new IllegalStateException("Not enough mana to pay spell");
+        }
+        additionalCostMana.pay(paymentPool, effectiveXValue);
+        if (!baseCost.canPayAsGeneric(paymentPool, effectiveXValue, additionalCost)) {
+            throw new IllegalStateException("Not enough mana to pay spell");
+        }
+
+        additionalCostMana.pay(pool, effectiveXValue);
+        baseCost.payAsGeneric(pool, effectiveXValue, additionalCost);
+        gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
+        return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
     }
 
     /**
@@ -9903,8 +9947,7 @@ public class SpellCastingService {
                     new ManaCost(withoutPayingManaCost ? "" : grantedFlashbackManaCost), cardHasFlashback);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
-            boolean anyManaType = grantedGraveyardCardCast
-                    && castingPermissionService.hasAnyManaTypePermission(
+            boolean anyManaType = castingPermissionService.hasAnyManaTypePermission(
                     gameData, playerId, card.getId());
             withMulticoloredSpellMana(gameData, playerId, card, () -> {
                 if (anyManaType) {
@@ -9912,6 +9955,9 @@ public class SpellCastingService {
                         throw new IllegalStateException("Not enough mana to pay casting cost");
                     }
                     cost.payAsGeneric(pool, effectiveXValue, additionalCost);
+                    if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
+                        gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
+                    }
                 } else if (cardHasFlashback) {
                     int manaXValue = cost.hasX() ? effectiveXValue : 0;
                     if (!cost.canPayFlashbackFromGraveyard(pool, manaXValue + additionalCost)) {

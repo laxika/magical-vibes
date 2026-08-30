@@ -29,6 +29,8 @@ public class Permanent {
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
+    /** Whether this permanent was untapped before its controller's most recent untap step. */
+    @Setter private boolean untappedAtTurnStart;
     private int untapSequence;
     private int controlChangeSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
@@ -647,6 +649,7 @@ public class Permanent {
         this.originalCard = card;
         this.bestow = false;
         this.tapped = false;
+        this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
         this.attackedThisCombat = false;
         this.summoningSick = true;
@@ -669,6 +672,7 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
+        this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
         this.attacking = source.attacking;

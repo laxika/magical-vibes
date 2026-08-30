@@ -34,6 +34,22 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantColorUntilEndOfTurnEffect) effect;
+        if (e.scope() == GrantScope.TARGETS) {
+            List<UUID> targetIds = entry.targetsForEffect(e);
+            int count = 0;
+            for (UUID targetId : targetIds) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target != null) {
+                    applyEffect(gameData, entry, e, target);
+                    count++;
+                }
+            }
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" makes " + count + " target creature(s) " + colorName(e)
+                            + " until end of turn.").build());
+            return;
+        }
+
         if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
             UUID targetPlayerId = entry.getTargetId();
             if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {

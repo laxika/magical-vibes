@@ -135,8 +135,13 @@ public class UntapStepService {
         gameData.untapStepPlayerId = activePlayerId;
         gameData.untapStepUntappedPermanentCount = 0;
 
+        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (activeBattlefield != null) {
+            activeBattlefield.forEach(p -> p.setUntappedAtTurnStart(!p.isTapped()));
+        }
+
         if (skipUntapStep) {
-            List<Permanent> ownBattlefield = gameData.playerBattlefields.get(activePlayerId);
+            List<Permanent> ownBattlefield = activeBattlefield;
             if (ownBattlefield != null) {
                 ownBattlefield.forEach(p -> {
                     // Permanents stay tapped, but a queued "skip next untap" is still consumed (this

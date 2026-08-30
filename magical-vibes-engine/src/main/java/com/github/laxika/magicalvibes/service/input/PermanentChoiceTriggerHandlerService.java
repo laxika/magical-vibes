@@ -1865,6 +1865,9 @@ public class PermanentChoiceTriggerHandlerService {
                 chosenId,
                 uptt.sourcePermanentId()
         );
+        if (uptt.choosingPlayerId() != null) {
+            entry.setActivePlayerId(uptt.choosingPlayerId());
+        }
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, chosenId);

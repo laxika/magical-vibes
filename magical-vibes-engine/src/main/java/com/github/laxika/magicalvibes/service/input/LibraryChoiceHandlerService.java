@@ -1243,7 +1243,7 @@ public class LibraryChoiceHandlerService {
                 placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), handOwnerId,
                         toBattlefieldTapped, false, false, false, null, battlefieldCounter, enterWithCounters);
             } else {
-                gameData.playerHands.get(handOwnerId).add(chosenCard);
+                gameData.addCardToHand(handOwnerId, chosenCard);
             }
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
             exileService.exileCard(gameData, playerId, chosenCard);

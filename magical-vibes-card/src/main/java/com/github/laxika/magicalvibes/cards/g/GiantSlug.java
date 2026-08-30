@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterChosenLandwalkAtNextU
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "33")
+@CardRegistration(set = "LEG", collectorNumber = "99")
 public class GiantSlug extends Card {
 
     public GiantSlug() {
