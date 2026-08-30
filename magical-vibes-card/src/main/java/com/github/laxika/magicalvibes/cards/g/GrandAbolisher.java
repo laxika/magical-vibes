@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
  * artifacts, creatures, or enchantments.
  */
 @CardRegistration(set = "M12", collectorNumber = "19")
+@CardRegistration(set = "BIG", collectorNumber = "2")
 public class GrandAbolisher extends Card {
 
     public GrandAbolisher() {

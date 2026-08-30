@@ -162,7 +162,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             if (grant.grantCondition() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    target, grant.grantCondition(), resolutionFilterContext(gameData, entry))) {
                 return;
             }
 
@@ -271,7 +272,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             // Optional grant condition: the target stays legal either way; only the keyword grant
             // is conditional (e.g. Vampire's Zeal grants first strike only if the target is a Vampire).
             if (grant.grantCondition() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    target, grant.grantCondition(), resolutionFilterContext(gameData, entry))) {
                 continue;
             }
 
@@ -299,6 +301,15 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordNames + " " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
         }
+    }
+
+    private FilterContext resolutionFilterContext(GameData gameData, StackEntry entry) {
+        return FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                .withXValue(entry.getXValue());
     }
 
     private void resolveTargetAndSharingCreatures(GameData gameData, StackEntry entry,

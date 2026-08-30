@@ -1,0 +1,85 @@
+package com.github.laxika.magicalvibes.cards.e;
+
+import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({EnigmaEidolon.class, AdelizTheCinderWind.class, GrizzlyBears.class})
+class EnigmaEidolonTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Sacrificing Enigma Eidolon mills three cards from the target player's library")
+    void sacrificeAbilityMillsTargetPlayer() {
+        harness.addToBattlefield(player1, new EnigmaEidolon());
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Enigma Eidolon");
+    }
+
+    @Test
+    @DisplayName("Casting a multicolored spell may return Enigma Eidolon from the graveyard")
+    void multicoloredSpellReturnsEidolonToHand() {
+        EnigmaEidolon eidolon = new EnigmaEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eidolon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(eidolon);
+    }
+
+    @Test
+    @DisplayName("Declining the multicolored spell trigger keeps Enigma Eidolon in the graveyard")
+    void decliningReturnKeepsEidolonInGraveyard() {
+        EnigmaEidolon eidolon = new EnigmaEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+
+    @Test
+    @DisplayName("A monocolored spell does not trigger Enigma Eidolon's graveyard ability")
+    void monocoloredSpellDoesNotTriggerReturn() {
+        EnigmaEidolon eidolon = new EnigmaEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+    }
+}

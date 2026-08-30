@@ -211,9 +211,9 @@ public class ExampleCard extends Card {
 
 ## Targeting checklist
 
-- Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
+- Targeting is computed automatically from effects — and from an activated ability's `TargetFilter` — for both spells (`Card`) and activated abilities (`ActivatedAbility`).
 - Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` built from a `TargetPredicates` factory — `TargetSpec.harmful(TargetPredicates.creature())`, `benign(TargetPredicates.permanent())`, `harmful(TargetPredicates.anyTarget())`, `benign(TargetPredicates.spellOnStack())`, `benign(TargetPredicates.graveyardCard())`, etc. (`harmful` = damage/fight/destroy/exile/sacrifice; add a `PermanentPredicate` argument to narrow). This is the ONE targeting declaration; the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations" for the factory table and a worked example.
-- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute targeting from effects. `ActivatedAbility.isNeedsTarget()` and `ActivatedAbility.isNeedsSpellTarget()` are derived getters on the ability.
+- `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute spell targeting from effects. `ActivatedAbility.isNeedsTarget()` also considers the ability's `TargetFilter` and `isNeedsSpellTarget()` remains effect-derived.
 - For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` to get the resolved effect list before computing targets.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.
@@ -548,6 +548,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
 | `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CreatureDiedUnderYourControlThisTurn(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new CreatureDiedUnderOpponentControlThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new CardsLeftGraveyardThisTurn(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new DidntActivateLoyaltyAbilityThisTurn(), wrapped)` | - | yes | yes (controller end step) | controller activated no planeswalker loyalty ability this turn (The Chain Veil) — reads `GameData.playersWhoActivatedLoyaltyAbilityThisTurn`, recorded when the loyalty cost is paid |
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
@@ -592,6 +593,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |
+| `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |

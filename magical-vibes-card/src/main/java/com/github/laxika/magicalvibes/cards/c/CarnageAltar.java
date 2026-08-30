@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,8 +17,7 @@ public class CarnageAltar extends Card {
                 false,
                 "{3}",
                 List.of(new SacrificeCreatureCost(), new DrawCardEffect()),
-                "{3}, Sacrifice a creature: Draw a card.",
-                TargetFilters.creatureYouControl()
+                "{3}, Sacrifice a creature: Draw a card."
         ));
     }
 }

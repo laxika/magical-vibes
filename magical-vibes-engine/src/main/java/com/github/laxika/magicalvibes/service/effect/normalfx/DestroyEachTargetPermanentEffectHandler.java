@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,10 +47,14 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         // creatures don't see each other die and "whenever a creature dies" triggers under-count.
         List<Permanent> toDestroy = new ArrayList<>();
         Map<UUID, UUID> controllerByPermanentId = new HashMap<>();
+        HashSet<UUID> seenTargetIds = new HashSet<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId());
         for (UUID targetId : targets) {
+            if (!seenTargetIds.add(targetId)) {
+                continue;
+            }
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
                 continue;

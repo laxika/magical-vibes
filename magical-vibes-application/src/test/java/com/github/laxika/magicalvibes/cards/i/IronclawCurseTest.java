@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,24 +17,23 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IronclawCurse.class, GiantSpider.class, GrizzlyBears.class, HillGiant.class,
+        CrawWurm.class, FountainOfYouth.class})
 class IronclawCurseTest extends BaseCardTest {
 
-    /** Grizzly Bears (2/2) enchanted with Ironclaw Curse, attached and on the battlefield. */
+    /** Giant Spider (2/4) enchanted with Ironclaw Curse, attached and on the battlefield. */
     private Permanent cursedSpider() {
-        Permanent spider = new Permanent(new GiantSpider());
-        gd.playerBattlefields.get(player1.getId()).add(spider);
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
 
-        Permanent aura = new Permanent(new IronclawCurse());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new IronclawCurse());
         aura.setAttachedTo(spider.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return spider;
     }
 
     @Test
     @DisplayName("Resolving Ironclaw Curse attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent spider = new Permanent(new GiantSpider());
-        gd.playerBattlefields.get(player1.getId()).add(spider);
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
 
         harness.setHand(player1, List.of(new IronclawCurse()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -59,10 +60,19 @@ class IronclawCurseTest extends BaseCardTest {
     @DisplayName("Enchanted creature can't block an attacker whose power equals its toughness")
     void cantBlockAttackerWithPowerEqualToToughness() {
         Permanent spider = cursedSpider(); // 2/3 after the curse
-        Permanent hillGiant = new Permanent(new HillGiant()); // 3/3
-        gd.playerBattlefields.get(player2.getId()).add(hillGiant);
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant()); // 3/3
 
         assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enchanted creature can't block an attacker whose power exceeds its toughness")
+    void cantBlockAttackerWithPowerGreaterThanToughness() {
+        Permanent spider = cursedSpider(); // 2/3 after the curse
+        Permanent crawWurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm()); // 6/4
+
+        assertThat(bls.canBlockAttacker(gd, spider, crawWurm,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 
@@ -70,8 +80,7 @@ class IronclawCurseTest extends BaseCardTest {
     @DisplayName("Enchanted creature can still block an attacker with lower power")
     void canBlockAttackerWithLowerPower() {
         Permanent spider = cursedSpider(); // 2/3 after the curse
-        Permanent bears = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2
 
         assertThat(bls.canBlockAttacker(gd, spider, bears,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
@@ -81,8 +90,7 @@ class IronclawCurseTest extends BaseCardTest {
     @DisplayName("Block restriction and debuff disappear when the aura is removed")
     void restrictionStopsWhenAuraRemoved() {
         Permanent spider = cursedSpider();
-        Permanent hillGiant = new Permanent(new HillGiant());
-        gd.playerBattlefields.get(player2.getId()).add(hillGiant);
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         assertThat(bls.canBlockAttacker(gd, spider, hillGiant,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
@@ -99,7 +107,6 @@ class IronclawCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Ironclaw Curse")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new IronclawCurse()));
         harness.addMana(player1, ManaColor.RED, 1);

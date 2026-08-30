@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -55,6 +58,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private void resolveFromAllGraveyards(GameData gameData, StackEntry entry,
                                           ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         List<GraveyardCard> cardsToReturn = new ArrayList<>();
+        int totalManaValue = 0;
         for (UUID targetCardId : entry.getTargetCardIds()) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCardId);
             if (graveyardOwnerId == null) {
@@ -65,8 +69,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     .findFirst().orElse(null);
             if (card != null && predicateEvaluationService.matchesCardPredicate(
                     card, effect.filter(), entry.getCard().getId(), gameData, graveyardOwnerId,
-                    null, null, entry.getXValue())) {
+                    null, null, entry.getXValue())
+                    && (!effect.hasTotalManaValueCap()
+                    || totalManaValue + card.getManaValue() <= effect.maxTotalManaValue())) {
                 cardsToReturn.add(new GraveyardCard(graveyardOwnerId, card));
+                totalManaValue += card.getManaValue();
             }
         }
 
@@ -95,6 +102,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);
+                applyReturnRiders(gameData, permanent, effect);
                 returnedCards.add(card);
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
             }
@@ -161,6 +169,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);
+                applyReturnRiders(gameData, permanent, e);
                 returnedCards.add(card);
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, graveyardOwnerId, permanent, card);
                 if (e.counterType() != null && e.counterCount() > 0) {
@@ -180,5 +189,16 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     }
 
     private record GraveyardCard(UUID ownerId, Card card) {
+    }
+
+    private void applyReturnRiders(GameData gameData, Permanent permanent,
+                                   ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
+        if (effect.grantHaste()) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
+        }
+        if (effect.sacrificeAtEndStep()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        }
     }
 }

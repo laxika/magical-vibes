@@ -46,6 +46,7 @@ public enum Keyword {
     SCRY,
     FLASHBACK,
     AFTERMATH,
+    HAUNT,
     TRANSFORM,
     DAYBOUND,
     NIGHTBOUND,
@@ -62,7 +63,9 @@ public enum Keyword {
     SHADOW,
     FLANKING,
     CONSPIRE,
+    REPLICATE,
     RETRACE,
+    JUMP,
     JUMP_START,
     BANDING,
     EMERGE,
@@ -91,6 +94,8 @@ public enum Keyword {
     DELVE,
     DREDGE,
     MODULAR,
+    PROWESS,
+    DASH,
     SUNBURST,
     PROTOTYPE,
     REBOUND,
@@ -108,7 +113,11 @@ public enum Keyword {
     DOUBLE,
     PLOT,
     AMASS,
-    ASSEMBLE;
+    ASSEMBLE,
+    WATERBEND,
+    FIREBENDING,
+    BLOW_UP,
+    DISGUISE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

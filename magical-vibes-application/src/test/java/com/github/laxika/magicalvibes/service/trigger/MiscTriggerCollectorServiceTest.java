@@ -271,6 +271,24 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("surveil mark-on-acceptance trigger keeps its marker on the stack entry")
+    void surveilMarkOnAcceptanceTriggerKeepsMarker() {
+        Permanent perm = createPermanent("Planetarium of Wan Shi Tong");
+        var effect = OncePerTurnTriggerEffect.markOnAcceptance(new DrawCardEffect(1));
+        var ctx = new TriggerContext.Surveil(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS,
+                effect.wrapped(), ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect.wrapped());
+        });
+    }
+
+    @Test
     @DisplayName("graveyard-leave trigger skips a false intervening turn condition")
     void graveyardLeaveTriggerSkipsFalseInterveningCondition() {
         Permanent perm = createPermanent("Kishla Skimmer");
@@ -437,6 +455,22 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("skips a false intervening condition")
+        void skipsFalseInterveningCondition() {
+            Permanent perm = createPermanent("Tolls of War");
+            var effect = new ConditionalEffect(new ControllerTurn(), new BoostSelfEffect(1, 1));
+            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

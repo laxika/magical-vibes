@@ -16,6 +16,8 @@ public class KaervekThePunisher extends Card {
                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
                         new CardColorPredicate(CardColor.BLACK),
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                        2));
+                        2,
+                        false,
+                        false));
     }
 }

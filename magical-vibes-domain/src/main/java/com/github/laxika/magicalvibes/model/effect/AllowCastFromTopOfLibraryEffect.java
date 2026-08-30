@@ -14,19 +14,23 @@ import java.util.Set;
  * type clause because colorless is a characteristic, not a card type.
  */
 public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
-                                              CardPredicate filter)
+                                              CardPredicate filter, boolean oncePerTurn)
         implements CardEffect {
 
     public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes) {
-        this(castableTypes, false, null);
+        this(castableTypes, false, null, false);
     }
 
     public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless) {
-        this(castableTypes, castableColorless, null);
+        this(castableTypes, castableColorless, null, false);
     }
 
     public AllowCastFromTopOfLibraryEffect(CardPredicate filter) {
-        this(Set.of(), false, filter);
+        this(filter, false);
+    }
+
+    public AllowCastFromTopOfLibraryEffect(CardPredicate filter, boolean oncePerTurn) {
+        this(Set.of(), false, filter, oncePerTurn);
     }
 
     public boolean matches(Card card) {

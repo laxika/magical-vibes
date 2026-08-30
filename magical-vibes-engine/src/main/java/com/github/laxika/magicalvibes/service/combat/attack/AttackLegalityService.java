@@ -79,6 +79,9 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
+        if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
@@ -138,12 +141,16 @@ public class AttackLegalityService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, CanAttackAsThoughNoDefenderEffect.class)) {
             return true;
         }
+        if (gameQueryService.getGrantedEffects(gameData, creature).stream()
+                .anyMatch(effect -> effect instanceof NoDefenderAttackPermissionEffect permission
+                        && permission.grantsCarrierAttackAsThoughNoDefender())) {
+            return true;
+        }
         // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),
         // stored as floating effects affecting this creature.
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (floating.effect() instanceof NoDefenderAttackPermissionEffect permission
-                        && permission.grantsCarrierAttackAsThoughNoDefender()
+                if (floating.effect() instanceof NoDefenderAttackPermissionEffect
                         && creature.getId().equals(floating.affectedPermanentId())) {
                     return true;
                 }

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.fail;
 
@@ -54,6 +55,7 @@ class RandomAiFuzzTest {
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 300_000;
     private static final long AI_DECISION_DELAY_MS = 0;
+    private static final long AI_SHUTDOWN_TIMEOUT_SECONDS = 5;
 
     @Test
     void fuzzTestRandomAi() throws Exception {
@@ -192,7 +194,8 @@ class RandomAiFuzzTest {
             }
 
             String fingerprint = computeFingerprint(gd, player1.getId(), player2.getId());
-            if (fingerprint.equals(lastFingerprint)) {
+            boolean aiHasPendingWork = aiConn1.hasPendingWork() || aiConn2.hasPendingWork();
+            if (fingerprint.equals(lastFingerprint) && !aiHasPendingWork) {
                 sameCount++;
 
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
@@ -206,10 +209,11 @@ class RandomAiFuzzTest {
             }
         }
 
-        // 7. Clean up executor threads
-        aiConn1.close();
-        aiConn2.close();
+        // 7. Stop event delivery before closing the executors, then wait for any decision that
+        // was already running. Otherwise its logs can escape this game's watcher and be reported
+        // as a failure in the next game after that game replaces the shared registry contents.
         eventSubscription.close();
+        closeAndAwait(aiConn1, aiConn2);
 
         // Catch failures logged between the last poll and game end (e.g. a crash
         // during the final combat that also happened to end the game).
@@ -217,6 +221,17 @@ class RandomAiFuzzTest {
         if (!trailingFailures.isEmpty()) {
             fail("Game #" + gameNumber + " finished, but failures were captured in logs:\n"
                     + String.join("\n", trailingFailures));
+        }
+    }
+
+    private void closeAndAwait(AiDecisionScheduler... schedulers) throws InterruptedException {
+        for (AiDecisionScheduler scheduler : schedulers) {
+            scheduler.close();
+        }
+        for (AiDecisionScheduler scheduler : schedulers) {
+            if (!scheduler.awaitTermination(AI_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                fail("AI scheduler did not terminate after close: " + scheduler.diagnosticSummary());
+            }
         }
     }
 

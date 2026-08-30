@@ -163,6 +163,9 @@ class ActivatedAbilityExecutionServiceTest {
         lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
                         eq(gameData), anyInt(), any(), any(), any()))
                 .thenAnswer(invocation -> invocation.getArgument(1));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
     }
 
     // =========================================================================
@@ -383,7 +386,8 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(lifeSupport).applyGainLife(gameData, player1Id, 1);
+            verify(lifeSupport).applyGainLife(gameData, player1Id, 1, perm.getCard().getName(),
+                    perm.getCard(), StackEntryType.ACTIVATED_ABILITY, player1Id);
         }
 
         @Test
@@ -427,7 +431,8 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(lifeSupport).applyGainLife(gameData, player1Id, 2);
+            verify(lifeSupport).applyGainLife(gameData, player1Id, 2, perm.getCard().getName(),
+                    perm.getCard(), StackEntryType.ACTIVATED_ABILITY, player1Id);
             assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
         }
 

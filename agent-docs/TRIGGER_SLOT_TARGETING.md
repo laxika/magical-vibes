@@ -119,6 +119,7 @@ combat damage step is processed.
 | Slot | Collector service | Pipeline |
 |---|---|---|
 | `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleDeathMayPayMana` + `handleLosesLifeEqualToPower` | Death |
+| `ON_HAUNTED_CREATURE_DIES` | `TriggerCollectionService.checkHauntedCreatureDeathTriggers` scans the tracked haunted-permanent relationships when a permanent enters a graveyard, then uses the death-trigger target queue for targeted effects | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
 | `ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE` | `DamageTriggerCollectorService.handleEquippedCreatureDealsCombatDamage` (scans attached Equipment and preserves last-known attachment) | Combat damage |
 | `ON_EQUIPPED_CREATURE_TRANSFORMS` | `AnimationSupport.fireEquipmentTransformTriggers` (non-targeting; pushed with the Equipment as `sourcePermanentId`) | Transform |
@@ -152,7 +153,7 @@ combat damage step is processed.
 | `ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (controller's battlefield; handles both creature permanents and creature spells targeted by an opponent) | Becomes-target |
 | `ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted creature's controller's battlefield; spell path only; the triggered ability uses the shared ETB multi-target picker so optional targets can be declined) | Becomes-target |
 | `ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (one trigger per other permanent, opponent-only; targeted permanent stored as non-targeting `triggeringPermanentId`) | Becomes-target |
-| `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`) | Becomes-target |
+| `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`; `TriggeringAbilityFromNamedLandConditionalEffect` can retain its wrapped effect only for an ability from a named land controlled by the watcher and targeting another creature) | Becomes-target |
 | `ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (targeted permanent's controller's battlefield; only permanent targets qualify, and the opposing controller is checked before queuing) | Becomes-target |
 | `UPKEEP_TRIGGERED` (any-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect targets both — `targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
 | `UPKEEP_TRIGGERED` (permanent-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepPermanentTargetTrigger` (queued when a non–any-target, non–player-target effect's `targetSpec()` includes permanents, e.g. Weed-Pruner Poplar's "target creature other than this creature gets -1/-1"). Honours the card's `PermanentPredicateTargetFilter`; use `PermanentNotPredicate(PermanentIsSourceCardPredicate)` for "other than this creature". | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
@@ -182,7 +183,7 @@ combat damage step is processed.
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT` | `TriggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers` + `DamageTriggerCollectorService` | Non-targeting; source permanent and controller are bound in the queued may ability |
 | `ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU` | `TriggerCollectionService.queueCreatureCombatDamageToYouTriggers` — never targets; the damaging creature is baked in as the stack entry's `targetId` with `nonTargeting = true`, so no pending-choice is queued. Teysa, Envoy of Ghosts. | None (baked-in subject) |
-| `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
+| `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain; the legacy creature/player path is used when no card-level permanent target filter is declared, while declared permanent filters are evaluated for target selection |
 | `ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` + `MiscTriggerCollectorService` | Life-gain |
 | `ON_CONTROLLER_DRAWS` / `ON_CONTROLLER_DRAWS_SECOND_CARD` (targeted effects) | `DrawService.checkControllerDrawTriggers` queues `DrawTriggerPermanentTarget` for a permanent-target effect bound to the card's `target(...)` filter (e.g. Mantle of Tides). `TriggeredAbilityQueueService.processNextDrawTriggerPermanentTarget` uses the shared `TriggerTargetCollector`; the controller chooses the permanent before the ability goes on the stack. | Draw (permanent target) |
 | `GRAVEYARD_ON_OPPONENT_GAINS_LIFE` | `TriggerCollectionService.checkLifeGainTriggers` | None (graveyard-resident, non-targeting) |
@@ -202,7 +203,7 @@ combat damage step is processed.
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
 | `ON_DAMAGED_CREATURE_DIES` (targeting effects) | `GraveyardService.enqueueDamagedCreatureDiesTriggers` → `SelfTriggeredAbilityTarget`; the target is chosen as the trigger is put on the stack. Non-targeting effects are pushed directly. | Damaged-creature death (reuses `Options.END_STEP`) |
 | Planeswalker ultimate emblems | `DrawService` / `TriggerCollectionService` (including land-entry emblem markers) | Emblem |
-| `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |
+| `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` / `SAGA_CHAPTER_IV` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |
 
 Slots that currently **only ever push non-targeting entries** (no pending queue):
 The controller-draw slots are an exception when an effect declares a target: any-target effects use
@@ -217,9 +218,10 @@ The controller-draw slots are an exception when an effect declares a target: any
 permanent-targeting `MayEffect` is routed through `queueMayAbility` — see the mapping table above),
 `DRAW_TRIGGERED`, `EACH_DRAW_TRIGGERED`,
 `ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
-`DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
+`DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS`,
+`ON_ENCHANTED_PLAYER_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, `ON_CREWS_VEHICLE`,
-`ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
+`ON_ALLY_PERMANENT_SACRIFICED`, `ON_OPPONENT_PERMANENT_SACRIFICED` (carries the sacrificing player as a non-targeting player reference), `ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED` (carries the sacrificed card id on the trigger for effects such as It That Betrays), `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_CREWS_VEHICLE`,
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` (Jinxed Ring; fires only for nontoken permanents entering the graveyard owned by the slot's controller),
@@ -247,6 +249,9 @@ whenever a non-token land card actually enters their graveyard from their librar
 library-to-graveyard event when one or more non-token creature cards actually enter the graveyard
 owner's graveyard — mill batches are checked in `GraveyardService.resolveMillPlayer` after replacement
 effects),
+`ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Devourer of Memory; fires once per
+library-to-graveyard event when one or more non-token cards actually enter the controller's graveyard —
+mill batches are checked after replacement effects),
 `ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY` (Dreadhound; fires once for each non-token
 creature card that actually enters any player's graveyard from a library, after replacement effects;
 checked in `GraveyardService.addCardToGraveyard`),
@@ -425,13 +430,15 @@ graveyard means the trigger is never put on the stack (CR 603.3c). As above, the
 `MayEffect` wrapper - the up-to-one pick can be left empty.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
-Ruin Rat) use the same trigger-time graveyard selection, but on the `ON_DEATH` path. `handleDeathDefault`
-routes any death effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside
-the permanent/player routing), and `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
-`ExileGraveyardCardsEffect` and calls `beginDeathGraveyardTarget`, which searches the graveyards the
-effect's declared `GraveyardSearchScope` names (`TargetSpec.graveyardScope()`) and prompts a
-`MultiGraveyardChoice`. With no legal target the death trigger is skipped, never put on the stack (CR
-603.3c). Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
+Ruin Rat) use the same trigger-time graveyard selection on `ON_DEATH` and `ON_ALLY_CREATURE_DIES`.
+`handleDeathDefault` and `TriggerCollectionService.checkAllyCreatureDeathTriggers` route any death
+effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside the
+permanent/player routing). `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
+graveyard target and calls `beginDeathGraveyardTarget`, which searches the declared scope and prompts a
+`MultiGraveyardChoice`. Optional up-to-one targets may be declined; a mandatory target with no legal
+card skips the trigger. An ally-death target may carry an excluded dying-card ID for an "other"
+restriction, so `CardNotPredicate(CardIsSelfPredicate())` is evaluated against the actual dying card.
+Use `ON_DEATH`, never `ON_SELF_LEAVES_BATTLEFIELD` (Offalsnout), for a "dies" trigger — the latter
 also fires on exile/bounce.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
@@ -587,6 +594,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of your upkeep, ..." | `UPKEEP_TRIGGERED` | Aura controller's upkeep (aura is on their battlefield) | Call to the Kindred |
 | "At the beginning of enchanted creature's controller's upkeep, ..." | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Enchanted creature's controller is the active player | Necrotic Plague, Soul Bleed, Numbing Dose, Erosion (enchanted land) |
 | "At the beginning of enchanted player's upkeep, ..." | `ENCHANTED_PLAYER_UPKEEP_TRIGGERED` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
+| "Whenever enchanted opponent draws a card, ..." | `ON_ENCHANTED_PLAYER_DRAWS` | The player attached to this player Aura draws a card | Psychic Possession (`DIS`) |
 | "At the beginning of each upkeep, ..." | `EACH_UPKEEP_TRIGGERED` | Every player's upkeep; targeted permanents are chosen by the source controller as the trigger is put on the stack | — |
 | "At the beginning of each player's upkeep, if this card is suspended, ..." | `SUSPENDED_EACH_UPKEEP_TRIGGERED` | Every player's upkeep while the card is exiled with a positive time-counter entry | Curse of the Cabal (`TSP`) |
 | "When enchanted creature dies, ..." | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted creature goes to graveyard | Necrotic Plague (return effect), Banewasp Affliction (life loss = toughness), Creature Bond (damage = toughness), Death Watch (lose life = power + gain life = toughness) |
@@ -629,3 +637,8 @@ permanent id remains available so an Aura effect can re-derive its host at resol
 `ON_CONTROLLER_DRAWS_SECOND_CARD` is checked by `DrawService.checkControllerDrawTriggers` after
 the controller's per-turn draw count reaches exactly two. It uses the same stack and any-target
 handling as `ON_CONTROLLER_DRAWS`, but does not fire on later draws in the same turn.
+
+`ON_ANY_CREATURE_DEALT_DAMAGE` also captures the damaged creature's controller as
+`triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`
+and `ExileTopCardsMayPlayUntilNextTurnEffect.forTriggeringPermanentController(...)` when a trigger says
+that creature's controller may use their library.

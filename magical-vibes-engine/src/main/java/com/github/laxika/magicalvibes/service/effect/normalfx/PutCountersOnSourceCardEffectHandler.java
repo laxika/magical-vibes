@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class PutCountersOnSourceCardEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,8 +34,12 @@ public class PutCountersOnSourceCardEffectHandler implements NormalEffectHandler
         Permanent source = findSourcePermanent(gameData, sourceCard);
         if (source != null) {
             PutCountersOnSourceCardEffect counters = (PutCountersOnSourceCardEffect) effect;
+            int count = counters.amount() == null
+                    ? counters.count()
+                    : amountEvaluationService.evaluate(gameData, counters.amount(),
+                    AmountContext.forStackEntry(entry, source));
             permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, entry, source, counters.counterType(), counters.count());
+                    gameData, entry, source, counters.counterType(), count);
         }
     }
 

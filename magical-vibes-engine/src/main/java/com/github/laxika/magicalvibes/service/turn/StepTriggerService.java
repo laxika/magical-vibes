@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedReturnAuraAttachedToPermanent;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
+import com.github.laxika.magicalvibes.model.action.DelayedCreateTokenCopy;
 import com.github.laxika.magicalvibes.model.action.DelayedExileCreatedPermanentsAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
@@ -19,9 +20,11 @@ import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermane
 import com.github.laxika.magicalvibes.model.action.DelayedCoinFlipSacrificeTargetPermanentAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
+import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
@@ -41,10 +44,12 @@ import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCa
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
+import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
@@ -99,6 +104,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
@@ -108,6 +114,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDiff
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderOpponentControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntActivateLoyaltyAbilityThisTurn;
@@ -136,6 +143,8 @@ import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqu
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -187,6 +196,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnUntapLockedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndStepUnlessConditionEffect;
@@ -404,6 +414,8 @@ public class StepTriggerService {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.UPKEEP);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_UPKEEP);
         epicService.fireUpkeepTriggers(gameData);
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP);
 
         // Cycle of Life: "At the beginning of your next upkeep, put a +1/+1 counter on that
         // creature." A delayed triggered ability — it uses the stack but doesn't target, so the
@@ -2067,8 +2079,24 @@ public class StepTriggerService {
                 trigger.sourceCard(),
                 TriggerTargetCollector.Options.UPKEEP);
         List<UUID> validTargets = result.validTargets();
+        boolean optionalTarget = trigger.sourceCard().getMinTargets() == 0
+                && trigger.sourceCard().getMaxTargets() == 1;
 
         if (validTargets.isEmpty()) {
+            if (optionalTarget) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        trigger.sourceCard(),
+                        trigger.controllerId(),
+                        trigger.sourceCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(trigger.effects()),
+                        (UUID) null,
+                        trigger.sourcePermanentId()));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers with no target."));
+                processNextUpkeepPermanentTarget(gameData);
+                return;
+            }
             gameLogService.append(gameData,
                     GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger has no valid targets."));
             log.info("Game {} - {} upkeep permanent-target trigger skipped (no valid targets)",
@@ -2086,8 +2114,19 @@ public class StepTriggerService {
             targetDescription = "target permanent";
         }
 
-        playerInputService.beginPermanentChoice(gameData, trigger.choosingPlayerId(), validTargets,
-                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+        if (optionalTarget) {
+            playerInputService.beginMultiPermanentChoice(
+                    gameData,
+                    trigger.choosingPlayerId(),
+                    validTargets,
+                    1,
+                    new MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget(
+                            trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId()),
+                    trigger.sourceCard().getName() + "'s ability — Choose up to one " + targetDescription + ".");
+        } else {
+            playerInputService.beginPermanentChoice(gameData, trigger.choosingPlayerId(), validTargets,
+                    trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+        }
 
         gameLogService.append(gameData,
                 GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger — choose " + targetDescription + "."));
@@ -2604,7 +2643,7 @@ public class StepTriggerService {
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else {
-                        gameData.stack.add(new StackEntry(
+                        StackEntry triggerEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 activePlayerId,
@@ -2612,7 +2651,17 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(effect)),
                                 activePlayerId,
                                 perm.getId()
-                        ));
+                        );
+                        if (effect instanceof PutCountersOnUntapLockedPermanentsEffect) {
+                            List<UUID> lockedPermanentIds = new ArrayList<>();
+                            gameData.forEachPermanent((playerId, permanent) -> {
+                                if (permanent.getUntapPreventedByPermanentIds().contains(perm.getId())) {
+                                    lockedPermanentIds.add(permanent.getId());
+                                }
+                            });
+                            triggerEntry.setEventCardIds(lockedPermanentIds);
+                        }
+                        gameData.stack.add(triggerEntry);
 
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
                         log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -2729,8 +2778,14 @@ public class StepTriggerService {
 
         drainAddManaAtNextMainPhase(gameData, true);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
             processNextMainPhasePlayerTarget(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
     }
 
@@ -2803,7 +2858,17 @@ public class StepTriggerService {
                 continue;
             }
 
+            List<CardEffect> modalEffects = triggering.stream()
+                    .filter(effect -> effect instanceof ChooseModeNotYetChosenEffect)
+                    .toList();
+            for (CardEffect modalEffect : modalEffects) {
+                ChooseModeNotYetChosenEffect modal = (ChooseModeNotYetChosenEffect) modalEffect;
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        perm.getCard(), activePlayerId, new ChooseOneEffect(modal.options()), perm.getId(), false, true));
+            }
+
             List<CardEffect> playerTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect))
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
@@ -2813,19 +2878,39 @@ public class StepTriggerService {
                         perm.getCard().getTargetFilter()));
             }
 
-            List<CardEffect> nonPlayerTargetEffects = triggering.stream()
+            List<CardEffect> graveyardTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect))
                     .filter(effect -> !playerTargetEffects.contains(effect))
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                     .toList();
-            if (!nonPlayerTargetEffects.isEmpty()) {
-                gameData.stack.add(new StackEntry(
+            if (!graveyardTargetEffects.isEmpty()) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(graveyardTargetEffects)));
+            }
+
+            List<CardEffect> nonTargetEffects = triggering.stream()
+                    .filter(effect -> !modalEffects.contains(effect)
+                            && !playerTargetEffects.contains(effect)
+                            && !graveyardTargetEffects.contains(effect))
+                    .toList();
+            if (!nonTargetEffects.isEmpty()) {
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         activePlayerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(nonPlayerTargetEffects),
+                        new ArrayList<>(nonTargetEffects),
                         null,
                         perm.getId()
-                ));
+                );
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                if (perm.isAttached()) {
+                    Permanent attached = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+                    if (attached != null) {
+                        entry.setAttachedPermanentSnapshot(new Permanent(attached));
+                    }
+                }
+                gameData.stack.add(entry);
             }
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -3000,13 +3085,22 @@ public class StepTriggerService {
             if (effects == null || effects.isEmpty()) {
                 return;
             }
+            List<CardEffect> triggeredEffects = effects.stream()
+                    .filter(effect -> !(effect instanceof ConditionalEffect conditional)
+                            || !conditional.interveningIf()
+                            || conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, playerId)))
+                    .toList();
+            if (triggeredEffects.isEmpty()) {
+                return;
+            }
 
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     playerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
+                    new ArrayList<>(triggeredEffects),
                     (UUID) null,
                     perm.getId()
             ));
@@ -3047,6 +3141,7 @@ public class StepTriggerService {
                 case 2 -> EffectSlot.SAGA_CHAPTER_II;
                 case 3 -> EffectSlot.SAGA_CHAPTER_III;
                 case 4 -> EffectSlot.SAGA_CHAPTER_IV;
+                case 5 -> EffectSlot.SAGA_CHAPTER_V;
                 default -> null;
             };
             if (chapterSlot == null) continue;
@@ -3055,11 +3150,12 @@ public class StepTriggerService {
             if (chapterEffects.isEmpty()) continue;
 
             String chapterName = switch (newLoreCount) {
-                    case 1 -> "I";
-                    case 2 -> "II";
-                    case 3 -> "III";
-                    case 4 -> "IV";
-                    default -> String.valueOf(newLoreCount);
+                case 1 -> "I";
+                case 2 -> "II";
+                case 3 -> "III";
+                case 4 -> "IV";
+                case 5 -> "V";
+                default -> String.valueOf(newLoreCount);
             };
 
             boolean needsPlayerTarget = chapterEffects.stream()
@@ -3318,10 +3414,6 @@ public class StepTriggerService {
             simultaneouslyEntered.add(perm);
             returnedPermanents.add(perm);
             returnedControllerIds.add(cardControllerId);
-            if (attachToPrimary) {
-                triggerCollectionService.checkAuraAttachedTriggers(
-                        gameData, card, primaryPermanent.getId());
-            }
             String playerName = gameData.playerIdToName.get(cardControllerId);
             String attackText = pending.returnAttacking() && attackTargetId != null
                     ? " tapped and attacking" : "";
@@ -3522,6 +3614,54 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(DamageForCardsStillExiledAtNextEndStep.class)) {
+            List<DamageForCardsStillExiledAtNextEndStep> pendingDamage = gameData.drainDelayedActions(
+                    DamageForCardsStillExiledAtNextEndStep.class,
+                    action -> action.controllerId().equals(gameData.activePlayerId));
+            for (DamageForCardsStillExiledAtNextEndStep action : pendingDamage) {
+                long stillExiled = action.cardIds().stream()
+                        .filter(cardId -> gameData.findExiledCard(cardId) != null)
+                        .count();
+                int damage = Math.toIntExact(stillExiled * action.damagePerCard());
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed trigger",
+                        new ArrayList<>(List.of(new DealDamageToPlayersEffect(
+                                damage, DamageRecipient.EACH_OPPONENT))),
+                        null,
+                        action.sourcePermanentId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed trigger deals " + damage + " damage to each opponent."));
+                log.info("Game {} - {} delayed trigger deals {} damage to each opponent",
+                        gameData.id, action.sourceCard().getName(), damage);
+            }
+        }
+
+        if (gameData.hasDelayedAction(UnattachEquipmentAtNextEndStep.class)) {
+            List<UnattachEquipmentAtNextEndStep> pendingUnattaches =
+                    gameData.drainDelayedActions(UnattachEquipmentAtNextEndStep.class);
+            for (UnattachEquipmentAtNextEndStep pending : pendingUnattaches) {
+                Permanent equipment = gameQueryService.findPermanentById(gameData, pending.equipmentId());
+                if (equipment == null || equipment.getAttachedTo() == null) {
+                    continue;
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new UnattachEquipmentEffect(pending.equipmentId()))));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed ability triggers to unattach the Equipment."));
+            }
+        }
+
         if (gameData.hasDelayedAction(SacrificeSelfAtNextEndStepTrigger.class)) {
             List<SacrificeSelfAtNextEndStepTrigger> pendingSacrifices =
                     gameData.drainDelayedActions(SacrificeSelfAtNextEndStepTrigger.class);
@@ -3656,7 +3796,8 @@ public class StepTriggerService {
                         gameData, sacrificingPlayerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.isSacrificed(permanent.getCard()));
                 lifeSupport.applyGainLife(gameData, action.controllerId(), toughness,
-                        action.sourceCard().getName(), action.sourceCard(), StackEntryType.TRIGGERED_ABILITY);
+                        action.sourceCard().getName(), action.sourceCard(), StackEntryType.TRIGGERED_ABILITY,
+                        action.controllerId());
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }
@@ -3956,6 +4097,27 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(DelayedCreateTokenCopy.class)) {
+            List<DelayedCreateTokenCopy> pendingCopies =
+                    gameData.drainDelayedActions(DelayedCreateTokenCopy.class);
+            for (DelayedCreateTokenCopy pending : pendingCopies) {
+                String sourceName = pending.sourceCard() != null
+                        ? pending.sourceCard().getName() : pending.copiedCard().getName();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.copiedCard(),
+                        pending.controllerId(),
+                        sourceName + "'s delayed trigger — create token copy",
+                        new ArrayList<>(List.of(new CreateTokenCopyOfSourceEffect()))
+                ));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard() != null ? pending.sourceCard() : pending.copiedCard(),
+                                "'s delayed trigger — create token copy."));
+                log.info("Game {} - {} delayed token copy trigger pushed onto stack",
+                        gameData.id, sourceName);
+            }
+        }
+
         if (gameData.hasDelayedAction(DelayedChooseOpponentGainsControlOfSource.class)) {
             List<DelayedChooseOpponentGainsControlOfSource> pendingControlChanges =
                     gameData.drainDelayedActions(DelayedChooseOpponentGainsControlOfSource.class);
@@ -4155,8 +4317,6 @@ public class StepTriggerService {
                 auraPermanent.setAttachedTo(enchantedPermanent.getId());
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, pending.auraOwnerId(), auraPermanent);
-                triggerCollectionService.checkAuraAttachedTriggers(
-                        gameData, auraPermanent, enchantedPermanent.getId());
                 gameLogService.append(gameData, GameLog.builder()
                         .card(auraCard)
                         .text(" returns to the battlefield attached to ")
@@ -4812,7 +4972,16 @@ public class StepTriggerService {
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof ControlsPermanentCount) {
                         CardEffect countWrapped = conditional.wrapped();
-                        if (countWrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        if (countWrapped.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                            // A conditional end-step ability can target a graveyard card. Keep the
+                            // conditional wrapper so it is checked again when the ability resolves.
+                            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect))));
+                            gameLogService.append(gameData,
+                                    GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
+                            log.info("Game {} - {} controller end-step graveyard-target count trigger queued",
+                                    gameData.id, perm.getCard().getName());
+                        } else if (countWrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || countWrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             // Condition met and the inner effect targets (e.g. Exuberant Firestoker's
                             // "deal 2 damage to target player or planeswalker") — queue for target selection.
@@ -4945,7 +5114,8 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof ConditionalEffect conditional
-                            && (conditional.condition() instanceof CreatureDiedUnderYourControlThisTurn
+                            && (conditional.condition() instanceof CreatureDiedUnderOpponentControlThisTurn
+                                || conditional.condition() instanceof CreatureDiedUnderYourControlThisTurn
                                 || conditional.condition() instanceof CardsLeftGraveyardThisTurn)) {
                         CardEffect wrapped = conditional.wrapped();
                         if (wrapped.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || wrapped.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
@@ -5367,6 +5537,7 @@ public class StepTriggerService {
                         || conditional.condition() instanceof ControlsPermanentCount
                         || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower
                         || conditional.condition() instanceof ControllerCastTwoOrMoreSpellsThisTurn
+                        || conditional.condition() instanceof ControllerDrewAtLeastCardsThisTurn
                         || conditional.condition() instanceof Coven
                         || conditional.condition() instanceof MaxSpeed)) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),

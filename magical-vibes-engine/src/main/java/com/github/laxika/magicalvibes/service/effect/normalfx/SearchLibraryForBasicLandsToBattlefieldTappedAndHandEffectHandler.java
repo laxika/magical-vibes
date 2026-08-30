@@ -57,32 +57,45 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
         }
 
         CardSubtype subtype = effect.subtype();
-        List<Card> basicLands = deck.stream()
-                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> !effect.basicOnly()
+                        || (card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)))
                 .filter(card -> subtype == null || card.getSubtypes().contains(subtype))
                 .toList();
 
-        if (basicLands.isEmpty()) {
+        if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
+            String logMsg = playerName + " searches their library but finds no "
+                    + describeCardType(effect) + " cards. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             return;
         }
 
         int toHandCount = 1 + (effect.extraCardCondition() != null && conditionEvaluationService.isMet(
                 gameData, effect.extraCardCondition(), ConditionContext.forStackEntry(entry)) ? 1 : 0);
-        String cardDescription = subtype == null ? "basic land" : "basic " + subtype.getDisplayName();
+        String cardDescription = describeCardType(effect);
 
-        // First pick: basic land to battlefield tapped (no shuffle yet); the follow-up
+        // First pick: land to battlefield tapped (no shuffle yet); the follow-up
         // hand search rides the search interaction
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(basicLands))
+        LibrarySearchFollowUp followUp = effect.basicOnly()
+                ? LibrarySearchFollowUp.forBasicLandToHand(toHandCount, subtype)
+                : LibrarySearchFollowUp.forLandSubtypeToHand(toHandCount, subtype);
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                 .reveals(true)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
                 .shuffleAfterSelection(false)
-                .followUp(LibrarySearchFollowUp.forBasicLandToHand(toHandCount, subtype))
+                .followUp(followUp)
                 .build(), "Search your library for a " + cardDescription + " card to put onto the battlefield tapped.", true);
 
-        log.info("Game {} - {} searches library for {} basic lands", gameData.id, playerName, basicLands.size());
+        log.info("Game {} - {} searches library for {} {} cards", gameData.id, playerName,
+                matchingCards.size(), cardDescription);
+    }
+
+    private String describeCardType(SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect effect) {
+        if (effect.subtype() == null) {
+            return effect.basicOnly() ? "basic land" : "land";
+        }
+        return (effect.basicOnly() ? "basic " : "") + effect.subtype().getDisplayName();
     }
 }

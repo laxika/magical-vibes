@@ -105,6 +105,7 @@ public class TurnFaceUpCopyService {
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is turned face up."));
         triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(gameData, controllerId, source);
         triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
+        triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
 
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
                 .filter(effect -> !(effect instanceof ReplacementEffect))

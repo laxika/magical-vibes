@@ -184,7 +184,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return;
             }
-            gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
+            gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);

@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves a graft-style counter move from the source permanent to the recorded entering
- * permanent without treating that permanent as a target.
+ * Resolves {@link MoveCounterFromSourceToEnteringCreatureEffect} using the permanent bound by the
+ * enter-the-battlefield trigger.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,12 +28,11 @@ public class MoveCounterFromSourceToEnteringCreatureEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var move = (MoveCounterFromSourceToEnteringCreatureEffect) effect;
-        CounterType counterType = move.counterType();
+        CounterType counterType = ((MoveCounterFromSourceToEnteringCreatureEffect) effect).counterType();
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent entering = gameQueryService.findPermanentById(gameData, move.enteringPermanentId());
-        if (source == null || entering == null || source.getCounterCount(counterType) <= 0) {
+        Permanent enteringCreature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (source == null || enteringCreature == null || source.getCounterCount(counterType) <= 0) {
             return;
         }
 
@@ -41,6 +40,6 @@ public class MoveCounterFromSourceToEnteringCreatureEffectHandler implements Nor
         if (counterType == CounterType.OIL) {
             gameData.recordOilCounterRemoved(source, 1);
         }
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, entering, counterType, 1);
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, enteringCreature, counterType, 1);
     }
 }

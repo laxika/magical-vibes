@@ -30,9 +30,10 @@ class TimebenderTest extends BaseCardTest {
 
     @Test
     void turningFaceUpAddsTwoTimeCountersToTargetPermanentWithTimeCounter() {
-        Permanent timebender = turnFaceUp();
+        Permanent timebender = prepareFaceDownTimebender();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.setCounterCount(CounterType.TIME, 1);
+        turnFaceUp(timebender);
 
         chooseModeAndTarget(timebender, "Put two time counters", target.getId());
 
@@ -65,6 +66,12 @@ class TimebenderTest extends BaseCardTest {
     }
 
     private Permanent turnFaceUp() {
+        Permanent timebender = prepareFaceDownTimebender();
+        turnFaceUp(timebender);
+        return timebender;
+    }
+
+    private Permanent prepareFaceDownTimebender() {
         harness.setHand(player1, List.of(new Timebender()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
@@ -73,9 +80,12 @@ class TimebenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent timebender = findPermanent(player1, "Timebender");
+        return timebender;
+    }
+
+    private void turnFaceUp(Permanent timebender) {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(timebender));
-        return timebender;
     }
 
     private void chooseModeAndTarget(Permanent timebender, String mode, java.util.UUID targetId) {

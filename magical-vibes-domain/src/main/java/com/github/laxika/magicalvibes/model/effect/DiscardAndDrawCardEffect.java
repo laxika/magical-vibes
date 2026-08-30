@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
  * Discard N cards then draw N cards (rummaging).
  * <p>
@@ -13,10 +16,21 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param discardAmount number of cards to discard
  * @param drawAmount    number of cards to draw
+ * @param random        whether the discarded cards are chosen at random
  */
-public record DiscardAndDrawCardEffect(int discardAmount, int drawAmount) implements CardEffect {
+public record DiscardAndDrawCardEffect(int discardAmount, int drawAmount, boolean random)
+        implements CardDrawingEffect {
+
+    public DiscardAndDrawCardEffect(int discardAmount, int drawAmount) {
+        this(discardAmount, drawAmount, false);
+    }
 
     public DiscardAndDrawCardEffect() {
-        this(1, 1);
+        this(1, 1, false);
+    }
+
+    @Override
+    public DynamicAmount drawnCardAmount() {
+        return new Fixed(drawAmount);
     }
 }

@@ -42,28 +42,39 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
                                              boolean fromHandOnly, boolean appliesToAllPlayers,
                                              boolean genericEqualToManaValue, boolean controllerTurnOnly,
-                                             Set<Zone> allowedZones, DynamicAmount manaValueCapAmount)
+                                             Set<Zone> allowedZones, CostEffect nonManaCost,
+                                             DynamicAmount manaValueCapAmount)
         implements CardEffect {
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
-        this(manaCost, filter, null, false, false, false, false, false, null, null);
+        this(manaCost, filter, null, false, false, false, false, false, null, null, null);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false, false, null, null);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, false, false, false, false, null, null, null);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false, false, null, null);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, false, false, false, null, null, null);
     }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                           CounterType manaValueCapCounter, boolean oncePerTurn,
                                           boolean fromHandOnly, boolean appliesToAllPlayers) {
-        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers, false, false, null, null);
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                false, false, null, null, null);
+    }
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn,
+                                          boolean fromHandOnly, boolean appliesToAllPlayers,
+                                          boolean genericEqualToManaValue, boolean controllerTurnOnly,
+                                          Set<Zone> allowedZones) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                genericEqualToManaValue, controllerTurnOnly, allowedZones, null, null);
     }
 
     /**
@@ -80,19 +91,27 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
      * the filter (Kentaro, the Smiling Cat).
      */
     public static AlternativeCostForSpellsEffect genericEqualToManaValue(CardPredicate filter) {
-        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false, true, false, null, null);
+        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false,
+                true, false, null, null, null);
     }
 
     /** A zero alternative cost usable once during each turn of the source controller. */
     public static AlternativeCostForSpellsEffect onceDuringControllerTurn(CardPredicate filter) {
         return new AlternativeCostForSpellsEffect("{0}", filter, null, true, false, false, false, true,
-                Set.of(Zone.HAND, Zone.LIBRARY), null);
+                Set.of(Zone.HAND, Zone.LIBRARY), null, null);
+    }
+
+    /** An alternative cost that is paid by collecting evidence rather than paying mana. */
+    public static AlternativeCostForSpellsEffect collectEvidence(int minimumManaValue,
+                                                                  CardPredicate filter) {
+        return new AlternativeCostForSpellsEffect(null, filter, null, false, false, false,
+                false, false, null, new CollectEvidenceCost(minimumManaValue), null);
     }
 
     /** A zero alternative cost for spells whose mana value is at most a dynamic amount. */
     public static AlternativeCostForSpellsEffect zeroManaValueAtMost(CardPredicate filter,
-                                                                       DynamicAmount cap) {
-        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false, false, true,
-                null, cap);
+                                                                     DynamicAmount cap) {
+        return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false,
+                false, true, null, null, cap);
     }
 }

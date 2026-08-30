@@ -14,20 +14,34 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
  * are eligible and the controller of the effect chooses among them. A non-null
  * {@code permanentFilter} supplies a resolution-time eligibility filter instead of the default
  * creature-only filter.
+ * When {@code nontokenOnly} is true, token permanents are not eligible. When
+ * {@code trackWithSource} is true, the exiled permanent is tracked with the source permanent.
  */
 public record TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly,
-                                                     PermanentPredicate permanentFilter)
+                                                     PermanentPredicate permanentFilter,
+                                                     boolean nontokenOnly,
+                                                     boolean trackWithSource)
         implements CardEffect {
     public TargetPlayerChoosesCreatureExileEffect() {
-        this(false, null);
+        this(false, null, false, false);
     }
 
     public TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly) {
-        this(greatestPowerOnly, null);
+        this(greatestPowerOnly, null, false, false);
     }
 
     public TargetPlayerChoosesCreatureExileEffect(PermanentPredicate permanentFilter) {
-        this(false, permanentFilter);
+        this(false, permanentFilter, false, false);
+    }
+
+    public TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly,
+                                                   PermanentPredicate permanentFilter) {
+        this(greatestPowerOnly, permanentFilter, false, false);
+    }
+
+    public TargetPlayerChoosesCreatureExileEffect(boolean greatestPowerOnly, boolean nontokenOnly,
+                                                   boolean trackWithSource) {
+        this(greatestPowerOnly, null, nontokenOnly, trackWithSource);
     }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.player()); }

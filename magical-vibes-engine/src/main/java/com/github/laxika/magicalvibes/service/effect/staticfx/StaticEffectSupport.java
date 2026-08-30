@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -26,9 +27,11 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -37,6 +40,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -168,10 +172,12 @@ public class StaticEffectSupport {
     }
 
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
+        if (permanent.isFaceDown()) return true;
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
+        if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null && permanent.getCard().hasType(CardType.LAND)
@@ -179,6 +185,25 @@ public class StaticEffectSupport {
         if (gameData != null && gameQueryService.isAnimatedByStarfield(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
+    }
+
+    /**
+     * Returns a permanent's current effective color count, including layer-5 color changes while
+     * the layered pass is active.
+     */
+    public int effectiveColorCount(Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null) {
+            return layered.getColors().size();
+        }
+        Set<CardColor> colors = new HashSet<>();
+        if (permanent.isColorOverridden()) {
+            colors.addAll(permanent.getTransientColors());
+        } else {
+            colors.addAll(permanent.getEffectiveColors());
+            colors.addAll(permanent.getTransientColors());
+        }
+        return colors.size();
     }
 
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {

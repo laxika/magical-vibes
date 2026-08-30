@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.List;
 
 /**
- * "Choose one that hasn't been chosen —" (Demonic Pact). A modal upkeep trigger whose modes are
+ * "Choose one that hasn't been chosen —" (Demonic Pact). A modal triggered ability whose modes are
  * consumed: every mode this permanent has already resolved is removed from the offered list, so the
  * final mode is forced once the other three are gone.
  *

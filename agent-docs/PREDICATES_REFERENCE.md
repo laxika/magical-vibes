@@ -54,11 +54,13 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentHasTapActivatedAbilityPredicate` | `()` | permanents with at least one effective activated ability whose cost includes `{T}`; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasNoAbilitiesPredicate` | `()` | permanents with no currently effective abilities, including printed text, keywords, granted abilities, and intrinsic basic-land mana abilities when applicable; used by Muraganda Petroglyphs |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
+| `PermanentIsEnchantedBySourceControllerAuraPredicate` | `()` | permanents with an attached Aura controlled by the source controller; the host and Aura may have different controllers — needs game data. Dawn Evangel |
 | `PermanentIsModifiedPredicate` | `()` | permanents with one or more counters, an attached Equipment, or an attached Aura controlled by that permanent's controller; needs game data, and uses `FilterContext.sourceControllerId` for a permanent that has left the battlefield |
 | `PermanentIsHostOfSourceAuraPredicate` | `()` | the permanent the **source Aura or Equipment** is currently attached to (the enchanted/equipped permanent) — needs game data + `sourceCardId`, or `FilterContext.sourcePermanentSnapshot` / static `StaticEffectContext.source` when GameData is unavailable. Wrap in `PermanentNotPredicate` for "other than enchanted creature" (Kjeldoran Pride reattach; Vampirism's other-creature count/`OWN_CREATURES` filter) |
 | `PermanentIsHostOfSourceAuraPredicate` | `()` | the permanent the **source Aura or Equipment** is currently attached to (the enchanted/equipped permanent) — needs game data + `sourceCardId` or `FilterContext.sourcePermanentId`, or `FilterContext.sourcePermanentSnapshot` / static `StaticEffectContext.source` when GameData is unavailable. Wrap in `PermanentNotPredicate` for "other than enchanted creature" (Kjeldoran Pride reattach; Vampirism's other-creature count/`OWN_CREATURES` filter) |
@@ -77,6 +79,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsKindredPredicate` | `()` | kindred permanents, including continuous card-type changes |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsRenownedPredicate` | `()` | renowned permanents (CR 702.112b — the marker `RenownEffect` sets on `Permanent.renowned`). Target-side counterpart of the `SourceIsRenowned` condition: pair with `TargetPermanentMatches` for "if it's renowned, …" (Enshrouding Mist) |
+| `PermanentIsSuspectedPredicate` | `()` | permanents that have the suspected designation |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentAttacksPlayerWithMostLifePredicate` | `()` | attacking creatures whose direct player attack target is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
 | `PermanentAttacksWhileSourceControllerHasMostLifePredicate` | `()` | attacking creatures whose source controller is tied for the highest life total among all players; attacks against planeswalkers or battles do not match (Preacher of the Schism) |
@@ -196,7 +199,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentIsSourcePermanentPredicate` | `()` | the source **permanent** itself, matched by permanent id (so a second copy of the same card is not matched). Wrap in `PermanentNotPredicate` for "each **other** …" wording (Renegade Krasis) | `sourcePermanentSnapshot` |
-| `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence) | none |
+| `PermanentIsSpecificPermanentPredicate` | `(UUID permanentId)` | exactly one permanent, by id — for effects whose stored predicate must be narrowed to a chosen target at resolution (Terrifying Presence, Zenos yae Galvus) | none |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
 | `PermanentControlledByActivePlayerPredicate` | `()` | permanents controlled by the active player (`gameData.activePlayerId`) | `gameData` |
 | `PermanentControlledByDefendingPlayerPredicate` | `()` | permanents controlled by a defending player of the current combat (a player attacked directly or via one of their planeswalkers, per `GameQueryService.isPlayerBeingAttacked`). Matches nothing outside combat, so a spell using it is uncastable before attackers are declared. Yare | `gameData` |
@@ -222,6 +225,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntrySharesColorOrManaValueWithImprintedCardPredicate` | `()` | source-aware spell-cast trigger predicate: matches when the cast spell shares a color or effective mana value with the card imprinted on the evaluating source permanent (Thought Prison); evaluated by `TargetLegalityService` with the source |
 | `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
 | `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
+| `StackEntryIsMulticoloredPredicate` | `()` | stack entries whose cards have two or more effective colors; Neutralizing Blast uses it to restrict a counterspell target |
 | `StackEntryCardTypeInPredicate` | `(Set<CardType>)` | stack entries whose card has any of the given card types. On an activated/triggered ability entry the card is the ability's **source**, so `Set.of(CardType.ARTIFACT)` + `StackEntryTypeInPredicate(ACTIVATED_ABILITY)` is "activated ability from an artifact source" (Brown Ouphe) |
 | `StackEntrySubtypeInPredicate` | `(Set<CardSubtype>)` | spells whose card has any of the given subtypes. Wrap in `StackEntryNotPredicate` for "non-[subtype] spell" (e.g. Faerie Trickery: counter target non-Faerie spell) |
 | `StackEntrySupertypeInPredicate` | `(Set<CardSupertype>)` | stack entries whose card has any of the given supertypes. Combine with `StackEntryTypeInPredicate` to restrict a target to legendary spells without admitting abilities from legendary permanents |

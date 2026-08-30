@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
@@ -23,6 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
@@ -99,6 +102,10 @@ public class EtbEffectResolver {
         register(SacrificeSelfIfEvokedEffect.class, (ctx, effect) ->
                 ctx.evoked() ? new SacrificeSelfEffect() : null);
 
+        register(ReturnSelfToHandIfDashCostPaidEffect.class, (ctx, effect) ->
+                ctx.alternateCost() && ctx.card().getKeywords().contains(Keyword.DASH)
+                        ? new ReturnSelfToHandAtEndStepEffect() : null);
+
         // "Gain life equal to that creature's toughness" — read toughness at trigger time.
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->
                 new GainLifeEffect(ctx.card().getToughness()));
@@ -111,13 +118,15 @@ public class EtbEffectResolver {
             Zone sourceZone = ctx.sourcePermanent() == null
                     ? (ctx.wasCastFromHand() ? Zone.HAND : null)
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
+            boolean collectEvidenceCostPaid = ctx.sourcePermanent() != null
+                    && ctx.sourcePermanent().isCollectEvidenceCostPaid();
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), ctx.madness(), false, false,
                     sourceZone, 0, null, null, false, false, false, null, null, null,
                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
-                    false, false, 0);
+                    false, collectEvidenceCostPaid, false, 0, false);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;

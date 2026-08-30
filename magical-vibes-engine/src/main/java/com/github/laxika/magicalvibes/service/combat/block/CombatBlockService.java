@@ -186,11 +186,20 @@ public class CombatBlockService {
         List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Integer> blockableCreatureIndices = getBlockableCreatureIndices(gameData, defenderId);
         BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
         return attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
-                .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, predicateEvaluationService,
-                        gameData, attackerBattlefield.get(idx), defenderBattlefield))
+                .filter(idx -> {
+                    Permanent attacker = attackerBattlefield.get(idx);
+                    if (!CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, predicateEvaluationService,
+                            gameData, attacker, defenderBattlefield)) {
+                        return true;
+                    }
+                    return blockableCreatureIndices.stream()
+                            .map(defenderBattlefield::get)
+                            .anyMatch(blocker -> blockLegalityService.canBlockAttacker(blockContext, blocker, attacker));
+                })
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToAttackingAlone(gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> blockLegalityService.canBeBlockedByAllDefendingCreatures(
@@ -586,6 +595,8 @@ public class CombatBlockService {
             List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(
                     attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
             grantedBecomesBlockedEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
+            grantedBecomesBlockedEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED));
             if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()) {
                 List<CardEffect> blockerSpecificEffects = new ArrayList<>(becomesBlockedRegs.stream()
                         .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
@@ -1288,6 +1299,7 @@ public class CombatBlockService {
             GraveyardCardChoosingEffect graveyardChoice = effects.stream()
                     .filter(GraveyardCardChoosingEffect.class::isInstance)
                     .map(GraveyardCardChoosingEffect.class::cast)
+                    .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                     .findFirst()
                     .orElse(null);
             if (graveyardChoice != null) {
@@ -1570,6 +1582,7 @@ public class CombatBlockService {
 
         token.setBlocking(true);
         token.addBlockingTargetId(attacker.getId());
+        attacker.setBlockedWithoutBlockers(false);
         UUID attackerControllerId = gameData.findControllerOf(attacker);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerControllerId);
         if (attackerBattlefield != null) {

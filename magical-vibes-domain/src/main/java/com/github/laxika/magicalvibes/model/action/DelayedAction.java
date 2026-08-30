@@ -45,6 +45,7 @@ public sealed interface DelayedAction permits
         RemoveCounterFromPermanentAtNextEndStep,
         DelayedUntapPermanents,
         DelayedCreateToken,
+        DelayedCreateTokenCopy,
         DelayedExileCreatedPermanentsAtEndStep,
         DelayedNontokenAttackTokenCreation,
         DelayedAttackTokenCreation,
@@ -52,6 +53,7 @@ public sealed interface DelayedAction permits
         DelayedLoseLifeAndReturnFromGraveyard,
         DelayedGraveyardToHandReturn,
         DiscardCardsAtNextEndStep,
+        DamageForCardsStillExiledAtNextEndStep,
         ExileCardsFromOwnGraveyardAtNextEndStep,
         ReturnExiledCardToHandAtEndStep,
         ReturnExiledCardToHandAtNextEndStep,
@@ -72,6 +74,7 @@ public sealed interface DelayedAction permits
         DelayedWatchedCreaturesCombatDamage,
         DelayedNamedCreatureCombatDamage,
         DelayedWatchedCreatureDealsDamage,
+        DelayedWatchedCreatureDealtDamage,
         DelayedControllerSpellCastTrigger,
         EpicDelayedTrigger,
         DelayedUnblockedAttackerPowerDamage,
@@ -105,5 +108,8 @@ public sealed interface DelayedAction permits
         ReboundAtNextUpkeep,
         PendingExileReturn,
         EachPlayerHandExileReturnAtNextEndStep,
-        TargetPlayerHandExileReturnAtNextTurnEndStep {
+        TargetPlayerHandExileReturnAtNextTurnEndStep,
+        DelayedDamageDoubling,
+        DelayedVehicleAttack,
+        UnattachEquipmentAtNextEndStep {
 }

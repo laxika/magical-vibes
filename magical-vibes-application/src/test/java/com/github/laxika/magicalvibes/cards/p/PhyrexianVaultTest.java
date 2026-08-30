@@ -87,6 +87,7 @@ class PhyrexianVaultTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Phyrexian Vault");
+        assertThat(entry.isNonTargeting()).isTrue();
     }
 
     @Test

@@ -92,6 +92,8 @@ public class GameData {
     /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
     public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Face-down creatures that entered under each player's control this turn, including ones that have since left or turned face up. */
+    public final Map<UUID, List<Card>> faceDownCreaturesEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Snapshot of permanents that entered under each player's control during the immediately preceding turn. */
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldLastTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
@@ -106,12 +108,16 @@ public class GameData {
     public final Set<UUID> playersWithCityBlessing = ConcurrentHashMap.newKeySet();
     /** Players who played at least one card from exile this turn. */
     public final Set<UUID> playersWhoPlayedCardFromExileThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who flipped at least one coin this turn. */
+    public final Set<UUID> playersWhoFlippedCoinsThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who played a land or cast a spell from somewhere other than their hand this turn. */
     public final Set<UUID> playersWhoPlayedOrCastFromOutsideHandThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who investigated this turn. */
     public final Set<UUID> playersWhoInvestigatedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts permanents sacrificed by subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> sacrificedPermanentSubtypeCountThisTurn = new ConcurrentHashMap<>();
+    /** Counts permanents sacrificed by controller this turn. */
+    public final Map<UUID, Integer> sacrificedPermanentCountThisTurn = new ConcurrentHashMap<>();
     /** Players who surveilled at least once this turn. */
     public final Set<UUID> playersWhoSurveilledThisTurn = ConcurrentHashMap.newKeySet();
     /**
@@ -129,6 +135,8 @@ public class GameData {
      * {@link #getSpellsCastThisGameByNameCount} (Approach of the Second Sun's "cast another spell named ... this game").
      */
     private final Map<UUID, Map<String, Integer>> spellNameCastCountsThisGame = new ConcurrentHashMap<>();
+    /** Total mana each player has spent to cast spells this turn. */
+    public final Map<UUID, Integer> manaSpentToCastSpellsThisTurn = new ConcurrentHashMap<>();
     /**
      * Transient mana spent to cast a spell, keyed by spell card instance id.
      * Populated during spell payment and consumed when spell-cast triggers fire.
@@ -191,6 +199,8 @@ public class GameData {
     public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who sacrificed at least one permanent this turn. */
     public final Set<UUID> playersWhoSacrificedPermanentsThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who sacrificed at least one artifact this turn. */
+    public final Set<UUID> playersWhoSacrificedArtifactsThisTurn = ConcurrentHashMap.newKeySet();
     /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
     public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsThatAttackedBattlesThisTurn = ConcurrentHashMap.newKeySet();
@@ -290,8 +300,12 @@ public class GameData {
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs (any type) put into each player's graveyard from the battlefield this turn (e.g. Twilight Shepherd). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Counts artifacts put into graveyards from the battlefield during this turn. */
+    public int artifactsPutIntoGraveyardFromBattlefieldThisTurn;
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
+    /** Tracks non-token creature card IDs put into graveyards from any zone this turn. */
+    public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
     /** Players who put a permanent card into their graveyard from anywhere this turn. */
     public final Set<UUID> playersWhoDescendedThisTurn = ConcurrentHashMap.newKeySet();
     /** Counts each permanent card put into each player's graveyard from anywhere this turn. */
@@ -323,6 +337,8 @@ public class GameData {
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
     /** Counts nontoken creature deaths from the battlefield this turn, per controller. */
     public final Map<UUID, Integer> nontokenCreatureDeathCountThisTurn = new ConcurrentHashMap<>();
+    /** Counts creatures exiled from the battlefield by controller this turn. */
+    public final Map<UUID, Integer> creatureExileCountThisTurn = new ConcurrentHashMap<>();
     /** Counts creature deaths by effective creature subtype and controller this turn. */
     public final Map<UUID, Map<CardSubtype, Integer>> creatureSubtypeDeathCountThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
@@ -364,6 +380,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
+    /** Exiled haunting card UUID -> the permanent UUID it haunts. */
+    public final Map<UUID, UUID> hauntingCardToPermanentId = new ConcurrentHashMap<>();
     /** Exiled Cosima card UUID → voyage counters accumulated while it remains exiled. */
     public final Map<UUID, Integer> exiledVoyageCounters = new ConcurrentHashMap<>();
     /** Exiled Cosima card UUID → controller of the ability that exiled it. */
@@ -431,6 +449,7 @@ public class GameData {
     public boolean preventAllDamageFromNonHumanSources;
     /** When non-null, creatures NOT matching this predicate are prevented from dealing combat damage this turn. */
     public PermanentPredicate combatDamageExemptPredicate;
+    public UUID combatDamageExemptControllerId;
     public boolean allPermanentsEnterTappedThisTurn;
     /**
      * Per-player count of additional +1/+1 counters that creatures entering under that player's
@@ -471,6 +490,8 @@ public class GameData {
      * after the one currently deciding (APNAP remainder). Cleared when the queue drains.
      */
     public final List<UUID> eachPlayerDamageUnlessPaysRemaining = new ArrayList<>();
+    /** Progress state for Whirlwind Denial's opponent-by-opponent pay-or-counter sequence. */
+    public final WhirlwindDenialState whirlwindDenial = new WhirlwindDenialState();
     /**
      * RevealHandDiscardMatchingCardsUnlessPaysLife: ids of the revealed cards still to be offered the
      * pay-or-discard prompt after the one currently being decided. Cleared when the queue drains.
@@ -558,8 +579,17 @@ public class GameData {
             new EachPlayerMayExileGraveyardCardsState();
     /** Progress state for Creeping Dread's each-player discard comparison. */
     public final CreepingDreadState creepingDread = new CreepingDreadState();
+    /** Progress state for Kroxa's opponent discard and nonland comparison. */
+    public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
+    /** Progress state for collecting one discarded card from every player before drawing. */
+    public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
+            eachPlayerDiscardsOneThenDrawsForEachCardType =
+            new EachPlayerDiscardsOneThenDrawsForEachCardTypeState();
     /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
     public final DispersalState dispersal = new DispersalState();
+    /** Progress state for an opponent-by-opponent discard-two-unless-nonland sequence. */
+    public final EachOpponentDiscardsTwoUnlessNonlandState eachOpponentDiscardsTwoUnlessNonland =
+            new EachOpponentDiscardsTwoUnlessNonlandState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
     /** Progress state for Liege of the Hollows' "each player may pay any amount of mana" flow. */
@@ -625,7 +655,7 @@ public class GameData {
      *  permanent id, so a permanent that leaves and re-enters the battlefield is a new object and may
      *  activate again (CR 400.7). Never cleared at turn cleanup — only by Karn's game restart. */
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisGame = new ConcurrentHashMap<>();
-    /** Per-permanent count of how many times its resolution-counting ability has resolved
+     /** Per-permanent count of how many times its resolution-counting ability has resolved
      *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim or
      *  Nissa, Resurgent Animist).
      *  Keyed by source permanent id; reset at the start of each turn. */
@@ -636,6 +666,13 @@ public class GameData {
      *  right graveyard/hand/library on leave; which player CONTROLS the permanent is derived from
      *  the floating {@code L2_CONTROL} effects (see {@link #deriveControllerOf}). */
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
+    /** Reflexive Equipment-unattach triggers registered until the end of the current turn. */
+    public final Map<UUID, List<ControlLossUnattachTrigger>> controlLossUnattachTriggers =
+            new ConcurrentHashMap<>();
+    /** Number of end steps that have begun during the current turn. */
+    public int endStepsThisTurn;
+    /** Extra end steps waiting to occur during the current turn. */
+    public int additionalEndStepsPending;
     public boolean endTurnRequested;
     /**
      * Unified queue of pending player interactions (decisions awaiting player input).
@@ -668,6 +705,8 @@ public class GameData {
     /** Additional combat phases with NO additional main phase (e.g. Finest Hour), queued after the
      *  current combat phase and consumed when leaving END_OF_COMBAT. Reset at the start of each turn. */
     public int additionalCombatPhasesOnly;
+    /** Whether only land creatures may attack during the current additional combat phase. */
+    public boolean onlyLandCreaturesCanAttackThisCombat;
     /** Additional combat phases inserted after the resolving main phase, with no main phase between them. */
     public int additionalCombatPhasesAfterMain;
     /** The normal phase to resume after {@link #additionalCombatPhasesAfterMain} is exhausted. */
@@ -761,6 +800,9 @@ public class GameData {
      * start/stop matching after the effect resolved (official ruling).
      */
     public final Set<PermanentPredicate> allDamagePreventionPredicates = ConcurrentHashMap.newKeySet();
+    /** Predicates whose matching permanents controlled by the keyed player have all damage prevented. */
+    public final Map<UUID, Set<PermanentPredicate>> allDamagePreventionPredicatesByController =
+            new ConcurrentHashMap<>();
     /** Predicates whose matching permanents controlled by the keyed player have combat damage prevented. */
     public final Map<UUID, Set<PermanentPredicate>> combatDamagePreventionPredicatesByController =
             new ConcurrentHashMap<>();
@@ -848,6 +890,7 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
     /** Source-specific damage redirect shields (e.g. Harm's Way): prevent damage from a chosen source and redirect to any target. */
@@ -961,8 +1004,20 @@ public class GameData {
     public final Map<UUID, Set<String>> opponentsCantCastNamedSpellsUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
+    /** Card names no player may cast or play until the key player's next turn. */
+    public final Map<UUID, Set<String>> spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
     /** Players who can't cast noncreature spells until the key player's next turn. */
     public final Map<UUID, Set<UUID>> playersCantCastNoncreatureSpellsUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Players who can't cast spells from outside their hands until the key player's next turn. */
+    public final Map<UUID, Set<UUID>> playersCantCastSpellsFromOutsideHandUntilControllerNextTurn =
+            new ConcurrentHashMap<>();
+
+    /** Players who can't play cards from their hand until the key player's next turn. */
+    public final Map<UUID, Set<UUID>> playersCantPlayCardsFromHandUntilControllerNextTurn =
             new ConcurrentHashMap<>();
 
     /** Card types all players can't cast until the end of the key player's next turn. */
@@ -1052,6 +1107,10 @@ public class GameData {
     /** Player IDs that may cast spells as though they had flash until end of turn (Alchemist's
      *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
     public final Set<UUID> playersWithFlashUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
+    /** Player IDs that may look at face-down creatures they don't control until end of turn
+     *  (Lumbering Laundry). Cleared at end of turn. */
+    public final Set<UUID> playersWhoMayLookAtFaceDownCreaturesThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Player IDs that may cast spells of a given type as though they had flash until end of turn.
      *  Cleared at end of turn. */
@@ -1225,6 +1284,8 @@ public class GameData {
      *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
      *  of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount =
+            new ConcurrentHashMap<>();
 
     /** Pending mana-value-limited one-shot spell copy triggers for the current turn. */
     public final Map<UUID, List<Integer>> pendingNextInstantSorceryCopyThisTurnMaxManaValues =
@@ -1332,6 +1393,8 @@ public class GameData {
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a source permanent to the latest card whose permission it granted. */
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
+    /** Maps a card with a source-controlled exile-play permission to its source permanent. */
+    public final Map<UUID, UUID> exilePlayPermissionSourcePermanents = new ConcurrentHashMap<>();
     /** Cost modifiers attached to cards that may be played from exile. */
     public final Map<UUID, ExilePlayCostModifier> exilePlayCostModifiers = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
@@ -1392,6 +1455,10 @@ public class GameData {
     public final Set<UUID> graveyardLeaveNotificationPendingArtifactOrCreatureOwners = ConcurrentHashMap.newKeySet();
     /** Number of cards exiled from each owner's graveyard during a suppressed batch. */
     public final Map<UUID, Integer> graveyardExileNotificationPendingCounts = new ConcurrentHashMap<>();
+    /** Creature cards captured for Kaya's exile trigger during a suppressed batch. */
+    public final Map<UUID, List<Card>> kayaExileNotificationPendingCreatureCards = new ConcurrentHashMap<>();
+    /** Creature-exile events captured for Kaya during a suppressed batch. */
+    public final Map<UUID, Integer> kayaExileNotificationPendingCounts = new ConcurrentHashMap<>();
     /** Whether a suppressed batch exiled one or more cards from a graveyard or the battlefield. */
     public boolean graveyardOrBattlefieldExileNotificationPending;
     /** Depth counter for tap events that are paid or performed as one batch. */
@@ -1400,6 +1467,16 @@ public class GameData {
     public final Map<UUID, Set<CardEffect>> permanentTapTriggerBatchFiredEffects = new ConcurrentHashMap<>();
     /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
     public final Set<UUID> playersWhoseCardsLeftGraveyardThisTurn = ConcurrentHashMap.newKeySet();
+    /** Number of cards that left each player's graveyard this turn. */
+    public final Map<UUID, Integer> cardsLeftGraveyardCountThisTurn = new ConcurrentHashMap<>();
+    /** Depth counter for batching non-dying battlefield departures into one trigger event. */
+    public int permanentLeaveNotificationDepth;
+    /** Last-known permanents present when a non-dying battlefield-leave batch began. */
+    public final Map<UUID, Permanent> permanentLeaveBatchWatchers = new ConcurrentHashMap<>();
+    /** Controllers of the last-known permanents in a non-dying battlefield-leave batch. */
+    public final Map<UUID, UUID> permanentLeaveBatchWatcherControllers = new ConcurrentHashMap<>();
+    /** Creature permanents that left during a non-dying battlefield-leave batch. */
+    public final Map<UUID, UUID> permanentLeaveBatchPendingCreatures = new ConcurrentHashMap<>();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
@@ -1423,6 +1500,8 @@ public class GameData {
      *  central discard hook. Read by {@code LastDiscardedCardManaValue} so a later effect of the same
      *  spell can scale off the card just discarded (Blast of Genius). */
     public int lastDiscardedCardManaValue;
+    /** Greatest mana value among cards discarded by the current discard effect. */
+    public int greatestDiscardedCardManaValue;
     /** Card types of the most recently discarded card, including additional card types. */
     public Set<CardType> lastDiscardedCardTypes = Set.of();
 
@@ -1445,6 +1524,8 @@ public class GameData {
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
     public final Map<UUID, Set<UUID>> combatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
+    /** Tracks how much combat damage each player was dealt this turn. */
+    public final Map<UUID, Integer> combatDamageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
     public final Set<UUID> playersDealtCombatDamageSinceTheirLastTurn = ConcurrentHashMap.newKeySet();
     public final Set<UUID> playersDealtCombatDamageLastTurn = ConcurrentHashMap.newKeySet();
 
@@ -1544,6 +1625,9 @@ public class GameData {
     /** Tracks every player or permanent that each source permanent has dealt damage to this game. */
     public final Map<UUID, Set<UUID>> damageRecipientsBySource = new ConcurrentHashMap<>();
 
+    /** Tracks distinct damage sources by the player who controlled them when they dealt damage this turn. */
+    public final Map<UUID, Set<UUID>> damageSourcesControlledByPlayerThisTurn = new ConcurrentHashMap<>();
+
     /** Records that {@code sourcePermanentId} dealt {@code amount} damage this turn. No-op when the
      *  source permanent is unknown or the amount is non-positive. */
     public void recordDamageDealtBySource(UUID sourcePermanentId, int amount) {
@@ -1552,6 +1636,16 @@ public class GameData {
         }
         damageDealtThisTurnBySource.merge(sourcePermanentId, amount, Integer::sum);
         permanentsThatHaveDealtDamage.add(sourcePermanentId);
+    }
+
+    /** Records a distinct source as having dealt damage while controlled by {@code controllerId}. */
+    public void recordDamageSourceControlledBy(UUID sourceId, UUID controllerId) {
+        if (sourceId == null || controllerId == null) {
+            return;
+        }
+        damageSourcesControlledByPlayerThisTurn
+                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(sourceId);
     }
 
     /** Records a player or permanent that a source permanent actually dealt damage to. */
@@ -1600,6 +1694,14 @@ public class GameData {
         if (artifactAmount > 0) {
             artifactDamageDealtToPlayersThisTurn.merge(playerId, Math.min(amount, artifactAmount), Integer::sum);
         }
+    }
+
+    /** Records that {@code amount} combat damage was dealt to {@code playerId} this turn. */
+    public void recordCombatDamageToPlayer(UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        combatDamageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
     }
 
     /** Records that {@code amount} noncombat damage was dealt to {@code playerId} this turn. */
@@ -1675,8 +1777,11 @@ public class GameData {
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks which permanents' once-each-turn library-cast permissions have been used this turn. */
+    public final Set<UUID> oncePerTurnLibraryCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks which source permanents or graveyard cards (by UUID) have already fired a
-     *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Procession). Cleared at start of
+     *  {@code OncePerTurnTriggerEffect} this turn (e.g. Ghoulish Process). Cleared at start of
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -1702,6 +1807,8 @@ public class GameData {
      *  other. Cleared at start of new turn. */
     public final Set<UUID> onceEachTurnAttackTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
+    public final Map<UUID, Set<BendingType>> bendingTypesCompletedThisTurn = new ConcurrentHashMap<>();
+
     /**
      * Creatures dying together in the current simultaneous-death event (CR 700.1 / destroy batch /
      * SBA lethal pass). Maps permanent id → permanent (last-known) and controller id. Used so
@@ -1710,8 +1817,13 @@ public class GameData {
      */
     public final Map<UUID, Permanent> simultaneousDyingCreatures = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
+    public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
+    public final Map<UUID, UUID> simultaneousDyingPermanentControllers = new ConcurrentHashMap<>();
     /** Last-known effective powers of creatures in the current simultaneous death event. */
     public final Map<UUID, Integer> simultaneousDyingPowers = new ConcurrentHashMap<>();
+    /** Last-known continuously granted ON_ANY_CREATURE_DIES effects for the current death event. */
+    public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedCreatureDeathEffects =
+            new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
      *  Maps source permanent UUID → set of subtypes the creature had at the time of dealing damage.
@@ -1721,6 +1833,9 @@ public class GameData {
     /** Tracks which creatures that dealt combat damage to players this turn had the Changeling keyword.
      *  These creatures count as having all creature subtypes for subtype-conditional triggers. */
     public final Set<UUID> combatDamageSourcesWithChangelingThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks which sources that dealt combat damage to players this turn were legendary. */
+    public final Set<UUID> combatDamageSourcesWithLegendaryThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks, per player who controlled the source at damage time, the union of subtypes of creatures
      *  they controlled that dealt combat damage to a player this turn. Used to evaluate the prowl
@@ -1778,10 +1893,14 @@ public class GameData {
      * turn (Emrakul, the Promised End). Consumed with {@link #pendingTurnControl} when that turn begins.
      */
     public final Set<UUID> pendingTurnControlExtraTurn = ConcurrentHashMap.newKeySet();
+    /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's next combat begins. */
+    public final Map<UUID, UUID> pendingCombatControl = new ConcurrentHashMap<>();
     /** Non-null when a player is being controlled this turn (the controlled player's ID). */
     public UUID mindControlledPlayerId;
     /** Non-null when a player is being controlled this turn (the controlling player's ID). */
     public UUID mindControllerPlayerId;
+    /** Whether the active mind control ends when the current combat phase ends. */
+    public boolean mindControlUntilEndOfCombat;
 
     // Taunt — "creatures that player controls attack you if able" during their next turn
     /** Delayed effect: affectedPlayerId -> controllerId to attack, consumed when the affected player's turn begins. */
@@ -2065,6 +2184,22 @@ public class GameData {
         return permanentsProtectedFromDamageUntilNextTurn.containsKey(permanentId);
     }
 
+    public void registerControlLossUnattachTrigger(UUID equipmentId, UUID controllerId, Card sourceCard) {
+        controlLossUnattachTriggers
+                .computeIfAbsent(equipmentId, ignored -> Collections.synchronizedList(new ArrayList<>()))
+                .add(new ControlLossUnattachTrigger(controllerId, sourceCard));
+    }
+
+    public List<ControlLossUnattachTrigger> controlLossUnattachTriggersFor(UUID equipmentId) {
+        List<ControlLossUnattachTrigger> triggers = controlLossUnattachTriggers.get(equipmentId);
+        if (triggers == null) {
+            return List.of();
+        }
+        synchronized (triggers) {
+            return List.copyOf(triggers);
+        }
+    }
+
     /** Removes and returns all floating effects with end-of-turn duration (cleanup step). */
     public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN
@@ -2098,13 +2233,15 @@ public class GameData {
     }
 
     /**
-     * Removes and returns all NON-control {@code WHILE_SOURCE_TAPPED} floating effects sourced from
+     * Removes and returns all non-control floating effects that last while their source is tapped,
+     * sourced from
      * the given permanent. Called when that permanent becomes untapped (CR 611.2b — such effects end
      * and do not resume). Control {@code WHILE_SOURCE_TAPPED} effects are handled separately by the
      * control reconciliation in {@code CreatureControlService}. Tawnos's Weaponry's +1/+1 buff.
      */
     public List<FloatingContinuousEffect> expireTappedSourceFloatingEffects(UUID sourcePermanentId) {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+        return expireFloatingEffects(fe -> (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || fe.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED)
                 && !fe.isControlEffect()
                 && sourcePermanentId.equals(fe.sourcePermanentId()));
     }
@@ -2501,6 +2638,19 @@ public class GameData {
         return drained;
     }
 
+    /** Removes and returns the first queued delayed action of the given kind, if one exists. */
+    public <T extends DelayedAction> T drainFirstDelayedAction(Class<T> type) {
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (type.isInstance(action)) {
+                it.remove();
+                return type.cast(action);
+            }
+        }
+        return null;
+    }
+
     /**
      * Removes and returns the queued delayed actions of the given kind that match {@code filter},
      * preserving insertion order and leaving non-matching entries in place (used by the per-step
@@ -2593,6 +2743,10 @@ public class GameData {
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
         spellCastOrderThisTurn.add(card.getId());
         mostRecentSpellCastThisTurn = card;
+        int manaSpent = getSpellCastManaSpent(card.getId());
+        if (manaSpent > 0) {
+            manaSpentToCastSpellsThisTurn.merge(playerId, manaSpent, Integer::sum);
+        }
         spellNameCastCountsThisGame.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
                 .merge(card.getName(), 1, Integer::sum);
         consumeNextSpellFlashGrant(playerId, card);
@@ -2699,6 +2853,11 @@ public class GameData {
     /** Records a permanent sacrificed by the given player this turn. */
     public void recordSacrificedPermanent(UUID playerId, Card card) {
         if (playerId == null || card == null) return;
+        playersWhoSacrificedPermanentsThisTurn.add(playerId);
+        sacrificedPermanentCountThisTurn.merge(playerId, 1, Integer::sum);
+        if (card.hasType(CardType.ARTIFACT)) {
+            playersWhoSacrificedArtifactsThisTurn.add(playerId);
+        }
         Map<CardSubtype, Integer> subtypeCounts = sacrificedPermanentSubtypeCountThisTurn
                 .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
         card.getSubtypes().stream().distinct().forEach(subtype -> subtypeCounts.merge(subtype, 1, Integer::sum));
@@ -2860,8 +3019,23 @@ public class GameData {
         return spellCastManaSpent.getOrDefault(spellCardId, 0);
     }
 
+    public int getManaSpentToCastSpellsThisTurn(UUID playerId) {
+        return manaSpentToCastSpellsThisTurn.getOrDefault(playerId, 0);
+    }
+
     public void clearSpellCastManaSpent(UUID spellCardId) {
         spellCastManaSpent.remove(spellCardId);
+    }
+
+    public void recordBending(UUID playerId, BendingType type) {
+        bendingTypesCompletedThisTurn
+                .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(type);
+    }
+
+    public boolean completedAllBendingTypes(UUID playerId) {
+        Set<BendingType> completed = bendingTypesCompletedThisTurn.get(playerId);
+        return completed != null && completed.containsAll(java.util.EnumSet.allOf(BendingType.class));
     }
 
     public void addSpellCastManaSource(UUID spellCardId, UUID sourcePermanentId) {
@@ -3108,6 +3282,7 @@ public class GameData {
         spellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
         mostRecentSpellCastThisTurn = null;
+        manaSpentToCastSpellsThisTurn.clear();
     }
 
     public static final int STARTING_LIFE_TOTAL = 20;
@@ -3365,9 +3540,11 @@ public class GameData {
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
+            hauntingCardToPermanentId.remove(cardId);
             foretoldCardIds.remove(cardId);
             foretoldCardCosts.remove(cardId);
             exilePlayPermissionSourceCards.entrySet().removeIf(entry -> cardId.equals(entry.getValue()));
+            exilePlayPermissionSourcePermanents.remove(cardId);
             exileCastPermissionsUntilEndOfTurn.removeIf(permission -> permission.cardId().equals(cardId));
             antedCardIds.remove(cardId);
             stashCounterCardIds.remove(cardId);
@@ -3388,6 +3565,20 @@ public class GameData {
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
         }
         return removed;
+    }
+
+    /** Ends exile-play permissions granted while a source permanent was controlled. */
+    public void expireExilePlayPermissionsForSource(UUID sourcePermanentId) {
+        if (sourcePermanentId == null) {
+            return;
+        }
+        for (Map.Entry<UUID, UUID> entry : exilePlayPermissionSourcePermanents.entrySet()) {
+            UUID cardId = entry.getKey();
+            if (sourcePermanentId.equals(entry.getValue())
+                    && exilePlayPermissionSourcePermanents.remove(cardId, sourcePermanentId)) {
+                exilePlayPermissions.remove(cardId);
+            }
+        }
     }
 
     /** Finds an exiled card entry by card ID, or null if not found. */
@@ -3463,10 +3654,16 @@ public class GameData {
         removedIds.forEach(exiledCardRefineCounters::remove);
         removedIds.forEach(exiledCardsWithStudyCounters::remove);
         removedIds.forEach(antedCardIds::remove);
+        removedIds.forEach(cardId -> {
+            exilePlayPermissionSourcePermanents.remove(cardId);
+            exilePlayPermissions.remove(cardId);
+        });
     }
 
     /** Removes source tracking from exile entries (sets sourcePermanentId to null). Used by Karn restart. */
     public void clearAllSourceTracking() {
+        exilePlayPermissionSourcePermanents.keySet().forEach(exilePlayPermissions::remove);
+        exilePlayPermissionSourcePermanents.clear();
         List<ExiledCardEntry> updated = new ArrayList<>();
         var it = exiledCards.iterator();
         while (it.hasNext()) {
@@ -3667,6 +3864,7 @@ public class GameData {
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;
+        copy.combatDamageExemptControllerId = this.combatDamageExemptControllerId;
         copy.allPermanentsEnterTappedThisTurn = this.allPermanentsEnterTappedThisTurn;
         copy.additionalEnterCountersThisTurn.putAll(this.additionalEnterCountersThisTurn);
         copy.additionalEnterCountersUntilNextTurn.putAll(this.additionalEnterCountersUntilNextTurn);
@@ -3718,11 +3916,35 @@ public class GameData {
         copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
         this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
                 copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
+        copy.kroxaDiscard.active = this.kroxaDiscard.active;
+        copy.kroxaDiscard.controllerId = this.kroxaDiscard.controllerId;
+        copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;
+        copy.kroxaDiscard.remaining.addAll(this.kroxaDiscard.remaining);
+        copy.kroxaDiscard.discardedNonland.putAll(this.kroxaDiscard.discardedNonland);
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.active =
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.active;
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId =
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId;
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.currentPlayerId =
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.currentPlayerId;
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining.addAll(
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining);
+        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.addAll(
+                this.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes);
         copy.dispersal.active = this.dispersal.active;
         copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
         copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
         copy.dispersal.selectedPermanentId = this.dispersal.selectedPermanentId;
         copy.dispersal.awaitingDiscard = this.dispersal.awaitingDiscard;
+        copy.eachOpponentDiscardsTwoUnlessNonland.active = this.eachOpponentDiscardsTwoUnlessNonland.active;
+        copy.eachOpponentDiscardsTwoUnlessNonland.remainingOpponentIds
+                .addAll(this.eachOpponentDiscardsTwoUnlessNonland.remainingOpponentIds);
+        copy.eachOpponentDiscardsTwoUnlessNonland.currentOpponentId =
+                this.eachOpponentDiscardsTwoUnlessNonland.currentOpponentId;
+        copy.eachOpponentDiscardsTwoUnlessNonland.awaitingMayChoice =
+                this.eachOpponentDiscardsTwoUnlessNonland.awaitingMayChoice;
+        copy.eachOpponentDiscardsTwoUnlessNonland.awaitingDiscard =
+                this.eachOpponentDiscardsTwoUnlessNonland.awaitingDiscard;
         copy.eachPlayerPayLife.active = this.eachPlayerPayLife.active;
         copy.eachPlayerPayLife.order.addAll(this.eachPlayerPayLife.order);
         copy.eachPlayerPayLife.index = this.eachPlayerPayLife.index;
@@ -3782,10 +4004,13 @@ public class GameData {
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.pendingGraveyardAbilityActivation = this.pendingGraveyardAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
+        copy.endStepsThisTurn = this.endStepsThisTurn;
+        copy.additionalEndStepsPending = this.additionalEndStepsPending;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
         copy.cardEnteringGraveyardByCycling = this.cardEnteringGraveyardByCycling;
         copy.additionalCombatMainPhasePairs = this.additionalCombatMainPhasePairs;
         copy.additionalCombatPhasesOnly = this.additionalCombatPhasesOnly;
+        copy.onlyLandCreaturesCanAttackThisCombat = this.onlyLandCreaturesCanAttackThisCombat;
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
@@ -3842,6 +4067,7 @@ public class GameData {
                 .addAll(this.playersExilingOpponentCreaturesInsteadOfDyingThisTurn);
         copy.playersWhoActivatedLoyaltyAbilityThisTurn.addAll(this.playersWhoActivatedLoyaltyAbilityThisTurn);
         copy.playersWhoPlayedCardFromExileThisTurn.addAll(this.playersWhoPlayedCardFromExileThisTurn);
+        copy.playersWhoFlippedCoinsThisTurn.addAll(this.playersWhoFlippedCoinsThisTurn);
         copy.playersWhoPlayedOrCastFromOutsideHandThisTurn.addAll(this.playersWhoPlayedOrCastFromOutsideHandThisTurn);
         copy.permanentsThatReceivedPlusOnePlusOneCountersThisTurn
                 .addAll(this.permanentsThatReceivedPlusOnePlusOneCountersThisTurn);
@@ -3855,6 +4081,10 @@ public class GameData {
         copy.permanentsPreventedFromDealingDamageUntilNextTurn.putAll(this.permanentsPreventedFromDealingDamageUntilNextTurn);
         copy.permanentsProtectedFromDamageUntilNextTurn.putAll(this.permanentsProtectedFromDamageUntilNextTurn);
         copy.allDamagePreventionPredicates.addAll(this.allDamagePreventionPredicates);
+        this.allDamagePreventionPredicatesByController.forEach((controllerId, predicates) ->
+                copy.allDamagePreventionPredicatesByController
+                        .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
+                        .addAll(predicates));
         this.combatDamagePreventionPredicatesByController.forEach((controllerId, predicates) ->
                 copy.combatDamagePreventionPredicatesByController
                         .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -3896,6 +4126,7 @@ public class GameData {
         copy.creatureDeathTriggerWatchers.addAll(this.creatureDeathTriggerWatchers);
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
+        copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.turnDamageRedirectToCreatureShields.addAll(this.turnDamageRedirectToCreatureShields);
@@ -3949,6 +4180,8 @@ public class GameData {
         copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
+        this.faceDownCreaturesEnteredBattlefieldThisTurn.forEach((k, v) ->
+                copy.faceDownCreaturesEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.permanentsEnteredBattlefieldLastTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldLastTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
@@ -3958,6 +4191,7 @@ public class GameData {
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
+        copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
                 .addAll(this.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn);
@@ -3970,6 +4204,8 @@ public class GameData {
         copy.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
                 .addAll(this.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn);
         copy.playersWhoSacrificedPermanentsThisTurn.addAll(this.playersWhoSacrificedPermanentsThisTurn);
+        copy.sacrificedPermanentCountThisTurn.putAll(this.sacrificedPermanentCountThisTurn);
+        copy.playersWhoSacrificedArtifactsThisTurn.addAll(this.playersWhoSacrificedArtifactsThisTurn);
         copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
         this.creaturesAttackedCountBySubtypeThisTurn.forEach((playerId, counts) ->
                 copy.creaturesAttackedCountBySubtypeThisTurn.put(playerId, new ConcurrentHashMap<>(counts)));
@@ -3983,6 +4219,9 @@ public class GameData {
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.playerCombatDamagePreventionShields.putAll(this.playerCombatDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
+        this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
+                copy.controlLossUnattachTriggers.put(equipmentId,
+                        Collections.synchronizedList(new ArrayList<>(triggers))));
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
         copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
@@ -3996,11 +4235,13 @@ public class GameData {
         copy.discardEventPlayerId = this.discardEventPlayerId;
         copy.discardEventCardCount = this.discardEventCardCount;
         copy.lastDiscardedCardManaValue = this.lastDiscardedCardManaValue;
+        copy.greatestDiscardedCardManaValue = this.greatestDiscardedCardManaValue;
         copy.lastDiscardedCardTypes = Set.copyOf(this.lastDiscardedCardTypes);
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        copy.combatDamageDealtToPlayersThisTurn.putAll(this.combatDamageDealtToPlayersThisTurn);
         copy.combatDamageSourcesThatDealtToCreaturesThisTurn
                 .addAll(this.combatDamageSourcesThatDealtToCreaturesThisTurn);
         this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
@@ -4018,6 +4259,11 @@ public class GameData {
             recipients.addAll(v);
             copy.damageRecipientsBySource.put(k, recipients);
         });
+        this.damageSourcesControlledByPlayerThisTurn.forEach((k, v) -> {
+            Set<UUID> sources = ConcurrentHashMap.newKeySet();
+            sources.addAll(v);
+            copy.damageSourcesControlledByPlayerThisTurn.put(k, sources);
+        });
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
         copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.artifactDamageDealtToPlayersThisTurn.putAll(this.artifactDamageDealtToPlayersThisTurn);
@@ -4034,6 +4280,7 @@ public class GameData {
             copy.qualifyingDamageControllersByPermanentThisTurn.put(k, controllers);
         });
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
+        copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
                 copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
@@ -4044,14 +4291,22 @@ public class GameData {
             copy.firstResolutionTriggerKeysThisTurn.put(k, keys);
         });
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
+        this.bendingTypesCompletedThisTurn.forEach((k, v) ->
+                copy.bendingTypesCompletedThisTurn.put(k, new java.util.HashSet<>(v)));
         copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);
         copy.pendingTokenCreationReplacement = this.pendingTokenCreationReplacement;
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
+        copy.simultaneousDyingPermanents.putAll(this.simultaneousDyingPermanents);
+        copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);
+        this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
+                copy.simultaneousDyingGrantedCreatureDeathEffects.put(
+                        permanentId, List.copyOf(effects)));
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
+        copy.combatDamageSourcesWithLegendaryThisTurn.addAll(this.combatDamageSourcesWithLegendaryThisTurn);
         this.combatDamageToPlayerControllerSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayerControllerSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.controllersDealtCombatDamageWithChangelingThisTurn.addAll(this.controllersDealtCombatDamageWithChangelingThisTurn);
@@ -4078,6 +4333,7 @@ public class GameData {
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         copy.exiledCards.addAll(this.exiledCards);
+        copy.hauntingCardToPermanentId.putAll(this.hauntingCardToPermanentId);
         copy.antedCardIds.addAll(this.antedCardIds);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardTimeCounters.putAll(this.exiledCardTimeCounters);
@@ -4118,12 +4374,15 @@ public class GameData {
                 copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
+        copy.artifactsPutIntoGraveyardFromBattlefieldThisTurn = this.artifactsPutIntoGraveyardFromBattlefieldThisTurn;
         copy.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn
                 .addAll(this.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn);
         copy.playersWhoDescendedThisTurn.addAll(this.playersWhoDescendedThisTurn);
         copy.descentsThisTurn.putAll(this.descentsThisTurn);
         this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
+        this.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
+                copy.creatureCardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardThisCombat.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardThisCombat.put(k, new HashSet<>(v)));
         this.cardsDiscardedOrCycledThisTurn.forEach((k, v) ->
@@ -4137,6 +4396,7 @@ public class GameData {
         copy.creatureLeftBattlefieldCountThisTurn.putAll(this.creatureLeftBattlefieldCountThisTurn);
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
+        copy.creatureExileCountThisTurn.putAll(this.creatureExileCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
                 copy.creatureSubtypeDeathCountThisTurn.put(k, new HashMap<>(v)));
         this.sacrificedPermanentSubtypeCountThisTurn.forEach((k, v) ->
@@ -4172,6 +4432,7 @@ public class GameData {
         copy.forcedCostOrElseSourceControllerId = this.forcedCostOrElseSourceControllerId;
         copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
+        copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
         copy.bounceUnlessPaysRemaining.addAll(this.bounceUnlessPaysRemaining);
@@ -4197,6 +4458,7 @@ public class GameData {
         copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
         copy.graveyardTargetOperation.anyNumber = this.graveyardTargetOperation.anyNumber;
+        copy.graveyardTargetOperation.giftPromised = this.graveyardTargetOperation.giftPromised;
         copy.graveyardTargetOperation.singleGraveyard = this.graveyardTargetOperation.singleGraveyard;
         copy.graveyardTargetOperation.cumulativeUpkeepPayment = this.graveyardTargetOperation.cumulativeUpkeepPayment;
         copy.graveyardTargetOperation.controllerGraveyardPayment =
@@ -4215,6 +4477,8 @@ public class GameData {
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
+        copy.graveyardTargetOperation.resolutionTimeCollectEvidenceResume =
+                this.graveyardTargetOperation.resolutionTimeCollectEvidenceResume;
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
         copy.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume =
                 this.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume;
@@ -4272,6 +4536,12 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimePhyrexianGrimoireResume;
         copy.graveyardTargetOperation.phyrexianGrimoireChosenCardId =
                 this.graveyardTargetOperation.phyrexianGrimoireChosenCardId;
+        copy.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume =
+                this.graveyardTargetOperation.resolutionTimeOpponentChoosesCardToHandResume;
+        copy.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId =
+                this.graveyardTargetOperation.opponentChoosesCardToHandChosenOpponentId;
+        copy.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId =
+                this.graveyardTargetOperation.opponentChoosesCardToHandChosenCardId;
 
         copy.queenKaylaBinKroogOperation.active = this.queenKaylaBinKroogOperation.active;
         copy.queenKaylaBinKroogOperation.controllerId = this.queenKaylaBinKroogOperation.controllerId;
@@ -4409,8 +4679,14 @@ public class GameData {
         copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.forEach((k, v) ->
+                copy.spellsAndLandsWithChosenNameCantBePlayedUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastNoncreatureSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastNoncreatureSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.forEach((k, v) ->
+                copy.playersCantCastSpellsFromOutsideHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
+        this.playersCantPlayCardsFromHandUntilControllerNextTurn.forEach((k, v) ->
+                copy.playersCantPlayCardsFromHandUntilControllerNextTurn.put(k, new HashSet<>(v)));
         this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
         copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
@@ -4440,6 +4716,8 @@ public class GameData {
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
+        copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
+                .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
         copy.pendingNextSpellUncounterableThisTurnCount.putAll(this.pendingNextSpellUncounterableThisTurnCount);
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
@@ -4459,6 +4737,7 @@ public class GameData {
         copy.libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll(this.libraryTopCardLifePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
+        copy.exilePlayPermissionSourcePermanents.putAll(this.exilePlayPermissionSourcePermanents);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
@@ -4481,6 +4760,9 @@ public class GameData {
         copy.graveyardLeaveNotificationPendingCreatureCardCounts.putAll(this.graveyardLeaveNotificationPendingCreatureCardCounts);
         copy.graveyardLeaveNotificationPendingArtifactOrCreatureOwners.addAll(this.graveyardLeaveNotificationPendingArtifactOrCreatureOwners);
         copy.graveyardExileNotificationPendingCounts.putAll(this.graveyardExileNotificationPendingCounts);
+        this.kayaExileNotificationPendingCreatureCards.forEach((playerId, cards) ->
+                copy.kayaExileNotificationPendingCreatureCards.put(playerId, new ArrayList<>(cards)));
+        copy.kayaExileNotificationPendingCounts.putAll(this.kayaExileNotificationPendingCounts);
         copy.graveyardOrBattlefieldExileNotificationPending = this.graveyardOrBattlefieldExileNotificationPending;
         copy.permanentTapTriggerBatchDepth = this.permanentTapTriggerBatchDepth;
         this.permanentTapTriggerBatchFiredEffects.forEach((sourceId, effects) -> {
@@ -4489,6 +4771,11 @@ public class GameData {
             copy.permanentTapTriggerBatchFiredEffects.put(sourceId, copiedEffects);
         });
         copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);
+        copy.cardsLeftGraveyardCountThisTurn.putAll(this.cardsLeftGraveyardCountThisTurn);
+        copy.permanentLeaveNotificationDepth = this.permanentLeaveNotificationDepth;
+        copy.permanentLeaveBatchWatchers.putAll(this.permanentLeaveBatchWatchers);
+        copy.permanentLeaveBatchWatcherControllers.putAll(this.permanentLeaveBatchWatcherControllers);
+        copy.permanentLeaveBatchPendingCreatures.putAll(this.permanentLeaveBatchPendingCreatures);
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->
@@ -4501,8 +4788,10 @@ public class GameData {
         // --- Mindslaver turn control ---
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
         copy.pendingTurnControlExtraTurn.addAll(this.pendingTurnControlExtraTurn);
+        copy.pendingCombatControl.putAll(this.pendingCombatControl);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
+        copy.mindControlUntilEndOfCombat = this.mindControlUntilEndOfCombat;
         copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
         copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.creatureMustAttackPermanentNextTurn.putAll(this.creatureMustAttackPermanentNextTurn);
@@ -4579,6 +4868,8 @@ public class GameData {
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
+        copy.playersWhoMayLookAtFaceDownCreaturesThisTurn
+                .addAll(this.playersWhoMayLookAtFaceDownCreaturesThisTurn);
         this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->
                 copy.cardTypeFlashGrantsThisTurn.put(k, ConcurrentHashMap.newKeySet()));
         this.cardTypeFlashGrantsThisTurn.forEach((k, v) ->

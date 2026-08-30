@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustChosenCounterOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
@@ -106,6 +107,41 @@ public class ExileTargetValidators {
         Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
         if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
             throw new IllegalStateException("Target card must be suspended");
+        }
+    }
+
+    @ValidatesTarget(ReturnTargetCardFromGraveyardOrExileToHandEffect.class)
+    public void validateReturnTargetCardFromGraveyardOrExile(
+            TargetValidationContext ctx, ReturnTargetCardFromGraveyardOrExileToHandEffect effect) {
+        if (ctx.targetZone() == Zone.GRAVEYARD) {
+            Card targetCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+            if (targetCard == null) {
+                throw new IllegalStateException("Target card not found in your graveyard");
+            }
+            if (ctx.sourceControllerId() != null
+                    && !ctx.sourceControllerId().equals(gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId()))) {
+                throw new IllegalStateException("Target card must be in your graveyard");
+            }
+            if (!predicateEvaluationService.matchesCardPredicate(targetCard, effect.graveyardFilter(), null)) {
+                throw new IllegalStateException("Target card must be a "
+                        + CardPredicateUtils.describeFilter(effect.graveyardFilter()));
+            }
+            return;
+        }
+        if (ctx.targetZone() != Zone.EXILE) {
+            throw new IllegalStateException("Effect requires a graveyard or exile target");
+        }
+        Card exiledCard = gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetId());
+        if (exiledCard == null) {
+            throw new IllegalStateException("Target card not found in exile");
+        }
+        if (effect.exileOwnedOnly() && ctx.sourceControllerId() != null
+                && !ctx.sourceControllerId().equals(gameQueryService.findExileOwnerById(ctx.gameData(), ctx.targetId()))) {
+            throw new IllegalStateException("Target must be an exiled card you own");
+        }
+        if (!predicateEvaluationService.matchesCardPredicate(exiledCard, effect.exileFilter(), null)) {
+            throw new IllegalStateException("Target card must be a "
+                    + CardPredicateUtils.describeFilter(effect.exileFilter()));
         }
     }
 

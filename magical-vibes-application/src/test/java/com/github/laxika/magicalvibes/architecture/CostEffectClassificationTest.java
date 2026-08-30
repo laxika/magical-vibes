@@ -76,6 +76,7 @@ class CostEffectClassificationTest {
             "RemoveCounterFromControlledCreatureCost",
             "RemoveCounterFromControlledPermanentCost",
             "RemoveTimeCounterFromPermanentOrSuspendedCardCost",
+            "RemoveCounterFromGrantingPermanentCost",
             "RemoveCounterFromSourceCost",
             "RemoveOneOrMoreCountersFromControlledCreaturesCost",
             "RemoveOneOrMoreCountersFromSourceCost",
@@ -87,6 +88,7 @@ class CostEffectClassificationTest {
             "RevealTwoCardsSharingColorCost",
             "RevealXCardsFromHandCost",
             "SacrificeAllMatchingPermanentsCost",
+            "SacrificeDistinctNamePermanentsCost",
             "SacrificePermanentsSequenceCost",
             "SacrificeSelfCost",
             "SacrificeSourceEquipmentCost",
@@ -110,10 +112,12 @@ class CostEffectClassificationTest {
             "SacrificeAllPermanentsYouControlCost",
             "PayXLifeCost",
             "PayLifeCost",
+            "PayLifeOrPayManaCost",
             "ChooseXValueCost",
             "ChooseCreatureTypeCost",
             "ExileCardFromGraveyardCost",
             "ExileXCardsFromGraveyardCost",
+            "CollectEvidenceCost",
             "ExileNCardsFromGraveyardCost",
             "DiscardCardTypeCost",
             "DiscardRandomCardCost",
@@ -123,12 +127,14 @@ class CostEffectClassificationTest {
             "DiscardXCardsCost",
             "EscalateDiscardCost",
             "EscalateManaCost",
+            "TieredManaCost",
             "RepeatableAdditionalManaCost",
             "SpreeAdditionalManaCost",
             "BeholdCost",
             "BeholdAndExileCost",
             "RevealCardFromHandCost",
-            "DelveCost");
+            "DelveCost",
+            "WaterbendCost");
 
     private static final String EFFECT_PKG_PATH =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";

@@ -24,6 +24,7 @@ class PhyrexianAltarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+        assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
