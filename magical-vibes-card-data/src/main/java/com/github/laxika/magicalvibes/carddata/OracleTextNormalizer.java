@@ -31,9 +31,9 @@ public final class OracleTextNormalizer {
 
     /**
      * Upstream providers print a keyword list with only the first keyword capitalized ("Trample,
-     * reach"); we capitalize every keyword in the list instead ("Trample, Reach").
+     * reach" or "Flying; fear"); we capitalize every keyword in the list instead.
      *
-     * <p>Only a line whose every comma-separated segment is one of the card's own keywords is
+     * <p>Only a line whose every comma- or semicolon-separated segment is one of the card's own keywords is
      * rewritten, so rules text that merely mentions a keyword ("Enchanted creature gains trample")
      * is left alone. A segment may carry a parameter ("Ward {2}", "Protection from red"); matching
      * looks at the leading keyword only.
@@ -55,9 +55,9 @@ public final class OracleTextNormalizer {
 
         String[] lines = cardText.split("\n", -1);
         for (int i = 0; i < lines.length; i++) {
-            String[] segments = lines[i].split(", ", -1);
+            String[] segments = keywordSegments(lines[i]);
             if (allKeywords(segments, keywords)) {
-                lines[i] = capitalizeEach(segments);
+                lines[i] = capitalizeEach(lines[i]);
             }
         }
         return String.join("\n", lines);
@@ -68,7 +68,7 @@ public final class OracleTextNormalizer {
      *
      * <p>Scryfall's {@code keywords} array on a double-faced card is the union of both faces, so a
      * back face's own keywords have to be narrowed back out of that combined list. A candidate
-     * counts only when it heads a segment of a line whose every comma-separated segment is itself a
+     * counts only when it heads a segment of a line whose every comma- or semicolon-separated segment is itself a
      * keyword — the same rule {@link #capitalizeKeywordLines} uses — so a keyword the card merely
      * mentions ("Enchanted creature gains trample") or grants to others ("Creatures you control
      * have flying") is not counted as the card's own.
@@ -87,7 +87,7 @@ public final class OracleTextNormalizer {
 
         Set<String> stated = new HashSet<>();
         for (String line : cardText.split("\n", -1)) {
-            String[] segments = line.split(", ", -1);
+            String[] segments = keywordSegments(line);
             List<String> onThisLine = new ArrayList<>(segments.length);
             for (String segment : segments) {
                 String keyword = matchingKeyword(segment, bySpelling.keySet());
@@ -126,13 +126,18 @@ public final class OracleTextNormalizer {
         return null;
     }
 
-    private static String capitalizeEach(String[] segments) {
-        StringBuilder line = new StringBuilder();
-        for (String segment : segments) {
-            if (!line.isEmpty()) {
-                line.append(", ");
+    private static String[] keywordSegments(String line) {
+        return line.split("[,;] ", -1);
+    }
+
+    private static String capitalizeEach(String value) {
+        StringBuilder line = new StringBuilder(value);
+        line.setCharAt(0, Character.toUpperCase(line.charAt(0)));
+        for (int i = 2; i < line.length(); i++) {
+            if (line.charAt(i - 1) == ' '
+                    && (line.charAt(i - 2) == ',' || line.charAt(i - 2) == ';')) {
+                line.setCharAt(i, Character.toUpperCase(line.charAt(i)));
             }
-            line.append(Character.toUpperCase(segment.charAt(0))).append(segment, 1, segment.length());
         }
         return line.toString();
     }

@@ -117,6 +117,7 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
                 }
 
                 Permanent permanent = new Permanent(card);
+                permanent.setEnteredFromExile(true);
                 initializeStartingCounters(permanent, card);
                 UUID enteringController = battlefieldEntryService.resolveEnteringController(
                         gameData, controllerId, permanent);

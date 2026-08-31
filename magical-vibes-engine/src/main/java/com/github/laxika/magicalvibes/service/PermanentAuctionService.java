@@ -119,6 +119,7 @@ public class PermanentAuctionService {
 
         gameData.removeFromExile(chosenId);
         Permanent permanent = new Permanent(chosen);
+        permanent.setEnteredFromExile(true);
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, chooserId, permanent);
 

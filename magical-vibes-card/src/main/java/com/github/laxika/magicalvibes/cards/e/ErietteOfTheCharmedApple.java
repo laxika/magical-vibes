@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedByAuraControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "202")
@@ -20,7 +20,7 @@ public class ErietteOfTheCharmedApple extends Card {
 
     public ErietteOfTheCharmedApple() {
         addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
-                new PermanentNotPredicate(new PermanentIsEnchantedByAuraControlledBySourceControllerPredicate()),
+                new PermanentNotPredicate(new PermanentIsEnchantedBySourceControllerAuraPredicate()),
                 true));
 
         PermanentCount aurasYouControl = new PermanentCount(

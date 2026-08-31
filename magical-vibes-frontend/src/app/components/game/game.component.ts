@@ -656,7 +656,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.isFlashbackPlayable(index)) {
       const card = this.myGraveyard[index];
       if (card?.needsTarget || card?.additionalBeholdFlashbackOnly || card?.graveyardCastRequiresDiscard
-          || card?.hasHarmonize) {
+          || (card?.graveyardCastExileCount ?? 0) > 0 || card?.hasHarmonize) {
         this.choice.targeting.startFlashbackTargeting(index, card);
       } else {
         this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: index, targetId: null, flashback: true });
@@ -1685,7 +1685,9 @@ export class GameComponent implements OnInit, OnDestroy {
     if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
     if (t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard) { t.cancelBehold(); return true; }
     if (t.selectingGraveyardCastDiscard) { t.cancelGraveyardCastDiscard(); return true; }
-    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard) { t.cancelAlternateCost(); return true; }
+    if (t.selectingGraveyardCastExile) { t.cancelGraveyardCastExile(); return true; }
+    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures || t.selectingAlternateCostHandCard
+        || t.selectingAlternateCostGraveyardCards) { t.cancelAlternateCost(); return true; }
     if (t.selectingExileCounterCost) { t.cancelExileCounterCost(); return true; }
     if (t.choosingXValue) { t.cancelXValue(); return true; }
     if (t.convoking) { t.cancelConvoke(); return true; }
@@ -1716,7 +1718,8 @@ export class GameComponent implements OnInit, OnDestroy {
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker || t.choosingKickerPermanent
       || t.choosingBuyback || t.choosingBuybackSacrifice || t.choosingBuybackDiscard
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
-      || t.selectingAlternateCostHandCard || t.selectingGraveyardCastDiscard || t.selectingExileCounterCost
+      || t.selectingAlternateCostHandCard || t.selectingAlternateCostGraveyardCards
+      || t.selectingGraveyardCastDiscard || t.selectingGraveyardCastExile || t.selectingExileCounterCost
       || t.choosingBehold || t.selectingBeholdPermanent || t.selectingBeholdHandCard
       || t.targetingGraveyard || t.targetingExile;
   }

@@ -24,6 +24,7 @@ class FallenAngelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bearsId);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -25,13 +24,12 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link GiftsUngivenEffect}: the controller searches their library for up to four
  * matching cards with different names and reveals them, then an opponent chooses two of them for
- * the graveyard while the rest go to the controller's hand.
+ * the graveyard while the rest go to the controller's hand or onto the battlefield tapped.
  *
  * <p>The search runs with {@link LibrarySearchDestination#GIFTS_UNGIVEN_POOL}, which keeps the found
  * cards out of every zone until the opponent has decided ({@code LibraryChoiceHandlerService});
- * the chooser is carried on a {@link PendingPileSeparation} queued here with
- * {@link CardPileDisposition#GIFTS_UNGIVEN} so the opponent stays the targeted player rather than
- * being re-derived at completion time.
+ * the chooser and final destination are carried on a {@link PendingPileSeparation} queued here so
+ * the opponent stays the targeted player rather than being re-derived at completion time.
  */
 @Slf4j
 @Component
@@ -79,7 +77,7 @@ public class GiftsUngivenEffectHandler implements NormalEffectHandlerBean {
         }
 
         gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId, List.of(),
-                List.of(), Map.of(), List.of(), List.of(), CardPileDisposition.GIFTS_UNGIVEN));
+                List.of(), Map.of(), List.of(), List.of(), giftsEffect.disposition()));
 
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                 LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))

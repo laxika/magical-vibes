@@ -9,10 +9,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * is evaluated once as this effect resolves, then remains fixed for the duration.
  */
 public record ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect(CardPredicate predicate,
-                                                                  DynamicAmount amount)
+                                                                  DynamicAmount amount,
+                                                                  boolean faceDownOnly)
         implements CardEffect {
 
     public ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect(CardPredicate predicate, int amount) {
-        this(predicate, new Fixed(amount));
+        this(predicate, new Fixed(amount), false);
+    }
+
+    public ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect(CardPredicate predicate, int amount,
+                                                                boolean faceDownOnly) {
+        this(predicate, new Fixed(amount), faceDownOnly);
+    }
+
+    public ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect(CardPredicate predicate,
+                                                                DynamicAmount amount) {
+        this(predicate, amount, false);
     }
 }

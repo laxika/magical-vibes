@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 /**
  * Like {@link MayEffect}, but the player must pay a mana cost to get the effect.
  * Used for "you may pay {X}. If you do, [effect]" patterns (e.g. Spellbomb cycle).
@@ -32,7 +34,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect, int lifeCost,
                                boolean sourceIsTriggeringPermanent, boolean targetAfterPayment)
-        implements CombatDamageTriggerContextEffect {
+        implements CombatDamageTriggerContextEffect, SacrificedPermanentCardAwareEffect {
 
     public static MayPayManaEffect reflexiveTarget(String manaCost, CardEffect wrapped, String prompt) {
         return new MayPayManaEffect(manaCost, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0,
@@ -65,6 +67,23 @@ public record MayPayManaEffect(String manaCost, CardEffect wrapped, String promp
         return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
                 ? contextEffect.combatDamageTriggerContext()
                 : null;
+    }
+
+    @Override
+    public boolean onlyTriggersOnSacrifice() {
+        return wrapped != null && wrapped.onlyTriggersOnSacrifice();
+    }
+
+    @Override
+    public CardEffect boundToSacrificedPermanent(Card sacrificedCard) {
+        CardEffect boundWrapped = wrapped instanceof SacrificedPermanentCardAwareEffect aware
+                ? aware.boundToSacrificedPermanent(sacrificedCard)
+                : wrapped;
+        CardEffect boundElse = elseEffect instanceof SacrificedPermanentCardAwareEffect aware
+                ? aware.boundToSacrificedPermanent(sacrificedCard)
+                : elseEffect;
+        return new MayPayManaEffect(manaCost, boundWrapped, prompt, payer, boundElse, lifeCost,
+                sourceIsTriggeringPermanent, targetAfterPayment);
     }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {

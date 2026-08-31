@@ -17,10 +17,12 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -1094,6 +1096,37 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("accepts creatures that share a creature type")
+        void acceptsCreaturesSharingType() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}", List.of(), "test", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+            Permanent first = addPermanent(player1Id, createCreature("First", CardColor.GREEN));
+            Permanent second = addPermanent(player1Id, createCreature("Second", CardColor.GREEN));
+            when(gameQueryService.shareCreatureType(gd, first, second)).thenReturn(true);
+
+            sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(first.getId(), second.getId()), source);
+        }
+
+        @Test
+        @DisplayName("rejects creatures that do not share a creature type")
+        void rejectsCreaturesWithoutSharedType() {
+            Card source = createCreature("Source", CardColor.RED);
+            ActivatedAbility ability = new ActivatedAbility(true, "{4}", List.of(), "test", List.of(), 2, 2)
+                    .withMultiTargetConstraint(
+                            com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_CREATURE_TYPES);
+            Permanent first = addPermanent(player1Id, createCreature("First", CardColor.GREEN));
+            Permanent second = addPermanent(player1Id, createCreature("Second", CardColor.GREEN));
+
+            assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
+                    List.of(first.getId(), second.getId()), source))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Chosen creatures must share a creature type");
+        }
+
+        @Test
         @DisplayName("accepts one artifact, one creature, and one land in any order")
         void acceptsOneArtifactCreatureAndLand() {
             Card artifactCard = new Card();
@@ -1404,6 +1437,23 @@ class TargetLegalityServiceTest {
             Card spell = createMultiTargetSpell(1, 2);
 
             sut.validateMultiSpellTargets(gd, spell, List.of(player2Id), player1Id);
+        }
+
+        @Test
+        @DisplayName("explicit permanent group rejects player allowed by a bound effect")
+        void explicitPermanentGroupRejectsPlayerAllowedByBoundEffect() {
+            Card spell = new Card();
+            spell.setName("Creature Targets");
+            spell.setType(CardType.SORCERY);
+            spell.target(new PermanentPredicateTargetFilter(
+                            new PermanentIsCreaturePredicate(), "Targets must be creatures"), 0, 3)
+                    .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new Fixed(1)));
+
+            assertThatThrownBy(() -> sut.validateMultiSpellTargets(
+                    gd, spell, List.of(player2Id), player1Id, 0, false,
+                    spell.getEffects(EffectSlot.SPELL), List.of(1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("This spell cannot target players");
         }
 
         @Test

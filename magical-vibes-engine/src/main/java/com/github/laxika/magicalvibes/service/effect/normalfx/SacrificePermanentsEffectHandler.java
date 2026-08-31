@@ -123,6 +123,31 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 effect.filter() instanceof PermanentIsCreaturePredicate);
     }
 
+    public boolean hasLegalSacrificeChoice(GameData gameData, StackEntry entry,
+            SacrificePermanentsEffect effect, UUID playerId) {
+        if (playerId == null || !gameData.playerIds.contains(playerId)
+                || isSacrificeProtected(gameData, entry, playerId)) {
+            return false;
+        }
+
+        int count = evaluateCount(gameData, entry, effect, playerId);
+        if (count <= 0) {
+            return false;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return false;
+        }
+
+        FilterContext filterContext = filterContextFor(gameData, entry);
+        long matchingCount = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
+                .filter(p -> !gameQueryService.cantBeSacrificed(gameData, p))
+                .count();
+        return matchingCount >= count;
+    }
+
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, SacrificePermanentsEffect e,
             UUID playerId, boolean creatureSingleSac) {
         if (isSacrificeProtected(gameData, entry, playerId)) {

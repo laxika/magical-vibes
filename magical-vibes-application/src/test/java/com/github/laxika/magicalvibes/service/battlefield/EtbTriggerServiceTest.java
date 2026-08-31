@@ -7,14 +7,18 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -132,5 +136,19 @@ class EtbTriggerServiceTest {
 
         verify(playerInputService).beginBasicLandTypeChoice(
                 gameData, controllerId, permanent.getId(), false, false, choice.allowedTypes());
+    }
+
+    @Test
+    void conditionalEntryReplacementDoesNotBecomeTriggeredAbility() {
+        Card creature = new Card();
+        creature.setName("Conditional Clone");
+        creature.setType(CardType.CREATURE);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalReplacementEffect(
+                new Raid(), new CopyPermanentOnEnterEffect(new PermanentIsCreaturePredicate(), "creature")));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.stack).isEmpty();
     }
 }

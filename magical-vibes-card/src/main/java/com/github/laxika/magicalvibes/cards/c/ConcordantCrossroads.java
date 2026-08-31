@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "CHR", collectorNumber = "60")
+@CardRegistration(set = "LEG", collectorNumber = "179")
 public class ConcordantCrossroads extends Card {
 
     public ConcordantCrossroads() {

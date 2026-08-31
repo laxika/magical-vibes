@@ -42,21 +42,24 @@ class SalvageTitanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Graveyard ability returns Salvage Titan to hand, exiling three artifact cards")
+    @DisplayName("Graveyard ability returns Salvage Titan to hand and exiles the chosen artifact cards")
     void graveyardAbilityReturnsSelf() {
+        Ornithopter first = new Ornithopter();
+        Juggernaut second = new Juggernaut();
+        CopperMyr third = new CopperMyr();
+        Ornithopter unchosen = new Ornithopter();
         SalvageTitan titan = new SalvageTitan();
-        harness.setGraveyard(player1, List.of(new Ornithopter(), new Juggernaut(), new CopperMyr(), titan));
+        harness.setGraveyard(player1, List.of(first, second, third, unchosen, titan));
 
-        harness.activateGraveyardAbility(player1, 3);
+        harness.activateGraveyardAbility(player1, 4);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Salvage Titan");
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unchosen);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Ornithopter"))
-                .anyMatch(c -> c.getName().equals("Juggernaut"))
-                .anyMatch(c -> c.getName().equals("Copper Myr"))
-                .noneMatch(c -> c.getName().equals("Salvage Titan"));
+                .containsExactlyInAnyOrder(first, second, third)
+                .doesNotContain(unchosen, titan);
     }
 
     @Test

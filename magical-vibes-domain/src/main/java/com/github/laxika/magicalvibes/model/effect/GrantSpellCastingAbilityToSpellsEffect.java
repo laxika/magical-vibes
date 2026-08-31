@@ -36,10 +36,11 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
                 && grantedAbility != Keyword.IMPROVISE
                 && grantedAbility != Keyword.REBOUND
                 && grantedAbility != Keyword.DELVE
-                && grantedAbility != Keyword.JUMP_START) {
+                && grantedAbility != Keyword.JUMP_START
+                && grantedAbility != Keyword.REPLICATE) {
             throw new IllegalArgumentException(
                     "No cast flow consults a granted " + grantedAbility
-                            + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, and JUMP_START do");
+                            + "; only CONSPIRE, CONVOKE, IMPROVISE, REBOUND, DELVE, JUMP_START, and REPLICATE do");
         }
     }
 }

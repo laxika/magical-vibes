@@ -84,5 +84,6 @@ class TheBelligerentTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
+        resolveCombat(player1);
     }
 }

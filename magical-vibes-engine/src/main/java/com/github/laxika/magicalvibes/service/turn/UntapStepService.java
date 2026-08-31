@@ -135,8 +135,13 @@ public class UntapStepService {
         gameData.untapStepPlayerId = activePlayerId;
         gameData.untapStepUntappedPermanentCount = 0;
 
+        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (activeBattlefield != null) {
+            activeBattlefield.forEach(p -> p.setUntappedAtTurnStart(!p.isTapped()));
+        }
+
         if (skipUntapStep) {
-            List<Permanent> ownBattlefield = gameData.playerBattlefields.get(activePlayerId);
+            List<Permanent> ownBattlefield = activeBattlefield;
             if (ownBattlefield != null) {
                 ownBattlefield.forEach(p -> {
                     // Permanents stay tapped, but a queued "skip next untap" is still consumed (this
@@ -297,7 +302,45 @@ public class UntapStepService {
             }
         });
 
+        untapSelfPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
         untapEnchantedPermanentsDuringOtherPlayersStep(gameData, activePlayerId);
+    }
+
+    private void untapSelfPermanentsDuringOtherPlayersStep(GameData gameData, UUID activePlayerId) {
+        gameData.forEachBattlefield((playerId, playerBattlefield) -> {
+            if (playerId.equals(activePlayerId)) return;
+
+            for (Permanent permanent : playerBattlefield) {
+                if (!permanent.isTapped() || !hasSelfCrossPlayerUntap(gameData, permanent, playerId, TurnStep.UNTAP)) {
+                    continue;
+                }
+
+                tapUntapSupport.untapPermanent(gameData, permanent);
+                String logLine = gameData.playerIdToName.get(playerId) + " untaps " + permanent.getCard().getName()
+                        + " during another player's untap step.";
+                gameLogService.append(gameData, GameLog.text(logLine));
+                log.info("Game {} - {} untaps self-scoped permanent {} during another player's untap step",
+                        gameData.id, playerId, permanent.getCard().getName());
+            }
+        });
+    }
+
+    private boolean hasSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId, TurnStep step) {
+        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, effect));
+    }
+
+    private boolean isActiveSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId,
+                                                 TurnStep step, CardEffect effect) {
+        if (effect instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect configuredEffect
+                && configuredEffect.step() == step
+                && configuredEffect.scope() == TapUntapScope.SELF) {
+            return true;
+        }
+        return effect instanceof ConditionalEffect conditional
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStaticEffect(source, controllerId))
+                && isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, conditional.wrapped());
     }
 
     /** Queues the batched untap-step triggers after all untap choices are complete. */
@@ -511,8 +554,8 @@ public class UntapStepService {
                 || hasActiveCounterLock(permanent, permanent.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.SELF)
                 || gameData.anyPermanentMatches(source -> source.isAttached()
                         && source.getAttachedTo().equals(permanent.getId())
-                        && (hasActiveCounterLock(source, source.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)
-                        || hasActiveCounterLock(source, source.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)));
+                        && (hasActiveCounterLock(permanent, source.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)
+                        || hasActiveCounterLock(permanent, source.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)));
     }
 
     private static boolean hasActiveCounterLock(Permanent permanent, List<CardEffect> effects, TapUntapScope scope) {

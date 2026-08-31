@@ -59,6 +59,7 @@ public class CopySupport {
         );
         copy.setCopy(true);
         copy.setKicked(source.isKicked());
+        copy.setTargetFilters(source.getTargetFilters());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
         return copy;
     }

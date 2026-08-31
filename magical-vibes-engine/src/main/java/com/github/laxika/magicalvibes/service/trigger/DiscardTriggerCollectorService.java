@@ -136,6 +136,10 @@ public class DiscardTriggerCollectorService {
                 gameData, discardingPlayerId, match.permanent())
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
+            damage = damagePreventionService.applyChannelHarmPrevention(
+                    gameData, discardingPlayerId,
+                    gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
+            if (damage <= 0) return true;
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
             effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
@@ -154,7 +158,8 @@ public class DiscardTriggerCollectorService {
             if (effectiveDamage > 0) {
                 gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
                         gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, discardingPlayerId, effectiveDamage);
+                triggerCollectionService.checkOpponentDealtDamageTriggers(
+                        gameData, discardingPlayerId, match.permanent().getId(), effectiveDamage);
             }
         }
 
@@ -324,12 +329,11 @@ public class DiscardTriggerCollectorService {
     }
 
     @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     private boolean handleSequenceOnDiscard(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
-        // "Whenever you cycle or discard a card, this creature gets +X/+Y until end of turn and can't be
-        // blocked this turn" (and similar mandatory multi-step self-triggers). Cycling discards the card
-        // (CR 702.29e), so this single controller-discard trigger fires for both. The steps must stay ONE
-        // atomic triggered ability (SequenceEffect), so queue a single stack entry carrying the source
-        // permanent id — each self step then resolves against this creature. (Cunning Survivor)
+        // Multi-step discard triggers must stay ONE atomic triggered ability (SequenceEffect), so queue
+        // a single stack entry carrying the source permanent id. Each self step then resolves against
+        // this creature.
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.enqueueTrigger(new StackEntry(

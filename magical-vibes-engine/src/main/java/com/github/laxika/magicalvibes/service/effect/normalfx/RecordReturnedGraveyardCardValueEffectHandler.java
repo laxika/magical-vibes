@@ -30,6 +30,10 @@ public class RecordReturnedGraveyardCardValueEffectHandler implements NormalEffe
         entry.setEventValue(0);
 
         UUID returnedCardId = entry.getTargetId();
+        if (returnedCardId == null && entry.getTargetCardIds() != null
+                && !entry.getTargetCardIds().isEmpty()) {
+            returnedCardId = entry.getTargetCardIds().getFirst();
+        }
         if (returnedCardId == null) {
             return;
         }
@@ -37,9 +41,10 @@ public class RecordReturnedGraveyardCardValueEffectHandler implements NormalEffe
         // Confirm the graveyard card was actually returned (it is now in the controller's hand)
         // rather than inferring the return from its type — a graveyard target that became illegal
         // is never returned, so no damage.
+        UUID returnedCardIdForLookup = returnedCardId;
         List<Card> hand = gameData.playerHands.get(entry.getControllerId());
         Card returnedCard = hand == null ? null
-                : hand.stream().filter(c -> c.getId().equals(returnedCardId)).findFirst().orElse(null);
+                : hand.stream().filter(c -> c.getId().equals(returnedCardIdForLookup)).findFirst().orElse(null);
         if (returnedCard == null) {
             return;
         }

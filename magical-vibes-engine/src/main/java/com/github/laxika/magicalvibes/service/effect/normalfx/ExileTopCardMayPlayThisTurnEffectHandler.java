@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -11,6 +10,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
@@ -45,6 +47,16 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
         ExileTopCardMayPlayThisTurnEffect exileEffect = (ExileTopCardMayPlayThisTurnEffect) effect;
         boolean withoutPaying = exileEffect.withoutPayingManaCost();
         UUID controllerId = entry.getControllerId();
+        var source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int count = amountEvaluationService.evaluate(gameData, exileEffect.count(),
+                AmountContext.forStackEntry(entry, source));
+        if (count <= 0) {
+            return;
+        }
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
 
@@ -53,14 +65,6 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                     GameLog.text(controllerName + "'s library is empty — nothing to exile."));
             return;
         }
-
-        Permanent sourcePermanent = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (sourcePermanent == null) {
-            sourcePermanent = entry.getSourcePermanentSnapshot();
-        }
-        int count = amountEvaluationService.evaluate(gameData, exileEffect.count(),
-                AmountContext.forStackEntry(entry, sourcePermanent));
 
         String playNote = withoutPaying
                 ? " (may play it without paying its mana cost this turn)"

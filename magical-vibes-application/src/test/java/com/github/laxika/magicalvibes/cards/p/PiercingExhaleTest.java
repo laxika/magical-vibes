@@ -87,6 +87,7 @@ class PiercingExhaleTest extends BaseCardTest {
     void rejectsOpponentCreatureAsSource() {
         Permanent source = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AirElemental());
         harness.setHand(player1, List.of(new PiercingExhale()));
         addMana();
 

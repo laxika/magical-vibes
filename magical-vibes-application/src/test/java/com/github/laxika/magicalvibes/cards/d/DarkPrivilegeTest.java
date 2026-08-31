@@ -80,6 +80,7 @@ class DarkPrivilegeTest extends BaseCardTest {
         // aura is index 2 (bears 0, fodder 1)
         harness.activateAbility(player1, 2, null, null);
         harness.handlePermanentChosen(player1, fodder.getId());
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

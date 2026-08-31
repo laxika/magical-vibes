@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -98,7 +99,12 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         // Resolution-time gate ("if it's legendary" — Ancient Animus): target stays legal,
         // the counters just aren't placed when the condition doesn't hold.
         if (e.resolutionCondition() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.resolutionCondition())) {
+                && !predicateEvaluationService.matchesPermanentPredicate(target, e.resolutionCondition(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                                .withSourceControllerId(entry.getControllerId())
+                                .withSourcePermanentId(entry.getSourcePermanentId())
+                                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot()))) {
             return;
         }
         if (gameQueryService.cantHaveCounters(gameData, target)) {

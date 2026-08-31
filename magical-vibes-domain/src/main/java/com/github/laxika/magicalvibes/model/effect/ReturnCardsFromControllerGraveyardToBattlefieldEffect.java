@@ -23,36 +23,44 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * at resolution, subject to their aggregate mana value not exceeding the cap.
  * When {@code mandatory} is true and more matching cards exist than the evaluated limit, the
  * controller must choose the full limit rather than declining an individual pick.
+ * Cards returned by the automatic path enter tapped when {@code enterTapped} is true.
  */
 public record ReturnCardsFromControllerGraveyardToBattlefieldEffect(
         CardPredicate filter,
         DynamicAmount maxCount,
         boolean manaValueEqualsX,
         Integer maxTotalManaValue,
-        boolean mandatory
+        boolean mandatory,
+        boolean enterTapped
 ) implements CardEffect {
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount) {
-        this(filter, fixed(maxCount), false, null, false);
+        this(filter, fixed(maxCount), false, null, false, false);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
                                                                   int maxTotalManaValue) {
-        this(filter, fixed(maxCount), false, maxTotalManaValue, false);
+        this(filter, fixed(maxCount), false, maxTotalManaValue, false, false);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
                                                                   boolean manaValueEqualsX) {
-        this(filter, fixed(maxCount), manaValueEqualsX, null, false);
+        this(filter, fixed(maxCount), manaValueEqualsX, null, false, false);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, DynamicAmount maxCount) {
-        this(filter, maxCount, false, null, false);
+        this(filter, maxCount, false, null, false, false);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, DynamicAmount maxCount,
                                                                   boolean mandatory) {
-        this(filter, maxCount, false, null, mandatory);
+        this(filter, maxCount, false, null, mandatory, false);
+    }
+
+    public ReturnCardsFromControllerGraveyardToBattlefieldEffect(
+            CardPredicate filter, int maxCount, boolean manaValueEqualsX,
+            Integer maxTotalManaValue, boolean enterTapped) {
+        this(filter, fixed(maxCount), manaValueEqualsX, maxTotalManaValue, false, enterTapped);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect {

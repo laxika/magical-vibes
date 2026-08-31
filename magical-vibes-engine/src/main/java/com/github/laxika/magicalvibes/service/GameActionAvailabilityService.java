@@ -331,6 +331,11 @@ public class GameActionAvailabilityService {
                 extraConvokeMana, additionalGenericCost, ctx)) {
             return true;
         }
+        if (card.getCastingOption(AdventureCast.class).isPresent() && card.getBackFaceCard() != null
+                && isCardPlayable(gameData, playerId, card.getBackFaceCard(), pool,
+                extraConvokeMana, additionalGenericCost, ctx)) {
+            return true;
+        }
         // Sunglasses of Urza: reflect the "spend white as red" permission for affordability without
         // mutating the caller's pool. Only copy when the player actually has the permission (rare).
         if (gameQueryService.canSpendWhiteManaAsRed(gameData, playerId) && !pool.isWhiteSpendableAsRed()) {
@@ -357,6 +362,17 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
+        }
+        if (gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
+                && pool.getMulticoloredSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteMulticoloredSpellOnlyMana();
+        }
+        if (!card.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteNoncreatureSpellOnlyMana();
         }
         if (card.hasType(CardType.CREATURE) && pool.getCreatureSpellOrAbilityManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
@@ -385,7 +401,8 @@ public class GameActionAvailabilityService {
                 && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
-                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card);
+                && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
+                && !castingPermissionService.isCardPlayRestrictedInHand(gameData, playerId, card);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays
@@ -407,7 +424,16 @@ public class GameActionAvailabilityService {
         boolean externalXCanBeZero = maxXValue == null
                 && card.hasXScaledTargets()
                 && card.getEffectiveMinTargets(0) == 0;
-        boolean allTargetsOptional = !card.getSpellTargets().isEmpty()
+        List<CardEffect> expandedTargetingEffects = EffectResolution.expandConditionalTargetingEffects(
+                targetingSpellEffects);
+        List<CardEffect> declaredTargetEffects = expandedTargetingEffects.stream()
+                .filter(effect -> effect.targetSpec().declaredTarget() != null)
+                .toList();
+        boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
+                && declaredTargetEffects.stream()
+                .allMatch(effect -> effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                        && returnEffect.upTo());
+        boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
                 || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0
                 || externalXCanBeZero);
@@ -634,8 +660,9 @@ public class GameActionAvailabilityService {
         if (card.getManaCost() == null) {
             // Card with no mana cost but has alternate cost (e.g. some future cards)
             return (castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    || castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)
                     || castingCostService.canAffordWebSlingingCost(
-                    gameData, playerId, card, pool, additionalGenericCost))
+                            gameData, playerId, card, pool, additionalGenericCost))
                     && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                             ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
                     && !castingPermissionService.isSpellLimitReached(gameData, playerId, card)
@@ -673,6 +700,10 @@ public class GameActionAvailabilityService {
             return true;
         }
 
+        if (castingCostService.canPayCollectEvidenceAlternativeCost(gameData, playerId, card)) {
+            return true;
+        }
+
         if (castingCostService.canPaySharedColorDiscardAlternativeCostFromBattlefield(gameData, playerId, card)) {
             return true;
         }
@@ -680,7 +711,9 @@ public class GameActionAvailabilityService {
         // A split card with fuse offers several mutually exclusive costs (each half, plus the fused
         // total) — it is castable if any one of them is payable, so every candidate is tried below.
         List<ManaCost> candidateCosts = castableCosts(card);
-        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
+        boolean collectEvidenceCostPaid = castingCostService.canPayCollectEvidenceCost(gameData, playerId, card);
+        int additionalCost = castingCostService.getCastCostModifier(
+                gameData, playerId, card, ctx.costSnapshot(), 0, collectEvidenceCostPaid)
                 + additionalGenericCost;
         if (castingCostService.hasTargetBasedCostIncrease(card)) {
             ValidTargetsResponse validTargets = validTargetService.computeValidTargetsForSpell(
@@ -698,7 +731,8 @@ public class GameActionAvailabilityService {
                 && candidateCosts.stream()
                 .map(c -> castingCostService.applyColoredManaCostReductions(
                         gameData, playerId, card, c, ctx.costSnapshot(), false))
-                .anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost))) {
+                .anyMatch(c -> c.canPayAsGeneric(pool, 0, effectiveAdditionalCost)
+                        && canPayWaterbendCost(gameData, playerId, card, pool, c, effectiveAdditionalCost))) {
             return true;
         }
         boolean isArtifact = card.hasType(CardType.ARTIFACT);
@@ -773,7 +807,11 @@ public class GameActionAvailabilityService {
             if (canAfford && card.isRequiresCreatureMana()) {
                 canAfford = cost.canPayCreatureOnly(pool, effectiveAdditionalCost);
             }
-            if (canAfford) {
+            if (canAfford && card.isRequiresBasicLandMana()) {
+                canAfford = cost.canPayBasicLandOnly(pool, 0, effectiveAdditionalCost);
+            }
+            if (canAfford && canPayWaterbendCost(
+                    gameData, playerId, card, paymentPool, cost, effectiveAdditionalCost)) {
                 return true;
             }
         }
@@ -820,15 +858,16 @@ public class GameActionAvailabilityService {
             if (e instanceof SacrificeCreaturesForCostReductionEffect s) { sacReduce = s; break; }
         }
         if (sacReduce != null) {
-            int creatureCount = 0;
+            int eligiblePermanentCount = 0;
             if (ctx.battlefield() != null) {
                 for (Permanent perm : ctx.battlefield()) {
-                    if (gameQueryService.isCreature(gameData, perm)) {
-                        creatureCount++;
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, perm, sacReduce.filter())) {
+                        eligiblePermanentCount++;
                     }
                 }
             }
-            int maxReduction = creatureCount * sacReduce.reductionPerCreature();
+            int maxReduction = eligiblePermanentCount * sacReduce.reductionPerCreature();
             if (cost.canPay(pool, additionalCost - maxReduction)) {
                 return true;
             }
@@ -913,7 +952,37 @@ public class GameActionAvailabilityService {
         if (castingCostService.canAffordWebSlingingCost(gameData, playerId, card, pool, additionalCost)) {
             return true;
         }
+        if (card.getCastingOption(AdventureCast.class).isPresent()) {
+            return false;
+        }
         return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
+    }
+
+    /** Checks the mana plus artifact/creature contributions for a spell's Waterbend cost. */
+    private boolean canPayWaterbendCost(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                         ManaCost spellCost, int additionalGenericCost) {
+        WaterbendCost waterbend = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(WaterbendCost.class::isInstance)
+                .map(WaterbendCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (waterbend == null) {
+            return true;
+        }
+        if (waterbend.optional()) {
+            return true;
+        }
+        int amount = waterbend.effectiveAmount(0);
+        int eligibleCount = (int) gameData.playerBattlefields
+                .getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
+                        || gameQueryService.isCreature(gameData, permanent))
+                .count();
+        List<ManaColor> contributions = Collections.nCopies(
+                Math.min(amount, eligibleCount), null);
+        return spellCost.canPayWithConvoke(pool,
+                additionalGenericCost + amount, contributions);
     }
 
     private boolean hasMatchingGraveyardTarget(GameData gameData, Card card, UUID playerId,
@@ -968,8 +1037,10 @@ public class GameActionAvailabilityService {
         boolean canPlayAnyLandsFromGraveyard = castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId);
         boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
                 .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
+        boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
         boolean hasMayhemLandPermission = graveyard.stream()
                 .anyMatch(card -> card.hasType(CardType.LAND)
+                        && !graveyardAbilitiesSuppressed
                         && card.getCastingOption(GraveyardCast.class)
                         .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                         .orElse(false));
@@ -992,7 +1063,8 @@ public class GameActionAvailabilityService {
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
-            boolean hasMayhemPermission = card.getCastingOption(GraveyardCast.class)
+            boolean hasMayhemPermission = !graveyardAbilitiesSuppressed
+                    && card.getCastingOption(GraveyardCast.class)
                     .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                     .orElse(false);
             if (card.hasType(CardType.LAND)
@@ -1067,6 +1139,7 @@ public class GameActionAvailabilityService {
         Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
                 .map(id -> gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(id, Set.of()))
                 .orElse(Set.of());
+        boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
 
         for (int i = 0; i < graveyard.size(); i++) {
             Card card = graveyard.get(i);
@@ -1078,12 +1151,16 @@ public class GameActionAvailabilityService {
                 continue;
             }
 
-            var flashback = card.effectiveFlashbackCast();
+            var flashback = graveyardAbilitiesSuppressed
+                    ? Optional.<FlashbackCast>empty()
+                    : card.effectiveFlashbackCast();
             if (flashback.isPresent()
                     && !castingPermissionService.canUseFlashback(gameData, playerId, flashback.get())) {
                 flashback = Optional.empty();
             }
-            var disturb = card.getCastingOption(DisturbCast.class);
+            var disturb = graveyardAbilitiesSuppressed
+                    ? Optional.<DisturbCast>empty()
+                    : card.getCastingOption(DisturbCast.class);
             boolean grantedAdventure = flashback.isEmpty()
                     && card.getCastingOption(AdventureCast.class).isPresent()
                     && card.getBackFaceCard() != null
@@ -1101,21 +1178,31 @@ public class GameActionAvailabilityService {
             if (castingPermissionService.isSpellLimitReached(gameData, playerId, castHalf)) {
                 continue;
             }
-            var harmonize = card.getCastingOption(HarmonizeCast.class);
+            var harmonize = graveyardAbilitiesSuppressed
+                    ? Optional.<HarmonizeCast>empty()
+                    : card.getCastingOption(HarmonizeCast.class);
             var graveyardCast = card.getCastingOption(GraveyardCast.class);
-            if (graveyardCast.isEmpty()) {
+            if (graveyardAbilitiesSuppressed) {
+                graveyardCast = Optional.empty();
+            } else if (graveyardCast.isEmpty()) {
                 graveyardCast = castingPermissionService.findMayhemCastOption(gameData, playerId, card);
             }
             boolean isDisturb = disturb.isPresent() && flashback.isEmpty();
+            Optional<FlashbackCast> grantedFlashbackOption = flashback.isEmpty() && !isDisturb
+                    ? castingPermissionService.findGrantedFlashback(gameData, playerId, card)
+                    : Optional.empty();
             boolean grantedHarmonize = harmonize.isEmpty() && flashback.isEmpty() && !isDisturb
+                    && !graveyardAbilitiesSuppressed
                     && gameData.cardsGrantedHarmonizeUntilEndOfTurn.contains(card.getId());
             boolean isHarmonize = (harmonize.isPresent() && flashback.isEmpty() && !isDisturb) || grantedHarmonize;
             boolean grantedFlashback = flashback.isEmpty()
+                    && !graveyardAbilitiesSuppressed
                     && !isDisturb
                     && !isHarmonize
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback
-                    && castingPermissionService.hasGrantedFlashback(gameData, playerId, card);
+                    && !graveyardAbilitiesSuppressed
+                    && grantedFlashbackOption.isPresent();
             boolean grantedGraveyardCardCast = flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
@@ -1148,7 +1235,8 @@ public class GameActionAvailabilityService {
                 isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
-            boolean isGrantedCyclingGraveyardCast = flashback.isEmpty()
+            Optional<CastingPermissionService.FilteredGraveyardPermission> filteredGraveyardPermission =
+                    flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
                     && !grantedFlashback
@@ -1157,9 +1245,12 @@ public class GameActionAvailabilityService {
                     && !isGrantedGraveyardPlay
                     && !isGraveyardCast
                     && !isGrantedGraveyardCast
-                    && castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card);
+                    ? castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                    : Optional.empty();
+            boolean isGrantedCyclingGraveyardCast = filteredGraveyardPermission.isPresent();
 
-            boolean isJumpStart = (card.getCastingOption(JumpStartCast.class).isPresent()
+            boolean isJumpStart = !graveyardAbilitiesSuppressed
+                    && (card.getCastingOption(JumpStartCast.class).isPresent()
                     || hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.JUMP_START, Zone.GRAVEYARD))
                     && flashback.isEmpty()
                     && !isDisturb
@@ -1175,7 +1266,8 @@ public class GameActionAvailabilityService {
 
             // Retrace (CR 702.81): castable from the graveyard for its normal mana cost if the
             // player has a land card in hand to discard as the additional cost.
-            boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
+            boolean isRetrace = !graveyardAbilitiesSuppressed
+                    && card.getCastingOption(Retrace.class).isPresent()
                     && flashback.isEmpty()
                     && !isDisturb
                     && !isHarmonize
@@ -1231,6 +1323,9 @@ public class GameActionAvailabilityService {
                 manaCostStr = harmonize.map(h -> h.getCost(ManaCastingCost.class)
                                 .map(ManaCastingCost::manaCost).orElse(null))
                         .orElse(castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost());
+            } else if (emblemFlashback) {
+                manaCostStr = grantedFlashbackOption.get()
+                        .getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
                     || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery
@@ -1284,6 +1379,14 @@ public class GameActionAvailabilityService {
                 continue;
             }
 
+            if (isGrantedCyclingGraveyardCast) {
+                int escapeExileCount = filteredGraveyardPermission.get().permission().additionalGraveyardExileCount();
+                long availableCards = graveyard.stream().filter(c -> c != card).count();
+                if (availableCards < escapeExileCount) {
+                    continue;
+                }
+            }
+
             if (flashback.isPresent() && !castingCostService.canPayFlashbackPermanentCosts(
                     gameData, playerId, flashback.get())) {
                 continue;
@@ -1314,10 +1417,34 @@ public class GameActionAvailabilityService {
             if (!castingCostService.canPayAdditionalSpellCostsFromGraveyard(gameData, playerId, castHalf)) {
                 continue;
             }
+            if (isGrantedCyclingGraveyardCast
+                    && !canPayFilteredGraveyardPermissionCosts(gameData, playerId,
+                    filteredGraveyardPermission.get().permission().additionalCosts())) {
+                continue;
+            }
 
             playable.add(i);
         }
 
         return playable;
+    }
+
+    private boolean canPayFilteredGraveyardPermissionCosts(GameData gameData, UUID playerId,
+                                                            List<CastingCost> costs) {
+        for (CastingCost cost : costs) {
+            if (cost instanceof LifeCastingCost lifeCost) {
+                if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                        || gameData.getLife(playerId) < lifeCost.amount()) {
+                    return false;
+                }
+            } else if (cost instanceof DiscardCardCastingCost) {
+                if (gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

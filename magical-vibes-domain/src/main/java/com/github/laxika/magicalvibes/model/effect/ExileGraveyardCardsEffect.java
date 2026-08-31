@@ -37,7 +37,7 @@ public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
         boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
-        boolean allowZeroTargets) implements CardEffect {
+        boolean allowZeroTargets) implements GraveyardCardChoosingEffect {
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      UUID affectedPlayerId, boolean exactTargetCount,
@@ -111,6 +111,25 @@ public record ExileGraveyardCardsEffect(
     public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
                 null, null, false, false, false, null, false, true);
+    }
+
+    @Override
+    public boolean choosesGraveyardCards() {
+        return switch (scope) {
+            case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_OPPONENT_GRAVEYARD,
+                    TARGET_CARDS_CONTROLLER_GRAVEYARD -> true;
+            default -> false;
+        };
+    }
+
+    @Override
+    public int graveyardChoiceMaxTargets() {
+        return count;
+    }
+
+    @Override
+    public CardPredicate graveyardChoiceFilter() {
+        return filter;
     }
 
     @Override

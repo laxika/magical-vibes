@@ -52,10 +52,12 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
 
         String cardName = entry.getCard().getName();
         List<UUID> eligibleIds = exileEffect.permanentFilter() == null
-                ? destructionSupport.collectCreatureIds(gameData, targetPlayerId, p -> true)
+                ? destructionSupport.collectCreatureIds(gameData, targetPlayerId,
+                        p -> !exileEffect.nontokenOnly() || !p.getCard().isToken())
                 : destructionSupport.collectPermanentIds(gameData, targetPlayerId,
                 permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, exileEffect.permanentFilter()));
+                        gameData, permanent, exileEffect.permanentFilter())
+                        && (!exileEffect.nontokenOnly() || !permanent.getCard().isToken()));
         if (exileEffect.greatestPowerOnly()) {
             eligibleIds = creaturesWithGreatestPower(gameData, eligibleIds);
         }
@@ -71,7 +73,12 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
         if (eligibleIds.size() == 1) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, eligibleIds.getFirst());
             if (permanent != null) {
-                exileSupport.exilePermanentAndLog(gameData, permanent, cardName);
+                if (exileEffect.trackWithSource() && entry.getSourcePermanentId() != null) {
+                    exileSupport.exilePermanentAndTrackWithSource(
+                            gameData, permanent, entry.getSourcePermanentId(), entry.getCard());
+                } else {
+                    exileSupport.exilePermanentAndLog(gameData, permanent, cardName);
+                }
             }
             return;
         }
@@ -79,7 +86,10 @@ public class TargetPlayerChoosesCreatureExileEffectHandler implements NormalEffe
         // Multiple creatures — prompt the target player to choose which one to exile.
         UUID choosingPlayerId = exileEffect.greatestPowerOnly() ? entry.getControllerId() : targetPlayerId;
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.DestroyChosenCreature(choosingPlayerId, cardName, true));
+                new PermanentChoiceContext.DestroyChosenCreature(
+                        choosingPlayerId, cardName, true,
+                        exileEffect.trackWithSource() ? entry.getSourcePermanentId() : null,
+                        exileEffect.trackWithSource() ? entry.getCard() : null));
         playerInputService.beginPermanentChoice(gameData, choosingPlayerId, eligibleIds,
                 exileEffect.greatestPowerOnly()
                         ? "Choose a creature with greatest power to exile."

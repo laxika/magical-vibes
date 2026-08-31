@@ -35,8 +35,11 @@ public record ExileTopCardMayPlayThisTurnEffect(
         this(count, withoutPayingManaCost, null);
     }
 
-    public ExileTopCardMayPlayThisTurnEffect(int count, boolean withoutPayingManaCost,
-                                             CardPredicate freeCastFilter) {
+    public ExileTopCardMayPlayThisTurnEffect(
+            int count,
+            boolean withoutPayingManaCost,
+            CardPredicate freeCastFilter
+    ) {
         this(new Fixed(count), withoutPayingManaCost, freeCastFilter);
     }
 }

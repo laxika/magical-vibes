@@ -124,6 +124,9 @@ public class CharacteristicState {
         if (!permanent.isFaceDown()) {
             this.keywords.addAll(card.getKeywords());
         }
+        if (permanent.isSuspected()) {
+            this.keywords.add(Keyword.MENACE);
+        }
         this.grantedActivatedAbilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         this.basePower = permanent.isFaceDown() ? permanent.getFaceDownPower()
                 : card.getPower() != null ? card.getPower() : 0;

@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -32,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -360,6 +364,25 @@ class DamageTriggerCollectorServiceTest {
     @Nested
     @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — CreateTokenEffect")
     class CreateTokensOnEnchantedCreatureDamage {
+
+        @Test
+        @DisplayName("queues a self-sacrifice trigger for damage to an enchanted creature")
+        void queuesSelfSacrificeForEnchantedCreatureDamage() {
+            Permanent aura = createPermanent("Sleep Magic");
+            Permanent creature = createPermanent("Hill Giant");
+            var effect = new SacrificeSelfEffect();
+            var ctx = new TriggerContext.DamageToCreature(creature, 2, player2Id);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
 
         @Test
         @DisplayName("queues a generic effect and records damage")
@@ -1026,6 +1049,102 @@ class DamageTriggerCollectorServiceTest {
         verify(conditionEvaluationService).isMet(eq(gd), eq(condition), contextCaptor.capture());
         assertThat(contextCaptor.getValue().sourcePermanent()).isNull();
         assertThat(contextCaptor.getValue().sourceCard()).isSameAs(source.getCard());
+    }
+
+    @Nested
+    @DisplayName("ON_DEALT_DAMAGE — ConditionalEffect")
+    class DealtDamageConditional {
+
+        @Test
+        @DisplayName("queues the trigger when the damage event meets the threshold")
+        void queuesWhenDamageMeetsThreshold() {
+            Permanent damagedCreature = createPermanent("Innocent Bystander");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition, new DrawCardEffect());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("does not queue the trigger when the damage event is below the threshold")
+        void skipsWhenDamageIsBelowThreshold() {
+            Permanent damagedCreature = createPermanent("Innocent Bystander");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition, new DrawCardEffect());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
+
+            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
+                    .thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(damagedCreature, player1Id, effect), EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("ON_OPPONENT_DEALT_DAMAGE — ConditionalEffect")
+    class OpponentDealtDamageConditional {
+
+        @Test
+        @DisplayName("queues the trigger with the damaged player when the damage reaches the threshold")
+        void queuesWhenDamageMeetsThreshold() {
+            gd.playerIds.add(player1Id);
+            gd.playerIds.add(player2Id);
+            Permanent watcher = createPermanent("Pain Magnification");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition,
+                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 3, UUID.randomUUID());
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(3)))
+                    .thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect), EffectSlot.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("does not queue the trigger below the damage threshold")
+        void skipsWhenDamageIsBelowThreshold() {
+            gd.playerIds.add(player1Id);
+            gd.playerIds.add(player2Id);
+            Permanent watcher = createPermanent("Pain Magnification");
+            var condition = new EventValueAtLeast(3);
+            var effect = new ConditionalEffect(condition,
+                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, UUID.randomUUID());
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class), eq(2)))
+                    .thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(watcher, player1Id, effect), EffectSlot.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
     }
 
     // ===== ON_DEALT_DAMAGE — default handler =====

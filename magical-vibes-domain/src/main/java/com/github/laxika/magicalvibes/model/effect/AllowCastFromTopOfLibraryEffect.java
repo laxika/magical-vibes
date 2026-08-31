@@ -39,6 +39,10 @@ public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boole
         return new AllowCastFromTopOfLibraryEffect(castableTypes, false, null, true);
     }
 
+    public AllowCastFromTopOfLibraryEffect(CardPredicate filter, boolean oncePerTurn) {
+        this(Set.of(), false, filter, oncePerTurn);
+    }
+
     public boolean matches(Card card) {
         if (card.getType() == CardType.LAND) return false;
         boolean matchesType = castableTypes.contains(card.getType())

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
@@ -128,6 +129,16 @@ class LayerClassifierTest {
         @DisplayName("SetBasePowerToughness is always 7b, even from the object's own static slot")
         void basePTSetterIsAlways7b() {
             SetBasePowerToughnessEffect effect = new SetBasePowerToughnessEffect(0, 4);
+
+            assertThat(LayerClassifier.classify(effect, true).layers()).containsExactly(Layer.L7B_SET_PT);
+            assertThat(LayerClassifier.classify(effect, false).layers()).containsExactly(Layer.L7B_SET_PT);
+        }
+
+        @Test
+        @DisplayName("Dynamic base P/T setter is always 7b")
+        void dynamicBasePTSetterIsAlways7b() {
+            SetBasePowerToughnessToAmountEffect effect = new SetBasePowerToughnessToAmountEffect(
+                    new Fixed(0), new Fixed(1), GrantScope.EQUIPPED_CREATURE);
 
             assertThat(LayerClassifier.classify(effect, true).layers()).containsExactly(Layer.L7B_SET_PT);
             assertThat(LayerClassifier.classify(effect, false).layers()).containsExactly(Layer.L7B_SET_PT);

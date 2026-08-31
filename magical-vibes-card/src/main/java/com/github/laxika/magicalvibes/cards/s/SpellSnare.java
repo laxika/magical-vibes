@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "ECL", collectorNumber = "71")
+@CardRegistration(set = "DIS", collectorNumber = "33")
 public class SpellSnare extends Card {
 
     public SpellSnare() {

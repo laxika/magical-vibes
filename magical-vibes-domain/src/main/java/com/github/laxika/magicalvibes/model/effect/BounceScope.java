@@ -29,6 +29,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum BounceScope {
     TARGET,
+    TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD,
     TARGET_CHOSEN_CREATURE_TYPE,
     SELF,
     TRIGGERING,

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * sets {@code Permanent.cantAttackThisTurn}). Attack-side sibling of {@link CantBlockThisTurnEffect};
  * combine the two for "target creature can't attack or block this turn".
  *
- * <p>Supported scopes: {@link TapUntapScope#TARGET} (target creature, multi-target-group) and
+ * <p>Supported scopes: {@link TapUntapScope#TARGET} (target creature, multi-target-group),
+ * {@link TapUntapScope#TARGET_PLAYERS_PERMANENTS} (creatures controlled by the target player), and
  * {@link TapUntapScope#ALL_CREATURES} (mass, optionally narrowed by {@code filter}).
  *
  * <p>Not to be confused with the static restriction effects ({@code CantAttackUnlessEffect},
@@ -25,8 +26,10 @@ public record CantAttackThisTurnEffect(TapUntapScope scope, PermanentPredicate f
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == TapUntapScope.TARGET
-                ? TargetSpec.benign(TargetPredicates.creature())
-                : TargetSpec.NONE;
+        return switch (scope) {
+            case TARGET -> TargetSpec.benign(TargetPredicates.creature());
+            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetPredicates.player());
+            default -> TargetSpec.NONE;
+        };
     }
 }

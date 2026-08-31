@@ -66,6 +66,19 @@ class CollectiveDefianceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent mode rejects the controller as its target")
+    void opponentModeRejectsController() {
+        harness.setHand(player1, List.of(new CollectiveDefiance()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 3, new int[]{2}, List.of(player1.getId()), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an opponent or planeswalker");
+    }
+
+    @Test
     @DisplayName("Two modes: escalate {1} and both effects resolve")
     void twoModesEscalateAndResolve() {
         GrizzlyBears bigBear = new GrizzlyBears();

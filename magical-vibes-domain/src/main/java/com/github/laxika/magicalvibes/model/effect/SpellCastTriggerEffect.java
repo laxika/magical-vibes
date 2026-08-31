@@ -57,8 +57,20 @@ public record SpellCastTriggerEffect(
         int nthSpellNumber,
         int minimumSpellNumber,
         boolean triggersOnAnyPlayer,
-        boolean requiresManaProducedBySource
+        boolean requiresManaProducedBySource,
+        int expendThreshold
 ) implements CardEffect {
+
+    public SpellCastTriggerEffect(
+            CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
+            TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition,
+            boolean onlyDuringOpponentTurn, boolean onlyDuringControllerTurn,
+            Condition intervening, int nthSpellNumber, int minimumSpellNumber,
+            boolean triggersOnAnyPlayer, boolean requiresManaProducedBySource) {
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, castSpellTargetCondition,
+                onlyDuringOpponentTurn, onlyDuringControllerTurn, intervening, nthSpellNumber,
+                minimumSpellNumber, triggersOnAnyPlayer, requiresManaProducedBySource, 0);
+    }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   String manaCost, TargetFilter targetFilter,
@@ -169,6 +181,14 @@ public record SpellCastTriggerEffect(
     /** Trigger that only fires when the spell is cast during the source controller's own turn (e.g. Eyes of the Wisent). */
     public static SpellCastTriggerEffect duringYourTurn(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
         return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true, null, 0, 0, false, false);
+    }
+
+    public static SpellCastTriggerEffect wheneverYouExpend(int threshold, List<CardEffect> resolvedEffects) {
+        if (threshold <= 0) {
+            throw new IllegalArgumentException("Expend threshold must be positive");
+        }
+        return new SpellCastTriggerEffect(null, resolvedEffects, null, null, null,
+                false, false, null, 0, 0, false, false, threshold);
     }
 
     /** Spell-cast trigger with a source-relative intervening condition. */

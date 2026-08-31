@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
@@ -50,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawIfEmptyLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.MiracleCast;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
@@ -63,8 +66,10 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -91,11 +96,13 @@ public class DrawService {
     // @Lazy to break the constructor cycle DrawService → InteractionHandlerRegistry →
     // (graveyard/card choice handlers) → DrawService.
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PlayerInteractionSupport playerInteractionSupport;
     // @Lazy: handler → InputCompletionService → … can reach back into draw/resolution paths.
     private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
 
     public DrawService(GameQueryService gameQueryService,
@@ -104,10 +111,12 @@ public class DrawService {
                        GameOutcomeService gameOutcomeService,
                        TriggeredAbilityQueueService triggeredAbilityQueueService,
                        @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
+                       @Lazy PlayerInteractionSupport playerInteractionSupport,
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
                        @Lazy LifeSupport lifeSupport,
                        @Lazy GraveyardService graveyardService,
                        ConditionEvaluationService conditionEvaluationService,
+                       GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                        DredgeSupport dredgeSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
@@ -115,22 +124,26 @@ public class DrawService {
         this.gameOutcomeService = gameOutcomeService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.playerInteractionSupport = playerInteractionSupport;
         this.breathstealersCryptDrawReplacementHandler = breathstealersCryptDrawReplacementHandler;
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         if (preventDrawIfNeeded(gameData, playerId)) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
 
-        if (isDrawSkipped(gameData)) {
+        if (isDrawSkipped(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
 
@@ -138,6 +151,10 @@ public class DrawService {
         // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
         // see a stable answer even if their source enters play later in the turn.
         boolean firstDrawStepDraw = markFirstDrawStepDraw(gameData, playerId);
+
+        if (!firstDrawStepDraw && resolveChainsOfMephistophelesDrawReplacement(gameData, playerId)) {
+            return;
+        }
 
         List<Integer> dredgeIndices = dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
         if (!dredgeIndices.isEmpty()) {
@@ -377,11 +394,12 @@ public class DrawService {
     }
 
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
+        gameData.chainsDrawReplacementsApplied.remove(playerId);
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
 
-        if (isDrawSkipped(gameData)) {
+        if (isDrawSkipped(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
@@ -436,13 +454,56 @@ public class DrawService {
         return false;
     }
 
-    private boolean isDrawSkipped(GameData gameData) {
+    private boolean resolveChainsOfMephistophelesDrawReplacement(GameData gameData, UUID playerId) {
+        int activeChains = countChainsOfMephistopheles(gameData);
+        int alreadyApplied = gameData.chainsDrawReplacementsApplied.getOrDefault(playerId, 0);
+        if (activeChains == 0 || alreadyApplied >= activeChains) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            return false;
+        }
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.isEmpty()) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            graveyardService.resolveMillPlayer(gameData, playerId, 1);
+            return true;
+        }
+
+        gameData.chainsDrawReplacementsApplied.put(playerId, alreadyApplied + 1);
+        gameData.discardCausedByOpponent = false;
+        playerInteractionSupport.resolveDiscardCards(
+                gameData, playerId, 1, DiscardFollowUp.rummage(1));
+        return true;
+    }
+
+    private int countChainsOfMephistopheles(GameData gameData) {
+        int count = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                count += permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(ChainsOfMephistophelesDrawReplacement.class::isInstance)
+                        .count();
+            }
+        }
+        return count;
+    }
+
+    private boolean isDrawSkipped(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        boolean libraryEmpty = library == null || library.isEmpty();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(effect -> effect instanceof SkipDrawReplacementEffect);
+                boolean skips = permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effect ->
+                        effect instanceof SkipDrawReplacementEffect
+                                || (libraryEmpty
+                                && pid.equals(playerId)
+                                && effect instanceof SkipDrawIfEmptyLibraryReplacementEffect));
                 if (skips) return true;
             }
         }
@@ -1087,6 +1148,7 @@ public class DrawService {
 
         checkControllerDrawTriggers(gameData, playerId, drawn);
         checkOpponentDrawTriggers(gameData, playerId);
+        checkEnchantedPlayerDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
         checkRevealFirstDrawTriggers(gameData, playerId, drawn);
         breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
@@ -1215,6 +1277,8 @@ public class DrawService {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
             checkControllerDrawTriggerSlot(
                     gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD, drawn);
+            checkGraveyardControllerDrawTriggerSlot(
+                    gameData, drawingPlayerId, EffectSlot.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD);
         }
 
         // Emblem draw triggers (e.g. Teferi, Hero of Dominaria emblem)
@@ -1229,7 +1293,9 @@ public class DrawService {
 
         for (Permanent perm : battlefield) {
             List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
-            if (drawEffects == null || drawEffects.isEmpty()) continue;
+            drawEffects = drawEffects == null ? new ArrayList<>() : new ArrayList<>(drawEffects);
+            drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot));
+            if (drawEffects.isEmpty()) continue;
 
             for (CardEffect authoredEffect : drawEffects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
@@ -1285,8 +1351,8 @@ public class DrawService {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
-                    // Any-target draw trigger (Niv-Mizzet, the Firemind): the controller must choose a
-                    // target before the ability goes on the stack.
+                    // Targeted draw trigger: the controller must choose a target before the ability
+                    // goes on the stack.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                             perm.getCard(),
                             drawingPlayerId,
@@ -1299,7 +1365,8 @@ public class DrawService {
                             gameData.id, perm.getCard().getName());
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && perm.getCard().getEffectTargetIndex(effect) >= 0) {
+                        && (perm.getCard().getEffectTargetIndex(effect) >= 0
+                        || perm.getCard().getEffectTargetIndex(authoredEffect) >= 0)) {
                     // A permanent-target draw trigger (Mantle of Tides): choose the target as the
                     // ability is put on the stack, using the card's declared target filter.
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
@@ -1333,6 +1400,31 @@ public class DrawService {
             }
         }
 
+    }
+
+    private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
+                                                         EffectSlot slot) {
+        List<Card> graveyard = gameData.playerGraveyards.get(drawingPlayerId);
+        if (graveyard == null) return;
+
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        for (Card card : new ArrayList<>(graveyard)) {
+            for (CardEffect effect : card.getEffects(slot)) {
+                if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
+
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        drawingPlayerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                log.info("Game {} - {} graveyard ability triggers on second card draw",
+                        gameData.id, card.getName());
+            }
+        }
     }
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
@@ -1402,6 +1494,44 @@ public class DrawService {
 
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
+                }
+            }
+        });
+    }
+
+    public void checkEnchantedPlayerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        gameData.forEachBattlefield((auraControllerId, battlefield) -> {
+            if (auraControllerId.equals(drawingPlayerId)) return;
+
+            for (Permanent perm : battlefield) {
+                if (!perm.isAttached() || !drawingPlayerId.equals(perm.getAttachedTo())) continue;
+
+                List<CardEffect> drawEffects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_PLAYER_DRAWS);
+                if (drawEffects == null || drawEffects.isEmpty()) continue;
+
+                for (CardEffect authoredEffect : drawEffects) {
+                    CardEffect effect = authoredEffect;
+                    if (effect instanceof DrawTriggerEffect drawTrigger) {
+                        effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
+                        if (effect == null) continue;
+                    }
+                    if (effect instanceof MayEffect may) {
+                        gameData.queueMayAbility(perm.getCard(), auraControllerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                auraControllerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(effect)),
+                                drawingPlayerId,
+                                perm.getId()
+                        ));
+                    }
+
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    log.info("Game {} - {} triggers on enchanted player draw", gameData.id, perm.getCard().getName());
                 }
             }
         });

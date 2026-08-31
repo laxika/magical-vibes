@@ -99,6 +99,9 @@ class GameActionAvailabilityServiceTest {
         lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
                 .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
                         invocation.getArgument(1)).get());
+        lenient().when(gameQueryService.withFreshQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>)
+                        invocation.getArgument(1)).get());
         lenient().when(gameQueryService.computeStaticBonus(any(), any())).thenReturn(NO_BONUS);
 
         // Real casting services (with the real handler registry) over the mocked collaborators,
@@ -313,6 +316,25 @@ class GameActionAvailabilityServiceTest {
                         .isEqualTo(playable.contains(i));
             }
             assertThat(playable).containsExactly(0);
+        }
+
+        @Test
+        @DisplayName("Cost previews do not invalidate an active hand iterator")
+        void costPreviewPreservesHandIterator() {
+            Card first = simpleCreature("First", "{G}");
+            Card second = simpleCreature("Second", "{G}");
+            List<Card> hand = gd.playerHands.get(player1Id);
+            hand.add(first);
+            hand.add(second);
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.GREEN);
+
+            for (Card card : hand) {
+                assertThat(svc.isCardPlayable(gd, player1Id, card, pool, 0)).isTrue();
+            }
+
+            assertThat(gd.playerHands.get(player1Id)).isSameAs(hand).containsExactly(first, second);
         }
     }
 
@@ -792,6 +814,9 @@ class GameActionAvailabilityServiceTest {
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                        any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
     }
 

@@ -42,7 +42,10 @@ public class LifeGainTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsTriggers({
+            @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE),
+            @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    })
     private boolean handleLifeGainSequence(TriggerMatchContext match,
                                             SequenceEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();

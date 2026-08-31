@@ -18,11 +18,11 @@ import java.util.Set;
 public class ApocalypseChime extends Card {
 
     /**
-     * Every permanent-card name in the Homelands expansion. The ability keys off the <em>name</em>,
-     * not the printing, so a later reprint (Serrated Arrows in a core set) is destroyed too, while a
-     * Homelands instant or sorcery name can never be on the battlefield and is left out.
+     * Every card name originally printed in HML. The ability keys off the <em>name</em>, not the
+     * printing, so a later reprint is destroyed too. Spell-card names are included because another
+     * effect can give a permanent one of those names.
      */
-    private static final Set<String> HOMELANDS_PERMANENT_NAMES = Set.of(
+    private static final Set<String> HOMELANDS_CARD_NAMES = Set.of(
             "Abbey Gargoyles", "Abbey Matron", "Aether Storm", "Ambush Party", "Anaba Ancestor",
             "Anaba Bodyguard", "Anaba Shaman", "Anaba Spirit Crafter", "An-Havva Constable",
             "An-Havva Township", "An-Zerrin Ruins", "Apocalypse Chime", "Autumn Willow",
@@ -43,7 +43,11 @@ public class ApocalypseChime extends Card {
             "Serra Aviary", "Serra Bestiary", "Serra Inquisitors", "Serra Paladin",
             "Serrated Arrows", "Soraya the Falconer", "Spectral Bears", "Timmerian Fiends",
             "Torture", "Trade Caravan", "Veldrane of Sengir", "Wall of Kelp", "Willow Faerie",
-            "Willow Priestess", "Wizards' School");
+            "Willow Priestess", "Wizards' School",
+            "Aliban's Tower", "Ambush", "An-Havva Inn", "Baki's Curse", "Broken Visage",
+            "Chain Stasis", "Dry Spell", "Evaporate", "Forget", "Headstone", "Jinx",
+            "Leeches", "Memory Lapse", "Merchant Scroll", "Prophecy", "Renewal",
+            "Retribution", "Shrink", "Truce", "Winter Sky");
 
     public ApocalypseChime() {
         // {2}, {T}, Sacrifice this artifact: Destroy all nontoken permanents with a name originally
@@ -53,7 +57,7 @@ public class ApocalypseChime extends Card {
                 "{2}",
                 List.of(new SacrificeSelfCost(), new DestroyAllPermanentsEffect(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentNameInPredicate(HOMELANDS_PERMANENT_NAMES),
+                                new PermanentNameInPredicate(HOMELANDS_CARD_NAMES),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         true,
                         EachPermanentScope.ALL_PLAYERS,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -39,6 +40,13 @@ public class BattlefieldEntryService {
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
         place(gameData, controllerId, permanent, placementService.snapshotEnterTappedTypes(gameData),
                 List.of(), 0, false, List.of());
+    }
+
+    public void putLandOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
+                                       Zone landPlayZone) {
+        placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
+                placementService.snapshotEnterTappedTypes(gameData), List.of(), 0, false, List.of(),
+                0, null, null, landPlayZone));
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
@@ -117,7 +125,7 @@ public class BattlefieldEntryService {
                        int convokeCreatureCount) {
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts,
-                convokeCreatureCount, null, null));
+                convokeCreatureCount, null, null, null));
     }
 
     public UUID resolveEnteringController(GameData gameData, UUID controllerId, Permanent permanent) {

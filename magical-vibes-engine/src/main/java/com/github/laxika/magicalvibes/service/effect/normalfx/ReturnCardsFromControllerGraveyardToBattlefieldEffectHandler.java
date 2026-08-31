@@ -96,7 +96,7 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
             }
             if (!cardsToReturn.isEmpty()) {
                 graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
-                        gameData, Map.of(controllerId, cardsToReturn), false, null);
+                        gameData, Map.of(controllerId, cardsToReturn), e.enterTapped(), null);
             }
             return;
         }

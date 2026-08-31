@@ -32,7 +32,8 @@ public class AllowCastMatchingCardsFromGraveyardThisTurnEffectHandler implements
         // covered too. Turn cleanup drops the grant.
         gameData.graveyardCastFilterPermissionsThisTurn.add(
                 new GameData.GraveyardCastFilterPermission(controllerId, e.filter(), e.singleUse(),
-                        e.entryCounterType(), e.grantedSubtype()));
+                        e.entryCounterType(), e.grantedSubtype(), false, false,
+                        e.additionalCost(), e.enterWithCounter(), e.enterWithCounterCount()));
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " may cast matching spells from their graveyard this turn."));

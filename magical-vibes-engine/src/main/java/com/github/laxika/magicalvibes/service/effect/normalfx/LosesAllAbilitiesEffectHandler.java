@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +46,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
+                    if (matchesFilter(gameData, entry, e, permanent)
+                            && gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
                     }
@@ -59,7 +63,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             int count = 0;
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
-                    if (gameQueryService.isCreature(gameData, permanent)) {
+                    if (matchesFilter(gameData, entry, e, permanent)
+                            && gameQueryService.isCreature(gameData, permanent)) {
                         applyEffect(gameData, entry, e, permanent);
                         count++;
                     }
@@ -74,7 +79,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                 || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
             final int[] count = {0};
             gameData.forEachPermanent((playerId, permanent) -> {
-                if (gameQueryService.isCreature(gameData, permanent)
+                if (matchesFilter(gameData, entry, e, permanent)
+                        && gameQueryService.isCreature(gameData, permanent)
                         && (e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
                         || entry.getSourcePermanentId() == null
                         || !permanent.getId().equals(entry.getSourcePermanentId()))
@@ -113,6 +119,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
 
             String durationText = switch (e.duration()) {
                 case CONTINUOUS, PERMANENT -> "indefinitely";
+                case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
                 case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
                         WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
                         "for as long as its source remains on the battlefield";
@@ -129,6 +136,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             target.setLosesAllAbilitiesPermanently(true);
         } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
             target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        } else if (e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+            target.addLosesAllAbilitiesUntilNextTurnController(entry.getControllerId());
         }
 
         // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk
@@ -155,5 +164,18 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                         ? EffectDuration.PERMANENT : e.duration(),
                 0));
         return true;
+    }
+
+    private boolean matchesFilter(GameData gameData, StackEntry entry,
+                                  LosesAllAbilitiesEffect effect, Permanent permanent) {
+        return effect.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                permanent,
+                effect.filter(),
+                FilterContext.of(gameData)
+                        .withSourceCardId(entry.getCard().getId())
+                        .withSourceControllerId(entry.getControllerId())
+                        .withSourcePermanentId(entry.getSourcePermanentId())
+                        .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                        .withXValue(entry.getXValue()));
     }
 }

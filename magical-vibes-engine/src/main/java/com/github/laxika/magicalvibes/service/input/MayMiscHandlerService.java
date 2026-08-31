@@ -595,7 +595,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} puts {} onto the battlefield (Believe)",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the top card into their hand."));
             log.info("Game {} - {} puts {} into hand from library top (Believe)",
@@ -634,7 +634,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} puts {} onto the battlefield from library top",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the top card into their hand."));
             log.info("Game {} - {} puts {} into hand from library top",

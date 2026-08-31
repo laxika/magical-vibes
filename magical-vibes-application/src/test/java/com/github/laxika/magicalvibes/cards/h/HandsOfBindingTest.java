@@ -55,7 +55,7 @@ class HandsOfBindingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getSkipUntapCount()).isEqualTo(2);
+        assertThat(target.getSkipUntapCount()).isEqualTo(1);
         assertThat(gd.exiledCards).hasSize(1);
     }
 }

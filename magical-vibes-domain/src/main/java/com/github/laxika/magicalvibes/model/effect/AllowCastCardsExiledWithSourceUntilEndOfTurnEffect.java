@@ -15,18 +15,25 @@ public record AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
         CardPredicate filter,
         boolean withoutPayingManaCost,
         boolean targetSpecificCard,
-        boolean putOnBottomOfOwnersLibrary
+        boolean putOnBottomOfOwnersLibrary,
+        boolean ownOnly
 ) implements CardEffect {
 
     public AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(CardPredicate filter,
                                                                boolean withoutPayingManaCost) {
-        this(filter, withoutPayingManaCost, false, false);
+        this(filter, withoutPayingManaCost, false, false, false);
+    }
+
+    public AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(CardPredicate filter,
+                                                               boolean withoutPayingManaCost,
+                                                               boolean ownOnly) {
+        this(filter, withoutPayingManaCost, false, false, ownOnly);
     }
 
     public static AllowCastCardsExiledWithSourceUntilEndOfTurnEffect targeted(
             CardPredicate filter, boolean withoutPayingManaCost, boolean putOnBottomOfOwnersLibrary) {
         return new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
-                filter, withoutPayingManaCost, true, putOnBottomOfOwnersLibrary);
+                filter, withoutPayingManaCost, true, putOnBottomOfOwnersLibrary, false);
     }
 
     @Override

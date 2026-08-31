@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MasumaroFirstToLive;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheSkullsporeNexus.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({TheSkullsporeNexus.class, GrizzlyBears.class, MasumaroFirstToLive.class, WrathOfGod.class})
 class TheSkullsporeNexusTest extends BaseCardTest {
 
     @Test
@@ -31,6 +32,24 @@ class TheSkullsporeNexusTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Playability evaluates the reduction after the spell leaves its controller's hand")
+    void playabilityEvaluatesReductionAfterSpellLeavesHand() {
+        harness.addToBattlefield(player1, new MasumaroFirstToLive());
+        harness.setHand(player1, List.of(new TheSkullsporeNexus(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player1);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).doesNotContain(0);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).contains(0);
     }
 
     @Test

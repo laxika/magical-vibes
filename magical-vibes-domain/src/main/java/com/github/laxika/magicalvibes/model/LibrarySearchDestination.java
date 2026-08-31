@@ -43,6 +43,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Offer the chosen exiled card for a free cast, or put it into its controller's hand. */
+    CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND,
     /** Cast the chosen revealed card without paying, then shuffle the rest into the library. */
     CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY,
     /** Discover a qualifying card: cast it for free or put it into its controller's hand. */

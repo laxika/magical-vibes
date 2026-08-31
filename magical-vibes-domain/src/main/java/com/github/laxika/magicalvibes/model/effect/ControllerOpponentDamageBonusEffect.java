@@ -1,10 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+
 /**
  * Capability for a static effect that adds damage when a source controlled by its controller
  * would deal damage to an opponent or to a permanent an opponent controls.
  */
 public interface ControllerOpponentDamageBonusEffect extends CardEffect {
 
-    int amount();
+    DynamicAmount amount();
+
+    default boolean appliesToCombatDamage() {
+        return true;
+    }
 }

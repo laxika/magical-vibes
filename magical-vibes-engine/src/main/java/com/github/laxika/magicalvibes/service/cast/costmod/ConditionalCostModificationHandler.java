@@ -40,7 +40,8 @@ public class ConditionalCostModificationHandler implements CostModificationHandl
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
         var conditional = (ConditionalEffect) effect;
         if (!conditionEvaluationService.isMet(context.gameData(), conditional.condition(),
-                ConditionContext.forCasting(context.castingPlayerId(), context.kicked()))) {
+                ConditionContext.forCasting(context.castingPlayerId(), context.kicked(),
+                        context.collectEvidenceCostPaid()))) {
             return 0;
         }
         CardEffect wrapped = conditional.wrapped();
@@ -53,7 +54,8 @@ public class ConditionalCostModificationHandler implements CostModificationHandl
                                              CostModificationSource source) {
         var conditional = (ConditionalEffect) effect;
         if (!conditionEvaluationService.isMet(context.gameData(), conditional.condition(),
-                ConditionContext.forCasting(context.castingPlayerId(), context.kicked()))) {
+                ConditionContext.forCasting(context.castingPlayerId(), context.kicked(),
+                        context.collectEvidenceCostPaid()))) {
             return null;
         }
         CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(

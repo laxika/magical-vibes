@@ -12,23 +12,22 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "251")
+@CardRegistration(set = "THB", collectorNumber = "237")
 public class SoulGuideLantern extends Card {
 
     public SoulGuideLantern() {
-        // When this artifact enters, exile target card from a graveyard.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD));
 
-        // {T}, Sacrifice this artifact: Exile each opponent's graveyard.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(),
-                        new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)),
+                List.of(
+                        new SacrificeSelfCost(),
+                        new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)
+                ),
                 "{T}, Sacrifice this artifact: Exile each opponent's graveyard."
         ));
-
-        // {1}, {T}, Sacrifice this artifact: Draw a card.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
