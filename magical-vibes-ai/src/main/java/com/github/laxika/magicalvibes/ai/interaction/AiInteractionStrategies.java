@@ -88,6 +88,7 @@ public final class AiInteractionStrategies {
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
+        register(new RemoveTimeCounterCostChoiceAiStrategy());
         register(new CraftMaterialChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
@@ -107,6 +108,7 @@ public final class AiInteractionStrategies {
         register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
         register(new NivMizzetColorPairChoiceAiStrategy());
         register(new FaceUpExiledCardChoiceAiStrategy());
+        register(new ETBExiledCardTargetChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

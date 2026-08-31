@@ -55,6 +55,7 @@ class LlanowarRebornTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanent(player1, "Grizzly Bears")
@@ -83,6 +84,7 @@ class LlanowarRebornTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanent(player2, "Grizzly Bears")

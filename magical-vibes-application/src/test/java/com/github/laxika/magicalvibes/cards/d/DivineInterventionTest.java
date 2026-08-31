@@ -42,6 +42,7 @@ class DivineInterventionTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(intervention.getCounterCount(CounterType.INTERVENTION)).isZero();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
@@ -61,6 +62,6 @@ class DivineInterventionTest extends BaseCardTest {
     }
 
     private Permanent addIntervention() {
-        return harness.addToBattlefieldAndReturn(player1, new DivineIntervention());
+        return harness.enterBattlefieldAndReturn(player1, new DivineIntervention());
     }
 }

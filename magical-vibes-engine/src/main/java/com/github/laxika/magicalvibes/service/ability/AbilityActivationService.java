@@ -4961,6 +4961,11 @@ public class AbilityActivationService {
         int costDerivedXValue = cost.trackSacrificedPower()
                 ? Math.max(0, totalPower)
                 : permanentIds.size();
+        List<UUID> sacrificedCardIds = permanentIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(Objects::nonNull)
+                .map(permanent -> permanent.getCard().getId())
+                .toList();
         targetLegalityService.validateActivatedAbilityTargetingAfterCostSelection(
                 gameData, player.getId(), ability, abilityEffects, context.targetId(), context.targetZone(),
                 source.getCard(), costDerivedXValue);
@@ -4972,7 +4977,7 @@ public class AbilityActivationService {
                 && !EffectResolution.needsTarget(abilityEffects, List.of(), false, false);
         completeActivationAndRecord(gameData, player, source, ability, abilityEffects, costDerivedXValue,
                 context.targetId(), context.targetZone(), nonTargeting, effectiveAbilityIndex(context.abilityIndex()),
-                context.targetIds(), context.damageAssignments(), permanentIds);
+                context.targetIds(), context.damageAssignments(), sacrificedCardIds);
     }
 
     /**

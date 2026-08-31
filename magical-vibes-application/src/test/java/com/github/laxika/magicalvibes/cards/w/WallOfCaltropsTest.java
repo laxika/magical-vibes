@@ -30,6 +30,8 @@ class WallOfCaltropsTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
 
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, firstWall, Keyword.BANDING)).isTrue();
         assertThat(gqs.hasKeyword(gd, secondWall, Keyword.BANDING)).isTrue();

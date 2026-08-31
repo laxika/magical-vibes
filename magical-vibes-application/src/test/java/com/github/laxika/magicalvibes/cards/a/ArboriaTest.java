@@ -65,7 +65,7 @@ class ArboriaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Arboria());
         addCreatureReady(player1, new GrizzlyBears());
         gd.activePlayerId = player2.getId();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
         gd.snapshotPlayerActionsForLastTurn(player2.getId());
 
         beginAttack(player1);
@@ -83,7 +83,7 @@ class ArboriaTest extends BaseCardTest {
         token.setType(CardType.CREATURE);
         token.setToken(true);
         gd.activePlayerId = player2.getId();
-        harness.addToBattlefield(player2, token);
+        harness.enterBattlefieldAndReturn(player2, token);
         gd.snapshotPlayerActionsForLastTurn(player2.getId());
 
         beginAttack(player1);

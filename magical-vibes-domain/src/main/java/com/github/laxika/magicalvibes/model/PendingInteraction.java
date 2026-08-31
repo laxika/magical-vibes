@@ -3191,8 +3191,31 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                LibrarySelectionFollowUp battlefieldSelectionFollowUp,
                                boolean selectLandsAfterHand,
                                boolean selectedToBattlefieldSimultaneously,
-                               boolean selectedToManifest)
+                               boolean selectedToManifest,
+                               boolean selectedCardMayGoToHandIfBattlefieldDeclined)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   boolean selectedToManifest) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, selectedToManifest, false);
+        }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                    java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -3212,7 +3235,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
                     effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
                     payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
-                    selectedToBattlefieldSimultaneously, false);
+                    selectedToBattlefieldSimultaneously, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3872,10 +3895,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                      java.util.List<CardEffect> effects,
                                      UUID sourcePermanentId,
                                      java.util.List<UUID> validCardIds,
+                                     java.util.List<UUID> validPermanentIds,
                                      UUID triggeringPermanentId) implements PendingInteraction {
         public ETBExiledCardTargetChoice {
             effects = java.util.List.copyOf(effects);
             validCardIds = java.util.List.copyOf(validCardIds);
+            validPermanentIds = java.util.List.copyOf(validPermanentIds);
         }
 
         @Override
@@ -3885,7 +3910,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+            java.util.List<UUID> validIds = new java.util.ArrayList<>(validCardIds);
+            validIds.addAll(validPermanentIds);
+            return new InteractionOptions.MultiCardPick(validIds, 1, 1);
         }
     }
 }

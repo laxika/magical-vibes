@@ -233,6 +233,7 @@ public class PermanentRemovalService {
         boolean hadPersist = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.PERSIST);
         boolean creatureDeathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
         boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
+        snapshotEffectiveSubtypes(gameData, target);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -262,6 +263,14 @@ public class PermanentRemovalService {
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
+    }
+
+    private void snapshotEffectiveSubtypes(GameData gameData, Permanent permanent) {
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype)) {
+                permanent.getGrantedSubtypes().add(subtype);
+            }
+        }
     }
 
     private boolean tryApplyDyingCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
@@ -1235,6 +1244,23 @@ public class PermanentRemovalService {
                 }
             }
         }
+        for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingPermanents.entrySet()) {
+            UUID sourceControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
+            if (sourceControllerId == null || sourceControllerId.equals(controllerId)) {
+                continue;
+            }
+            Permanent permanent = entry.getValue();
+            ExileOpponentCreaturesInsteadOfDyingEffect effect = permanent.getCard()
+                    .getEffects(EffectSlot.STATIC).stream()
+                    .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
+                    .map(ExileOpponentCreaturesInsteadOfDyingEffect.class::cast)
+                    .filter(candidate -> !candidate.nontokenOnly() || !dyingCard.isToken())
+                    .findFirst().orElse(null);
+            if (effect != null) {
+                return new OpponentDyingCreatureExileReplacement(
+                        effect, permanent.getCard(), sourceControllerId, permanent.getId());
+            }
+        }
         return null;
     }
 
@@ -1424,7 +1450,7 @@ public class PermanentRemovalService {
             }
             // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
             triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
-                    gameData, target.getOriginalCard(), controllerId, ownerId);
+                    gameData, target, controllerId, ownerId);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {

@@ -407,8 +407,10 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(lifeSupport).applyGainLife(gameData, player2Id, 1);
-            verify(lifeSupport, never()).applyGainLife(gameData, player1Id, 1);
+            verify(lifeSupport).applyGainLife(gameData, player2Id, 1, card.getName(), card,
+                    StackEntryType.ACTIVATED_ABILITY, player1Id);
+            verify(lifeSupport, never()).applyGainLife(gameData, player1Id, 1, card.getName(), card,
+                    StackEntryType.ACTIVATED_ABILITY, player1Id);
         }
 
         @Test

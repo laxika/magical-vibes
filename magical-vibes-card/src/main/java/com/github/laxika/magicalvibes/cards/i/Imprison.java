@@ -15,11 +15,13 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringTapAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "107")
 public class Imprison extends Card {
 
     public Imprison() {
+        target(TargetFilters.creature());
         CardEffect activationTrigger = new TriggeringTapAbilityConditionalEffect(
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsHostOfSourceAuraPredicate(),

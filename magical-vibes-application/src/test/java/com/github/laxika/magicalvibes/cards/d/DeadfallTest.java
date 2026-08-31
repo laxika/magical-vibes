@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Deadfall.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Deadfall.class, Forest.class, GrizzlyBears.class, Island.class})
 class DeadfallTest extends BaseCardTest {
 
     @Test
@@ -39,6 +40,7 @@ class DeadfallTest extends BaseCardTest {
     @DisplayName("Deadfall does not affect other landwalk abilities")
     void otherLandwalkRemainsUnblockable() {
         harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
         harness.addToBattlefield(player2, new Deadfall());
         Permanent attacker = addWalker(player1, Keyword.ISLANDWALK);
         Permanent blocker = readyCreature(player2, new GrizzlyBears());

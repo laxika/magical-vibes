@@ -48,10 +48,6 @@ class EurekaTest extends BaseCardTest {
                 .playerId()).isEqualTo(player1.getId());
         harness.handleMultipleCardsChosen(player1, List.of(firstForest.getId()));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class)
-                .playerId()).isEqualTo(player2.getId());
-        harness.handleMultipleCardsChosen(player2, List.of());
-
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())

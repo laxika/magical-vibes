@@ -101,7 +101,7 @@ class ShivanSandMageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castCreature(player1, 0, mode);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, targetId);
+        harness.handleMultipleCardsChosen(player1, List.of(targetId));
         resolveAllTriggers();
     }
 }

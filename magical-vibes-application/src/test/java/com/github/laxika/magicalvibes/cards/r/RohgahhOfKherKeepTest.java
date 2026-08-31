@@ -38,11 +38,10 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
     void payingUpkeepCostKeepsControl() {
         Permanent kobold = createKoboldToken(player1);
         Permanent rohgahh = harness.addToBattlefieldAndReturn(player1, new RohgahhOfKherKeep());
-        harness.addMana(player1, ManaColor.RED, 3);
-
         beginUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(rohgahh, kobold);
@@ -67,22 +66,21 @@ class RohgahhOfKherKeepTest extends BaseCardTest {
         assertThat(kobold.isTapped()).isTrue();
         assertThat(opponentKobold.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears).doesNotContain(rohgahh, kobold);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(rohgahh, kobold).doesNotContain(opponentKobold);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(rohgahh, kobold, opponentKobold);
     }
 
     private void beginUpkeep(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities();
     }
 
     private Permanent createKoboldToken(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new KherKeep());
+        Permanent kherKeep = harness.addToBattlefieldAndReturn(player, new KherKeep());
         harness.addMana(player, ManaColor.COLORLESS, 1);
         harness.addMana(player, ManaColor.RED, 1);
-        harness.activateAbility(player, 0, 1, null, null);
+        harness.activateAbility(player,
+                gd.playerBattlefields.get(player.getId()).indexOf(kherKeep), 1, null, null);
         harness.passBothPriorities();
         return findPermanent(player, "Kobolds of Kher Keep");
     }

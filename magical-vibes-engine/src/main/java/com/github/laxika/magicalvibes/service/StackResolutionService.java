@@ -392,6 +392,7 @@ public class StackResolutionService {
 
     private void processResolvedPermanentEtb(GameData gameData, UUID controllerId, Card card,
                                              UUID targetId, StackEntry entry) {
+        int stackSizeBeforeEtb = gameData.stack.size();
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
                     true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds());
@@ -403,6 +404,14 @@ public class StackResolutionService {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,
                     true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
                     entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
+        }
+        if (entry.isGiftPromised()) {
+            for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
+                StackEntry triggeredEntry = gameData.stack.get(i);
+                if (triggeredEntry.getCard().getId().equals(card.getId())) {
+                    triggeredEntry.setGiftPromised(true);
+                }
+            }
         }
     }
 
@@ -486,7 +495,7 @@ public class StackResolutionService {
 
         if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(
                 gameData, controllerId, characteristics, entry.getTargetId(), entry.getXValue(),
-                entry.getPhysicalCard(), characteristics != card)) {
+                entry.getManaSpentToCast(), entry.getPhysicalCard(), characteristics != card)) {
             return;
         }
 
@@ -885,7 +894,8 @@ public class StackResolutionService {
 
         // "As enters" card name choice (e.g. Pithing Needle, Phyrexian Revoker, Sorcerous Spyglass)
         // — name must be chosen BEFORE the permanent enters the battlefield (MTG Rule 614.1c)
-        if (beginChooseCardNameOnEnter(gameData, controllerId, characteristics)) {
+        if (beginChooseCardNameOnEnter(gameData, controllerId, characteristics)
+                || beginChooseCardTypeOnEnter(gameData, controllerId, characteristics)) {
             return;
         }
 

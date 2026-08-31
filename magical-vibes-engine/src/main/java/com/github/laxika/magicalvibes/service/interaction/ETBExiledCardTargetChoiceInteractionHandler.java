@@ -51,24 +51,29 @@ public class ETBExiledCardTargetChoiceInteractionHandler
                              InteractionAnswer answer) {
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (chosenIds == null || chosenIds.size() != 1
-                || !interaction.validCardIds().contains(chosenIds.getFirst())) {
-            throw new IllegalStateException("Choose one face-up exiled card");
+                || (!interaction.validCardIds().contains(chosenIds.getFirst())
+                && !interaction.validPermanentIds().contains(chosenIds.getFirst()))) {
+            throw new IllegalStateException("Choose one valid permanent or face-up exiled card");
         }
 
         ExiledCardEntry chosen = findFaceUpExiledCard(gameData, chosenIds.getFirst());
-        if (chosen == null) {
-            throw new IllegalStateException("Chosen card is no longer available");
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, chosenIds.getFirst());
+        if (chosen == null && chosenPermanent == null) {
+            throw new IllegalStateException("Chosen target is no longer available");
         }
 
         gameData.interaction.clearAwaitingInput();
+        UUID targetId = chosen != null ? chosen.card().getId() : chosenPermanent.getId();
+        Zone targetZone = chosen != null ? Zone.EXILE : Zone.BATTLEFIELD;
+        String targetName = chosen != null ? chosen.card().getName() : chosenPermanent.getCard().getName();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 interaction.sourceCard(),
                 interaction.controllerId(),
                 interaction.sourceCard().getName() + "'s ETB ability",
                 new ArrayList<>(interaction.effects()),
-                chosen.card().getId(),
-                Zone.EXILE,
+                targetId,
+                targetZone,
                 interaction.sourcePermanentId());
         entry.setTriggeringPermanentId(interaction.triggeringPermanentId());
         if (interaction.sourcePermanentId() != null) {
@@ -83,7 +88,7 @@ public class ETBExiledCardTargetChoiceInteractionHandler
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(interaction.sourceCard())
-                .text("'s ETB ability targets " + chosen.card().getName() + ".")
+                .text("'s ETB ability targets " + targetName + ".")
                 .build());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {

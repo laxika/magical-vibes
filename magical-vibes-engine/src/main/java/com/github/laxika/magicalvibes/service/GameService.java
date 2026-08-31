@@ -488,17 +488,25 @@ public class GameService {
     public void playCardWithGift(GameData gameData, Player player, int cardIndex, Integer xValue,
                                  UUID targetId, Map<UUID, Integer> damageAssignments,
                                  List<UUID> targetIds, boolean giftPromised) {
+        playCardWithGift(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                targetIds, null, giftPromised);
+    }
+
+    public void playCardWithGift(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                 UUID targetId, Map<UUID, Integer> damageAssignments,
+                                 List<UUID> targetIds, Integer discardHandCardIndex,
+                                 boolean giftPromised) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardWithGift(gameData, actionPlayer, cardIndex, xValue, targetId,
-                        damageAssignments, targetIds, giftPromised))) {
+                        damageAssignments, targetIds, discardHandCardIndex, giftPromised))) {
             return;
         }
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithGift(gameData, player, cardIndex, xValue, targetId,
-                    damageAssignments, targetIds, giftPromised);
+                    damageAssignments, targetIds, discardHandCardIndex, giftPromised);
         }
     }
 

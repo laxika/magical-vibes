@@ -1406,7 +1406,7 @@ public class ActivatedAbilityExecutionService {
                 // "{T}, Exert this creature: Add …" (Oasis Ritualist). Exert is modeled as
                 // SkipNextUntapEffect(SELF); on a mana ability it must apply inline here because
                 // mana abilities never hit the stack / NormalEffectHandlerBean path.
-                permanent.setSkipUntapCount(permanent.getSkipUntapCount() + 1);
+                permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " won't untap during its controller's next untap step."));
             } else if (effect instanceof ReturnSourceToHandAtNextUntapEffect) {

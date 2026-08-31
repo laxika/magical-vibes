@@ -71,6 +71,13 @@ public class CloneService {
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue, Card physicalCard, boolean transformed) {
+        return prepareCloneReplacementEffect(
+                gameData, controllerId, card, targetId, xValue, xValue, physicalCard, transformed);
+    }
+
+    public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                 int xValue, int filterXValue,
+                                                 Card physicalCard, boolean transformed) {
         CopyCreatureCardInGraveyardOnEnterEffect graveyardCopyEffect = findGraveyardCopyEffect(card);
         if (graveyardCopyEffect != null
                 && prepareGraveyardCloneReplacementEffect(
@@ -83,7 +90,8 @@ public class CloneService {
             return true;
         }
 
-        boolean prepared = prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, false);
+        boolean prepared = prepareCloneReplacementEffect(
+                gameData, controllerId, card, targetId, xValue, filterXValue, false);
         if (prepared) {
             gameData.cloneOperation.physicalCard = physicalCard;
             gameData.cloneOperation.transformed = transformed;
@@ -93,10 +101,17 @@ public class CloneService {
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                                  int xValue, boolean landPlay) {
+        return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, xValue, xValue, landPlay);
+    }
+
+    private boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                                  int xValue, int filterXValue, boolean landPlay) {
         CopyPermanentOnEnterEffect copyEffect = findCopyEffect(gameData, controllerId, card);
         if (copyEffect == null) return false;
 
-        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceControllerId(controllerId)
+                .withXValue(filterXValue);
         List<UUID> validIds = new ArrayList<>();
         if (copyEffect.cardFilter() != null) {
             for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
@@ -156,7 +171,7 @@ public class CloneService {
                 controllerId,
                 List.of(copyEffect),
                 card.getName() + " — You may have it enter as a copy of any " + copyEffect.typeLabel() + " " + sourceDescription + "."
-        ));
+        ).withEventValue(filterXValue));
         playerInputService.processNextMayAbility(gameData);
         return true;
     }

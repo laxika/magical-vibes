@@ -230,7 +230,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
-                e.battlefieldSelectionFollowUp(), false, false));
+                e.battlefieldSelectionFollowUp(), false, false, false,
+                e.selectedCardMayGoToHandIfBattlefieldDeclined()));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

@@ -1217,11 +1217,21 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectETBExiledCardTargetChoice(
             GameData gameData, PendingInteraction.ETBExiledCardTargetChoice interaction) {
+        List<UUID> validIds = new ArrayList<>(interaction.validCardIds());
+        validIds.addAll(interaction.validPermanentIds());
+        List<CardView> cardViews = new ArrayList<>(exiledCardViews(gameData, interaction.validCardIds()));
+        gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> interaction.validPermanentIds().contains(permanent.getId()))
+                .map(permanent -> cardViewFactory.create(permanent.getCard()).toBuilder()
+                        .id(permanent.getId())
+                        .build())
+                .forEach(cardViews::add);
         return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                validIds,
+                cardViews,
                 1,
-                interaction.sourceCard().getName() + "'s ability — Choose a face-up exiled card.");
+                interaction.sourceCard().getName() + "'s ability — Choose a permanent or face-up exiled card.");
     }
 
     private InteractionPromptMessage projectPermanentChoice(

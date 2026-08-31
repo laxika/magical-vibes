@@ -52,6 +52,7 @@ class ManaMatrixTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
 
+        gd.playerManaPools.get(player1.getId()).clear();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))

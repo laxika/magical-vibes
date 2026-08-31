@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -49,8 +51,6 @@ class TangleTumblerTest extends BaseCardTest {
         Permanent ordinaryCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handlePermanentChosen(player1, firstToken.getId());
-        harness.handlePermanentChosen(player1, secondToken.getId());
         harness.passBothPriorities();
 
         assertThat(firstToken.isTapped()).isTrue();
@@ -78,8 +78,6 @@ class TangleTumblerTest extends BaseCardTest {
         Permanent secondToken = addToken(player1, "Second token");
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handlePermanentChosen(player1, firstToken.getId());
-        harness.handlePermanentChosen(player1, secondToken.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);

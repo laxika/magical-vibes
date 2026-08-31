@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,27 +29,25 @@ class HiddenGrottoTest extends BaseCardTest {
 
         Permanent grotto = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(grotto.isTapped()).isFalse();
-        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        PendingInteraction.MayAbilityChoice surveil =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(surveil).isNotNull();
-        assertThat(surveil.cards()).containsExactly(topCard);
-        assertThat(surveil.toGraveyard()).isTrue();
+        assertThat(surveil.description()).contains("Put Grizzly Bears into your graveyard");
     }
 
     @Test
     @DisplayName("Surveil 1 can put the top card into the graveyard")
     void surveilPutsTopCardIntoGraveyard() {
-        GameData gameData = harness.getGameData();
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new HiddenGrotto()));
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gameData.playerGraveyards.get(player1.getId())).contains(topCard);
-        assertThat(gameData.playerDecks.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
     }
 
     @Test

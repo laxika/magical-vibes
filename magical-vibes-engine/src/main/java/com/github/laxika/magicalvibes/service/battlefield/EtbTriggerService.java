@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -264,6 +265,7 @@ public class EtbTriggerService {
         }
         triggeredEffects = triggeredEffects.stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
+                .filter(e -> !(e instanceof ChooseCardTypeOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseBasicLandTypeOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseEquipmentAttachmentOnEnterEffect))
                 // Primal Clay's shape choice is made while the new permanent enters, not as an ETB ability.

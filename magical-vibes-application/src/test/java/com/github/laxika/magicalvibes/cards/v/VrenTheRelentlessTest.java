@@ -65,8 +65,8 @@ class VrenTheRelentlessTest extends BaseCardTest {
         List<Permanent> rats = findPermanents(player1, "Rat");
         assertThat(rats).hasSize(3);
         assertThat(rats).allSatisfy(rat -> {
-            assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(3);
-            assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(4);
         });
     }
 

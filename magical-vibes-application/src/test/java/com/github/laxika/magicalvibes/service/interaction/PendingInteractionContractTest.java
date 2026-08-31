@@ -85,6 +85,7 @@ class PendingInteractionContractTest {
             PendingWhimsOfTheFates.class,
             PendingValkiCopyChoice.class,
             PendingValkiHandExileChoice.class,
+            PendingInteraction.PortentOfCalamityState.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(

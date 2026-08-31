@@ -55,7 +55,7 @@ class ValleyQuestcallerTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getCard() == questcaller.getCard())
+                        && entry.getCard().getId().equals(questcaller.getCard().getId()))
                 .hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())

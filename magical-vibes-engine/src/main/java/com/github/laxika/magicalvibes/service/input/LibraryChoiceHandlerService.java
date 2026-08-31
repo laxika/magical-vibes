@@ -50,10 +50,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -2220,6 +2222,12 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (libraryRevealChoice.selectedCardMayGoToHandIfBattlefieldDeclined()) {
+            resolveMayPutSelectedCardOntoBattlefieldElseToHand(
+                    gameData, controllerId, selectedCards, remainingCards);
+            return;
+        }
+
         if (libraryRevealChoice.selectedToHand()) {
             boolean controllerLifePayment = libraryRevealChoice.payLifePerSelection();
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
@@ -2365,6 +2373,36 @@ public class LibraryChoiceHandlerService {
         }
 
         finishSearchAndResume(gameData);
+    }
+
+    private void resolveMayPutSelectedCardOntoBattlefieldElseToHand(
+            GameData gameData, UUID controllerId, List<Card> selectedCards, List<Card> remainingCards) {
+        Collections.shuffle(remainingCards);
+        gameData.playerDecks.get(controllerId).addAll(remainingCards);
+        if (selectedCards.isEmpty()) {
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        Card selectedCard = selectedCards.getFirst();
+        if (!controllerId.equals(gameData.activePlayerId)) {
+            gameData.addCardToHand(controllerId, selectedCard);
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        gameData.playerDecks.get(controllerId).addFirst(selectedCard);
+        StackEntry pending = gameData.pendingEffectResolutionEntry;
+        Card sourceCard = pending != null ? pending.getCard() : selectedCard;
+        UUID sourcePermanentId = pending != null ? pending.getSourcePermanentId() : null;
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                sourceCard,
+                controllerId,
+                List.of(new LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect(
+                        new CardTruePredicate(), false)),
+                "Put " + selectedCard.getName() + " onto the battlefield?",
+                selectedCard.getId(), null, sourcePermanentId));
+        playerInputService.processNextMayAbility(gameData);
     }
 
     private void handlePsychoticEpisodeChoice(GameData gameData, Player player,

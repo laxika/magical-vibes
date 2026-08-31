@@ -1174,7 +1174,7 @@ public class DeathTriggerCollectorService {
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), eventValue,
-                    new Permanent(match.permanent())));
+                    new Permanent(match.permanent()), false));
             return;
         }
 

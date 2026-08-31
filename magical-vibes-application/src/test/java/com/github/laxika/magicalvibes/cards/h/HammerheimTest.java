@@ -35,7 +35,8 @@ class HammerheimTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(hammerheim));
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(hammerheim), 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }

@@ -55,7 +55,7 @@ class GathanRaidersTest extends BaseCardTest {
         assertThat(raiders.isFaceDown()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(5);
     }

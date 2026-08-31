@@ -52,7 +52,7 @@ class GlyphOfDestructionTest extends BaseCardTest {
 
         assertThat(wall.getMarkedDamage()).isEqualTo(0);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

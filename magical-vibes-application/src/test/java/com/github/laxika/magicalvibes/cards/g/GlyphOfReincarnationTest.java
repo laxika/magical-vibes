@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
+import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,13 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlyphOfReincarnation.class, WallOfWood.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({GlyphOfReincarnation.class, WallOfGlare.class, WallOfWood.class, GrizzlyBears.class, LlanowarElves.class})
 class GlyphOfReincarnationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys creatures blocked by the targeted Wall and returns one creature per death")
     void destroysBlockedCreaturesAndReturnsOneCreaturePerDeath() {
-        Permanent wall = addCreatureReady(player2, new WallOfWood());
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
         Permanent affectedAttacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent secondAffectedAttacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent unaffectedAttacker = addCreatureReady(player1, new GrizzlyBears());

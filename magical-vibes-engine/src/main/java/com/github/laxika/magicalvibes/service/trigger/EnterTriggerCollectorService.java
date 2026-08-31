@@ -267,6 +267,7 @@ public class EnterTriggerCollectorService {
 
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
@@ -456,8 +457,16 @@ public class EnterTriggerCollectorService {
                                                         SacrificeSelfThenEffect effect,
                                                         TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
-                findEnteringPermanentId(match, pe.enteringCard()));
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (isTargeting(effect)) {
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                        match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                        match.permanent().getId(), enteringPermanentId));
+            }
+        } else {
+            enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(), enteringPermanentId);
+        }
         logTriggered(match);
         return true;
     }

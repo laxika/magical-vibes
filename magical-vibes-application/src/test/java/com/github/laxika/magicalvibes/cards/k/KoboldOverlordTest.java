@@ -39,10 +39,11 @@ class KoboldOverlordTest extends BaseCardTest {
     }
 
     private Permanent createKoboldToken(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new KherKeep());
+        Permanent kherKeep = harness.addToBattlefieldAndReturn(player, new KherKeep());
         harness.addMana(player, ManaColor.COLORLESS, 1);
         harness.addMana(player, ManaColor.RED, 1);
-        harness.activateAbility(player, 0, 1, null, null);
+        harness.activateAbility(player,
+                gd.playerBattlefields.get(player.getId()).indexOf(kherKeep), 1, null, null);
         harness.passBothPriorities();
         return findPermanent(player, "Kobolds of Kher Keep");
     }

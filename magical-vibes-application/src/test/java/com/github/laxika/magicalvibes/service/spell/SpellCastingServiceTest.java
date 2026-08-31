@@ -583,7 +583,8 @@ class SpellCastingServiceTest {
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putLandOntoBattlefield(
+                    eq(gd), eq(player1Id), any(Permanent.class), eq(Zone.HAND));
             verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);
@@ -616,8 +617,8 @@ class SpellCastingServiceTest {
             svc.playCard(gd, player1, 0, null, null, null, null, null, true, null);
 
             ArgumentCaptor<Permanent> permanentCaptor = ArgumentCaptor.forClass(Permanent.class);
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), permanentCaptor.capture());
+            verify(battlefieldEntryService).putLandOntoBattlefield(
+                    eq(gd), eq(player1Id), permanentCaptor.capture(), eq(Zone.GRAVEYARD));
             assertThat(permanentCaptor.getValue().getEnteredFromGraveyardOwnerId()).isEqualTo(player1Id);
         }
     }
@@ -748,7 +749,7 @@ class SpellCastingServiceTest {
             // validateSpellTargeting is called with needsTarget=false (ETB-only),
             // so hexproof won't be enforced at cast time
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false));
+                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false), eq(false));
         }
 
         @Test
@@ -764,7 +765,7 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false));
+                    eq(gd), eq(sorcery), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false));
         }
 
         @Test
@@ -858,7 +859,7 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false));
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), eq(true), anyInt(), eq(false), eq(false));
         }
     }
 
@@ -884,7 +885,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
             verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false));
+                    eq(gd), eq(instant), anyList(), eq(player2Id), any(), eq(player1Id), anyBoolean(), anyInt(), eq(false), eq(false));
             verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(instant), eq(player1Id), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
@@ -1493,7 +1494,8 @@ class SpellCastingServiceTest {
             assertThat(gd.stack).isEmpty();
             assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
             assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putLandOntoBattlefield(
+                    eq(gd), eq(player1Id), any(Permanent.class), eq(Zone.EXILE));
             verify(battlefieldEntryService).processLandETBEffects(eq(gd), eq(player1Id), eq(land));
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
             verify(turnProgressionService).resolveAutoPass(gd);

@@ -263,6 +263,10 @@ class StepTriggerServiceTest {
         gd.playerHands.put(player2Id, new ArrayList<>());
         gd.playerGraveyards.put(player1Id, new ArrayList<>());
         gd.playerGraveyards.put(player2Id, new ArrayList<>());
+        lenient().when(gameQueryService.getEffectiveGraveyardEffects(
+                        eq(gd), any(Card.class), any(EffectSlot.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
+                        .getEffects(invocation.getArgument(2)));
     }
 
     @Nested

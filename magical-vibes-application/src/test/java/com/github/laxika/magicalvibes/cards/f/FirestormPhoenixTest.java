@@ -79,6 +79,7 @@ class FirestormPhoenixTest extends BaseCardTest {
         harness.getGameService().playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 6);

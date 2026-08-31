@@ -25,7 +25,7 @@ class ValleyFlamecallerTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }

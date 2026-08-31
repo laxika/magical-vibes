@@ -43,7 +43,7 @@ class DarksteelGarrisonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, garrison), null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a land you control");
+                .hasMessageContaining("Target must be a land");
     }
 
     @Test

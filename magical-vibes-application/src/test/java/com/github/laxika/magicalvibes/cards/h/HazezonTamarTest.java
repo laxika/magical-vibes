@@ -46,7 +46,7 @@ class HazezonTamarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, hazezon.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
@@ -65,7 +65,7 @@ class HazezonTamarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, hazezon.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Sand Warrior")).isZero();
     }

@@ -131,6 +131,10 @@ class EnterTriggerCollectorServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.getEffectiveGraveyardEffects(
+                        eq(gd), any(Card.class), any(EffectSlot.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
+                        .getEffects(invocation.getArgument(2)));
     }
 
     private void addAllyCreatureTrigger(EffectSlot slot, com.github.laxika.magicalvibes.model.effect.CardEffect effect) {

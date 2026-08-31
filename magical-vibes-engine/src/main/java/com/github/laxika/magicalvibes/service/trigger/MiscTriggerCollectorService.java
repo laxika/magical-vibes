@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
@@ -703,6 +704,17 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = BoostTargetCreatureEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapBoostTarget(TriggerMatchContext match,
+            BoostTargetCreatureEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                "fortified permanent became tapped", match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        return true;
+    }
+
     // ── ON_OPPONENT_LOSES_LIFE ─────────────────────────────────────────
 
     @CollectsTrigger(value = MillOpponentOnLifeLossEffect.class, slot = EffectSlot.ON_OPPONENT_LOSES_LIFE)
@@ -1034,6 +1046,25 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on energy gain (self-boost)",
                 gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE),
+            @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    })
+    private boolean handleLifeChangeBoostSelf(TriggerMatchContext match,
+            BoostSelfEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 

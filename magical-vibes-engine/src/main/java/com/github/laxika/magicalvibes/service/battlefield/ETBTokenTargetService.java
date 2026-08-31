@@ -189,18 +189,20 @@ public class ETBTokenTargetService {
             validSpellTargets.stream()
                     .filter(id -> !validTargetObjects.contains(id))
                     .forEach(validTargetObjects::add);
+            if (!validExiledCardTargets.isEmpty()
+                    && validPlayerTargets.isEmpty()
+                    && validSpellTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
+                interactionHandlerRegistry.begin(gameData,
+                        new PendingInteraction.ETBExiledCardTargetChoice(
+                                pending.sourceCard(), pending.controllerId(), pending.effects(),
+                                pending.sourcePermanentId(), validExiledCardTargets,
+                                validPermanentTargets, pending.triggeringPermanentId()));
+                log.info("Game {} - {} ETB exiled-card or permanent target trigger awaiting target selection",
+                        gameData.id, pending.sourceCard().getName());
+                return;
+            }
             if (validPlayerTargets.isEmpty() && validTargetObjects.isEmpty()) {
-                if (!validExiledCardTargets.isEmpty()) {
-                    gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
-                    interactionHandlerRegistry.begin(gameData,
-                            new PendingInteraction.ETBExiledCardTargetChoice(
-                                    pending.sourceCard(), pending.controllerId(), pending.effects(),
-                                    pending.sourcePermanentId(), validExiledCardTargets,
-                                    pending.triggeringPermanentId()));
-                    log.info("Game {} - {} ETB exiled-card target trigger awaiting target selection",
-                            gameData.id, pending.sourceCard().getName());
-                    return;
-                }
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s enter-the-battlefield ability has no valid targets."));
                 log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",

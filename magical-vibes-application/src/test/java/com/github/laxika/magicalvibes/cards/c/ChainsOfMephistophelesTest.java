@@ -21,6 +21,7 @@ class ChainsOfMephistophelesTest extends BaseCardTest {
     void firstDrawOfDrawStepIsNotReplaced() {
         harness.addToBattlefield(player1, new ChainsOfMephistopheles());
         CardFixture fixture = new CardFixture();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(fixture.libraryCard));
 
         harness.forceActivePlayer(player1);

@@ -160,6 +160,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentPermanentsEnteringDon
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeSourceDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageToPlayersAndBattlesBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSourceDamageBonusEffect;
@@ -606,7 +607,11 @@ public class GameQueryService {
         LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
         try {
             CharacteristicState state = pass.board().states().get(permanent.getId());
-            return state != null && state.hasSubtype(subtype);
+            return state != null
+                    ? state.hasSubtype(subtype)
+                    : permanent.getCard().getSubtypes().contains(subtype)
+                    || permanent.getTransientSubtypes().contains(subtype)
+                    || permanent.getGrantedSubtypes().contains(subtype);
         } finally {
             layerSystemService.endPass(pass);
         }
@@ -7272,21 +7277,23 @@ public class GameQueryService {
      * @return the damage after applying all multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage, StackEntry entry) {
+        Permanent source = entry != null && entry.getSourcePermanentId() != null
+                ? findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        UUID controllerId = entry != null ? entry.getControllerId() : null;
+        if (source != null) {
+            UUID sourceControllerId = findPermanentController(gameData, source.getId());
+            if (sourceControllerId != null) controllerId = sourceControllerId;
+        }
         int bonus = 0;
         if (damage > 0 && entry != null) {
             bonus = getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
                     + getColorSourcePermanentDamageBonus(gameData, entry.getControllerId(),
                             entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
+                    + getSubtypeSourceDamageBonus(gameData, controllerId,
+                            entry.getEffectiveDamageSourceCard(), source)
                     + getControllerDamageBonus(gameData, entry)
                     + getSpellDamageBonus(gameData, entry);
-        }
-        UUID controllerId = entry != null ? entry.getControllerId() : null;
-        Permanent source = entry != null && entry.getSourcePermanentId() != null
-                ? findPermanentById(gameData, entry.getSourcePermanentId())
-                : null;
-        if (source != null) {
-            UUID sourceControllerId = findPermanentController(gameData, source.getId());
-            if (sourceControllerId != null) controllerId = sourceControllerId;
         }
         return (damage + bonus) * getDamageMultiplier(gameData)
                 * getControllerDamageMultiplier(gameData, controllerId, entry, false, source)
@@ -7591,7 +7598,8 @@ public class GameQueryService {
             if (controllerId != null) {
                 bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
                         + getColorSourcePermanentDamageBonus(gameData, controllerId,
-                                source.getCard().getColors(), source.getId());
+                                source.getCard().getColors(), source.getId())
+                        + getSubtypeSourceDamageBonus(gameData, controllerId, source.getCard(), source);
                 if (target != null) {
                     UUID targetControllerId = findPermanentController(gameData, target.getId());
                     bonus += getAdditionalDamageToOpponentsBonus(
@@ -7619,6 +7627,28 @@ public class GameQueryService {
             }
         }
         return result;
+    }
+
+    private int getSubtypeSourceDamageBonus(GameData gameData, UUID controllerId,
+                                             Card sourceCard, Permanent source) {
+        if (controllerId == null || sourceCard == null) {
+            return 0;
+        }
+        int[] bonus = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!playerId.equals(controllerId)) {
+                return;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SubtypeSourceDamageBonusEffect subtypeBonus
+                        && subtypeBonus.subtypes().stream().anyMatch(subtype -> source != null
+                                ? hasEffectiveSubtype(gameData, source, subtype)
+                                : sourceCard.getSubtypes().contains(subtype))) {
+                    bonus[0] += subtypeBonus.amount();
+                }
+            }
+        });
+        return bonus[0];
     }
 
     /**

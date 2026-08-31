@@ -9,12 +9,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,14 +61,14 @@ class RemoveEnchantmentsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(ownEnchantment, ownAuraOnOwnCreature.getCard(), ownAuraOnOpponentAttacker.getCard());
-        assertThat(gd.playerBattlefields.get(player1))
+        assertThat(gd.playerBattlefields.get(player1.getId()))
                 .doesNotContain(ownEnchantmentPermanent, opponentEnchantmentPermanent,
                         ownAuraOnOwnCreature, opponentAuraOnOwnCreature);
-        assertThat(gd.playerBattlefields.get(player2))
+        assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(ownAuraOnOpponentAttacker, opponentAuraOnOpponentAttacker)
                 .contains(ownAuraOnOpponentNonattacker);
 
-        assertThat(gd.playerGraveyards.get(player2))
+        assertThat(gd.playerGraveyards.get(player2.getId()))
                 .contains(opponentEnchantment, opponentAuraOnOwnCreature.getCard(), opponentAuraOnOpponentAttacker.getCard())
                 .doesNotContain(ownEnchantment, (Card) ownAuraOnOwnCreature.getCard(),
                         (Card) ownAuraOnOpponentAttacker.getCard(), (Card) ownAuraOnOpponentNonattacker.getCard());
@@ -80,6 +85,17 @@ class RemoveEnchantmentsTest extends BaseCardTest {
     }
 
     private void markOwnedBy(Permanent permanent, Player owner) {
+        var controllerId = gd.playerBattlefields.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(permanent))
+                .map(java.util.Map.Entry::getKey)
+                .findFirst()
+                .orElseThrow();
         gd.stolenCreatures.put(permanent.getId(), owner.getId());
+        if (!controllerId.equals(owner.getId())) {
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Test control effect", permanent.getId(), controllerId,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanent.getId(),
+                    null, null, EffectDuration.PERMANENT, 0));
+        }
     }
 }

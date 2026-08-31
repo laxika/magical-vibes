@@ -237,6 +237,12 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                 eq(gameData), any(Permanent.class), any(Permanent.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySelfDamagePreventionShield(
+                        eq(gameData), any(Permanent.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyCreaturePreventionShieldWithoutSelfDamagePrevention(
+                        eq(gameData), any(Permanent.class), anyInt(), eq(true)))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         // The SBA check decides deaths from the live battlefield, so the removal mock must
         // actually remove — otherwise the casualty diff and the SBA repeat passes see ghosts.
         lenient().doAnswer(inv -> {

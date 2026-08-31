@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,6 +56,7 @@ class MarblePriestTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(wall.getId(), 3));
 
         assertThat(priest.getMarkedDamage()).isEqualTo(2);
         assertThat(wall.getMarkedDamage()).isEqualTo(3);

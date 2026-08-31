@@ -16,7 +16,6 @@ public class Telekinesis extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures())
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.TARGET, 2));
     }
 }

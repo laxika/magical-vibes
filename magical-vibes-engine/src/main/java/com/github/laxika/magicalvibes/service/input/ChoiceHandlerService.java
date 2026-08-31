@@ -1563,7 +1563,12 @@ public class ChoiceHandlerService {
 
         legendRuleService.checkLegendRule(gameData, ctx.controllerId());
 
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        battlefieldEntryService.processCreatureETBEffects(
+                gameData, ctx.controllerId(), perm.getCard(), null, true);
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleTriggeredModalChoice(GameData gameData, Player player, String chosenLabel,
