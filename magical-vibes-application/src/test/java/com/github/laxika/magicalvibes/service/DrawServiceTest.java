@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
@@ -27,6 +31,9 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -188,6 +195,25 @@ class DrawServiceTest {
                     assertThat(trigger.sourcePermanentId()).isEqualTo(equipment.getId());
                     assertThat(trigger.targetFilter()).isEqualTo(TargetFilters.creatureYouControl());
                 });
+    }
+
+    @Test
+    void targetedPlayerDrawTriggerQueuesTargetChoice() {
+        Card card = createCard("Queza, Augur of Agonies", CardType.CREATURE);
+        SequenceEffect effect = SequenceEffect.of(
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new GainLifeEffect(1));
+        card.target(new PlayerPredicateTargetFilter(
+                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                        "Target must be an opponent"))
+                .addEffect(EffectSlot.ON_CONTROLLER_DRAWS, effect);
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
+                .isNotNull();
     }
 
     @Test

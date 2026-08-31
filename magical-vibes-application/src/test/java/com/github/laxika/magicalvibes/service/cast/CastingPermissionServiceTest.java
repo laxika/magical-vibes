@@ -314,6 +314,24 @@ class CastingPermissionServiceTest {
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, stashed.getId())).isFalse();
     }
 
+    @Test
+    @DisplayName("collection counters grant one controller-only any-mana exile cast each turn")
+    void collectionCountersGrantExileCastingPermission() {
+        Card evelyn = new Card();
+        evelyn.addEffect(EffectSlot.STATIC,
+                AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(evelyn));
+
+        Card collected = new Card();
+        gd.addToExileWithCollectionCounter(player2Id, collected, player1Id);
+
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasAnyManaTypePermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, collected.getId())).isFalse();
+        assertThat(svc.consumeCollectionCounterPermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, collected.getId())).isFalse();
+    }
+
     @Nested
     @DisplayName("isSpellCastingAllowed — legendary sorcery restriction")
     class LegendarySorceryRestriction {

@@ -36,13 +36,22 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        resolve(gameData, entry, (ReturnAllCardsExiledWithSourceEffect) effect, null);
+    }
+
+    void returnAllCardsExiledWithSourceExcept(GameData gameData, StackEntry entry,
+                                              UUID excludedCardId) {
+        resolve(gameData, entry, new ReturnAllCardsExiledWithSourceEffect(), excludedCardId);
+    }
+
+    private void resolve(GameData gameData, StackEntry entry,
+                         ReturnAllCardsExiledWithSourceEffect returnEffect,
+                         UUID excludedCardId) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
             return;
         }
 
-        ReturnAllCardsExiledWithSourceEffect returnEffect =
-                (ReturnAllCardsExiledWithSourceEffect) effect;
         if (returnEffect.turnFaceUp()) {
             for (int i = 0; i < gameData.exiledCards.size(); i++) {
                 ExiledCardEntry exiledEntry = gameData.exiledCards.get(i);
@@ -57,6 +66,8 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
 
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .filter(e -> excludedCardId == null
+                        || !excludedCardId.equals(e.card().getId()))
                 .filter(e -> returnEffect.filter() == null
                         || predicateEvaluationService.matchesCardPredicate(
                         e.card(), returnEffect.filter(), entry.getCard().getId()))

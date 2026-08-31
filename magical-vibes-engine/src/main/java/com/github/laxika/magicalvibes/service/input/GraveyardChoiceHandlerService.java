@@ -721,6 +721,14 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.milledCreaturesToHand != null) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.milledCreaturesToHand =
+                    new GraveyardTargetOperationState.MilledCreaturesToHandContext(List.copyOf(cardIds));
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.cloneOperation.graveyardCopyChoicePending) {
             Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, cardIds.getFirst());
             if (selectedCard == null || !selectedCard.hasType(CardType.CREATURE)) {

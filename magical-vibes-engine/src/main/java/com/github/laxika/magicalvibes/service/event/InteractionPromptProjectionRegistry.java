@@ -384,11 +384,16 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectExiledCardMayPlayChoice(
             GameData gameData, PendingInteraction.ExiledCardMayPlayChoice interaction) {
+        String duration = switch (interaction.duration()) {
+            case END_OF_TURN -> "until the end of this turn";
+            case NEXT_END_STEP -> "until your next end step";
+            case NEXT_TURN -> "until the end of your next turn";
+        };
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
-                "Choose a card exiled this way to play until the end of your next turn.");
+                "Choose a card exiled this way to play " + duration + ".");
     }
 
     private InteractionPromptMessage projectLudevicCopyChoice(

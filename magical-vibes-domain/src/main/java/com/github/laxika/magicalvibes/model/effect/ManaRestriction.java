@@ -70,6 +70,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with exactly three colors. */
+    record ExactlyThreeColorSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addExactlyThreeColorSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with exactly three colors only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override

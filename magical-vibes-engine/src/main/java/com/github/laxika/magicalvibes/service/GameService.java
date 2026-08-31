@@ -1364,13 +1364,20 @@ public class GameService {
     }
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, List.of());
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId))) return;
+                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
+                        counterCostPermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId);
+            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
+                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of());
         }
     }
 

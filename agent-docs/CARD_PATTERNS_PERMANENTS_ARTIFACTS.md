@@ -133,6 +133,7 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Creature that crews using toughness | `g/GiantOx.java` | STATIC `UseToughnessForCrewAndSaddleEffect()`; `CrewCostHandler` uses that creature's effective toughness instead of power |
 | Vehicle with Crew + combat trigger | `w/Weatherlight.java` | CrewCost(3) + AnimatePermanentsEffect.crew() activated ability (no tap, no mana). ON_COMBAT_DAMAGE_TO_PLAYER LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, CardIsHistoricPredicate()). Crew cost auto-pays when all creatures must be tapped; prompts interactively otherwise |
+| Vehicle with ETB/attack exile-until-leaves trigger and source-exile return rider | `m/MysteriousLimousine.java` | Shared `ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect` target group on `ON_ENTER_BATTLEFIELD` and `ON_ATTACK`, with `PermanentNotPredicate(PermanentIsSourcePermanentPredicate())` for "another" and Crew 2 |
 | Vehicle with Exhaust + Crew + exhaust-activation draw trigger | `r/RangersRefueler.java` | Exhaust ability uses `.withMaxActivationsPerGame(1).withExhaust()` and permanent `AnimatePermanentsEffect`; `ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY` draws before the exhaust ability resolves; Crew 2 remains a separate ordinary activated ability |
 
 ## Equipment
@@ -140,6 +141,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Simple boost equip | `l/LeoninScimitar.java` | STATIC StaticBoostEffect(X, Y, GrantScope.EQUIPPED_CREATURE) + EquipActivatedAbility |
+| Counter-scaled planeswalker Equipment | `l/LuxiorGiadasGift.java` | STATIC AttachedBoostEffect(CountersOnSource(ANY), same, EQUIPPED_CREATURE, true) + GrantCardTypeEffect(CREATURE, EQUIPPED_CREATURE) + RemoveCardTypeFromAttachedPermanentEffect(PLANESWALKER) + custom EquipEffect.toPlaneswalker() `{1}` + EquipActivatedAbility(`{3}`) |
 | Dynamic base P/T equip | `a/AettirAndPriwen.java` | STATIC SetBasePowerToughnessToAmountEffect(ControllerLifeTotal(), same, GrantScope.EQUIPPED_CREATURE) + EquipActivatedAbility("{5}") — equipped creature's base power and toughness follow the Equipment controller's life total |
 | Equipped-creature controller anthem | `h/HexgoldHoverwings.java` | STATIC `StaticBoostEffect(1, 0, OWN_CREATURES, PermanentIsEquippedPredicate())` + `LivingWeaponEffect` + flying on the equipped creature + equip. The predicate applies the +1/+0 to every creature you control that has any Equipment attached, not only to this Equipment's host |
 | Boost + filtered required blocker equip | `s/SlayersCleaver.java` | STATIC StaticBoostEffect(3, 1, EQUIPPED_CREATURE) + MustBeBlockedByMatchingCreatureIfAbleEffect(Eldrazi) + EquipActivatedAbility("{4}") |

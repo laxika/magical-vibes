@@ -56,6 +56,8 @@ public enum LibrarySearchDestination {
     EXILE_FOR_FREE_CAST,
     /** Exile the chosen card face up and offer its controller a one-time free cast. */
     EXILE_FOR_MAY_CAST,
+    /** Exile the chosen card face up and offer its controller a one-time normal-cost cast. */
+    EXILE_FOR_MAY_CAST_WITH_NORMAL_COST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
     /** Put the chosen card onto the battlefield tapped under a specified player's control. */

@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsCreaturesSharingCr
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithSameName;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterCountAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterKindsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalToughnessAtLeast;
@@ -149,6 +150,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DealtDamageByRedSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
+import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
@@ -163,6 +165,7 @@ import com.github.laxika.magicalvibes.model.condition.DuringCombat;
 import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
+import com.github.laxika.magicalvibes.model.condition.EquippedCreatureHasAtLeastEquipment;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.FaceDownCreatureEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
@@ -285,6 +288,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
+import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetManaValueAtMostControllerGraveyardCount;
@@ -404,6 +408,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0) == 4;
             case Delirium ignored ->
                     isDeliriumMet(gameData, ctx);
+            case DistinctManaValuesAmongCardsInGraveyardAtLeast c ->
+                    distinctManaValuesAmongCardsInGraveyardAtLeast(gameData, ctx, c.threshold());
             case PermanentTypesInGraveyardAtLeast c ->
                     permanentTypesInGraveyardAtLeast(gameData, ctx, c.threshold());
             case DevotionToColorAtLeast c ->
@@ -492,6 +498,8 @@ public class ConditionEvaluationService {
                     isSourceEquipped(gameData, ctx);
             case EquippedCreatureDidntDealCombatDamageToCreatureThisTurn ignored ->
                     equippedCreatureDidntDealCombatDamageToCreatureThisTurn(gameData, ctx);
+            case EquippedCreatureHasAtLeastEquipment c ->
+                    equippedCreatureHasAtLeastEquipment(gameData, ctx, c.minimum());
             case Enchanted ignored ->
                     isSourceEnchanted(gameData, ctx);
             case EnchantedByAtLeastAuras c ->
@@ -545,6 +553,8 @@ public class ConditionEvaluationService {
                     countControlledMatchingPermanentNames(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentsWithSameName c ->
                     controlsMatchingPermanentsWithSameName(gameData, ctx, c.minCount(), c.filter());
+            case ControlledCreatureCounterCountAtLeast c ->
+                    controlledCreatureCounterCount(gameData, ctx) >= c.threshold();
             case ControlledCreatureCounterKindsAtLeast c ->
                     controlledCreatureCounterKinds(gameData, ctx) >= c.threshold();
             case ControlsOtherPermanentCount c ->
@@ -913,6 +923,16 @@ public class ConditionEvaluationService {
                     ctx.xValue() >= c.minMana();
             case SpellCreatureManaSpentAtLeast c ->
                     ctx.xValue() >= c.minMana();
+            case SpellManaValueEqualsSourceCounters c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                int counterCount = source == null
+                        ? -1
+                        : c.counterType() == CounterType.ANY
+                                ? source.getCounters().values().stream().mapToInt(Integer::intValue).sum()
+                                : source.getCounterCount(c.counterType());
+                int spellManaValue = eventValue != null ? eventValue : ctx.eventValue();
+                yield source != null && spellManaValue == counterCount + c.offset();
+            }
             case SpellManaSpentGreaterThanSourcePower ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && ctx.xValue() > gameQueryService.getEffectivePower(gameData, source);
@@ -1659,6 +1679,20 @@ public class ConditionEvaluationService {
         return found.size() >= threshold;
     }
 
+    private boolean distinctManaValuesAmongCardsInGraveyardAtLeast(
+            GameData gameData, ConditionContext ctx, int threshold) {
+        if (ctx.controllerId() == null) return false;
+        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
+        if (graveyard == null || graveyard.isEmpty()) return false;
+        Set<Integer> found = new HashSet<>();
+        for (Card card : graveyard) {
+            if (!card.isToken()) {
+                found.add(card.getManaValue());
+            }
+        }
+        return found.size() >= threshold;
+    }
+
     private boolean devotionToColorAtLeast(GameData gameData, ConditionContext ctx,
                                            DevotionToColorAtLeast condition) {
         if (ctx.controllerId() == null) return false;
@@ -1716,6 +1750,30 @@ public class ConditionEvaluationService {
         return equippedCreatureId != null
                 && gameQueryService.findPermanentById(gameData, equippedCreatureId) != null
                 && !gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.contains(equippedCreatureId);
+    }
+
+    private boolean equippedCreatureHasAtLeastEquipment(GameData gameData, ConditionContext ctx, int minimum) {
+        Permanent equipment = ctx.sourcePermanent();
+        if (equipment == null && ctx.sourcePermanentId() != null) {
+            equipment = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        }
+        if (equipment == null || !equipment.isAttached()) return false;
+
+        UUID equippedCreatureId = equipment.getAttachedTo();
+        int count = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (permanent.isAttached()
+                        && equippedCreatureId.equals(permanent.getAttachedTo())
+                        && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                    count++;
+                    if (count >= minimum) return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean isSourceEnchanted(GameData gameData, ConditionContext ctx) {
@@ -2012,6 +2070,19 @@ public class ConditionEvaluationService {
             }
         }
         return counterKinds.size();
+    }
+
+    private long controlledCreatureCounterCount(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+
+        return battlefield.stream()
+                .filter(permanent -> isCreatureForCondition(gameData, permanent))
+                .mapToLong(permanent -> permanent.getCounters().values().stream()
+                        .mapToLong(Integer::longValue)
+                        .sum())
+                .sum();
     }
 
     private long countOtherControlledMatchingPermanents(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {

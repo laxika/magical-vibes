@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureHasCountersConditionalEffect;
@@ -223,6 +225,36 @@ class EnterTriggerCollectorServiceTest {
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ally-creature turn-scoped modal queues mode selection")
+    void allyCreatureTurnScopedModalQueuesModeSelection() {
+        Card source = new Card();
+        source.setName("Gala Greeters");
+        source.addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption("First mode", new GainLifeEffect(1)),
+                        new ChooseOneEffect.ChooseOneOption("Second mode", new GainLifeEffect(1)))));
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+        Card entering = enteringCreature(2, 2);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingInteractions)
+                .filteredOn(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                .hasSize(1);
+        var pending = gd.pendingInteractions.stream()
+                .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
+                .findFirst()
+                .orElseThrow();
+        assertThat(pending.modesResetEachTurn()).isTrue();
+        assertThat(pending.sourcePermanentId()).isEqualTo(sourcePermanent.getId());
     }
 
     @Test

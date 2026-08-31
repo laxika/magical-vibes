@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -296,6 +298,21 @@ public class EnterTriggerCollectorService {
         }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
                 findEnteringPermanentId(match, pe.enteringCard()));
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureEnterTurnScopedModal(TriggerMatchContext match,
+                                                             ChooseModeNotYetChosenThisTurnEffect effect,
+                                                             TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(effect.options()),
+                    match.permanent().getId(), true));
+        }
         logTriggered(match);
         return true;
     }

@@ -1467,7 +1467,9 @@ public class CastingCostService {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                         .map(this::manaCostOf)
-                        .anyMatch(reduction -> cost.canPayAfterReduction(pool, reduction));
+                        .anyMatch(reduction -> manaCost.get().treasureManaOnly()
+                                ? pool.canPayWithTreasureManaAfterReduction(cost, reduction)
+                                : cost.canPayAfterReduction(pool, reduction));
             }
             // Emerge: optimistically reduce by the highest mana value among sacrificeable permanents.
             int emergeReduction = 0;
@@ -1482,7 +1484,9 @@ public class CastingCostService {
                     ? getCastCostModifierForFaceDownSpell(gameData, playerId, card)
                     : card.getKeywords().contains(Keyword.PLOT)
                     ? getPlotCostModifier(gameData, playerId, card) : -emergeReduction;
-            if (!cost.canPay(pool, additionalCost)) return false;
+            if (!(manaCost.get().treasureManaOnly()
+                    ? pool.canPayWithTreasureMana(cost, additionalCost)
+                    : cost.canPay(pool, additionalCost))) return false;
         }
 
         return true;

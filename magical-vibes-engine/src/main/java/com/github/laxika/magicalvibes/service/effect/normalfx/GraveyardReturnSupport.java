@@ -180,7 +180,8 @@ public class GraveyardReturnSupport {
 
         if (targetCard == null
                 || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId))
+                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId,
+                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger()))
                 || (effect.targetNotPutIntoGraveyardThisCombat()
                 && targetOwnerId != null
                 && gameData.cardsPutIntoGraveyardThisCombat
@@ -515,7 +516,10 @@ public class GraveyardReturnSupport {
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
-                            grantedEffect, p.getId(), null, null, EffectDuration.PERMANENT, 0));
+                            grantedEffect, p.getId(), null, null,
+                            effect.battlefieldEffectGrantDuration() == null
+                                    ? EffectDuration.PERMANENT
+                                    : effect.battlefieldEffectGrantDuration(), 0));
                 }
             }
             break;

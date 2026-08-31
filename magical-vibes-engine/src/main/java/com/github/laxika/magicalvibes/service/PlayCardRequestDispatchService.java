@@ -42,7 +42,13 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
-            gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            List<UUID> counterCostPermanentIds = listOrEmpty(request.exileCounterCostPermanentIds());
+            if (counterCostPermanentIds.isEmpty()) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            } else {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        counterCostPermanentIds);
+            }
             return;
         }
         if (Boolean.TRUE.equals(request.flashback())) {

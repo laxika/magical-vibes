@@ -168,6 +168,7 @@ public class GraveyardTargetOperationState {
      */
     public AsEntersGraveyardExileContext asEntersExile;
     public MilledCreatureReturnContext milledCreatureReturn;
+    public MilledCreaturesToHandContext milledCreaturesToHand;
 
     /**
      * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
@@ -201,6 +202,12 @@ public class GraveyardTargetOperationState {
 
     public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {
         public MilledCreatureReturnContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
+        public MilledCreaturesToHandContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

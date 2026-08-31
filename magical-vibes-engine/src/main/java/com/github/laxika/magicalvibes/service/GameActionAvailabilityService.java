@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -367,6 +368,12 @@ public class GameActionAvailabilityService {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteNoncreatureSpellOnlyMana();
+        }
+        if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
+                && pool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteExactlyThreeColorSpellOnlyMana();
         }
         if (card.hasType(CardType.CREATURE) && pool.getCreatureSpellOrAbilityManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
@@ -1346,6 +1353,19 @@ public class GameActionAvailabilityService {
                 }
             } else if (cost instanceof DiscardCardCastingCost) {
                 if (gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
+                    return false;
+                }
+            } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {
+                long matchingPermanents = gameData.playerBattlefields
+                        .getOrDefault(playerId, List.of())
+                        .stream()
+                        .filter(permanent -> gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                                || !gameQueryService.isCreature(gameData, permanent))
+                        .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, sacrificeCost.filter(),
+                                FilterContext.of(gameData).withSourceControllerId(playerId)))
+                        .count();
+                if (matchingPermanents < sacrificeCost.count()) {
                     return false;
                 }
             } else {

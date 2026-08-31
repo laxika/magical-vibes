@@ -1242,10 +1242,10 @@ public class CombatDamageService {
                 CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
                         ? amountAware.snapshotCombatDamage(damageDealt)
                         : rawEffect;
-                // CR 603.4 — a triggered ability with an intervening "if" clause only triggers when
-                // the condition is met at trigger time (it is re-checked on resolution by
-                // EffectResolutionService). Applies to every condition, not just metalcraft.
+                // CR 603.4 — only an intervening "if" clause gates trigger creation. Resolution-
+                // time conditions remain on the stack and are checked by EffectResolutionService.
                 if (effect instanceof ConditionalEffect conditional
+                        && conditional.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(creature, attackerId))) {
                     log.info("Game {} - {}'s {} combat damage trigger does not fire", gameData.id,
@@ -2758,6 +2758,17 @@ public class CombatDamageService {
         if (state.damageToDefendingPlayer > unpreventable) {
             state.damageToDefendingPlayer = Math.max(unpreventable, state.damageToDefendingPlayer
                     - damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.damageToDefendingPlayer));
+        }
+        int angelDamage = state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer;
+        int angelPreventableDamage = Math.max(0, state.damageToDefendingPlayer - unpreventable)
+                + state.poisonDamageToDefendingPlayer;
+        int angelPrevented = damageSupport.applyAngelOfSufferingReplacement(
+                gameData, defenderId, angelDamage, angelPreventableDamage);
+        if (angelPrevented > 0) {
+            int preventedFromNormalDamage = Math.min(
+                    angelPrevented, Math.max(0, state.damageToDefendingPlayer - unpreventable));
+            state.damageToDefendingPlayer -= preventedFromNormalDamage;
+            state.poisonDamageToDefendingPlayer -= angelPrevented - preventedFromNormalDamage;
         }
         if (state.damageToDefendingPlayer > unpreventable) {
             state.damageToDefendingPlayer = Math.max(unpreventable, state.damageToDefendingPlayer

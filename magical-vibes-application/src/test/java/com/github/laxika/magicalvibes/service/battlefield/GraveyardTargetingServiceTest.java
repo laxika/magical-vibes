@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -140,6 +142,36 @@ class GraveyardTargetingServiceTest {
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
                 eq(1), eq(0), anyString());
+    }
+
+    @Test
+    @DisplayName("graveyard return targeting passes a total mana value cap to the choice")
+    void handleReturnToBattlefieldTargeting_passesMaximumManaValue() {
+        Card source = new Card();
+        source.setName("Patch Up");
+        Card creature = new Card();
+        creature.setName("Creature");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}");
+        Card expensiveCreature = new Card();
+        expensiveCreature.setName("Expensive creature");
+        expensiveCreature.setType(CardType.CREATURE);
+        expensiveCreature.setManaCost("{4}");
+        gd.playerGraveyards.get(player1Id).add(creature);
+        gd.playerGraveyards.get(player1Id).add(expensiveCreature);
+        ReturnTargetCardsFromGraveyardToBattlefieldEffect effect =
+                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                        new CardTypePredicate(CardType.CREATURE), 3, false, false,
+                        null, 3, null, null, null, 0);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(creature), eq(effect.filter()), eq(source.getId()), eq(gd), eq(player1Id),
+                isNull(), isNull(), isNull())).thenReturn(true);
+        service.handleUpToNGraveyardSpellTargeting(gd, player1Id, source,
+                StackEntryType.SORCERY_SPELL, effect, List.of(effect));
+
+        verify(playerInputService).beginMultiGraveyardChoiceWithMaximumManaValue(
+                eq(gd), eq(player1Id), argThat(cards -> cards.contains(creature)
+                        && !cards.contains(expensiveCreature)), eq(1), eq(0), eq(3), anyString());
     }
 
     @Test

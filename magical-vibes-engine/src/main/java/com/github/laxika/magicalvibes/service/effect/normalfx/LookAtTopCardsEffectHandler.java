@@ -184,6 +184,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .destination(e.chosenDestination())
                         .grantHaste(e.grantHaste())
                         .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                        .enterWithCounters(e.battlefieldEntryReplacement())
                         .build(),
                         prompt,
                         e.optional()));
@@ -200,8 +201,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .prompt("You may put one of these cards onto the battlefield.")
                     .grantHaste(e.grantHaste())
                     .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                    .enterWithCounters(e.battlefieldEntryReplacement())
                     .destination(e.chosenDestination())
-                            .build(),
+                    .build(),
                     "You may put one of these cards onto the battlefield.",
                     true));
             return;
@@ -226,7 +228,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
-                e.battlefieldSelectionFollowUp(), false, false));
+                e.battlefieldSelectionFollowUp(), false, false, e.battlefieldEntryReplacement()));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

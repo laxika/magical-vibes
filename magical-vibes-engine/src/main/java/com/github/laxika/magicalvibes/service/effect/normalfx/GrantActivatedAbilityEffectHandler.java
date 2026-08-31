@@ -155,6 +155,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
 
         String durationText = switch (e.duration()) {
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case UNTIL_SOURCE_CARD_CAST_FROM_EXILE -> "until the source card is cast from exile";
             case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS ->
                     "for as long as the source remains on the battlefield";
             case PERMANENT, CONTINUOUS -> "indefinitely";
@@ -174,7 +175,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         EffectDuration duration = grant.duration();
         if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
                 || duration == EffectDuration.WHILE_SOURCE_REMAINS
-                || duration == EffectDuration.PERMANENT) {
+                || duration == EffectDuration.PERMANENT
+                || duration == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     entry.getCard().getName(),
@@ -184,7 +186,9 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                             grant.ability().withGrantSource(entry.getSourcePermanentId()),
                             GrantScope.TARGET,
                             grant.filter(),
-                            duration
+                            duration,
+                            grant.expirationCardId() != null
+                                    ? grant.expirationCardId() : entry.getCard().getId()
                     ),
                     permanent.getId(),
                     null,

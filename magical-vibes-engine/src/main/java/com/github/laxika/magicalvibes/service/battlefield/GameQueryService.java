@@ -129,6 +129,7 @@ import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffec
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastFromZonesEffect;
@@ -1394,6 +1395,14 @@ public class GameQueryService {
                 && !hasLostAllAbilities(gameData, source)
                 && source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(SpendBlueManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance);
+    }
+
+    /** Returns whether the source's activated abilities may use any mana as any color. */
+    public boolean canSpendManaAsAnyColorForActivatedAbilities(GameData gameData, Permanent source) {
+        return source != null
+                && !hasLostAllAbilities(gameData, source)
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance);
     }
 
     /**
@@ -7774,7 +7783,13 @@ public class GameQueryService {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
                             && lock.blocksManaAbilities()) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                        UUID sourceControllerId = findPermanentController(gameData, p.getId());
+                        FilterContext filterContext = FilterContext.of(gameData)
+                                .withSourceCardId(p.getCard().getId())
+                                .withSourceControllerId(sourceControllerId)
+                                .withSourcePermanentId(p.getId());
+                        if (predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, lock.predicate(), filterContext)) {
                             return false;
                         }
                     }

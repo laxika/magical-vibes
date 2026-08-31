@@ -10,7 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Terisian Mindbreaker's non-targeting attack trigger. */
+/** Resolves non-targeting defending-player half-library attack triggers. */
 @Component
 @RequiredArgsConstructor
 public class MillHalfDefendingPlayerEffectHandler implements NormalEffectHandlerBean {
@@ -25,6 +25,7 @@ public class MillHalfDefendingPlayerEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (MillHalfDefendingPlayerEffect) effect;
         UUID attackedTargetId = entry.getAttackedTargetId();
         if (attackedTargetId == null) {
             return;
@@ -37,6 +38,7 @@ public class MillHalfDefendingPlayerEffectHandler implements NormalEffectHandler
         }
 
         int librarySize = gameData.playerDecks.get(defendingPlayerId).size();
-        graveyardService.resolveMillPlayer(gameData, defendingPlayerId, (librarySize + 1) / 2);
+        int cardsToMill = e.roundUp() ? (librarySize + 1) / 2 : librarySize / 2;
+        graveyardService.resolveMillPlayer(gameData, defendingPlayerId, cardsToMill);
     }
 }

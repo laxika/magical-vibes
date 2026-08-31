@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "71")
+@CardRegistration(set = "SNC", collectorNumber = "70")
 public class CorruptCourtOfficial extends Card {
 
     public CorruptCourtOfficial() {

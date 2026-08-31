@@ -184,6 +184,7 @@ public class StateBasedActionService {
             gameData.spellsWithPlotOnResolution.remove(cardId);
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
+            gameData.exiledCardsWithCollectionCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);

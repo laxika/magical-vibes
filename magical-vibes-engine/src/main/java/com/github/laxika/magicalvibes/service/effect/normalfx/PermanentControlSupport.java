@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -43,6 +44,7 @@ public class PermanentControlSupport {
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
         if (!(token.amount() instanceof Fixed fixed)) {
@@ -75,6 +77,21 @@ public class PermanentControlSupport {
      */
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                        String sourceSetCode, int power, int toughness) {
+        Card jinnieFay = amount > 0
+                ? TokenCreationReplacementSupport.findJinnieFay(gameData, controllerId) : null;
+        if (jinnieFay != null) {
+            playerInputService.beginJinnieFayTokenChoice(
+                    gameData, controllerId, jinnieFay, token, amount, power, toughness, sourceSetCode);
+            return List.of();
+        }
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
+                true, true, true);
+    }
+
+    /** Creates tokens after Jinnie Fay's replacement choice has already been made. */
+    public List<UUID> applyCreateTokenAfterJinnieFayChoice(GameData gameData, UUID controllerId,
+                                                            CreateTokenEffect token, int amount,
+                                                            String sourceSetCode, int power, int toughness) {
         return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
                 true, true, true);
     }

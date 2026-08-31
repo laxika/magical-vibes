@@ -53,6 +53,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         UUID choicePlayerId = switch (e.choicePlayer()) {
             case CONTROLLER -> entry.getControllerId();
             case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetId == null
                     ? null
@@ -72,9 +73,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        boolean defendingPlayerChoice = e.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER;
+
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
-                choicePlayerId,
+                defendingPlayerChoice ? entry.getControllerId() : choicePlayerId,
                 List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
                 targetId,
@@ -85,7 +88,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 0,
                 entry.getAttackedTargetId(),
                 e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null,
-                null,
+                defendingPlayerChoice ? choicePlayerId : null,
                 entry.getSourcePermanentSnapshot(),
                 null,
                 entry.getTriggeringCardId(),
@@ -106,5 +109,14 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             }
         }
         return null;
+    }
+
+    private UUID findDefendingPlayerId(GameData gameData, UUID attackedTargetId) {
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

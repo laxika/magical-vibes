@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -1565,6 +1566,28 @@ class CastingCostServiceTest {
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 
             gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificeCreatureOrDiscardCardOrPayLifeCost — true for any of its three options")
+        void sacrificeCreatureOrDiscardCardOrPayLifeCost() {
+            Card spell = spellWith(new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
+            gd.playerHands.get(player1Id).add(spell);
+            gd.playerLifeTotals.put(player1Id, 3);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerLifeTotals.put(player1Id, 4);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerLifeTotals.put(player1Id, 3);
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerHands.get(player1Id).clear();
+            Permanent creature = new Permanent(graveyardCard("Fodder", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }
 

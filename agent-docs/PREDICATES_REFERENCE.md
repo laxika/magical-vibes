@@ -1,5 +1,7 @@
 # PREDICATES_REFERENCE
 
+| `PermanentIsChosenPermanentPredicate` | `()` | the permanent chosen by the source permanent, matched by its current permanent id | `sourcePermanentId` or `sourcePermanentSnapshot` |
+
 `PermanentProtectedByDefendingPlayerPredicate()` matches battles protected by the defending player in the combat context carried by `FilterContext`; it is intended for attack-trigger target filters.
 
 Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPredicate`, and `PlayerPredicate` types. Extracted from ACTIVATED_ABILITY_GUIDE.md for standalone readability.
@@ -174,6 +176,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate` | `()` | nonland permanents with the lowest mana value among all nonland permanents on the battlefield (ties allowed) | `gameData` |
 | `PermanentHasLeastPowerAmongAllCreaturesPredicate` | `()` | creatures with the least effective power among all creatures on the battlefield across every player (ties allowed). Wretched Banquet | `gameData` |
 | `PermanentDealtDamageThisTurnPredicate` | `()` | permanents dealt damage this turn (evaluated against `GameData.permanentsDealtDamageThisTurn`) | `gameData` |
+| `PermanentDealtNoncombatDamageThisTurnPredicate` | `()` | permanents dealt noncombat damage this turn (evaluated against `GameData.permanentsDealtNoncombatDamageThisTurn`) | `gameData` |
 | `PermanentEnteredBattlefieldThisTurnPredicate` | `()` | permanents whose physical card entered the battlefield this turn; checks the original and current card identities so copy/transform effects preserve the match | `gameData` |
 | `PermanentCrewedBySourceThisTurnPredicate` | `()` | permanents that were tapped to pay the source Vehicle's crew cost this turn | source permanent snapshot |
 | `PermanentEnteredBattlefieldThisOrLastTurnPredicate` | `()` | permanents whose physical card entered during the current or immediately preceding turn; requires the source controller to have had a previous turn | `gameData` + `sourceControllerId` |
@@ -188,7 +191,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentSharesNameWithAnotherPermanentPredicate` | `()` | permanent shares its name with at least one other permanent on any battlefield (Eye of Singularity ETB wipe) | `gameData` |
 | `PermanentNameInPredicate` | `(Set<String> cardNames)` | permanents whose name is one of a fixed roster of names (exact `Card.getName()` equality). For "a name originally printed in the Homelands expansion" (Apocalypse Chime) — the card class owns the name list, so a later reprint of a listed name still matches | none |
 
-| `PermanentSharesCardTypeWithSourcePermanentPredicate` | `()` | permanents that share an artifact, creature, or enchantment card type with the source permanent snapshot; used for trigger-time comparisons with an entering permanent | `FilterContext.sourcePermanentSnapshot` |
+| `PermanentSharesCardTypeWithSourcePermanentPredicate` | `()` | permanents that share a permanent card type with the source permanent snapshot; used for source-relative type comparisons | `FilterContext.sourcePermanentSnapshot` |
 
 ### Source-relative predicates
 
@@ -239,6 +242,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryTargetsOnlySingleCreaturePredicate` | `()` | spells whose target occurrences all identify one creature; repeated occurrences of that creature are allowed (Muck Drubb) |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
+| `StackEntryIsCopyPredicate` | `()` | spells that were put onto the stack as copies rather than cast; used for "spell ... that wasn't cast" (Errant, Street Artist) |
 | `StackEntryNotTargetedByNamedCreatureAbilityPredicate` | `(String creatureName)` | target spells that are not already targeted by an activated or triggered ability from another creature with the given name; source-aware and evaluated by `TargetLegalityService` |
 | `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The source aura's attachment is supplied externally by the evaluating service. Used by Curse of Echoes and Curse of Silence |
@@ -350,10 +354,12 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
 | `CardIsMulticoloredPredicate` | `()` | a card with two or more colours (`Card.getColors().size() >= 2`); monocoloured and colourless cards never match. Card-in-any-zone counterpart of `PermanentIsMonocoloredPredicate`; used as a graveyard filter for "target multicolored card from your graveyard" (Reborn Hope) |
 | `CardHasExactlyTwoColorsPredicate` | `()` | a card with exactly two colors; used for Invasion of Ravnica's cast trigger and library selection |
+| `CardHasExactlyNColorsPredicate` | `(int colorCount)` | a card with exactly `colorCount` colors; used for dynamic-color-count library searches such as Evolving Door |
 | `CardIsColorlessPredicate` | `()` | colorless cards (`Card.getColors()` empty). Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "colorless creature card" (Grizzled Angler) |
 | `CardIsDoubleFacedPredicate` | `()` | physical double-faced cards; recognizes modal, transforming, disturb, and battle double-faced cards while excluding split, flip, and meld cards |
 | `CardControllerDoesNotOwnPredicate` | `()` | a card whose owner is not the perspective player (the `cardOwnerId` argument of `matchesCardPredicate`, which is the casting player in the spell-cast trigger path). Cards with no tracked owner (tokens/copies) never match. Use as a `SpellCastTriggerEffect` filter for "a spell you don't own" (Nita, Forum Conciliator). Ownership is stamped at game setup on `Card.ownerId` and preserved across zones |
 | `CardPowerAtMostPredicate` | `(int maxPower)` | a card whose printed power is <= `maxPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for library searches like "a creature card with power 2 or less" (Imperial Recruiter) |
+| `CardPowerAtMostSourcePowerPredicate` | `()` | a card whose power is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardPowerAtLeastPredicate` | `(int minPower)` | a card whose printed power is >= `minPower`; cards without power (non-creatures) never match. Compose with `CardTypePredicate(CREATURE)` via `CardAllOfPredicate` for "a creature card with power 5 or greater" (Sacellum Godspeaker) |
 | `CardManaValueAtMostSourcePowerPredicate` | `()` | a card whose mana value is <= the source permanent's effective power; needs `GameData` and `sourceCardId` |
 | `CardManaValueLessThanSourcePowerPredicate` | `()` | a card whose mana value is strictly less than the source permanent's effective power; needs `GameData` and `sourceCardId` |

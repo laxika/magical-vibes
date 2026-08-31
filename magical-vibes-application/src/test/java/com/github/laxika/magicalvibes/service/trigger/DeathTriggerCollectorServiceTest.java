@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
@@ -492,6 +494,21 @@ class DeathTriggerCollectorServiceTest {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
             assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        @DisplayName("Preserves alternate-cost state for a conditional death trigger")
+        void preservesAlternateCostState() {
+            Card card = createCreature("Blitz Creature", 2, 2);
+            var effect = new ConditionalEffect(new CastForAlternateCost(), new DrawCardEffect(1));
+            Permanent perm = new Permanent(card);
+            perm.setAlternateCost(true);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().isAlternateCost()).isTrue();
         }
 
         @Test

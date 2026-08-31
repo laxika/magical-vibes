@@ -19,6 +19,7 @@ package com.github.laxika.magicalvibes.model.action;
  */
 public sealed interface DelayedAction permits
         DelayedAdditionalCombatBeginningEffect,
+        TargetCreatureMustAttackNextCombat,
         DelayedEndOfCombatTrigger,
         DelayedPermanentAction,
         ExilePermanentAtControllerEndStep,
@@ -85,6 +86,7 @@ public sealed interface DelayedAction permits
         DelayedSacrificeSourceWhenTargetLeaves,
         DelayedSacrificeTargetWhenSourceLeaves,
         DelayedDestroyTargetWhenSourceLeaves,
+        DelayedExileReturnCounterTrigger,
         DelayedSacrificeTargetPermanentAtEndStep,
         DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost,
         DelayedCoinFlipSacrificeTargetPermanentAtEndStep,

@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUn
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -919,6 +920,23 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.EXILE_FOR_MAY_CAST_WITH_NORMAL_COST) {
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
+                    shuffleAfterSelection ? ". Library is shuffled." : "."));
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    chosenCard,
+                    playerId,
+                    List.of(new MayCastExiledCardWithNormalCostEffect(UUID.randomUUID(), false)),
+                    "Cast " + chosenCard.getName() + "?",
+                    chosenCard.getId()));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_FOR_FREE_CAST) {
             // Jace, Architect of Thought −8: the found nonland card is exiled face up (it may be cast
             // later), its owner shuffles, and the queue moves on to the next player's library. The
@@ -1397,8 +1415,9 @@ public class LibraryChoiceHandlerService {
                 case EXILE_IMPRINT -> "into exile (imprint)";
             case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM, EXILE_TWO_FACE_DOWN_REST_TO_BOTTOM_RANDOM,
                         EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD -> "into exile face down";
-            case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
-                        EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST -> "into exile";
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
+                        EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM, EXILE_FOR_MAY_CAST,
+                        EXILE_FOR_MAY_CAST_WITH_NORMAL_COST -> "into exile";
                 case EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM -> "into exile face down";
                 case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case EXILE_AND_CREATE_TOKENS -> throw new IllegalStateException("EXILE_AND_CREATE_TOKENS should be handled earlier");
@@ -2130,7 +2149,7 @@ public class LibraryChoiceHandlerService {
         if (libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
             placeCardsOnBattlefieldSimultaneously(gameData, selectedCards, controllerId,
                     libraryRevealChoice.selectedToBattlefieldTapped(), false, false, false,
-                    null, null, null);
+                    null, null, libraryRevealChoice.battlefieldEntryReplacement());
         } else {
             List<Permanent> simultaneouslyEntered = new ArrayList<>();
             for (Card card : selectedCards) {
@@ -2139,7 +2158,8 @@ public class LibraryChoiceHandlerService {
                     perm.setFaceDownAsCloaked();
                 }
                 battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, controllerId, perm, enterTappedTypesSnapshot, simultaneouslyEntered);
+                        gameData, controllerId, perm, enterTappedTypesSnapshot, simultaneouslyEntered,
+                        libraryRevealChoice.battlefieldEntryReplacement());
                 simultaneouslyEntered.add(perm);
                 selectedPermanentIds.add(perm.getId());
                 if (selectedCards.size() == 1 && gameData.pendingEffectResolutionEntry != null) {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
@@ -225,6 +226,28 @@ public class AsEntersInteractionService {
                 return;
             }
             // No other creatures — bodyguard enters with no chosen creature
+        }
+
+        boolean needsNonlandPermanentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseNonlandPermanentOnEnterEffect.class::isInstance);
+        if (needsNonlandPermanentChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validIds = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(permanent -> permanent != justEntered)
+                    .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!validIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseNonlandPermanentAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                                convokeCreatureIds));
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, new ArrayList<>(validIds),
+                        List.of(controllerId), "Choose a nonland permanent, or choose yourself to decline.");
+                return;
+            }
         }
 
         boolean needsPrimalClayFormChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchan
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndMillEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayingShieldDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CrumblingSanctuaryDamageReplacementEffect;
@@ -392,7 +393,7 @@ public class DamageSupport {
             recordRedSourceNoncombatDamage(gameData,
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
                     sourcePermanentForBonus, sourceControllerId, damage);
-            gameData.recordDamageToPermanent(target.getId(), damage);
+            gameData.recordNoncombatDamageToPermanent(target.getId(), damage);
             if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                     || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                 gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
@@ -605,6 +606,8 @@ public class DamageSupport {
         }
         if (damage <= 0) return;
 
+        damagePreventionService.consumeShieldCounter(gameData, target);
+
         recordRedSourceNoncombatDamage(gameData, entry.getEffectiveDamageSourceCard(), sourcePermanent,
                 sourceControllerId, damage);
         if (applyDralnuReplacement(gameData, target, damage) > 0) {
@@ -653,7 +656,7 @@ public class DamageSupport {
         // Record only (CR 704.5g — unpreventable damage still accumulates as marked damage);
         // the state-based action check performs any resulting destruction.
         target.addMarkedDamage(damageSourceKey(entry, null), damage);
-        gameData.recordDamageToPermanent(target.getId(), damage);
+        gameData.recordNoncombatDamageToPermanent(target.getId(), damage);
         if (damage > 0 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH)) {
             target.setDamagedByDeathtouch(true);
         }
@@ -716,11 +719,11 @@ public class DamageSupport {
         }
     }
 
-    public void resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
+    public int resolveCreatureTargetDamage(GameData gameData, StackEntry entry, int damage) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) return;
-        if (isDamagePreventedForCreature(gameData, entry, target)) return;
-        dealCreatureDamage(gameData, entry, target, damage);
+        if (target == null) return 0;
+        if (isDamagePreventedForCreature(gameData, entry, target)) return 0;
+        return dealCreatureDamage(gameData, entry, target, damage);
     }
 
     /**
@@ -897,7 +900,7 @@ public class DamageSupport {
                 if (damageDealt > 0) {
                     recordRedSourceNoncombatDamage(gameData, source, sourcePermanent, sourceControllerId,
                             damageDealt);
-                    gameData.recordDamageToPermanent(targetPermanent.getId(), damageDealt);
+                    gameData.recordNoncombatDamageToPermanent(targetPermanent.getId(), damageDealt);
                     if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                             || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                         gameData.recordQualifyingDamageControllerToPermanent(
@@ -1267,6 +1270,15 @@ public class DamageSupport {
                         "'s " + chasmPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             }
 
+            int angelPrevented = applyAngelOfSufferingReplacement(
+                    gameData, playerId, effectiveDamage, effectiveDamage);
+            if (angelPrevented > 0) {
+                effectiveDamage -= angelPrevented;
+                gameLogService.append(gameData, GameLog.cardThen(source,
+                        "'s " + angelPrevented + " damage to " + gameData.playerIdToName.get(playerId)
+                                + " is prevented by Angel of Suffering."));
+            }
+
             int lichReplaced = applyNefariousLichReplacement(gameData, playerId, effectiveDamage);
             if (lichReplaced > 0) {
                 effectiveDamage -= lichReplaced;
@@ -1614,9 +1626,8 @@ public class DamageSupport {
                         // Record only — the state-based action check (CR 704.5g) performs any
                         // destruction once the current damage event finishes.
                         targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
-                        gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage);
+                        gameData.recordNoncombatDamageToPermanent(targetPerm.getId(), effectiveDamage);
                     }
-                    gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                 }
             }
         }
@@ -1836,6 +1847,29 @@ public class DamageSupport {
 
         graveyardService.exileCardsFromGraveyard(gameData, playerId, damage);
         return damage;
+    }
+
+    /**
+     * Angel of Suffering: mills twice the damage that would be dealt to its controller and
+     * prevents the preventable portion. If the damage cannot be prevented, it still mills twice
+     * that many cards.
+     */
+    public int applyAngelOfSufferingReplacement(GameData gameData, UUID playerId, int damage,
+                                                int preventableDamage) {
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        boolean hasEffect = battlefield.stream().anyMatch(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PreventAllDamageToControllerAndMillEffect.class::isInstance));
+        if (!hasEffect) return 0;
+
+        graveyardService.resolveMillPlayer(gameData, playerId, damage * 2);
+        return gameQueryService.isDamagePreventable(gameData)
+                ? Math.min(damage, Math.max(0, preventableDamage))
+                : 0;
     }
 
     /**

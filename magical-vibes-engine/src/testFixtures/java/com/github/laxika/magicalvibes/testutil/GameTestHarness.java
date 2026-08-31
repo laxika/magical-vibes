@@ -1298,6 +1298,11 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, targetId);
     }
 
+    public void castFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null, counterCostPermanentIds);
+    }
+
     public void castAndResolveFromLibraryTop(Player player) {
         castFromLibraryTop(player);
         passBothPriorities();
@@ -1305,6 +1310,11 @@ public class GameTestHarness {
 
     public void castAndResolveFromLibraryTop(Player player, UUID targetId) {
         castFromLibraryTop(player, targetId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
+        castFromLibraryTop(player, counterCostPermanentIds);
         passBothPriorities();
     }
 

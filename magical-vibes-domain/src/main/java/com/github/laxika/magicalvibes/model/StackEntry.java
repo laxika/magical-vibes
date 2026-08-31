@@ -51,6 +51,8 @@ public class StackEntry {
     @Setter private UUID sourceStackCardId;
     /** Colored mana spent to activate this ability, snapshotted so later activations cannot overwrite it. */
     @Setter private Map<ManaColor, Integer> activationManaSpent = Map.of();
+    /** Whether mana produced by a Treasure was spent to activate this ability. */
+    @Setter private boolean activationUsedTreasureMana;
     /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
     @Setter private int manaSpentToCast;
     private final Zone targetZone;
@@ -132,6 +134,8 @@ public class StackEntry {
     @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** Whether this spell's optional casualty additional cost was paid. */
+    @Setter private boolean casualtyCostPaid;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -314,6 +318,8 @@ public class StackEntry {
     private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
+    /** Explicit starting loyalty for a copied planeswalker spell, when the copy defines one. */
+    @Setter private Integer startingLoyalty;
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
@@ -572,6 +578,7 @@ public class StackEntry {
         this.enteringCounters.putAll(source.enteringCounters);
         this.sourceStackCardId = source.sourceStackCardId;
         this.activationManaSpent = source.activationManaSpent.isEmpty() ? Map.of() : new HashMap<>(source.activationManaSpent);
+        this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
@@ -602,6 +609,7 @@ public class StackEntry {
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.casualtyCostPaid = source.casualtyCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
@@ -669,6 +677,7 @@ public class StackEntry {
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
+        this.startingLoyalty = source.startingLoyalty;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
         source.noncombatExcessDamageTriggerEffectsFired.forEach((sourceId, effects) ->
                 this.noncombatExcessDamageTriggerEffectsFired.put(sourceId, new HashSet<>(effects)));

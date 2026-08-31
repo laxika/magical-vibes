@@ -693,7 +693,7 @@ public class DeathTriggerCollectorService {
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect)), null,
+                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect)), sd.dyingPower(),
                     new Permanent(match.permanent())
             ));
         } else {
@@ -711,6 +711,9 @@ public class DeathTriggerCollectorService {
                     sourcePermanentId
             );
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            // Preserve cast-mode state for conditional abilities that resolve after the permanent
+            // has left the battlefield, such as a blitz-only death trigger.
+            entry.setAlternateCost(match.permanent().isAlternateCost());
             match.gameData().stack.add(entry);
         }
         return true;

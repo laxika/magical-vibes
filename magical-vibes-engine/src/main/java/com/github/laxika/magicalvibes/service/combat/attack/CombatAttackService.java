@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -552,7 +553,7 @@ public class CombatAttackService {
         validateMatchingCreatureAlsoAttacks(gameData, battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
-        validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
+        validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
         validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices);
@@ -953,8 +954,20 @@ public class CombatAttackService {
                     for (CardEffect effect : nonTargetingMayEffects) {
                         com.github.laxika.magicalvibes.model.effect.MayEffect may =
                                 (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
-                        gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId(),
-                                attacker.getAttackTarget());
+                        if (may.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER) {
+                            UUID attackedTargetId = attacker.getAttackTarget();
+                            UUID defendingPlayerId = attackedTargetId == null ? null
+                                    : gameData.playerIds.contains(attackedTargetId)
+                                            ? attackedTargetId
+                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                            if (defendingPlayerId != null) {
+                                gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, null,
+                                        attacker.getId(), defendingPlayerId, new Permanent(attacker));
+                            }
+                        } else {
+                            gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId(),
+                                    attacker.getAttackTarget());
+                        }
                     }
 
                     if (!otherEffects.isEmpty()) {
@@ -2002,7 +2015,8 @@ public class CombatAttackService {
 
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,
-                                                    Set<Integer> declaredAttackerIndices) {
+                                                    Set<Integer> declaredAttackerIndices,
+                                                    Map<Integer, UUID> attackTargets) {
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return;
@@ -2017,18 +2031,26 @@ public class CombatAttackService {
                 gameData, playerId, attackableIndices);
         int maxRequirements = 0;
         for (int idx : restrictionValidGroupAttackers) {
-            maxRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
+            maxRequirements += attackLegalityService.getMaximumMustAttackRequirementCount(
+                    gameData, battlefield.get(idx));
         }
         for (int idx : attackableIndices) {
             if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
                 maxRequirements = Math.max(maxRequirements,
-                        attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)));
+                        attackLegalityService.getMaximumMustAttackRequirementCount(
+                                gameData, battlefield.get(idx)));
             }
         }
 
+        UUID defaultTargetId = gameQueryService.getOpponentId(gameData, playerId);
         int satisfiedRequirements = 0;
         for (int idx : declaredAttackerIndices) {
-            satisfiedRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
+            UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
+            if (targetId == null) {
+                targetId = defaultTargetId;
+            }
+            satisfiedRequirements += attackLegalityService.getMustAttackRequirementCount(
+                    gameData, battlefield.get(idx), targetId);
         }
 
         if (satisfiedRequirements < maxRequirements) {
@@ -2040,7 +2062,8 @@ public class CombatAttackService {
             }
             for (int idx : restrictionValidAttackers) {
                 if (!declaredAttackerIndices.contains(idx)
-                        && attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)) > 0) {
+                        && attackLegalityService.getMaximumMustAttackRequirementCount(
+                        gameData, battlefield.get(idx)) > 0) {
                     throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
                 }
             }

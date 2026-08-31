@@ -239,6 +239,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                             : ", then shuffle and put that card on top.");
             case EXILE -> "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_FOR_MAY_CAST -> "Search your library for a " + desc + " to exile" + remaining + ".";
+            case EXILE_FOR_MAY_CAST_WITH_NORMAL_COST ->
+                    "Search your library for a " + desc + " to exile" + remaining + ".";
             case EXILE_PLAYABLE_ANY_NUMBER -> "Search your library for matching cards to exile (any number).";
             case GRAVEYARD -> count > 1
                     ? "Search your library for a " + desc + " to put into your graveyard" + remaining + "."

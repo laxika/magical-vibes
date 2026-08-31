@@ -936,11 +936,19 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         Permanent perm = new Permanent(card);
+        if (entry.isCopy() && !perm.getCard().isToken()) {
+            Card tokenCard = perm.getCard().createRuntimeCopy();
+            tokenCard.setToken(true);
+            perm.setCard(tokenCard);
+        }
         // Planeswalkers with printed loyalty "X" (e.g. Nissa, Steward of Elements) enter with
         // loyalty counters equal to the X paid for their {X} cost. Scryfall's non-numeric "X"
         // loyalty parses to 0, so an {X} in the mana cost is the reliable signal.
-        int startingLoyalty = card.getLoyalty() != null ? card.getLoyalty() : 0;
-        if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()) {
+        int startingLoyalty = entry.getStartingLoyalty() != null
+                ? entry.getStartingLoyalty()
+                : card.getLoyalty() != null ? card.getLoyalty() : 0;
+        if (entry.getStartingLoyalty() == null
+                && card.getParsedManaCost() != null && card.getParsedManaCost().hasX()) {
             startingLoyalty = entry.getXValue();
         }
         startingLoyalty += entry.getGrantedAdditionalLoyaltyCounters();

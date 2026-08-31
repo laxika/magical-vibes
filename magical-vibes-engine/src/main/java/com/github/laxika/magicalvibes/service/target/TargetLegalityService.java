@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostCont
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -3612,6 +3613,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryCastFromZonePredicate castFrom) {
             return stackEntry.getSourceZone() == castFrom.sourceZone();
+        }
+        if (predicate instanceof StackEntryIsCopyPredicate) {
+            return stackEntry.isCopy();
         }
         if (predicate instanceof StackEntryKickedPredicate) {
             return stackEntry.wasKicked();

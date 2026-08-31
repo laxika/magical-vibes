@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
+import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
@@ -295,6 +296,7 @@ public class TurnProgressionService {
                     p.setBlockedThisCombat(false);
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
+                processTargetCreatureMustAttackNextCombat(gameData);
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);
                 }
@@ -343,6 +345,26 @@ public class TurnProgressionService {
             ));
             gameLogService.append(gameData,
                     GameLog.cardThen(pending.sourceCard(), "'s additional combat trigger triggers."));
+        }
+    }
+
+    private void processTargetCreatureMustAttackNextCombat(GameData gameData) {
+        List<TargetCreatureMustAttackNextCombat> pendingActions =
+                gameData.drainDelayedActions(TargetCreatureMustAttackNextCombat.class);
+        for (TargetCreatureMustAttackNextCombat pending : pendingActions) {
+            Permanent target = findPermanentOnAnyBattlefield(gameData, pending.permanentId());
+            if (target == null) {
+                continue;
+            }
+            UUID controllerId = gameData.findControllerOf(target);
+            if (!gameData.activePlayerId.equals(controllerId)) {
+                gameData.queueDelayedAction(pending);
+                continue;
+            }
+            target.setMustAttackThisCombat(true);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(target.getCard(), " must attack this combat if able."));
+            log.info("Game {} - {} must attack this combat if able", gameData.id, target.getCard().getName());
         }
     }
 
@@ -522,6 +544,7 @@ public class TurnProgressionService {
         gameData.playersWhoSearchedLibraryThisTurn.clear();
         gameData.playersWhoInvestigatedThisTurn.clear();
         gameData.sacrificedPermanentSubtypeCountThisTurn.clear();
+        gameData.sacrificedPermanentCountThisTurn.clear();
         gameData.playersWhoSurveilledThisTurn.clear();
         gameData.playersWhoFlippedCoinsThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
@@ -636,6 +659,7 @@ public class TurnProgressionService {
         List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
+        gameData.permanentsDealtNoncombatDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();

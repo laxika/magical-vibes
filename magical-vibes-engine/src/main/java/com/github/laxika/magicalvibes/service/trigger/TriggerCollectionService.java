@@ -32,9 +32,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
@@ -84,12 +86,15 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -402,6 +407,13 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone);
         if (castZone != Zone.HAND) {
             gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(castingPlayerId);
+        }
+
+        if (castZone == Zone.EXILE) {
+            gameData.expireFloatingEffects(fe ->
+                    fe.duration() == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                            && fe.effect() instanceof GrantActivatedAbilityEffect grant
+                            && spellCard.getId().equals(grant.expirationCardId()));
         }
 
         gameData.expireFloatingEffects(fe ->
@@ -1040,6 +1052,28 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(copyEffect))
                 ));
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            } else if (effect instanceof CopyThisSpellIfCasualtyPaidEffect casualtyTrigger) {
+                StackEntry spellEntry = null;
+                for (StackEntry se : gameData.stack) {
+                    if (se.getCard().getId().equals(spellCard.getId())) {
+                        spellEntry = se;
+                        break;
+                    }
+                }
+                if (spellEntry == null || !spellEntry.isCasualtyCostPaid()) continue;
+
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        spellCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                                new StackEntry(spellEntry), castingPlayerId, Set.of(), Set.of(),
+                                casualtyTrigger.removedSupertypes(), casualtyTrigger.tokenCopy(), true, false, false,
+                                casualtyTrigger.startingLoyaltyFromX())))
+                ));
+                log.info("Game {} - {} casualty copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             } else if (effect instanceof CopyThisSpellForXValueEffect) {
                 StackEntry spellEntry = null;
@@ -2478,8 +2512,8 @@ public class TriggerCollectionService {
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
-                    var match = new TriggerMatchContext(gameData, perm, sacrificingPlayerId, effect);
-                    dispatch(match, EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    dispatchSlotEffect(gameData, perm, sacrificingPlayerId,
+                            EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, ctx, effect);
                 }
             }
         }
@@ -7277,6 +7311,50 @@ public class TriggerCollectionService {
             log.info("Game {} - {} delayed leave-trigger fires (source {} left); destroy target {}",
                     gameData.id, delayed.sourceCard().getName(), leavingPermanent.getCard().getName(),
                     delayed.targetPermanentId());
+        }
+    }
+
+    /**
+     * Fires delayed counter triggers for cards that return from exile when their source leaves the
+     * battlefield. The return controller is compared with the controller captured when the
+     * source's enter-the-battlefield ability resolved.
+     */
+    public void processDelayedExileReturnCounterTriggers(GameData gameData, UUID leavingPermanentId,
+                                                          List<PendingExileReturn> pendingReturns,
+                                                          List<UUID> returnedPermanentIds) {
+        List<DelayedExileReturnCounterTrigger> delayedTriggers = gameData.drainDelayedActions(
+                DelayedExileReturnCounterTrigger.class,
+                trigger -> leavingPermanentId.equals(trigger.watchedPermanentId()));
+        if (delayedTriggers.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < pendingReturns.size(); i++) {
+            PendingExileReturn pending = pendingReturns.get(i);
+            UUID returnedPermanentId = returnedPermanentIds.get(i);
+            if (returnedPermanentId == null) {
+                continue;
+            }
+            for (DelayedExileReturnCounterTrigger delayed : delayedTriggers) {
+                if (!pending.controllerId().equals(delayed.controllerId())) {
+                    continue;
+                }
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        delayed.sourceCard(),
+                        delayed.controllerId(),
+                        delayed.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(
+                                delayed.counterType(), delayed.counterAmount()))),
+                        returnedPermanentId,
+                        (UUID) null);
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed return counter trigger queued for {}",
+                        gameData.id, delayed.sourceCard().getName(), pending.card().getName());
+            }
         }
     }
 

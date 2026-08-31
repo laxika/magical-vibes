@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
@@ -706,6 +707,9 @@ public class ActivatedAbilityExecutionService {
                         ability.getGrantSourcePermanentId()));
             } else if (effect instanceof ExileEnchantedCreatureEffect && permanent.getAttachedTo() != null) {
                 snapshotEffects.add(new ExileEnchantedCreatureEffect(permanent.getAttachedTo()));
+            } else if (effect instanceof SacrificeGrantingPermanentAndControllerDrawsEffect sacrifice) {
+                snapshotEffects.add(new SacrificeGrantingPermanentAndControllerDrawsEffect(
+                        sacrifice.cards(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
                 snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
             } else if (effect instanceof DealDamageToAnyTargetEffect dd
@@ -1823,6 +1827,8 @@ public class ActivatedAbilityExecutionService {
         }
         Map<ManaColor, Integer> activationManaSpent = gameData.abilityActivationManaSpent.get(permanent.getCard().getId());
         stackEntry.setActivationManaSpent(activationManaSpent == null ? Map.of() : Map.copyOf(activationManaSpent));
+        stackEntry.setActivationUsedTreasureMana(
+                gameData.abilityActivationUsedTreasureMana.getOrDefault(permanent.getCard().getId(), false));
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so
         // ChosenPermanentPower can read its power as the ability resolves (Impelled Giant).
         stackEntry.setChosenPermanentId(permanent.getChosenPermanentId());

@@ -1776,9 +1776,9 @@ public class AbilityActivationService {
         }
 
         // Pay the "discard this card" cost intrinsic to a hand-activated ability — or exile it
-        // instead when the printed cost says so (Elvish Spirit Guide). Exiling is not a discard, so
-        // no discard triggers fire; and the ability produces mana, so it resolves immediately
-        // without using the stack (CR 605.1a).
+        // instead when the printed cost says so. Exiling is not a discard, so no discard triggers
+        // fire. Mana abilities resolve immediately without using the stack; other abilities are
+        // pushed onto the stack below.
         boolean discarded = false;
         if (ability.isSuspendsSourceFromHand()) {
             hand.remove(handCardIndex);
@@ -1798,12 +1798,13 @@ public class AbilityActivationService {
         if (ability.isExilesSourceFromHand()) {
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
-            resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
-            gameData.priorityPassedBy.clear();
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
-            return;
-        }
-        if (ability.isRevealsSourceFromHand()) {
+            if (ability.isManaAbility()) {
+                resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
+                gameData.priorityPassedBy.clear();
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                return;
+            }
+        } else if (ability.isRevealsSourceFromHand()) {
             cardRevealService.revealToAllPlayers(gameData, playerId,
                     com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
         } else {
@@ -2817,6 +2818,8 @@ public class AbilityActivationService {
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         boolean previousBlueSpendPermission = pool != null
                 && pool.isBlueSpendableAsAnyColorForActivatedAbilities();
+        boolean previousAllManaSpendPermission = pool != null
+                && pool.isAllManaSpendableAsAnyColorForActivatedAbilities();
         if (pool != null) {
             // Refresh the "spend white as red" permission (Sunglasses of Urza) so this ability's cost
             // affordability check and payment honor it.
@@ -2840,6 +2843,7 @@ public class AbilityActivationService {
         } finally {
             if (pool != null) {
                 pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
+                pool.setAllManaSpendableAsAnyColorForActivatedAbilities(previousAllManaSpendPermission);
             }
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -2885,6 +2889,8 @@ public class AbilityActivationService {
         if (activationPool != null) {
             activationPool.setBlueSpendableAsAnyColorForActivatedAbilities(
                     gameQueryService.canSpendBlueManaAsAnyColorForActivatedAbilities(gameData, permanent));
+            activationPool.setAllManaSpendableAsAnyColorForActivatedAbilities(
+                    gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent));
         }
         List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
         if (abilities.isEmpty()) {
@@ -3394,6 +3400,7 @@ public class AbilityActivationService {
                     ? subtypeSpellOrAbilityContext : Set.of();
             ManaPool payingPool = gameData.playerManaPools.get(playerId);
             EnumMap<ManaColor, Integer> manaBefore = payingPool.getAllManaTotals();
+            int treasureManaBefore = payingPool.getTreasureManaTotal();
             EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(payingPool);
             ManaPool.CreatureAbilityManaState promotedCreatureSourceMana = gameQueryService.isCreature(gameData, permanent)
                     ? payingPool.promoteCreatureAbilityMana()
@@ -3408,10 +3415,12 @@ public class AbilityActivationService {
                             regularManaBefore);
                 }
             }
-            recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals());
+            recordActivationManaSpent(gameData, permanent, manaBefore, payingPool.getAllManaTotals(),
+                    treasureManaBefore, payingPool.getTreasureManaTotal());
         } else if (additionalGenericCost > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
             ManaPool pool = gameData.playerManaPools.get(playerId);
+            int treasureManaBefore = pool.getTreasureManaTotal();
             ManaCost taxCost = new ManaCost("{" + additionalGenericCost + "}");
             if (gameQueryService.isCreature(gameData, permanent)) {
                 EnumMap<ManaColor, Integer> regularManaBefore = snapshotPoolColors(pool);
@@ -3424,6 +3433,10 @@ public class AbilityActivationService {
             } else {
                 taxCost.pay(pool);
             }
+            gameData.abilityActivationUsedTreasureMana.put(permanent.getCard().getId(),
+                    treasureManaBefore > pool.getTreasureManaTotal());
+        } else {
+            gameData.abilityActivationUsedTreasureMana.put(permanent.getCard().getId(), false);
         }
 
         if (putExiledCardIntoGraveyardCost != null) {
@@ -4675,6 +4688,12 @@ public class AbilityActivationService {
                 affordabilityPool = copyManaPool(manaPool);
                 affordabilityPool.setBlueSpendableAsAnyColorForActivatedAbilities(true);
             }
+            if (manaPool != null
+                    && gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent)
+                    && !manaPool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
+                affordabilityPool = copyManaPool(affordabilityPool);
+                affordabilityPool.setAllManaSpendableAsAnyColorForActivatedAbilities(true);
+            }
             if (manaPool != null && gameQueryService.isCreature(gameData, permanent)) {
                 affordabilityPool = copyManaPool(affordabilityPool);
                 affordabilityPool.promoteCreatureAbilityMana();
@@ -5865,7 +5884,8 @@ public class AbilityActivationService {
      * (Ice Cauldron). Keyed by card id like the imprint map, and overwritten on every activation.
      */
     private void recordActivationManaSpent(GameData gameData, Permanent permanent,
-                                           EnumMap<ManaColor, Integer> before, EnumMap<ManaColor, Integer> after) {
+                                           EnumMap<ManaColor, Integer> before, EnumMap<ManaColor, Integer> after,
+                                           int treasureManaBefore, int treasureManaAfter) {
         EnumMap<ManaColor, Integer> spent = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
             int amount = before.getOrDefault(color, 0) - after.getOrDefault(color, 0);
@@ -5874,6 +5894,8 @@ public class AbilityActivationService {
             }
         }
         gameData.abilityActivationManaSpent.put(permanent.getCard().getId(), spent);
+        gameData.abilityActivationUsedTreasureMana.put(permanent.getCard().getId(),
+                treasureManaBefore > treasureManaAfter);
     }
 
     /**

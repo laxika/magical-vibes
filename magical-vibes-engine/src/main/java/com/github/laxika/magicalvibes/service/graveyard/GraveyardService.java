@@ -767,13 +767,25 @@ public class GraveyardService {
 
 
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
-        return tryReplaceDestruction(gameData, perm, true);
+        return tryReplaceDestruction(gameData, perm, true, false);
     }
 
     public boolean tryReplaceDestruction(GameData gameData, Permanent perm, boolean allowRegeneration) {
+        return tryReplaceDestruction(gameData, perm, allowRegeneration, true);
+    }
+
+    private boolean tryReplaceDestruction(GameData gameData, Permanent perm, boolean allowRegeneration,
+                                          boolean allowShieldCounter) {
         Permanent umbraArmor = findDestructionReplacementSource(gameData, perm, DestructionReplacement.UMBRA_ARMOR);
         if (umbraArmor != null) {
             performUmbraArmorReplacement(gameData, perm, umbraArmor);
+            return true;
+        }
+        if (allowShieldCounter && perm.getCounterCount(CounterType.SHIELD) > 0) {
+            int shields = perm.getCounterCount(CounterType.SHIELD);
+            perm.setCounterCount(CounterType.SHIELD, shields - 1);
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " loses a shield counter instead of being destroyed."));
+            log.info("Game {} - {} loses a shield counter instead of being destroyed", gameData.id, perm.getCard().getName());
             return true;
         }
         if (!allowRegeneration || perm.isCantRegenerateThisTurn()
