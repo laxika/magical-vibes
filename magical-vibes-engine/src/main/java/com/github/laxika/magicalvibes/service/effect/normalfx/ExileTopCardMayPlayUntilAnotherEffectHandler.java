@@ -45,6 +45,7 @@ public class ExileTopCardMayPlayUntilAnotherEffectHandler implements NormalEffec
         UUID previousCardId = gameData.exilePlayPermissionSourceCards.put(sourcePermanentId, topCard.getId());
         if (previousCardId != null) {
             gameData.exilePlayPermissions.remove(previousCardId);
+            gameData.exilePlayPermissionConditions.remove(previousCardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(previousCardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(previousCardId);
         }

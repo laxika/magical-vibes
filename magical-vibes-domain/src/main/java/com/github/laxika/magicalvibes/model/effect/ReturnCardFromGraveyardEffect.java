@@ -239,6 +239,8 @@ import java.util.Set;
  *                             so the returned permanent can be recognized by effects that treat
  *                             unearth returns specially
  * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
+ * @param eventCardIdsOnly       when {@code true}, restricts a resolution-time graveyard choice to cards whose
+ *                               ids were recorded by a preceding event on the current stack entry
  * @param targetGroup          positional graveyard-card target group resolved by this effect, or
  *                             {@code -1} when the effect uses the ordinary target path
  */
@@ -312,6 +314,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean unearth,
         boolean exileAtNextUpkeep,
         List<CardEffect> battlefieldEffectGrants,
+        boolean eventCardIdsOnly,
         int targetGroup
 ) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect {
 

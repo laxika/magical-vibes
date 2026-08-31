@@ -932,7 +932,7 @@ public class CombatDamageService {
                 }
             }
             return new DamagePhaseSnapshot(attackerStats, defenderStats,
-                    gameQueryService.isDamagePreventable(gameData),
+                    gameQueryService.isDamagePreventable(gameData, true),
                     attackerProtectedFromBlocker, blockerProtectedFromAttacker);
         });
     }
@@ -2757,11 +2757,13 @@ public class CombatDamageService {
         // Glacial Chasm: prevent all combat damage that would be dealt to its controller.
         if (state.damageToDefendingPlayer > unpreventable) {
             state.damageToDefendingPlayer = Math.max(unpreventable, state.damageToDefendingPlayer
-                    - damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.damageToDefendingPlayer));
+                    - damageSupport.applyControllerAllDamagePrevention(
+                    gameData, defenderId, state.damageToDefendingPlayer, true));
         }
         if (state.damageToDefendingPlayer > unpreventable) {
             state.damageToDefendingPlayer = Math.max(unpreventable, state.damageToDefendingPlayer
-                    - damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.damageToDefendingPlayer));
+                    - damageSupport.applyImmortalCoilPrevention(
+                    gameData, defenderId, state.damageToDefendingPlayer, true));
         }
         // Soul Echo: each 1 combat damage removes an echo counter instead (replacement, not prevention).
         if (state.damageToDefendingPlayer > 0) {
@@ -2801,11 +2803,13 @@ public class CombatDamageService {
 
         // Glacial Chasm also prevents infect combat damage (still damage, so no poison counters).
         if (state.poisonDamageToDefendingPlayer > 0) {
-            state.poisonDamageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+            state.poisonDamageToDefendingPlayer -= damageSupport.applyControllerAllDamagePrevention(
+                    gameData, defenderId, state.poisonDamageToDefendingPlayer, true);
         }
         // Immortal Coil also prevents infect combat damage (still damage), exiling per point prevented.
         if (state.poisonDamageToDefendingPlayer > 0) {
-            state.poisonDamageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+            state.poisonDamageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(
+                    gameData, defenderId, state.poisonDamageToDefendingPlayer, true);
         }
         // Soul Echo replaces infect combat damage too — it is still damage that would be dealt to you.
         if (state.poisonDamageToDefendingPlayer > 0) {
@@ -2916,7 +2920,7 @@ public class CombatDamageService {
                         gameData, targetId, damage, damageSource);
                 processPendingRedirectDamage(gameData);
                 redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                        gameData, targetId, redirectEffective);
+                        gameData, targetId, redirectEffective, true);
 
                 if (redirectEffective > 0) {
                     if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
@@ -3043,7 +3047,7 @@ public class CombatDamageService {
             UUID pwControllerId = gameQueryService.findPermanentController(gameData, pw.getId());
             damage *= gameQueryService.getDamageToRecipientMultiplier(
                     gameData, pwControllerId, sourceControllerId, true);
-            if (gameQueryService.isDamagePreventable(gameData)
+            if (gameQueryService.isDamagePreventable(gameData, true)
                     && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, pwControllerId, atk.getCard().getName())) {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
                 return;
@@ -3067,13 +3071,15 @@ public class CombatDamageService {
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
             processEyeForAnEyeReflections(gameData);
             if (damagePreventionService.isColorDamagePreventedForTarget(
-                    gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk))) {
+                    gameData, pw.getId(), gameQueryService.getEffectiveColors(gameData, atk), true)) {
                 damage = 0;
             }
-            damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage);
+            damage = damagePreventionService.applyPermanentDamagePreventionShield(gameData, pw, damage, true);
             // Djeru, With Eyes Open: prevent N combat damage per attacker to a planeswalker you control.
-            damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(gameData, pwControllerId, damage);
-            damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, pwControllerId, damage);
+            damage -= damagePreventionService.applyPlaneswalkerFixedPerSourceDamagePrevention(
+                    gameData, pwControllerId, damage, true);
+            damage -= damagePreventionService.applyAllButOneDamagePrevention(
+                    gameData, pwControllerId, damage, true);
             if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
                 damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
                 damage = 0;
@@ -3130,10 +3136,12 @@ public class CombatDamageService {
                     state.deathtouchDamageRedirectedToGuard = true;
                 }
             }
-        } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
+        } else if (damagePreventionService.isSourceDamagePreventedForPlayer(
+                gameData, defenderId, atk.getId(), true)) {
             // Source-specific damage prevention — skip this damage
             damagePreventionService.applySourceDamagePreventionForPlayer(
-                    gameData, defenderId, atk.getId(), damage, gameQueryService.getEffectiveColors(gameData, atk));
+                    gameData, defenderId, atk.getId(), damage,
+                    gameQueryService.getEffectiveColors(gameData, atk), true);
         } else {
             // Tok-Tok, Volcano Born: an attacker of a matching colour deals that much combat damage
             // plus N to the defending player instead (CR 614.1). Applied per attacker, before the
@@ -3178,7 +3186,7 @@ public class CombatDamageService {
             int combatRedirectTargetIdx = attackingBattlefield == null || combatRedirectTarget == null
                     ? -1 : attackingBattlefield.indexOf(combatRedirectTarget);
             if (damage > 0 && combatRedirectTargetIdx >= 0) {
-                if (gameQueryService.isDamagePreventable(gameData)
+                if (gameQueryService.isDamagePreventable(gameData, true)
                         && gameQueryService.hasProtectionFromDamageSource(gameData, combatRedirectTarget, atk)) {
                     return;
                 }
@@ -3206,7 +3214,7 @@ public class CombatDamageService {
                 int redirectTargetIdx = redirectBattlefield == null
                         ? -1 : redirectBattlefield.indexOf(sourceCombatRedirectTarget);
                 if (redirectTargetIdx >= 0) {
-                    if (gameQueryService.isDamagePreventable(gameData)
+                    if (gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.hasProtectionFromDamageSource(
                             gameData, sourceCombatRedirectTarget, atk)) {
                         return;
@@ -3248,32 +3256,38 @@ public class CombatDamageService {
             CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());
             if (damage > 0
                     && !damagePreventionService.isColorDamagePreventedForTarget(
-                            gameData, defenderId, gameQueryService.getEffectiveColors(gameData, atk))
-                    && !(gameQueryService.isDamagePreventable(gameData)
+                            gameData, defenderId, gameQueryService.getEffectiveColors(gameData, atk), true)
+                    && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, attackerColor))
-                    && !(gameQueryService.isDamagePreventable(gameData)
+                    && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, defenderId, atk.getCard().getName()))
-                    && !(gameQueryService.isDamagePreventable(gameData)
+                    && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, defenderId, atk.getCard().getName()))
-                    && !(gameQueryService.isDamagePreventable(gameData)
+                    && !(gameQueryService.isDamagePreventable(gameData, true)
                             && gameQueryService.playerHasProtectionFromOpponents(gameData, defenderId,
                             gameQueryService.findPermanentController(gameData, atk.getId())))
-                    && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)
-                    && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, defenderId, atk)) {
+                    && !damagePreventionService.applyColorDamagePreventionForPlayer(
+                            gameData, defenderId, attackerColor, true)
+                    && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
+                            gameData, defenderId, atk, true)) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
-                damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
+                damage = damagePreventionService.applyOpponentSourceDamageReduction(
+                        gameData, defenderId, attackerControllerId, damage, true);
                 // Apply target+source-specific prevention shields (e.g. Healing Grace)
-                damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, defenderId, atk.getId(), damage);
+                damage = damagePreventionService.applyTargetSourcePreventionShield(
+                        gameData, defenderId, atk.getId(), damage, true);
                 // Eye for an Eye: reflect this attacker's damage to the player back at its controller.
                 damagePreventionService.applyEyeForAnEyeReflection(gameData, defenderId, atk.getId(), damage);
                 processEyeForAnEyeReflections(gameData);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
-                damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
+                damage = damagePreventionService.applyPlayerNextSourceDamageShield(
+                        gameData, defenderId, atk.getId(), damage, true);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
                 damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, defenderId, true);
                 processEyeForAnEyeReflections(gameData);
                 // Battletide Alchemist: the defending player prevents up to (Clerics they control) of this attacker's damage.
-                int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, defenderId, damage);
+                int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(
+                        gameData, defenderId, damage, true);
                 if (battletidePrevented > 0) {
                     damage -= battletidePrevented;
                     gameLogService.append(gameData, GameLog.textCardText(battletidePrevented + " of ", atk.getCard(), "'s combat damage to "
@@ -3293,10 +3307,10 @@ public class CombatDamageService {
                     gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented."));
                 }
-                damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage);
+                damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
                 damage -= damageSupport.applyDelayingShieldCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                        gameData, defenderId, damage);
+                        gameData, defenderId, damage, true);
                 if (isGlobalCreaturePreventionLifeGain(gameData, atk)) {
                     damagePreventionService.applyAllByCreaturesPreventionLifeGain(gameData, damage);
                     damage = 0;
@@ -3401,12 +3415,14 @@ public class CombatDamageService {
                                                            Permanent target) {
         return gameData.preventAllCombatDamage
                 && (target == null || !target.isDamageCantBePreventedOrRedirectedThisTurn())
+                && !gameQueryService.isCombatDamageCantBePrevented(gameData)
                 && !gameQueryService.damageCantBePreventedFromSource(gameData, source, true);
     }
 
     private boolean isGlobalCreaturePreventionLifeGain(GameData gameData, Permanent source) {
         return gameData.preventAllDamageByCreatures
                 && !gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty()
+                && gameQueryService.isDamagePreventable(gameData, true)
                 && gameQueryService.isCreature(gameData, source)
                 && !gameQueryService.damageCantBePreventedFromSource(gameData, source);
     }
@@ -3470,21 +3486,23 @@ public class CombatDamageService {
             return;
         }
         // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
-        damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
+        damage = damagePreventionService.applyTargetSourcePreventionShield(
+                gameData, target.getId(), source.getId(), damage, true);
         // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
         damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage, target.getId(), true);
         processEyeForAnEyeReflections(gameData);
         // Shadowbane: the chosen source's next combat damage to the protected player's creatures.
         damage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
-                gameData, targetControllerId, source.getId(), damage);
+                gameData, targetControllerId, source.getId(), damage, true);
         if (damagePreventionService.isColorDamagePreventedForTarget(
-                gameData, target.getId(), gameQueryService.getEffectiveColors(gameData, source))) {
+                gameData, target.getId(), gameQueryService.getEffectiveColors(gameData, source), true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
         // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
-        if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {
+        if (damagePreventionService.applySwansSourceControllerDraw(
+                gameData, target, damage, swansSourceControllerId, true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
@@ -3503,21 +3521,22 @@ public class CombatDamageService {
             return;
         }
         // Prismatic Ward: prevent all combat damage to the enchanted creature from sources of the chosen colour.
-        if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, gameQueryService.getEffectiveColors(gameData, source))) {
+        if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(
+                gameData, target, gameQueryService.getEffectiveColors(gameData, source), true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
-        if (gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, source)) {
+        if (gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, source, true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
         // Gideon's Intervention: prevent all combat damage to a creature you control from a source with the chosen name.
-        if (gameQueryService.isDamagePreventable(gameData)
+        if (gameQueryService.isDamagePreventable(gameData, true)
                 && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, targetControllerId, source.getCard().getName())) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }
-        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source)) {
+        if (gameQueryService.isCreatureSourceDamageToSelfPrevented(gameData, target, null, source, true)) {
             gameLogService.append(gameData, GameLog.textCardText("Combat damage to ", target.getCard(), " is prevented."));
             return;
         }

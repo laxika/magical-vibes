@@ -43,8 +43,19 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                                              boolean fromHandOnly, boolean appliesToAllPlayers,
                                              boolean genericEqualToManaValue, boolean controllerTurnOnly,
                                              Set<Zone> allowedZones, CostEffect nonManaCost,
-                                             DynamicAmount manaValueCapAmount)
+                                             DynamicAmount manaValueCapAmount, boolean castsWithWarp)
         implements CardEffect {
+
+    public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
+                                          CounterType manaValueCapCounter, boolean oncePerTurn,
+                                          boolean fromHandOnly, boolean appliesToAllPlayers,
+                                          boolean genericEqualToManaValue, boolean controllerTurnOnly,
+                                          Set<Zone> allowedZones, CostEffect nonManaCost,
+                                          DynamicAmount manaValueCapAmount) {
+        this(manaCost, filter, manaValueCapCounter, oncePerTurn, fromHandOnly, appliesToAllPlayers,
+                genericEqualToManaValue, controllerTurnOnly, allowedZones, nonManaCost,
+                manaValueCapAmount, false);
+    }
 
     public AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter) {
         this(manaCost, filter, null, false, false, false, false, false, null, null, null);
@@ -113,5 +124,11 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
                                                                      DynamicAmount cap) {
         return new AlternativeCostForSpellsEffect("{0}", filter, null, false, false, false,
                 false, true, null, null, cap);
+    }
+
+    /** An alternative cost from hand that casts the resulting permanent with Warp. */
+    public static AlternativeCostForSpellsEffect warp(String manaCost, CardPredicate filter) {
+        return new AlternativeCostForSpellsEffect(manaCost, filter, null, false, true, false,
+                false, false, Set.of(Zone.HAND), null, null, true);
     }
 }

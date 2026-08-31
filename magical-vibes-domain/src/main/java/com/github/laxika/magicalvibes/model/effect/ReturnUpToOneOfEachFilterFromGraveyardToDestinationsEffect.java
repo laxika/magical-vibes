@@ -16,7 +16,8 @@ public record ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
         List<GraveyardChoiceDestination> destinations,
         List<String> targetDescriptions,
         List<Integer> minimumTargetCounts,
-        boolean requiresDistinctTargets
+        boolean requiresDistinctTargets,
+        boolean enterTapped
 ) implements IndependentlyTargetedGraveyardCardsEffect {
 
     public ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
@@ -24,7 +25,16 @@ public record ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
             List<GraveyardChoiceDestination> destinations,
             List<String> targetDescriptions) {
         this(targetFilters, destinations, targetDescriptions,
-                targetFilters == null ? List.of() : Collections.nCopies(targetFilters.size(), 0), false);
+                targetFilters == null ? List.of() : Collections.nCopies(targetFilters.size(), 0), false, false);
+    }
+
+    public ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect(
+            List<CardPredicate> targetFilters,
+            List<GraveyardChoiceDestination> destinations,
+            List<String> targetDescriptions,
+            List<Integer> minimumTargetCounts,
+            boolean requiresDistinctTargets) {
+        this(targetFilters, destinations, targetDescriptions, minimumTargetCounts, requiresDistinctTargets, false);
     }
 
     public ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect {

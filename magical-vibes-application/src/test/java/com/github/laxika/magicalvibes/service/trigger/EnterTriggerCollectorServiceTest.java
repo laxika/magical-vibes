@@ -542,6 +542,38 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("Ally-artifact once-per-turn trigger queues only once")
+    void allyArtifactOncePerTurnQueuesOnlyOnce() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+                new OncePerTurnTriggerEffect(new GainLifeEffect(1)));
+
+        Card firstArtifact = new Card();
+        firstArtifact.setName("First Artifact");
+        firstArtifact.setType(CardType.ARTIFACT);
+        Permanent firstPermanent = new Permanent(firstArtifact);
+        gd.playerBattlefields.get(player1Id).add(firstPermanent);
+        when(gameQueryService.findPermanentById(gd, firstPermanent.getId())).thenReturn(firstPermanent);
+        when(gameQueryService.isArtifact(gd, firstPermanent)).thenReturn(true);
+
+        service.checkAllyArtifactEntersTriggers(gd, player1Id, firstArtifact);
+
+        Card secondArtifact = new Card();
+        secondArtifact.setName("Second Artifact");
+        secondArtifact.setType(CardType.ARTIFACT);
+        Permanent secondPermanent = new Permanent(secondArtifact);
+        gd.playerBattlefields.get(player1Id).add(secondPermanent);
+        when(gameQueryService.findPermanentById(gd, secondPermanent.getId())).thenReturn(secondPermanent);
+        when(gameQueryService.isArtifact(gd, secondPermanent)).thenReturn(true);
+
+        service.checkAllyArtifactEntersTriggers(gd, player1Id, secondArtifact);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new GainLifeEffect(1));
+        assertThat(gd.oncePerTurnTriggersFiredThisTurn)
+                .containsExactly(gd.playerBattlefields.get(player1Id).getFirst().getId());
+    }
+
+    @Test
     @DisplayName("Ally-equipment scan queues a may ability")
     void allyEquipmentQueuesMayAbility() {
         addAllyCreatureTrigger(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,

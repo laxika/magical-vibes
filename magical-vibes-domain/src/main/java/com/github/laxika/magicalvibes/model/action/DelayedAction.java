@@ -98,6 +98,7 @@ public sealed interface DelayedAction permits
         SacrificeSelfAtNextEndStepTrigger,
         ExileToOwnerGraveyardAtNextUpkeep,
         ExilePermanentAtNextUpkeep,
+        GrantExilePlayPermissionAtNextTurn,
         PutCounterOnPermanentAtNextUpkeep,
         RevokeExilePlayPermissionAtNextUpkeep,
         TransformSourceAtNextUpkeep,

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -993,6 +994,29 @@ class ActivatedAbilityExecutionServiceTest {
                     .noneMatch(e -> e instanceof ExileSelfCost);
             assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof DrawCardEffect);
+        }
+    }
+
+    @Nested
+    @DisplayName("exile source equipment cost")
+    class ExileSourceEquipmentCostFlow {
+
+        @Test
+        @DisplayName("ExileSourceEquipmentCost exiles the granting Equipment")
+        void exileSourceEquipmentCostExilesGrantingEquipment() {
+            Permanent creature = addReadyPermanent(player1Id, createCreature("Equipped Creature"));
+            Permanent equipment = addReadyPermanent(player1Id, createCard("Test Equipment", CardType.ARTIFACT));
+            List<CardEffect> effects = List.of(new ExileSourceEquipmentCost(), new DrawCardEffect(1));
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Exile the granting Equipment: draw a card").withGrantSource(equipment.getId());
+            when(gameQueryService.findPermanentById(gameData, equipment.getId())).thenReturn(equipment);
+
+            service.completeActivationAfterCosts(gameData, player1, creature, ability, effects,
+                    0, null, null, false);
+
+            verify(permanentRemovalService).removePermanentToExile(gameData, equipment);
+            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+                    .noneMatch(e -> e instanceof ExileSourceEquipmentCost);
         }
     }
 

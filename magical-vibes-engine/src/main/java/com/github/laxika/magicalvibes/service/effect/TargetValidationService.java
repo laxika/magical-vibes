@@ -129,8 +129,17 @@ public class TargetValidationService {
                 && ctx.targetZone() == Zone.EXILE;
         if (exiledCardTarget) {
             requireTarget(ctx);
-            if (gameQueryService.findCardInExileById(ctx.gameData(), ctx.targetId()) == null) {
+            var exiled = ctx.gameData().findExiledCard(ctx.targetId());
+            if (exiled == null || exiled.faceDown()) {
                 throw new IllegalStateException("Target card not found in exile");
+            }
+            TargetPredicate.ExiledCards restriction = (TargetPredicate.ExiledCards)
+                    predicate.leaf(TargetPredicate.Kind.EXILED_CARD).orElseThrow();
+            UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+            if (!predicateEvaluationService.matchesCardPredicate(
+                    exiled.card(), restriction.inner(), sourceCardId, ctx.gameData(), exiled.ownerId(),
+                    ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                throw new IllegalStateException("Target card does not match the required predicate");
             }
             return;
         }

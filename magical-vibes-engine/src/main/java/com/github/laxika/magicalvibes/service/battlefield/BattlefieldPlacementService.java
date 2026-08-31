@@ -181,7 +181,9 @@ public class BattlefieldPlacementService {
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
         TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
-        becomeDayAsEntersEffectHandler.applyDayboundEntryFace(gameData, permanent);
+        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            becomeDayAsEntersEffectHandler.applyDayboundEntryFace(gameData, permanent);
+        }
         Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
         int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
@@ -225,7 +227,9 @@ public class BattlefieldPlacementService {
             applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyAdditionalEnterCountersThisTurn(gameData, controllerId, permanent);
             applyControlledCreaturesEnterWithSourcePowerCounters(gameData, controllerId, permanent);
-            becomeDayAsEntersEffectHandler.applyIfPresent(gameData, permanent);
+            if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                becomeDayAsEntersEffectHandler.applyIfPresent(gameData, permanent);
+            }
             if (noteControllerLifeTotalEffectHandler != null) {
                 noteControllerLifeTotalEffectHandler.applyIfPresent(gameData, controllerId, permanent);
             }
@@ -240,7 +244,8 @@ public class BattlefieldPlacementService {
         if (plusOnePlusOneCountersAfterEntry > plusOnePlusOneCountersBeforeEntry
                 || (plusOnePlusOneCountersBeforeEntry > 0 && plusOnePlusOneCountersAfterEntry > 0)) {
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                    gameData, permanent, controllerId);
+                    gameData, permanent, controllerId,
+                    Math.max(1, plusOnePlusOneCountersAfterEntry - plusOnePlusOneCountersBeforeEntry));
         }
         // CR 613.7d: an object receives its timestamp as it enters a zone.
         permanent.setTimestamp(gameData.nextTimestamp());
@@ -322,6 +327,9 @@ public class BattlefieldPlacementService {
      * the permanent can't have counters (Solemnity), since accepting could do nothing.
      */
     private void applyUnleash(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         boolean unleash = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof UnleashEffect);
         if (!unleash || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
@@ -343,7 +351,8 @@ public class BattlefieldPlacementService {
                            List<Permanent> simultaneouslyEntered) {
         boolean grantedRiot = gameData.spellsGrantedRiotOnEntry.remove(permanent.getCard().getId());
         boolean creature = gameQueryService.isCreature(gameData, permanent);
-        boolean ownRiot = creature && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean ownRiot = creature && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(RiotEffect.class::isInstance);
         boolean battlefieldRiot = creature && !permanent.getCard().isToken()
                 && gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
@@ -544,6 +553,9 @@ public class BattlefieldPlacementService {
      */
     private RevealSubtypeOrEntersTappedEffect findActiveConditionalRevealEffect(
             GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return null;
+        }
         ConditionContext ctx = ConditionContext.forPermanent(permanent, controllerId);
         return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof ConditionalReplacementEffect conditional
@@ -556,6 +568,9 @@ public class BattlefieldPlacementService {
 
     private void applyRevealSubtypeOrEntersTapped(GameData gameData, UUID controllerId, Permanent permanent,
                                                   RevealSubtypeOrEntersTappedEffect activeConditionalEffect) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         RevealSubtypeOrEntersTappedEffect effect = null;
         for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (staticEffect instanceof RevealSubtypeOrEntersTappedEffect revealEffect) {
@@ -598,6 +613,9 @@ public class BattlefieldPlacementService {
     }
 
     private void applyMayPayLifeOrEntersTapped(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         MayPayLifeOrEntersTappedEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(e -> e instanceof MayPayLifeOrEntersTappedEffect)
                 .map(MayPayLifeOrEntersTappedEffect.class::cast)
@@ -815,6 +833,9 @@ public class BattlefieldPlacementService {
      * entering permanent always enters; only the older copies leave.
      */
     private void applySacrificeOtherPermanentsWithSameName(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         boolean present = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(SacrificeOtherPermanentsWithSameNameOnEnterEffect.class::isInstance);
         if (!present) {
@@ -845,6 +866,9 @@ public class BattlefieldPlacementService {
      * {@link #completeSacrificePermanentsToEnter}.
      */
     private boolean applyEntryCostReplacement(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return true;
+        }
         if (permanent.isEntryCostPaid()) {
             return true;
         }
@@ -888,6 +912,9 @@ public class BattlefieldPlacementService {
 
     private boolean applyRequiredGraveyardExileReplacement(GameData gameData, UUID controllerId,
                                                            Permanent permanent, int xValue) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return true;
+        }
         ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect effect = permanent.getCard()
                 .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
@@ -981,6 +1008,9 @@ public class BattlefieldPlacementService {
     }
 
     private void applySelfEnterTapped(Permanent enteringPermanent) {
+        if (enteringPermanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         boolean entersTapped = enteringPermanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof EntersTappedEffect);
         if (entersTapped) {
@@ -997,6 +1027,9 @@ public class BattlefieldPlacementService {
      * after this method), "other lands" / "matching permanents" counts naturally exclude it.
      */
     private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
+        if (enteringPermanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ConditionalReplacementEffect conditional
                     && conditional.upgradedEffect() instanceof EntersTappedEffect) {
@@ -1038,28 +1071,30 @@ public class BattlefieldPlacementService {
         // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            EnterWithCountersEffect enterWith;
-            if (effect instanceof EnterWithCountersEffect direct) {
-                enterWith = direct;
-            } else if (effect instanceof ConditionalEffect conditional
-                    && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
-                ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, false, permanent.isProwl(), false, false, false,
-                        permanent.getCastFromZone(), xValue, null, null, false,
-                        false, false, null, null, null, repeatedAdditionalCosts,
-                        permanent.isAlternateCost(), 0);
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+                EnterWithCountersEffect enterWith;
+                if (effect instanceof EnterWithCountersEffect direct) {
+                    enterWith = direct;
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
+                    ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
+                            card, kicked, false, permanent.isProwl(), false, false, false,
+                            permanent.getCastFromZone(), xValue, null, null, false,
+                            false, false, null, null, null, repeatedAdditionalCosts,
+                            permanent.isAlternateCost(), 0);
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                        continue;
+                    }
+                    enterWith = wrapped;
+                } else {
                     continue;
                 }
-                enterWith = wrapped;
-            } else {
-                continue;
-            }
 
-            if (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith)) continue;
-            applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, xValue,
-                    repeatedAdditionalCosts, convokeCreatureCount, card);
+                if (permanent.getChosenSubtype() == null && isChosenSubtypeDependent(enterWith)) continue;
+                applyEnterWithCountersEffect(gameData, controllerId, permanent, enterWith, xValue,
+                        repeatedAdditionalCosts, convokeCreatureCount, card);
+            }
         }
 
         if (additionalEnterWithCounters != null) {
@@ -1074,6 +1109,9 @@ public class BattlefieldPlacementService {
 
     private void applyEntryReplacementEffects(GameData gameData, UUID controllerId,
                                               Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect);
         }
@@ -1085,7 +1123,8 @@ public class BattlefieldPlacementService {
      * its ETB effects are collected, preserving the card's entry-time behavior.
      */
     public void applyDeferredEnterWithCounters(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (permanent.getChosenSubtype() == null
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || permanent.getChosenSubtype() == null
                 || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         int countersBefore = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
@@ -1310,7 +1349,8 @@ public class BattlefieldPlacementService {
         subtypes.addAll(entering.getCard().getSubtypes());
         subtypes.addAll(entering.getTransientSubtypes());
         subtypes.addAll(entering.getGrantedSubtypes());
-        boolean changeling = entering.getCard().hasKeyword(Keyword.CHANGELING);
+        boolean changeling = !entering.isLosesAllAbilitiesUntilEndOfTurn()
+                && entering.getCard().hasKeyword(Keyword.CHANGELING);
 
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
         List<Permanent> snapshot = List.copyOf(bf);
@@ -1444,7 +1484,12 @@ public class BattlefieldPlacementService {
                 if (!(effect instanceof ControlledPermanentEntryReplacementEffect replacement)) continue;
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, replacement.enteringPermanentPredicate(), sourceContext)) {
-                    additionalCounters += Math.max(0, replacement.additionalCounterCount(permanent));
+                    DynamicAmount dynamicAmount = replacement.additionalCounterAmount();
+                    int replacementCount = dynamicAmount == null
+                            ? replacement.additionalCounterCount(permanent)
+                            : amountEvaluationService.evaluate(gameData, dynamicAmount,
+                                    new AmountContext(controllerId, source, null, 0, 0));
+                    additionalCounters += Math.max(0, replacementCount);
                 }
             }
         }

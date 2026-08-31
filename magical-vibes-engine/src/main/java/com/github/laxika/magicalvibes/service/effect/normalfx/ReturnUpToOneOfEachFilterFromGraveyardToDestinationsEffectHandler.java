@@ -62,7 +62,7 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
 
             GraveyardChoiceDestination destination = returnEffect.destinations().get(groupIndex);
             if (destination == GraveyardChoiceDestination.BATTLEFIELD) {
-                if (allBattlefield) {
+                if (allBattlefield || returnEffect.enterTapped()) {
                     battlefieldTargetIds.addAll(legalTargetIds);
                 } else {
                     graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry, legalTargetIds,
@@ -81,7 +81,7 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
             }
         }
 
-        if (!allBattlefield) {
+        if (!allBattlefield && battlefieldTargetIds.isEmpty()) {
             return;
         }
 
@@ -96,7 +96,7 @@ public class ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffectHandler
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
             }
             graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
-                    gameData, Map.of(entry.getControllerId(), battlefieldCards), false, null);
+                    gameData, Map.of(entry.getControllerId(), battlefieldCards), returnEffect.enterTapped(), null);
         }
     }
 }

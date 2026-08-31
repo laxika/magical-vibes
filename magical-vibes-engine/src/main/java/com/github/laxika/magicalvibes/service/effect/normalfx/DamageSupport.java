@@ -1793,7 +1793,12 @@ public class DamageSupport {
      * active player.
      */
     public int applyControllerAllDamagePrevention(GameData gameData, UUID playerId, int damage) {
-        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        return applyControllerAllDamagePrevention(gameData, playerId, damage, false);
+    }
+
+    public int applyControllerAllDamagePrevention(GameData gameData, UUID playerId, int damage,
+                                                   boolean combatDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
         if (damage <= 0) return 0;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1823,7 +1828,12 @@ public class DamageSupport {
     }
 
     public int applyImmortalCoilPrevention(GameData gameData, UUID playerId, int damage) {
-        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        return applyImmortalCoilPrevention(gameData, playerId, damage, false);
+    }
+
+    public int applyImmortalCoilPrevention(GameData gameData, UUID playerId, int damage,
+                                           boolean combatDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
         if (damage <= 0) return 0;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

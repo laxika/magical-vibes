@@ -152,6 +152,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -176,6 +177,7 @@ public class DeathTriggerCollectorService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
 
     // ── ON_DEATH (dying card's own death triggers) ─────────────────────
@@ -2722,6 +2724,12 @@ public class DeathTriggerCollectorService {
         if (sl.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE) {
             return false;
         }
+        if (effect.wrapped() instanceof ConditionalEffect conditional
+                && conditional.interveningIf()
+                && !conditionEvaluationService.isInterveningIfMet(
+                        match.gameData(), conditional, match.permanent(), sl.controllerId())) {
+            return false;
+        }
         return handleSelfLeavesDefault(match, effect.wrapped(), ctx);
     }
 
@@ -3057,7 +3065,8 @@ public class DeathTriggerCollectorService {
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    match.permanent().getCard(), sl.controllerId(), new ArrayList<>(List.of(effect))
+                    match.permanent().getCard(), sl.controllerId(), new ArrayList<>(List.of(effect)),
+                    "leaves-the-battlefield", match.permanent().getId(), new Permanent(match.permanent())
             ));
         } else {
             StackEntry entry = new StackEntry(

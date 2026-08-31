@@ -128,6 +128,18 @@ class PlayerInputServiceTest {
         return card;
     }
 
+    @Test
+    @DisplayName("Begins a spell odd/even choice with both options")
+    void beginsSpellManaValueParityChoice() {
+        svc.beginSpellManaValueParityChoice(gd, PLAYER1_ID);
+
+        PendingInteraction.ColorChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("ODD", "EVEN");
+        assertThat(choice.prompt()).isEqualTo("Choose odd or even.");
+        assertThat(choice.decidingPlayerId()).isEqualTo(PLAYER1_ID);
+    }
+
     // ========================================================================
     // Decision ownership
     // ========================================================================

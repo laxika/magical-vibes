@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
@@ -98,6 +99,8 @@ public class GameData {
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldLastTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /** Whether any spell was cast for its Warp cost this turn. */
+    public boolean spellWarpedThisTurn;
     public final Map<UUID, List<StackEntry>> crimeCandidatesThisTurn = new ConcurrentHashMap<>();
     private final Set<UUID> spellsCastFromHandThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose creature spell was countered by an opponent this turn (Summoning Trap). */
@@ -321,6 +324,8 @@ public class GameData {
             ConcurrentHashMap.newKeySet();
     /** Counts creatures that left the battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureLeftBattlefieldCountThisTurn = new ConcurrentHashMap<>();
+    /** Whether any nonland permanent left the battlefield this turn. */
+    public boolean nonlandPermanentLeftBattlefieldThisTurn;
     /**
      * When non-null, the card with this ID is currently being put into a graveyard as the discard cost
      * of activating a cycling ability. Read by {@link com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement}
@@ -525,6 +530,8 @@ public class GameData {
     public CardColor chosenSpellColor;
     /** Resolution-time "choose a number" answer for a spell with no permanent to store it on. */
     public Integer chosenSpellNumber;
+    /** Resolution-time "choose odd or even" answer for a spell with no permanent to store it on. */
+    public ManaValueParity chosenSpellManaValueParity;
     /** Resolution-time Turnabout permanent type choice. */
     public CardType chosenSpellPermanentType;
     /** Resolution-time card type choice for a spell with no permanent to store it on. */
@@ -1358,6 +1365,8 @@ public class GameData {
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
+    /** Optional condition that must remain true for an exiled card's play permission to be active. */
+    public final Map<UUID, Condition> exilePlayPermissionConditions = new ConcurrentHashMap<>();
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps a source permanent to the latest card whose permission it granted. */
     public final Map<UUID, UUID> exilePlayPermissionSourceCards = new ConcurrentHashMap<>();
@@ -1382,6 +1391,8 @@ public class GameData {
      *  permission. Temporary entries are listed in {@link #exilePlayPermissionsExpireEndOfTurn};
      *  entries without an expiry remain valid for as long as the card remains exiled. */
     public final Set<UUID> exilePlayWithoutPayingManaCost = ConcurrentHashMap.newKeySet();
+    /** Exiled card UUIDs whose permission makes a land played from exile enter tapped. */
+    public final Set<UUID> exileCardsEnterTapped = ConcurrentHashMap.newKeySet();
     /** Card UUIDs that are exiled instead of being put into a graveyard (e.g. a spell cast via
      *  Nita, Forum Conciliator: "If that spell would be put into a graveyard, exile it instead").
      *  Cleared during cleanup step. */
@@ -1751,9 +1762,9 @@ public class GameData {
      *  this turn. Cleared at start of new turn. */
     public final Map<UUID, Set<String>> firstResolutionTriggerKeysThisTurn = new ConcurrentHashMap<>();
 
-    /** Crown permanent IDs that have replaced a token creation event this turn. */
+    /** Permanent IDs that have replaced a token creation event this turn. */
     public final Set<UUID> tokenCreationReplacementUsedThisTurn = ConcurrentHashMap.newKeySet();
-    /** Token creation event paused for a Mirrormind Crown replacement choice. */
+    /** Token creation event paused for a once-per-turn replacement choice. */
     public PendingTokenCreationReplacement pendingTokenCreationReplacement;
 
     /** Tracks which permanents (by UUID) have already fired a {@code OncePerTurnTriggerEffect} in the
@@ -2684,6 +2695,14 @@ public class GameData {
         consumeNextInstantSorceryUncounterableGrant(playerId, card);
     }
 
+    /** Records a spell cast and whether it was cast for an alternate Warp cost. */
+    public void recordSpellCast(UUID playerId, Card card, boolean castWithWarp) {
+        recordSpellCast(playerId, card);
+        if (castWithWarp) {
+            spellWarpedThisTurn = true;
+        }
+    }
+
     public void recordSpellCastFromHand(Card card) {
         if (card != null) spellsCastFromHandThisTurn.add(card.getId());
     }
@@ -3193,6 +3212,7 @@ public class GameData {
         spellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
         mostRecentSpellCastThisTurn = null;
+        spellWarpedThisTurn = false;
     }
 
     public static final int STARTING_LIFE_TOTAL = 20;
@@ -3463,11 +3483,13 @@ public class GameData {
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             plottedCardIds.remove(cardId);
             exilePlayPermissions.remove(cardId);
+            exilePlayPermissionConditions.remove(cardId);
             exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
+            exileCardsEnterTapped.remove(cardId);
             exileInsteadOfGraveyard.remove(cardId);
             exiledCardTimeCounters.remove(cardId);
             exiledCardHitCounters.remove(cardId);
@@ -3775,6 +3797,7 @@ public class GameData {
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.chosenSpellColor = this.chosenSpellColor;
         copy.chosenSpellNumber = this.chosenSpellNumber;
+        copy.chosenSpellManaValueParity = this.chosenSpellManaValueParity;
         copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
         copy.chosenSpellCardType = this.chosenSpellCardType;
         copy.turnaboutTap = this.turnaboutTap;
@@ -4056,6 +4079,7 @@ public class GameData {
                 copy.permanentsEnteredBattlefieldLastTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
+        copy.spellWarpedThisTurn = this.spellWarpedThisTurn;
         copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);
         copy.mostRecentSpellCastThisTurn = this.mostRecentSpellCastThisTurn;
         this.spellNameCastCountsThisGame.forEach((k, v) ->
@@ -4255,6 +4279,7 @@ public class GameData {
         copy.playersWhosePermanentsLeftBattlefieldThisTurn
                 .addAll(this.playersWhosePermanentsLeftBattlefieldThisTurn);
         copy.creatureLeftBattlefieldCountThisTurn.putAll(this.creatureLeftBattlefieldCountThisTurn);
+        copy.nonlandPermanentLeftBattlefieldThisTurn = this.nonlandPermanentLeftBattlefieldThisTurn;
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
@@ -4582,6 +4607,7 @@ public class GameData {
                 .addAll(this.playersAllowedToPlayFromLibraryTopUntilEndOfTurn);
         copy.libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll(this.libraryTopCardLifePlayPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
+        copy.exilePlayPermissionConditions.putAll(this.exilePlayPermissionConditions);
         copy.exilePlayPermissionSourceCards.putAll(this.exilePlayPermissionSourceCards);
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
@@ -4590,6 +4616,7 @@ public class GameData {
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);
         copy.stashCounterCardIds.addAll(this.stashCounterCardIds);
         copy.exilePlayWithoutPayingManaCost.addAll(this.exilePlayWithoutPayingManaCost);
+        copy.exileCardsEnterTapped.addAll(this.exileCardsEnterTapped);
         copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);

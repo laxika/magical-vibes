@@ -585,7 +585,7 @@ public class GameViewProjectionFactory {
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
             if (!alreadyIncluded.contains(entry.card().getId())
-                    && playerId.equals(gameData.exilePlayPermissions.get(entry.card().getId()))) {
+                    && castingPermissionService.hasExilePlayPermission(gameData, playerId, entry.card().getId())) {
                 exiledCards.add(entry.card());
                 alreadyIncluded.add(entry.card().getId());
             }
@@ -634,8 +634,7 @@ public class GameViewProjectionFactory {
                 continue;
             }
 
-            UUID permittedPlayer = gameData.exilePlayPermissions.get(card.getId());
-            boolean hasPermission = (permittedPlayer != null && permittedPlayer.equals(playerId))
+            boolean hasPermission = castingPermissionService.hasExilePlayPermission(gameData, playerId, card.getId())
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
@@ -697,7 +696,8 @@ public class GameViewProjectionFactory {
                                 : cost.canPay(cardPool, additionalCost);
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
                         if (!foretellPermission && !canAfford) {
-                            canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                            canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(
+                                    gameData, playerId, card, pool, additionalCost, Zone.EXILE);
                         }
                         if (!canAfford
                                 && (card.getKeywords().contains(Keyword.CONVOKE)
@@ -836,7 +836,8 @@ public class GameViewProjectionFactory {
                 canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
             if (!canAfford) {
-                canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);
+                canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(
+                        gameData, playerId, topCard, pool, additionalCost, Zone.LIBRARY);
             }
             if (canAfford) {
                 playable.add(cardViewFactory.create(topCard));

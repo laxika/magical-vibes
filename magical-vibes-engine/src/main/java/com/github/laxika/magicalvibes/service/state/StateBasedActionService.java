@@ -192,6 +192,7 @@ public class StateBasedActionService {
             gameData.exilePlayAnyManaTypeWhileExiled.remove(cardId);
             gameData.stashCounterCardIds.remove(cardId);
             gameData.exilePlayWithoutPayingManaCost.remove(cardId);
+            gameData.exileCardsEnterTapped.remove(cardId);
             gameData.exileInsteadOfGraveyard.remove(cardId);
             gameData.foretoldCardIds.remove(cardId);
             gameData.graveyardPlayPermissions.remove(cardId);

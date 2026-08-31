@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCombatDamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndAbilitiesCantBeCounteredEffect;
@@ -1407,6 +1408,18 @@ public class GameQueryService {
                 && !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
     }
 
+    /** Returns whether damage of the requested type can be prevented. */
+    public boolean isDamagePreventable(GameData gameData, boolean isCombatDamage) {
+        return isDamagePreventable(gameData)
+                && (!isCombatDamage || !isCombatDamageCantBePrevented(gameData));
+    }
+
+    /** Returns whether an active battlefield effect prevents combat damage prevention globally. */
+    public boolean isCombatDamageCantBePrevented(GameData gameData) {
+        return gameData.anyPermanentMatches(permanent ->
+                hasActiveStaticEffect(gameData, permanent, CombatDamageCantBePreventedEffect.class));
+    }
+
     /**
      * Returns {@code true} if damage dealt by the given source permanent can't be prevented because
      * that permanent itself carries {@link SourceDamageCantBePreventedEffect} (e.g. Malignus). Unlike
@@ -1439,7 +1452,13 @@ public class GameQueryService {
     /** Returns whether this player's active turn-scoped source filters prevent damage from the source. */
     public boolean isDamageFromMatchingSourcePreventedForPlayer(GameData gameData, UUID playerId,
                                                                 Permanent source) {
-        if (!isDamagePreventable(gameData) || source == null || damageCantBePreventedFromSource(gameData, source)) {
+        return isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, source, false);
+    }
+
+    public boolean isDamageFromMatchingSourcePreventedForPlayer(GameData gameData, UUID playerId,
+                                                                Permanent source, boolean isCombatDamage) {
+        if (!isDamagePreventable(gameData, isCombatDamage) || source == null
+                || damageCantBePreventedFromSource(gameData, source, isCombatDamage)) {
             return false;
         }
         Set<PermanentPredicate> predicates = gameData.playersWithDamageFromMatchingSourcesPrevented.get(playerId);
@@ -2627,7 +2646,8 @@ public class GameQueryService {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
                     } else {
-                        applies = sourceControlsAffected && replacement.appliesTo(counterType, creature, artifact);
+                        applies = sourceControlsAffected && replacement.appliesTo(
+                                counterType, creature, artifact, source, permanent);
                     }
                     if (applies) result[0] = replacement.replace(counterType, result[0]);
                 }
@@ -4058,8 +4078,13 @@ public class GameQueryService {
      * damage is currently preventable (respects Leyline of Punishment, etc.).
      */
     public boolean isColorDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature, Set<CardColor> sourceColors) {
+        return isColorDamageToEnchantedCreaturePrevented(gameData, creature, sourceColors, false);
+    }
+
+    public boolean isColorDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature,
+                                                              Set<CardColor> sourceColors, boolean isCombatDamage) {
         if (creature == null || sourceColors == null || sourceColors.isEmpty()) return false;
-        if (!isDamagePreventable(gameData)) return false;
+        if (!isDamagePreventable(gameData, isCombatDamage)) return false;
         sourceColors = getDamageSourceColors(gameData, sourceColors);
         if (sourceColors.isEmpty()) return false;
         final Set<CardColor> effectiveColors = sourceColors;
@@ -4078,8 +4103,16 @@ public class GameQueryService {
     public boolean isDamageBetweenCreaturesOfSharedColorPrevented(GameData gameData,
                                                                    Permanent target,
                                                                    Permanent source) {
+        return isDamageBetweenCreaturesOfSharedColorPrevented(gameData, target, source, false);
+    }
+
+    public boolean isDamageBetweenCreaturesOfSharedColorPrevented(GameData gameData,
+                                                                   Permanent target,
+                                                                   Permanent source,
+                                                                   boolean isCombatDamage) {
         if (target == null || source == null || target.getId().equals(source.getId())) return false;
-        if (!isDamagePreventable(gameData) || !isCreature(gameData, target) || !isCreature(gameData, source)) {
+        if (!isDamagePreventable(gameData, isCombatDamage) || !isCreature(gameData, target)
+                || !isCreature(gameData, source)) {
             return false;
         }
         Set<CardColor> targetColors = getEffectiveColors(gameData, target);
@@ -4623,7 +4656,12 @@ public class GameQueryService {
      * (its source is always a creature); this covers the noncombat path where the source is known.
      */
     public boolean isCreatureSourceDamageToSelfPrevented(GameData gameData, Permanent target, StackEntry entry, Permanent explicitSource) {
-        if (!isDamagePreventable(gameData)) return false;
+        return isCreatureSourceDamageToSelfPrevented(gameData, target, entry, explicitSource, false);
+    }
+
+    public boolean isCreatureSourceDamageToSelfPrevented(GameData gameData, Permanent target, StackEntry entry,
+                                                         Permanent explicitSource, boolean isCombatDamage) {
+        if (!isDamagePreventable(gameData, isCombatDamage)) return false;
         boolean preventsAllCreatureDamage = target.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance);
         boolean preventsDamageFromBlockedCreature = target.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -7315,7 +7353,7 @@ public class GameQueryService {
      * prevention effects (e.g. {@link PreventAllCombatDamageToAndByEnchantedCreatureEffect}).
      */
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
-        if (!isDamagePreventable(gameData)) return false;
+        if (!isDamagePreventable(gameData, isCombatDamage)) return false;
         boolean globalCreaturePrevention = isDamageByCreaturePrevented(gameData, creature)
                 && gameData.damageByCreaturesPreventionLifeGainPlayers.isEmpty();
         if (globalCreaturePrevention
@@ -7378,7 +7416,12 @@ public class GameQueryService {
     /** Returns whether this creature's damage to the target creature is covered by its own static prevention. */
     public boolean isDamageFromPermanentSourceToCreaturePrevented(GameData gameData, Permanent source,
                                                                    Permanent target) {
-        if (!isDamagePreventable(gameData) || source == null || target == null
+        return isDamageFromPermanentSourceToCreaturePrevented(gameData, source, target, false);
+    }
+
+    public boolean isDamageFromPermanentSourceToCreaturePrevented(GameData gameData, Permanent source,
+                                                                   Permanent target, boolean isCombatDamage) {
+        if (!isDamagePreventable(gameData, isCombatDamage) || source == null || target == null
                 || !isCreature(gameData, source) || !isCreature(gameData, target)) {
             return false;
         }
@@ -7467,7 +7510,12 @@ public class GameQueryService {
     /** Returns whether damage from a player's source to that player's creature is prevented. */
     public boolean isDamageFromControlledSourceToControlledCreaturePrevented(
             GameData gameData, Permanent creature, UUID sourceControllerId) {
-        if (!isDamagePreventable(gameData) || creature == null || sourceControllerId == null
+        return isDamageFromControlledSourceToControlledCreaturePrevented(gameData, creature, sourceControllerId, false);
+    }
+
+    public boolean isDamageFromControlledSourceToControlledCreaturePrevented(
+            GameData gameData, Permanent creature, UUID sourceControllerId, boolean isCombatDamage) {
+        if (!isDamagePreventable(gameData, isCombatDamage) || creature == null || sourceControllerId == null
                 || !isCreature(gameData, creature)) return false;
         UUID creatureControllerId = findPermanentController(gameData, creature.getId());
         if (!sourceControllerId.equals(creatureControllerId)) return false;

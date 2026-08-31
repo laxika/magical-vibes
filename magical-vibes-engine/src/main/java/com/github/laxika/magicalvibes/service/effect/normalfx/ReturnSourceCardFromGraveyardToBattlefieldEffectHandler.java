@@ -69,6 +69,7 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
         if (e.tapped()) {
             permanent.tap();
         }
+        permanent.setLosesAllAbilitiesPermanently(e.losesAllAbilities());
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
@@ -77,13 +78,11 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 " to the battlefield" + (e.tapped() ? " tapped" : "") + "."));
         log.info("Game {} - {} returns to the battlefield from the graveyard", gameData.id, card.getName());
 
-        graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
-
         if (e.losesAllAbilities()) {
-            permanent.setLosesAllAbilitiesPermanently(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
                     entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
                     permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
         }
+        graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
     }
 }

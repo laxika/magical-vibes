@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -94,6 +95,29 @@ player1Id = UUID.randomUUID();
                 millHalfLibraryEffectHandler.resolve(gd, entry, effect);
 
                 verify(graveyardService).resolveMillPlayer(gd, player2Id, 5);
+            }
+
+            @Test
+            @DisplayName("Mills each player in a multi-target group")
+            void millsEachPlayerInMultiTargetGroup() {
+                for (int i = 0; i < 11; i++) {
+                    gd.playerDecks.get(player1Id).add(createCard("Player1Card" + i));
+                }
+                for (int i = 0; i < 9; i++) {
+                    gd.playerDecks.get(player2Id).add(createCard("Player2Card" + i));
+                }
+
+                Card spell = createCard("Singularity Rupture");
+                MillHalfLibraryEffect effect = new MillHalfLibraryEffect(false);
+                spell.target(0, 99).addEffect(EffectSlot.SPELL, effect);
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, spell,
+                        player1Id, "Singularity Rupture", List.of(effect), 0,
+                        List.of(player1Id, player2Id));
+
+                millHalfLibraryEffectHandler.resolve(gd, entry, effect);
+
+                verify(graveyardService).resolveMillPlayer(gd, player1Id, 5);
+                verify(graveyardService).resolveMillPlayer(gd, player2Id, 4);
             }
 
             @Test

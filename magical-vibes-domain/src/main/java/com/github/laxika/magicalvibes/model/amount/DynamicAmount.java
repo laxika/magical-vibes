@@ -43,6 +43,7 @@ public sealed interface DynamicAmount permits
         ConvokeCreatureCount,
         ChosenNumberOnSource,
         ChosenPermanentPower,
+        ChosenCreatureOrWarpedCardPower,
         ControllerLifeTotal,
         ControllerSpeed,
         CountersOnLinkedPermanent,

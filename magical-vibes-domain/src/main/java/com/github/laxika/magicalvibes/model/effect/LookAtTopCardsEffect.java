@@ -436,6 +436,14 @@ public record LookAtTopCardsEffect(
                 false, 0, 0, followUp);
     }
 
+    /** You may put any number of matching cards onto the battlefield tapped; the rest are shuffled into the library. */
+    public static LookAtTopCardsEffect mayPutAnyNumberMatchingOntoBattlefieldTappedShuffleRest(
+            DynamicAmount lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(lookCount, lookCount, choosePredicate,
+                LookDestination.SHUFFLE_INTO_LIBRARY, true,
+                LibrarySearchDestination.BATTLEFIELD_TAPPED, true);
+    }
+
     /** Choose exactly two of the top five cards to enter the battlefield cloaked. */
     public static LookAtTopCardsEffect cloakTwoFromTopFive() {
         return new LookAtTopCardsEffect(new Fixed(5), new Fixed(2), null,

@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -128,6 +129,31 @@ public class DrawService {
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
+        resolveDrawCards(gameData, playerId, 1);
+    }
+
+    public void resolveDrawCards(GameData gameData, UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+
+        int drawAmount = amount;
+        Permanent quantumRiddler = findQuantumRiddlerDrawReplacementSource(gameData, playerId);
+        if (quantumRiddler != null) {
+            drawAmount++;
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " draws one additional card with " + quantumRiddler.getCard().getName() + "."));
+            log.info("Game {} - {} draws one additional card with {}",
+                    gameData.id, playerName, quantumRiddler.getCard().getName());
+        }
+
+        for (int i = 0; i < drawAmount; i++) {
+            resolveDrawCardInternal(gameData, playerId);
+        }
+    }
+
+    private void resolveDrawCardInternal(GameData gameData, UUID playerId) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
@@ -575,6 +601,43 @@ public class DrawService {
     private boolean isHandEmpty(GameData gameData, UUID playerId) {
         List<Card> hand = gameData.playerHands.get(playerId);
         return hand == null || hand.isEmpty();
+    }
+
+    public boolean hasQuantumRiddlerDrawReplacement(GameData gameData, UUID playerId) {
+        return findQuantumRiddlerDrawReplacementSource(gameData, playerId) != null;
+    }
+
+    private Permanent findQuantumRiddlerDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean active = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> isActiveQuantumRiddlerDrawReplacement(
+                            gameData, permanent, playerId, effect));
+            if (active) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private boolean isActiveQuantumRiddlerDrawReplacement(GameData gameData, Permanent permanent,
+                                                          UUID controllerId, CardEffect effect) {
+        if (effect.getClass() == QuantumRiddlerDrawReplacementEffect.class) {
+            return true;
+        }
+        if (effect.getClass() != ConditionalEffect.class) {
+            return false;
+        }
+
+        ConditionalEffect conditional = (ConditionalEffect) effect;
+        return conditional.wrapped().getClass()
+                == QuantumRiddlerDrawReplacementEffect.class
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forPermanent(permanent, controllerId));
     }
 
     private Card findEmptyHandDrawExtraSourceCard(GameData gameData, UUID playerId) {

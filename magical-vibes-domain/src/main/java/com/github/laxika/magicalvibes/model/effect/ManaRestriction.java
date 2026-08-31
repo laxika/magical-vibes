@@ -83,6 +83,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells from outside the controller's hand. */
+    record NonHandSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNonHandSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells cast from outside hand only";
+        }
+    }
+
     record ForetellOrInstantSorcery() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -145,6 +158,23 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast artifact spells. */
+    record ArtifactSpellsOnly() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addArtifactSpellOnlyColorless(amount);
+            } else {
+                pool.addArtifactSpellOnlyMana(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "artifact spells only";
+        }
+    }
+
     /** Mana spendable only to cast artifact spells or activate any activated ability (Guidelight Optimizer). */
     record ArtifactSpellsOrAbilities() implements ManaRestriction {
         @Override
@@ -159,13 +189,17 @@ public sealed interface ManaRestriction {
     }
 
     /**
-     * Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). Narrower than
-     * {@link ArtifactSpells}: cannot pay artifact spell costs.
+     * Mana spendable only to activate abilities of artifacts (Soldevi Machinist, Steelswarm Operator).
+     * Narrower than {@link ArtifactSpells}: cannot pay artifact spell costs.
      */
     record ArtifactAbilities() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addArtifactAbilityOnlyColorless(amount);
+            if (color == ManaColor.COLORLESS) {
+                pool.addArtifactAbilityOnlyColorless(amount);
+            } else {
+                pool.addArtifactAbilityOnlyMana(color, amount);
+            }
         }
 
         @Override

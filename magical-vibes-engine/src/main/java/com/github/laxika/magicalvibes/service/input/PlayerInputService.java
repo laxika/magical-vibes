@@ -359,6 +359,13 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
     }
 
+    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards,
+                                          int maxCount, int minCount, Integer maxTotalManaValue,
+                                          String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount, maxTotalManaValue));
+    }
+
     public void beginMultiGraveyardChoiceWithMinimumManaValue(GameData gameData, UUID playerId,
                                                                List<Card> cards, int maxCount,
                                                                int minimumTotalManaValue, String prompt) {
@@ -1040,6 +1047,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a number for a spell", gameData.id, playerName);
+    }
+
+    public void beginSpellManaValueParityChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellManaValueParityChoice choiceContext =
+                new ChoiceContext.SpellManaValueParityChoice(playerId);
+        List<String> options = List.of("ODD", "EVEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options, "Choose odd or even."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose odd or even for a spell", gameData.id, playerName);
     }
 
     public void beginManaValueParityChoice(GameData gameData, UUID playerId, UUID permanentId) {
@@ -2019,13 +2037,27 @@ public class PlayerInputService {
                                          List<UUID> remainingChoosers, int cardsPerPlayer,
                                          boolean faceDown, boolean returnOnSourceLeave,
                                          UUID untapPermanentId) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
+                remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
+                untapPermanentId, false, null, 0, false);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount,
+                                         List<UUID> remainingChoosers, int cardsPerPlayer,
+                                         boolean faceDown, boolean returnOnSourceLeave,
+                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         UUID playPermissionTaxSourceControllerId,
+                                         int exilePlayOpponentTax, boolean landsEnterTapped) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
                 playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
                 "Choose a card to exile.", remainingChoosers != null ? remainingChoosers : List.of(),
-                cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId));
+                cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId,
+                playPermissionToChooser, playPermissionTaxSourceControllerId,
+                exilePlayOpponentTax, landsEnterTapped));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

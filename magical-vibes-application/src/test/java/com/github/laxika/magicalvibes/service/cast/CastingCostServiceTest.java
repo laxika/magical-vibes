@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
@@ -1464,6 +1465,29 @@ class CastingCostServiceTest {
         card.setName(name);
         card.setType(CardType.CREATURE);
         return card;
+    }
+
+    @Test
+    void warpAlternativeSelectionHonorsSourceZone() {
+        Card source = new Card();
+        source.addEffect(EffectSlot.STATIC,
+                AlternativeCostForSpellsEffect.warp("{2}{R}", new CardTruePredicate()));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card spell = new Card();
+        spell.setManaCost("{6}");
+        ManaPool pool = new ManaPool();
+        pool.add(ManaColor.RED);
+        pool.add(ManaColor.COLORLESS, 2);
+        when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenReturn(true);
+
+        var handSelection = svc.findAffordableAlternativeCostSelection(
+                gd, player1Id, spell, pool, 0, Zone.HAND);
+        assertThat(handSelection).isNotNull();
+        assertThat(handSelection.manaCost()).isEqualTo("{2}{R}");
+        assertThat(handSelection.castsWithWarp()).isTrue();
+        assertThat(svc.findAffordableAlternativeCostSelection(
+                gd, player1Id, spell, pool, 0, Zone.EXILE)).isNull();
     }
 
     @Nested

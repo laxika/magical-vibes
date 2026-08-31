@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 
 @CardRegistration(set = "GTC", collectorNumber = "240")
 @CardRegistration(set = "RNA", collectorNumber = "246")
+@CardRegistration(set = "EOE", collectorNumber = "251")
 public class BreedingPool extends Card {
 
     public BreedingPool() {

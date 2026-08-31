@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -146,7 +147,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
         boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
-        boolean anyNumber = chooseCount > 1 || randomBottom;
+        boolean shuffleIntoLibrary = e.restDestination() == LookDestination.SHUFFLE_INTO_LIBRARY;
+        boolean anyNumber = chooseCount > 1 || randomBottom || shuffleIntoLibrary;
 
         if (matchingCards.isEmpty()) {
             if (e.recordChosenCount()) {
@@ -164,6 +166,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         playerName + " puts the revealed cards into their graveyard."));
             } else if (randomBottom) {
                 bottomInRandomOrder(gameData, controllerId, playerName, topCards);
+            } else if (shuffleIntoLibrary) {
+                gameData.playerDecks.get(controllerId).addAll(topCards);
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " finds no eligible cards. The revealed cards are shuffled into their library."));
             } else {
                 libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, topCards);
             }
@@ -217,11 +224,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 ? "Choose exactly " + minCount + " cards to cloak. The rest go to the bottom of your library in a random order."
                 : randomBottom
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
+                : shuffleIntoLibrary
+                ? "Choose any number of eligible cards to put onto the battlefield. The rest are shuffled into your library."
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library.";
         List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, topCards, cardIds, restToGraveyard, false,
-                !restToGraveyard && !randomBottom && !remainingToExile,
+                !restToGraveyard && !randomBottom && !remainingToExile && !shuffleIntoLibrary,
                 randomBottom, remainingToExile, 0, null,
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),

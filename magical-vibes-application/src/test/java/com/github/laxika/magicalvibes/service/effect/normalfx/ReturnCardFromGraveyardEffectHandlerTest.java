@@ -308,6 +308,37 @@ class ReturnCardFromGraveyardEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("Restricts an event-card graveyard choice to cards recorded by the event")
+            void restrictsChoiceToEventCardIds() {
+                Card unrelatedCreature = createCard("Unrelated Creature");
+                Card destroyedCreature = createCard("Destroyed Creature");
+                gd.playerGraveyards.get(player1Id).add(unrelatedCreature);
+                gd.playerGraveyards.get(player2Id).add(destroyedCreature);
+
+                CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+                ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                        .filter(filter)
+                        .eventCardIdsOnly(true)
+                        .build();
+                StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Zero Point Ballad"),
+                        player1Id, "Zero Point Ballad", new ArrayList<>(List.of(effect)));
+                entry.setEventCardIds(List.of(destroyedCreature.getId()));
+
+                when(predicateEvaluationService.matchesCardPredicate(
+                        eq(destroyedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+
+                returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc
+                                && gc.cardPool().equals(List.of(destroyedCreature))));
+                verify(predicateEvaluationService, never()).matchesCardPredicate(
+                        eq(unrelatedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull());
+            }
+
+            @Test
             @DisplayName("Marks mandatory resolution-time graveyard choices as mandatory")
             void marksMandatoryChoiceAsMandatory() {
                 Card creature = createCard("Grizzly Bears");

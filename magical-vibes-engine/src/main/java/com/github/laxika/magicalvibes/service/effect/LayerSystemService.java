@@ -1958,6 +1958,15 @@ public class LayerSystemService {
                     }
                 }
             }
+            case OWN_PERMANENTS -> {
+                for (PermanentSlot slot : slots) {
+                    if (slot.controllerId().equals(source.controllerId())
+                            && matchesL4Filter(slot, filter, board, gameData,
+                            source.permanent(), source.controllerId())) {
+                        targets.add(slot);
+                    }
+                }
+            }
             case OWN_CREATURES, ALL_OWN_CREATURES, OPPONENT_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF -> {
                 for (PermanentSlot slot : slots) {
                     if (slot.permanent() == source.permanent() && scope != GrantScope.ALL_CREATURES_INCLUDING_SELF) continue;

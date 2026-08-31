@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -160,6 +162,23 @@ class CastingPermissionServiceTest {
         assertThat(svc.getCastableTypesFromTopOfLibrary(gd, player1Id))
                 .containsExactly(CardType.CREATURE);
         assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
+    }
+
+    @Test
+    @DisplayName("conditional direct exile-play permission follows the controlled subtype")
+    void conditionalExilePlayPermission() {
+        Card exiled = new Card();
+        gd.addToExile(player2Id, exiled);
+        ControlsPermanent controlsKavu = new ControlsPermanent(
+                new PermanentHasSubtypePredicate(CardSubtype.KAVU));
+        gd.exilePlayPermissions.put(exiled.getId(), player1Id);
+        gd.exilePlayPermissionConditions.put(exiled.getId(), controlsKavu);
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(controlsKavu), any())).thenReturn(false);
+        assertThat(svc.hasExilePlayPermission(gd, player1Id, exiled.getId())).isFalse();
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(controlsKavu), any())).thenReturn(true);
+        assertThat(svc.hasExilePlayPermission(gd, player1Id, exiled.getId())).isTrue();
     }
 
     @Nested
