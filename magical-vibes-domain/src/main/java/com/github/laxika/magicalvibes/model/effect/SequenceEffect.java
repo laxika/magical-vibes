@@ -115,7 +115,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof DamageSourceControllerAwareEffect aware
                         ? aware.bindDamageSourceController(controllerId, damageDealt)
                         : step)
-                .toList(), controllerDrawCount, onlyIfSacrificed);
+                 .toList(), controllerDrawCount, onlyIfSacrificed);
     }
 
     @Override

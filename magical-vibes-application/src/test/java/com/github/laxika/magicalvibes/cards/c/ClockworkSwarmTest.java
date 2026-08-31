@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
+import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
+import com.github.laxika.magicalvibes.cards.w.WallOfKelp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ClockworkSwarm.class, WallOfKelp.class, AnabaBodyguard.class})
 class ClockworkSwarmTest extends BaseCardTest {
 
     @Test
@@ -41,8 +43,12 @@ class ClockworkSwarmTest extends BaseCardTest {
         swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
 
         declareAttackers(player1, List.of(0));
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
+        assertThat(gd.stack).isNotEmpty();
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+
+        harness.passBothPriorities();
         assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(3);
     }
@@ -54,10 +60,28 @@ class ClockworkSwarmTest extends BaseCardTest {
         swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
 
         declareAttackers(player1, List.of()); // stays back
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
-        leaveEndOfCombat();
 
         assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Blocking removes a +1/+0 counter at end of combat")
+    void blockingRemovesCounterAtEndOfCombat() {
+        addCreatureReady(player1, new AnabaBodyguard());
+        Permanent swarm = addCreatureReady(player2, new ClockworkSwarm());
+        swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
     }
 
     @Test
@@ -99,9 +123,24 @@ class ClockworkSwarmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep ability cannot be activated during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new ClockworkSwarm());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+    }
+
+    @Test
     @DisplayName("Cannot be blocked by a Wall")
     void cannotBeBlockedByWall() {
-        setUpAttackWithBlocker(new WallOfWood());
+        setUpAttackWithBlocker(new WallOfKelp());
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -111,7 +150,7 @@ class ClockworkSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("Can be blocked by a non-Wall creature")
     void canBeBlockedByNonWall() {
-        Permanent blocker = setUpAttackWithBlocker(new GrizzlyBears());
+        Permanent blocker = setUpAttackWithBlocker(new AnabaBodyguard());
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -119,19 +158,12 @@ class ClockworkSwarmTest extends BaseCardTest {
     }
 
     private Permanent setUpAttackWithBlocker(Card blockerCard) {
-        Permanent swarm = new Permanent(new ClockworkSwarm());
-        swarm.setSummoningSick(false);
+        Permanent swarm = addCreatureReady(player1, new ClockworkSwarm());
         swarm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(swarm);
 
-        Permanent blocker = new Permanent(blockerCard);
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, blockerCard);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         return blocker;
     }
@@ -143,12 +175,6 @@ class ClockworkSwarmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, x);
 
         harness.activateAbility(player1, 0, x, null);
-        harness.passBothPriorities();
-    }
-
-    private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }

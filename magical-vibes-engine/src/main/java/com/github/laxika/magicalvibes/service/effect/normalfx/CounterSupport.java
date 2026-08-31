@@ -184,7 +184,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return;
             }
-            gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
+            gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);
@@ -259,6 +259,11 @@ public class CounterSupport {
     }
 
     public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
+        return counterSpellAndExile(gameData, source, target, target.getControllerId());
+    }
+
+    public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target,
+                                        UUID exileOwnerId) {
         gameData.stack.remove(target);
 
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
@@ -268,7 +273,7 @@ public class CounterSupport {
             if (applyControlledCounterExileReplacement(gameData, source, target)) {
                 return false;
             }
-            exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
+            exileService.exileCard(gameData, exileOwnerId, target.getPhysicalCard());
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);

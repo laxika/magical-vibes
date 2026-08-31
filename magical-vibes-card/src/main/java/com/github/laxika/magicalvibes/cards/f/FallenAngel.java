@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "161")
 @CardRegistration(set = "8ED", collectorNumber = "133")
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "6ED", collectorNumber = "127")
 @CardRegistration(set = "CHR", collectorNumber = "32")
 @CardRegistration(set = "BTD", collectorNumber = "25")
+@CardRegistration(set = "LEG", collectorNumber = "97")
 public class FallenAngel extends Card {
 
     public FallenAngel() {
@@ -22,8 +22,7 @@ public class FallenAngel extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 1)),
-                "Sacrifice a creature: Fallen Angel gets +2/+1 until end of turn.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice a creature: Fallen Angel gets +2/+1 until end of turn."
         ));
     }
 }

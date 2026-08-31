@@ -724,7 +724,7 @@ public class PlayerInteractionSupport {
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
                 imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
-                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect);
+                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0);
         interactionHandlerRegistry.begin(gameData, interaction);
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",

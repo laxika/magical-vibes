@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,42 +16,47 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GorillaWarCry.class, GorillaShaman.class})
 class GorillaWarCryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Every creature on the battlefield gains menace until end of turn")
-    void allCreaturesGainMenace() {
-        harness.forceActivePlayer(player1);
-        Permanent mine = addCreatureReady(player1, new GrizzlyBears());
-        Permanent theirs = addCreatureReady(player2, new GrizzlyBears());
+    void allExistingCreaturesGainMenace() {
+        harness.forceActivePlayer(player2);
+        Permanent mine = addCreatureReady(player1, new GorillaShaman());
+        Permanent theirs = addCreatureReady(player2, new GorillaShaman());
         harness.setHand(player1, List.of(new GorillaWarCry()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        assertThat(mine.getGrantedKeywords()).contains(Keyword.MENACE);
-        assertThat(theirs.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.MENACE)).isTrue();
+
+        Permanent enteredLater = addCreatureReady(player1, new GorillaShaman());
+        assertThat(gqs.hasKeyword(gd, enteredLater, Keyword.MENACE)).isFalse();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.MENACE)).isFalse();
     }
 
     @Test
     @DisplayName("A single blocker cannot block an attacker that gained menace")
     void singleBlockerIsIllegal() {
         harness.forceActivePlayer(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GorillaShaman());
+        addCreatureReady(player2, new GorillaShaman());
         harness.setHand(player1, List.of(new GorillaWarCry()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -62,20 +66,17 @@ class GorillaWarCryTest extends BaseCardTest {
     @DisplayName("Two blockers can still block the menacing attacker")
     void twoBlockersAreLegal() {
         harness.forceActivePlayer(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GorillaShaman());
+        addCreatureReady(player2, new GorillaShaman());
+        addCreatureReady(player2, new GorillaShaman());
         harness.setHand(player1, List.of(new GorillaWarCry()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
@@ -86,13 +87,12 @@ class GorillaWarCryTest extends BaseCardTest {
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
         harness.forceActivePlayer(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GorillaShaman());
         harness.setHand(player1, List.of(new GorillaWarCry()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
         assertThat(scheduled).hasSize(1);
@@ -100,9 +100,7 @@ class GorillaWarCryTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

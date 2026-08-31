@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -151,6 +152,9 @@ class CastingCostServiceTest {
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
         lenient().when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
+        lenient().when(predicateEvaluationService.matchesCardPredicate(
+                        any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(inv -> matchesCardType(inv.getArgument(0), inv.getArgument(1)));
     }
 
@@ -318,7 +322,8 @@ class CastingCostServiceTest {
                     new ReduceCastCostForMatchingSpellsEffect(
                             new CardTruePredicate(), 1, CostModificationScope.SELF, Zone.GRAVEYARD));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(true);
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -494,7 +499,8 @@ class CastingCostServiceTest {
                             new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
                 Card card = inv.getArgument(0);
                 CardTypePredicate pred = inv.getArgument(1);
                 return card.hasType(pred.cardType());
@@ -649,7 +655,8 @@ class CastingCostServiceTest {
                             new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(warchief));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardSubtypePredicate pred = inv.getArgument(1);
@@ -695,11 +702,7 @@ class CastingCostServiceTest {
                             new CardTypePredicate(CardType.INSTANT), 3, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
 
-            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
-                Card card = invocation.getArgument(0);
-                CardTypePredicate pred = invocation.getArgument(1);
-                return card.hasType(pred.cardType());
-            });
+            evaluateCardTypePredicates();
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
             Card bolt = new Card();
@@ -911,6 +914,30 @@ class CastingCostServiceTest {
 
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, creature, ability))
                     .isZero();
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
+                    .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Dynamic symmetric activated-ability reductions use the reducing permanent")
+        void dynamicSymmetricReductionUsesReducingPermanent() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+                    new PermanentAllOfPredicate(List.of(
+                            new PermanentIsCreaturePredicate(),
+                            new PermanentControlledBySourceControllerPredicate())),
+                    new SourcePower()));
+            Permanent reducingPermanent = new Permanent(reducer);
+            gd.playerBattlefields.get(player1Id).add(reducingPermanent);
+
+            Permanent creature = new Permanent(new Card());
+            ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{3}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, reducingPermanent)).thenReturn(2);
+
             assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
                     .isEqualTo(2);
         }

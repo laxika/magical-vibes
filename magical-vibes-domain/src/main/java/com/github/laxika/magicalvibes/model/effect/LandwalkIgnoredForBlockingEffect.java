@@ -1,14 +1,29 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Keyword;
+
 /**
- * Board-wide static: creatures with landwalk abilities (CR 702.14a) can be blocked as though they
- * didn't have those abilities. Applies to every creature on the battlefield regardless of
- * controller, and shuts off both printed landwalk {@code Keyword}s and the snow-landwalk shapes
- * modelled as "can't be blocked while the defending player controls …" (Staff of the Ages).
+ * Board-wide static: creatures with the selected landwalk ability can be blocked as though they
+ * didn't have it. A {@code null} keyword selects every landwalk ability, including snow landwalk;
+ * a non-null keyword selects only that printed landwalk ability.
  *
  * <p>Only landwalk is suppressed — other defender-condition evasion (Scrapdiver Serpent) keeps
  * working, which is why the landwalk-flavoured records flag themselves via
  * {@link BlockabilityRestrictionEffect#unblockableIfDefenderControlsIsLandwalk()}.
  */
-public record LandwalkIgnoredForBlockingEffect() implements CardEffect {
+public record LandwalkIgnoredForBlockingEffect(Keyword landwalkKeyword) implements CardEffect {
+
+    public LandwalkIgnoredForBlockingEffect() {
+        this(null);
+    }
+
+    public LandwalkIgnoredForBlockingEffect {
+        if (landwalkKeyword != null && !Keyword.LANDWALK_MAP.containsKey(landwalkKeyword)) {
+            throw new IllegalArgumentException("Not a landwalk keyword: " + landwalkKeyword);
+        }
+    }
+
+    public boolean ignoresAllLandwalk() {
+        return landwalkKeyword == null;
+    }
 }

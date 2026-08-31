@@ -39,7 +39,8 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
         }
 
         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect())));
+                entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect()),
+                null, 0, 0, 0, entry.getTriggeringPermanentPowerAtTrigger()));
         triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.a.AngryMob;
+import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Inquisition.class, GrizzlyBears.class, SavannahLions.class})
+@CardUsed({Inquisition.class, AngryMob.class, BogRats.class})
 class InquisitionTest extends BaseCardTest {
 
     @Test
@@ -21,13 +21,12 @@ class InquisitionTest extends BaseCardTest {
     void dealsDamageForWhiteCardsInHand() {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Inquisition()));
-        harness.setHand(player2, List.of(new SavannahLions(), new GrizzlyBears(), new SavannahLions()));
+        harness.setHand(player2, List.of(new AngryMob(), new BogRats(), new AngryMob()));
         addInquisitionMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("reveals their hand"));
     }
 
@@ -36,26 +35,37 @@ class InquisitionTest extends BaseCardTest {
     void ignoresNonwhiteCardsInHand() {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Inquisition()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new BogRats(), new BogRats()));
         addInquisitionMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Reveals an empty hand without dealing damage")
+    void revealsEmptyHandWithoutDealingDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Inquisition()));
+        harness.setHand(player2, List.of());
+        addInquisitionMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Can target its controller")
     void canTargetItsController() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new Inquisition(), new SavannahLions()));
+        harness.setHand(player1, List.of(new Inquisition(), new AngryMob()));
         addInquisitionMana();
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -63,9 +73,9 @@ class InquisitionTest extends BaseCardTest {
     void rejectsPermanentTarget() {
         harness.setHand(player1, List.of(new Inquisition()));
         addInquisitionMana();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BogRats());
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 gd.playerBattlefields.get(player2.getId()).getFirst().getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

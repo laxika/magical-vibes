@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "5ED", collectorNumber = "31")
+@CardRegistration(set = "LEG", collectorNumber = "18")
 public class GreaterRealmOfPreservation extends Card {
 
     public GreaterRealmOfPreservation() {

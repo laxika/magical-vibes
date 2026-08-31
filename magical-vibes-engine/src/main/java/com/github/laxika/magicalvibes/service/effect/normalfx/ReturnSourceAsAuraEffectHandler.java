@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -53,7 +55,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        Card auraCard = auraForm(sourceCard, returnEffect.enchantFilter());
+        Card auraCard = auraForm(sourceCard, returnEffect.enchantFilter(), returnEffect.retainedAbility());
         List<UUID> validTargetIds = new ArrayList<>();
         List<Permanent> controlledPermanents = gameData.playerBattlefields.get(controllerId);
         if (controlledPermanents != null) {
@@ -72,36 +74,54 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
         if (validTargetIds.size() == 1) {
-            attachAura(gameData, auraCard, controllerId, validTargetIds.getFirst());
+            attachAura(gameData, sourceCard, auraCard, controllerId, validTargetIds.getFirst());
             return;
         }
 
         gameData.interaction.setPendingAuraCard(auraCard);
+        gameData.interaction.setPendingAuraOriginalCard(sourceCard);
         gameData.interaction.setPendingAuraOwnerId(controllerId);
         playerInputService.beginPermanentChoice(gameData, controllerId, validTargetIds,
-                "Choose a Forest to attach " + auraCard.getName() + " to.");
+                "Choose a permanent to attach " + auraCard.getName() + " to.");
     }
 
-    private Card auraForm(Card sourceCard, com.github.laxika.magicalvibes.model.filter.TargetFilter enchantFilter) {
+    private Card auraForm(Card sourceCard,
+                          com.github.laxika.magicalvibes.model.filter.TargetFilter enchantFilter,
+                          ActivatedAbility retainedAbility) {
         Card copy = sourceCard.createRuntimeCopy();
         copy.setType(CardType.ENCHANTMENT);
         copy.setAdditionalTypes(Set.of());
         copy.setSubtypes(List.of(CardSubtype.AURA));
         copy.setPower(null);
         copy.setToughness(null);
+        if (retainedAbility != null) {
+            for (EffectSlot slot : EffectSlot.values()) {
+                var registrations = copy.getEffectRegistrations(slot);
+                if (!registrations.isEmpty()) {
+                    registrations.clear();
+                }
+            }
+            copy.getActivatedAbilities().clear();
+            copy.getGraveyardActivatedAbilities().clear();
+            copy.getHandActivatedAbilities().clear();
+            copy.getStackActivatedAbilities().clear();
+            copy.setKeywords(Set.of());
+            copy.addActivatedAbility(retainedAbility);
+        }
         copy.clearRuntimeSpellTargets();
         copy.target(enchantFilter);
         copy.freeze();
         return copy;
     }
 
-    private void attachAura(GameData gameData, Card auraCard, UUID controllerId, UUID targetId) {
+    private void attachAura(GameData gameData, Card sourceCard, Card auraCard, UUID controllerId, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null || !auraAttachmentService.canEnchant(gameData, auraCard, controllerId, target)) {
             return;
         }
 
-        Permanent auraPermanent = new Permanent(auraCard);
+        Permanent auraPermanent = new Permanent(sourceCard);
+        auraPermanent.setCard(auraCard);
         auraPermanent.setAttachedTo(targetId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPermanent);
 

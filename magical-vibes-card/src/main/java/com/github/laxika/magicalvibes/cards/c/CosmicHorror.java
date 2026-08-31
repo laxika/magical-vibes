@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "126")
+@CardRegistration(set = "LEG", collectorNumber = "92")
 public class CosmicHorror extends Card {
 
     public CosmicHorror() {

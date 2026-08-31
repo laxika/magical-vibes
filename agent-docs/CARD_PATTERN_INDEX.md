@@ -35,7 +35,10 @@ This index has been split into smaller files for faster lookup. Each file is und
 | auction, bid life | CARD_PATTERNS_LANDS_SPELLS.md |
 | vanilla, no abilities, empty body | CARD_PATTERNS_CREATURES_ETB.md |
 | keyword creature, flying, haste, infect | CARD_PATTERNS_CREATURES_ETB.md |
+| first matching spell cast each turn costs less | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | ETB, enters the battlefield | CARD_PATTERNS_CREATURES_ETB.md |
+| airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
+| airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | kicker, alternate casting cost | CARD_PATTERNS_CREATURES_ETB.md |
 | buyback, return spell to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | attack trigger, death trigger, upkeep trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |

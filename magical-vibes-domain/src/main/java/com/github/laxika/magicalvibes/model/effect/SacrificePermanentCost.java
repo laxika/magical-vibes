@@ -50,7 +50,6 @@ public record SacrificePermanentCost(PermanentPredicate filter, String descripti
         return new SacrificePermanentCost(filter, description, true, false, false, false, true);
     }
 
-    @Override
     public boolean recordsSacrificedPermanentSnapshot() {
         return recordSacrificedPermanentSnapshot;
     }
@@ -58,5 +57,10 @@ public record SacrificePermanentCost(PermanentPredicate filter, String descripti
     @Override
     public PermanentPredicate consumedPermanentFilter() {
         return filter;
+    }
+
+    @Override
+    public boolean sacrificesChosenPermanent() {
+        return true;
     }
 }

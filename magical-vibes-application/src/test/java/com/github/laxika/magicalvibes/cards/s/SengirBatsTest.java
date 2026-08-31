@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,30 +16,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SengirBats.class, FugitiveWizard.class, GrizzlyBears.class, CruelEdict.class,
+        SeaSprite.class, SengirAutocrat.class})
 class SengirBatsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets a +1/+1 counter when a creature it damaged in combat dies")
     void getsCounterWhenDamagedCreatureDiesInCombat() {
-        harness.addToBattlefield(player1, new SengirBats());
-        harness.addToBattlefield(player2, new FugitiveWizard());
-
-        Permanent bats = gd.playerBattlefields.get(player1.getId()).getFirst();
-        bats.setSummoningSick(false);
+        Permanent bats = addCreatureReady(player1, new SengirBats());
         bats.setAttacking(true);
 
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Fugitive Wizard");
         assertThat(bats.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -49,26 +42,17 @@ class SengirBatsTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers when a creature damaged by Sengir Bats dies later the same turn")
     void triggersWhenDamagedCreatureDiesLaterThisTurn() {
-        harness.addToBattlefield(player1, new SengirBats());
-        GrizzlyBears toughBlocker = new GrizzlyBears();
-        toughBlocker.setPower(1);
-        toughBlocker.setToughness(5);
-        harness.addToBattlefield(player2, toughBlocker);
-
-        Permanent bats = gd.playerBattlefields.get(player1.getId()).getFirst();
-        bats.setSummoningSick(false);
+        Permanent bats = addCreatureReady(player1, new SengirBats());
         bats.setAttacking(true);
 
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
-        blocker.setSummoningSick(false);
+        GrizzlyBears toughBlockerCard = new GrizzlyBears();
+        toughBlockerCard.setPower(1);
+        toughBlockerCard.setToughness(5);
+        Permanent blocker = addCreatureReady(player2, toughBlockerCard);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(bats.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -80,10 +64,46 @@ class SengirBatsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bats.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Triggers only for a creature damaged by that Sengir Bats")
+    void triggersOnlyForCreatureDamagedByThatSengirBats() {
+        Permanent watchingBats = addCreatureReady(player1, new SengirBats());
+        Permanent damagingBats = addCreatureReady(player1, new SengirBats());
+        damagingBats.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new SeaSprite());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(1);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(watchingBats.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(damagingBats.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Triggers when a creature token it damaged dies")
+    void triggersWhenDamagedCreatureTokenDies() {
+        Permanent bats = addCreatureReady(player1, new SengirBats());
+        harness.enterBattlefieldAndReturn(player2, new SengirAutocrat());
+        resolveAllTriggers();
+
+        Permanent serf = findPermanents(player2, "Serf").getFirst();
+        serf.setAttacking(true);
+        bats.setBlocking(true);
+        bats.addBlockingTarget(gd.playerBattlefields.get(player2.getId()).indexOf(serf));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Serf")).doesNotContain(serf);
         assertThat(bats.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

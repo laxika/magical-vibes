@@ -141,6 +141,13 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         this(new Fixed(amount), restriction, null, false, false, false, false, false, false, spellOnlySubtypes, false);
     }
 
+    /** "Add N mana in any combination of colors" with a spell-subtype restriction. */
+    public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction,
+                                   Set<CardSubtype> spellOnlySubtypes, boolean anyColorCombination) {
+        this(new Fixed(amount), restriction, null, false, false, false, false, anyColorCombination,
+                false, spellOnlySubtypes, false);
+    }
+
     public AwardAnyColorManaEffect(int amount, ManaSpendRestriction restriction, CardSubtype subtype,
                                    boolean sourceBecomesProducedColorUntilEndOfTurn) {
         this(new Fixed(amount), restriction, subtype, sourceBecomesProducedColorUntilEndOfTurn,
@@ -196,9 +203,11 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
             case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,
                  INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, ARTIFACT_SPELLS_OR_ABILITIES,
                  FLASHBACK_ONLY, EXILED_SPELL_ONLY, GRAVEYARD_SPELL_ONLY,
+                 MULTICOLORED_SPELLS,
                  CHOSEN_SUBTYPE_SPELL_OR_ABILITY, SUBTYPE_SPELL, SUBTYPE_SPELL_OR_ABILITY,
                  CHOSEN_SUBTYPE_CREATURE_SOURCE_SPELL_OR_ABILITY,
                  CREATURE_SPELLS_OR_ABILITIES, CREATURE_COLORS_ABILITIES, MANA_VALUE_AT_LEAST_FOUR,
+                 CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
                  PARTY_SPELL_OR_ABILITY, MOUNT_OR_VEHICLE_SPELL, PLANESWALKER_SPELLS -> 0;
         };
     }

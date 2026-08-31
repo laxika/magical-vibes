@@ -109,7 +109,7 @@ class StackResolutionServiceTest {
                 legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameLogService, effectResolutionService, playerInputService, triggerCollectionService,
                 creatureControlService, stateTriggerService, exileService, null, permanentCounterSupport,
-                mutationCoordinator, null, auraCopyService, null);
+                mutationCoordinator, null, auraCopyService, null, null);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -424,7 +424,7 @@ class StackResolutionServiceTest {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
             when(cloneService.prepareCloneReplacementEffect(
-                    any(), any(), any(), any(), anyInt(), any(), anyBoolean())).thenReturn(true);
+                    any(), any(), any(), any(), anyInt(), anyInt(), any(), anyBoolean())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 

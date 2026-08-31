@@ -360,6 +360,11 @@ public record CreateTokenEffect(
                 )));
     }
 
+    /** Treasure tokens with an explicit tapped state. */
+    public static CreateTokenEffect ofTreasureToken(int amount, boolean tapped) {
+        return ofTreasureToken(new Fixed(amount), tapped);
+    }
+
     /** Tapped Treasure token. */
     public static CreateTokenEffect ofTappedTreasureToken(int amount) {
         return new CreateTokenEffect(CardType.ARTIFACT, amount, "Treasure", 0, 0, null, null,

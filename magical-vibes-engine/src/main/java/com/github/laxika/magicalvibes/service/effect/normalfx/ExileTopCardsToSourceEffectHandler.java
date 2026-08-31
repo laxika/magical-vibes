@@ -85,7 +85,8 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             }
         }
 
-        Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
+        Card sourceCard = sourcePermanent != null
+                ? sourcePermanent.getCard() : entry.getTargetingCard();
         List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard
                 .getEffects(EffectSlot.STATIC).stream()
                 .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)

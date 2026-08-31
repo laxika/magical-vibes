@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
@@ -79,6 +80,9 @@ public class AttackLegalityService {
      */
     public boolean canAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
+        if (gameData.onlyLandCreaturesCanAttackThisCombat && !gameQueryService.isLand(gameData, creature)) {
+            return false;
+        }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
@@ -136,6 +140,11 @@ public class AttackLegalityService {
         }
         // An Aura attached to this creature that grants the permission (e.g. Animate Wall).
         if (gameQueryService.hasAuraWithEffect(gameData, creature, CanAttackAsThoughNoDefenderEffect.class)) {
+            return true;
+        }
+        if (gameQueryService.getGrantedEffects(gameData, creature).stream()
+                .anyMatch(effect -> effect instanceof NoDefenderAttackPermissionEffect permission
+                        && permission.grantsCarrierAttackAsThoughNoDefender())) {
             return true;
         }
         // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),
@@ -212,6 +221,12 @@ public class AttackLegalityService {
             return false;
         }
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        if (targetIsPlayer
+                && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
+                && gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance))) {
+            return false;
+        }
         // The protected player is the attacked player, or the controller of the attacked planeswalker.
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);

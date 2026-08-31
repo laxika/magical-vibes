@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceContr
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -82,7 +83,7 @@ import java.util.UUID;
 
 /**
  * Trigger collectors for damage-related events (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
- * ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_DEALT_DAMAGE).
+ * ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, ON_DEALT_DAMAGE, ON_OPPONENT_DEALT_DAMAGE).
  */
 @Slf4j
 @Service
@@ -1028,6 +1029,43 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_DAMAGE)
+    private boolean handleOpponentDealtDamageConditional(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        if (conditional.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()), dc.amount())) {
+            return false;
+        }
+        return handleOpponentDealtDamageDefault(match, conditional, ctx);
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_DEALT_DAMAGE)
+    private boolean handleOpponentDealtDamageDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        Permanent watcher = match.permanent();
+        if (watcher == null) return false;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                dc.damagedPlayerId(),
+                watcher.getId());
+        entry.setEventValue(dc.amount());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} ON_OPPONENT_DEALT_DAMAGE trigger fires ({} damage)",
+                match.gameData().id, watcher.getCard().getName(), dc.amount());
+        return true;
+    }
+
     // ── ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT (Retaliator Griffin) ────
 
     @CollectsTrigger(value = SacrificePermanentsEffect.class,
@@ -1308,7 +1346,7 @@ public class DamageTriggerCollectorService {
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
-                    "deals damage", sourcePermanentId));
+                    "deals damage", sourcePermanentId, sd.totalDamage()));
 
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger awaits target ({} damage)",
@@ -1371,6 +1409,33 @@ public class DamageTriggerCollectorService {
             triggered = true;
         }
         return triggered;
+    }
+
+    @CollectsTrigger(value = DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect.class,
+            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    private boolean handleSingleTargetCreatureSpellDealsDamage(TriggerMatchContext match,
+            DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (match.permanent() == null || sd.singleCreatureSpellTargetId() == null) return false;
+
+        int damage = sd.damageToPermanents().getOrDefault(sd.singleCreatureSpellTargetId(), 0);
+        if (damage <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT))),
+                null,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        return true;
     }
 
     @CollectsTrigger(value = ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect.class,

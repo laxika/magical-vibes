@@ -62,7 +62,7 @@ public class RevealUntilColorToHandRestExiledEffectHandler implements NormalEffe
         List<Card> rest = new ArrayList<>(revealed);
         if (found != null) {
             rest.remove(found);
-            gameData.playerHands.get(controllerId).add(found);
+            gameData.addCardToHand(controllerId, found);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " puts " + found.getName() + " into their hand."));
         } else {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -223,6 +225,8 @@ public class TurnCleanupService {
             p.setDamagePreventionShield(0);
             p.setDamageToCounterPreventionShield(0);
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
+            p.setAllDamageToPlusOnePlusOneCounterPreventionShield(false);
+            p.setDamageDestructionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
             p.setMinusOneCounterRegenerationShield(0);
@@ -233,6 +237,7 @@ public class TurnCleanupService {
 
         gameData.playerDamagePreventionShields.clear();
         gameData.playerCombatDamagePreventionShields.clear();
+        gameData.channelHarmShields.clear();
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
@@ -253,6 +258,7 @@ public class TurnCleanupService {
         gameData.preventAllDamageByCreatures = false;
         gameData.preventAllDamageFromNonHumanSources = false;
         gameData.combatDamageExemptPredicate = null;
+        gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.additionalEnterCountersThisTurn.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
@@ -275,14 +281,19 @@ public class TurnCleanupService {
         gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
                 watch -> watch.untilEndOfTurn());
         gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
+        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
+        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamage.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
+        gameData.creaturesProtectedFromTargetingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
+        gameData.targetSorceryDamageRedirectShields.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.playersRedirectingAllCreatureDamage.clear();
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
+        gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
@@ -310,10 +321,14 @@ public class TurnCleanupService {
         gameData.opponentGraveyardLifeLossWatchers.clear();
         gameData.lifeGainOpponentLifeLossWatchers.clear();
         gameData.playersWhoseSpeedIncreasedThisTurn.clear();
-        gameData.temporaryGlobalTriggeredAbilities.clear();
+        gameData.temporaryGlobalTriggeredAbilities.removeIf(watcher ->
+                !watcher.untilEndOfNextTurn()
+                        || (gameData.activePlayerId.equals(watcher.controllerId())
+                        && gameData.turnNumber != watcher.registrationTurnNumber()));
         gameData.creatureDeathTriggerWatchers.clear();
         gameData.allyCreatureEntersTriggerWatchers.clear();
         gameData.drawReplacementTargetToController.clear();
+        gameData.chainsDrawReplacementsApplied.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
@@ -384,10 +399,13 @@ public class TurnCleanupService {
         gameData.playersExilingCardsInsteadOfGraveyardThisTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
+        gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
         gameData.pendingNextSpellUncounterableThisTurnCount.clear();
+        gameData.pendingAnyManaTypeForNextSpellThisTurnCount.clear();
+        gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
@@ -406,6 +424,8 @@ public class TurnCleanupService {
         gameData.kayaExileNotificationPendingCreatureCards.clear();
         gameData.kayaExileNotificationPendingCounts.clear();
         gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
+        gameData.cardsLeftGraveyardCountThisTurn.clear();
+        gameData.creatureExileCountThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
@@ -430,6 +450,8 @@ public class TurnCleanupService {
             }
             return false;
         });
+        gameData.graveyardAdventureCastPermissions.entrySet()
+                .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
 
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -507,14 +529,27 @@ public class TurnCleanupService {
     private Set<ManaColor> protectedManaColors(GameData gameData, UUID playerId) {
         EnumSet<ManaColor> protectedColors = EnumSet.noneOf(ManaColor.class);
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return protectedColors;
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PreventManaDrainEffect prevent
+                            && prevent.color() != null) {
+                        protectedColors.add(prevent.color());
+                    }
+                }
+            }
         }
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PreventManaDrainEffect prevent
-                        && prevent.color() != null) {
-                    protectedColors.add(prevent.color());
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!playerId.equals(floating.affectedPlayerId())) {
+                    continue;
+                }
+                if (floating.effect() instanceof PreventManaDrainEffect prevent) {
+                    if (prevent.color() == null) {
+                        protectedColors.addAll(Set.of(ManaColor.values()));
+                    } else {
+                        protectedColors.add(prevent.color());
+                    }
                 }
             }
         }

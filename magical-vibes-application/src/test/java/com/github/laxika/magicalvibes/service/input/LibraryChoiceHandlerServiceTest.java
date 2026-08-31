@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -110,7 +112,8 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
-                permanentControlSupport, permanentCounterSupport);
+                permanentControlSupport, permanentCounterSupport,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class));
         registry.register(new LibraryRevealChoiceInteractionHandler(service));
         registry.register(new LibraryReorderInteractionHandler(
                 gameLogService, mock(WarpWorldService.class), inputCompletionService));
@@ -245,6 +248,30 @@ class LibraryChoiceHandlerServiceTest {
 
         verify(permanentCounterSupport).placeCounterOnPermanent(
                 eq(gd), isNull(), any(), eq(CounterType.STUN), eq(1));
+    }
+
+    @Test
+    @DisplayName("Scopes a library return-to-hand action to its configured controller")
+    void scopesLibraryReturnToHandActionToConfiguredController() {
+        Card creature = createCard("Creature", CardType.CREATURE);
+        gd.playerDecks.get(player1Id).add(creature);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(creature))
+                .canFailToFind(true)
+                .sourceCards(new ArrayList<>(List.of(creature)))
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.BATTLEFIELD)
+                .returnToHandAtEndStep(true)
+                .returnToHandAtControllerEndStepId(player2Id)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                params, "Choose a creature", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .anyMatch(action -> action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP
+                        && player2Id.equals(action.controllerId()));
     }
 
     @Test
@@ -401,6 +428,38 @@ class LibraryChoiceHandlerServiceTest {
         verify(exileService).exileCardFaceDown(gd, player2Id, first, sourcePermanentId);
         verify(exileService).exileCardFaceDown(gd, player2Id, second, sourcePermanentId);
         assertThat(gd.playerDecks.get(player2Id)).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("Bounded top-of-library search takes two cards before graveyarding the rest")
+    void boundedTopOfLibrarySearchTakesTwoCards() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, second, third));
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, new ArrayList<>(sourceCards))
+                .canFailToFind(true)
+                .remainingCount(2)
+                .sourceCards(sourceCards)
+                .restToGraveyard(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose up to two", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(second, third);
+        assertThat(next.params().remainingCount()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(first);
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(second, first);
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, third, Zone.LIBRARY);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
     }
 
     @Test

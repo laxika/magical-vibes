@@ -21,7 +21,8 @@ public record MassDamageEffect(
         boolean perCreatureAmount,
         boolean exileInsteadOfDie,
         boolean cantRegenerate,
-        boolean damagesBattles
+        boolean damagesBattles,
+        boolean tapDamagedCreatures
 ) implements BoardWipeEffect {
 
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
@@ -29,7 +30,7 @@ public record MassDamageEffect(
                             boolean perCreatureAmount, boolean exileInsteadOfDie,
                             boolean cantRegenerate) {
         this(amount, damagesPlayers, damagesPlaneswalkers, filter, perCreatureAmount,
-                exileInsteadOfDie, cantRegenerate, false);
+                exileInsteadOfDie, cantRegenerate, false, false);
     }
 
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers,
@@ -65,12 +66,18 @@ public record MassDamageEffect(
 
     /** Fixed damage to each creature, planeswalker, and battle. */
     public static MassDamageEffect damageToEachCreaturePlaneswalkerAndBattle(int damage) {
-        return new MassDamageEffect(new Fixed(damage), false, true, null, false, false, false, true);
+        return new MassDamageEffect(new Fixed(damage), false, true, null, false, false, false, true, false);
+    }
+
+    /** Fixed damage to each creature, then taps each creature actually dealt damage. */
+    public static MassDamageEffect damageAndTapEachCreature(int damage) {
+        return new MassDamageEffect(new Fixed(damage), false, false, null,
+                false, false, false, false, true);
     }
 
     /** Fixed damage to all creatures only (e.g. Pyroclasm) */
     public MassDamageEffect(int damage) {
-        this(new Fixed(damage), false, false, null, false, false, false);
+        this(new Fixed(damage), false, false, null, false, false, false, false, false);
     }
 
     /** Mass damage always sweeps the board. */
@@ -81,23 +88,24 @@ public record MassDamageEffect(
 
     /** Fixed damage to all creatures + players */
     public MassDamageEffect(int damage, boolean damagesPlayers) {
-        this(new Fixed(damage), damagesPlayers, false, null, false, false, false);
+        this(new Fixed(damage), damagesPlayers, false, null, false, false, false, false, false);
     }
 
     /** Dynamic damage to all creatures + players (e.g. Ashling the Pilgrim's EventValue blast) */
     public MassDamageEffect(DynamicAmount amount, boolean damagesPlayers) {
-        this(amount, damagesPlayers, false, null, false, false, false);
+        this(amount, damagesPlayers, false, null, false, false, false, false, false);
     }
 
     /** Backward-compatible int/X constructor (no planeswalker damage) */
     public MassDamageEffect(int damage, boolean usesXValue, boolean damagesPlayers, PermanentPredicate filter) {
-        this(usesXValue ? new XValue() : new Fixed(damage), damagesPlayers, false, filter, false, false, false);
+        this(usesXValue ? new XValue() : new Fixed(damage), damagesPlayers, false, filter,
+                false, false, false, false, false);
     }
 
     /** Backward-compatible int/X constructor with planeswalker damage */
     public MassDamageEffect(int damage, boolean usesXValue, boolean damagesPlayers,
                             boolean damagesPlaneswalkers, PermanentPredicate filter) {
         this(usesXValue ? new XValue() : new Fixed(damage), damagesPlayers, damagesPlaneswalkers, filter,
-                false, false, false);
+                false, false, false, false, false);
     }
 }

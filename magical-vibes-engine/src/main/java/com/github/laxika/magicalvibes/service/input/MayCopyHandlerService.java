@@ -83,12 +83,14 @@ public class MayCopyHandlerService {
 
             // Collect valid targets (the copying permanent is NOT on the battlefield yet)
             FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceControllerId(ability.controllerId());
+                    .withSourceControllerId(ability.controllerId())
+                    .withXValue(ability.eventValue());
             List<UUID> validIds = new ArrayList<>();
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
+                    if (p.getCard().getId().equals(ability.sourceCard().getId())) continue;
                     if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
                         validIds.add(p.getId());
                     }

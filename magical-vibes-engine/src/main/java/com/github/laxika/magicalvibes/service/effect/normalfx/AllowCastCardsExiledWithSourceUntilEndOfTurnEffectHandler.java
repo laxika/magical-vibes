@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -35,28 +34,30 @@ public class AllowCastCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
 
-        List<Card> matchingCards;
+        List<ExiledCardEntry> matchingEntries;
         if (e.targetSpecificCard()) {
             ExiledCardEntry targetEntry = entry.getTargetId() == null
                     ? null : gameData.findExiledCard(entry.getTargetId());
-            Card targetCard = targetEntry == null ? null : targetEntry.card();
-            matchingCards = targetCard != null
+            matchingEntries = targetEntry != null
                     && sourcePermanentId.equals(targetEntry.sourcePermanentId())
+                    && (!e.ownOnly() || entry.getControllerId().equals(targetEntry.ownerId()))
                     && (e.filter() == null
-                    || predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null))
-                    ? List.of(targetCard) : List.of();
+                    || predicateEvaluationService.matchesCardPredicate(targetEntry.card(), e.filter(), null))
+                    ? List.of(targetEntry) : List.of();
         } else {
-            matchingCards = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
-                    .filter(card -> e.filter() == null
-                            || predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))
+            matchingEntries = gameData.getExiledWithPermanentEntries(sourcePermanentId, entry.getCard().getId()).stream()
+                    .filter(exiledEntry -> !e.ownOnly()
+                            || entry.getControllerId().equals(exiledEntry.ownerId()))
+                    .filter(exiledEntry -> e.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(exiledEntry.card(), e.filter(), null))
                     .toList();
         }
-        if (matchingCards.isEmpty()) return;
+        if (matchingEntries.isEmpty()) return;
 
         UUID grantId = UUID.randomUUID();
-        for (Card card : matchingCards) {
+        for (ExiledCardEntry matchingEntry : matchingEntries) {
             gameData.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
-                    grantId, sourcePermanentId, entry.getControllerId(), card.getId(),
+                    grantId, sourcePermanentId, entry.getControllerId(), matchingEntry.card().getId(),
                     e.withoutPayingManaCost(), e.putOnBottomOfOwnersLibrary()));
         }
 
@@ -64,7 +65,7 @@ public class AllowCastCardsExiledWithSourceUntilEndOfTurnEffectHandler implement
                 + " may cast a card exiled with " + entry.getCard().getName()
                 + " until end of turn."));
         log.info("Game {} - {} may cast one of {} card(s) exiled with {} until end of turn",
-                gameData.id, gameData.playerIdToName.get(entry.getControllerId()), matchingCards.size(),
+                gameData.id, gameData.playerIdToName.get(entry.getControllerId()), matchingEntries.size(),
                 entry.getCard().getName());
     }
 }

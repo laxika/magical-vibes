@@ -32,6 +32,9 @@ public enum PreventionScope {
      *  Non-targeting: every creature on the battlefield as the ability resolves gets its own next-N
      *  shield and every player gets one too; creatures entering later are unaffected. */
     NEXT_TO_EACH_CREATURE_AND_PLAYER,
+    /** "Prevent the next N damage that would be dealt to each creature you control this turn" (Samite Censer-Bearer).
+     *  Every creature controlled by the ability's controller as it resolves gets its own next-N shield. */
+    NEXT_TO_CONTROLLED_CREATURES,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
     /** "Prevent all combat damage that would be dealt this turn by attacking creatures" (Harmless Assault). */
@@ -50,6 +53,8 @@ public enum PreventionScope {
     ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS,
     /** "Prevent all [combat] damage that would be dealt to target creature(s) this turn" (Foxfire, Redeem). */
     ALL_TO_TARGET_CREATURES,
+    /** "Prevent all damage that would be dealt to target creature(s) this turn; put a +1/+1 counter on it for each 1 damage prevented" (Brace for Impact). */
+    ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
     /** "Prevent all [combat] damage target creature(s) would deal this turn" (Soul Parry, Resistance Fighter). */
     ALL_BY_TARGET_CREATURES,
     /** "Until your next turn, prevent all damage target permanent would deal" (Gideon of the Trials +1).
@@ -66,6 +71,8 @@ public enum PreventionScope {
     ALL_BY_SELF,
     /** "Prevent all damage that would be dealt to you and creatures you control this turn" (Safe Passage). */
     ALL_TO_CONTROLLER_AND_CREATURES,
+    /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
+    ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control). Unlike
      *  {@link #ALL_TO_CONTROLLER_AND_CREATURES} the controller's creatures are not shielded. */
     ALL_TO_CONTROLLER,

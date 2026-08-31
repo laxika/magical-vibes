@@ -22,16 +22,19 @@ import java.util.Set;
      * @param combatOnly      combat-only window for the controller, target-creature, and matching-permanent scopes
  * @param sourceColors    the prevented source colors for color-based prevention scopes
  * @param exemptPredicate creatures still dealing combat damage for {@link PreventionScope#ALL_COMBAT_EXCEPT}
-     * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
-     *                        or {@link PreventionScope#ALL_TO_CONTROLLED_MATCHING_PERMANENTS}
-     *                        or all combat damage to which is prevented for
-     *                        {@link PreventionScope#ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS};
- *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE} an optional narrowing of the legal target
+ * @param victimPredicate permanents all damage to which is prevented for {@link PreventionScope#ALL_TO_MATCHING_PERMANENTS}
+ *                        or {@link PreventionScope#ALL_TO_CONTROLLED_MATCHING_PERMANENTS}
+ *                        or all combat damage to which is prevented for
+ *                        {@link PreventionScope#ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS};
+ *                        or the target restriction for
+ *                        {@link PreventionScope#ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS};
+ *                        for {@link PreventionScope#NEXT_TO_TARGET_CREATURE}, an optional narrowing of the legal target
  * @param gainLife        whether the controller gains life equal to damage prevented by a
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  * @param sourcePredicate damage sources matching this predicate for
  *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
- *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES}
+ *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -72,7 +75,8 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
                 || scope == PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES
                 || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER
-                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER;
+                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER
+                || scope == PreventionScope.NEXT_TO_CONTROLLED_CREATURES;
         if (needsAmount && amount == null) {
             throw new IllegalArgumentException("NEXT_* prevention scopes require an amount: " + scope);
         }
@@ -90,6 +94,7 @@ public record PreventDamageEffect(
         boolean acceptsVictimPredicate = scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
         if (victimPredicate != null && !acceptsVictimPredicate) {
             throw new IllegalArgumentException(
@@ -97,7 +102,8 @@ public record PreventDamageEffect(
         }
         if (victimPredicate == null && (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
-                || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS)) {
+                || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS)) {
             throw new IllegalArgumentException(scope + " requires a victimPredicate");
         }
         if (gainLife && scope != PreventionScope.NEXT_TO_TARGET && scope != PreventionScope.ALL_BY_CREATURES) {
@@ -105,7 +111,8 @@ public record PreventDamageEffect(
                     "gainLife is exactly the NEXT_TO_TARGET or ALL_BY_CREATURES parameter: " + scope);
         }
         boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
-                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
+                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES;
         if ((sourcePredicate != null) != acceptsSourcePredicate) {
             throw new IllegalArgumentException(
                     "sourcePredicate is exactly a matching-source prevention parameter: " + scope);
@@ -189,6 +196,16 @@ public record PreventDamageEffect(
                 PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER, new Fixed(amount), false, null, null, null);
     }
 
+    /**
+     * "Prevent the next {@code amount} damage that would be dealt to each creature you control
+     * this turn." Non-targeting; only creatures controlled by the ability's controller as it
+     * resolves are shielded.
+     */
+    public static PreventDamageEffect nextToControlledCreatures(int amount) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_CONTROLLED_CREATURES, new Fixed(amount), false, null, null, null);
+    }
+
     /** "Prevent all combat damage that would be dealt this turn." */
     public static PreventDamageEffect allCombat() {
         return new PreventDamageEffect(PreventionScope.ALL_COMBAT, null, false, null, null, null);
@@ -236,6 +253,13 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt to target creature(s) this turn." */
     public static PreventDamageEffect allToTargetCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_TARGET_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt to target creature(s) this turn and put a +1/+1 counter on it for each 1 damage prevented." */
+    public static PreventDamageEffect allToTargetCreaturesAndAddPlusOnePlusOneCounters(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
+                null, false, null, null, victimPredicate);
     }
 
     /** "Prevent all combat damage that would be dealt to target creature(s) this turn" (Foxfire). */
@@ -293,6 +317,14 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt to you and creatures you control this turn." */
     public static PreventDamageEffect allToControllerAndCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
+    public static PreventDamageEffect allToControllerAndCreaturesFromMatchingSources(
+            PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
     }
 
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control) — the player only. */
@@ -369,6 +401,8 @@ public record PreventDamageEffect(
                     : TargetPredicates.narrowPermanents(TargetPredicates.creature(), victimPredicate));
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
             case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
+            case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS -> TargetSpec.benign(
+                    TargetPredicates.creature(), victimPredicate);
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN,
                  ALL_TO_AND_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN -> TargetSpec.benign(TargetPredicates.permanent());
             default -> TargetSpec.NONE;

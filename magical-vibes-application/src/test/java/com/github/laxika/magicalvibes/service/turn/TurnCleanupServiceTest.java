@@ -774,6 +774,22 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Preserves a color from a player-scoped floating effect")
+        void preservesPlayerScopedFloatingColor() {
+            gd.playerManaPools.get(player1Id).add(ManaColor.RED, 3);
+            gd.playerManaPools.get(player2Id).add(ManaColor.RED, 2);
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "The Last Agni Kai", null, player1Id,
+                    new PreventManaDrainEffect(ManaColor.RED), null, player1Id, null,
+                    EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            sut.drainManaPools(gd);
+
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isEqualTo(3);
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isZero();
+        }
+
+        @Test
         @DisplayName("Does nothing when mana pools are already empty")
         void doesNothingWhenAlreadyEmpty() {
             sut.drainManaPools(gd);

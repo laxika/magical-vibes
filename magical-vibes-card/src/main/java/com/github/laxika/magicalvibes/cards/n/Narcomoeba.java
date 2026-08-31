@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 
 @CardRegistration(set = "GRN", collectorNumber = "47")
+@CardRegistration(set = "FUT", collectorNumber = "54")
 public class Narcomoeba extends Card {
 
     public Narcomoeba() {

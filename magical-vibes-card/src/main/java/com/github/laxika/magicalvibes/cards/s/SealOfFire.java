@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "98")
+@CardRegistration(set = "DIS", collectorNumber = "71")
 public class SealOfFire extends Card {
 
     public SealOfFire() {

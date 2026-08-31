@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranEscort;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoldeviSteamBeast.class, KjeldoranEscort.class})
 class SoldeviSteamBeastTest extends BaseCardTest {
 
     @Test
@@ -20,12 +22,7 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         addCreatureReady(player1, new SoldeviSteamBeast());
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         // 20 + 2 from the tap trigger - 4 unblocked combat damage.
@@ -36,15 +33,10 @@ class SoldeviSteamBeastTest extends BaseCardTest {
     @DisplayName("Another creature of the controller becoming tapped does not trigger the Beast")
     void otherCreatureTappingDoesNotTrigger() {
         addCreatureReady(player1, new SoldeviSteamBeast());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new KjeldoranEscort());
         harness.setLife(player2, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(1));
         harness.passBothPriorities();
 
         // 20 - 2 combat damage only; no life gained because the Beast stayed untapped.
@@ -62,24 +54,22 @@ class SoldeviSteamBeastTest extends BaseCardTest {
 
         Permanent beast = findPermanent(player1, "Soldevi Steam Beast");
         assertThat(beast.getRegenerationShield()).isEqualTo(1);
+        harness.setLife(player2, 20);
 
         beast.setBlocking(true);
         beast.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new KjeldoranEscort());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Soldevi Steam Beast");
         Permanent regenerated = findPermanent(player1, "Soldevi Steam Beast");
         assertThat(regenerated.isTapped()).isTrue();
         assertThat(regenerated.getRegenerationShield()).isZero();
+        harness.assertLife(player2, 22);
     }
 
     @Test
@@ -90,15 +80,10 @@ class SoldeviSteamBeastTest extends BaseCardTest {
         beast.setBlocking(true);
         beast.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new KjeldoranEscort());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertInGraveyard(player1, "Soldevi Steam Beast");
     }

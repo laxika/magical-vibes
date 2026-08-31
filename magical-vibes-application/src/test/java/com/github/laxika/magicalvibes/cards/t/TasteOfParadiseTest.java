@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({TasteOfParadise.class})
 class TasteOfParadiseTest extends BaseCardTest {
 
     @Test
@@ -42,11 +46,9 @@ class TasteOfParadiseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TasteOfParadise()));
         harness.addMana(player1, ManaColor.GREEN, 4); // only {3}{G}
 
-        try {
-            harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{1}{G}"), List.of());
-        } catch (RuntimeException expected) {
-            // cast rejected
-        }
+        assertThatThrownBy(() -> harness.castSorceryWithRepeatedCosts(
+                player1, 0, List.of("{1}{G}"), List.of()))
+                .isInstanceOf(IllegalStateException.class);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

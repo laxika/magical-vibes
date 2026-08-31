@@ -105,6 +105,9 @@ class DiscardTriggerCollectorServiceTest {
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
         lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gd), any(UUID.class), org.mockito.ArgumentMatchers.nullable(UUID.class), anyInt()))
+                .thenAnswer(invocation -> invocation.getArgument(3));
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);

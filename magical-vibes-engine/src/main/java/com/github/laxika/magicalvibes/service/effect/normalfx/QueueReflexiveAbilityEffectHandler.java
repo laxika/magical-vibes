@@ -61,6 +61,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         if (queueEffect.useEventValueAsX()) {
             reflexiveEntry.setEventValue(entry.getEventValue());
         }
+        reflexiveEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         gameData.stack.add(reflexiveEntry);
     }
 

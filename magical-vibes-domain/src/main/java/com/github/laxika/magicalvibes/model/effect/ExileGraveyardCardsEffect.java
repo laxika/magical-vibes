@@ -31,11 +31,22 @@ import java.util.UUID;
  *                                stack entry's event value
  * @param grantPlayPermissionUntilEndOfTurn whether exiled targeted controller-graveyard cards
  *                                           may be played by the controller this turn
+ * @param allowZeroTargets whether a targeted graveyard choice may contain zero cards
  */
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
         boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
-        CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn) implements CardEffect {
+        CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
+        boolean allowZeroTargets) implements GraveyardCardChoosingEffect {
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     UUID affectedPlayerId, boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter,
+                                     boolean grantPlayPermissionUntilEndOfTurn) {
+        this(count, scope, filter, affectedPlayerId, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn, false);
+    }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      UUID affectedPlayerId, boolean exactTargetCount,
@@ -95,6 +106,30 @@ public record ExileGraveyardCardsEffect(
     public static ExileGraveyardCardsEffect targetedFromControllerGraveyardMayPlayThisTurn() {
         return new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
                 null, null, false, false, false, null, true);
+    }
+
+    public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
+                null, null, false, false, false, null, false, true);
+    }
+
+    @Override
+    public boolean choosesGraveyardCards() {
+        return switch (scope) {
+            case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_OPPONENT_GRAVEYARD,
+                    TARGET_CARDS_CONTROLLER_GRAVEYARD -> true;
+            default -> false;
+        };
+    }
+
+    @Override
+    public int graveyardChoiceMaxTargets() {
+        return count;
+    }
+
+    @Override
+    public CardPredicate graveyardChoiceFilter() {
+        return filter;
     }
 
     @Override

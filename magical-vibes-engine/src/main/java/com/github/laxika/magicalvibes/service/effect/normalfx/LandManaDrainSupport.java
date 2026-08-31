@@ -45,7 +45,6 @@ public class LandManaDrainSupport {
         if (pool == null || battlefield == null) {
             return;
         }
-        int multiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
         for (Permanent perm : new ArrayList<>(battlefield)) {
             if (!perm.getCard().hasType(CardType.LAND) || perm.isTapped()) {
                 continue;
@@ -53,6 +52,7 @@ public class LandManaDrainSupport {
             if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
                 continue;
             }
+            int multiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, perm);
             if (produceLandMana(gameData, playerId, pool, perm, multiplier)) {
                 tapUntapSupport.tapPermanent(gameData, perm);
             }

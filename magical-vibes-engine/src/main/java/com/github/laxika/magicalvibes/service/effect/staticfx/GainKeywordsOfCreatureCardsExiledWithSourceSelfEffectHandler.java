@@ -11,24 +11,8 @@ import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
-
 @Component
 public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implements StaticEffectHandlerBean {
-
-    private static final Set<Keyword> WATCHED_KEYWORDS = Set.of(
-            Keyword.FLYING,
-            Keyword.FEAR,
-            Keyword.FIRST_STRIKE,
-            Keyword.DOUBLE_STRIKE,
-            Keyword.HASTE,
-            Keyword.FORESTWALK,
-            Keyword.MOUNTAINWALK,
-            Keyword.ISLANDWALK,
-            Keyword.SWAMPWALK,
-            Keyword.PLAINSWALK,
-            Keyword.TRAMPLE
-    );
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,21 +26,25 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        GainKeywordsOfCreatureCardsExiledWithSourceEffect keywordEffect =
+                (GainKeywordsOfCreatureCardsExiledWithSourceEffect) effect;
         for (Card card : context.gameData().getCardsExiledByPermanent(context.source().getId())) {
             if (!card.hasType(CardType.CREATURE)) {
                 continue;
             }
 
             for (Keyword keyword : card.getKeywords()) {
-                if (WATCHED_KEYWORDS.contains(keyword)) {
+                if (keywordEffect.watchedKeywords().contains(keyword)) {
                     accumulator.addKeyword(keyword);
                 }
             }
 
-            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
-                if (staticEffect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionScope() == null) {
-                    accumulator.addGrantedEffect(staticEffect);
+            if (keywordEffect.copyProtectionEffects()) {
+                for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+                    if (staticEffect instanceof ProtectionGrantingEffect protection
+                            && protection.protectionScope() == null) {
+                        accumulator.addGrantedEffect(staticEffect);
+                    }
                 }
             }
         }

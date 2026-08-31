@@ -72,6 +72,24 @@ class VoidMawTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Activated ability is available only while a card is exiled with Void Maw")
+    void abilityAvailabilityRequiresExiledCard() {
+        Permanent maw = addMaw();
+
+        assertThat(gs.canActivateAbility(gd, player1.getId(), maw, 0,
+                gd.playerManaPools.get(player1.getId()))).isFalse();
+
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        removeToGraveyard(bears);
+
+        assertThat(gs.canActivateAbility(gd, player1.getId(), maw, 0,
+                gd.playerManaPools.get(player1.getId()))).isTrue();
+        assertThat(gd.getCardsExiledByPermanent(maw.getId()))
+                .extracting(Card::getId)
+                .containsExactly(bears.getCard().getId());
+    }
+
     private Permanent addMaw() {
         Permanent maw = harness.addToBattlefieldAndReturn(player1, new VoidMaw());
         maw.setSummoningSick(false);

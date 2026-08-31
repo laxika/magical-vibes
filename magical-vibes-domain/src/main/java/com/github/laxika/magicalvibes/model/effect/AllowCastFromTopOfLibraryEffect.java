@@ -44,8 +44,18 @@ public record AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boole
         this(castableTypes, false, null, false, List.copyOf(additionalCosts));
     }
 
+    public AllowCastFromTopOfLibraryEffect(Set<CardType> castableTypes, boolean castableColorless,
+                                           CardPredicate filter) {
+        this(castableTypes, castableColorless, filter, false);
+    }
+
     public AllowCastFromTopOfLibraryEffect(CardPredicate filter) {
-        this(filter, false);
+        this(Set.of(), false, filter, false);
+    }
+
+    /** A normal-cost permission to cast matching cards from the top once each turn per source. */
+    public static AllowCastFromTopOfLibraryEffect onceEachTurn(Set<CardType> castableTypes) {
+        return new AllowCastFromTopOfLibraryEffect(castableTypes, false, null, true);
     }
 
     public AllowCastFromTopOfLibraryEffect(CardPredicate filter, boolean oncePerTurn) {

@@ -171,7 +171,6 @@ public class ActivatedAbility {
     private boolean sourceStaysInHand;
     /** Whether this ability can be activated only while its source card is in exile. */
     private boolean exileOnly;
-
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
     }
@@ -587,8 +586,14 @@ public class ActivatedAbility {
         return this;
     }
 
+    /**
+     * Whether this ability carries a target during activation. An ability-side target filter is
+     * itself a target declaration, even when its effect target specs are neutral (for example,
+     * an ability that looks at a target player's library).
+     */
     public boolean isNeedsTarget() {
-        return !multiTargetFilters.isEmpty()
+        return targetFilter != null
+                || !multiTargetFilters.isEmpty()
                 || effects.stream().anyMatch(e -> {
                     TargetSpec spec = e.targetSpec();
                     return spec.admits(TargetPredicate.Kind.PLAYER)

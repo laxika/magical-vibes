@@ -19,14 +19,18 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -53,6 +57,8 @@ public class StateBasedActionService {
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
 
+    private record RoleAttachmentKey(UUID hostId, UUID controllerId) {}
+
     /**
      * Safety bound on CR 704.3 repetition. Every productive pass removes at least one permanent
      * or zeroes out a counter pair, so a legal game converges long before this; the cap only
@@ -73,7 +79,8 @@ public class StateBasedActionService {
         boolean anyPerformed;
         int passes = 0;
         do {
-            anyPerformed = destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            anyPerformed = enforceCounterLimits(gameData);
+            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
@@ -96,6 +103,7 @@ public class StateBasedActionService {
             // an unrelated sweep happened to run.
             anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
+            anyPerformed |= removeRedundantRoles(gameData);
 
             // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
             // Applied here, outside the battlefield iteration in the destroy pass that spent the
@@ -178,6 +186,7 @@ public class StateBasedActionService {
 
         for (UUID cardId : removedTokenIds) {
             gameData.exiledCardEggCounters.remove(cardId);
+            gameData.exiledCardScreamCounters.remove(cardId);
             gameData.exiledCardDreamCounters.remove(cardId);
             gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
@@ -225,6 +234,45 @@ public class StateBasedActionService {
             }
             return true;
         });
+    }
+
+    private boolean removeRedundantRoles(GameData gameData) {
+        Map<RoleAttachmentKey, List<Permanent>> attachedRoles = new HashMap<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.isAttached()
+                    || !permanent.getCard().getSubtypes()
+                    .contains(com.github.laxika.magicalvibes.model.CardSubtype.ROLE)) {
+                return;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (controllerId == null) {
+                return;
+            }
+            attachedRoles.computeIfAbsent(
+                    new RoleAttachmentKey(permanent.getAttachedTo(), controllerId), ignored -> new ArrayList<>())
+                    .add(permanent);
+        });
+
+        boolean changed = false;
+        for (List<Permanent> roles : attachedRoles.values()) {
+            if (roles.size() < 2) {
+                continue;
+            }
+            List<Permanent> oldestRoles = roles.stream()
+                    .sorted(Comparator.comparingLong(Permanent::getTimestamp).reversed())
+                    .skip(1)
+                    .toList();
+            for (Permanent role : oldestRoles) {
+                if (permanentRemovalService.removePermanentToGraveyard(gameData, role)) {
+                    gameLogService.append(gameData, GameLog.cardThen(role.getCard(),
+                            " is put into its owner's graveyard because its controller controls another Role attached to the same permanent."));
+                    log.info("Game {} - redundant Role {} is put into its owner's graveyard",
+                            gameData.id, role.getCard().getName());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
@@ -280,13 +328,21 @@ public class StateBasedActionService {
 
         try {
             for (DeathEntry entry : toDie) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                if (controllerId != null) {
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
+                }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -319,13 +375,42 @@ public class StateBasedActionService {
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanentControllers.clear();
             gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
         return !toDie.isEmpty() || replacementPerformed;
+    }
+
+    private boolean enforceCounterLimits(GameData gameData) {
+        boolean changed = false;
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+        for (Permanent permanent : permanents) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || permanent.isLosesAllAbilitiesPermanently()) {
+                continue;
+            }
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>(
+                    permanent.getCard().getEffects(EffectSlot.STATIC));
+            effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+            for (com.github.laxika.magicalvibes.model.effect.CardEffect effect : effects) {
+                if (!(effect instanceof CounterLimitEffect limit)
+                        || permanent.isStaticEffectSuppressed(effect.getClass())) {
+                    continue;
+                }
+                int current = permanent.getCounterCount(limit.counterType());
+                if (current > limit.maximum()) {
+                    permanent.setCounterCount(limit.counterType(), limit.maximum());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed

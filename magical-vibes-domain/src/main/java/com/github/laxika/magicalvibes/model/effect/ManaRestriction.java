@@ -83,6 +83,18 @@ public sealed interface ManaRestriction {
         }
     }
 
+    record CreatureSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override
@@ -371,6 +383,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "costs that contain {X} only";
+        }
+    }
+
+    /** Mana spendable only to cast spells with mana value 5 or greater or with {X} in their costs. */
+    record ManaValueAtLeastFiveOrXCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addManaValueAtLeastFiveOrXOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with mana value 5 or greater or {X} in their costs only";
         }
     }
 

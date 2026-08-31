@@ -19,6 +19,10 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeCollectEvidenceResume;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
     public boolean resolutionTimeReturnCardsToBattlefieldResume;
+    /** Resolution-time choice of one targeted card to put onto the battlefield for a bargained spell. */
+    public boolean resolutionTimeBargainedReturnChoiceResume;
+    /** The targeted cards retained while the bargained battlefield replacement is being chosen. */
+    public List<UUID> resolutionTimeBargainedReturnTargetCardIds = List.of();
 
     public Card card;
     public UUID controllerId;
@@ -26,6 +30,7 @@ public class GraveyardTargetOperationState {
     public StackEntryType entryType;
     public int xValue;
     public boolean anyNumber;
+    public boolean giftPromised;
     /**
      * Whether all chosen targets must come from one graveyard ("... from a single graveyard",
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
@@ -133,6 +138,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenEffectChoiceMade;
     /** The card chosen for the optional graveyard exile, or {@code null} for a decline. */
     public UUID resolutionTimeExileThenEffectChosenCardId;
+    /** Whether an optional any-number graveyard exile with a follow-up is awaiting its answer. */
+    public boolean resolutionTimeExileAnyNumberThenEffectResume;
+    /** Whether the optional any-number graveyard exile has been answered. */
+    public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
+    /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
+    public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore or Shrouded
      * Lore). When set,
@@ -159,6 +170,12 @@ public class GraveyardTargetOperationState {
     public UUID scroungeChosenCardId;
     /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */
     public boolean resolutionTimeScroungeResume;
+    /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
+    public boolean resolutionTimeOpponentChoosesCardToHandResume;
+    /** Opponent selected by the controller for the resolution-time graveyard choice. */
+    public UUID opponentChoosesCardToHandChosenOpponentId;
+    /** Card selected by the opponent for the resolution-time graveyard choice. */
+    public UUID opponentChoosesCardToHandChosenCardId;
     /**
      * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
      * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the

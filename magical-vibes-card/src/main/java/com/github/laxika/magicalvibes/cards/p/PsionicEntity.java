@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "95")
+@CardRegistration(set = "LEG", collectorNumber = "67")
 public class PsionicEntity extends Card {
 
     public PsionicEntity() {

@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
@@ -70,18 +72,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTapActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -104,12 +109,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessGreaterThanPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -691,6 +699,23 @@ class PredicateEvaluationServiceTest {
                     new CardColorPredicate(CardColor.RED)
             )), null)).isFalse();
         }
+
+        @Test
+        @DisplayName("CardDoesNotShareColorWithSourceControlledCreaturePredicate compares source controller creatures")
+        void cardDoesNotShareColorWithSourceControlledCreaturePredicateMatches() {
+            Card sourceCard = createEnchantment("Source");
+            addPermanent(player1Id, sourceCard);
+            addPermanent(player1Id, createCreature("Green Creature", 2, 2, CardColor.GREEN));
+            Card whiteCard = createCreature("White Creature", 1, 1, CardColor.WHITE);
+            Card greenCard = createCreature("Green Spell", 1, 1, CardColor.GREEN);
+
+            CardPredicate predicate = new CardDoesNotShareColorWithSourceControlledCreaturePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(whiteCard, predicate, sourceCard.getId(), gd, player2Id))
+                    .isTrue();
+            assertThat(evaluator.matchesCardPredicate(greenCard, predicate, sourceCard.getId(), gd, player2Id))
+                    .isFalse();
+        }
     }
 
     // ===== matchesPermanentPredicate =====
@@ -713,6 +738,42 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsCreaturePredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("Name predicates reject face-down permanents with no name")
+        void namePredicatesRejectFaceDownPermanents() {
+            Permanent faceDownWirefly = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+            faceDownWirefly.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            Permanent faceUpWirefly = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+
+            PermanentNamedPredicate namedWirefly = new PermanentNamedPredicate("Wirefly");
+            assertThat(evaluator.matchesPermanentPredicate(gd, faceDownWirefly, namedWirefly)).isFalse();
+            CharacteristicState faceDownState = new CharacteristicState(
+                    faceDownWirefly.getCard(), faceDownWirefly);
+            assertThat(evaluator.matchesPermanentPredicate(
+                    faceDownState, faceDownWirefly, namedWirefly, FilterContext.of(gd))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, faceUpWirefly, namedWirefly)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Two face-down permanents without names do not share a name")
+        void namelessPermanentsDoNotShareAName() {
+            Permanent first = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+            first.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            Permanent second = addPermanent(player1Id,
+                    createCreature("Wirefly", 2, 2, null));
+            second.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+            FilterContext sourceContext = FilterContext.of(gd)
+                    .withSourceCardId(first.getCard().getId());
+            assertThat(evaluator.matchesPermanentPredicate(
+                    second, new PermanentHasSameNameAsSourcePredicate(), sourceContext)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, first,
+                    new PermanentSharesNameWithAnotherPermanentPredicate())).isFalse();
         }
 
         @Test
@@ -900,6 +961,24 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(
                     gd, perm, new PermanentHasNonManaActivatedAbilityPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasTapActivatedAbilityPredicate matches only abilities with a tap cost")
+        void tapActivatedAbilityPredicateMatchesOnlyTapAbilities() {
+            Card tapCard = createCreature("Tap Creature", 1, 1, CardColor.GREEN);
+            tapCard.addActivatedAbility(new ActivatedAbility(true, null,
+                    List.of(new DrawCardEffect()), "{T}: Draw a card."));
+            Permanent tapPermanent = addPermanent(player1Id, tapCard);
+
+            Card noTapCard = createCreature("No Tap Creature", 1, 1, CardColor.GREEN);
+            noTapCard.addActivatedAbility(new ActivatedAbility(false, "{1}",
+                    List.of(new DrawCardEffect()), "{1}: Draw a card."));
+            Permanent noTapPermanent = addPermanent(player1Id, noTapCard);
+
+            PermanentHasTapActivatedAbilityPredicate predicate = new PermanentHasTapActivatedAbilityPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, tapPermanent, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, noTapPermanent, predicate)).isFalse();
         }
 
         @Test
@@ -1586,6 +1665,30 @@ class PredicateEvaluationServiceTest {
             FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
 
             assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentControlledBySourceControllerPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Aura attached to an attacking opponent creature matches")
+        void auraAttachedToAttackingOpponentCreatureMatches() {
+            Permanent attacker = addPermanent(player2Id, createCreature("Attacker", 2, 2, CardColor.GREEN));
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1Id);
+
+            Card auraCard = new Card();
+            auraCard.setName("Aura");
+            auraCard.setType(CardType.ENCHANTMENT);
+            auraCard.setSubtypes(List.of(CardSubtype.AURA));
+            Permanent aura = addPermanent(player2Id, auraCard);
+            aura.setAttachedTo(attacker.getId());
+
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+            PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate predicate =
+                    new PermanentIsAuraAttachedToAttackingCreatureControlledByOpponentOfSourceControllerPredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(aura, predicate, ctx)).isTrue();
+
+            attacker.setAttacking(false);
+            assertThat(evaluator.matchesPermanentPredicate(aura, predicate, ctx)).isFalse();
         }
 
         @Test
@@ -2390,6 +2493,41 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesPermanentPredicate(
                     attacker, new PermanentBlockedBySourceThisTurnPredicate(), context)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("PermanentSharesNameWithAnotherControlledPermanentPredicate")
+    class SharesNameWithAnotherControlledPermanent {
+
+        @Test
+        void matchesAnotherPermanentWithTheSameControllerAndName() {
+            Permanent target = addPermanent(player1Id, createEnchantment("Shared Name"));
+            addPermanent(player1Id, createEnchantment("Shared Name"));
+
+            FilterContext context = FilterContext.of(gd);
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
+                    .isTrue();
+            assertThat(evaluator.matchesStaticFilter(
+                    target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
+                    .isTrue();
+        }
+
+        @Test
+        void ignoresAnotherPermanentWithTheSameNameControlledByAnOpponent() {
+            Permanent target = addPermanent(player1Id, createEnchantment("Shared Name"));
+            addPermanent(player2Id, createEnchantment("Shared Name"));
+
+            FilterContext context = FilterContext.of(gd);
+
+            assertThat(evaluator.matchesPermanentPredicate(
+                    target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
+                    .isFalse();
+            assertThat(evaluator.matchesStaticFilter(
+                    target, new PermanentSharesNameWithAnotherControlledPermanentPredicate(), context))
+                    .isFalse();
         }
     }
 

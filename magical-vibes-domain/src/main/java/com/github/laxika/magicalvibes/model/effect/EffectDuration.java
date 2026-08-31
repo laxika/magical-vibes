@@ -29,6 +29,8 @@ public enum EffectDuration {
      *  (e.g. Cycle of Life's "until your next upkeep"). Survives end-of-turn cleanup; cleared in
      *  {@code StepTriggerService.handleUpkeepTriggers} when that controller is the active player. */
     UNTIL_CONTROLLERS_NEXT_UPKEEP,
+    /** One-shot effect that lasts through the end of the effect controller's next upkeep. */
+    UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP,
     /** One-shot effect with no wear-off (e.g. "becomes a creature permanently" — Tezzeret, Waker). */
     PERMANENT,
     /** One-shot effect that lasts for as long as the source permanent remains on the battlefield

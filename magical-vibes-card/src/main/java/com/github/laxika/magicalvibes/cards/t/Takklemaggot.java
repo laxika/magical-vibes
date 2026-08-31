@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOrN
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "37")
+@CardRegistration(set = "LEG", collectorNumber = "119")
 public class Takklemaggot extends Card {
 
     public Takklemaggot() {

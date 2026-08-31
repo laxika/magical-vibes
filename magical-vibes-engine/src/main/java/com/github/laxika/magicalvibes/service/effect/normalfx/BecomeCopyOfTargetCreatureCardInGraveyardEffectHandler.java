@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
@@ -54,17 +55,32 @@ public class BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler implements N
             return;
         }
 
+        BecomeCopyOfTargetCreatureCardInGraveyardEffect copyEffect =
+                (BecomeCopyOfTargetCreatureCardInGraveyardEffect) effect;
         Card printed = source.getOriginalCard();
-        List<ActivatedAbility> retainedAbilities = List.copyOf(printed.getActivatedAbilities());
+        List<ActivatedAbility> retainedAbilities = copyEffect.retainedSourceAbilityIndex() == -1
+                ? List.copyOf(printed.getActivatedAbilities())
+                : List.of(printed.getActivatedAbilities().get(copyEffect.retainedSourceAbilityIndex()));
         permanentCopierService.applyCloneCopy(source, graveyardCard, null, null, Set.of());
 
         Card copy = source.getCard();
-        copy.setName(printed.getName());
+        if (copyEffect.retainSourceName()) {
+            copy.setName(printed.getName());
+        }
 
-        Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
-        supertypes.addAll(copy.getSupertypes());
-        supertypes.add(CardSupertype.LEGENDARY);
-        copy.setSupertypes(supertypes);
+        if (copyEffect.addLegendarySupertype()) {
+            Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(copy.getSupertypes());
+            supertypes.add(CardSupertype.LEGENDARY);
+            copy.setSupertypes(supertypes);
+        }
+
+        if (!copyEffect.additionalKeywords().isEmpty()) {
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(copy.getKeywords());
+            keywords.addAll(copyEffect.additionalKeywords());
+            copy.setKeywords(keywords);
+        }
 
         for (ActivatedAbility retainedAbility : retainedAbilities) {
             copy.addActivatedAbility(retainedAbility);

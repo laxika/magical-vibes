@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -30,6 +31,11 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
 
     public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
                             UUID sourceCardId, String sourceCardName) {
+        beginChoice(gameData, playerId, predicate, label, sourceCardId, sourceCardName, null);
+    }
+
+    public void beginChoice(GameData gameData, UUID playerId, CardPredicate predicate, String label,
+                            UUID sourceCardId, String sourceCardName, CounterType enterWithCounter) {
         List<UUID> validCardIds = new ArrayList<>();
         addMatchingCardIds(validCardIds, gameData.playerHands.get(playerId), predicate,
                 sourceCardId, gameData, playerId);
@@ -41,10 +47,15 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PutCardFromHandOrGraveyardChoice(
-                        playerId, validCardIds, label, sourceCardName));
+                        playerId, validCardIds, label, sourceCardName, enterWithCounter));
     }
 
     public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName) {
+        applyChoice(gameData, playerId, chosenCardId, sourceCardName, null);
+    }
+
+    public void applyChoice(GameData gameData, UUID playerId, UUID chosenCardId, String sourceCardName,
+                            CounterType enterWithCounter) {
         Card chosen = removeCard(gameData.playerHands.get(playerId), chosenCardId);
         String zone = "hand";
         if (chosen == null) {
@@ -60,6 +71,9 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
         }
 
         Permanent permanent = new Permanent(chosen);
+        if (enterWithCounter != null) {
+            permanent.setCounterCount(enterWithCounter, 1);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " puts "

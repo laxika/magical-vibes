@@ -68,6 +68,24 @@ class GraveyardTargetingServiceTest {
     }
 
     @Test
+    @DisplayName("handleAttackGraveyardTargeting keeps the trigger when no graveyard cards are available")
+    void handleAttackGraveyardTargeting_pushesTriggerWhenGraveyardsAreEmpty() {
+        Card card = new Card();
+        card.setName("Restless Cottage");
+        UUID sourcePermanentId = UUID.randomUUID();
+        ExileCardsFromGraveyardEffect exile = new ExileCardsFromGraveyardEffect(1, 0);
+
+        service.handleAttackGraveyardTargeting(
+                gd, player1Id, card, List.of(exile), sourcePermanentId, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(exile);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanentId);
+        assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+    }
+
+    @Test
     @DisplayName("handleGraveyardExileETBTargeting pushes stack entry with no targets when all graveyards are empty")
     void handleGraveyardExileETBTargeting_pushesEmptyTargetEntryWhenGraveyardsEmpty() {
         Card card = new Card();

@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -269,6 +271,24 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("surveil mark-on-acceptance trigger keeps its marker on the stack entry")
+    void surveilMarkOnAcceptanceTriggerKeepsMarker() {
+        Permanent perm = createPermanent("Planetarium of Wan Shi Tong");
+        var effect = OncePerTurnTriggerEffect.markOnAcceptance(new DrawCardEffect(1));
+        var ctx = new TriggerContext.Surveil(player1Id);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_SURVEILS,
+                effect.wrapped(), ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect.wrapped());
+        });
+    }
+
+    @Test
     @DisplayName("graveyard-leave trigger skips a false intervening turn condition")
     void graveyardLeaveTriggerSkipsFalseInterveningCondition() {
         Permanent perm = createPermanent("Kishla Skimmer");
@@ -471,6 +491,22 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
+        }
+
+        @Test
+        @DisplayName("skips a false intervening condition")
+        void skipsFalseInterveningCondition() {
+            Permanent perm = createPermanent("Tolls of War");
+            var effect = new ConditionalEffect(new ControllerTurn(), new BoostSelfEffect(1, 1));
+            var ctx = new TriggerContext.AllySacrificed(player1Id, null);
+            when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test
@@ -1271,6 +1307,31 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("queues a suspended card's conditional opponent-graveyard trigger")
+    void queuesSuspendedCardOpponentGraveyardTrigger() {
+        Card sourceCard = createCard("Nihilith");
+        var effect = new ConditionalEffect(
+                new SourceCardSuspended(),
+                new MayEffect(new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()),
+                        "Remove a time counter from Nihilith?"));
+        var ctx = new TriggerContext.CardPutIntoGraveyard(createCard("Shock"), player2Id);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                new TriggerMatchContext(gd, null, player1Id, effect, sourceCard),
+                EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
+                effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(sourceCard);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isNull();
+        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
     }
 
     @Test

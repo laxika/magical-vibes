@@ -8,6 +8,7 @@ public class LandCopyOperationState {
     public Card enteringCard;
     public UUID controllerId;
     public boolean landPlay;
+    public Zone landPlayZone;
     public boolean initiallyTapped;
     public String logSuffix;
 }
