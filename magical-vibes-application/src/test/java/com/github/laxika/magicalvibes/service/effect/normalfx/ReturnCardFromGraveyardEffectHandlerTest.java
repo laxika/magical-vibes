@@ -386,4 +386,31 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                         i instanceof PendingInteraction.GraveyardChoice gc
                                 && gc.validIndices().equals(List.of(1))));
             }
+
+    @Test
+    @DisplayName("Preserves mandatory and tapped flags on a resolution-time graveyard choice")
+    void preservesMandatoryAndTappedFlagsOnResolutionTimeChoice() {
+        Card land = createCard("Forest");
+        gd.playerGraveyards.get(player1Id).add(land);
+        CardPredicate filter = new CardTypePredicate(CardType.LAND);
+        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(filter)
+                .mandatory(true)
+                .enterTapped(true)
+                .build();
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Test source"),
+                player1Id, "Test source", new ArrayList<>(List.of(effect)));
+
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(land), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+
+        returnCardFromGraveyardHandler.resolve(gd, entry, effect);
+
+        verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
+                interaction instanceof PendingInteraction.GraveyardChoice choice
+                        && choice.mandatory()
+                        && choice.enterTapped()
+                        && choice.validIndices().equals(List.of(0))));
+    }
 }

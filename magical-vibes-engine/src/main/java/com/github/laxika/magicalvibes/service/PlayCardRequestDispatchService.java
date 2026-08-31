@@ -40,6 +40,11 @@ public class PlayCardRequestDispatchService {
             gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
             return;
         }
+        if (Boolean.TRUE.equals(request.adventure()) && Boolean.TRUE.equals(request.fromGraveyard())) {
+            gameService.playAdventureCardFromGraveyard(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.targetIds()), request.damageAssignments());
+            return;
+        }
         if (Boolean.TRUE.equals(request.flashback())) {
             CardType chosenGraveyardType = request.chosenGraveyardType() != null
                     ? CardType.valueOf(request.chosenGraveyardType()) : null;
@@ -65,7 +70,7 @@ public class PlayCardRequestDispatchService {
         }
         if (Boolean.TRUE.equals(request.adventure())) {
             gameService.playAdventureCard(gameData, player, request.cardIndex(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.targetIds()));
+                    request.targetId(), listOrEmpty(request.targetIds()), request.damageAssignments());
             return;
         }
         if (isPlotAlternateCast(gameData, player, request)) {

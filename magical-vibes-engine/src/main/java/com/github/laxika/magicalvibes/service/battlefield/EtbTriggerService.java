@@ -565,6 +565,7 @@ public class EtbTriggerService {
             // are excluded; they passed through cast-time target selection.
             boolean hasDynamicTargetCount = card.hasDynamicTargetCount();
             boolean etbNeedsTarget = otherEffects.stream()
+                    .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
 
@@ -579,11 +580,12 @@ public class EtbTriggerService {
                             && (!card.isAura() || card.getEffectTargetIndex(e) != 0)
                             && (ce.targetSpec().admits(TargetPredicate.Kind.PLAYER) || ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            // MayPayManaEffect ETBs never take a cast-time target (see EffectResolution), so a
-            // targeting pay/else ability (Knight of the Mists) must choose as the trigger goes
-            // on the stack — including the just-entered permanent as a legal choice.
+            // Non-reflexive MayPayManaEffect ETBs never take a cast-time target (see
+            // EffectResolution), so a targeting pay/else ability (Knight of the Mists) must choose
+            // as the trigger goes on the stack — including the just-entered permanent as a legal
+            // choice.
             boolean mayPayManaNeedsTarget = otherEffects.stream()
-                    .anyMatch(e -> e instanceof MayPayManaEffect
+                    .anyMatch(e -> e instanceof MayPayManaEffect mayPay && !mayPay.targetAfterPayment()
                             && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 

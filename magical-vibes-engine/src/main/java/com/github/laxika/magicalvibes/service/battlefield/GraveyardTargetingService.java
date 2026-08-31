@@ -509,9 +509,20 @@ public class GraveyardTargetingService {
         }
 
         if (matchingCards.isEmpty()) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s attack trigger",
+                    new ArrayList<>(effects),
+                    sourcePermanentId,
+                    List.of()
+            );
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(card,
                     "'s attack trigger has no valid graveyard targets."));
-            log.info("Game {} - {} attack graveyard trigger skipped (no valid targets)",
+            log.info("Game {} - {} attack graveyard trigger pushed with 0 targets",
                     gameData.id, card.getName());
             return;
         }

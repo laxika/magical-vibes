@@ -164,6 +164,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
 
+    /** Discerning Financier: the controller chooses another player to gain control of a target permanent. */
+    record ChooseAnotherPlayerGainsControlOfTargetPermanent(
+            UUID controllerId, UUID targetPermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
+
     /** Murmurs from Beyond: the controller chooses which opponent makes the revealed-card choice. */
     record MurmursFromBeyondOpponentChoice(UUID controllerId, List<Card> revealedCards)
             implements PermanentChoiceContext {

@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLandsUnlessAnyPlayerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /** Handles one player's choice to pay life to keep a land during Cleansing. */
@@ -24,6 +27,9 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeHandler implements MayEffectHand
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,12 +46,9 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeHandler implements MayEffectHand
 
         boolean paid = accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost());
         if (paid) {
-            int lifeLoss = effect.lifeCost()
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
-            gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeLoss);
-            triggerCollectionService.checkLifeLossTriggers(gameData, player.getId(), lifeLoss);
+            lifeSupport.applyLifePayment(gameData, player.getId(), effect.lifeCost(), ability.sourceCard().getName());
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeLoss + " life to prevent ",
+                    player.getUsername() + " pays " + effect.lifeCost() + " life to prevent ",
                     ability.sourceCard(), "'s land from being destroyed."));
         }
 

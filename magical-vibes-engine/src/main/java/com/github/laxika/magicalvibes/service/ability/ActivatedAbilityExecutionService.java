@@ -373,7 +373,7 @@ public class ActivatedAbilityExecutionService {
                 .findFirst()
                 .ifPresent(cost -> {
                     if (xLifeCost > 0) {
-                        lifeSupport.applyLifeLoss(gameData, playerId, xLifeCost,
+                        lifeSupport.applyLifePayment(gameData, playerId, xLifeCost,
                                 permanent.getCard().getName());
                     }
                 });
@@ -737,8 +737,8 @@ public class ActivatedAbilityExecutionService {
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.CAVE));
 
-        // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
-        int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
+        // Mana-production replacement effects are applied to the tapped permanent.
+        int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
 
         boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
                 && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
@@ -1193,6 +1193,7 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)
                             || sourceDamagePrevented
+                            || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, permanent)
                             || gameData.isPreventedFromDealingDamage(permanent.getId())
                             || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                         damage = 0;
@@ -1367,6 +1368,7 @@ public class ActivatedAbilityExecutionService {
             }
             if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)
                     || sourceDamagePrevented
+                    || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, permanent)
                     || gameData.isPreventedFromDealingDamage(permanent.getId())
                     || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                 damage = 0;

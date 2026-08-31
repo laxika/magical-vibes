@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnly
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
@@ -393,6 +394,8 @@ public final class LayerClassifier {
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCardsInAllGraveyardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect.class,
+                fixed(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class,

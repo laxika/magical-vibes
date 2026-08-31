@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
@@ -491,6 +492,7 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.cardPutIntoExileThisTurn = false;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
         gameData.additionalUpkeepsRemaining = 0;
@@ -596,6 +598,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
         gameData.clearDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class);
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
+        gameData.clearDelayedActions(DelayedBeginningOfCombatTrigger.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
@@ -620,6 +623,7 @@ public class TurnProgressionService {
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
+        gameData.topLibraryCastPermissionSourcesUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();

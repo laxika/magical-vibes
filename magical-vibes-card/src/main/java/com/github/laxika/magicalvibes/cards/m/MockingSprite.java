@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "159")
+@CardRegistration(set = "WOE", collectorNumber = "62")
 public class MockingSprite extends Card {
 
     public MockingSprite() {

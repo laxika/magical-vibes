@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.EnumSet;
 import java.util.Locale;
@@ -65,6 +66,11 @@ final class TokenCardFactory {
             tokenCard.setToughness(toughness);
         }
         tokenCard.setSubtypes(token.subtypes());
+        if (token.subtypes() != null
+                && token.subtypes().contains(CardSubtype.AURA)
+                && token.subtypes().contains(CardSubtype.ROLE)) {
+            tokenCard.target(TargetFilters.creature());
+        }
         if (token.keywords() != null && !token.keywords().isEmpty()) {
             tokenCard.setKeywords(token.keywords());
             tokenCard.setCardText(keywordText(token.keywords()));

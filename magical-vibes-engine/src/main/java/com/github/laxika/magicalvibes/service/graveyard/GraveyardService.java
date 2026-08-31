@@ -1436,6 +1436,7 @@ public class GraveyardService {
         if (leavingCards == null || leavingCards.isEmpty()) {
             return;
         }
+        leavingCards.forEach(card -> gameData.graveyardAdventureCastPermissions.remove(card.getId()));
         leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         notifyCardsLeftGraveyard(gameData, ownerId);
         int creatureCardCount = (int) leavingCards.stream()

@@ -3,9 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -27,6 +31,8 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -48,11 +54,19 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             return;
         }
 
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourcePermanent == null) {
+            sourcePermanent = entry.getSourcePermanentSnapshot();
+        }
+        int count = amountEvaluationService.evaluate(gameData, exileEffect.count(),
+                AmountContext.forStackEntry(entry, sourcePermanent));
+
         String playNote = withoutPaying
                 ? " (may play it without paying its mana cost this turn)"
                 : " (may play it this turn)";
 
-        for (int i = 0; i < exileEffect.count() && !deck.isEmpty(); i++) {
+        for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
 

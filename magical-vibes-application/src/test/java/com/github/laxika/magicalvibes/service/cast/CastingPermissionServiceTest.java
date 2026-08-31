@@ -219,6 +219,26 @@ class CastingPermissionServiceTest {
             assertThat(svc.canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gd, player1Id, spell)).isTrue();
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
         }
+
+        @Test
+        @DisplayName("tracks a once-each-turn top-library permission per source permanent")
+        void tracksOnceEachTurnPermissionPerSource() {
+            Card sourceCard = new Card();
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    AllowCastFromTopOfLibraryEffect.onceEachTurn(Set.of(CardType.INSTANT)));
+            Permanent source = new Permanent(sourceCard);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isTrue();
+            svc.markTopLibraryCastPermissionUsed(gd, player1Id, instant);
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isFalse();
+
+            gd.topLibraryCastPermissionSourcesUsedThisTurn.clear();
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isTrue();
+        }
     }
 
     @Test

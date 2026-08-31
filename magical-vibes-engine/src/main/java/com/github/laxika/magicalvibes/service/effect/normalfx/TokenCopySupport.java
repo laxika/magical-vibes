@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -134,7 +135,13 @@ public class TokenCopySupport {
         tokenCard.setColors(effect.colorOverride() != null
                 ? List.of(effect.colorOverride())
                 : sourceCard.getColors());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
+        if (effect.removeLegendary() && sourceCard.getSupertypes().contains(CardSupertype.LEGENDARY)) {
+            EnumSet<CardSupertype> supertypes = EnumSet.copyOf(sourceCard.getSupertypes());
+            supertypes.remove(CardSupertype.LEGENDARY);
+            tokenCard.setSupertypes(supertypes);
+        } else {
+            tokenCard.setSupertypes(sourceCard.getSupertypes());
+        }
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
         tokenCard.setCardText(sourceCard.getCardText());

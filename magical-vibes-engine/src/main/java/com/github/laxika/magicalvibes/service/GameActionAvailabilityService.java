@@ -371,6 +371,14 @@ public class GameActionAvailabilityService {
                     : new ManaPool(pool);
             pool.promoteCreatureOrEnchantmentSpellOnlyMana();
         }
+        if ((card.getManaValue() >= 5
+                || card.getParsedManaCost() != null && card.getParsedManaCost().hasX())
+                && pool.getManaValueAtLeastFiveOrXOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteManaValueAtLeastFiveOrXOnlyMana();
+        }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
                 && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
@@ -1076,7 +1084,20 @@ public class GameActionAvailabilityService {
                 flashback = Optional.empty();
             }
             var disturb = card.getCastingOption(DisturbCast.class);
-            Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
+            boolean grantedAdventure = flashback.isEmpty()
+                    && card.getCastingOption(AdventureCast.class).isPresent()
+                    && card.getBackFaceCard() != null
+                    && (card.getBackFaceCard().hasType(CardType.SORCERY)
+                    || card.getBackFaceCard().hasType(CardType.INSTANT))
+                    && castingPermissionService.hasGrantedGraveyardAdventureCastPermission(
+                    gameData, card, playerId);
+            Card castHalf = flashback.isPresent()
+                    ? card.graveyardCastHalf()
+                    : grantedAdventure ? card.getBackFaceCard() : card;
+            if (grantedAdventure && !gameQueryService.canCastSpellFromZone(
+                    gameData, castHalf, Zone.GRAVEYARD, playerId)) {
+                continue;
+            }
             if (castingPermissionService.isSpellLimitReached(gameData, playerId, castHalf)) {
                 continue;
             }
@@ -1185,7 +1206,7 @@ public class GameActionAvailabilityService {
 
             if (flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast && !isGraveyardCast
                     && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isJumpStart && !isRetrace
-                    && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
+                    && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery && !grantedAdventure) {
                 continue;
             }
 
@@ -1212,7 +1233,8 @@ public class GameActionAvailabilityService {
                         .orElse(castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost());
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
-                    || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
+                    || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery
+                    || grantedAdventure) {
                 manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
             } else {
                 manaCostStr = flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);

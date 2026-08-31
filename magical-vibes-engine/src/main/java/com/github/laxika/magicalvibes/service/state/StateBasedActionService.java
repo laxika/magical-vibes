@@ -25,8 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -52,6 +55,8 @@ public class StateBasedActionService {
     }
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
+
+    private record RoleAttachmentKey(UUID hostId, UUID controllerId) {}
 
     /**
      * Safety bound on CR 704.3 repetition. Every productive pass removes at least one permanent
@@ -96,6 +101,7 @@ public class StateBasedActionService {
             // an unrelated sweep happened to run.
             anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
+            anyPerformed |= removeRedundantRoles(gameData);
 
             // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
             // Applied here, outside the battlefield iteration in the destroy pass that spent the
@@ -223,6 +229,45 @@ public class StateBasedActionService {
             }
             return true;
         });
+    }
+
+    private boolean removeRedundantRoles(GameData gameData) {
+        Map<RoleAttachmentKey, List<Permanent>> attachedRoles = new HashMap<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.isAttached()
+                    || !permanent.getCard().getSubtypes()
+                    .contains(com.github.laxika.magicalvibes.model.CardSubtype.ROLE)) {
+                return;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (controllerId == null) {
+                return;
+            }
+            attachedRoles.computeIfAbsent(
+                    new RoleAttachmentKey(permanent.getAttachedTo(), controllerId), ignored -> new ArrayList<>())
+                    .add(permanent);
+        });
+
+        boolean changed = false;
+        for (List<Permanent> roles : attachedRoles.values()) {
+            if (roles.size() < 2) {
+                continue;
+            }
+            List<Permanent> oldestRoles = roles.stream()
+                    .sorted(Comparator.comparingLong(Permanent::getTimestamp).reversed())
+                    .skip(1)
+                    .toList();
+            for (Permanent role : oldestRoles) {
+                if (permanentRemovalService.removePermanentToGraveyard(gameData, role)) {
+                    gameLogService.append(gameData, GameLog.cardThen(role.getCard(),
+                            " is put into its owner's graveyard because its controller controls another Role attached to the same permanent."));
+                    log.info("Game {} - redundant Role {} is put into its owner's graveyard",
+                            gameData.id, role.getCard().getName());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {

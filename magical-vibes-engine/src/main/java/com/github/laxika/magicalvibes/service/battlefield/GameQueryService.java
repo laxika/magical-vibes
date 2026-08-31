@@ -124,6 +124,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsTh
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsAnyColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorEffect;
+import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendBlueManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
@@ -135,6 +136,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrifice
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackWithoutTappingPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.LifePaymentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewAndSaddlePowerModifierEffect;
@@ -931,6 +933,11 @@ public class GameQueryService {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantPayLifeOrSacrificeCreaturesEffect.class);
     }
 
+    /** Returns whether the player controls a static effect that replaces life payments. */
+    public boolean hasLifePaymentReplacement(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, LifePaymentReplacementEffect.class);
+    }
+
     /**
      * Returns {@code true} if a resolving spell or ability controlled by {@code sourceControllerId}
      * may cause {@code playerId} to sacrifice permanents. A player who controls an
@@ -1037,20 +1044,30 @@ public class GameQueryService {
 
     /**
      * Returns the multiplier applied to mana the given player produces by tapping a permanent for
-     * mana, per any {@link ManaReflectionEffect} static effects they control (Mana Reflection). Each
-     * such effect doubles the mana produced, and multiple stack multiplicatively (2^count). Returns
-     * 1 when the player controls none.
+     * mana, per matching {@link ManaReflectionEffect} static effects they control. Each effect
+     * applies its configured multiplier, and multiple effects stack multiplicatively. The legacy
+     * overload matches every permanent and is retained for callers that do not have a specific
+     * mana source.
      */
     public int manaProductionMultiplier(GameData gameData, UUID playerId) {
+        return manaProductionMultiplier(gameData, playerId, null);
+    }
+
+    public int manaProductionMultiplier(GameData gameData, UUID playerId, Permanent tappedPermanent) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return 1;
-        int reflections = 0;
+        int multiplier = 1;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ManaReflectionEffect) reflections++;
+                if (effect instanceof ManaReflectionEffect reflection
+                        && (tappedPermanent == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, tappedPermanent, reflection.permanentFilter()))) {
+                    multiplier *= reflection.multiplier();
+                }
             }
         }
-        return 1 << reflections;
+        return multiplier;
     }
 
     /**
@@ -1356,6 +1373,22 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, SpendManaAsAnyColorEffect.class);
     }
 
+    /** Returns whether the source creature's controller has the activated-ability color permission. */
+    public boolean canSpendManaAsAnyColorForActivatedAbilities(GameData gameData, Permanent source) {
+        if (source == null || !isCreature(gameData, source)) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream()
+                .filter(permanent -> !hasLostAllAbilities(gameData, permanent))
+                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance));
+    }
+
     /**
      * Returns whether the source creature's activated abilities may use blue mana as mana of any
      * color, as granted by Quicksilver Elemental.
@@ -1414,6 +1447,21 @@ public class GameQueryService {
             return false;
         }
         Set<PermanentPredicate> predicates = gameData.playersWithDamageFromMatchingSourcesPrevented.get(playerId);
+        return predicates != null && predicates.stream()
+                .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate));
+    }
+
+    /** Returns whether matching source damage to a creature controlled by the player is prevented this turn. */
+    public boolean isDamageFromMatchingSourcePreventedForControlledCreature(
+            GameData gameData, Permanent creature, Permanent source) {
+        if (!isDamagePreventable(gameData) || creature == null || source == null
+                || !isCreature(gameData, creature)) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        Set<PermanentPredicate> predicates =
+                gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.get(controllerId);
         return predicates != null && predicates.stream()
                 .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate));
     }
@@ -3549,6 +3597,14 @@ public class GameQueryService {
                 recordGrantedEffectDiff(beforeSource, source.getCard().getName(),
                         accumulator, explainEffects);
             }
+            if (sourceState != null) {
+                for (CardEffect effect : sourceState.getGrantedStaticEffects()) {
+                    StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
+                    if (handler != null) {
+                        handler.apply(context, effect, accumulator);
+                    }
+                }
+            }
         }
         // Process emblem static effects
         for (Emblem emblem : gameData.emblems) {
@@ -3693,6 +3749,15 @@ public class GameQueryService {
                     if (layeredManaged) {
                         accumulator.setLayeredOutputsSuppressed(false);
                     }
+                }
+            }
+        }
+        if (state != null) {
+            for (CardEffect effect : state.getGrantedStaticEffects()) {
+                StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
+                if (selfHandler != null) {
+                    selfHandler.apply(new StaticEffectContext(
+                            target, target, resolvedTargetControllerId, true, gameData), effect, accumulator);
                 }
             }
         }

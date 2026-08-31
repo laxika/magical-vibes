@@ -113,6 +113,21 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text(
                         "All damage that would be dealt to " + playerName + " and creatures " + playerName + " controls this turn is prevented."));
             }
+            case ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES -> {
+                UUID controllerId = entry.getControllerId();
+                if (controllerId != null) {
+                    gameData.playersWithDamageFromMatchingSourcesPrevented
+                            .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(e.sourcePredicate());
+                    gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented
+                            .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(e.sourcePredicate());
+                }
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage that would be dealt to " + playerName + " and creatures " + playerName
+                                + " controls this turn by matching sources is prevented."));
+            }
             case ALL_TO_CONTROLLER -> {
                 UUID controllerId = entry.getControllerId();
                 gameData.playersWithAllPlayerDamagePrevented.add(controllerId);

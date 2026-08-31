@@ -158,6 +158,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler eachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
     private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
@@ -653,6 +654,13 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleChooseOpponentGainsControlOfSource(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentGainsControlOfSource context) {
         chooseOpponentGainsControlOfSourceEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseAnotherPlayerGainsControlOfTargetPermanent(
+            GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseAnotherPlayerGainsControlOfTargetPermanent context) {
+        chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

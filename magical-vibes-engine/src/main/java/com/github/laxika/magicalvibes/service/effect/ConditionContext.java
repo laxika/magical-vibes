@@ -37,6 +37,7 @@ public record ConditionContext(
         boolean alternateCost,
         boolean spectacle,
         boolean controlledMountAsCast,
+        boolean controlledFaerieAsCast,
         boolean castDuringMainPhase,
         int eventValue
 ) {
@@ -59,7 +60,7 @@ public record ConditionContext(
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, spectacle, false, false, 0);
+                alternateCost, spectacle, false, false, false, 0);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -75,7 +76,7 @@ public record ConditionContext(
                 madness, castForForetell, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, beholdCostPaid, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, false, false, false, eventValue);
+                alternateCost, false, false, false, false, eventValue);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -143,7 +144,7 @@ public record ConditionContext(
                 madness, false, overloaded, sourceZone, xValue, targetId, triggeringCard,
                 staticEvaluation, putCounterCostPaid, false, triggeringPermanentId,
                 triggeringPermanentPowerAtTrigger, sacrificedCard, repeatedAdditionalCosts,
-                alternateCost, false, false, false, 0);
+                alternateCost, false, false, false, false, 0);
     }
 
     public ConditionContext(UUID controllerId, UUID sourcePermanentId, Permanent sourcePermanent,
@@ -195,7 +196,8 @@ public record ConditionContext(
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
                         ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),
                 entry.getRepeatedAdditionalCosts(), entry.isAlternateCost(), entry.isSpectacle(),
-                entry.isControlledMountAsCast(), entry.isCastDuringMainPhase(), entry.getEventValue());
+                entry.isControlledMountAsCast(), entry.isControlledFaerieAsCast(),
+                entry.isCastDuringMainPhase(), entry.getEventValue());
     }
 
     public static ConditionContext forPermanent(Permanent permanent, UUID controllerId) {
@@ -213,8 +215,12 @@ public record ConditionContext(
     }
 
     public static ConditionContext forCasting(UUID castingPlayerId) {
+        return forCasting(castingPlayerId, false);
+    }
+
+    public static ConditionContext forCasting(UUID castingPlayerId, boolean kicked) {
         return new ConditionContext(castingPlayerId, null, null, null,
-                false, false, false, false, null, 0, null, null, false);
+                kicked, false, false, false, null, 0, null, null, false);
     }
 
     public static ConditionContext forCard(Card card, UUID controllerId) {
@@ -254,7 +260,8 @@ public record ConditionContext(
                 copiedXValue, copiedTargetId, copiedTriggeringCard, staticEvaluation,
                 putCounterCostPaid, beholdCostPaid, copiedTriggeringPermanentId,
                 copiedTriggeringPower, sacrificedCard, repeatedAdditionalCosts, alternateCost,
-                spectacle, controlledMountAsCast, castDuringMainPhase, copiedEventValue);
+                spectacle, controlledMountAsCast, controlledFaerieAsCast, castDuringMainPhase,
+                copiedEventValue);
     }
 
     public ConditionContext withEventValue(int newEventValue) {

@@ -96,6 +96,7 @@ public enum CardSet {
     SET_GRN("GRN"),
     SET_WAR("WAR"),
     SET_ELD("ELD"),
+    SET_WOE("WOE"),
     SET_SOS("SOS"),
     SET_SUM("SUM"),
     SET_S00("S00"),

@@ -83,9 +83,12 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -112,6 +115,9 @@ public class CombatBlockService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -401,13 +407,9 @@ public class CombatBlockService {
             combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
         }
         if (blockLifeTaxTotal > 0) {
-            int lifeLoss = blockLifeTaxTotal
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, defenderId);
-            int currentLife = gameData.playerLifeTotals.get(defenderId);
-            gameData.playerLifeTotals.put(defenderId, currentLife - lifeLoss);
-            gameData.lifeLostThisTurn.merge(defenderId, lifeLoss, Integer::sum);
+            lifeSupport.applyLifePayment(gameData, defenderId, blockLifeTaxTotal, "block tax");
             gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " pays " + lifeLoss + " life to declare blockers."));
+                    player.getUsername() + " pays " + blockLifeTaxTotal + " life to declare blockers."));
         }
 
         combatTapCostService.payBlockCosts(gameData, defenderId, attackerBattlefield, declaredBlockers);

@@ -227,9 +227,20 @@ public class CastingCostService {
                 xValue);
     }
 
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue, boolean kicked) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
+                false, xValue, false, null, kicked);
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue, Zone sourceZone) {
         return getCastCostModifier(gameData, playerId, card,
                 buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue,
+                                   Zone sourceZone, boolean kicked) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, kicked);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
@@ -314,8 +325,15 @@ public class CastingCostService {
     private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                     CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
                                     boolean plottingFromHand, Zone sourceZone) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
+                plottingFromHand, sourceZone, false);
+    }
+
+    private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                    boolean plottingFromHand, Zone sourceZone, boolean kicked) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
-                flashbackCost, xValue, plottingFromHand, sourceZone);
+                flashbackCost, xValue, plottingFromHand, sourceZone, kicked);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
@@ -865,7 +883,8 @@ public class CastingCostService {
                                         .withSourceCardId(perm.getOriginalCard().getId())
                                         .withSourceControllerId(pid)
                                         .withSourcePermanentId(perm.getId()))) {
-                        reduction += reducingEffect.genericCostReduction();
+                        reduction += evaluateActivatedAbilityCostReduction(
+                                gameData, reducingEffect, perm, pid);
                     }
                 }
             }

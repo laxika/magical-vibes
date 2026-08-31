@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +10,11 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -74,6 +80,26 @@ class EtbTriggerServiceTest {
                 PermanentChoiceContext.ETBTokenTargetTrigger.class)).isTrue();
         assertThat(gameData.stack).isEmpty();
         verify(etbTokenTargetService).processNextETBTokenTargetTrigger(gameData);
+    }
+
+    @Test
+    void reflexiveMayPayEtbQueuesWithoutChoosingTargetUntilPayment() {
+        Card creature = new Card();
+        creature.setName("Reflexive Creature");
+        creature.setType(CardType.CREATURE);
+        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                MayPayManaEffect.reflexiveTarget("{2}",
+                        SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
+                        "Pay {2} to tap and stun a creature?"));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.hasPendingInteraction(
+                PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getTargetId()).isNull();
     }
 
     @Test

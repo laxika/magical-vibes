@@ -1,12 +1,21 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+
 /**
- * Static replacement effect: if the controller taps a permanent for mana, it produces twice as
- * much of that mana instead. Used by Mana Reflection. Applies to every permanent the controller
- * taps for mana (lands, creatures, artifacts, ...), doubling whatever mana that tap produces.
- * Multiple instances stack multiplicatively (two copies = quadruple), so the effective mana is
- * {@code produced * 2^(number of controlled reflections)}. Applied in the mana-ability resolution
- * via {@code GameQueryService.manaProductionMultiplier}.
+ * Static replacement effect that multiplies mana produced by a matching permanent. The no-arg
+ * form is used by Mana Reflection and matches every permanent at two times; a predicate and
+ * multiplier narrow and scale the affected mana source for cards such as Virtue of Strength.
+ * Multiple instances stack multiplicatively.
  */
-public record ManaReflectionEffect() implements CardEffect {
+public record ManaReflectionEffect(PermanentPredicate permanentFilter, int multiplier) implements CardEffect {
+
+    public ManaReflectionEffect() {
+        this(new PermanentTruePredicate(), 2);
+    }
+
+    public ManaReflectionEffect(PermanentPredicate permanentFilter) {
+        this(permanentFilter, 2);
+    }
 }

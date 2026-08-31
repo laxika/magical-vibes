@@ -778,6 +778,7 @@ public class PermanentRemovalService {
                 if (allTracked != null) {
                     allTracked.remove(cardId);
                 }
+                gameData.graveyardAdventureCastPermissions.remove(cardId);
                 graveyardService.notifyCardLeftGraveyard(gameData, playerId, leaving);
                 return;
             }
@@ -804,6 +805,7 @@ public class PermanentRemovalService {
                 if (allTracked != null) {
                     allTracked.remove(cardId);
                 }
+                gameData.graveyardAdventureCastPermissions.remove(cardId);
                 graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, leaving);
                 return;
             }

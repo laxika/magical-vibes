@@ -132,6 +132,8 @@ public class DiscardTriggerCollectorService {
         }
         if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
                 && !sourceDamagePrevented
+                && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
+                gameData, discardingPlayerId, match.permanent())
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);

@@ -498,6 +498,11 @@ public class DamagePreventionService {
             return 0;
         }
 
+        if (gameQueryService.isDamageFromMatchingSourcePreventedForControlledCreature(
+                gameData, permanent, damageSource)) {
+            return 0;
+        }
+
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
         if (gameQueryService.isDamageFromControlledSourceToControlledCreaturePrevented(
                 gameData, permanent, sourceControllerId)) {

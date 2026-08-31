@@ -335,7 +335,7 @@ public class MayMiscHandlerService {
         if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING) {
             // The choosing player (may-ability controller) pays 2 life; the revealed top card of the
             // drawing player's library goes into that player's graveyard instead of being drawn.
-            lifeSupport.applyLifeLoss(gameData, player.getId(), 2, ability.sourceCard().getName());
+            lifeSupport.applyLifePayment(gameData, player.getId(), 2, ability.sourceCard().getName());
 
             List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
             if (deck != null && !deck.isEmpty()) {
@@ -469,11 +469,7 @@ public class MayMiscHandlerService {
         boolean canPayLife = lifeCost <= 0 || gameData.getLife(controllerId) >= lifeCost;
         if (accepted && canPayLife && deck != null && !deck.isEmpty()) {
             if (lifeCost > 0) {
-                int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
-                int life = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, life - lifeLoss);
-                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeLoss);
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeLoss + " life."));
+                lifeSupport.applyLifePayment(gameData, controllerId, lifeCost, "Eye Spy");
             }
             Card topCard = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, libraryOwnerId, topCard, Zone.LIBRARY);

@@ -58,7 +58,8 @@ public record LibrarySearchParams(
         boolean allowCastFromLibraryWhileSearching,
         boolean grantExilePlayPermission,
         boolean allowAnyManaType,
-        boolean withoutPayingManaCost
+        boolean withoutPayingManaCost,
+        Integer mayCastManaValueAtMost
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
@@ -87,7 +88,8 @@ public record LibrarySearchParams(
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                 battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
-                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
+                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
+                mayCastManaValueAtMost);
     }
 
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
@@ -101,7 +103,8 @@ public record LibrarySearchParams(
                 returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode,
                 sourceSideboard, battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                 placeBattlefieldCardsSimultaneously, allow,
-                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
+                grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
+                mayCastManaValueAtMost);
     }
 
     public static class Builder {
@@ -150,6 +153,7 @@ public record LibrarySearchParams(
         private boolean grantExilePlayPermission = true;
         private boolean allowAnyManaType = true;
         private boolean withoutPayingManaCost;
+        private Integer mayCastManaValueAtMost;
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -368,6 +372,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder mayCastManaValueAtMost(Integer mayCastManaValueAtMost) {
+            this.mayCastManaValueAtMost = mayCastManaValueAtMost;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -379,7 +388,8 @@ public record LibrarySearchParams(
                     returnToHandAtEndStep, animateFound, battlefieldCounter, enterWithCounters, repeatUntilDecline, tokenTemplate, sourceSetCode, sourceSideboard,
                     battlefieldIfChosenBeholdType, battlefieldIfManaValueAtMost,
                     placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
-                    grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost);
+                    grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
+                    mayCastManaValueAtMost);
         }
     }
 }

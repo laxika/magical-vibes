@@ -134,6 +134,8 @@ public class LandTapTriggerCollectorService {
         }
         if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
                 && !sourceDamagePrevented
+                && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
+                gameData, tappingPlayerId, match.permanent())
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);

@@ -1180,7 +1180,7 @@ public class MultiPermanentChoiceHandlerService {
         int tapped = 0;
         for (UUID permId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permId);
-            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent)) {
+            if (permanent != null && tapUntapSupport.tapPermanent(gameData, permanent, playerId)) {
                 tapped++;
             }
         }
@@ -1994,7 +1994,7 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     perm.tap();
-                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
                     tappedCards.add(perm.getCard());
                 }
             }
@@ -2100,7 +2100,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && !permanent.isTapped()) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, playerId);
                 tappedCards.add(permanent.getCard());
             }
         }
@@ -2136,7 +2136,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !perm.isTapped()) {
                 perm.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
                 tappedCards.add(perm.getCard());
             }
         }
@@ -2208,7 +2208,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !perm.isTapped()) {
                 perm.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
                 tappedCards.add(perm.getCard());
             }
         }
@@ -2278,7 +2278,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && !permanent.isTapped()) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, playerId);
                 tappedPermanents.add(permanent);
             }
         }

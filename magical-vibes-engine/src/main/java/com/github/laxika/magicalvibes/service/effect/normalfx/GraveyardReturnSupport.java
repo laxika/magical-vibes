@@ -1029,7 +1029,7 @@ public class GraveyardReturnSupport {
                 .enterTapped(effect.enterTapped())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
-                .mandatory(effect.greatestPower())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -1095,6 +1095,7 @@ public class GraveyardReturnSupport {
                 .enterTapped(effect.enterTapped())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .cardPool(cardPool);
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());

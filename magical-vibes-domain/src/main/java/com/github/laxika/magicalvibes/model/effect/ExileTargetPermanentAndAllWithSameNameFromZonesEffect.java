@@ -9,20 +9,27 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>
  * By default the search is fully automatic. The optional subtype and any-number parameters can
  * instead make the search conditional on the exiled permanent's subtype and offer the controller
- * a choice of any number of matching cards. The exiled permanent itself goes to exile rather than
- * the graveyard, so it is not caught a second time by the search.
+ * a choice of any number of matching cards. The optional draw flag makes the searched player draw
+ * a card for each matching card exiled from their hand. The exiled permanent itself goes to exile
+ * rather than the graveyard, so it is not caught a second time by the search.
  * <p>
  * {@code targetPredicate} narrows the legal target (an enchantment for Scour, a nonblack creature
  * for Eradicate) and is used both as the declarative target spec and as the card's target filter.
  * <p>
- * Used by: Scour, Eradicate, Deicide
+ * Used by: Scour, Eradicate, Deicide, The End
  */
 public record ExileTargetPermanentAndAllWithSameNameFromZonesEffect(
-        PermanentPredicate targetPredicate, CardSubtype requiredTargetSubtype, boolean chooseAnyNumber)
+        PermanentPredicate targetPredicate, CardSubtype requiredTargetSubtype, boolean chooseAnyNumber,
+        boolean drawForHandExiled)
         implements RemovalEffect {
 
     public ExileTargetPermanentAndAllWithSameNameFromZonesEffect(PermanentPredicate targetPredicate) {
-        this(targetPredicate, null, false);
+        this(targetPredicate, null, false, false);
+    }
+
+    public ExileTargetPermanentAndAllWithSameNameFromZonesEffect(
+            PermanentPredicate targetPredicate, CardSubtype requiredTargetSubtype, boolean chooseAnyNumber) {
+        this(targetPredicate, requiredTargetSubtype, chooseAnyNumber, false);
     }
 
     @Override

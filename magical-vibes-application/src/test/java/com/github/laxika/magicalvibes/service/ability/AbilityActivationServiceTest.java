@@ -143,7 +143,7 @@ class AbilityActivationServiceTest {
         gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
         // No Mana Reflection in these tests — every mana production is 1x.
-        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
         lenient().when(castingCostService.getImposedSacrificeRequirementForAbility(
                         eq(gameData), any()))

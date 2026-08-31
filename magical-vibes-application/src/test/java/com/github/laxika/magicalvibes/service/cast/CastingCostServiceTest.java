@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -910,6 +911,30 @@ class CastingCostServiceTest {
 
             assertThat(svc.getActivatedAbilityCostReduction(gd, player1Id, creature, ability))
                     .isZero();
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
+                    .isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Dynamic symmetric activated-ability reductions use the reducing permanent")
+        void dynamicSymmetricReductionUsesReducingPermanent() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+                    new PermanentAllOfPredicate(List.of(
+                            new PermanentIsCreaturePredicate(),
+                            new PermanentControlledBySourceControllerPredicate())),
+                    new SourcePower()));
+            Permanent reducingPermanent = new Permanent(reducer);
+            gd.playerBattlefields.get(player1Id).add(reducingPermanent);
+
+            Permanent creature = new Permanent(new Card());
+            ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{3}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, reducingPermanent)).thenReturn(2);
+
             assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
                     .isEqualTo(2);
         }

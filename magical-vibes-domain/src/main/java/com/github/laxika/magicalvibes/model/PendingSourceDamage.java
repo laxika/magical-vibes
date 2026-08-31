@@ -23,9 +23,11 @@ public final class PendingSourceDamage {
     private final UUID sourcePermanentId;
     private int amount;
     private final Map<UUID, Integer> damageToPlayers = new LinkedHashMap<>();
+    private final Map<UUID, Integer> damageToPermanents = new LinkedHashMap<>();
     private final Set<UUID> damageToPermanentControllers = new LinkedHashSet<>();
     private final List<DamageRecipient> damageRecipients = new java.util.ArrayList<>();
     private final List<CardEffect> selfDealsDamageEffects;
+    private UUID singleCreatureSpellTargetId;
 
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount) {
         this(sourceCard, controllerId, sourcePermanentId, amount, null);
@@ -52,12 +54,22 @@ public final class PendingSourceDamage {
     public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
                                UUID damagedPlayerId, UUID damagedPermanentControllerId,
                                UUID damagedPermanentId, List<CardEffect> selfDealsDamageEffects) {
+        this(sourceCard, controllerId, sourcePermanentId, amount, damagedPlayerId,
+                damagedPermanentControllerId, damagedPermanentId, selfDealsDamageEffects, null);
+    }
+
+    public PendingSourceDamage(Card sourceCard, UUID controllerId, UUID sourcePermanentId, int amount,
+                               UUID damagedPlayerId, UUID damagedPermanentControllerId,
+                               UUID damagedPermanentId, List<CardEffect> selfDealsDamageEffects,
+                               UUID singleCreatureSpellTargetId) {
         this.sourceCard = sourceCard;
         this.controllerId = controllerId;
         this.sourcePermanentId = sourcePermanentId;
         this.amount = amount;
         this.selfDealsDamageEffects = selfDealsDamageEffects == null ? null : List.copyOf(selfDealsDamageEffects);
+        this.singleCreatureSpellTargetId = singleCreatureSpellTargetId;
         addToPlayer(damagedPlayerId, amount);
+        addToPermanent(damagedPermanentId, amount);
         addToPermanentController(damagedPermanentControllerId);
         addDamageRecipient(damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
     }
@@ -80,6 +92,14 @@ public final class PendingSourceDamage {
 
     public Map<UUID, Integer> getDamageToPlayers() {
         return Map.copyOf(damageToPlayers);
+    }
+
+    public Map<UUID, Integer> getDamageToPermanents() {
+        return Map.copyOf(damageToPermanents);
+    }
+
+    public UUID getSingleCreatureSpellTargetId() {
+        return singleCreatureSpellTargetId;
     }
 
     public Set<UUID> getDamageToPermanentControllers() {
@@ -112,6 +132,7 @@ public final class PendingSourceDamage {
                     UUID damagedPermanentId) {
         this.amount += extra;
         addToPlayer(damagedPlayerId, extra);
+        addToPermanent(damagedPermanentId, extra);
         addToPermanentController(damagedPermanentControllerId);
         addDamageRecipient(damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
     }
@@ -119,6 +140,18 @@ public final class PendingSourceDamage {
     private void addToPlayer(UUID damagedPlayerId, int amount) {
         if (damagedPlayerId != null && amount > 0) {
             damageToPlayers.merge(damagedPlayerId, amount, Integer::sum);
+        }
+    }
+
+    private void addToPermanent(UUID damagedPermanentId, int amount) {
+        if (damagedPermanentId != null && amount > 0) {
+            damageToPermanents.merge(damagedPermanentId, amount, Integer::sum);
+        }
+    }
+
+    public void rememberSingleCreatureSpellTarget(UUID targetId) {
+        if (singleCreatureSpellTargetId == null) {
+            singleCreatureSpellTargetId = targetId;
         }
     }
 
@@ -130,8 +163,9 @@ public final class PendingSourceDamage {
 
     public PendingSourceDamage copy() {
         PendingSourceDamage copy = new PendingSourceDamage(sourceCard, controllerId, sourcePermanentId, amount,
-                null, null, selfDealsDamageEffects);
+                null, null, null, selfDealsDamageEffects, singleCreatureSpellTargetId);
         damageToPlayers.forEach((playerId, playerDamage) -> copy.damageToPlayers.put(playerId, playerDamage));
+        damageToPermanents.forEach((permanentId, permanentDamage) -> copy.damageToPermanents.put(permanentId, permanentDamage));
         copy.damageToPermanentControllers.addAll(damageToPermanentControllers);
         copy.damageRecipients.addAll(damageRecipients);
         return copy;

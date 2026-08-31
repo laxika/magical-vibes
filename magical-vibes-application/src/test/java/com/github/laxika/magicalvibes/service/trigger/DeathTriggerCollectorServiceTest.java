@@ -44,6 +44,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
@@ -1068,6 +1070,25 @@ class DeathTriggerCollectorServiceTest {
             assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
             assertThat(pending.sourcePermanentSnapshot()).isNotNull();
             assertThat(pending.effects()).containsExactly(effect.wrapped());
+        }
+
+        @Test
+        @DisplayName("Controller conditional queues a non-targeted trigger without target choice")
+        void controllerConditionalQueuesNonTargetedTrigger() {
+            Card watcher = createCreature("Syr Ginger, the Meal Ender", 3, 1);
+            Permanent perm = new Permanent(watcher);
+            var effect = new TriggeringArtifactControllerConditionalEffect(SequenceEffect.of(
+                    new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1)));
+            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
+
+            assertThat(svc.handleArtifactGraveyardControllerConditional(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            assertThat(gd.pendingInteractions).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isNull();
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect.wrapped());
         }
 
         @Test

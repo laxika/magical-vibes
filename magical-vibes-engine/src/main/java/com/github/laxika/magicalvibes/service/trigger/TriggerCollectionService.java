@@ -122,6 +122,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -1964,10 +1965,21 @@ public class TriggerCollectionService {
                                                    UUID sourcePermanentId, int totalDamage,
                                                    Map<UUID, Integer> damageToPlayers,
                                                    List<CardEffect> snapshottedSelfEffects) {
+        queueSourceDealsDamageReflections(gameData, sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
+                damageToPlayers, snapshottedSelfEffects, null, Map.of());
+    }
+
+    public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                                   UUID sourcePermanentId, int totalDamage,
+                                                   Map<UUID, Integer> damageToPlayers,
+                                                   List<CardEffect> snapshottedSelfEffects,
+                                                   UUID singleCreatureSpellTargetId,
+                                                   Map<UUID, Integer> damageToPermanents) {
         if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
 
         var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
-                damageToPlayers == null ? Map.of() : Map.copyOf(damageToPlayers));
+                damageToPlayers == null ? Map.of() : Map.copyOf(damageToPlayers), singleCreatureSpellTargetId,
+                damageToPermanents == null ? Map.of() : Map.copyOf(damageToPermanents));
         gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)) {
@@ -4115,7 +4127,11 @@ public class TriggerCollectionService {
     public void collectTemporaryGlobalTriggers(GameData gameData, EffectSlot slot, UUID targetId,
                                                int eventValue) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (watcher.slot() != slot) continue;
+            if (watcher.slot() != slot
+                    || (slot == EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES
+                    && !watcher.controllerId().equals(targetId))) {
+                continue;
+            }
 
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -4151,6 +4167,15 @@ public class TriggerCollectionService {
     }
 
     public void checkEnchantedPermanentTapTriggers(GameData gameData, Permanent tappedPermanent) {
+        UUID tappingPlayerId = gameData.currentlyResolvingControllerId;
+        if (tappingPlayerId == null && gameData.pendingEffectResolutionEntry != null) {
+            tappingPlayerId = gameData.pendingEffectResolutionEntry.getControllerId();
+        }
+        checkEnchantedPermanentTapTriggers(gameData, tappedPermanent, tappingPlayerId);
+    }
+
+    public void checkEnchantedPermanentTapTriggers(GameData gameData, Permanent tappedPermanent,
+                                                   UUID tappingPlayerId) {
         UUID tappedPermanentControllerId = null;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
@@ -4310,6 +4335,83 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on opponent permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
+            }
+        });
+
+        // "Whenever you tap an untapped creature an opponent controls" triggers. The tapping
+        // player is tracked separately from the tapped permanent's controller because an effect
+        // may instruct another player to tap their own permanent.
+        if (tappingPlayerId == null || tappingPlayerId.equals(controllerId)) {
+            return;
+        }
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(tappingPlayerId)) return;
+            List<EffectRegistration> registrations = new ArrayList<>(
+                    perm.getCard().getEffectRegistrations(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT));
+            perm.getTemporaryTriggeredEffects(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT).stream()
+                    .map(EffectRegistration::new).forEach(registrations::add);
+            perm.getPersistentTriggeredEffects(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT).stream()
+                    .map(EffectRegistration::new).forEach(registrations::add);
+            grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                            gameData, perm, EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT).stream()
+                    .map(EffectRegistration::new).forEach(registrations::add);
+            for (EffectRegistration registration : registrations) {
+                CardEffect effect = registration.effect();
+                if (shouldSkipBatchedTapTrigger(gameData, perm, registration)) continue;
+                CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getOriginalCard().getId())
+                            .withSourceControllerId(ownerId);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(tappedPermanent, conditional.predicate(), filterContext)) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+                resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
+                if (resolved == null) continue;
+                if (resolved instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, ownerId))) {
+                    continue;
+                }
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    markBatchedTapTrigger(gameData, perm, registration);
+                    continue;
+                }
+                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && !(resolved instanceof MayPayManaEffect)) {
+                    gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), perm.getId(),
+                            tappedPermanent.getId()));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    if (oncePerTurn) {
+                        gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                    }
+                    markBatchedTapTrigger(gameData, perm, registration);
+                    continue;
+                }
+                UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        bakedTargetId,
+                        perm.getId()
+                );
+                entry.setTriggeringPermanentId(tappedPermanent.getId());
+                gameData.enqueueTrigger(entry);
+                if (oncePerTurn) {
+                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
+                }
+                markBatchedTapTrigger(gameData, perm, registration);
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }
         });
     }
@@ -6644,6 +6746,10 @@ public class TriggerCollectionService {
 
         collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_CREATURE_DIES,
                 dyingCreatureControllerId, Math.max(0, ctx.dyingCreatureToughness()));
+        if (!dyingCard.isToken()) {
+            collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+                    dyingCreatureControllerId, 0);
+        }
 
         collectEmblemCreatureDeathTriggers(gameData, dyingCard);
         collectCreatureDeathTriggerWatchers(gameData);
@@ -7455,6 +7561,7 @@ public class TriggerCollectionService {
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         for (Permanent perm : new ArrayList<>(battlefield)) {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
             // "Whenever this creature or another creature you control enters" is the same scan
             // minus the self-exclusion, so it is checked before the source is skipped.
             List<CardEffect> selfOrAllyEffects = perm.getCard().getEffects(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD);
@@ -7625,7 +7732,13 @@ public class TriggerCollectionService {
                 if (resolved == null) continue;
                 resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, resolved);
                 if (resolved == null) continue;
-                dispatchEnter(gameData, perm, playerId, EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+                CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
+                if (dispatchEffect == null) continue;
+                if (dispatchEnter(gameData, perm, playerId,
+                        EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+                        effect, dispatchEffect, ctx)) {
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, resolved);
+                }
             }
         });
     }
@@ -7929,9 +8042,12 @@ public class TriggerCollectionService {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
                 if (resolved == null) continue;
 
+                CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
+                if (dispatchEffect == null) continue;
+
                 // Intervening-if (CR 603.4): gate at trigger time; leave ConditionalEffect wrapped
                 // so EffectResolutionService re-checks at resolution.
-                if (resolved instanceof ConditionalEffect conditional
+                if (dispatchEffect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof ControlsPermanentCount) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, controllerId))) {
@@ -7941,8 +8057,11 @@ public class TriggerCollectionService {
                     }
                 }
 
-                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                        effect, resolved, ctx);
+                boolean triggered = dispatchEnter(gameData, perm, controllerId,
+                        EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, effect, dispatchEffect, ctx);
+                if (triggered) {
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, resolved);
+                }
             }
         }
 
@@ -8314,19 +8433,23 @@ public class TriggerCollectionService {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
                 if (resolved == null) continue;
 
+                CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
+                if (dispatchEffect == null) continue;
+
                 int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
                         gameData, controllerId, controllerId, enteringCard);
 
                 // A targeted effect can't go on the stack without its target, so queue the choice first.
-                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                if (dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                     for (int i = 0; i < triggerCount; i++) {
                         gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                                perm.getCard(), controllerId, new ArrayList<>(List.of(resolved)), perm.getId()));
+                                perm.getCard(), controllerId, new ArrayList<>(List.of(dispatchEffect)), perm.getId()));
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers for {} entering (ally enchantment entered, awaiting target)",
                                 gameData.id, perm.getCard().getName(), enteringCard.getName());
                     }
+                    OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, resolved);
                     continue;
                 }
 
@@ -8336,7 +8459,7 @@ public class TriggerCollectionService {
                             perm.getCard(),
                             controllerId,
                             perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(resolved)),
+                            new ArrayList<>(List.of(dispatchEffect)),
                             null,
                             perm.getId()
                     );
@@ -8347,6 +8470,35 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers for {} entering (ally enchantment entered)",
                             gameData.id, perm.getCard().getName(), enteringCard.getName());
+                }
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, resolved);
+            }
+        }
+
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(
+                        EffectSlot.GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
+                    if (resolved == null) continue;
+
+                    if (resolved instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, controllerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                controllerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(List.of(resolved))
+                        ));
+                    }
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} graveyard enchantment trigger queued", gameData.id, card.getName());
                 }
             }
         }

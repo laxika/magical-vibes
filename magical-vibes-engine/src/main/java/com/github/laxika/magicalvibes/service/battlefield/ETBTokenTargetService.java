@@ -245,6 +245,8 @@ public class ETBTokenTargetService {
                     || groupFilter instanceof PermanentPredicateTargetFilter
                     || groupFilter instanceof ControlledPermanentPredicateTargetFilter
                     || groupFilter instanceof OwnedPermanentPredicateTargetFilter;
+            boolean canTargetExiledCard = groupEffects.stream()
+                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
@@ -271,6 +273,20 @@ public class ETBTokenTargetService {
                 }
             }
 
+            List<UUID> validExiledCardTargets = new ArrayList<>();
+            if (canTargetExiledCard) {
+                TriggerTargetCollector.Result exiledTargets = triggerTargetCollector.collect(
+                        gameData, groupEffects, groupFilter, pending.controllerId(), card,
+                        TriggerTargetCollector.Options.ATTACK,
+                        pending.sourcePermanentId() == null
+                                ? null
+                                : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+                validExiledCardTargets.addAll(exiledTargets.validTargets().stream()
+                        .filter(id -> gameData.findExiledCard(id) != null)
+                        .filter(id -> !targetAlreadyChosen(pending, id))
+                        .toList());
+            }
+
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_CARD_TYPE
                     && !pending.chosenTargetsSoFar().isEmpty()) {
                 List<Permanent> selected = pending.chosenTargetsSoFar().stream()
@@ -294,7 +310,9 @@ public class ETBTokenTargetService {
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
             }
 
-            boolean noLegalTargets = validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty();
+            boolean noLegalTargets = validPlayerTargets.isEmpty()
+                    && validPermanentTargets.isEmpty()
+                    && validExiledCardTargets.isEmpty();
 
             if (noLegalTargets) {
                 if (chosenInGroup < effectiveMinTargets) {
@@ -328,6 +346,7 @@ public class ETBTokenTargetService {
             String prompt = minMet
                     ? card.getName() + "'s ability — Choose " + slotLabel + " (or yourself to stop)."
                     : card.getName() + "'s ability — Choose " + slotLabel + ".";
+            validPermanentTargets.addAll(validExiledCardTargets);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets, prompt);
 

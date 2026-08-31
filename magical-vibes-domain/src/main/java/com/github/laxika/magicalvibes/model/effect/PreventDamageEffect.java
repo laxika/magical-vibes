@@ -30,7 +30,8 @@ import java.util.Set;
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  * @param sourcePredicate damage sources matching this predicate for
  *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
- *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES}
+ *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -102,7 +103,8 @@ public record PreventDamageEffect(
                     "gainLife is exactly the NEXT_TO_TARGET or ALL_BY_CREATURES parameter: " + scope);
         }
         boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
-                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
+                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES;
         if ((sourcePredicate != null) != acceptsSourcePredicate) {
             throw new IllegalArgumentException(
                     "sourcePredicate is exactly a matching-source prevention parameter: " + scope);
@@ -284,6 +286,14 @@ public record PreventDamageEffect(
     /** "Prevent all damage that would be dealt to you and creatures you control this turn." */
     public static PreventDamageEffect allToControllerAndCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);
+    }
+
+    /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
+    public static PreventDamageEffect allToControllerAndCreaturesFromMatchingSources(
+            PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
     }
 
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control) — the player only. */
