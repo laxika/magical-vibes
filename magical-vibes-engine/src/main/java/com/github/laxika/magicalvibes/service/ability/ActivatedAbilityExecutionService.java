@@ -1136,14 +1136,15 @@ public class ActivatedAbilityExecutionService {
                     CardColor onlyColor = availableColors.iterator().next();
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             permanent, ManaColor.valueOf(onlyColor.name()));
-                    gameData.playerManaPools.get(playerId).add(manaColor);
+                    gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
                     if (caveSource) {
-                        gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, 1);
+                        gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
                     }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
+                            playerId, isCreatureSource, manaMultiplier);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()
@@ -1189,14 +1190,15 @@ public class ActivatedAbilityExecutionService {
                     CardColor onlyColor = availableColors.iterator().next();
                     ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, playerId,
                             permanent, ManaColor.valueOf(onlyColor.name()));
-                    gameData.playerManaPools.get(playerId).add(manaColor);
+                    gameData.playerManaPools.get(playerId).add(manaColor, manaMultiplier);
                     if (caveSource) {
-                        gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, 1);
+                        gameData.playerManaPools.get(playerId).addCaveManaTag(manaColor, manaMultiplier);
                     }
                     
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " adds {" + onlyColor.getCode() + "} from " , permanent.getCard(), "."));
                 } else if (availableColors.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(
+                            playerId, isCreatureSource, manaMultiplier);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()

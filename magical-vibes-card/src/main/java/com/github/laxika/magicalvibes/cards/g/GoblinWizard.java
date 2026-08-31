@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -37,16 +36,14 @@ public class GoblinWizard extends Card {
                 "{T}: You may put a Goblin permanent card from your hand onto the battlefield."
         ));
 
-        PermanentPredicate goblinCreature = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
+        PermanentPredicate goblin = new PermanentHasSubtypePredicate(CardSubtype.GOBLIN);
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.WHITE, goblinCreature)),
+                List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.WHITE, goblin)),
                 "{R}: Target Goblin gains protection from white until end of turn.",
-                new PermanentPredicateTargetFilter(goblinCreature, "Target must be a Goblin creature")
+                new PermanentPredicateTargetFilter(goblin, "Target must be a Goblin")
         ));
     }
 }

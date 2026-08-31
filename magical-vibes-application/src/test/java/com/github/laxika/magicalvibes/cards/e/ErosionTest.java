@@ -78,8 +78,8 @@ class ErosionTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.passBothPriorities(); // resolve trigger -> prompt
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, "Pay {1}");
 
         assertThat(landIsPresent(player2, land.getId())).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
@@ -98,6 +98,24 @@ class ErosionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger -> prompt
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Controller can choose life instead of mana when both payment alternatives are available")
+    void choosesLifeWhenBothPaymentAlternativesAreAvailable() {
+        Permanent land = addLand(player2);
+        attachErosion(land);
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, "Pay 1 life");
 
         assertThat(landIsPresent(player2, land.getId())).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);

@@ -808,6 +808,8 @@ public class GameData {
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players with an active effect that redirects damage dealt to any creature to them. */
     public final Set<UUID> playersRedirectingAllCreatureDamage = ConcurrentHashMap.newKeySet();
+    /** Suppresses re-offering an optional creature-damage redirect while a declined event resumes. */
+    public boolean resolvingDeclinedAllCreatureDamageRedirect;
     /**
      * Predicates whose matching permanents have all damage to them prevented this turn
      * (Ethersworn Shieldmage). Re-evaluated per damage event, so it covers permanents that
@@ -4038,6 +4040,7 @@ public class GameData {
         copy.eachPlayerRummage.currentPlayerId = this.eachPlayerRummage.currentPlayerId;
         copy.eachPlayerRummage.pendingDraw = this.eachPlayerRummage.pendingDraw;
         copy.eachPlayerRummage.remaining.addAll(this.eachPlayerRummage.remaining);
+        copy.eachPlayerRummage.chosenAmounts.putAll(this.eachPlayerRummage.chosenAmounts);
         copy.eachPlayerPutsCardFromHandOnTopOfLibrary.active =
                 this.eachPlayerPutsCardFromHandOnTopOfLibrary.active;
         copy.eachPlayerPutsCardFromHandOnTopOfLibrary.remaining.addAll(
@@ -4184,6 +4187,7 @@ public class GameData {
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.playersWithAllCreatureDamagePrevented.addAll(this.playersWithAllCreatureDamagePrevented);
         copy.playersRedirectingAllCreatureDamage.addAll(this.playersRedirectingAllCreatureDamage);
+        copy.resolvingDeclinedAllCreatureDamageRedirect = this.resolvingDeclinedAllCreatureDamageRedirect;
         copy.playersWithAllPlayerDamagePrevented.addAll(this.playersWithAllPlayerDamagePrevented);
         copy.playersWithAllPlayerDamagePreventedUntilNextTurn
                 .addAll(this.playersWithAllPlayerDamagePreventedUntilNextTurn);

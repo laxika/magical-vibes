@@ -8098,8 +8098,41 @@ public class GameQueryService {
      * read the granted ability instead of the printed one.
      */
     public boolean hasLostAllAbilities(GameData gameData, Permanent permanent) {
-        return permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                || computeStaticBonus(gameData, permanent).losesAllAbilities();
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return true;
+        }
+        CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
+        if (activeState != null) {
+            return activeState.isPrintedAbilitiesRemoved() || activeState.isLosesAllAbilities();
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = pass.board().states().get(permanent.getId());
+            return state != null && (state.isPrintedAbilitiesRemoved() || state.isLosesAllAbilities());
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
+    public boolean hasLostPrintedAbilities(GameData gameData, Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return true;
+        }
+        CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
+        if (activeState != null) {
+            return activeState.isPrintedAbilitiesRemoved()
+                    || activeState.isLosesAllAbilities()
+                    || activeState.isLosesAllNonManaAbilities();
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            CharacteristicState state = pass.board().states().get(permanent.getId());
+            return state != null && (state.isPrintedAbilitiesRemoved()
+                    || state.isLosesAllAbilities()
+                    || state.isLosesAllNonManaAbilities());
+        } finally {
+            layerSystemService.endPass(pass);
+        }
     }
 
     /** Whether a suspected permanent still has the menace and can't-block abilities. */

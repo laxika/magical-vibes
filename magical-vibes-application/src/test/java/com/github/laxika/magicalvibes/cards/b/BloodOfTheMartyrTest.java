@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -28,9 +29,29 @@ class BloodOfTheMartyrTest extends BaseCardTest {
 
         harness.activateAbility(player1, indexOf(player1, pyromancer), null, target.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("The controller can decline redirecting a creature's damage")
+    void canDeclineRedirectingDamage() {
+        harness.setLife(player1, 20);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+
+        castBloodOfTheMartyr();
+
+        harness.activateAbility(player1, indexOf(player1, pyromancer), null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
     @Test

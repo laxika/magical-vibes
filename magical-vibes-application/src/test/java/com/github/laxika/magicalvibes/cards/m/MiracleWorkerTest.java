@@ -18,7 +18,7 @@ class MiracleWorkerTest extends BaseCardTest {
     @Test
     void destroysAuraAttachedToCreature() {
         addReadyMiracleWorker(player1);
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new GaeasEmbrace());
         aura.setAttachedTo(creature.getId());
 
@@ -27,6 +27,18 @@ class MiracleWorkerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Gaea's Embrace");
         harness.assertInGraveyard(player2, "Gaea's Embrace");
+    }
+
+    @Test
+    void cannotTargetAuraAttachedToOpponentCreature() {
+        addReadyMiracleWorker(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new GaeasEmbrace());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, aura.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Aura attached to a creature you control");
     }
 
     @Test

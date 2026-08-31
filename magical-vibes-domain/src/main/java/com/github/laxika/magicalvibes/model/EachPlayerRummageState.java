@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -20,11 +22,14 @@ public class EachPlayerRummageState {
     public int pendingDraw;
     /** Players (APNAP order) not yet processed. */
     public final Deque<UUID> remaining = new ArrayDeque<>();
+    /** Amount selected by each processed player when the shared result is deferred. */
+    public final Map<UUID, Integer> chosenAmounts = new LinkedHashMap<>();
 
     public void reset() {
         active = false;
         currentPlayerId = null;
         pendingDraw = 0;
         remaining.clear();
+        chosenAmounts.clear();
     }
 }

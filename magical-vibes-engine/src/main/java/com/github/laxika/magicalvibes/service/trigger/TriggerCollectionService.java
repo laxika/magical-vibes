@@ -10158,13 +10158,15 @@ public class TriggerCollectionService {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
         if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
         boolean triggered = false;
-        for (CardEffect effect : perm.getCard().getEffects(slot)) {
-            if (slot == EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE
-                    && !passesPermanentCardPutIntoGraveyardInterveningIf(gameData, perm, controllerId, effect)) {
-                continue;
-            }
-            if (dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effect)) {
-                triggered = true;
+        if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            for (CardEffect effect : perm.getCard().getEffects(slot)) {
+                if (slot == EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE
+                        && !passesPermanentCardPutIntoGraveyardInterveningIf(gameData, perm, controllerId, effect)) {
+                    continue;
+                }
+                if (dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effect)) {
+                    triggered = true;
+                }
             }
         }
         // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight

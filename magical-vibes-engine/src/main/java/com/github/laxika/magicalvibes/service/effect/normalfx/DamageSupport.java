@@ -31,7 +31,9 @@ import com.github.laxika.magicalvibes.model.effect.NefariousLichDamageReplacemen
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectChosenColorSpellDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -296,9 +298,28 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
                     gameData, targetControllerId, target, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
-            rawDamage = damagePreventionService.applyAllCreatureDamageRedirectToController(
-                    gameData, target, sourcePermId, rawDamage);
-            processSourceRedirectDamage(gameData);
+            if (!gameData.resolvingDeclinedAllCreatureDamageRedirect
+                    && rawDamage > 0 && !gameData.playersRedirectingAllCreatureDamage.isEmpty()) {
+                UUID redirectControllerId = gameData.playersRedirectingAllCreatureDamage.stream()
+                        .filter(gameData.playerIds::contains)
+                        .findFirst()
+                        .orElse(null);
+                if (redirectControllerId != null) {
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            entry.getCard(), redirectControllerId,
+                            List.of(new RedirectAllCreatureDamageToControllerEffect()),
+                            "Have " + rawDamage + " damage dealt to you instead?",
+                            target.getId(), null, sourcePermId, null, 0, 0,
+                            null, null, null, entry.getSourcePermanentSnapshot(),
+                            entry.getControllerId(), null, rawDamage));
+                    return 0;
+                }
+            }
+            if (!gameData.resolvingDeclinedAllCreatureDamageRedirect) {
+                rawDamage = damagePreventionService.applyAllCreatureDamageRedirectToController(
+                        gameData, target, sourcePermId, rawDamage);
+                processSourceRedirectDamage(gameData);
+            }
             rawDamage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
                     gameData, target, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
