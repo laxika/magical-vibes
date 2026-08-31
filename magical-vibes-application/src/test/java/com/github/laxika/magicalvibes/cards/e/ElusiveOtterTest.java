@@ -36,7 +36,7 @@ class ElusiveOtterTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.findExiledCard(card.getId())).isSameAs(card);
+        assertThat(gd.findExiledCard(card.getId()).card()).isSameAs(card);
         assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
     }
 
@@ -61,7 +61,7 @@ class ElusiveOtterTest extends BaseCardTest {
         harness.castAdventure(player1, 0, 0, Map.of());
         harness.passBothPriorities();
 
-        assertThat(gd.findExiledCard(card.getId())).isSameAs(card);
+        assertThat(gd.findExiledCard(card.getId()).card()).isSameAs(card);
     }
 
     @Test

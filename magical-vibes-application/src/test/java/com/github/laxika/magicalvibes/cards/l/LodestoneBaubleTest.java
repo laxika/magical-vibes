@@ -79,6 +79,7 @@ class LodestoneBaubleTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player2.getId()).get(handBefore).getId()).isEqualTo(forest.getId());

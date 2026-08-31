@@ -1472,7 +1472,12 @@ public class CastingCostService {
         }
 
         var lifeCost = altCast.getCost(LifeCastingCost.class);
-        if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) return false;
+        if (lifeCost.isPresent()
+                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || gameData.getLife(playerId) < lifeCost.get().amount())) {
+            return false;
+        }
 
         var sacCost = altCast.getCost(SacrificePermanentsCost.class);
         if (sacCost.isPresent()) {

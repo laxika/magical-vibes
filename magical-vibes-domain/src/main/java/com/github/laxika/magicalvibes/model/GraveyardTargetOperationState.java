@@ -68,6 +68,8 @@ public class GraveyardTargetOperationState {
     public Card physicalCard;
     /** Whether the pending spell was cast as an Adventure. */
     public boolean castWithAdventure;
+    /** Whether the pending spell's optional kicker-style cost was paid. */
+    public boolean kicked;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */

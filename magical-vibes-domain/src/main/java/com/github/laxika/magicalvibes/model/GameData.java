@@ -1662,6 +1662,7 @@ public class GameData {
         creatureDamageToPlayersThisTurn
                 .computeIfAbsent(sourcePermanentId, k -> ConcurrentHashMap.newKeySet())
                 .add(playerId);
+        recordDamageRecipientBySource(sourcePermanentId, playerId);
     }
 
     /** Tracks how much damage each source dealt this turn, to every recipient (players, planeswalkers,
@@ -4686,6 +4687,7 @@ public class GameData {
         copy.graveyardTargetOperation.spellCounterTargetId = this.graveyardTargetOperation.spellCounterTargetId;
         copy.graveyardTargetOperation.permanentTargetIds = this.graveyardTargetOperation.permanentTargetIds == null
                 ? null : new ArrayList<>(this.graveyardTargetOperation.permanentTargetIds);
+        copy.graveyardTargetOperation.kicked = this.graveyardTargetOperation.kicked;
         copy.graveyardTargetOperation.resolutionTimeCollectEvidenceResume =
                 this.graveyardTargetOperation.resolutionTimeCollectEvidenceResume;
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;

@@ -438,7 +438,8 @@ public class GameActionAvailabilityService {
                 .toList();
         boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
                 && declaredTargetEffects.stream()
-                .allMatch(effect -> effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo());
         boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0

@@ -25,7 +25,7 @@ class GoblinRockSledTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(sled.isAttacking()).isTrue();
+        assertThat(sled.isAttackedDuringControllersCurrentTurn()).isTrue();
     }
 
     @Test
@@ -56,7 +56,7 @@ class GoblinRockSledTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(sled.isAttacking()).isTrue();
+        assertThat(sled.isAttackedDuringControllersCurrentTurn()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -67,14 +67,21 @@ class GoblinRockSledTest extends BaseCardTest {
         Permanent sled = addCreatureReady(player1, new GoblinRockSled());
 
         declareAttackers(player1, List.of(0));
-        advanceToUpkeep(player1);
+        advanceTurn();
+        advanceTurn();
 
         assertThat(sled.isTapped()).isTrue();
 
-        advanceToUpkeep(player2);
-        advanceToUpkeep(player1);
+        advanceTurn();
+        advanceTurn();
 
         assertThat(sled.isTapped()).isFalse();
+    }
+
+    private void advanceTurn() {
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
     }
 
 }

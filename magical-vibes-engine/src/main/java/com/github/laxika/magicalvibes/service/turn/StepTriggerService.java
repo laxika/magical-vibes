@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.RemoveCountersFromPermanentAtNextCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
@@ -517,12 +518,16 @@ public class StepTriggerService {
                             gameData.id, playerName, pending.count(), pending.sourceCard().getName());
                     continue;
                 }
-                for (int i = 0; i < pending.count(); i++) {
-                    drawService.resolveDrawCard(gameData, pending.controllerId());
-                }
-                gameLogService.append(gameData, GameLog.textCardText(
-                        playerName + " draws " + pending.count() + " cards from ", pending.sourceCard(), "."));
-                log.info("Game {} - {} draws {} cards from delayed upkeep trigger ({})",
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(), pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new DrawCardEffect(pending.count()))),
+                        (UUID) null, (UUID) null);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed upkeep draw trigger pushed onto stack for {} card(s) ({})",
                         gameData.id, playerName, pending.count(), pending.sourceCard().getName());
             }
         }
@@ -2212,7 +2217,8 @@ public class StepTriggerService {
                 ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
         List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
                 gameData, playerTargetFilter,
-                new ArrayList<>(gameData.orderedPlayerIds), trigger.choosingPlayerId());
+                new ArrayList<>(gameData.orderedPlayerIds), trigger.controllerId(),
+                trigger.sourcePermanentId());
 
         if (trigger.anyNumberTargets()) {
             if (trigger.excludedPlayerId() != null) {
@@ -5401,6 +5407,26 @@ public class StepTriggerService {
         }
 
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    public void handleCleanupTriggers(GameData gameData) {
+        List<RemoveCountersFromPermanentAtNextCleanup> pendingRemovals =
+                gameData.drainDelayedActions(RemoveCountersFromPermanentAtNextCleanup.class);
+        for (RemoveCountersFromPermanentAtNextCleanup action : pendingRemovals) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    action.sourceCard(),
+                    action.controllerId(),
+                    action.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(new RemoveCounterFromTargetPermanentEffect(
+                            action.counterType(), null, action.amount()))),
+                    action.permanentId(),
+                    (UUID) null);
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                    "'s delayed ability triggers to remove counters."));
+        }
     }
 
     /**

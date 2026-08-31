@@ -79,8 +79,8 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 resolveSinglePlayer(gameData, entry, e, targetPlayerId, creatureSingleSac);
             }
             case ACTIVE_PLAYER -> {
-                UUID activePlayerId = entry.getTargetId();
-                if (activePlayerId == null || !gameData.playerIds.contains(activePlayerId)) {
+                UUID activePlayerId = gameData.activePlayerId;
+                if (activePlayerId == null) {
                     return;
                 }
                 resolveSinglePlayer(gameData, entry, e, activePlayerId, creatureSingleSac);

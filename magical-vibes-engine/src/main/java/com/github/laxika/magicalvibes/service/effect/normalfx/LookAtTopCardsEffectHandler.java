@@ -551,7 +551,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 controllerId, topCards, cardIds,
                 false, true, false, false, true, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
-                        + " into your hand and exile the rest."));
+                        + " into your hand and exile the rest.",
+                false, Math.min(chooseCount, topCards.size()), false));
     }
 
     // ===== rest on the bottom of the library (Stress Dream / Shrine / Jar of Eyeballs;

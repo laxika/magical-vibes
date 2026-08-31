@@ -1360,6 +1360,7 @@ public class GraveyardChoiceHandlerService {
         boolean pendingGiftPromised = gameData.graveyardTargetOperation.giftPromised;
         Card pendingPhysicalCard = gameData.graveyardTargetOperation.physicalCard;
         boolean pendingAdventure = gameData.graveyardTargetOperation.castWithAdventure;
+        boolean pendingKicked = gameData.graveyardTargetOperation.kicked;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
@@ -1396,6 +1397,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.flashback = false;
         gameData.graveyardTargetOperation.physicalCard = null;
         gameData.graveyardTargetOperation.castWithAdventure = false;
+        gameData.graveyardTargetOperation.kicked = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
         gameData.graveyardTargetOperation.chapterName = null;
@@ -1444,6 +1446,9 @@ public class GraveyardChoiceHandlerService {
             }
             if (pendingAdventure) {
                 spellEntry.setCastWithAdventure(true);
+            }
+            if (pendingKicked) {
+                spellEntry.setKicked(true);
             }
             spellEntry.setSourceZone(pendingFlashback ? Zone.GRAVEYARD : Zone.HAND);
             gameData.stack.add(spellEntry);

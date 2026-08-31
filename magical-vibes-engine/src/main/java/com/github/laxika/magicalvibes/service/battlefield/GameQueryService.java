@@ -4208,8 +4208,14 @@ public class GameQueryService {
             List<ActivatedAbility> mergedAbilities = new ArrayList<>(state.getGrantedActivatedAbilities());
             mergedAbilities.addAll(accumulator.getGrantedActivatedAbilities());
             grantedActivatedAbilities = mergedAbilities;
-            List<CardEffect> mergedEffects = new ArrayList<>(state.getGrantedStaticEffects());
-            mergedEffects.addAll(accumulator.getGrantedEffects());
+            Set<CardEffect> seenGrantedEffects = Collections.newSetFromMap(new IdentityHashMap<>());
+            List<CardEffect> mergedEffects = new ArrayList<>();
+            state.getGrantedStaticEffects().stream()
+                    .filter(seenGrantedEffects::add)
+                    .forEach(mergedEffects::add);
+            accumulator.getGrantedEffects().stream()
+                    .filter(seenGrantedEffects::add)
+                    .forEach(mergedEffects::add);
             grantedEffects = mergedEffects;
             Set<Keyword> blockedKeywords = mergedEffects.stream()
                     .filter(CantHaveOrGainKeywordEffect.class::isInstance)
@@ -6460,16 +6466,19 @@ public class GameQueryService {
         if (attacker.isMustBeBlockedByAllThisTurn()) {
             return true;
         }
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof EnchantedPermanentConditionalEffect) {
-                continue;
-            }
-            if (matchesLureBlockerFilter(gameData, attacker, attacker, blocker, effect)) {
-                return true;
+        if (!hasLostPrintedAbilities(gameData, attacker)) {
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EnchantedPermanentConditionalEffect) {
+                    continue;
+                }
+                if (matchesLureBlockerFilter(gameData, attacker, attacker, blocker, effect)) {
+                    return true;
+                }
             }
         }
         return gameData.anyPermanentMatches(aura ->
                 aura.isAttached() && attacker.getId().equals(aura.getAttachedTo())
+                        && !hasLostPrintedAbilities(gameData, aura)
                         && aura.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> matchesLureBlockerFilter(gameData, attacker, aura, blocker, e)));
     }

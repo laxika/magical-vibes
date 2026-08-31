@@ -104,6 +104,7 @@ import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
@@ -1807,7 +1808,7 @@ public class SpellCastingService {
                         gameData, adventureCard, targetId, null, playerId, true, effectiveXValue);
             }
         }
-        if (!actionAvailabilityService.isCardPlayable(
+        if (!actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                 gameData, playerId, adventureCard, gameData.playerManaPools.get(playerId), 0)) {
             throw new IllegalStateException("Card is not playable");
         }
@@ -3059,7 +3060,8 @@ public class SpellCastingService {
         boolean needsImmediateGraveyardEffectTargeting = graveyardTargetingSource.stream()
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect)
                         && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToHandEffect)
-                        && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect))
+                        && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect)
+                        && !(e instanceof TargetedGraveyardCardsEffect))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
                 .flatMap(e -> e.targetSpec().graveyardScope().stream())
@@ -4293,6 +4295,7 @@ public class SpellCastingService {
                     gameData.graveyardTargetOperation.physicalCard = adventure ? physicalHandCard : null;
                     gameData.graveyardTargetOperation.castWithAdventure = adventure;
                     gameData.graveyardTargetOperation.giftPromised = giftPromised;
+                    gameData.graveyardTargetOperation.kicked = kicked && kickerEffect != null;
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToHandEffect,
                             graveyardMaxTargets, filteredSpellEffects, graveyardMinTargets);
@@ -4307,7 +4310,9 @@ public class SpellCastingService {
                 ));
             } else if (graveyardToTopEffect != null) {
                 long matchingCount = 0;
-                if (graveyardToTopEffect.fromOtherGraveyards()) {
+                if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+                    matchingCount = 0;
+                } else if (graveyardToTopEffect.fromOtherGraveyards()) {
                     for (UUID pid : gameData.orderedPlayerIds) {
                         if (pid.equals(playerId)) {
                             continue;
@@ -4763,10 +4768,11 @@ public class SpellCastingService {
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) && targetId != null) {
                 // Combined graveyard + permanent targeting (e.g. Yawgmoth's Vile Offering)
+                List<UUID> graveyardTargetIds = graveyardTargetIds(gameData, targetId, targetIds);
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,
-                        null, Map.of(), Zone.GRAVEYARD, targetIds, targetIds
+                        null, Map.of(), Zone.GRAVEYARD, graveyardTargetIds, targetIds
                 ));
             } else if (targetId != null && !targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Preserve a separately transported target alongside modal target groups (e.g.
@@ -4784,10 +4790,11 @@ public class SpellCastingService {
             } else if (!targetIds.isEmpty()
                     && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting)
                     && !additionalCosts.sacrificeAllCreatures()) {
+                List<UUID> graveyardTargetIds = graveyardTargetIds(gameData, null, targetIds);
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null,
-                        null, Map.of(), Zone.GRAVEYARD, targetIds, targetIds
+                        null, Map.of(), Zone.GRAVEYARD, graveyardTargetIds, targetIds
                 ));
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
@@ -7445,6 +7452,22 @@ public class SpellCastingService {
         gameData.stack.add(stackEntry);
 
         finishSpellCast(gameData, playerId, player, graveyard, card, false);
+    }
+
+    private List<UUID> graveyardTargetIds(GameData gameData, UUID primaryTargetId, List<UUID> declaredTargetIds) {
+        List<UUID> graveyardTargetIds = new ArrayList<>();
+        for (UUID targetId : declaredTargetIds) {
+            if (gameQueryService.findCardInGraveyardById(gameData, targetId) != null
+                    && !graveyardTargetIds.contains(targetId)) {
+                graveyardTargetIds.add(targetId);
+            }
+        }
+        if (primaryTargetId != null
+                && gameQueryService.findCardInGraveyardById(gameData, primaryTargetId) != null
+                && !graveyardTargetIds.contains(primaryTargetId)) {
+            graveyardTargetIds.add(primaryTargetId);
+        }
+        return graveyardTargetIds;
     }
 
     private void preserveGraveyardOwner(StackEntry stackEntry, UUID casterId, UUID graveyardOwnerId) {
@@ -10790,6 +10813,16 @@ public class SpellCastingService {
         int emergeReduction = computeEmergeManaReduction(gameData, altCast, sacrificePermanentIds);
         ManaCost sacrificedManaCost = computeSacrificedManaCost(gameData, altCast, sacrificePermanentIds);
 
+        LifeCastingCost alternateLifeCost = altCast.getCost(LifeCastingCost.class).orElse(null);
+        if (alternateLifeCost != null
+                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId))) {
+            throw new IllegalStateException("Cannot pay life as a casting cost");
+        }
+        if (alternateLifeCost != null && gameData.getLife(playerId) < alternateLifeCost.amount()) {
+            throw new IllegalStateException("Not enough life to pay alternate casting cost");
+        }
+
         // Sacrifice all required permanents
         if (altCast.getCost(SacrificePermanentsCost.class).isPresent()) {
             for (UUID sacId : sacrificePermanentIds) {
@@ -10808,9 +10841,8 @@ public class SpellCastingService {
         }
 
         // Pay life
-        altCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
-            int currentLife = gameData.getLife(playerId);
-            lifeSupport.applyLifePayment(gameData, playerId, lifeCost.amount(), card.getName());
+        altCast.getCost(LifeCastingCost.class).ifPresent(cost -> {
+            lifeSupport.applyLifePayment(gameData, playerId, cost.amount(), card.getName());
         });
 
         // Have each other player gain life for the alternate cost.

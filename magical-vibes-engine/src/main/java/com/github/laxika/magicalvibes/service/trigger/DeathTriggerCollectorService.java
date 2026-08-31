@@ -966,8 +966,8 @@ public class DeathTriggerCollectorService {
     boolean handleReturnEnchantedCreatureToBattlefield(TriggerMatchContext match,
             ReturnEnchantedCreatureToBattlefieldOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        CardEffect effectForStack = epd.dyingCreatureCardId() != null
-                ? new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(epd.dyingCreatureCardId(),
+        CardEffect effectForStack = !epd.dyingPermanentCardIds().isEmpty()
+                ? new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(epd.dyingPermanentCardIds(),
                         effect.underAuraControllersControl(), effect.enterTapped(), effect.enterWithCounter())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);

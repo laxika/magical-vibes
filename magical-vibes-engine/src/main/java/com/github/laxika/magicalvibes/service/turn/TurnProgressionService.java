@@ -328,7 +328,7 @@ public class TurnProgressionService {
                     return;
                 }
                 // CR 514.2: Remove damage and end "until end of turn" effects
-                turnCleanupService.applyCleanupResets(gameData);
+                applyCleanupResets(gameData);
             }
         } else {
             advanceTurn(gameData);
@@ -967,6 +967,7 @@ public class TurnProgressionService {
     }
 
     public void applyCleanupResets(GameData gameData) {
+        stepTriggerService.handleCleanupTriggers(gameData);
         turnCleanupService.applyCleanupResets(gameData);
     }
 

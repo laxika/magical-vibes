@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class MayEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,6 +76,17 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvingMayEffectFromStack = false;
             return;
         }
+        if (e.wrapped() instanceof SacrificeEnchantedCreatureEffect
+                && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId)) {
+            gameData.resolvingMayEffectFromStack = false;
+            if (e.elseEffect() != null) {
+                EffectHandler elseHandler = effectHandlerRegistry.getHandler(e.elseEffect());
+                if (elseHandler != null) {
+                    elseHandler.resolve(gameData, entry, e.elseEffect());
+                }
+            }
+            return;
+        }
 
         boolean defendingPlayerChoice = e.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER;
 
@@ -97,6 +112,18 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 null
         ));
+    }
+
+    private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, UUID choicePlayerId) {
+        UUID enchantedId = entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot().getAttachedTo()
+                : null;
+        if (enchantedId == null && entry.getSourcePermanentId() != null) {
+            var aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            enchantedId = aura == null ? null : aura.getAttachedTo();
+        }
+        return enchantedId != null
+                && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId));
     }
 
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {

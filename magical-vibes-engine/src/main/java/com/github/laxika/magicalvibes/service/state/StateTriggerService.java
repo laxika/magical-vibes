@@ -65,6 +65,28 @@ public class StateTriggerService {
                             .withSourceCardId(perm.getCard().getId())
                             .withSourceControllerId(controllerId));
         }
+        if (trigger.battlefieldPredicate() != null) {
+            int matches = 0;
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(perm.getCard().getId())
+                    .withSourceControllerId(controllerId)
+                    .withSourcePermanentId(perm.getId());
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                if (battlefield == null) {
+                    continue;
+                }
+                for (Permanent permanent : battlefield) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, trigger.battlefieldPredicate(), context)) {
+                        matches++;
+                        if (matches > trigger.maximumBattlefieldMatches()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
         return trigger.predicate().test(gameData, perm, controllerId);
     }
 

@@ -73,6 +73,8 @@ class BountyOfTheHuntTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(bears.getEffectivePower()).isEqualTo(2);
@@ -93,6 +95,7 @@ class BountyOfTheHuntTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -164,6 +167,7 @@ class BountyOfTheHuntTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

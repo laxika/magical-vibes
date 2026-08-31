@@ -47,6 +47,7 @@ public sealed interface DelayedAction permits
         DelayedPlusZeroPlusOneCounters,
         PutCounterOnPermanentAtNextEndStep,
         RemoveCounterFromPermanentAtNextEndStep,
+        RemoveCountersFromPermanentAtNextCleanup,
         DelayedUntapPermanents,
         DelayedCreateToken,
         DelayedCreateTokenAtNextUpkeep,

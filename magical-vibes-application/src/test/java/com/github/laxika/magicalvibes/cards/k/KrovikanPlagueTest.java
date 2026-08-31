@@ -87,6 +87,7 @@ class KrovikanPlagueTest extends BaseCardTest {
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }

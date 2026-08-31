@@ -480,9 +480,12 @@ public class BlockLegalityService {
         boolean cantBeBlockedByPowerLessThanIslandCount = false;
         List<AttackerRestriction> restrictions = new ArrayList<>();
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                restrictions.add(new AttackerRestriction(attacker, restriction));
+        if (!bonus.losesAllAbilities() && !bonus.losesAllNonManaAbilities()
+                && !attacker.isLosesAllAbilitiesUntilEndOfTurn()) {
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                    restrictions.add(new AttackerRestriction(attacker, restriction));
+                }
             }
         }
         for (CardEffect effect : bonus.grantedEffects()) {

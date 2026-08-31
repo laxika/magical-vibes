@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.OpponentPreviouslyDamagedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceCombatThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
@@ -3076,6 +3077,9 @@ public class TargetLegalityService {
         if (entry.getTargetFilter() != null) {
             return entry.getTargetFilter();
         }
+        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+            return null;
+        }
         Card targetingCard = entry.getTargetingCard();
         if (targetingCard == null) {
             return null;
@@ -4251,6 +4255,11 @@ public class TargetLegalityService {
                             .anyMatch(card -> card.hasType(CardType.SORCERY));
             case PlayerLostLifeThisTurnPredicate ignored ->
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
+            case OpponentPreviouslyDamagedBySourcePredicate ignored ->
+                    controllerId != null && !controllerId.equals(targetPlayerId)
+                            && sourcePermanentId != null
+                            && gameData.damageRecipientsBySource
+                            .getOrDefault(sourcePermanentId, Set.of()).contains(targetPlayerId);
             case PlayerDamagedBySourceThisTurnPredicate ignored ->
                     wasDamagedBySourceThisTurn(gameData, sourcePermanentId, targetPlayerId);
             case PlayerDamagedBySourceCombatThisTurnPredicate ignored ->

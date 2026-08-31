@@ -1518,7 +1518,8 @@ public class PermanentRemovalService {
                         gameData, target, controllerId, gameData.currentlyResolvingControllerId);
             }
             triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
-                    target.getCard().getId(), dyingPowerAtDeath, dyingToughnessAtDeath, wasCreature);
+                    target.getCard().getId(), dyingPowerAtDeath, dyingToughnessAtDeath, wasCreature,
+                    target.cardsLeavingBattlefield().stream().map(Card::getId).toList());
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)
             if ((target.getCard().isAura() || target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
                     && !creatureDeathTriggersSuppressed) {
