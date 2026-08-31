@@ -644,10 +644,10 @@ public class PredicateEvaluationService {
                     yield gameQueryService.effectiveBasicLandTypes(gameData, permanent)
                             .contains(hasSubtypePredicate.subtype());
                 }
-                if (gameData != null && !GameQueryService.isStaticEvaluationActive()) {
+                boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
+                if (gameData != null && !GameQueryService.isStaticEvaluationActive() && !creatureSubtype) {
                     yield gameQueryService.hasEffectiveSubtype(gameData, permanent, hasSubtypePredicate.subtype());
                 }
-                boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
                 // "Loses all creature types" strips every creature subtype (base/transient/granted) and,
                 // via hasKeyword, the Changeling grant too.
                 if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {

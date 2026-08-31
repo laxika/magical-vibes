@@ -4566,7 +4566,7 @@ public class SpellCastingService {
                         .orElseThrow(() -> new IllegalStateException("Must choose at most one card for each color"));
                 StackEntry entry = new StackEntry(
                         entryType, card, playerId, card.getName(), filteredSpellEffects, resolvedXValue,
-                        null, null, Map.of(), Zone.GRAVEYARD, assignment.orderedTargetIds(), List.of());
+                        null, null, Map.of(), Zone.GRAVEYARD, List.of(), assignment.orderedTargetIds());
                 entry.setTargetGroupSizes(assignment.groupSizes());
                 gameData.stack.add(entry);
             } else if (!targetIds.isEmpty() && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) && targetId != null) {
@@ -4574,7 +4574,7 @@ public class SpellCastingService {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, targetId,
-                        null, Map.of(), Zone.GRAVEYARD, targetIds, List.of()
+                        null, Map.of(), Zone.GRAVEYARD, List.of(), targetIds
                 ));
             } else if (targetId != null && !targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Preserve a separately transported target alongside modal target groups (e.g.
@@ -4595,7 +4595,7 @@ public class SpellCastingService {
                 gameData.stack.add(new StackEntry(
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null,
-                        null, Map.of(), Zone.GRAVEYARD, targetIds, List.of()
+                        null, Map.of(), Zone.GRAVEYARD, List.of(), targetIds
                 ));
             } else if (!targetIds.isEmpty() && !additionalCosts.sacrificeAllCreatures()) {
                 // Multi-target spell (e.g. "one or two target creatures each get +2/+1")
