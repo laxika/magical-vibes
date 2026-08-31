@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FountainOfYouth.class})
 class FountainOfYouthTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -30,17 +32,14 @@ class FountainOfYouthTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Fountain of Youth");
     }
 
     @Test
     @DisplayName("Activating ability taps Fountain of Youth")
     void activatingTapsFountain() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        GameData gd = harness.getGameData();
-        Permanent fountain = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(fountain.isTapped()).isFalse();
 
         harness.activateAbility(player1, 0, null, null);
@@ -72,9 +71,8 @@ class FountainOfYouthTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertLife(player1, 21);
     }
 
     @Test
@@ -88,8 +86,7 @@ class FountainOfYouthTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BogRats;
+import com.github.laxika.magicalvibes.cards.s.Scarecrow;
+import com.github.laxika.magicalvibes.cards.s.ScarwoodGoblins;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,34 +11,32 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HolyLight.class, FugitiveWizard.class, GrizzlyBears.class, SavannahLions.class})
+@CardUsed({HolyLight.class, BogRats.class, Scarecrow.class, ScarwoodGoblins.class, Squire.class})
 class HolyLightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives nonwhite creatures -1/-1 and leaves white creatures unchanged")
     void debuffsNonwhiteCreatures() {
-        Permanent ownNonwhite = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentNonwhite = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent white = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
+        Permanent ownColorless = harness.addToBattlefieldAndReturn(player1, new Scarecrow());
+        Permanent opponentMulticoloredNonwhite = harness.addToBattlefieldAndReturn(player2, new ScarwoodGoblins());
+        Permanent white = harness.addToBattlefieldAndReturn(player2, new Squire());
 
         castHolyLight();
 
-        assertThat(ownNonwhite.getEffectivePower()).isEqualTo(1);
-        assertThat(ownNonwhite.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentNonwhite.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentNonwhite.getEffectiveToughness()).isEqualTo(1);
-        assertThat(white.getEffectivePower()).isEqualTo(2);
-        assertThat(white.getEffectiveToughness()).isEqualTo(1);
+        assertThat(ownColorless.getEffectivePower()).isEqualTo(1);
+        assertThat(ownColorless.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opponentMulticoloredNonwhite.getEffectivePower()).isEqualTo(1);
+        assertThat(opponentMulticoloredNonwhite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(white.getEffectivePower()).isEqualTo(1);
+        assertThat(white.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Destroys nonwhite creatures reduced to 0 toughness")
     void killsSmallNonwhiteCreatures() {
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new BogRats());
 
         castHolyLight();
 
@@ -48,7 +46,7 @@ class HolyLightTest extends BaseCardTest {
     @Test
     @DisplayName("Effect wears off at end of turn")
     void wearsOffAtEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Scarecrow());
 
         castHolyLight();
         assertThat(creature.getEffectivePower()).isEqualTo(1);
@@ -62,10 +60,19 @@ class HolyLightTest extends BaseCardTest {
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Does not affect nonwhite creatures entering after it resolves")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        castHolyLight();
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Scarecrow());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void castHolyLight() {
-        harness.setHand(player1, List.of(new HolyLight()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new HolyLight(), "{2}{W}");
         harness.passBothPriorities();
     }
 }

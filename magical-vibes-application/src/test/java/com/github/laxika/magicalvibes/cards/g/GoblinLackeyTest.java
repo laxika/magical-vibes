@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinLackey.class, HermeticStudy.class})
 class GoblinLackeyTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,7 @@ class GoblinLackeyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the trigger puts a chosen Goblin permanent onto the battlefield")
+    @CardUsed({GoblinHero.class, GrizzlyBears.class, Shock.class})
     void acceptingTriggerPutsGoblinPermanentOntoBattlefield() {
         harness.setHand(player1, List.of(new GoblinHero(), new GrizzlyBears(), new Shock()));
         dealNoncombatDamage();
@@ -43,6 +46,7 @@ class GoblinLackeyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Declining the trigger leaves the hand unchanged")
+    @CardUsed(GoblinHero.class)
     void decliningTriggerLeavesHandUnchanged() {
         harness.setHand(player1, List.of(new GoblinHero()));
         dealNoncombatDamage();
@@ -55,9 +59,8 @@ class GoblinLackeyTest extends BaseCardTest {
 
     private void dealNoncombatDamage() {
         Permanent lackey = addCreatureReady(player1, new GoblinLackey());
-        Permanent study = new Permanent(new HermeticStudy());
+        Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         study.setAttachedTo(lackey.getId());
-        gd.playerBattlefields.get(player1.getId()).add(study);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lackey), null,
                 player2.getId());
         harness.passBothPriorities();
