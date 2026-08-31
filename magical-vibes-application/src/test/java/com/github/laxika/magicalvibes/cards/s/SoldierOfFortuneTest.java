@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SoldierOfFortune.class)
 class SoldierOfFortuneTest extends BaseCardTest {
 
     @Test
@@ -78,5 +80,29 @@ class SoldierOfFortuneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithoutTarget() {
+        Permanent soldier = addCreatureReady(player1, new SoldierOfFortune());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(soldier.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetPermanent() {
+        Permanent soldier = addCreatureReady(player1, new SoldierOfFortune());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, soldier.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(soldier.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
