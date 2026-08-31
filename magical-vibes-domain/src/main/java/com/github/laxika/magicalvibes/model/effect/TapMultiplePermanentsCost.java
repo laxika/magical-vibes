@@ -18,16 +18,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param filter        which permanents qualify
  * @param excludeSource whether the ability's own source permanent is excluded from the choices
  *                      (set this when the ability also has {@code requiresTap = true})
+ * @param tracksChosenPermanents whether the chosen permanents are retained on the ability's stack
+ *                                entry for a later effect in that ability
  */
-public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter, boolean excludeSource)
+public record TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter, boolean excludeSource,
+                                        boolean tracksChosenPermanents)
         implements CostEffect {
 
     public TapMultiplePermanentsCost(int count, PermanentPredicate filter) {
-        this(new Fixed(count), filter, false);
+        this(new Fixed(count), filter, false, false);
     }
 
     public TapMultiplePermanentsCost(int count, PermanentPredicate filter, boolean excludeSource) {
-        this(new Fixed(count), filter, excludeSource);
+        this(new Fixed(count), filter, excludeSource, false);
+    }
+
+    public TapMultiplePermanentsCost(int count, PermanentPredicate filter, boolean excludeSource,
+                                     boolean tracksChosenPermanents) {
+        this(new Fixed(count), filter, excludeSource, tracksChosenPermanents);
+    }
+
+    public TapMultiplePermanentsCost(DynamicAmount count, PermanentPredicate filter, boolean excludeSource) {
+        this(count, filter, excludeSource, false);
     }
 
     @Override

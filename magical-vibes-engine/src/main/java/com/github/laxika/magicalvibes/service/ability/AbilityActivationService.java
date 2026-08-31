@@ -1785,6 +1785,9 @@ public class AbilityActivationService {
         // resolves first.
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            if (ability.isCyclingAbility()) {
+                triggerCollectionService.checkCycleTriggers(gameData, playerId, card);
+            }
         }
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
@@ -2006,7 +2009,7 @@ public class AbilityActivationService {
             gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
         }
         gameData.discardCausedByOpponent = false;
-        collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
+        collectDiscardTriggersAsAbilityCost(gameData, playerId, card, true);
 
         // Push the ability onto the stack with its graveyard targets (cost effects are not resolved)
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -2866,6 +2869,7 @@ public class AbilityActivationService {
                 .map(e -> toPermanentChoiceCostHandler(gameData, e, sourceId, xValueForCost))
                 .filter(Objects::nonNull)
                 .toList());
+        List<UUID> chosenCostPermanentIds = new ArrayList<>();
         CastingCostService.ImposedSacrificeRequirement imposedTax =
                 castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
         if (!imposedTax.isEmpty()) {
@@ -3620,7 +3624,7 @@ public class AbilityActivationService {
                 }
             }
             if (handlePermanentChoiceCost(gameData, player, permanent, ability, abilityEffects, effectiveIndex,
-                    effectiveXValue, targetId, targetZone, targetIds, handler)) {
+                    effectiveXValue, targetId, targetZone, targetIds, handler, chosenCostPermanentIds)) {
                 return;
             }
         }
@@ -3631,7 +3635,7 @@ public class AbilityActivationService {
         Zone resolutionTargetZone = targetZone;
         completeActivationAndRecord(gameData, player, permanent, ability, activationEffects,
                 effectiveXValue, resolutionTargetId, resolutionTargetZone, nonTargeting, effectiveIndex,
-                targetIds, damageAssignments);
+                targetIds, damageAssignments, chosenCostPermanentIds);
     }
 
     private void validatePreventDividedDamageAssignments(GameData gameData, UUID playerId,
@@ -3803,7 +3807,8 @@ public class AbilityActivationService {
                                                ActivatedAbility ability, List<CardEffect> abilityEffects,
                                                int abilityIndex, int xValue, UUID targetId, Zone targetZone,
                                                List<UUID> targetIds,
-                                               PermanentChoiceCostHandler handler) {
+                                               PermanentChoiceCostHandler handler,
+                                               List<UUID> chosenCostPermanentIds) {
         int required = handler.requiredCount();
         if (required <= 0) return false;
         UUID playerId = player.getId();
@@ -3820,6 +3825,9 @@ public class AbilityActivationService {
                     }
                     recordSacrificedLandCard(handler.costEffect(), source, abilityIndex, chosen);
                     handler.validateAndPay(gameData, player, chosen);
+                    if (handler.costEffect() instanceof CostEffect cost && cost.tracksChosenPermanents()) {
+                        chosenCostPermanentIds.add(id);
+                    }
                     recordUntappedCostPermanent(handler.costEffect(), source, chosen.getId());
                     recordTappedCostPermanent(handler.costEffect(), source, chosen.getId());
                 }
@@ -3876,6 +3884,11 @@ public class AbilityActivationService {
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
+        boolean tracksChosenPermanents = context.costEffect() instanceof CostEffect cost
+                && cost.tracksChosenPermanents();
+        List<UUID> chosenCostPermanentIds = tracksChosenPermanents
+                ? new ArrayList<>(context.chosenSoFar() == null ? List.of() : context.chosenSoFar())
+                : new ArrayList<>();
 
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
         if (chosen == null) {
@@ -3939,6 +3952,9 @@ public class AbilityActivationService {
         recordSacrificedLandCard(context.costEffect(), sourcePermanent, effectiveIndex, chosen);
 
         handler.validateAndPay(gameData, player, chosen);
+        if (tracksChosenPermanents) {
+            chosenCostPermanentIds.add(chosenPermanentId);
+        }
         recordTappedCostPermanent(context.costEffect(), sourcePermanent, chosenPermanentId);
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
@@ -3957,6 +3973,9 @@ public class AbilityActivationService {
                     Permanent autoPay = gameQueryService.findPermanentById(gameData, id);
                     if (autoPay != null) {
                         handler.validateAndPay(gameData, player, autoPay);
+                        if (tracksChosenPermanents) {
+                            chosenCostPermanentIds.add(autoPay.getId());
+                        }
                         recordUntappedCostPermanent(context.costEffect(), sourcePermanent, autoPay.getId());
                         recordTappedCostPermanent(context.costEffect(), sourcePermanent, autoPay.getId());
                     }
@@ -3978,7 +3997,7 @@ public class AbilityActivationService {
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget();
         completeActivationAndRecord(gameData, player, sourcePermanent, ability, abilityEffects,
                 finalXValue, context.targetId(), context.targetZone(), nonTargeting, effectiveIndex,
-                context.targetIds());
+                context.targetIds(), null, chosenCostPermanentIds);
     }
 
     /**
@@ -4663,9 +4682,26 @@ public class AbilityActivationService {
                                               int xValue, UUID targetId, Zone targetZone,
                                               boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
                                               Map<UUID, Integer> damageAssignments) {
+        completeActivationAndRecord(gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
+                nonTargeting, abilityIndex, targetIds, damageAssignments, List.of());
+    }
+
+    private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
+                                              ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                              int xValue, UUID targetId, Zone targetZone,
+                                              boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
+                                              Map<UUID, Integer> damageAssignments,
+                                              List<UUID> chosenCostPermanentIds) {
         recordAbilityActivationUse(gameData, permanent, abilityIndex);
-        activatedAbilityExecutionService.completeActivationAfterCosts(
-                gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone, nonTargeting, targetIds, damageAssignments);
+        if (chosenCostPermanentIds == null || chosenCostPermanentIds.isEmpty()) {
+            activatedAbilityExecutionService.completeActivationAfterCosts(
+                    gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
+                    nonTargeting, targetIds, damageAssignments);
+        } else {
+            activatedAbilityExecutionService.completeActivationAfterCosts(
+                    gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
+                    nonTargeting, targetIds, damageAssignments, chosenCostPermanentIds);
+        }
     }
 
     private void sacrificePermanentAsCost(GameData gameData, Player player, Permanent sacTarget) {
@@ -5465,8 +5501,16 @@ public class AbilityActivationService {
     }
 
     private void collectDiscardTriggersAsAbilityCost(GameData gameData, UUID playerId, Card discardedCard) {
+        collectDiscardTriggersAsAbilityCost(gameData, playerId, discardedCard, false);
+    }
+
+    private void collectDiscardTriggersAsAbilityCost(GameData gameData, UUID playerId, Card discardedCard,
+                                                     boolean cycled) {
         int stackBefore = gameData.stack.size();
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
+        if (cycled) {
+            triggerCollectionService.checkCycleTriggers(gameData, playerId, discardedCard);
+        }
         if (gameData.stack.size() > stackBefore) {
             gameData.pendingActivatedAbilityCostTriggers.addAll(
                     new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size())));

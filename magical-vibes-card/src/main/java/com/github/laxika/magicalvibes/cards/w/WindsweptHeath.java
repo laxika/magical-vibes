@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "248")
+@CardRegistration(set = "ONS", collectorNumber = "328")
 public class WindsweptHeath extends Card {
 
     public WindsweptHeath() {

@@ -263,6 +263,10 @@ public class GameQueryService {
             CardSubtype.KOTH,
             CardSubtype.BOLAS
     );
+    public static final List<String> TEXT_CHANGE_CREATURE_TYPES = Arrays.stream(CardSubtype.values())
+            .filter(subtype -> !NON_CREATURE_SUBTYPES.contains(subtype))
+            .map(CardSubtype::name)
+            .toList();
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
 
@@ -1357,6 +1361,18 @@ public class GameQueryService {
         if (!isDamagePreventable(gameData) || source == null || damageCantBePreventedFromSource(gameData, source)) {
             return false;
         }
+        List<PermanentPredicate> nextPredicates = gameData.playerNextDamageFromMatchingSourcesPrevented.get(playerId);
+        if (nextPredicates != null) {
+            for (PermanentPredicate predicate : nextPredicates) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate)) {
+                    nextPredicates.remove(predicate);
+                    if (nextPredicates.isEmpty()) {
+                        gameData.playerNextDamageFromMatchingSourcesPrevented.remove(playerId, nextPredicates);
+                    }
+                    return true;
+                }
+            }
+        }
         Set<PermanentPredicate> predicates = gameData.playersWithDamageFromMatchingSourcesPrevented.get(playerId);
         return predicates != null && predicates.stream()
                 .anyMatch(predicate -> predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate));
@@ -1495,6 +1511,10 @@ public class GameQueryService {
      */
     public boolean isCreature(GameData gameData, Permanent permanent) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (permanent.isFaceDown() && !bonus.cardTypeOverriding()
+                && permanent.getFaceDownCardTypes().contains(CardType.CREATURE)) {
+            return true;
+        }
         return isCreatureWithBonus(gameData, permanent, bonus);
     }
 
@@ -5949,13 +5969,13 @@ public class GameQueryService {
     /**
      * Returns whether a last-known battlefield permanent shares a creature type with a card in a
      * non-battlefield zone. The permanent side uses its layered creature types; the card side uses
-     * its intrinsic creature types.
+     * its effective creature types in that zone.
      */
     public boolean shareCreatureType(GameData gameData, Permanent permanent, Card card) {
         boolean permanentChangeling = hasKeyword(gameData, permanent, Keyword.CHANGELING);
         boolean cardChangeling = card.hasKeyword(Keyword.CHANGELING);
         Set<CardSubtype> permanentTypes = effectiveCreatureSubtypes(gameData, permanent);
-        Set<CardSubtype> cardTypes = card.getSubtypes().stream()
+        Set<CardSubtype> cardTypes = getCardSubtypes(card, gameData, card.getOwnerId()).stream()
                 .filter(this::isCreatureSubtype)
                 .collect(java.util.stream.Collectors.toSet());
         if (permanentChangeling) {
@@ -6061,6 +6081,34 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /** Returns whether a player controls at least {@code minimum} creatures sharing a creature type. */
+    public boolean controlsCreaturesSharingCreatureType(GameData gameData, UUID controllerId, int minimum) {
+        if (minimum <= 0) return true;
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+
+        Set<CardSubtype> allCreatureTypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (isCreatureSubtype(subtype)) {
+                allCreatureTypes.add(subtype);
+            }
+        }
+
+        Map<CardSubtype, Integer> countsByType = new HashMap<>();
+        for (Permanent permanent : battlefield) {
+            if (!isCreature(gameData, permanent)) continue;
+            Set<CardSubtype> creatureTypes = effectiveCreatureSubtypes(gameData, permanent);
+            if (hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+                creatureTypes = allCreatureTypes;
+            }
+            for (CardSubtype creatureType : creatureTypes) {
+                countsByType.merge(creatureType, 1, Integer::sum);
+            }
+        }
+        return countsByType.values().stream().anyMatch(count -> count >= minimum);
     }
 
     /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */

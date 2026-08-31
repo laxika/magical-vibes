@@ -69,6 +69,8 @@ public enum PreventionScope {
     ALL_TO_CONTROLLER_FROM_ATTACKERS,
     /** "Prevent all damage that would be dealt to you this turn by creatures matching a predicate." */
     ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+    /** "Prevent the next damage that would be dealt to you by a source matching a predicate." */
+    NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that would be dealt to players this turn by sources matching a predicate." */
     ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */

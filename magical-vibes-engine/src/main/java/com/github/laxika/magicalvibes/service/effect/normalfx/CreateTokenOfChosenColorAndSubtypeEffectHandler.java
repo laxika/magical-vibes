@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenOfChosenColorAndSubtypeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,7 @@ public class CreateTokenOfChosenColorAndSubtypeEffectHandler implements NormalEf
 
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,8 +52,11 @@ public class CreateTokenOfChosenColorAndSubtypeEffectHandler implements NormalEf
         if (subtype == null) {
             return;
         }
+        AmountContext context = AmountContext.forStackEntry(entry, source);
+        int power = amountEvaluationService.evaluate(gameData, tokenEffect.power(), context);
+        int toughness = amountEvaluationService.evaluate(gameData, tokenEffect.toughness(), context);
         CreateTokenEffect token = new CreateTokenEffect(
-                subtype.getDisplayName(), tokenEffect.power(), tokenEffect.toughness(), chosenColor,
+                subtype.getDisplayName(), power, toughness, chosenColor,
                 List.of(subtype), Set.of(), Set.of());
         permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), token, 1,
                 entry.getCard().getSetCode());

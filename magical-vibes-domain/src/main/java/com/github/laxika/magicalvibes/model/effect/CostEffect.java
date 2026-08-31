@@ -73,6 +73,14 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * True when the permanents chosen to pay this cost must be retained on the ability's stack
+     * entry for a later effect in that ability.
+     */
+    default boolean tracksChosenPermanents() {
+        return false;
+    }
+
+    /**
      * True when paying this cost must preserve the sacrificed permanent's last-known
      * characteristics for a later effect in the same ability.
      */

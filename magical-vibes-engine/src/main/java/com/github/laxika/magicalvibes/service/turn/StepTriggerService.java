@@ -169,6 +169,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
@@ -203,6 +204,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -1448,6 +1450,22 @@ public class StepTriggerService {
                     ? 0 : gameQueryService.getEffectivePower(gameData, enchantedPermanent);
 
             for (CardEffect effect : enchantedControllerUpkeepEffects) {
+                if (effect instanceof ForcedCostOrElseEffect forcedCost
+                        && (forcedCost.elseEffects().stream().anyMatch(
+                                TargetPlayerGainsControlOfEnchantedPermanentEffect.class::isInstance)
+                        || forcedCost.paidEffects().stream().anyMatch(
+                                TargetPlayerGainsControlOfEnchantedPermanentEffect.class::isInstance))) {
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                            perm.getCard(), enchantedPermanentControllerId, new ArrayList<>(List.of(effect)),
+                            perm.getId(), new PlayerPredicateTargetFilter(
+                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                    "Target must be an opponent"), enchantedPermanentControllerId));
+                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
+                    log.info("Game {} - {} enchanted-permanent-controller upkeep trigger awaiting opponent target",
+                            gameData.id, perm.getCard().getName());
+                    continue;
+                }
+
                 // Bake the enchanted permanent's controller into effects that need it
                 CardEffect effectForStack = effect;
                 if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {

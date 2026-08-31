@@ -271,6 +271,10 @@ public class DamageSupport {
                     gameData, target, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
             if (rawDamage <= 0) return 0;
+            rawDamage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
+                    gameData, target.getId(), sourcePermId, rawDamage);
+            processSourceRedirectDamage(gameData);
+            if (rawDamage <= 0) return 0;
             // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
             // a chosen source to the protected creature onto another permanent.
             rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
@@ -383,7 +387,10 @@ public class DamageSupport {
                     sourceControllerId,
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage,
                     null, targetControllerId, target.getId());
-            triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
+            triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, sourceControllerId,
+                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
+                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
                     gameData, sourceControllerId, target, damage);
 
@@ -586,7 +593,9 @@ public class DamageSupport {
             accumulateSourceDamageForReflection(gameData, entry.getEffectiveDamageSourceCard(),
                     entry.getControllerId(), entry.getSourcePermanentId(), damage,
                     null, gameQueryService.findPermanentController(gameData, target.getId()), target.getId());
-            triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, entry.getControllerId());
+            triggerCollectionService.checkDealtDamageToCreatureTriggers(
+                    gameData, target, damage, entry.getControllerId(), entry.getEffectiveDamageSourceCard(),
+                    entry.getSourcePermanentId());
             triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
                     gameData, sourceControllerId, target, damage);
 
@@ -1104,6 +1113,9 @@ public class DamageSupport {
         // Saving Grace: redirect all damage this turn to the player onto the enchanted creature.
         rawDamage = damagePreventionService.applyTurnDamageRedirectToCreature(
                 gameData, playerId, null, damageSourceId, rawDamage, false);
+        processSourceRedirectDamage(gameData);
+        rawDamage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
+                gameData, playerId, damageSourceId, rawDamage);
         processSourceRedirectDamage(gameData);
         // Martyrdom: redirect the next N damage to the player onto the creature carrying the ability.
         rawDamage = damagePreventionService.applyPlayerNextDamageRedirectShields(

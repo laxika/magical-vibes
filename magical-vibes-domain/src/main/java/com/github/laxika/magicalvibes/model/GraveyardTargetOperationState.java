@@ -22,6 +22,7 @@ public class GraveyardTargetOperationState {
     public List<CardEffect> effects;
     public StackEntryType entryType;
     public int xValue;
+    public CardSubtype chosenCreatureType;
     public boolean anyNumber;
     /**
      * Whether all chosen targets must come from one graveyard ("... from a single graveyard",

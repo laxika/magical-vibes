@@ -639,6 +639,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
     }
 
+    public void handleChooseOpponentForSubtype(GameData gameData, UUID opponentId,
+            PermanentChoiceContext.ChooseOpponentForSubtype context) {
+        if (gameData.playerIds.contains(opponentId) && !opponentId.equals(context.controllerId())) {
+            playerInputService.beginSubtypeChoice(gameData, opponentId, context.permanentId(),
+                    context.allowedSubtypes(), context.landPlay());
+        }
+    }
+
     public void handleOpponentChoosesPermanentToExile(GameData gameData, UUID permanentId,
             PermanentChoiceContext.OpponentChoosesPermanentToExile context) {
         opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler.completePermanentChoice(

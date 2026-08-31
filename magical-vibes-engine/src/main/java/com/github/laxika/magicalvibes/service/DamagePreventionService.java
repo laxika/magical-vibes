@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceNextCombatDamageToOpponentRedirectShield;
+import com.github.laxika.magicalvibes.model.SourcePermanentAndControllerNextDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.TurnSourceDamageRedirectToControllerShield;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToContr
 import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerAndCreaturesDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerAndPermanentsNoncombatDamagePreventionEffect;
+import com.github.laxika.magicalvibes.model.effect.FilteredCreaturesDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
@@ -61,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedC
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -74,6 +77,7 @@ import com.github.laxika.magicalvibes.service.effect.DamagePreventionReplacement
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -92,6 +96,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class DamagePreventionService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
@@ -100,13 +105,16 @@ public class DamagePreventionService {
     private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
     private final GameLogService gameLogService;
 
-    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService,
+    public DamagePreventionService(GameQueryService gameQueryService,
+                                   PredicateEvaluationService predicateEvaluationService,
+                                   LifeSupport lifeSupport, DrawService drawService,
                                    AmountEvaluationService amountEvaluationService,
                                    DamagePreventionReplacementSupport damagePreventionReplacementSupport,
                                    StaticEffectConditionResolver staticEffectConditionResolver,
                                    ObjectProvider<PermanentControlSupport> permanentControlSupportProvider,
                                    GameLogService gameLogService) {
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.lifeSupport = lifeSupport;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
@@ -323,7 +331,7 @@ public class DamagePreventionService {
             if (gameQueryService.isCreature(gameData, permanent)) {
                 damage -= applyControllerAndCreaturesFixedPerSourceDamagePrevention(
                         gameData, gameQueryService.findPermanentController(gameData, permanent.getId()), damage,
-                        isCombatDamage, damageSource);
+                        isCombatDamage, damageSource, permanent);
                 if (damage <= 0) return 0;
             }
             if (gameQueryService.hasActiveStaticEffect(
@@ -481,7 +489,7 @@ public class DamagePreventionService {
         int prevented = 0;
         if (controllerId != null) {
             prevented = evaluatePerSourceControllerAndCreaturesDamagePrevention(
-                    gameData, controllerId, damage, isCombatDamage, damageSource);
+                    gameData, controllerId, damage, isCombatDamage, damageSource, permanent);
         }
         return damage - Math.min(damage, prevented);
     }
@@ -543,7 +551,8 @@ public class DamagePreventionService {
      * level counters and similar live conditions are evaluated at damage time.
      */
     private int applyControllerAndCreaturesFixedPerSourceDamagePrevention(
-            GameData gameData, UUID controllerId, int damage, boolean combatDamage, Permanent damageSource) {
+            GameData gameData, UUID controllerId, int damage, boolean combatDamage, Permanent damageSource,
+            Permanent protectedCreature) {
         if (controllerId == null || damage <= 0) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
@@ -555,6 +564,18 @@ public class DamagePreventionService {
                 CardEffect resolved = staticEffectConditionResolver.resolve(
                         gameData, source, controllerId, effect);
                 if (resolved instanceof ControllerAndCreaturesDamagePreventionEffect prevention) {
+                    reduction += prevention.amount();
+                } else if (resolved instanceof FilteredCreaturesDamagePreventionEffect prevention
+                        && protectedCreature != null
+                        && (!combatDamage || damageSource != null)
+                        && (prevention.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                        protectedCreature,
+                        prevention.filter(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(source.getCard().getId())
+                                .withSourceControllerId(controllerId)
+                                .withSourcePermanentSnapshot(source)
+                                .withSourcePermanentId(source.getId())))) {
                     reduction += prevention.amount();
                 } else if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
@@ -568,7 +589,8 @@ public class DamagePreventionService {
     }
 
     private int evaluatePerSourceControllerAndCreaturesDamagePrevention(
-            GameData gameData, UUID controllerId, int damage, boolean combatDamage, Permanent damageSource) {
+            GameData gameData, UUID controllerId, int damage, boolean combatDamage, Permanent damageSource,
+            Permanent protectedCreature) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
 
@@ -577,7 +599,18 @@ public class DamagePreventionService {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(
                         gameData, source, controllerId, effect);
-                if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
+                if (resolved instanceof FilteredCreaturesDamagePreventionEffect prevention
+                        && protectedCreature != null
+                        && (prevention.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                        protectedCreature,
+                        prevention.filter(),
+                        FilterContext.of(gameData)
+                                .withSourceCardId(source.getCard().getId())
+                                .withSourceControllerId(controllerId)
+                                .withSourcePermanentSnapshot(source)
+                                .withSourcePermanentId(source.getId())))) {
+                    reduction += prevention.amount();
+                } else if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || gameQueryService.isCreature(gameData, damageSource))) {
                     reduction += amountEvaluationService.evaluate(gameData, prevention.amount(),
@@ -719,7 +752,7 @@ public class DamagePreventionService {
         damage = applyHalfDamagePrevention(gameData, playerId, damage);
         if (damage <= 0) return 0;
         damage -= applyControllerAndCreaturesFixedPerSourceDamagePrevention(
-                gameData, playerId, damage, combatDamage, damageSource);
+                gameData, playerId, damage, combatDamage, damageSource, null);
         if (damage <= 0) return 0;
         // Process redirect shields first (e.g. Vengeful Archon)
         damage = applyRedirectShields(gameData, playerId, damage);
@@ -1256,6 +1289,52 @@ public class DamagePreventionService {
 
         gameData.creatureDamageRedirectShields.addAll(toReAdd);
         return remaining;
+    }
+
+    /**
+     * Applies Glarecaster's shared one-shot redirect shield to damage dealt to its source permanent.
+     */
+    public int applySourcePermanentAndControllerNextDamageRedirectToPermanent(
+            GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || protectedPermanentId == null
+                || gameData.sourcePermanentAndControllerNextDamageRedirectShields.isEmpty()) {
+            return damage;
+        }
+
+        Iterator<SourcePermanentAndControllerNextDamageRedirectShield> it =
+                gameData.sourcePermanentAndControllerNextDamageRedirectShields.iterator();
+        while (it.hasNext()) {
+            SourcePermanentAndControllerNextDamageRedirectShield shield = it.next();
+            if (!protectedPermanentId.equals(shield.protectedPermanentId())) continue;
+            it.remove();
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    protectedPermanentId, sourcePermanentId, damage, shield.redirectTargetId()));
+            return 0;
+        }
+        return damage;
+    }
+
+    /**
+     * Applies Glarecaster's shared one-shot redirect shield to damage dealt to its controller.
+     */
+    public int applySourcePermanentAndControllerNextDamageRedirectToPlayer(
+            GameData gameData, UUID protectedPlayerId, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || protectedPlayerId == null
+                || gameData.sourcePermanentAndControllerNextDamageRedirectShields.isEmpty()) {
+            return damage;
+        }
+
+        Iterator<SourcePermanentAndControllerNextDamageRedirectShield> it =
+                gameData.sourcePermanentAndControllerNextDamageRedirectShields.iterator();
+        while (it.hasNext()) {
+            SourcePermanentAndControllerNextDamageRedirectShield shield = it.next();
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
+            it.remove();
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    protectedPlayerId, sourcePermanentId, damage, shield.redirectTargetId()));
+            return 0;
+        }
+        return damage;
     }
 
     /**

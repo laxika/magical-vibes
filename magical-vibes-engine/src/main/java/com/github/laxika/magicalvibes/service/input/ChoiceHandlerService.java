@@ -582,10 +582,14 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + color.name().toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
 
-            boolean needsSubtypeChoice = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .anyMatch(e -> e instanceof ChooseSubtypeOnEnterEffect);
-            if (needsSubtypeChoice) {
-                playerInputService.beginSubtypeChoice(gameData, player.getId(), perm.getId());
+            ChooseSubtypeOnEnterEffect subtypeChoice = perm.getCard()
+                    .getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(ChooseSubtypeOnEnterEffect.class::isInstance)
+                    .map(ChooseSubtypeOnEnterEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (subtypeChoice != null) {
+                playerInputService.beginSubtypeChoice(gameData, player.getId(), perm.getId(),
+                        subtypeChoice.allowedSubtypes(), false, subtypeChoice.opponentChooses());
                 return;
             }
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
@@ -1033,21 +1037,28 @@ public class ChoiceHandlerService {
         }
         boolean isColor = GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
         boolean isLandType = GameQueryService.TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
-        if (!isColor && !isLandType) {
+        boolean isCreatureType = GameQueryService.TEXT_CHANGE_CREATURE_TYPES.contains(chosenWord);
+        if (!isColor && !isLandType && !isCreatureType) {
             throw new IllegalArgumentException("Invalid choice: " + chosenWord);
         }
 
         ChoiceContext.TextChangeToWord choiceContext =
-                new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn());
+                new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn(),
+                        isCreatureType);
 
         List<String> remainingOptions;
         String promptType;
         if (isColor) {
             remainingOptions = GameQueryService.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(chosenWord)).toList();
             promptType = "color word";
-        } else {
+        } else if (isLandType) {
             remainingOptions = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(chosenWord)).toList();
             promptType = "basic land type";
+        } else {
+            remainingOptions = GameQueryService.TEXT_CHANGE_CREATURE_TYPES.stream()
+                    .filter(t -> !t.equals(chosenWord) && !t.equals("WALL"))
+                    .toList();
+            promptType = "creature type";
         }
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -1056,9 +1067,17 @@ public class ChoiceHandlerService {
     }
 
     private void handleTextChangeToWordChosen(GameData gameData, Player player, String chosenWord, ChoiceContext.TextChangeToWord ctx) {
+        PendingInteraction.ColorChoice active = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active != null && !active.options().contains(chosenWord)) {
+            throw new IllegalArgumentException("Invalid choice: " + chosenWord);
+        }
         if (ctx.isColor()) {
             if (!GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord)) {
                 throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
+            }
+        } else if (ctx.isCreatureType()) {
+            if (!GameQueryService.TEXT_CHANGE_CREATURE_TYPES.contains(chosenWord) || chosenWord.equals("WALL")) {
+                throw new IllegalArgumentException("Invalid creature type choice: " + chosenWord);
             }
         } else {
             if (!GameQueryService.TEXT_CHANGE_LAND_TYPES.contains(chosenWord)) {
@@ -1120,7 +1139,7 @@ public class ChoiceHandlerService {
             case "SWAMP" -> "Swamp";
             case "MOUNTAIN" -> "Mountain";
             case "FOREST" -> "Forest";
-            default -> throw new IllegalArgumentException("Invalid choice: " + choice);
+            default -> CardSubtype.valueOf(choice).getDisplayName();
         };
     }
 
@@ -2752,8 +2771,12 @@ public class ChoiceHandlerService {
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+            if (controllerId == null) {
+                controllerId = player.getId();
+            }
             perm.setChosenSubtype(subtype);
-            battlefieldEntryService.applyDeferredEnterWithCounters(gameData, player.getId(), perm);
+            battlefieldEntryService.applyDeferredEnterWithCounters(gameData, controllerId, perm);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + subtype.getDisplayName() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
@@ -2761,9 +2784,9 @@ public class ChoiceHandlerService {
             // The subtype choice deferred the permanent's ETB triggers (they were skipped while input
             // was pending). Now that the type is chosen, process them — e.g. Brass Herald's "reveal the
             // top four cards" trigger, which reads the chosen type from the permanent.
-            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), null, true);
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, perm.getCard(), null, true);
             if (ctx.landPlay()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), perm.getCard());
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
             }
         }
 

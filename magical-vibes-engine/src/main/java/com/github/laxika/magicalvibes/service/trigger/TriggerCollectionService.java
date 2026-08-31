@@ -1399,6 +1399,19 @@ public class TriggerCollectionService {
 
     // ── Source deals damage to a player (noncombat) ────────────────────
 
+    public void checkCycleTriggers(GameData gameData, UUID cyclingPlayerId, Card cycledCard) {
+        TriggerContext ctx = new TriggerContext.Cycle(cyclingPlayerId, cycledCard);
+        boolean[] anyTriggered = {false};
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_PLAYER_CYCLES, ctx)) {
+                anyTriggered[0] = true;
+            }
+        });
+        if (anyTriggered[0]) {
+            gameOutcomeService.checkWinCondition(gameData);
+        }
+    }
+
     private boolean collectTemporaryGlobalDiscardTriggers(GameData gameData, UUID discardingPlayerId) {
         if (!gameData.discardCausedByOpponent) {
             return false;
@@ -3424,7 +3437,15 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
+    public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt,
+                                                   UUID damageSourceControllerId) {
+        checkDealtDamageToCreatureTriggers(gameData, damagedCreature, damageDealt, damageSourceControllerId,
+                null, null);
+    }
+
+    public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt,
+                                                   UUID damageSourceControllerId, Card sourceCard,
+                                                   UUID sourcePermanentId) {
         if (damageDealt > 0) {
             checkEnchantedCreatureDealtDamageTriggers(gameData, damagedCreature, damageDealt);
         }
@@ -3439,7 +3460,8 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
         if (controllerId == null) return;
 
-        var ctx = new TriggerContext.DamageToCreature(damagedCreature, damageDealt, damageSourceControllerId);
+        var ctx = new TriggerContext.DamageToCreature(damagedCreature, damageDealt, damageSourceControllerId,
+                sourceCard, sourcePermanentId);
 
         for (CardEffect effect : effects) {
             var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, effect);
@@ -4933,6 +4955,8 @@ public class TriggerCollectionService {
 
         collectGraveyardOpponentLifeGainTriggers(gameData, gainingPlayerId);
         collectLifeGainOpponentLifeLossTriggers(gameData, gainingPlayerId, lifeGainedAmount);
+        collectTemporaryGlobalTriggers(gameData, EffectSlot.ON_ANY_PLAYER_GAINS_LIFE,
+                gainingPlayerId, lifeGainedAmount);
     }
 
     /** Fires triggers for a player's positive energy-counter change. */

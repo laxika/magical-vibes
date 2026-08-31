@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
@@ -2457,6 +2458,20 @@ public class TargetLegalityService {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (card == null) {
             return false;
+        }
+
+        List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
+                entry.getEffectsToResolve().stream()
+                        .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
+                        .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
+                        .toList();
+        if (!chosenTypeEffects.isEmpty()) {
+            CardSubtype chosenCreatureType = entry.getChosenCreatureType();
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            return chosenCreatureType != null
+                    && entry.getControllerId().equals(graveyardOwnerId)
+                    && chosenTypeEffects.stream().anyMatch(effect -> predicateEvaluationService.matchesCardPredicate(
+                    card, effect.filter(chosenCreatureType), entry.getCard().getId(), gameData, graveyardOwnerId));
         }
 
         List<CardEffect> declarativeGraveyardEffects = entry.getEffectsToResolve().stream()

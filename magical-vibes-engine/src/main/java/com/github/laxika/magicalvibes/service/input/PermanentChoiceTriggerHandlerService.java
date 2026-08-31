@@ -899,6 +899,8 @@ public class PermanentChoiceTriggerHandlerService {
         boolean declined = hasOptionalSingleTarget(ett.sourceCard(), ett.effects())
                 && isPlayerTarget
                 && permanentId.equals(ett.controllerId());
+        UUID sourcePermanentId = ett.sourceIsEnteringPermanent()
+                ? ett.enteringPermanentId() : ett.sourcePermanentId();
         if (target != null || isPlayerTarget) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -907,12 +909,19 @@ public class PermanentChoiceTriggerHandlerService {
                     ett.sourceCard().getName() + "'s ability",
                     new ArrayList<>(ett.effects()),
                     null,
-                    ett.sourcePermanentId()
+                    sourcePermanentId
             );
             if (!declined) {
                 entry.setTargetId(permanentId);
             }
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
+            if (ett.sourceIsEnteringPermanent() && sourcePermanentId != null) {
+                Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (enteringPermanent != null) {
+                    entry.setSourcePermanentSnapshot(new Permanent(enteringPermanent));
+                    entry.setDamageSourceCard(enteringPermanent.getCard());
+                }
+            }
             boolean targetsRelativeToEnteringPermanent = ett.effects().stream()
                     .anyMatch(effect -> effect instanceof ExchangeControlOfTargetPermanentsEffect exchange
                             && exchange.triggeringPermanentIsFirstTarget());

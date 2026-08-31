@@ -157,7 +157,7 @@ public class EtbTriggerService {
                 .orElse(null);
         if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
-                    subtypeChoice.allowedSubtypes(), true);
+                    subtypeChoice.allowedSubtypes(), true, subtypeChoice.opponentChooses());
             return;
         }
         ChooseBasicLandTypeOnEnterEffect basicLandTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -227,7 +227,7 @@ public class EtbTriggerService {
                 .orElse(null);
         if (enteringPermanent != null && enteringPermanent.getChosenSubtype() == null && subtypeChoice != null) {
             playerInputService.beginSubtypeChoice(gameData, controllerId, enteringPermanent.getId(),
-                    subtypeChoice.allowedSubtypes());
+                    subtypeChoice.allowedSubtypes(), false, subtypeChoice.opponentChooses());
             return;
         }
 

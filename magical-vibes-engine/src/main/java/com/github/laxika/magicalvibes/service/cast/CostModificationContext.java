@@ -8,11 +8,18 @@ import java.util.UUID;
 
 /**
  * The spell whose effective cast cost is being computed: the game state, the player
- * casting it, the card itself, and whether a flashback cost or a hand-plot cost is being paid.
+ * casting it, the card itself, and the cast mode and source details relevant to cost modifiers.
  */
 public record CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                       boolean flashbackCost, int xValue, boolean plottingFromHand,
-                                      Zone sourceZone) {
+                                      Zone sourceZone, boolean castingFaceDown) {
+
+    public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
+                                   boolean flashbackCost, int xValue, boolean plottingFromHand,
+                                   Zone sourceZone) {
+        this(gameData, castingPlayerId, spell, flashbackCost, xValue, plottingFromHand,
+                sourceZone, false);
+    }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell) {
         this(gameData, castingPlayerId, spell, false, 0, false, null);

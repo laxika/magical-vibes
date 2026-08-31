@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -43,8 +45,10 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaEchoesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentSourceEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
@@ -79,9 +83,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -115,6 +121,53 @@ public class EnterTriggerCollectorService {
         this.graveyardTargetingService = graveyardTargetingService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
+    }
+
+    @CollectsTrigger(value = ManaEchoesEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
+    private boolean handleManaEchoesEnter(TriggerMatchContext match, ManaEchoesEffect effect,
+                                          TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            return true;
+        }
+        Permanent enteringPermanent = gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        if (enteringPermanent == null || !gameQueryService.isCreature(match.gameData(), enteringPermanent)) {
+            return false;
+        }
+
+        Set<CardSubtype> enteringTypes =
+                new HashSet<>(gameQueryService.effectiveCreatureSubtypes(match.gameData(), enteringPermanent));
+        if (gameQueryService.hasKeyword(match.gameData(), enteringPermanent,
+                Keyword.CHANGELING)) {
+            for (CardSubtype subtype : CardSubtype.values()) {
+                if (gameQueryService.isCreatureSubtype(subtype)) {
+                    enteringTypes.add(subtype);
+                }
+            }
+        }
+        CardEffect queuedEffect = new ManaEchoesEffect(enteringTypes);
+        if (match.rawEffect() instanceof MayEffect may) {
+            queuedEffect = new MayEffect(queuedEffect, may.prompt(), may.elseEffect(), may.choicePlayer());
+        }
+
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(queuedEffect)),
+                    enteringPermanentId,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
+        }
+        logTriggered(match);
+        return true;
     }
 
     // ── Default "put it on the stack" fallbacks (one per registry-backed slot) ─────────
@@ -525,6 +578,12 @@ public class EnterTriggerCollectorService {
         if (gainLifeEqualToEnteringPower) {
             may = new MayEffect(new GainLifeEffect(new TargetPower()), may.prompt());
         }
+        boolean sourceIsEnteringPermanent = may instanceof TriggeringPermanentSourceEffect source
+                && source.sourceIsTriggeringPermanent();
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (sourceIsEnteringPermanent && enteringPermanentId == null) {
+            return true;
+        }
         // Always bind the source permanent so a "may put a counter on this creature" wrapper
         // (e.g. Godtracker of Jund) resolves against the source; ally scans leave the target
         // player unset (null), which is harmless for player-directed wrapped effects.
@@ -534,15 +593,16 @@ public class EnterTriggerCollectorService {
         if (needsTargetChoice) {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(may)), match.permanent().getId(),
-                        findEnteringPermanentId(match, pe.enteringCard())));
+                        sourceCard, match.controllerId(), new ArrayList<>(List.of(may)),
+                        sourceIsEnteringPermanent ? enteringPermanentId : match.permanent().getId(),
+                        enteringPermanentId, sourceIsEnteringPermanent));
             }
             logTriggered(match);
             return true;
         }
         boolean usesEnteringTarget = may.wrapped() instanceof DiscardCardThenEffect discard
                 && discard.useEntryTarget();
-        UUID enteringPermanentId = (gainLifeEqualToEnteringPower || usesEnteringTarget)
+        enteringPermanentId = (gainLifeEqualToEnteringPower || usesEnteringTarget)
                 ? findEnteringPermanentId(match, pe.enteringCard()) : null;
         UUID mayTargetId = gainLifeEqualToEnteringPower || usesEnteringTarget
                 ? enteringPermanentId : pe.defaultTargetPlayerId();

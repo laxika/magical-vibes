@@ -309,6 +309,26 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Applies a face-down-only reduction only while casting face down")
+        void appliesFaceDownOnlyReduction() {
+            Card reducer = new Card();
+            reducer.setName("Dream Chisel");
+            reducer.setType(CardType.ARTIFACT);
+            reducer.addEffect(EffectSlot.STATIC,
+                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+                            1, CostModificationScope.SELF, true));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+            evaluateCardTypePredicates();
+
+            Card creature = new Card();
+            creature.setName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, creature, 0, false)).isZero();
+            assertThat(svc.getCastCostModifier(gd, player1Id, creature, 0, true)).isEqualTo(-1);
+        }
+
+        @Test
         @DisplayName("Applies a zone-scoped reduction only to spells cast from that zone")
         void appliesZoneScopedReductionOnlyToMatchingSourceZone() {
             Card reducer = new Card();

@@ -40,8 +40,13 @@ public sealed interface ChoiceContext {
 
     record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) implements ChoiceContext {}
 
-    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn)
-            implements ChoiceContext {}
+    record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn,
+                            boolean isCreatureType) implements ChoiceContext {
+
+        public TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn) {
+            this(targetId, fromWord, isColor, untilEndOfTurn, false);
+        }
+    }
 
     record ManaColorSpellChoice(UUID playerId, int amount, Set<CardSubtype> subtypes) implements ChoiceContext {
         public ManaColorSpellChoice {

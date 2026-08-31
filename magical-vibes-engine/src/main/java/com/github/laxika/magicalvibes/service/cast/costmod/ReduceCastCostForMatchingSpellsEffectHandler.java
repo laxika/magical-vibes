@@ -40,6 +40,9 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         if (reduce.plotFromHandOnly() != context.plottingFromHand()) {
             return 0;
         }
+        if (reduce.faceDownOnly() && !context.castingFaceDown()) {
+            return 0;
+        }
         if (!reduce.sourceZones().isEmpty()
                 && (context.sourceZone() == null
                 ? reduce.sourceZones().stream().noneMatch(zone -> spellWasCastFromZone(

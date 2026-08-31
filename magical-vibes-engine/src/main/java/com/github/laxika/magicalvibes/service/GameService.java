@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -38,7 +37,6 @@ import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -75,7 +73,6 @@ public class GameService {
     private final CardRevealService cardRevealService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
-    private final PermanentCounterSupport permanentCounterSupport;
     private final TriggerCollectionService triggerCollectionService;
     private final CastingCostService castingCostService;
     private final TurnFaceUpCopyService turnFaceUpCopyService;
@@ -90,7 +87,6 @@ public class GameService {
                        ManaChoiceNarrowingService manaChoiceNarrowingService,
                        CardRevealService cardRevealService, PredicateEvaluationService predicateEvaluationService,
                        ConditionEvaluationService conditionEvaluationService,
-                       PermanentCounterSupport permanentCounterSupport,
                        TriggerCollectionService triggerCollectionService,
                        CastingCostService castingCostService,
                        TurnFaceUpCopyService turnFaceUpCopyService) {
@@ -109,7 +105,6 @@ public class GameService {
         this.cardRevealService = cardRevealService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
-        this.permanentCounterSupport = permanentCounterSupport;
         this.triggerCollectionService = triggerCollectionService;
         this.castingCostService = castingCostService;
         this.turnFaceUpCopyService = turnFaceUpCopyService;
@@ -126,7 +121,7 @@ public class GameService {
         this(gameQueryService, gameLogService, combatService, turnProgressionService,
                 interactionHandlerRegistry, spellCastingService, stackResolutionService,
                 abilityActivationService, mulliganService, gameOutcomeService, mutationCoordinator,
-                manaChoiceNarrowingService, null, null, null, null, null, null, null);
+                manaChoiceNarrowingService, null, null, null, null, null, null);
     }
 
     private boolean runAsActionIfNeeded(GameData gameData, Runnable action) {
@@ -1039,24 +1034,7 @@ public class GameService {
                 spellCastingService.payMorphAdditionalCost(
                         gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
             }
-            permanent.turnFaceUp();
-            List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
-                    .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
-                    .filter(TurnFaceUpReplacementEffect.class::isInstance)
-                    .map(TurnFaceUpReplacementEffect.class::cast)
-                    .toList();
-            for (TurnFaceUpReplacementEffect replacement : replacements) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(
-                        gameData, null, permanent, replacement.counterCount());
-            }
-            UUID controllerId = player.getId();
-            if (turnFaceUpCopyService != null
-                    && turnFaceUpCopyService.prepareChoice(gameData, permanent, controllerId)) {
-                return;
-            }
-            if (turnFaceUpCopyService != null) {
-                turnFaceUpCopyService.finishTurnFaceUp(gameData, controllerId, permanent.getId());
-            }
+            turnFaceUpCopyService.turnFaceUpWithoutCost(gameData, permanent);
         }
     }
 

@@ -1608,6 +1608,27 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayPayManaEffect.class,
+            slot = EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleCreaturePutIntoOwnerGraveyardMayPay(TriggerMatchContext match,
+            MayPayManaEffect mayPay, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
+        CardEffect wrapped = mayPay.wrapped();
+        if (wrapped instanceof DyingCreatureCardAwareEffect aware && apg.dyingCard() != null) {
+            wrapped = aware.boundToDyingCard(apg.dyingCard().getId());
+        }
+        CardEffect elseEffect = mayPay.elseEffect();
+        if (elseEffect instanceof DyingCreatureCardAwareEffect aware && apg.dyingCard() != null) {
+            elseEffect = aware.boundToDyingCard(apg.dyingCard().getId());
+        }
+        if (wrapped != mayPay.wrapped() || elseEffect != mayPay.elseEffect()) {
+            mayPay = new MayPayManaEffect(mayPay.manaCost(), wrapped, mayPay.prompt(), mayPay.payer(),
+                    elseEffect, mayPay.lifeCost());
+        }
+        match.gameData().queueMayAbility(match.permanent().getCard(), apg.graveyardOwnerId(), mayPay, null);
+        return true;
+    }
+
     @CollectsTrigger(value = ReturnTriggeringCardToOwnerHandEffect.class,
             slot = EffectSlot.ON_EQUIPPED_CREATURE_DIES)
     boolean handleEquippedCreatureReturnToHand(TriggerMatchContext match,

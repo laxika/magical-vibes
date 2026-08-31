@@ -1116,6 +1116,7 @@ public class GraveyardChoiceHandlerService {
         UUID controllerId = gameData.graveyardTargetOperation.controllerId;
         StackEntryType pendingEntryType = gameData.graveyardTargetOperation.entryType;
         int pendingXValue = gameData.graveyardTargetOperation.xValue;
+        CardSubtype pendingChosenCreatureType = gameData.graveyardTargetOperation.chosenCreatureType;
         UUID pendingTargetPlayerId = gameData.graveyardTargetOperation.targetPlayerId;
         boolean pendingFlashback = gameData.graveyardTargetOperation.flashback;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
@@ -1147,6 +1148,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.effects = null;
         gameData.graveyardTargetOperation.entryType = null;
         gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.chosenCreatureType = null;
         gameData.graveyardTargetOperation.anyNumber = false;
         gameData.graveyardTargetOperation.singleGraveyard = false;
         gameData.graveyardTargetOperation.targetPlayerId = null;
@@ -1190,6 +1192,7 @@ public class GraveyardChoiceHandlerService {
             );
             spellEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
             spellEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
+            spellEntry.setChosenCreatureType(pendingChosenCreatureType);
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);
             }

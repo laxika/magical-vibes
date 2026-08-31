@@ -119,6 +119,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            UUID controllerId, PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
+    /** The controller chooses the opponent who will choose a creature type as a permanent enters. */
+    record ChooseOpponentForSubtype(UUID controllerId, UUID permanentId,
+                                    List<CardSubtype> allowedSubtypes, boolean landPlay)
+            implements PermanentChoiceContext {
+        public ChooseOpponentForSubtype {
+            allowedSubtypes = allowedSubtypes == null ? List.of() : List.copyOf(allowedSubtypes);
+        }
+    }
+
     /** The chosen opponent chooses a matching permanent controlled by the source's controller to exile. */
     record OpponentChoosesPermanentToExile(Card sourceCard, UUID sourcePermanentId,
                                            UUID choosingPlayerId, UUID controllerId,
@@ -156,10 +165,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
 
+    /** Risky Move: its controller chooses the creature to risk after gaining control of the enchantment. */
+    record RiskyMoveCreatureChoice(Card sourceCard, UUID sourcePermanentId, UUID controllerId)
+            implements PermanentChoiceContext {}
+
+    /** Risky Move: its controller chooses the opponent who may gain the chosen creature. */
+    record RiskyMoveOpponentChoice(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
+                                   UUID creatureId) implements PermanentChoiceContext {}
+
     /** Murmurs from Beyond: the controller chooses which opponent makes the revealed-card choice. */
     record MurmursFromBeyondOpponentChoice(UUID controllerId, List<Card> revealedCards)
             implements PermanentChoiceContext {
         public MurmursFromBeyondOpponentChoice {
+            revealedCards = List.copyOf(revealedCards);
+        }
+    }
+
+    /** Animal Magnetism: the controller chooses which opponent makes the revealed-card choice. */
+    record AnimalMagnetismOpponentChoice(UUID controllerId, List<Card> revealedCards)
+            implements PermanentChoiceContext {
+        public AnimalMagnetismOpponentChoice {
             revealedCards = List.copyOf(revealedCards);
         }
     }
@@ -532,22 +557,37 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  stack entry's {@code triggeringPermanentId} so an effect that acts on "that creature"
      *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
-                               UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {
+                               UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter,
+                               boolean sourceIsEnteringPermanent) implements PermanentChoiceContext {
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, null, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, null, null, false);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null, null, false);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
                                    UUID targetSourcePermanentId) {
             this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, null);
+                    targetSourcePermanentId, null, false);
+        }
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId,
+                                   UUID targetSourcePermanentId, TargetFilter targetFilter) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, targetFilter, false);
+        }
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId,
+                                   boolean sourceIsEnteringPermanent) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    null, null, sourceIsEnteringPermanent);
         }
     }
 

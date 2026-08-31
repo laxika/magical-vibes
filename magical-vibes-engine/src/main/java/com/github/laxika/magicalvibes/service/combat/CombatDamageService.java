@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAmountAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSourceAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -531,6 +533,8 @@ public class CombatDamageService {
         boolean unblockedRedirect = livingBlockers.isEmpty()
                 && !atk.isBlockedWithoutBlockers()
                 && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
+        boolean assignsAmongDefendingPlayerAndCreatures =
+                assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk);
 
         Set<UUID> validTargetIds = new HashSet<>();
         for (int blkIdx : livingBlockers) {
@@ -543,9 +547,20 @@ public class CombatDamageService {
                 }
             }
         }
+        if (assignsAmongDefendingPlayerAndCreatures) {
+            validTargetIds.add(defenderId);
+            for (Permanent def : defBf) {
+                if (gameQueryService.isCreature(gameData, def)) {
+                    validTargetIds.add(def.getId());
+                }
+            }
+        }
         boolean canTargetOverflow = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
                 || assignsCombatDamageAsThoughUnblocked(gameData, atk)
-                || unblockedRedirect;
+                || unblockedRedirect
+                || (assignsAmongDefendingPlayerAndCreatures
+                && (unblockedRedirect || (livingBlockers.isEmpty() && !atk.isBlockedWithoutBlockers())
+                || Objects.equals(overflowTargetId, defenderId)));
         if (canTargetOverflow) {
             validTargetIds.add(overflowTargetId);
         }
@@ -556,7 +571,7 @@ public class CombatDamageService {
             }
         }
 
-        if (unblockedRedirect) {
+        if (unblockedRedirect && !assignsAmongDefendingPlayerAndCreatures) {
             int recipients = 0;
             for (int assigned : assignments.values()) {
                 if (assigned > 0) recipients++;
@@ -570,8 +585,14 @@ public class CombatDamageService {
         // Validate trample (CR 510.1c): lethal damage to each blocker is required only as a
         // precondition for assigning damage to the player or planeswalker the creature is
         // attacking. Among the blockers themselves, damage may be divided freely.
+        boolean usesDefendingPlayerOrCreatureAssignment = assignsAmongDefendingPlayerAndCreatures
+                && assignments.entrySet().stream().anyMatch(entry -> entry.getValue() > 0
+                && (Objects.equals(entry.getKey(), defenderId)
+                || defBf.stream().anyMatch(def -> def.getId().equals(entry.getKey())
+                && gameQueryService.isCreature(gameData, def))));
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
-                && assignments.getOrDefault(overflowTargetId, 0) > 0) {
+                && assignments.getOrDefault(overflowTargetId, 0) > 0
+                && !usesDefendingPlayerOrCreatureAssignment) {
             boolean atkHasDeathtouchForValidation = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
             for (int blkIdx : livingBlockers) {
                 Permanent blk = defBf.get(blkIdx);
@@ -593,6 +614,22 @@ public class CombatDamageService {
         if (!canTargetOverflow && assignments.containsKey(overflowTargetId)) {
             throw new IllegalStateException("Cannot assign damage to " +
                     (gameData.playerIds.contains(overflowTargetId) ? "defending player" : "planeswalker"));
+        }
+
+        boolean unblocked = livingBlockers.isEmpty() && !atk.isBlockedWithoutBlockers();
+        if (assignsAmongDefendingPlayerAndCreatures && unblocked
+                && !Objects.equals(overflowTargetId, defenderId)
+                && assignments.getOrDefault(overflowTargetId, 0) > 0
+                && assignments.entrySet().stream()
+                .anyMatch(entry -> !entry.getKey().equals(overflowTargetId) && entry.getValue() > 0)) {
+            throw new IllegalStateException(
+                    "An unblocked creature cannot split damage between its attack target and defending player or creatures");
+        }
+        if (assignsAmongDefendingPlayerAndCreatures && !Objects.equals(overflowTargetId, defenderId)
+                && assignments.getOrDefault(overflowTargetId, 0) > 0
+                && usesDefendingPlayerOrCreatureAssignment) {
+            throw new IllegalStateException(
+                    "Damage assigned among the defending player and creatures cannot also be assigned to the attack target");
         }
 
         // Store and remove from pending
@@ -767,7 +804,8 @@ public class CombatDamageService {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
                     applyPlayerAssignedDamage(gameData, state, atk, atkStats, defBf,
                             playerAssignment, activeId, defenderId, unblockedDamageRedirectTarget,
-                            damagePreventableFrom(gameData, snap.damagePreventable(), atk));
+                            damagePreventableFrom(gameData, snap.damagePreventable(), atk),
+                            assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk));
                 }
             } else if (blkIndices.isEmpty() || assignAsUnblocked) {
                 // A creature made blocked without a creature blocking it deals no damage unless it
@@ -975,16 +1013,25 @@ public class CombatDamageService {
                                             List<Permanent> defBf,
                                             Map<UUID, Integer> playerAssignment,
                                             UUID activeId, UUID defenderId,
-                                            Permanent redirectTarget, boolean damagePreventable) {
+                                            Permanent redirectTarget, boolean damagePreventable,
+                                            boolean assignsAmongDefendingPlayerAndCreatures) {
         UUID overflowTargetId = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
         for (var dmgEntry : playerAssignment.entrySet()) {
             UUID targetId = dmgEntry.getKey();
             int dmg = dmgEntry.getValue();
             if (dmg <= 0) continue;
-            if (targetId.equals(overflowTargetId)) {
+            boolean assignedToDefendingPlayer = assignsAmongDefendingPlayerAndCreatures
+                    && targetId.equals(defenderId) && !targetId.equals(overflowTargetId);
+            if (targetId.equals(overflowTargetId) || assignedToDefendingPlayer) {
                 // Overflow damage to the attack target (player or planeswalker)
                 int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, null);
-                accumulatePlayerDamage(gameData, atk, atkStats, actualDmg, defenderId, redirectTarget, state);
+                if (assignedToDefendingPlayer) {
+                    accumulatePlayerDamageToPlayer(gameData, atk, atkStats, actualDmg, defenderId,
+                            redirectTarget, state);
+                } else {
+                    accumulatePlayerDamage(gameData, atk, atkStats, actualDmg, defenderId,
+                            redirectTarget, state);
+                }
             } else {
                 // Damage assigned to a defending creature. For a blocked attacker this is one of
                 // its blockers; for an unblocked redirect (e.g. Cunning Giant) it can be any
@@ -2283,7 +2330,8 @@ public class CombatDamageService {
     }
 
     private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt,
-                                          UUID sourceControllerId, List<CardEffect> dealtDamageEffects,
+                                          Card sourceCard, UUID sourcePermanentId, UUID sourceControllerId,
+                                          List<CardEffect> dealtDamageEffects,
                                           List<CardEffect> combatDamageReceivedEffects) {}
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
@@ -2314,7 +2362,7 @@ public class CombatDamageService {
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
                 triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId, damageAmount,
-                        sourceControllerId, effects, combatDamageReceivedEffects));
+                        source.getCard(), source.getId(), sourceControllerId, effects, combatDamageReceivedEffects));
             }
         }
         return triggers;
@@ -2324,7 +2372,10 @@ public class CombatDamageService {
         for (DealtDamageTriggerData data : triggerData) {
             for (CardEffect effect : data.dealtDamageEffects()) {
                 CardEffect effectToAdd = effect;
-                if (effect instanceof DamageSourceControllerAwareEffect aware) {
+                if (effect instanceof DamageSourceAwareEffect aware) {
+                    effectToAdd = aware.bindDamageSource(
+                            data.sourceCard(), data.sourcePermanentId(), data.sourceControllerId(), data.damageDealt());
+                } else if (effect instanceof DamageSourceControllerAwareEffect aware) {
                     effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt());
                 } else if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
                         && burn.playerRelation() == PlayerRelation.OPPONENT) {
@@ -2928,19 +2979,26 @@ public class CombatDamageService {
                                          int damage, UUID defenderId, Permanent redirectTarget,
                                          CombatDamageState state) {
         withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
-                gameData, atk, atkStats, damage, defenderId, redirectTarget, state));
+                gameData, atk, atkStats, damage, defenderId, redirectTarget, state, null));
+    }
+
+    private void accumulatePlayerDamageToPlayer(GameData gameData, Permanent atk, CombatantStats atkStats,
+                                                int damage, UUID playerId, Permanent redirectTarget,
+                                                CombatDamageState state) {
+        withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
+                gameData, atk, atkStats, damage, playerId, redirectTarget, state, playerId));
     }
 
     private void accumulatePlayerDamageInternal(GameData gameData, Permanent atk, CombatantStats atkStats,
-                                                int damage, UUID defenderId, Permanent redirectTarget,
-                                                CombatDamageState state) {
+                                                 int damage, UUID defenderId, Permanent redirectTarget,
+                                                 CombatDamageState state, UUID forcedPlayerTarget) {
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
         if (sourceControllerId != null) {
             state.combatDamageDealerControllers.putIfAbsent(atk, sourceControllerId);
         }
 
         // Check if the attacker is attacking a planeswalker instead of a player
-        UUID attackTarget = atk.getAttackTarget();
+        UUID attackTarget = forcedPlayerTarget != null ? forcedPlayerTarget : atk.getAttackTarget();
         if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) {
             // CR 510.1b: If the planeswalker left the battlefield, the creature assigns no combat damage
             Permanent pw = gameQueryService.findPermanentById(gameData, attackTarget);
@@ -3136,6 +3194,9 @@ public class CombatDamageService {
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(
                     gameData, defenderId, null, atk.getId(), damage, true);
             processSourceRedirectDamage(gameData);
+            damage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
+                    gameData, defenderId, atk.getId(), damage);
+            processSourceRedirectDamage(gameData);
             // Martyrdom: redirect the next N combat damage to the defending player onto the creature
             // carrying the ability.
             damage = damagePreventionService.applyPlayerNextDamageRedirectShields(
@@ -3315,6 +3376,10 @@ public class CombatDamageService {
                 gameData, target, source.getId(), damage);
         processSourceRedirectDamage(gameData);
         if (damage <= 0) return;
+        damage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
+                gameData, target.getId(), source.getId(), damage);
+        processSourceRedirectDamage(gameData);
+        if (damage <= 0) return;
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
         processEyeForAnEyeReflections(gameData);
@@ -3491,6 +3556,12 @@ public class CombatDamageService {
                 .anyMatch(AssignCombatDamageAsThoughUnblockedEffect::mandatory);
     }
 
+    private boolean assignsCombatDamageAmongDefendingPlayerAndCreatures(GameData gameData,
+                                                                         Permanent attacker) {
+        return combatDamageAssignmentEffects(gameData, attacker).stream()
+                .anyMatch(CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect.class::isInstance);
+    }
+
     private List<CardEffect> combatDamageAssignmentEffects(GameData gameData, Permanent attacker) {
         List<CardEffect> effects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.STATIC));
         effects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.STATIC));
@@ -3595,9 +3666,16 @@ public class CombatDamageService {
         if (livingBlockerIndices.isEmpty()) {
             // Unblocked attacker that may assign its combat damage to a defending creature
             // (e.g. Cunning Giant). Prompt only when there is a defending creature to choose.
-            return canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
+            boolean attackingPlaneswalker = atk.getAttackTarget() != null
+                    && !gameData.playerIds.contains(atk.getAttackTarget());
+            return canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf)
+                    || (!atk.isBlockedWithoutBlockers()
+                    && assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk)
+                    && (attackingPlaneswalker || defBf.stream()
+                    .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent))));
         }
         if (mustAssignCombatDamageAsThoughUnblocked(gameData, atk)) return false;
+        if (assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk)) return true;
         if (livingBlockerIndices.size() >= 2) return true;
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) return true;
         if (assignsCombatDamageAsThoughUnblocked(gameData, atk)) return true;
@@ -3752,16 +3830,20 @@ public class CombatDamageService {
         }
 
         List<CombatDamageTarget> domainTargets = new ArrayList<>();
+        Set<UUID> domainTargetIds = new HashSet<>();
         for (int blkIdx : livingBlockers) {
             Permanent blk = defBf.get(blkIdx);
             int toughness = gameQueryService.getEffectiveToughness(gameData, blk);
             int damageTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
             domainTargets.add(new CombatDamageTarget(
                     blk.getId(), blk.getCard().getName(), toughness, damageTaken, false));
+            domainTargetIds.add(blk.getId());
         }
 
         boolean isTrample = gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE);
         boolean isDeathtouch = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
+        boolean assignsAmongDefendingPlayerAndCreatures =
+                assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk);
         // Unblocked attacker that may redirect its whole combat damage to one defending creature
         // (e.g. Cunning Giant): offer every defending creature plus the defending player.
         boolean unblockedRedirect = livingBlockers.isEmpty()
@@ -3769,23 +3851,43 @@ public class CombatDamageService {
                 && canRedirectUnblockedDamageToDefendingCreature(gameData, atk, defBf);
         if (unblockedRedirect) {
             for (Permanent def : defBf) {
-                if (gameQueryService.isCreature(gameData, def)) {
+                if (gameQueryService.isCreature(gameData, def) && domainTargetIds.add(def.getId())) {
                     domainTargets.add(new CombatDamageTarget(def.getId(), def.getCard().getName(),
                             gameQueryService.getEffectiveToughness(gameData, def), def.getMarkedDamage(), false));
                 }
             }
         }
+        if (assignsAmongDefendingPlayerAndCreatures) {
+            for (int defIdx = 0; defIdx < defBf.size(); defIdx++) {
+                Permanent def = defBf.get(defIdx);
+                if (gameQueryService.isCreature(gameData, def) && domainTargetIds.add(def.getId())) {
+                    domainTargets.add(new CombatDamageTarget(
+                            def.getId(), def.getCard().getName(),
+                            gameQueryService.getEffectiveToughness(gameData, def),
+                            def.getMarkedDamage() + p1.defDamageTaken.getOrDefault(defIdx, 0), false));
+                }
+            }
+            if (domainTargetIds.add(defenderId)) {
+                domainTargets.add(new CombatDamageTarget(
+                        defenderId, gameData.playerIdToName.get(defenderId), 0, 0, true));
+            }
+        }
+        UUID overflowTarget = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
+        boolean unblocked = livingBlockers.isEmpty() && !atk.isBlockedWithoutBlockers();
         boolean addOverflow = isTrample || assignsCombatDamageAsThoughUnblocked(gameData, atk)
-                || unblockedRedirect;
+                || unblockedRedirect
+                || (assignsAmongDefendingPlayerAndCreatures
+                && (unblocked || Objects.equals(overflowTarget, defenderId)));
         if (addOverflow) {
-            UUID overflowTarget = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
             if (gameData.playerIds.contains(overflowTarget)) {
                 String defenderName = gameData.playerIdToName.get(overflowTarget);
-                domainTargets.add(new CombatDamageTarget(
-                        overflowTarget, defenderName, 0, 0, true));
+                if (domainTargetIds.add(overflowTarget)) {
+                    domainTargets.add(new CombatDamageTarget(
+                            overflowTarget, defenderName, 0, 0, true));
+                }
             } else {
                 Permanent pw = gameQueryService.findPermanentById(gameData, overflowTarget);
-                if (pw != null) {
+                if (pw != null && domainTargetIds.add(overflowTarget)) {
                     domainTargets.add(new CombatDamageTarget(
                             overflowTarget, pw.getCard().getName(), 0, 0, true));
                 }
@@ -3807,7 +3909,8 @@ public class CombatDamageService {
         UUID assigningPlayer = attackerDamageAssigner(gameData, atk, livingBlockers, defBf, activeId, defenderId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
                 assigningPlayer, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
-                domainTargets, isTrample, isDeathtouch, unblockedRedirect));
+                domainTargets, isTrample, isDeathtouch,
+                unblockedRedirect && !assignsAmongDefendingPlayerAndCreatures));
     }
 
     /**

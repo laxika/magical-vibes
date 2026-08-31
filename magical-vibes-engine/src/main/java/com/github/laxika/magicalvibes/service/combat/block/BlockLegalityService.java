@@ -87,31 +87,33 @@ public class BlockLegalityService {
             if (source.isAttached()) {
                 attachedByHostId.computeIfAbsent(source.getAttachedTo(), id -> new ArrayList<>(1)).add(source);
             }
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof MatchingCreaturesCantBlockMatchingCreaturesEffect restriction) {
-                    globalBlockRestrictions.add(new GlobalBlockRestriction(restriction,
-                            FilterContext.of(gameData)
-                                    .withSourceControllerId(playerId)
-                                    .withSourceCardId(source.getOriginalCard().getId())));
-                }
-                if (effect instanceof LandwalkIgnoredForBlockingEffect) {
-                    landwalkIgnored[0] = true;
-                }
-                if (effect instanceof AttackOrBlockRestrictionEffect restriction
-                        && restriction.globallyCantAttackOrBlock() != null) {
-                    globalAttackOrBlockRestrictions.add(new GlobalAttackOrBlockRestriction(
-                            restriction.globallyCantAttackOrBlock(),
-                            FilterContext.of(gameData)
-                                    .withSourceControllerId(playerId)
-                                    .withSourceCardId(source.getOriginalCard().getId())));
-                }
-                if (effect instanceof TappedBlockPermissionEffect permission
-                        && permission.tappedBlockMatcher() != null) {
-                    tappedBlockPermissions.add(new BlockLegalityContext.TappedBlockPermission(
-                            permission,
-                            FilterContext.of(gameData)
-                                    .withSourceControllerId(playerId)
-                                    .withSourceCardId(source.getOriginalCard().getId())));
+            if (!source.isFaceDown()) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof MatchingCreaturesCantBlockMatchingCreaturesEffect restriction) {
+                        globalBlockRestrictions.add(new GlobalBlockRestriction(restriction,
+                                FilterContext.of(gameData)
+                                        .withSourceControllerId(playerId)
+                                        .withSourceCardId(source.getOriginalCard().getId())));
+                    }
+                    if (effect instanceof LandwalkIgnoredForBlockingEffect) {
+                        landwalkIgnored[0] = true;
+                    }
+                    if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                            && restriction.globallyCantAttackOrBlock() != null) {
+                        globalAttackOrBlockRestrictions.add(new GlobalAttackOrBlockRestriction(
+                                restriction.globallyCantAttackOrBlock(),
+                                FilterContext.of(gameData)
+                                        .withSourceControllerId(playerId)
+                                        .withSourceCardId(source.getOriginalCard().getId())));
+                    }
+                    if (effect instanceof TappedBlockPermissionEffect permission
+                            && permission.tappedBlockMatcher() != null) {
+                        tappedBlockPermissions.add(new BlockLegalityContext.TappedBlockPermission(
+                                permission,
+                                FilterContext.of(gameData)
+                                        .withSourceControllerId(playerId)
+                                        .withSourceCardId(source.getOriginalCard().getId())));
+                    }
                 }
             }
         });
@@ -402,23 +404,25 @@ public class BlockLegalityService {
             return true;
         }
         UUID controllerId = null;
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            Condition unless = null;
-            if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
-                unless = restriction.cantAttackOrBlockUnless();
-            } else if (effect instanceof BlockingRestrictionEffect restriction) {
-                unless = restriction.cantBlockUnless();
-            }
-            if (unless == null) {
-                continue;
-            }
-            if (controllerId == null) {
-                controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-                if (controllerId == null) return false;
-            }
-            if (!conditionEvaluationService.isMet(gameData, unless,
-                    ConditionContext.forPermanent(creature, controllerId))) {
-                return true;
+        if (!creature.isFaceDown()) {
+            for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+                Condition unless = null;
+                if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
+                    unless = restriction.cantAttackOrBlockUnless();
+                } else if (effect instanceof BlockingRestrictionEffect restriction) {
+                    unless = restriction.cantBlockUnless();
+                }
+                if (unless == null) {
+                    continue;
+                }
+                if (controllerId == null) {
+                    controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+                    if (controllerId == null) return false;
+                }
+                if (!conditionEvaluationService.isMet(gameData, unless,
+                        ConditionContext.forPermanent(creature, controllerId))) {
+                    return true;
+                }
             }
         }
         return false;
@@ -437,9 +441,11 @@ public class BlockLegalityService {
         boolean cantBeBlockedByPowerLessThanIslandCount = false;
         List<AttackerRestriction> restrictions = new ArrayList<>();
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof BlockabilityRestrictionEffect restriction) {
-                restrictions.add(new AttackerRestriction(attacker, restriction));
+        if (!attacker.isFaceDown()) {
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                    restrictions.add(new AttackerRestriction(attacker, restriction));
+                }
             }
         }
         for (CardEffect effect : bonus.grantedEffects()) {
@@ -448,13 +454,16 @@ public class BlockLegalityService {
             }
         }
         for (Permanent source : context.attachedTo(attacker)) {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof BlockabilityRestrictionEffect restriction
-                        && (restriction.unblockableIfDefenderControls() != null
-                        || restriction.blockableOnlyBy() != null
-                        || restriction.cantBeBlockedByCreaturesMatching() != null
-                        || restriction.requiresAllDefendingCreaturesToBlock())) {
-                    restrictions.add(new AttackerRestriction(source, restriction));
+            if (!source.isFaceDown()) {
+                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof BlockabilityRestrictionEffect restriction
+                            && (restriction.unblockableIfDefenderControls() != null
+                            || restriction.defenderControlsCreaturesSharingTypeMinimum() != null
+                            || restriction.blockableOnlyBy() != null
+                            || restriction.cantBeBlockedByCreaturesMatching() != null
+                            || restriction.requiresAllDefendingCreaturesToBlock())) {
+                        restrictions.add(new AttackerRestriction(source, restriction));
+                    }
                 }
             }
         }
@@ -464,6 +473,12 @@ public class BlockLegalityService {
                 if (restriction.unblockableIfDefenderControls() != null
                         && !(restriction.unblockableIfDefenderControlsIsLandwalk() && context.landwalkIgnored)
                         && defenderControls(context, attackerRestriction.source(), restriction.unblockableIfDefenderControls())) {
+                    unblockable = true;
+                }
+                if (restriction.defenderControlsCreaturesSharingTypeMinimum() != null
+                        && !gameQueryService.controlsCreaturesSharingCreatureType(
+                        gameData, defenderControllerId(context),
+                        restriction.defenderControlsCreaturesSharingTypeMinimum())) {
                     unblockable = true;
                 }
                 if (restriction.unblockableIfControllerCastHistoricSpellThisTurn()) {
@@ -536,30 +551,32 @@ public class BlockLegalityService {
         Integer cantBlockPowerAtLeast = null;
         if (!bonus.losesAllAbilities() && !blocker.isLosesAllAbilitiesUntilEndOfTurn()) {
             UUID blockerControllerId = gameQueryService.findPermanentController(gameData, blocker.getId());
-            for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
-                effect = staticEffectConditionResolver.resolve(gameData, blocker, blockerControllerId, effect);
-                if (effect == null) {
-                    continue;
-                }
-                if (effect instanceof CanBlockCreaturesWithShadowEffect) {
-                    blocksShadowAsThoughShadow = true;
-                }
-                if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
-                    if (attackerFilterRestrictions == null) {
-                        attackerFilterRestrictions = new ArrayList<>(2);
+            if (!blocker.isFaceDown()) {
+                for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+                    effect = staticEffectConditionResolver.resolve(gameData, blocker, blockerControllerId, effect);
+                    if (effect == null) {
+                        continue;
                     }
-                    attackerFilterRestrictions.add(restriction);
-                }
-                if (effect instanceof BlockingRestrictionEffect restriction) {
-                    if (restriction.cantBlock()) {
-                        cantBlockStatic = true;
+                    if (effect instanceof CanBlockCreaturesWithShadowEffect) {
+                        blocksShadowAsThoughShadow = true;
                     }
-                    if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
-                        cantBlockPowerAtLeastOwnToughnessStatic = true;
+                    if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
+                        if (attackerFilterRestrictions == null) {
+                            attackerFilterRestrictions = new ArrayList<>(2);
+                        }
+                        attackerFilterRestrictions.add(restriction);
                     }
-                    Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
-                    if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
-                        cantBlockPowerAtLeast = threshold;
+                    if (effect instanceof BlockingRestrictionEffect restriction) {
+                        if (restriction.cantBlock()) {
+                            cantBlockStatic = true;
+                        }
+                        if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
+                            cantBlockPowerAtLeastOwnToughnessStatic = true;
+                        }
+                        Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
+                        if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
+                            cantBlockPowerAtLeast = threshold;
+                        }
                     }
                 }
             }
@@ -643,6 +660,16 @@ public class BlockLegalityService {
                 .withSourcePermanentSnapshot(source);
         return context.defenderBattlefield.stream()
                 .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext));
+    }
+
+    private UUID defenderControllerId(BlockLegalityContext context) {
+        for (Permanent permanent : context.defenderBattlefield) {
+            UUID controllerId = context.gameData.findControllerOf(permanent);
+            if (controllerId != null) {
+                return controllerId;
+            }
+        }
+        return null;
     }
 
     private record AttackerRestriction(Permanent source, BlockabilityRestrictionEffect effect) {

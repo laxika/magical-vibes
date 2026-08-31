@@ -162,6 +162,7 @@ public class StackEntry {
     @Setter private UUID beheldCardOwnerId;
     @Setter private CardSubtype beholdChosenSubtype;
     @Setter private CardSubtype chosenCreatureType;
+    private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
@@ -230,6 +231,10 @@ public class StackEntry {
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
     private List<UUID> convokeCreatureIds = List.of();
+    /** Permanents chosen to pay a cost and retained for a later effect in the same ability. */
+    private List<UUID> chosenCostPermanentIds = List.of();
+    /** Last-known snapshots of permanents chosen to pay a tracked cost. */
+    private List<Permanent> chosenCostPermanentSnapshots = List.of();
     /** Last-known card characteristics of the permanent sacrificed as an additional cast cost. */
     private Card sacrificedCard;
     /** Card id of the creature exiled as an additional cost to cast this spell, when one was paid. */
@@ -591,6 +596,7 @@ public class StackEntry {
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
         this.chosenCreatureType = source.chosenCreatureType;
+        this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
@@ -623,6 +629,10 @@ public class StackEntry {
         this.triggeringPermanentToughnessAtTrigger = source.triggeringPermanentToughnessAtTrigger;
         this.convokeCreatureIds = source.convokeCreatureIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
+        this.chosenCostPermanentIds = source.chosenCostPermanentIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.chosenCostPermanentIds);
+        this.chosenCostPermanentSnapshots = source.chosenCostPermanentSnapshots.isEmpty()
+                ? List.of() : source.chosenCostPermanentSnapshots.stream().map(Permanent::new).toList();
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
@@ -732,6 +742,16 @@ public class StackEntry {
 
     public void setConvokeCreatureIds(List<UUID> convokeCreatureIds) {
         this.convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
+    }
+
+    public void setChosenCostPermanentIds(List<UUID> chosenCostPermanentIds) {
+        this.chosenCostPermanentIds = chosenCostPermanentIds == null
+                ? List.of() : List.copyOf(chosenCostPermanentIds);
+    }
+
+    public void setChosenCostPermanentSnapshots(List<Permanent> chosenCostPermanentSnapshots) {
+        this.chosenCostPermanentSnapshots = chosenCostPermanentSnapshots == null
+                ? List.of() : chosenCostPermanentSnapshots.stream().map(Permanent::new).toList();
     }
 
     public void setTargetCardIdsByEffect(Map<CardEffect, List<UUID>> targetCardIdsByEffect) {

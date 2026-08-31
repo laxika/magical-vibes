@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -196,9 +198,33 @@ public class CreatureControlService {
         }
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());
 
+        queueSelfControlChangeTriggers(gameData, permanent, derived);
+
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
+    }
+
+    private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
+        List<CardEffect> effects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+
+        for (CardEffect effect : effects) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s ability",
+                    List.of(effect),
+                    null,
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        }
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

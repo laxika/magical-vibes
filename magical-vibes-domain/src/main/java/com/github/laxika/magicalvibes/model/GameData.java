@@ -530,6 +530,9 @@ public class GameData {
     /** Progress state for each-player discard effects with an opponent life-loss fallback. */
     public final EachPlayerDiscardsOrLosesLifeState eachPlayerDiscardsOrLosesLife =
             new EachPlayerDiscardsOrLosesLifeState();
+    /** Progress state for each-player discard effects that check for discarded creature cards. */
+    public final EachPlayerDiscardsCreatureOrLosesLifeState eachPlayerDiscardsCreatureOrLosesLife =
+            new EachPlayerDiscardsCreatureOrLosesLifeState();
     /** Progress state for each player's optional graveyard exile and remaining-card life loss. */
     public final EachPlayerMayExileGraveyardCardsState eachPlayerMayExileGraveyardCards =
             new EachPlayerMayExileGraveyardCardsState();
@@ -584,6 +587,26 @@ public class GameData {
      *  random order, then draw a card." Keyed by drawing player id, value = X. Consumed on the next
      *  draw in {@code DrawService.resolveDrawCard} and cleared at end-of-turn cleanup. */
     public final Map<UUID, Integer> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
+    /** Words of Worship — one queued replacement per activation of "the next time you would draw a
+     *  card this turn, you gain 5 life instead". Consumed by {@code DrawService.resolveDrawCard} and
+     *  cleared at end-of-turn cleanup. */
+    public final Map<UUID, Integer> pendingNextDrawGainLife = new ConcurrentHashMap<>();
+    /** Words of Wilding - one queued replacement per activation of "the next time you would draw a
+     *  card this turn, create a 2/2 green Bear creature token instead". Each value is the source set
+     *  code used for the created token's art. */
+    public final Map<UUID, List<String>> pendingNextDrawCreateBears = new ConcurrentHashMap<>();
+    /** Words of War — one queued replacement per activation of "the next time you would draw a
+     *  card this turn, this enchantment deals 2 damage to the chosen target instead". Each queue
+     *  entry retains the activation's target and source card. */
+    public final Map<UUID, List<PendingNextDrawDamageReplacement>> pendingNextDrawDamage = new ConcurrentHashMap<>();
+    /** Words of Wind — one queued replacement per activation of the controller's next draw this
+     *  turn. Each replacement is consumed by {@code DrawService.resolveDrawCard} and cleared at
+     *  end-of-turn cleanup. */
+    public final Map<UUID, Integer> pendingNextDrawReturnPermanents = new ConcurrentHashMap<>();
+    /** Words of Waste — one queued replacement per activation of the controller's next draw this
+     *  turn. Each replacement is consumed by {@code DrawService.resolveDrawCard} and cleared at
+     *  end-of-turn cleanup. */
+    public final Map<UUID, Integer> pendingNextDrawDiscardOpponents = new ConcurrentHashMap<>();
     /** Mangara's Tome — one-shot, turn-scoped delayed replacements of a player's next draws this
      *  turn: "instead put the top card of the exiled pile into its owner's hand." Keyed by drawing
      *  player id, value = a queue of source permanent ids (one entry per activation, since each
@@ -714,6 +737,9 @@ public class GameData {
     /** Players for whom damage from matching source permanents is prevented this turn. */
     public final Map<UUID, Set<PermanentPredicate>> playersWithDamageFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
+    /** Players for whom the next damage from a matching source is prevented. */
+    public final Map<UUID, List<PermanentPredicate>> playerNextDamageFromMatchingSourcesPrevented =
+            new ConcurrentHashMap<>();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who, this turn, gain control of tokens that would be created under an opponent's control (Crafty Cutpurse). */
@@ -839,6 +865,9 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Martyrdom: redirect the next N damage this turn dealt to a protected player onto a fixed permanent (any source). */
     public final List<PlayerNextDamageRedirectShield> playerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
+    /** Glarecaster: redirect the next damage dealt to this permanent and/or its controller onto a fixed target. */
+    public final List<SourcePermanentAndControllerNextDamageRedirectShield>
+            sourcePermanentAndControllerNextDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** One-shot redirection shields (General's Regalia): the next damage event from a chosen source
      *  to the controller is dealt to a fixed creature instead. */
     public final List<PlayerSourceNextDamageRedirectShield> playerSourceNextDamageRedirectShields =
@@ -3547,6 +3576,11 @@ public class GameData {
         copy.eachPlayerDiscardsOrLosesLife.currentPlayerId = this.eachPlayerDiscardsOrLosesLife.currentPlayerId;
         copy.eachPlayerDiscardsOrLosesLife.discardPending = this.eachPlayerDiscardsOrLosesLife.discardPending;
         copy.eachPlayerDiscardsOrLosesLife.remaining.addAll(this.eachPlayerDiscardsOrLosesLife.remaining);
+        copy.eachPlayerDiscardsCreatureOrLosesLife.active = this.eachPlayerDiscardsCreatureOrLosesLife.active;
+        copy.eachPlayerDiscardsCreatureOrLosesLife.currentPlayerId = this.eachPlayerDiscardsCreatureOrLosesLife.currentPlayerId;
+        copy.eachPlayerDiscardsCreatureOrLosesLife.remaining.addAll(this.eachPlayerDiscardsCreatureOrLosesLife.remaining);
+        copy.eachPlayerDiscardsCreatureOrLosesLife.playersWhoDiscardedCreature
+                .addAll(this.eachPlayerDiscardsCreatureOrLosesLife.playersWhoDiscardedCreature);
         copy.eachPlayerMayExileGraveyardCards.active = this.eachPlayerMayExileGraveyardCards.active;
         copy.eachPlayerMayExileGraveyardCards.currentPlayerId = this.eachPlayerMayExileGraveyardCards.currentPlayerId;
         copy.eachPlayerMayExileGraveyardCards.remaining.addAll(this.eachPlayerMayExileGraveyardCards.remaining);
@@ -3669,6 +3703,8 @@ public class GameData {
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         this.playersWithDamageFromMatchingSourcesPrevented.forEach((k, v) ->
                 copy.playersWithDamageFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
+        this.playerNextDamageFromMatchingSourcesPrevented.forEach((k, v) ->
+                copy.playerNextDamageFromMatchingSourcesPrevented.put(k, new CopyOnWriteArrayList<>(v)));
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersGatheringTokensThisTurn.addAll(this.playersGatheringTokensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
@@ -3737,6 +3773,8 @@ public class GameData {
         copy.creatureControllerDamageRedirectShields.addAll(this.creatureControllerDamageRedirectShields);
         copy.turnSourceDamageRedirectToControllerShields.addAll(this.turnSourceDamageRedirectToControllerShields);
         copy.playerNextDamageRedirectShields.addAll(this.playerNextDamageRedirectShields);
+        copy.sourcePermanentAndControllerNextDamageRedirectShields.addAll(
+                this.sourcePermanentAndControllerNextDamageRedirectShields);
         copy.playerSourceNextDamageRedirectShields.addAll(this.playerSourceNextDamageRedirectShields);
         copy.playerNextInstantOrSorceryDamageRedirectShields.addAll(this.playerNextInstantOrSorceryDamageRedirectShields);
         copy.sourceNextCombatDamageToOpponentRedirectShields.addAll(this.sourceNextCombatDamageToOpponentRedirectShields);
@@ -3820,6 +3858,14 @@ public class GameData {
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
         copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
+        copy.pendingNextDrawGainLife.putAll(this.pendingNextDrawGainLife);
+        this.pendingNextDrawCreateBears.forEach((playerId, sourceSetCodes) ->
+                copy.pendingNextDrawCreateBears.put(playerId,
+                        Collections.synchronizedList(new ArrayList<>(sourceSetCodes))));
+        this.pendingNextDrawDamage.forEach((playerId, replacements) ->
+                copy.pendingNextDrawDamage.put(playerId, Collections.synchronizedList(new ArrayList<>(replacements))));
+        copy.pendingNextDrawReturnPermanents.putAll(this.pendingNextDrawReturnPermanents);
+        copy.pendingNextDrawDiscardOpponents.putAll(this.pendingNextDrawDiscardOpponents);
         this.pendingNextDrawFromExiledPile.forEach((k, v) ->
                 copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.pendingMysticReflections.addAll(this.pendingMysticReflections);

@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -9,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -25,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfD
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
@@ -63,6 +68,10 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -73,6 +82,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -94,6 +104,13 @@ public class DrawService {
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandEffectHandler;
+    private final PlayerInteractionSupport playerInteractionSupport;
+    private final DamageSupport damageSupport;
+    private final PermanentControlSupport permanentControlSupport;
+
+    private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
+            "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
 
     public DrawService(GameQueryService gameQueryService,
                        ExileService exileService,
@@ -104,7 +121,11 @@ public class DrawService {
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
                        @Lazy LifeSupport lifeSupport,
                        @Lazy GraveyardService graveyardService,
-                       ConditionEvaluationService conditionEvaluationService) {
+                       ConditionEvaluationService conditionEvaluationService,
+                       @Lazy EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandEffectHandler,
+                       @Lazy PlayerInteractionSupport playerInteractionSupport,
+                       @Lazy DamageSupport damageSupport,
+                       @Lazy PermanentControlSupport permanentControlSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -115,6 +136,10 @@ public class DrawService {
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.eachPlayerReturnsPermanentToHandEffectHandler = eachPlayerReturnsPermanentToHandEffectHandler;
+        this.playerInteractionSupport = playerInteractionSupport;
+        this.damageSupport = damageSupport;
+        this.permanentControlSupport = permanentControlSupport;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -168,6 +193,57 @@ public class DrawService {
                 gameData.pendingNextDrawFromExiledPile.remove(playerId);
             }
             resolveNextDrawFromExiledPile(gameData, playerId, pileSourceId);
+            return;
+        }
+
+        // Words of Worship — one queued activation replaces one draw with gaining 5 life.
+        Integer pendingGainLife = gameData.pendingNextDrawGainLife.remove(playerId);
+        if (pendingGainLife != null) {
+            if (pendingGainLife > 1) {
+                gameData.pendingNextDrawGainLife.put(playerId, pendingGainLife - 1);
+            }
+            lifeSupport.applyGainLife(gameData, playerId, 5, "Words of Worship");
+            return;
+        }
+
+        // Words of Wilding - one queued activation replaces one draw with creating a Bear token.
+        List<String> pendingCreateBears = gameData.pendingNextDrawCreateBears.get(playerId);
+        if (pendingCreateBears != null && !pendingCreateBears.isEmpty()) {
+            String sourceSetCode = pendingCreateBears.removeFirst();
+            if (pendingCreateBears.isEmpty()) {
+                gameData.pendingNextDrawCreateBears.remove(playerId);
+            }
+            permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR,
+                    1, sourceSetCode);
+            return;
+        }
+
+        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
+        if (pendingDamage != null && !pendingDamage.isEmpty()) {
+            PendingNextDrawDamageReplacement replacement = pendingDamage.removeFirst();
+            if (pendingDamage.isEmpty()) {
+                gameData.pendingNextDrawDamage.remove(playerId);
+            }
+            resolveNextDrawDamage(gameData, playerId, replacement);
+            return;
+        }
+
+        Integer pendingReturnPermanents = gameData.pendingNextDrawReturnPermanents.remove(playerId);
+        if (pendingReturnPermanents != null) {
+            if (pendingReturnPermanents > 1) {
+                gameData.pendingNextDrawReturnPermanents.put(playerId, pendingReturnPermanents - 1);
+            }
+            eachPlayerReturnsPermanentToHandEffectHandler.beginReplacement(gameData, "Words of Wind");
+            return;
+        }
+
+        Integer pendingDiscardOpponents = gameData.pendingNextDrawDiscardOpponents.remove(playerId);
+        if (pendingDiscardOpponents != null) {
+            if (pendingDiscardOpponents > 1) {
+                gameData.pendingNextDrawDiscardOpponents.put(playerId, pendingDiscardOpponents - 1);
+            }
+            playerInteractionSupport.startNextEachPlayerDiscard(gameData,
+                    DiscardFollowUp.eachPlayer(opponentsInApnapOrder(gameData, playerId), playerId, 1));
             return;
         }
 
@@ -360,6 +436,35 @@ public class DrawService {
         }
 
         performDrawCard(gameData, playerId);
+    }
+
+    private List<UUID> opponentsInApnapOrder(GameData gameData, UUID controllerId) {
+        List<UUID> opponents = new ArrayList<>();
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId != null && !activePlayerId.equals(controllerId)
+                && gameData.playerIds.contains(activePlayerId)) {
+            opponents.add(activePlayerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId) && !playerId.equals(activePlayerId)
+                    && gameData.playerIds.contains(playerId)) {
+                opponents.add(playerId);
+            }
+        }
+        return opponents;
+    }
+
+    private void resolveNextDrawDamage(GameData gameData, UUID playerId,
+                                       PendingNextDrawDamageReplacement replacement) {
+        StackEntry damageEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                replacement.sourceCard(),
+                playerId,
+                replacement.sourceCard().getName() + "'s draw replacement",
+                List.of(),
+                replacement.targetId(),
+                replacement.sourcePermanentId());
+        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, replacement.targetId(), 2, false);
     }
 
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {

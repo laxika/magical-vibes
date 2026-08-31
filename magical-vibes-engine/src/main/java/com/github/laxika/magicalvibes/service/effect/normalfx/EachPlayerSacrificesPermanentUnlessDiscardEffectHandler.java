@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,13 +38,21 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        EachPlayerSacrificesPermanentUnlessDiscardEffect sacrificeEffect =
+                (EachPlayerSacrificesPermanentUnlessDiscardEffect) effect;
         EachPlayerSacrificeOrDiscardState state = gameData.eachPlayerSacrificeOrDiscard;
         String sourceName = entry.getCard().getName();
 
         if (!state.active) {
             state.reset();
             state.active = true;
-            state.remaining.addAll(apnapPlayers(gameData));
+            if (sacrificeEffect.repeatForEachCardDrawn()) {
+                for (int i = 0; i < entry.getDrawnCardIdsThisResolution().size(); i++) {
+                    state.remaining.add(entry.getControllerId());
+                }
+            } else {
+                state.remaining.addAll(apnapPlayers(gameData));
+            }
             advance(gameData, entry, sourceName);
             return;
         }
@@ -66,7 +76,7 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
             }
             state.currentPlayerId = playerId;
 
-            boolean hasPermanent = !permanentIds(gameData, playerId).isEmpty();
+            boolean hasPermanent = !permanentIds(gameData, playerId, entry.getControllerId()).isEmpty();
             boolean hasCard = hasCardToDiscard(gameData, playerId);
             if (!hasPermanent && !hasCard) {
                 continue;
@@ -101,7 +111,7 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
         UUID playerId = state.currentPlayerId;
 
         if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE.equals(mode)) {
-            List<UUID> ids = permanentIds(gameData, playerId);
+            List<UUID> ids = permanentIds(gameData, playerId, entry.getControllerId());
             if (ids.isEmpty()) {
                 advance(gameData, entry, sourceName);
                 return;
@@ -142,8 +152,11 @@ public class EachPlayerSacrificesPermanentUnlessDiscardEffectHandler implements 
         advance(gameData, entry, sourceName);
     }
 
-    private List<UUID> permanentIds(GameData gameData, UUID playerId) {
-        return destructionSupport.collectPermanentIds(gameData, playerId, permanent -> true);
+    private List<UUID> permanentIds(GameData gameData, UUID playerId, UUID sourceControllerId) {
+        return gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)
+                ? destructionSupport.collectPermanentIds(gameData, playerId,
+                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
+                : List.of();
     }
 
     private boolean hasCardToDiscard(GameData gameData, UUID playerId) {

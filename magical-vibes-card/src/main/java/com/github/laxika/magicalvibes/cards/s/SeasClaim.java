@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "9ED", collectorNumber = "97")
+@CardRegistration(set = "ONS", collectorNumber = "113")
 public class SeasClaim extends Card {
 
     public SeasClaim() {

@@ -201,6 +201,7 @@ on what the mana may pay for.
 | Mass exile + return at step (target player, filtered) | `s/SuddenDisappearance.java` | FlickerEffect.exilePlayersPermanentsReturnAtStep(PermanentNotPredicate(PermanentIsLandPredicate()), TurnStep.END_STEP) — exile all nonland permanents target player controls, return at next end step |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
+| X draw + per-card sacrifice-or-discard | `r/ReadTheRunes.java` | DrawCardEffect(XValue) + `EachPlayerSacrificesPermanentUnlessDiscardEffect.forEachCardDrawn()` |
 | Draw + any-player pay gate + discard | `r/RhysticScrying.java` | DrawCardEffect(3) + MayPayManaEffect("{2}", DiscardEffect(3, CONTROLLER), ..., MayPayPayer.ANY_PLAYER) |
 | Land: choose color, then any-player pay gate prevents mana | `r/RhysticCave.java` | `ChooseColorAtResolutionEffect` + `MayPayManaEffect("{1}", ClearChosenColorEffect(), ..., MayPayPayer.ANY_PLAYER, AwardManaOfChosenColorEffect())`; the ability is intentionally non-mana so it resolves on the stack and cannot be activated during spell/ability payment |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |

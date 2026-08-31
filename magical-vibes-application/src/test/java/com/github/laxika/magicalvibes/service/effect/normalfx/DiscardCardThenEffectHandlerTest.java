@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -75,5 +77,30 @@ class DiscardCardThenEffectHandlerTest extends AbstractPlayerInteractionHandlerT
                 anyString(), anyInt(), any());
         verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                 logEntry.plainText().contains("no a land card to discard")));
+    }
+
+    @Test
+    @DisplayName("Begins discard for the targeted permanent's controller")
+    void beginsDiscardForTargetPermanentController() {
+        Card card = createCard("Chain of Plasma");
+        Card discard = createCard("Bear");
+        gd.playerHands.get(player2Id).add(discard);
+        UUID targetId = UUID.randomUUID();
+        when(gameQueryService.findPermanentController(gd, targetId)).thenReturn(player2Id);
+
+        CreateTokenEffect copy = new CreateTokenEffect("Copy", 1, 1,
+                CardColor.BLUE, List.of(CardSubtype.ILLUSION), Set.of(), Set.of());
+        DiscardCardThenEffect effect = new DiscardCardThenEffect(
+                null, copy, "a card", DiscardRecipient.TARGET_PLAYER_OR_PERMANENT_CONTROLLER, true);
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), targetId);
+
+        resolveEffect(gd, entry, effect);
+
+        assertThat(gd.discardCausedByOpponent).isTrue();
+        verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id),
+                argThat((List<Integer> indices) -> indices.equals(List.of(0))),
+                anyString(), eq(1),
+                argThat((DiscardFollowUp f) -> f.thenEffect() == copy
+                        && targetId.equals(f.thenEffectTargetId())));
     }
 }

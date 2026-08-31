@@ -485,8 +485,14 @@ public class InteractionPromptProjectionRegistry {
                 .map(cardViewFactory::create)
                 .toList();
         return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews, 1,
-                "You may put an " + interaction.label() + " card from your hand onto the battlefield.");
+                new ArrayList<>(interaction.validCardIds()), cardViews,
+                interaction.anyNumber() && !interaction.repeatUntilNoOne()
+                        ? interaction.validCardIds().size() : 1,
+                interaction.anyNumber() && !interaction.repeatUntilNoOne()
+                        ? "You may put any number of " + interaction.label()
+                                + " cards from your hand onto the battlefield."
+                        : "You may put an " + interaction.label()
+                                + " card from your hand onto the battlefield.");
     }
 
     private InteractionPromptMessage projectRevealAnyNumberOfCardsFromHandChoice(

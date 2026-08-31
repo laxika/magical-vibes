@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -107,6 +108,7 @@ public class LibraryChoiceHandlerService {
     private final DrawService drawService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
@@ -1959,6 +1961,11 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PendingAnimalMagnetismChoice.class)) {
+            handleAnimalMagnetismRevealChoice(gameData, allRevealedCards, cardIds);
+            return;
+        }
+
         // Karn, Scion of Urza -1: controller chose which silver-counter card to return
         if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
             handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
@@ -2485,6 +2492,12 @@ public class LibraryChoiceHandlerService {
     private void handleMurmursFromBeyondRevealChoice(GameData gameData, List<Card> allRevealedCards,
                                                      List<UUID> selectedCardIds) {
         murmursFromBeyondEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
+        finishSearchAndResume(gameData);
+    }
+
+    private void handleAnimalMagnetismRevealChoice(GameData gameData, List<Card> allRevealedCards,
+                                                   List<UUID> selectedCardIds) {
+        animalMagnetismEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
         finishSearchAndResume(gameData);
     }
 

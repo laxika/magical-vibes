@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "9ED", collectorNumber = "59")
+@CardRegistration(set = "ONS", collectorNumber = "63")
 public class Annex extends Card {
 
     public Annex() {

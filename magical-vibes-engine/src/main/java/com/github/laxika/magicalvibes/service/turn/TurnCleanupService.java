@@ -231,6 +231,7 @@ public class TurnCleanupService {
         gameData.turnDamageRedirectToCreatureShields.clear();
         gameData.turnSourceDamageRedirectToControllerShields.clear();
         gameData.playerNextDamageRedirectShields.clear();
+        gameData.sourcePermanentAndControllerNextDamageRedirectShields.clear();
         gameData.playerNextInstantOrSorceryDamageRedirectShields.clear();
         gameData.sourceNextCombatDamageToOpponentRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
@@ -273,6 +274,7 @@ public class TurnCleanupService {
         gameData.playersWithAllPlayerDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
+        gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
@@ -303,6 +305,11 @@ public class TurnCleanupService {
         gameData.drawReplacementTargetToController.clear();
         gameData.drawStepFirstDrawTaken.clear();
         gameData.pendingNextDrawLookAtTop.clear();
+        gameData.pendingNextDrawGainLife.clear();
+        gameData.pendingNextDrawCreateBears.clear();
+        gameData.pendingNextDrawDamage.clear();
+        gameData.pendingNextDrawReturnPermanents.clear();
+        gameData.pendingNextDrawDiscardOpponents.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();

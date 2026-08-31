@@ -30,6 +30,7 @@ import java.util.Set;
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  * @param sourcePredicate damage sources matching this predicate for
  *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
  *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
@@ -99,7 +100,8 @@ public record PreventDamageEffect(
         if (gainLife && scope != PreventionScope.NEXT_TO_TARGET) {
             throw new IllegalArgumentException("gainLife is exactly the NEXT_TO_TARGET parameter: " + scope);
         }
-        boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
+        boolean acceptsSourcePredicate = scope == PreventionScope.NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
                 || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
         if ((sourcePredicate != null) != acceptsSourcePredicate) {
             throw new IllegalArgumentException(
@@ -292,6 +294,13 @@ public record PreventDamageEffect(
     public static PreventDamageEffect allToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
         return new PreventDamageEffect(
                 PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
+    }
+
+    /** "Prevent the next damage that would be dealt to you by a source matching {@code sourcePredicate}." */
+    public static PreventDamageEffect nextToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES,
                 null, false, null, null, null, false, sourcePredicate);
     }
 

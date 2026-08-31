@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ORI", collectorNumber = "151")
+@CardRegistration(set = "ONS", collectorNumber = "205")
 public class GoblinPiledriver extends Card {
 
     public GoblinPiledriver() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
@@ -59,6 +60,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
@@ -77,6 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -208,7 +212,8 @@ class StepTriggerServiceTest {
         // mock would silently return nulls and break them.
         TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(
                 gameQueryService, predicateEvaluationService, targetLegalityService);
-        ValidTargetService validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
+        ValidTargetService validTargetService = new ValidTargetService(
+                gameQueryService, predicateEvaluationService, targetLegalityService, null, null, null);
         sut = new StepTriggerService(
                 drawService,
                 gameQueryService,
@@ -544,6 +549,37 @@ class StepTriggerServiceTest {
 
             // processNextUpkeepPlayerTarget consumes the pending trigger and asks for target selection
             verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Enchanted creature controller chooses an opponent for a control-changing upkeep effect")
+        void enchantedCreatureControllerChoosesControlChangeOpponent() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Custody Battle");
+            card.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+                    new ForcedCostOrElseEffect(
+                            new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
+                            List.of(new TargetPlayerGainsControlOfEnchantedPermanentEffect()), true));
+            Permanent host = new Permanent(createCardWithName("Host Creature"));
+            Permanent aura = new Permanent(card);
+            aura.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player2Id).add(aura);
+
+            when(gameQueryService.findPermanentController(gd, host.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(targetLegalityService.matchesPlayerPredicate(
+                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), isNull()))
+                    .thenReturn(true);
+            when(targetLegalityService.matchesPlayerPredicate(
+                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), isNull()))
+                    .thenReturn(false);
+
+            sut.handleUpkeepTriggers(gd);
+
+            verify(playerInputService).beginAnyTargetChoice(
+                    eq(gd), eq(player1Id), any(),
+                    argThat((List<UUID> ids) -> ids.equals(List.of(player2Id))), any());
         }
 
         @Test

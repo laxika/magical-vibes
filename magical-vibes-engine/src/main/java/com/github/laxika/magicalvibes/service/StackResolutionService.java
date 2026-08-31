@@ -769,7 +769,7 @@ public class StackResolutionService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
-                        subtypeChoice.allowedSubtypes());
+                        subtypeChoice.allowedSubtypes(), false, subtypeChoice.opponentChooses());
             }
 
             // Check if enchantment has "as enters, choose odd or even" (Ashling's Prerogative)
@@ -886,7 +886,7 @@ public class StackResolutionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
-                    subtypeChoice.allowedSubtypes());
+                    subtypeChoice.allowedSubtypes(), false, subtypeChoice.opponentChooses());
         }
 
         // Check if artifact creature has "as this creature enters, it becomes your choice of ..."

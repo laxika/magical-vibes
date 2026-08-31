@@ -267,6 +267,22 @@ public class ActivatedAbilityExecutionService {
                                              boolean markAsNonTargetingForSacCreatureCost,
                                              List<UUID> targetIds,
                                              Map<UUID, Integer> damageAssignments) {
+        completeActivationAfterCosts(gameData, player, permanent, ability, abilityEffects, effectiveXValue,
+                targetId, targetZone, markAsNonTargetingForSacCreatureCost, targetIds, damageAssignments, List.of());
+    }
+
+    public void completeActivationAfterCosts(GameData gameData,
+                                             Player player,
+                                             Permanent permanent,
+                                             ActivatedAbility ability,
+                                             List<CardEffect> abilityEffects,
+                                             int effectiveXValue,
+                                             UUID targetId,
+                                             Zone targetZone,
+                                             boolean markAsNonTargetingForSacCreatureCost,
+                                             List<UUID> targetIds,
+                                             Map<UUID, Integer> damageAssignments,
+                                             List<UUID> chosenCostPermanentIds) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
@@ -597,7 +613,7 @@ public class ActivatedAbilityExecutionService {
                 .map(SacrificeCreatureCost.class::cast)
                 .anyMatch(SacrificeCreatureCost::recordSacrificedPermanentSnapshot);
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
-                targetZone, targetIds, damageAssignments, tracksSacrificedCard,
+                targetZone, targetIds, damageAssignments, chosenCostPermanentIds, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
@@ -1635,6 +1651,7 @@ public class ActivatedAbilityExecutionService {
                                     Zone targetZone,
                                     List<UUID> targetIds,
                                     Map<UUID, Integer> damageAssignments,
+                                    List<UUID> chosenCostPermanentIds,
                                     boolean tracksSacrificedCard,
                                     boolean recordsSacrificedPermanentSnapshot) {
         Zone effectiveTargetZone = targetZone;
@@ -1694,6 +1711,16 @@ public class ActivatedAbilityExecutionService {
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
+        List<UUID> trackedIds = chosenCostPermanentIds == null ? List.of() : List.copyOf(chosenCostPermanentIds);
+        stackEntry.setChosenCostPermanentIds(trackedIds);
+        List<Permanent> trackedSnapshots = new ArrayList<>();
+        for (UUID trackedId : trackedIds) {
+            Permanent trackedPermanent = gameQueryService.findPermanentById(gameData, trackedId);
+            if (trackedPermanent != null) {
+                trackedSnapshots.add(new Permanent(trackedPermanent));
+            }
+        }
+        stackEntry.setChosenCostPermanentSnapshots(trackedSnapshots);
         if (tracksSacrificedCard) {
             stackEntry.setSacrificedCardSnapshot(permanent.getChosenCard());
         }

@@ -10,6 +10,8 @@ public enum EffectSlot {
      *  (CR 603.3). */
     ON_SELF_TAPPED_FOR_MANA,
     ON_ENTER_BATTLEFIELD,
+    /** Triggers when this permanent changes control to another player. */
+    ON_SELF_BECOMES_CONTROLLED,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** "Whenever a creature or enchantment enters under your control" for a turn-scoped global trigger. */
@@ -142,6 +144,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DISCARDS,
     /** Triggers once for a discard event in which the controller discards one or more cards. */
     ON_CONTROLLER_DISCARD_EVENT,
+    /** Triggers whenever any player cycles a card. */
+    ON_ANY_PLAYER_CYCLES,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,
@@ -498,6 +502,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Singularity). Filter which permanents trigger it with a {@code TriggeringCardConditionalEffect}
      *  wrapper. Used by Nature's Wrath / Eye of Singularity. */
     ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,
+    /** Triggers whenever any player gains one or more life. */
+    ON_ANY_PLAYER_GAINS_LIFE,
     ON_CONTROLLER_GAINS_LIFE,
     /** Triggers whenever this permanent's controller gets one or more energy counters. */
     ON_CONTROLLER_GETS_ENERGY,

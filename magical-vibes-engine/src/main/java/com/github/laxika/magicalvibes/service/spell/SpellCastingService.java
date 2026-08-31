@@ -94,6 +94,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.DeliverUntoEvilEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
@@ -2131,10 +2132,13 @@ public class SpellCastingService {
                 }
                 ManaCost sacrificedManaCost = computeSacrificedManaCost(
                         gameData, altCast, alternateCostSacrificePermanentIds);
+                int faceDownCostModifier = card.getMorphCost() == null ? 0
+                        : castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue, true);
                 boolean canPay = altCast.reduceManaBySacrificedManaCost()
                         ? cost.canPayAfterReduction(pool, sacrificedManaCost)
                         : cost.canPay(pool, alternateCostXArgument(cost, effectiveXValue,
-                                computeEmergeManaReduction(gameData, altCast, alternateCostSacrificePermanentIds)));
+                                computeEmergeManaReduction(gameData, altCast, alternateCostSacrificePermanentIds))
+                                + faceDownCostModifier);
                 if (!canPay) {
                     throw new IllegalStateException("Not enough mana to pay alternate casting cost");
                 }
@@ -2276,7 +2280,8 @@ public class SpellCastingService {
         boolean needsImmediateGraveyardEffectTargeting = graveyardTargetingSource.stream()
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect)
                         && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToHandEffect)
-                        && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect))
+                        && !(e instanceof ReturnUpToOneOfEachFilterFromGraveyardToDestinationsEffect)
+                        && !(e instanceof ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         Set<GraveyardSearchScope> graveyardScopes = graveyardTargetingSource.stream()
                 .flatMap(e -> e.targetSpec().graveyardScope().stream())
@@ -3064,6 +3069,12 @@ public class SpellCastingService {
                             .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
                             .findFirst().orElse(null);
 
+            ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect chosenTypeGraveyardToHandEffect =
+                    filteredSpellEffects.stream()
+                            .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
+                            .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
+                            .findFirst().orElse(null);
+
             ReturnUpToOneOfEachFilterFromGraveyardToHandEffect oneOfEachFilterGraveyardEffect =
                     (ReturnUpToOneOfEachFilterFromGraveyardToHandEffect) filteredSpellEffects.stream()
                             .filter(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::isInstance)
@@ -3302,6 +3313,23 @@ public class SpellCastingService {
                 if (matchingCount > 0) {
                     graveyardTargetingService.handleUpToOneOfEachFilterGraveyardSpellTargeting(
                             gameData, playerId, card, entryType, oneOfEachFilterGraveyardEffect, filteredSpellEffects);
+                    return;
+                }
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, Map.of(), null, List.of(), List.of()
+                ));
+            } else if (chosenTypeGraveyardToHandEffect != null) {
+                CardPredicate targetFilter = chosenTypeGraveyardToHandEffect.filter(chosenCreatureType);
+                long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                                c, targetFilter, card.getId(), gameData, playerId))
+                        .count();
+                if (matchingCount > 0) {
+                    gameData.graveyardTargetOperation.chosenCreatureType = chosenCreatureType;
+                    graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
+                            entryType, targetFilter, chosenTypeGraveyardToHandEffect.maxTargets(), filteredSpellEffects);
                     return;
                 }
                 gameData.stack.add(new StackEntry(
@@ -3913,10 +3941,25 @@ public class SpellCastingService {
         PermanentPredicate chosenTypeFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(chosenCreatureType)));
+        ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect chosenTypeGraveyardEffect = effects.stream()
+                .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::cast)
+                .findFirst().orElse(null);
         List<UUID> announcedTargets = !targetIds.isEmpty()
                 ? targetIds
                 : targetId != null ? List.of(targetId) : List.of();
         for (UUID announcedTarget : announcedTargets) {
+            Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, announcedTarget);
+            if (chosenTypeGraveyardEffect != null && graveyardCard != null) {
+                UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, announcedTarget);
+                if (!playerId.equals(graveyardOwnerId)
+                        || !predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, chosenTypeGraveyardEffect.filter(chosenCreatureType),
+                        null, gameData, graveyardOwnerId)) {
+                    throw new IllegalStateException("Targets must have the chosen creature type");
+                }
+                continue;
+            }
             Permanent target = gameQueryService.findPermanentById(gameData, announcedTarget);
             if (target == null || !predicateEvaluationService.matchesPermanentPredicate(
                     gameData, target, chosenTypeFilter)) {
@@ -8763,6 +8806,8 @@ public class SpellCastingService {
         AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
                 .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
         UUID playerId = player.getId();
+        int faceDownCostModifier = card.getMorphCost() == null ? 0
+                : castingCostService.getCastCostModifier(gameData, playerId, card, xValue, true);
 
         // Snapshot emerge reduction before sacrifice (creature must still be on the battlefield
         // when its mana value is read — CR 702.123).
@@ -8952,7 +8997,7 @@ public class SpellCastingService {
         if (altCast.reduceManaBySacrificedManaCost()) {
             cost.payAfterReduction(pool, sacrificedManaCost);
         } else {
-            cost.pay(pool, alternateCostXArgument(cost, xValue, emergeReduction));
+            cost.pay(pool, alternateCostXArgument(cost, xValue, emergeReduction) + faceDownCostModifier);
         }
         int manaSpent = before - pool.getTotalAllMana();
         gameLogService.append(gameData, GameLog.textCardText(

@@ -245,7 +245,7 @@ public class AsEntersInteractionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(),
-                    subtypeChoice.allowedSubtypes());
+                    subtypeChoice.allowedSubtypes(), false, subtypeChoice.opponentChooses());
             return;
         }
 

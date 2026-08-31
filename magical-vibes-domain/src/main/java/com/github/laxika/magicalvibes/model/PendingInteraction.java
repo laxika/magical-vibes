@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -24,6 +25,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingOpponentChoosesCardToHandRestToGraveyard,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingMurmursFromBeyondChoice,
+        PendingAnimalMagnetismChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
         PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
@@ -871,7 +873,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                               com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
                                               String label, String cardName,
                                               boolean repeatUntilNoOne, UUID startingPlayerId,
-                                              boolean cardPutThisRound)
+                                              boolean cardPutThisRound, boolean anyNumber)
             implements PendingInteraction {
 
         public EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -880,7 +882,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                   com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
                                                   String label, String cardName) {
             this(playerId, validCardIds, remainingPlayerIds, chosenCardIds, predicate, label, cardName,
-                    false, null, false);
+                    false, null, false, false);
+        }
+
+        public EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                  java.util.List<UUID> remainingPlayerIds,
+                                                  java.util.List<UUID> chosenCardIds,
+                                                  com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
+                                                  String label, String cardName,
+                                                  boolean repeatUntilNoOne, UUID startingPlayerId,
+                                                  boolean cardPutThisRound) {
+            this(playerId, validCardIds, remainingPlayerIds, chosenCardIds, predicate, label, cardName,
+                    repeatUntilNoOne, startingPlayerId, cardPutThisRound, false);
         }
 
         public EachPlayerMayPutCardFromHandChoice {
@@ -896,7 +909,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds, 0,
+                    anyNumber && !repeatUntilNoOne ? validCardIds.size() : 1);
         }
     }
 
@@ -918,9 +932,22 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    record EachPlayerRevealContext(java.util.List<UUID> remainingPlayerIds,
+                                   java.util.List<UUID> playerOrder,
+                                   java.util.Map<UUID, Integer> revealedCounts,
+                                   CardPredicate filter, CreateTokenEffect token) {
+
+        public EachPlayerRevealContext {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            playerOrder = java.util.List.copyOf(playerOrder);
+            revealedCounts = java.util.Map.copyOf(revealedCounts);
+        }
+    }
+
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                 String cardName, ManaAbilityRevealContext manaAbilityContext,
-                                                ActivatedAbilityRevealContext activatedAbilityContext)
+                                                ActivatedAbilityRevealContext activatedAbilityContext,
+                                                EachPlayerRevealContext eachPlayerRevealContext)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
@@ -929,12 +956,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                    String cardName) {
-            this(playerId, validCardIds, cardName, null, null);
+            this(playerId, validCardIds, cardName, null, null, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                    String cardName, ManaAbilityRevealContext manaAbilityContext) {
-            this(playerId, validCardIds, cardName, manaAbilityContext, null);
+            this(playerId, validCardIds, cardName, manaAbilityContext, null, null);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, ManaAbilityRevealContext manaAbilityContext,
+                                                   ActivatedAbilityRevealContext activatedAbilityContext) {
+            this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext, null);
         }
 
         @Override

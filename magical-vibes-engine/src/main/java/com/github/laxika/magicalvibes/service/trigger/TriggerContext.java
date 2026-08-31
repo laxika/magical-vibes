@@ -80,6 +80,9 @@ public sealed interface TriggerContext {
     /** Context for a discard event containing one or more cards. */
     record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
 
+    /** Context for cycling triggers. */
+    record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
@@ -142,7 +145,12 @@ public sealed interface TriggerContext {
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */
-    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
+    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
+                            Card sourceCard, UUID sourcePermanentId) implements TriggerContext {
+        public DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
+            this(damagedCreature, damageDealt, damageSourceControllerId, null, null);
+        }
+    }
 
     record OpponentPermanentDealtExcessDamage(Permanent damagedPermanent,
                                               UUID damagedPermanentControllerId,

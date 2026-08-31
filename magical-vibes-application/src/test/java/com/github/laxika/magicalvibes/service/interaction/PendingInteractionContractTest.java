@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -63,6 +64,7 @@ class PendingInteractionContractTest {
             PendingKarnScionRevealChoice.class,
             PendingOpponentChoosesCardToHandRestToGraveyard.class,
             PendingMurmursFromBeyondChoice.class,
+            PendingAnimalMagnetismChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
             PendingDubiousChallengeChoice.class,

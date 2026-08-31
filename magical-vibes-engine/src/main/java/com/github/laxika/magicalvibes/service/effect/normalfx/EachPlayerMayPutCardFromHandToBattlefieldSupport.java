@@ -65,7 +65,8 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
             List<UUID> remainingPlayerIds = new ArrayList<>(orderedPlayerIds.subList(i + 1, orderedPlayerIds.size()));
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.EachPlayerMayPutCardFromHandChoice(
                     playerId, validCardIds, remainingPlayerIds, chosenCardIds, effect.predicate(),
-                    effect.label(), cardName, effect.repeatUntilNoOne(), startingPlayerId, cardPutThisRound));
+                    effect.label(), cardName, effect.repeatUntilNoOne(), startingPlayerId, cardPutThisRound,
+                    effect.anyNumber()));
             log.info("Game {} - Awaiting {} to choose an {} to put onto the battlefield ({})",
                     gameData.id, gameData.playerIdToName.get(playerId), effect.label(), cardName);
             return true;

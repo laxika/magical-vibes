@@ -113,6 +113,7 @@ public enum CardSet {
     SET_UDS("UDS"),
     SET_ODY("ODY"),
     SET_USG("USG"),
+    SET_ONS("ONS"),
     SET_ITP("ITP"),
     SET_JUD("JUD"),
     SET_RQS("RQS"),

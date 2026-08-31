@@ -136,6 +136,8 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerReturnsCreatureToHandEffectHandler eachPlayerReturnsCreatureToHandHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesLandsThenDestroyRestEffectHandler eachPlayerChoosesLandsThenDestroyRestHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .RaidingPartyEffectHandler raidingPartyEffectHandler;
@@ -207,6 +209,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one creature must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsPermanent
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one permanent must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice choice
                 && choice.requiresChoice() && permanentIds.size() != 1) {
@@ -531,6 +537,8 @@ public class MultiPermanentChoiceHandlerService {
             handleForcedReturnToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsCreature ctx) {
             handleEachPlayerReturnsCreature(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerReturnsPermanent ctx) {
+            handleEachPlayerReturnsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
@@ -2472,6 +2480,18 @@ public class MultiPermanentChoiceHandlerService {
     private void handleEachPlayerReturnsCreature(GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.EachPlayerReturnsCreature context) {
         eachPlayerReturnsCreatureToHandHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleEachPlayerReturnsPermanent(GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerReturnsPermanent context) {
+        eachPlayerReturnsPermanentToHandHandler.completeChoice(gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

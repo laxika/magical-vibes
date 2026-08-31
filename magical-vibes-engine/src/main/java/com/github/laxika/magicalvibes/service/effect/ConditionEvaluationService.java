@@ -1051,8 +1051,8 @@ public class ConditionEvaluationService {
                     anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx, c.minimumCreatureDifference());
             case ControlsMoreCreaturesThanOpponent ignored ->
                     controlsMoreCreaturesThanOpponent(gameData, ctx);
-            case APlayerControlsMoreCreaturesThanEachOtherPlayer ignored ->
-                    aPlayerControlsMoreCreaturesThanEachOtherPlayer(gameData);
+            case APlayerControlsMoreCreaturesThanEachOtherPlayer c ->
+                    aPlayerControlsMoreCreaturesThanEachOtherPlayer(gameData, c.creatureFilter(), ctx);
             case APlayerHasMoreCardsInHandThanEachOtherPlayer ignored ->
                     aPlayerHasMoreCardsInHandThanEachOtherPlayer(gameData);
             case OpponentControlsMoreLands ignored ->
@@ -1321,11 +1321,13 @@ public class ConditionEvaluationService {
                 .anyMatch(creatureColors -> creatureColors.stream().anyMatch(spellColors::contains));
     }
 
-    private boolean aPlayerControlsMoreCreaturesThanEachOtherPlayer(GameData gameData) {
+    private boolean aPlayerControlsMoreCreaturesThanEachOtherPlayer(GameData gameData,
+                                                                     PermanentPredicate creatureFilter,
+                                                                     ConditionContext context) {
         int highestCreatureCount = -1;
         int playersWithMostCreatures = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            int creatureCount = countCreaturesControlled(gameData, playerId);
+            int creatureCount = countMatchingControlledPermanents(gameData, playerId, creatureFilter, context);
             if (creatureCount > highestCreatureCount) {
                 highestCreatureCount = creatureCount;
                 playersWithMostCreatures = 1;
@@ -1334,6 +1336,19 @@ public class ConditionEvaluationService {
             }
         }
         return playersWithMostCreatures == 1;
+    }
+
+    private int countMatchingControlledPermanents(GameData gameData, UUID playerId,
+                                                   PermanentPredicate filter, ConditionContext context) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (matchesPermanent(gameData, permanent, filter, context)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private boolean aPlayerHasMoreCardsInHandThanEachOtherPlayer(GameData gameData) {
@@ -1794,30 +1809,7 @@ public class ConditionEvaluationService {
     }
 
     private boolean controlsCreaturesSharingCreatureType(GameData gameData, ConditionContext ctx, int minimum) {
-        if (minimum <= 0) return true;
-        if (ctx.controllerId() == null) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
-        if (battlefield == null) return false;
-
-        Set<CardSubtype> allCreatureTypes = EnumSet.noneOf(CardSubtype.class);
-        for (CardSubtype subtype : CardSubtype.values()) {
-            if (gameQueryService.isCreatureSubtype(subtype)) {
-                allCreatureTypes.add(subtype);
-            }
-        }
-
-        Map<CardSubtype, Integer> countsByType = new HashMap<>();
-        for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) continue;
-            Set<CardSubtype> creatureTypes = gameQueryService.effectiveCreatureSubtypes(gameData, permanent);
-            if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
-                creatureTypes = allCreatureTypes;
-            }
-            for (CardSubtype creatureType : creatureTypes) {
-                countsByType.merge(creatureType, 1, Integer::sum);
-            }
-        }
-        return countsByType.values().stream().anyMatch(count -> count >= minimum);
+        return gameQueryService.controlsCreaturesSharingCreatureType(gameData, ctx.controllerId(), minimum);
     }
 
     /**

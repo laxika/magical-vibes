@@ -12,6 +12,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "197")
+@CardRegistration(set = "ONS", collectorNumber = "198")
 public class DragonRoost extends Card {
 
     public DragonRoost() {

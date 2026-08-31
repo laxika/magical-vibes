@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrifi
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
@@ -45,6 +46,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
@@ -338,6 +341,36 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutCounterOnReferencedPermanentEffect.class,
+            slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    private boolean handleCreatureDealsDamageToYouPutCounter(TriggerMatchContext match,
+            PutCounterOnReferencedPermanentEffect effect, TriggerContext ctx) {
+        if (effect.reference() != PermanentReference.TRIGGERING) return false;
+
+        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
+        GameData gameData = match.gameData();
+        Permanent damageSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
+        if (damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) return false;
+
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                watcher.getId());
+        entry.setTriggeringPermanentId(damageSource.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers to put a counter on the creature that dealt damage",
+                gameData.id, watcher.getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = ExileDamageSourcePermanentUntilSourceLeavesEffect.class,
             slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
     private boolean handleExileDamageSourceOnDamage(TriggerMatchContext match,
@@ -385,6 +418,18 @@ public class DamageTriggerCollectorService {
     }
 
     // ── ON_DEALT_DAMAGE ────────────────────────────────────────────────
+
+    @CollectsTrigger(value = DealDamageToDamageSourceCreatureOrSpellControllerEffect.class,
+            slot = EffectSlot.ON_DEALT_DAMAGE)
+    private boolean handleDamageSourceCreatureOrSpellController(
+            TriggerMatchContext match, DealDamageToDamageSourceCreatureOrSpellControllerEffect trigger,
+            TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        CardEffect effectToAdd = trigger.bindDamageSource(
+                dc.sourceCard(), dc.sourcePermanentId(), dc.damageSourceControllerId(), dc.damageDealt());
+        addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
+        return true;
+    }
 
     @CollectsTriggers({
         @CollectsTrigger(value = DamageSourceControllerSacrificesPermanentsEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE),

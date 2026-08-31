@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 /**
  * Shared draw/discard/reveal/choice helpers used by every PlayerInteraction effect handler
@@ -83,6 +84,13 @@ public class PlayerInteractionSupport {
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
+                ignored -> true);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId, UUID sourceCardId,
+                                          Predicate<Card> additionalFilter) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -91,6 +99,9 @@ public class PlayerInteractionSupport {
                 Card handCard = hand.get(i);
                 if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), sourceCardId,
                         gameData, playerId)) {
+                    continue;
+                }
+                if (!additionalFilter.test(handCard)) {
                     continue;
                 }
                 // Mind into Matter: "mana value X or less".

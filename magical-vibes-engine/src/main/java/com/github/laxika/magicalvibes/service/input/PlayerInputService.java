@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -783,6 +784,17 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                    List<CardSubtype> allowedSubtypes, boolean landPlay) {
+        beginSubtypeChoice(gameData, playerId, permanentId, allowedSubtypes, landPlay, false);
+    }
+
+    public void beginSubtypeChoice(GameData gameData, UUID controllerId, UUID permanentId,
+                                   List<CardSubtype> allowedSubtypes, boolean landPlay,
+                                   boolean opponentChooses) {
+        if (opponentChooses) {
+            beginSubtypeChoiceByOpponent(gameData, controllerId, permanentId, allowedSubtypes, landPlay);
+            return;
+        }
+
         ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId, landPlay);
 
         List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
@@ -796,10 +808,29 @@ public class PlayerInputService {
                 .map(CardSubtype::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
+                controllerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
 
-        String playerName = gameData.playerIdToName.get(playerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+    }
+
+    private void beginSubtypeChoiceByOpponent(GameData gameData, UUID controllerId, UUID permanentId,
+                                              List<CardSubtype> allowedSubtypes, boolean landPlay) {
+        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .toList();
+        if (opponents.isEmpty()) {
+            return;
+        }
+        if (opponents.size() == 1) {
+            beginSubtypeChoice(gameData, opponents.getFirst(), permanentId, allowedSubtypes, landPlay);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChooseOpponentForSubtype(
+                controllerId, permanentId, allowedSubtypes, landPlay));
+        beginPlayerChoice(gameData, controllerId, opponents,
+                "Choose an opponent to choose a creature type.");
     }
 
     public void beginSpellCreatureTypeChoice(GameData gameData, UUID playerId) {

@@ -55,6 +55,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentHasNonManaActivatedAbilityPredicate` | `()` / `levelUp()` | permanents with at least one effective activated ability that isn't a mana ability; `levelUp()` narrows it to the engine's level-up abilities; needs game data when continuous ability grants or ability loss can matter |
 | `PermanentHasManaAbilityPredicate` | `()` | permanents with at least one effective mana ability; needs game data when continuous ability grants or ability loss can matter |
+| `PermanentHasMorphAbilityPredicate` | `()` | face-up permanents whose current card has a morph ability |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsFaceDownPredicate` | `()` | face-down permanents; used to narrow a benign target to a face-down object (Smoke Teller) |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
@@ -145,6 +146,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentPowerAtLeastSourceControllerLifeTotalPredicate` | `()` | permanents with power >= the source controller's current life total | `gameData` + `sourceControllerId` |
 | `PermanentPowerGreaterThanActivePlayerHandSizePredicate` | `()` | permanents with effective power greater than the active player's current hand size | `gameData` |
 | `PermanentPowerAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | creatures with power <= number of permanents of the subtype source's controller controls | `gameData` + `sourceControllerId` |
+| `PermanentPowerAtMostSubtypeCountPredicate` | `(CardSubtype)` | permanents with power <= number of permanents of the subtype on all battlefields | `gameData` |
 | `PermanentManaValueAtMostControlledCountPredicate` | `(PermanentPredicate countFilter)` | permanents with mana value <= the number of matching permanents source's controller controls | `gameData` + `sourceControllerId` |
 | `PermanentManaValueAtMostSourceControllerHandSizePredicate` | `()` | permanents with mana value <= the number of cards in the source controller's hand | `gameData` + `sourceControllerId` |
 | `PermanentManaValueEqualsXPredicate` | `()` | permanents with mana value == X (returns true when xValue is null) | `xValue` |

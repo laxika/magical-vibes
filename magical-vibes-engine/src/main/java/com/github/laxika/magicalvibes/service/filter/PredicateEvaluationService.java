@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasManaAbilityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCumulativeUpkeepPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsPredicate;
@@ -183,6 +184,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlle
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledSubtypeCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
@@ -633,6 +635,8 @@ public class PredicateEvaluationService {
                     hasNonManaActivatedAbility(gameData, permanent, hasNonManaAbilityPredicate.levelUpOnly());
             case PermanentHasManaAbilityPredicate ignored ->
                     hasManaAbility(gameData, permanent);
+            case PermanentHasMorphAbilityPredicate ignored ->
+                    !permanent.isFaceDown() && permanent.getCard().getMorphCost() != null;
             case PermanentIsCreaturePredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
@@ -938,6 +942,25 @@ public class PredicateEvaluationService {
                     for (Permanent p : controllerBattlefield) {
                         if (matchesPermanentPredicate(gameData, p, subtypePredicate)) {
                             subtypeCount++;
+                        }
+                    }
+                }
+                yield gameQueryService.getEffectivePower(gameData, permanent) <= subtypeCount;
+            }
+            case PermanentPowerAtMostSubtypeCountPredicate subtypeCountPredicate -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                PermanentHasSubtypePredicate subtypePredicate =
+                        new PermanentHasSubtypePredicate(subtypeCountPredicate.subtype());
+                int subtypeCount = 0;
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                    if (battlefield != null) {
+                        for (Permanent battlefieldPermanent : battlefield) {
+                            if (matchesPermanentPredicate(battlefieldPermanent, subtypePredicate, filterContext)) {
+                                subtypeCount++;
+                            }
                         }
                     }
                 }
@@ -1513,6 +1536,10 @@ public class PredicateEvaluationService {
             }
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && filterContext != null
+                        && filterContext.sourcePermanentId() != null) {
+                    sourcePermanent = gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+                }
                 if (sourcePermanent == null && gameData != null && sourceCardId != null) {
                     sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 }
@@ -1522,6 +1549,10 @@ public class PredicateEvaluationService {
             }
             case PermanentHasSourceChosenNamePredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && filterContext != null
+                        && filterContext.sourcePermanentId() != null) {
+                    sourcePermanent = gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+                }
                 if (sourcePermanent == null && gameData != null && sourceCardId != null) {
                     sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 }
@@ -1530,6 +1561,10 @@ public class PredicateEvaluationService {
             }
             case PermanentHasSourceChosenColorPredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && filterContext != null
+                        && filterContext.sourcePermanentId() != null) {
+                    sourcePermanent = gameQueryService.findPermanentById(gameData, filterContext.sourcePermanentId());
+                }
                 if (sourcePermanent == null && gameData != null && sourceCardId != null) {
                     sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 }
@@ -1757,6 +1792,10 @@ public class PredicateEvaluationService {
             }
             case PermanentHasSourceChosenNamePredicate ignored -> {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
+                if (source == null && context != null && context.gameData() != null
+                        && context.sourcePermanentId() != null) {
+                    source = gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
+                }
                 String chosenName = source == null ? null : source.getChosenName();
                 yield chosenName != null && chosenName.equals(effectiveName(permanent, context));
             }
@@ -1771,6 +1810,7 @@ public class PredicateEvaluationService {
             case PermanentHasAtLeastCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentCounterCountAtLeastPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasKeywordPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasMorphAbilityPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSupertypePredicate p -> gameQueryService.hasEffectiveSupertype(
                     context == null ? null : context.gameData(), permanent, p.supertype());
@@ -2168,6 +2208,10 @@ public class PredicateEvaluationService {
         if (context.sourcePermanentSnapshot() != null) {
             return context.sourcePermanentSnapshot().getChosenSubtype();
         }
+        if (context.gameData() != null && context.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
+            return source == null ? null : source.getChosenSubtype();
+        }
         if (context.gameData() == null || context.sourceCardId() == null) return null;
         Permanent source = findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());
         return source == null ? null : source.getChosenSubtype();
@@ -2177,6 +2221,10 @@ public class PredicateEvaluationService {
         if (context == null) return null;
         if (context.sourcePermanentSnapshot() != null) {
             return context.sourcePermanentSnapshot().getChosenColor();
+        }
+        if (context.gameData() != null && context.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
+            return source == null ? null : source.getChosenColor();
         }
         if (context.gameData() == null || context.sourceCardId() == null) return null;
         Permanent source = findPermanentByCurrentCardId(context.gameData(), context.sourceCardId());

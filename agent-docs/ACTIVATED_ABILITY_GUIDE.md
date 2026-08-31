@@ -1105,3 +1105,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_TRANSFORM_TO_FRONT_FACE` | This permanent transforms back to front face |
 | `ON_PLAYER_LOSES_GAME` | A player loses the game (fired in `GameOutcomeService`; 2-player engine ends before it resolves) |
 | `GRAVEYARD_ON_ALLY_CREATURE_DIES` | Like ON_ALLY_CREATURE_DIES but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect` to filter the dying creature. A `MayEffect` inner is queued as a may-ability; anything else (e.g. `MayPayManaEffect`) goes on the stack. A source card that dies in the same event does not trigger. Scanned in `TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers`. Used by Furious Forebear |
+Cryptic Gateway uses `TapMultiplePermanentsCost(2, PermanentIsCreaturePredicate, false, true)` so the exact two tapped creatures are retained for `PutCreatureFromHandSharingChosenCostPermanentsEffect`.

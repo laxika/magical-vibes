@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "10E", collectorNumber = "162")
 @CardRegistration(set = "9ED", collectorNumber = "148")
 @CardRegistration(set = "ORI", collectorNumber = "109")
+@CardRegistration(set = "ONS", collectorNumber = "159")
 public class NantukoHusk extends Card {
 
     public NantukoHusk() {

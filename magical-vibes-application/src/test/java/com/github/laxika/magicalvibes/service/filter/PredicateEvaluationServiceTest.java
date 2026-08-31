@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
@@ -1166,6 +1167,23 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentPowerAtMostSubtypeCountPredicate counts matching permanents on every battlefield")
+        void powerAtMostSubtypeCountUsesEveryBattlefield() {
+            Permanent target = addPermanent(player1Id,
+                    createCreatureWithSubtypes("Attacker", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            addPermanent(player2Id,
+                    createCreatureWithSubtypes("Soldier One", 1, 1, CardColor.WHITE, List.of(CardSubtype.SOLDIER)));
+            addPermanent(player2Id,
+                    createCreatureWithSubtypes("Soldier Two", 1, 1, CardColor.WHITE, List.of(CardSubtype.SOLDIER)));
+
+            FilterContext context = FilterContext.of(gd).withSourceControllerId(player1Id);
+            PermanentPowerAtMostSubtypeCountPredicate predicate =
+                    new PermanentPowerAtMostSubtypeCountPredicate(CardSubtype.SOLDIER);
+
+            assertThat(evaluator.matchesPermanentPredicate(target, predicate, context)).isTrue();
+        }
+
+        @Test
         @DisplayName("greatest power among controller's creatures is evaluated per permanent controller")
         void greatestPowerAmongControllerCreatures() {
             Permanent p1Small = addPermanent(player1Id,
@@ -2073,6 +2091,20 @@ class PredicateEvaluationServiceTest {
 
             source.setChosenSubtype(CardSubtype.GOBLIN);
             assertThat(evaluator.matchesStaticFilter(bear, chosen, ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("source-chosen subtype resolves the source by permanent ID")
+        void sourceChosenSubtypeResolvesFromPermanentId() {
+            Permanent bear = addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Card sourceCard = createCreature("Shimmer Source", 1, 1, CardColor.BLUE);
+            Permanent source = addPermanent(player1Id, sourceCard);
+            source.setChosenSubtype(CardSubtype.BEAR);
+            FilterContext ctx = FilterContext.of(gd).withSourcePermanentId(source.getId());
+
+            assertThat(evaluator.matchesStaticFilter(bear,
+                    new PermanentHasSourceChosenSubtypePredicate(), ctx)).isTrue();
         }
     }
 

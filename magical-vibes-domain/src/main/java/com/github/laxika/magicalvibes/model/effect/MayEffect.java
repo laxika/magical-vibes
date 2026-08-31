@@ -16,7 +16,8 @@ import java.util.UUID;
  * @param choicePlayer identifies the player who makes the choice
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
-        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect {
+        implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
+        TriggeringPermanentSourceEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -48,5 +49,11 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
                 ? aware.withCombatDamageDealerIds(dealerIds)
                 : wrapped;
         return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
+    }
+
+    @Override
+    public boolean sourceIsTriggeringPermanent() {
+        return wrapped instanceof TriggeringPermanentSourceEffect source
+                && source.sourceIsTriggeringPermanent();
     }
 }

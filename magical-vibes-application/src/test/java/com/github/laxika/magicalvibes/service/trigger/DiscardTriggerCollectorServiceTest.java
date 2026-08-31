@@ -691,6 +691,31 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("ON_ANY_PLAYER_CYCLES — PutCountersOnSelfEffect")
+    class CycleSelfCounters {
+
+        @Test
+        @DisplayName("queues a counter trigger with the source permanent")
+        void queuesCounterTrigger() {
+            Permanent aura = createPermanent("Withering Hex");
+            var effect = new PutCountersOnSelfEffect(CounterType.PLAGUE);
+            var ctx = new TriggerContext.Cycle(player1Id, createCard("Censor"));
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CYCLES, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        }
+    }
+
     // ===== ON_CONTROLLER_DISCARDS — SequenceEffect =====
 
     @Nested
