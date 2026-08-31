@@ -19,6 +19,10 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeCollectEvidenceResume;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
     public boolean resolutionTimeReturnCardsToBattlefieldResume;
+    /** Resolution-time choice of one targeted card to put onto the battlefield for a bargained spell. */
+    public boolean resolutionTimeBargainedReturnChoiceResume;
+    /** The targeted cards retained while the bargained battlefield replacement is being chosen. */
+    public List<UUID> resolutionTimeBargainedReturnTargetCardIds = List.of();
 
     public Card card;
     public UUID controllerId;
@@ -134,6 +138,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenEffectChoiceMade;
     /** The card chosen for the optional graveyard exile, or {@code null} for a decline. */
     public UUID resolutionTimeExileThenEffectChosenCardId;
+    /** Whether an optional any-number graveyard exile with a follow-up is awaiting its answer. */
+    public boolean resolutionTimeExileAnyNumberThenEffectResume;
+    /** Whether the optional any-number graveyard exile has been answered. */
+    public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
+    /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
+    public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore or Shrouded
      * Lore). When set,

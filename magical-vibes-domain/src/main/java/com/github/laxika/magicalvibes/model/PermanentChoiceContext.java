@@ -233,6 +233,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
 
+    /** Discerning Financier: the controller chooses another player to gain control of a target permanent. */
+    record ChooseAnotherPlayerGainsControlOfTargetPermanent(
+            UUID controllerId, UUID targetPermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
+
     /** Rohgahh of Kher Keep: the ability controller chooses which opponent gains the tapped permanents. */
     record ChooseOpponentGainsControlOfSourceAndMatchingPermanents(
             UUID choosingPlayerId,

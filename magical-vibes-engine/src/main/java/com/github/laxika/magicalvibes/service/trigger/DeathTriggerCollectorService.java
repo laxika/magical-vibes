@@ -1390,6 +1390,20 @@ public class DeathTriggerCollectorService {
             return true;
         }
 
+        if (triggerEffect.targetSpec().declaredTarget() == null) {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(triggerEffect)),
+                    null,
+                    match.permanent().getId()
+            ));
+            logArtifactGraveyard(match);
+            return true;
+        }
+
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(),
                 new ArrayList<>(List.of(triggerEffect)), true,

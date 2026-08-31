@@ -25,6 +25,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaValueEqualsXPredicate,
         StackEntryManaValueEqualsSourceCountersPredicate,
         StackEntryManaValueEqualsSourcePowerPredicate,
+        StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate,
         StackEntryManaValueAtMostControlledCountPredicate,
         StackEntryManaValueAtMostControllerGraveyardCountPredicate,
         StackEntrySharesColorOrManaValueWithImprintedCardPredicate,

@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -582,6 +583,7 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         @Test
         @DisplayName("A per-creature aura tax is added on top of the board-wide one")
+        @CardUsed({Brainwash.class, GrizzlyBears.class, HillGiant.class, WindbornMuse.class})
         void perCreatureAuraTaxAddsToTheBoardWideTax() {
             // Brainwash: the enchanted creature can't attack unless its controller pays {3}.
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

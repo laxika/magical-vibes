@@ -6,13 +6,22 @@ import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        VisceridDrone.class,
+        GrizzlyBears.class,
+        Ornithopter.class,
+        SnowCoveredSwamp.class,
+        Swamp.class
+})
 class VisceridDroneTest extends BaseCardTest {
 
     @Test
@@ -34,6 +43,21 @@ class VisceridDroneTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
+    @Test
+    @DisplayName("The Swamp ability can use a snow Swamp")
+    void swampAbilityCanUseSnowSwamp() {
+        addCreatureReady(player1, new VisceridDrone());
+        UUID fodderId = addCreatureReady(player1, new GrizzlyBears()).getId();
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, victim.getId());
+        harness.handlePermanentChosen(player1, fodderId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Snow-Covered Swamp");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("The source can be sacrificed as the creature cost")
@@ -51,6 +75,26 @@ class VisceridDroneTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Viscerid Drone");
         harness.assertInGraveyard(player1, "Swamp");
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+    @Test
+    @DisplayName("Both abilities require the source to tap")
+    void abilityRequiresSourceToTap() {
+        Permanent source = addCreatureReady(player1, new VisceridDrone());
+        UUID firstFodderId = addCreatureReady(player1, new GrizzlyBears()).getId();
+        Permanent firstSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent firstVictim = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondVictim = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, firstVictim.getId());
+        harness.handlePermanentChosen(player1, firstFodderId);
+        harness.handlePermanentChosen(player1, firstSwamp.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, secondVictim.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -79,6 +123,21 @@ class VisceridDroneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Ornithopter");
+    }
+    @Test
+    @DisplayName("The destruction cannot be regenerated")
+    void destructionCannotBeRegenerated() {
+        addCreatureReady(player1, new VisceridDrone());
+        UUID fodderId = addCreatureReady(player1, new GrizzlyBears()).getId();
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        victim.setRegenerationShield(1);
+
+        harness.activateAbility(player1, 0, 0, null, victim.getId());
+        harness.handlePermanentChosen(player1, fodderId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test

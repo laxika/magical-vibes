@@ -1,27 +1,31 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElvishBard.class, ElvishRanger.class, AesthirGlider.class, Humility.class})
 class ElvishBardTest extends BaseCardTest {
 
     @Test
     @DisplayName("All able creatures must block Elvish Bard")
     void allAbleCreaturesMustBlock() {
-        Permanent bard = attackingCreature(new ElvishBard());
-        gd.playerBattlefields.get(player1.getId()).add(bard);
+        Permanent bard = addCreatureReady(player1, new ElvishBard());
+        bard.setAttacking(true);
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        addCreatureReady(player2, new ElvishRanger());
+        addCreatureReady(player2, new ElvishRanger());
 
         prepareDeclareBlockers();
 
@@ -43,14 +47,12 @@ class ElvishBardTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped creatures are not forced to block Elvish Bard")
     void tappedCreaturesNotForcedToBlock() {
-        Permanent bard = attackingCreature(new ElvishBard());
-        gd.playerBattlefields.get(player1.getId()).add(bard);
+        Permanent bard = addCreatureReady(player1, new ElvishBard());
+        bard.setAttacking(true);
 
-        Permanent untapped = readyCreature(new GrizzlyBears());
-        Permanent tapped = readyCreature(new GrizzlyBears());
+        Permanent untapped = addCreatureReady(player2, new ElvishRanger());
+        Permanent tapped = addCreatureReady(player2, new ElvishRanger());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(untapped);
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -59,16 +61,41 @@ class ElvishBardTest extends BaseCardTest {
         assertThat(tapped.isBlocking()).isFalse();
     }
 
-    private Permanent attackingCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
+    @Test
+    void noBlockRequiredWhenNoCreatureCanBlock() {
+        Permanent bard = addCreatureReady(player1, new ElvishBard());
+        bard.setAttacking(true);
+        addCreatureReady(player2, new AesthirGlider());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
     }
 
-    private Permanent readyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void noBlockersAreIllegalWhenAbleCreatureExists() {
+        Permanent bard = addCreatureReady(player1, new ElvishBard());
+        bard.setAttacking(true);
+        addCreatureReady(player2, new ElvishRanger());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void losingAllAbilitiesRemovesTheBlockRequirement() {
+        Permanent bard = addCreatureReady(player1, new ElvishBard());
+        bard.setAttacking(true);
+        harness.addToBattlefield(player1, new Humility());
+        addCreatureReady(player2, new ElvishRanger());
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
 }

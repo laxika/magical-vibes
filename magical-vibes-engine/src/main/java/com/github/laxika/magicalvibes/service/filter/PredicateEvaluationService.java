@@ -133,6 +133,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSo
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithEquippedCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesMostCommonColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithAnotherControlledPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithControlledTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -245,6 +247,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -1671,6 +1674,32 @@ public class PredicateEvaluationService {
                 });
                 yield foundOther[0];
             }
+            case PermanentSharesNameWithAnotherControlledPermanentPredicate ignored -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID controllerId = gameData.findControllerOf(permanent);
+                List<Permanent> controllerBattlefield = controllerId == null
+                        ? null
+                        : gameData.playerBattlefields.get(controllerId);
+                if (controllerBattlefield == null) {
+                    yield false;
+                }
+                String name = effectiveName(permanent, filterContext);
+                yield controllerBattlefield.stream()
+                        .anyMatch(other -> !other.getId().equals(permanent.getId())
+                                && name.equals(effectiveName(other, filterContext)));
+            }
+            case PermanentSharesNameWithControlledTokenPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                String name = effectiveName(permanent, filterContext);
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                yield controllerBattlefield != null && controllerBattlefield.stream()
+                        .anyMatch(other -> other.getCard().isToken()
+                                && name.equals(effectiveName(other, filterContext)));
+            }
             case PermanentHasSourceChosenSubtypePredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
                 if (sourcePermanent == null && gameData != null && sourceCardId != null) {
@@ -1970,6 +1999,8 @@ public class PredicateEvaluationService {
                     controllerControlsMatchingStatic(permanent, p, context);
             case PermanentControllerControlsPermanentCountAtMostPredicate p ->
                     controllerControlsAtMostMatchingStatic(permanent, p, context);
+            case PermanentSharesNameWithAnotherControlledPermanentPredicate ignored ->
+                    sharesNameWithAnotherControlledPermanentStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
                     hasGreatestManaValueAmongAllCreaturesStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongAllArtifactsPredicate ignored ->
@@ -2248,6 +2279,20 @@ public class PredicateEvaluationService {
                 .limit((long) predicate.maxCount() + 1)
                 .count();
         return matchingCount <= predicate.maxCount();
+    }
+
+    private boolean sharesNameWithAnotherControlledPermanentStatic(Permanent permanent, FilterContext context) {
+        GameData gameData = context == null ? null : context.gameData();
+        if (gameData == null) return false;
+        UUID controllerId = gameData.findControllerOf(permanent);
+        List<Permanent> controllerBattlefield = controllerId == null
+                ? null
+                : gameData.playerBattlefields.get(controllerId);
+        if (controllerBattlefield == null) return false;
+        String name = effectiveName(permanent, context);
+        return controllerBattlefield.stream()
+                .anyMatch(other -> !other.getId().equals(permanent.getId())
+                        && name.equals(effectiveName(other, context)));
     }
 
     /**
@@ -2897,6 +2942,7 @@ public class PredicateEvaluationService {
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueEqualsSourcePowerPredicate ignored -> false;
+            case StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate ignored -> false;
             case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryManaValueAtMostControllerGraveyardCountPredicate ignored -> false;
             case StackEntrySharesColorOrManaValueWithImprintedCardPredicate ignored -> false;

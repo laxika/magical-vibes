@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantStrength;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScarabOfTheUnseen.class, Forest.class, GrizzlyBears.class, HolyStrength.class})
 class ScarabOfTheUnseenTest extends BaseCardTest {
 
     @Test
@@ -23,15 +23,12 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
     void returnsAllAttachedAuras() {
         harness.addToBattlefield(player1, new ScarabOfTheUnseen());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        GameData gd = harness.getGameData();
 
-        Permanent ownAura = new Permanent(new HolyStrength());
+        Permanent ownAura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
         ownAura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(ownAura);
 
-        Permanent opponentAura = new Permanent(new GiantStrength());
+        Permanent opponentAura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
         opponentAura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(opponentAura);
 
         int p1HandBefore = gd.playerHands.get(player1.getId()).size();
         int p2HandBefore = gd.playerHands.get(player2.getId()).size();
@@ -51,7 +48,6 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
     void sacrificesItselfAndSchedulesDraw() {
         Permanent scarab = harness.addToBattlefieldAndReturn(player1, new ScarabOfTheUnseen());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        GameData gd = harness.getGameData();
 
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
@@ -62,6 +58,27 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
         assertThat(scheduled.getFirst().count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Draws a card at the beginning of the next turn's upkeep")
+    void drawsAtNextTurnUpkeep() {
+        harness.addToBattlefield(player1, new ScarabOfTheUnseen());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
     @Test

@@ -4,25 +4,21 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(DiseasedVermin.class)
 class DiseasedVerminTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gets an infection counter when it deals combat damage to a player")
     void getsInfectionCounterOnCombatDamage() {
-        Permanent vermin = addReadyVermin();
-        vermin.setAttacking(true);
-        harness.setLife(player2, 20);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage: 20 -> 19
-        harness.passBothPriorities(); // resolve the combat damage trigger
+        Permanent vermin = addReadyVerminThatDealsCombatDamage();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
         assertThat(vermin.getCounterCount(CounterType.INFECTION)).isEqualTo(1);
@@ -31,7 +27,7 @@ class DiseasedVerminTest extends BaseCardTest {
     @Test
     @DisplayName("At upkeep, deals damage equal to its infection counters to the opponent")
     void upkeepDealsDamageEqualToInfectionCounters() {
-        Permanent vermin = addReadyVermin();
+        Permanent vermin = addReadyVerminThatDealsCombatDamage();
         vermin.setCounterCount(CounterType.INFECTION, 2);
         harness.setLife(player2, 20);
 
@@ -45,8 +41,7 @@ class DiseasedVerminTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep trigger cannot target its controller")
     void upkeepTriggerCannotTargetController() {
-        Permanent vermin = addReadyVermin();
-        vermin.setCounterCount(CounterType.INFECTION, 2);
+        addReadyVerminThatDealsCombatDamage();
 
         advanceToUpkeep(player1);
 
@@ -58,7 +53,8 @@ class DiseasedVerminTest extends BaseCardTest {
     @Test
     @DisplayName("With no infection counters, the upkeep trigger deals no damage")
     void upkeepWithNoCountersDealsNoDamage() {
-        addReadyVermin();
+        Permanent vermin = addReadyVerminThatDealsCombatDamage();
+        vermin.setCounterCount(CounterType.INFECTION, 0);
         harness.setLife(player2, 20);
 
         advanceToUpkeep(player1);
@@ -66,6 +62,26 @@ class DiseasedVerminTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for an opponent it has not previously damaged")
+    void upkeepDoesNotTriggerForPreviouslyUndamagedOpponent() {
+        Permanent vermin = addReadyVermin();
+        vermin.setCounterCount(CounterType.INFECTION, 2);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent addReadyVerminThatDealsCombatDamage() {
+        Permanent vermin = addReadyVermin();
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+        return vermin;
     }
 
     private Permanent addReadyVermin() {

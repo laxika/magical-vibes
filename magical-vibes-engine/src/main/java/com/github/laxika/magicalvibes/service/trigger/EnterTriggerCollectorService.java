@@ -279,6 +279,16 @@ public class EnterTriggerCollectorService {
     })
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        match.permanent().getCard(), match.controllerId(), List.of(effect)));
+            }
+            logTriggered(match);
+            return true;
+        }
         // A targeting effect can't be pushed straight onto the stack with a pre-set target — queue a
         // pending choice so the controller picks one as the ability goes on the stack (CR 603.3d).
         // Permanent-targeting effects (e.g. Reaper King's "destroy target permanent") always route

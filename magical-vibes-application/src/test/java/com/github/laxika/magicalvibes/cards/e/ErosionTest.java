@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BogImp;
+import com.github.laxika.magicalvibes.cards.m.MazeOfIth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Erosion.class, MazeOfIth.class, BogImp.class})
 class ErosionTest extends BaseCardTest {
 
     // ===== Targeting =====
@@ -37,13 +39,12 @@ class ErosionTest extends BaseCardTest {
     @DisplayName("Cannot enchant a non-land creature")
     void cannotEnchantCreature() {
         addLand(player2); // a legal target exists so the Aura is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BogImp());
 
         harness.setHand(player1, List.of(new Erosion()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
@@ -138,6 +139,25 @@ class ErosionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Controller can choose life instead of mana when both payment alternatives are available")
+    void canChooseLifeInsteadOfManaWhenBothAreAvailable() {
+        Permanent land = addLand(player2);
+        attachErosion(land);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(landIsPresent(player2, land.getId())).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Erosion does NOT trigger during the aura controller's own upkeep")
     void doesNotFireDuringAuraControllerUpkeep() {
         Permanent land = addLand(player2);
@@ -153,15 +173,12 @@ class ErosionTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void attachErosion(Permanent land) {
-        Permanent erosion = new Permanent(new Erosion());
+        Permanent erosion = harness.addToBattlefieldAndReturn(player1, new Erosion());
         erosion.setAttachedTo(land.getId());
-        gd.playerBattlefields.get(player1.getId()).add(erosion);
     }
 
     private Permanent addLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new MazeOfIth());
     }
 
     private boolean landIsPresent(Player player, UUID landId) {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.spell;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -41,6 +43,7 @@ import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -395,6 +398,27 @@ class SpellCastingServiceTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getDamageAssignments()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Allows an Adventure with only optional targets to be cast without targets")
+    void allowsAdventureWithNoOptionalTargets() {
+        Card front = createCreature("Test Creature", "{4}{R}");
+        Card adventure = createSorcery("Test Adventure", "{2}{R}");
+        adventure.target(TargetFilters.creature(), 0, 2)
+                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+        front.setBackFaceCard(adventure);
+        front.addCastingOption(new AdventureCast("{2}{R}"));
+        setHand(player1Id, List.of(front));
+        addMana(player1Id, ManaColor.RED, 2);
+        addMana(player1Id, ManaColor.COLORLESS, 1);
+        when(actionAvailabilityService.isCardPlayable(
+                eq(gd), eq(player1Id), eq(adventure), any(ManaPool.class), eq(0))).thenReturn(true);
+
+        svc.playAdventureCard(gd, player1, 0, null, null, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
     }
 
     // =========================================================================

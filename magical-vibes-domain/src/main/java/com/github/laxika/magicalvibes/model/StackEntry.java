@@ -179,6 +179,8 @@ public class StackEntry {
     @Setter private boolean overloaded;
     /** Whether the spell's controller controlled a Mount when the spell was finished being cast. */
     @Setter private boolean controlledMountAsCast;
+    /** Whether the spell's controller controlled a Faerie when the spell was finished being cast. */
+    @Setter private boolean controlledFaerieAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -638,6 +640,7 @@ public class StackEntry {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
         this.controlledMountAsCast = source.controlledMountAsCast;
+        this.controlledFaerieAsCast = source.controlledFaerieAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;

@@ -20,7 +20,7 @@ import java.util.Set;
  * The token copies all copiable characteristics per CR 707.2.
  *
  * <p>Optional overrides support "except it's X/Y", "except it's also a [type]",
- * additional subtypes, and counters placed after the token enters.
+ * additional subtypes, removing legendary, and counters placed after the token enters.
  */
 public record CreateTokenCopyOfTargetPermanentEffect(
         List<CardSubtype> additionalSubtypes,
@@ -70,6 +70,20 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
                 trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 false, Map.of(), creatureSubtypeOverride, false, false, new Fixed(1), false);
+    }
+
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes, Set<CardType> additionalTypes,
+            Integer powerOverride, Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters, boolean grantHaste,
+            boolean exileAtEndStep, boolean sacrificeAtEndStep, boolean tappedAndAttacking,
+            boolean trackWithSource, boolean createForTargetController,
+            CardColor colorOverride, Set<Keyword> additionalKeywords,
+            boolean removeLegendary) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking,
+                trackWithSource, createForTargetController, colorOverride, additionalKeywords,
+                false, Map.of(), List.of(), false, removeLegendary, new Fixed(1), false);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(

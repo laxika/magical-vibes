@@ -126,6 +126,7 @@ public enum CounterType {
     PLUS_ZERO_PLUS_TWO,
     SCREAM,
     SHELL,
+    SKEWER,
     SLEIGHT,
     SLEEP,
     SLIME,

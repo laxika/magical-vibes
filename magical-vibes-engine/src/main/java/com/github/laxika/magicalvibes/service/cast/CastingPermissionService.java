@@ -1278,6 +1278,14 @@ public class CastingPermissionService {
         return permission != null && playerId.equals(permission.castingPlayerId());
     }
 
+    public boolean hasGrantedGraveyardAdventureCastPermission(GameData gameData, Card card, UUID playerId) {
+        GameData.GraveyardAdventureCastPermission permission =
+                gameData.graveyardAdventureCastPermissions.get(card.getId());
+        return permission != null
+                && playerId.equals(permission.castingPlayerId())
+                && permission.expireTurn() > gameData.turnNumber;
+    }
+
     public boolean hasGraveyardPlayPermission(GameData gameData, Card card, UUID playerId) {
         UUID permittedPlayer = gameData.graveyardPlayPermissions.get(card.getId());
         if (permittedPlayer != null && permittedPlayer.equals(playerId)) {
@@ -1482,7 +1490,9 @@ public class CastingPermissionService {
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
-                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow) {
+                if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
+                        && (!allow.oncePerTurn()
+                        || !gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId()))) {
                     castableTypes.addAll(allow.castableTypes());
                 }
             }
@@ -1540,50 +1550,56 @@ public class CastingPermissionService {
 
     /** Returns whether a specific card may be cast from the top by paying its normal cost. */
     public boolean canCastFromTopOfLibraryNormally(GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.LAND)) return false;
+        return findTopLibraryCastPermissionSource(gameData, playerId, card).isPresent();
+    }
+
+    /**
+     * Returns the source permanent granting a normal-cost top-library cast, preferring an unlimited
+     * permission so a once-each-turn permission is not spent unnecessarily.
+     */
+    public Optional<UUID> findTopLibraryCastPermissionSource(GameData gameData, UUID playerId, Card card) {
+        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card);
+        return source == null ? Optional.empty() : Optional.of(source.permanentId());
+    }
+
+    /** Marks the selected once-each-turn top-library permission as used by a successful cast. */
+    public void markTopLibraryCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
+        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card);
+        if (source != null && source.oncePerTurn()) {
+            gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.add(source.permanentId());
+        }
+    }
+
+    private TopLibraryCastPermissionSource findTopLibraryCastPermissionSourceInternal(
+            GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) return null;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return null;
+        TopLibraryCastPermissionSource oncePerTurnFallback = null;
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
-                        && matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
-                        && (!allow.oncePerTurn()
-                        || !gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId()))) {
-                    return true;
+                        && matchesTopLibraryPermission(gameData, playerId, perm, card, allow)) {
+                    if (!allow.oncePerTurn()) {
+                        return new TopLibraryCastPermissionSource(perm.getId(), false);
+                    }
+                    if (!gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(perm.getId())
+                            && oncePerTurnFallback == null) {
+                        oncePerTurnFallback = new TopLibraryCastPermissionSource(perm.getId(), true);
+                    }
                 }
             }
         }
-        return false;
+        return oncePerTurnFallback;
+    }
+
+    private record TopLibraryCastPermissionSource(UUID permanentId, boolean oncePerTurn) {
     }
 
     /** Marks the once-each-turn top-library permission used by a successful normal-cost cast. */
     public void markOncePerTurnLibraryCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return;
-
-        boolean hasUnlimitedPermission = battlefield.stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(AllowCastFromTopOfLibraryEffect.class::isInstance)
-                        .map(AllowCastFromTopOfLibraryEffect.class::cast)
-                        .filter(permission -> !permission.oncePerTurn())
-                        .filter(permission -> matchesTopLibraryPermission(
-                                gameData, playerId, permanent, card, permission)))
-                .findAny()
-                .isPresent();
-        if (hasUnlimitedPermission) return;
-
-        for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect permission
-                        && permission.oncePerTurn()
-                        && !gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.contains(permanent.getId())
-                        && matchesTopLibraryPermission(gameData, playerId, permanent, card, permission)) {
-                    gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.add(permanent.getId());
-                    return;
-                }
-            }
-        }
+        markTopLibraryCastPermissionUsed(gameData, playerId, card);
     }
 
     private boolean matchesTopLibraryPermission(GameData gameData, UUID playerId, Permanent source,

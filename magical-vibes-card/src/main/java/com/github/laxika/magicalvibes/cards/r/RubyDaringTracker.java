@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "FDN", collectorNumber = "245")
+@CardRegistration(set = "WOE", collectorNumber = "212")
 public class RubyDaringTracker extends Card {
 
     public RubyDaringTracker() {

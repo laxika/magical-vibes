@@ -1782,6 +1782,23 @@ public class MiscTriggerCollectorService {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtNoncombatDamageToOpponentMay(TriggerMatchContext match,
+            MayEffect effect, TriggerContext ctx) {
+        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
+        if (match.permanent() == null || !match.controllerId().equals(damage.sourceControllerId())) {
+            return false;
+        }
+
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), effect,
+                null, match.permanent().getId(), damage.damageAmount());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on noncombat damage to opponent (may ability)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
             slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageToDamagedPlayerPermanent(TriggerMatchContext match,

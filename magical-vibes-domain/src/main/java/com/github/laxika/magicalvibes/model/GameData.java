@@ -385,6 +385,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> sourceCreatedTokens = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
+    /** Whether any card has been put into exile during the current turn. */
+    public boolean cardPutIntoExileThisTurn;
     /** Exiled haunting card UUID -> the permanent UUID it haunts. */
     public final Map<UUID, UUID> hauntingCardToPermanentId = new ConcurrentHashMap<>();
     /** Exiled Cosima card UUID → voyage counters accumulated while it remains exiled. */
@@ -791,6 +793,9 @@ public class GameData {
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Players for whom damage from matching source permanents is prevented this turn. */
     public final Map<UUID, Set<PermanentPredicate>> playersWithDamageFromMatchingSourcesPrevented =
+            new ConcurrentHashMap<>();
+    /** Players for whom damage from matching sources is prevented this turn to creatures they control. */
+    public final Map<UUID, Set<PermanentPredicate>> playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
     /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
@@ -1238,6 +1243,13 @@ public class GameData {
                     exileInsteadOfGraveyard, 0, false, false);
         }
     }
+
+    /** A temporary permission to cast a specific card from its controller's graveyard as an Adventure. */
+    public record GraveyardAdventureCastPermission(UUID castingPlayerId, int expireTurn) {}
+
+    /** Card UUIDs that may be cast as an Adventure from the controller's graveyard until a turn ends. */
+    public final Map<UUID, GraveyardAdventureCastPermission> graveyardAdventureCastPermissions =
+            new ConcurrentHashMap<>();
 
     /** A turn-scoped grant letting {@code playerId} cast cards matching {@code filter} from a
      *  permitted graveyard, paying their normal costs. */
@@ -1847,7 +1859,6 @@ public class GameData {
     /** Tracks which permanents (by UUID) have already provided their once-each-turn "you may pay {0}"
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
-
     /** Tracks which permanents' once-each-turn library-cast permissions have been used this turn. */
     public final Set<UUID> oncePerTurnLibraryCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -2230,7 +2241,11 @@ public class GameData {
         this.cardsExiledListener = cardsExiledListener;
     }
 
-    private void notifyCardsExiled() {
+    private void notifyCardsExiled(Card card) {
+        if (card == null || card.isToken()) {
+            return;
+        }
+        cardPutIntoExileThisTurn = true;
         Consumer<GameData> listener = cardsExiledListener;
         if (listener != null) {
             listener.accept(this);
@@ -3562,7 +3577,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         exiledCards.add(new ExiledCardEntry(card, ownerId, null, false, turnNumber));
-        notifyCardsExiled();
+        notifyCardsExiled(card);
     }
 
     /** Adds a card to the ante zone, represented by an untracked exile entry. */
@@ -3583,7 +3598,7 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, false, turnNumber));
-        notifyCardsExiled();
+        notifyCardsExiled(card);
     }
 
     /** Associates an already-exiled card with a source permanent without creating a second exile event. */
@@ -3619,14 +3634,14 @@ public class GameData {
         spellsWithDreamCounterOnResolution.remove(card.getId());
         spellsWithPlotOnResolution.remove(card.getId());
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, turnNumber));
-        notifyCardsExiled();
+        notifyCardsExiled(card);
     }
 
     /** Adds a card to exile with source tracking, face-down status, and its exiling player. */
     public void addToExile(UUID ownerId, Card card, UUID sourcePermanentId, boolean faceDown,
                            UUID exilerId) {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, exilerId));
-        notifyCardsExiled();
+        notifyCardsExiled(card);
     }
 
     /** Exiles a card from hand face down as a foretell special action. */
@@ -3642,6 +3657,7 @@ public class GameData {
         if (foretellCost != null) {
             foretoldCardCosts.put(card.getId(), foretellCost);
         }
+        notifyCardsExiled(card);
     }
 
     /**
@@ -3985,6 +4001,7 @@ public class GameData {
         copy.untapStepUntappedPermanentCount = this.untapStepUntappedPermanentCount;
         copy.untapStepPlayerId = this.untapStepPlayerId;
         copy.turnNumber = this.turnNumber;
+        copy.cardPutIntoExileThisTurn = this.cardPutIntoExileThisTurn;
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
         copy.additionalUpkeepsRemaining = this.additionalUpkeepsRemaining;
         copy.currentUpkeepIsAdditional = this.currentUpkeepIsAdditional;
@@ -4200,6 +4217,8 @@ public class GameData {
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         this.playersWithDamageFromMatchingSourcesPrevented.forEach((k, v) ->
                 copy.playersWithDamageFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
+        this.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.forEach((k, v) ->
+                copy.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.playersGatheringTokensThisTurn.addAll(this.playersGatheringTokensThisTurn);
         copy.playersExilingUncastEnteringCreaturesThisTurn.addAll(this.playersExilingUncastEnteringCreaturesThisTurn);
@@ -4641,6 +4660,10 @@ public class GameData {
                 this.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume;
         copy.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume =
                 this.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume;
+        copy.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume =
+                this.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume;
+        copy.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds =
+                new ArrayList<>(this.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds);
         copy.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume =
                 this.graveyardTargetOperation.resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
         copy.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume =
@@ -5066,6 +5089,7 @@ public class GameData {
         copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn
                 .addAll(this.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn);
         copy.graveyardCardCastPermissionsUntilEndOfTurn.putAll(this.graveyardCardCastPermissionsUntilEndOfTurn);
+        copy.graveyardAdventureCastPermissions.putAll(this.graveyardAdventureCastPermissions);
 
         // --- Damage prevention / redirection still pending ---
         copy.permanentsPreventedFromDealingDamage.addAll(this.permanentsPreventedFromDealingDamage);

@@ -730,6 +730,16 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileAnyNumberThenEffectChosenCardIds =
+                    List.copyOf(cardIds);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (gameData.cloneOperation.copyCardFilter != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearPermanentChoiceContext();
@@ -806,6 +816,33 @@ public class GraveyardChoiceHandlerService {
                     graveyardReturnSupport.putCardOntoBattlefield(gameData, player.getId(), card);
                 }
             }
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
+        if (gameData.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume) {
+            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+            if (pendingEntry == null) {
+                throw new IllegalStateException("Missing paused bargained graveyard return resolution");
+            }
+            gameData.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume = false;
+            List<UUID> targetCardIds = gameData.graveyardTargetOperation
+                    .resolutionTimeBargainedReturnTargetCardIds;
+            gameData.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds = List.of();
+            gameData.interaction.clearAwaitingInput();
+            Set<UUID> battlefieldCardIds = new HashSet<>(cardIds);
+            graveyardReturnSupport.processTargetedGraveyardTargets(
+                    gameData, pendingEntry, targetCardIds,
+                    (graveyard, card) -> {
+                        if (battlefieldCardIds.contains(card.getId())) {
+                            graveyardReturnSupport.putCardOntoBattlefield(
+                                    gameData, player.getId(), card);
+                        } else {
+                            permanentRemovalService.addCardToHandFromGraveyard(
+                                    gameData, player.getId(), player.getId(), card);
+                        }
+                    },
+                    " returns ", " from graveyard.");
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }

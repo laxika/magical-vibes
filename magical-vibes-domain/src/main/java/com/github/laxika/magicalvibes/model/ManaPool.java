@@ -151,6 +151,8 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> creatureAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with mana value 4 or greater. */
     private final EnumMap<ManaColor, Integer> manaValueAtLeastFourOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Per-color mana that can only be spent to cast spells with mana value 5 or greater or with {X} in their costs. */
+    private final EnumMap<ManaColor, Integer> manaValueAtLeastFiveOrXOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-color mana spendable only on creature spells with mana value at least four or with X. */
     private final EnumMap<ManaColor, Integer> creatureSpellManaValueAtLeastFourOrXOnlyMana =
             new EnumMap<>(ManaColor.class);
@@ -307,6 +309,7 @@ public class ManaPool {
         creatureSpellOrAbilityMana.putAll(source.creatureSpellOrAbilityMana);
         creatureAbilityOnlyMana.putAll(source.creatureAbilityOnlyMana);
         manaValueAtLeastFourOnlyMana.putAll(source.manaValueAtLeastFourOnlyMana);
+        manaValueAtLeastFiveOrXOnlyMana.putAll(source.manaValueAtLeastFiveOrXOnlyMana);
         creatureSpellManaValueAtLeastFourOrXOnlyMana
                 .putAll(source.creatureSpellManaValueAtLeastFourOrXOnlyMana);
         faceDownSpellsOrTurnFaceUpMana.putAll(source.faceDownSpellsOrTurnFaceUpMana);
@@ -598,6 +601,7 @@ public class ManaPool {
             creatureSpellOrAbilityMana.put(color, 0);
             creatureAbilityOnlyMana.put(color, 0);
             manaValueAtLeastFourOnlyMana.put(color, 0);
+            manaValueAtLeastFiveOrXOnlyMana.put(color, 0);
             creatureSpellManaValueAtLeastFourOrXOnlyMana.put(color, 0);
             faceDownSpellsOrTurnFaceUpMana.put(color, 0);
         }
@@ -723,6 +727,7 @@ public class ManaPool {
         total += getCreatureSpellOrAbilityManaTotal();
         total += getCreatureAbilityOnlyManaTotal();
         total += getManaValueAtLeastFourOnlyManaTotal();
+        total += getManaValueAtLeastFiveOrXOnlyManaTotal();
         total += getCreatureSpellManaValueAtLeastFourOrXOnlyManaTotal();
         total += getFaceDownSpellsOrTurnFaceUpManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {
@@ -2557,6 +2562,28 @@ public class ManaPool {
         manaValueAtLeastFourOnlyMana.put(color, Math.max(0, current - amount));
     }
 
+    /** Adds mana spendable only to cast spells with mana value 5 or greater or with {X} in their costs. */
+    public void addManaValueAtLeastFiveOrXOnlyMana(ManaColor color, int amount) {
+        manaValueAtLeastFiveOrXOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getManaValueAtLeastFiveOrXOnlyMana(ManaColor color) {
+        return manaValueAtLeastFiveOrXOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getManaValueAtLeastFiveOrXOnlyManaTotal() {
+        int total = 0;
+        for (int value : manaValueAtLeastFiveOrXOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void removeManaValueAtLeastFiveOrXOnlyMana(ManaColor color, int amount) {
+        int current = manaValueAtLeastFiveOrXOnlyMana.getOrDefault(color, 0);
+        manaValueAtLeastFiveOrXOnlyMana.put(color, Math.max(0, current - amount));
+    }
+
     public void addCreatureSpellManaValueAtLeastFourOrXOnlyMana(ManaColor color, int amount) {
         creatureSpellManaValueAtLeastFourOrXOnlyMana.merge(color, amount, Integer::sum);
     }
@@ -2591,6 +2618,36 @@ public class ManaPool {
         faceDownSpellsOrTurnFaceUpMana.merge(color, amount, Integer::sum);
     }
 
+    /** Temporarily exposes this restricted mana to the ordinary spell-payment algorithm. */
+    public ManaValueAtLeastFiveOrXSpellManaState promoteManaValueAtLeastFiveOrXOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, pool.getOrDefault(color, 0));
+            int amount = getManaValueAtLeastFiveOrXOnlyMana(color);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                manaValueAtLeastFiveOrXOnlyMana.put(color, 0);
+            }
+        }
+        return new ManaValueAtLeastFiveOrXSpellManaState(regularBefore, promoted);
+    }
+
+    /** Restores the unspent portion of temporarily promoted mana. */
+    public void restorePromotedManaValueAtLeastFiveOrXOnlyMana(ManaValueAtLeastFiveOrXSpellManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promoted = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - pool.getOrDefault(color, 0));
+            int remaining = Math.max(0, promoted - spent);
+            if (remaining > 0) {
+                pool.merge(color, -remaining, Integer::sum);
+                manaValueAtLeastFiveOrXOnlyMana.merge(color, remaining, Integer::sum);
+            }
+        }
+    }
+
     /** Temporarily exposes this restricted mana to the ordinary mana payment path. */
     public FaceDownSpellsOrTurnFaceUpManaState promoteFaceDownSpellsOrTurnFaceUpMana() {
         EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
@@ -2619,6 +2676,10 @@ public class ManaPool {
                 faceDownSpellsOrTurnFaceUpMana.merge(color, remaining, Integer::sum);
             }
         }
+    }
+
+    public record ManaValueAtLeastFiveOrXSpellManaState(Map<ManaColor, Integer> regularBefore,
+                                                         Map<ManaColor, Integer> promoted) {
     }
 
     public record FaceDownSpellsOrTurnFaceUpManaState(Map<ManaColor, Integer> regularBefore,
@@ -2697,6 +2758,7 @@ public class ManaPool {
         moveColoredManaToColorless(creatureSourceCreatureSpellOnlyMana);
         moveColoredManaToColorless(creatureOrEnchantmentSpellOnlyMana);
         moveColoredManaToColorless(manaValueAtLeastFourOnlyMana);
+        moveColoredManaToColorless(manaValueAtLeastFiveOrXOnlyMana);
         moveColoredManaToColorless(creatureSpellManaValueAtLeastFourOrXOnlyMana);
         moveColoredManaToColorless(faceDownSpellsOrTurnFaceUpMana);
         for (Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry : exiledCardOnlyMana.entrySet()) {
@@ -2794,6 +2856,7 @@ public class ManaPool {
         moveManaTo(replacementColor, creatureSpellOrAbilityMana);
         moveManaTo(replacementColor, creatureAbilityOnlyMana);
         moveManaTo(replacementColor, manaValueAtLeastFourOnlyMana);
+        moveManaTo(replacementColor, manaValueAtLeastFiveOrXOnlyMana);
         moveManaTo(replacementColor, creatureSpellManaValueAtLeastFourOrXOnlyMana);
         for (EnumMap<ManaColor, Integer> bucket : exiledCardOnlyMana.values()) {
             moveManaTo(replacementColor, bucket);
@@ -2950,6 +3013,7 @@ public class ManaPool {
         drainColorBucket(creatureSpellOrAbilityMana, protectedColors);
         drainColorBucket(creatureAbilityOnlyMana, protectedColors);
         drainColorBucket(manaValueAtLeastFourOnlyMana, protectedColors);
+        drainColorBucket(manaValueAtLeastFiveOrXOnlyMana, protectedColors);
         drainColorBucket(creatureSpellManaValueAtLeastFourOrXOnlyMana, protectedColors);
         drainColorBucket(faceDownSpellsOrTurnFaceUpMana, protectedColors);
 
@@ -3091,6 +3155,7 @@ public class ManaPool {
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureAbilityOnlyMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
+            amount += manaValueAtLeastFiveOrXOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
             amount += faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0);
             amount += exiledSpellOnlyMana.getOrDefault(color, 0);
@@ -3151,6 +3216,7 @@ public class ManaPool {
             amount += creatureSpellOrAbilityMana.getOrDefault(color, 0);
             amount += creatureAbilityOnlyMana.getOrDefault(color, 0);
             amount += manaValueAtLeastFourOnlyMana.getOrDefault(color, 0);
+            amount += manaValueAtLeastFiveOrXOnlyMana.getOrDefault(color, 0);
             amount += creatureSpellManaValueAtLeastFourOrXOnlyMana.getOrDefault(color, 0);
             amount += faceDownSpellsOrTurnFaceUpMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : exiledCardOnlyMana.values()) {

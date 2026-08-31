@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerThisTu
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToControllerByArtifactsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourceThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToSourcePermanentBySourceNameThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtByTargetPlayerSorceryThisTurn;
@@ -160,6 +161,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
 import com.github.laxika.magicalvibes.model.amount.TopCardOfLibraryManaValue;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWithSource;
+import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -492,6 +494,10 @@ public class AmountEvaluationService {
                     damageDealtToOpponentsThisTurn(gameData, ctx);
             case NoncombatDamageDealtToOpponentsThisTurn ignored ->
                     noncombatDamageDealtToOpponentsThisTurn(gameData, ctx);
+            case DamageDealtToSourceThisTurn ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : gameData.damageDealtToPermanentsThisTurn
+                                    .getOrDefault(ctx.sourcePermanent().getId(), 0);
             case DamageDealtToTargetPermanentThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPermanentsThisTurn
@@ -500,6 +506,8 @@ public class AmountEvaluationService {
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
                     totalManaValueOfCardsExiledWithSource(gameData, ctx);
+            case TotalManaValueOfCardsOwnedInExile ignored ->
+                    totalManaValueOfCardsOwnedInExile(gameData, ctx);
             case TotalPowerOfCardsExiledWithSource ignored ->
                     totalPTOfCardsExiledWithSource(gameData, ctx, true);
             case TotalPowerOfControlledCreatures ignored ->
@@ -1790,6 +1798,14 @@ public class AmountEvaluationService {
     private int totalManaValueOfCardsExiledWithSource(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
         return gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
+                .mapToInt(Card::getManaValue)
+                .sum();
+    }
+
+    private int totalManaValueOfCardsOwnedInExile(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        return gameData.getPlayerExiledCards(ctx.controllerId()).stream()
+                .filter(card -> !card.isToken())
                 .mapToInt(Card::getManaValue)
                 .sum();
     }

@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -491,6 +492,24 @@ public class LibraryChoiceHandlerService {
                 return;
             }
 
+            if (destination == LibrarySearchDestination.TOP_OF_LIBRARY
+                    && chosenCard != null && remainingCount > 1 && !sourceCards.isEmpty()) {
+                String prompt = "You may put another card on top of your library. The rest go into your graveyard.";
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(sourceCards))
+                                .canFailToFind(true)
+                                .remainingCount(remainingCount - 1)
+                                .sourceCards(new ArrayList<>(sourceCards))
+                                .restToGraveyard(true)
+                                .shuffleAfterSelection(false)
+                                .prompt(prompt)
+                                .destination(destination)
+                                .build(),
+                        prompt,
+                        true));
+                return;
+            }
+
             // Two-bounded-pick (Gift of the Gargantuan / Benefaction of Rhonas): after the first
             // pick, run the second-type pick over the same looked-at cards before disposing the rest.
             if (followUp.secondBoundedPick() != null
@@ -724,6 +743,38 @@ public class LibraryChoiceHandlerService {
 
         if (!removed) {
             throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND) {
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+
+            Integer maxManaValue = librarySearch.mayCastManaValueAtMost();
+            boolean mayCast = maxManaValue != null
+                    && !chosenCard.hasType(CardType.LAND)
+                    && chosenCard.getManaValue() <= maxManaValue;
+            if (mayCast) {
+                Card sourceCard = gameData.pendingEffectResolutionEntry != null
+                        ? gameData.pendingEffectResolutionEntry.getCard() : chosenCard;
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        sourceCard,
+                        playerId,
+                        List.of(new MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect()),
+                        "Cast " + chosenCard.getName()
+                                + " without paying its mana cost? If you don't, put it into your hand.",
+                        chosenCard.getId()));
+            } else {
+                gameData.removeFromExile(chosenCard.getId());
+                gameData.addCardToHand(deckOwnerId, chosenCard);
+            }
+
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " exiles a card face down", chosenCard,
+                    mayCast ? "." : " and puts it into their hand."));
+            finishSearchAndResume(gameData);
+            return;
         }
 
         if (destination == LibrarySearchDestination.EXILE_AND_CREATE_TOKENS) {
@@ -1451,6 +1502,8 @@ public class LibraryChoiceHandlerService {
                         "PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM should be handled earlier");
                 case EXILE_AND_MAY_CAST_WITHOUT_PAYING -> throw new IllegalStateException(
                         "EXILE_AND_MAY_CAST_WITHOUT_PAYING should be handled earlier");
+                case EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND -> throw new IllegalStateException(
+                        "EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND should be handled earlier");
                 case EXILE_FOR_FREE_CAST -> throw new IllegalStateException("EXILE_FOR_FREE_CAST should be handled earlier");
                 case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
                 case DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM -> throw new IllegalStateException("DRAW_CHOSEN_REST_TO_BOTTOM_RANDOM should be handled earlier");

@@ -51,6 +51,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.CardsInExileAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardDirectlyAboveSelfInGraveyard;
@@ -76,6 +78,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellT
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
+import com.github.laxika.magicalvibes.model.condition.ControlledFaerieAsCast;
 import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCreatureSpellCounteredByOpponentThisTurn;
@@ -549,6 +552,7 @@ public class ConditionEvaluationService {
             case CommittedCrimeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
+            case ControlledFaerieAsCast ignored -> ctx.controlledFaerieAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
                     ctx.controllerId() != null
                             && ctx.targetId() != null
@@ -666,6 +670,10 @@ public class ConditionEvaluationService {
                     countCardsInHand(gameData, ctx.controllerId()) <= c.threshold();
             case CardsInExileAtLeast c ->
                     gameData.exiledCards.size() >= c.threshold();
+            case CardsInExileMatchingAtLeast c ->
+                    countMatchingCardsInExile(gameData, ctx.controllerId(), c.filter()) >= c.threshold();
+            case CardPutIntoExileThisTurn ignored ->
+                    gameData.cardPutIntoExileThisTurn;
             case CardsInHandMatchingAtLeast c ->
                     countMatchingCardsInHand(gameData, ctx.controllerId(), c.filter()) >= c.threshold();
             case ActivePlayerControlsPermanent c ->
@@ -2817,6 +2825,20 @@ public class ConditionEvaluationService {
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .count();
+    }
+
+    private int countMatchingCardsInExile(GameData gameData, UUID ownerId, CardPredicate filter) {
+        if (ownerId == null) return 0;
+        int count = 0;
+        for (var entry : gameData.exiledCards) {
+            if (!ownerId.equals(entry.ownerId()) || entry.card().isToken()) continue;
+            boolean matches = GameQueryService.isStaticEvaluationActive()
+                    ? predicateEvaluationService.matchesCardPredicate(entry.card(), filter, null)
+                    : filter == null || predicateEvaluationService.matchesCardPredicate(
+                            entry.card(), filter, null, gameData, ownerId);
+            if (matches) count++;
+        }
+        return count;
     }
 
     private boolean isTopCardOfLibraryColor(GameData gameData, UUID controllerId, TopCardOfLibraryColor c) {

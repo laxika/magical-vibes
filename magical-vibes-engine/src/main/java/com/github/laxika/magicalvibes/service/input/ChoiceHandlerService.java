@@ -3556,7 +3556,7 @@ public class ChoiceHandlerService {
         }
 
         if (paid > 0) {
-            lifeSupport.applyLifeLoss(gameData, player.getId(), paid, ctx.card().getName());
+            lifeSupport.applyLifePayment(gameData, player.getId(), paid, ctx.card().getName());
         }
 
         gameLogService.append(gameData, GameLog.textCardText(

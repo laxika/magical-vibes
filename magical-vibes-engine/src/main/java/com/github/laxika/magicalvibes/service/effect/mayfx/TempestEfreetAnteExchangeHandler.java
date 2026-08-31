@@ -8,12 +8,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TempestEfreetAnteExchangeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TempestEfreetAnteExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,6 +35,9 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
     private final TempestEfreetAnteExchangeEffectHandler exchangeEffectHandler;
     private final TriggerCollectionService triggerCollectionService;
 
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return TempestEfreetAnteExchangeEffect.class;
@@ -47,13 +53,9 @@ public class TempestEfreetAnteExchangeHandler implements MayEffectHandlerBean {
                 && gameData.getLife(opponentId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            int lifeLoss = effect.lifeCost()
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, opponentId);
-            gameData.playerLifeTotals.put(opponentId, gameData.getLife(opponentId) - lifeLoss);
-            triggerCollectionService.checkLifePaymentTriggers(gameData, opponentId, lifeLoss);
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, opponentId, effect.lifeCost(), ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to avoid the {} exchange", gameData.id,
-                    player.getUsername(), lifeLoss, ability.sourceCard().getName());
+                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
             // Declined (or can no longer pay) — perform the exchange.
             exchangeEffectHandler.performExchange(gameData, ability.sourceCard(), controllerId, opponentId);

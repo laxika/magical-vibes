@@ -55,7 +55,7 @@ public class LimDulsVaultRepeatChoiceInteractionHandler
         gameData.interaction.clearAwaitingInput();
 
         if (accepted) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, 1, "Lim-Dûl's Vault");
+            lifeSupport.applyLifePayment(gameData, controllerId, 1, "Lim-Dûl's Vault");
             limDulsVaultSupport.beginOrder(gameData, controllerId, interaction.lookedAt(), true);
             return;
         }
