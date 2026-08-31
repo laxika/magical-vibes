@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MysticCompass.class, Forest.class, GrizzlyBears.class})
 class MysticCompassTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -31,6 +34,7 @@ class MysticCompassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forestId);
 
         assertThat(compass.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(forestId);
     }
@@ -103,6 +107,26 @@ class MysticCompassTest extends BaseCardTest {
     }
 
     @Test
+    void abilityControllerChoosesTypeForOpponentLand() {
+        addReadyCompass(player1);
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        UUID opponentForestId = harness.getPermanentId(player2, Forest.class.getSimpleName());
+
+        harness.activateAbility(player1, 0, null, opponentForestId);
+        harness.passBothPriorities();
+
+        var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(interaction.playerId()).isEqualTo(player1.getId());
+
+        harness.handleListChoice(player1, CardSubtype.ISLAND.name());
+
+        Permanent forest = gqs.findPermanentById(gd, opponentForestId);
+        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-land permanent")
     void cannotTargetNonLand() {
         addReadyCompass(player1);
@@ -119,9 +143,8 @@ class MysticCompassTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyCompass(Player player) {
-        Permanent perm = new Permanent(new MysticCompass());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MysticCompass());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

@@ -1,34 +1,37 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.h.HallOfTheBanditLord;
+import com.github.laxika.magicalvibes.cards.h.HeartOfYavimaya;
+import com.github.laxika.magicalvibes.cards.l.LakeOfTheDead;
+import com.github.laxika.magicalvibes.cards.s.SoldeviExcavations;
+import com.github.laxika.magicalvibes.cards.t.ThawingGlaciers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BenthicExplorers.class, HallOfTheBanditLord.class, HeartOfYavimaya.class, LakeOfTheDead.class,
+        SoldeviExcavations.class, ThawingGlaciers.class})
 class BenthicExplorersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Untapping the only tapped opponent land untaps it and adds that land's mana")
     void untapsOpponentLandAndAddsItsMana() {
-        addReadyExplorers();
-        harness.addToBattlefield(player2, new Island());
-        harness.tapPermanent(player2, 0);
-        UUID islandId = harness.getPermanentId(player2, "Island");
+        Permanent explorers = addReadyExplorers();
+        Permanent lake = harness.addToBattlefieldAndReturn(player2, new LakeOfTheDead());
+        lake.tap();
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(isTapped(islandId)).isFalse();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(lake.isTapped()).isFalse();
+        assertThat(explorers.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -36,7 +39,7 @@ class BenthicExplorersTest extends BaseCardTest {
     @DisplayName("Cannot be activated when no opponent land is tapped")
     void cannotActivateWithoutTappedOpponentLand() {
         addReadyExplorers();
-        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new HeartOfYavimaya());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -45,56 +48,89 @@ class BenthicExplorersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts mana from a land ability with a mana rider")
+    void countsManaFromLandAbilityWithManaRider() {
+        addReadyExplorers();
+        Permanent hall = harness.addToBattlefieldAndReturn(player2, new HallOfTheBanditLord());
+        hall.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(hall.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("A tapped land the controller controls is not a legal payment")
     void ownTappedLandIsNotALegalPayment() {
         addReadyExplorers();
-        harness.addToBattlefield(player1, new Island());
-        harness.tapPermanent(player1, 1);
-        UUID ownIslandId = harness.getPermanentId(player1, "Island");
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new HeartOfYavimaya());
+        ownLand.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        // Tapping it for mana above added {U}; the cost may not untap it to add a second mana
-        assertThat(isTapped(ownIslandId)).isTrue();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
     @DisplayName("With several tapped opponent lands the chosen land decides the mana type")
     void chosenLandDecidesManaType() {
         addReadyExplorers();
-        harness.addToBattlefield(player2, new Island());
-        harness.addToBattlefield(player2, new Forest());
-        harness.tapPermanent(player2, 0);
-        harness.tapPermanent(player2, 1);
-        UUID forestId = harness.getPermanentId(player2, "Forest");
+        Permanent lake = harness.addToBattlefieldAndReturn(player2, new LakeOfTheDead());
+        Permanent heart = harness.addToBattlefieldAndReturn(player2, new HeartOfYavimaya());
+        lake.tap();
+        heart.tap();
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactlyInAnyOrder(harness.getPermanentId(player2, "Island"), forestId);
+                .containsExactlyInAnyOrder(lake.getId(), heart.getId());
 
-        harness.handlePermanentChosen(player1, forestId);
+        harness.handlePermanentChosen(player1, heart.getId());
 
-        assertThat(isTapped(forestId)).isFalse();
+        assertThat(heart.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
-    private void addReadyExplorers() {
-        Permanent explorers = new Permanent(new BenthicExplorers());
-        explorers.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(explorers);
+    @Test
+    @DisplayName("Can choose colorless mana from a tapped land that produces multiple types")
+    void canChooseColorlessMana() {
+        addReadyExplorers();
+        Permanent excavations = harness.addToBattlefieldAndReturn(player2, new SoldeviExcavations());
+        excavations.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("BLUE", "COLORLESS");
+
+        harness.handleListChoice(player1, "COLORLESS");
+
+        assertThat(excavations.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private boolean isTapped(UUID permanentId) {
-        return gd.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(p -> p.getId().equals(permanentId))
-                .findFirst()
-                .map(Permanent::isTapped)
-                .orElseThrow();
+    @Test
+    @DisplayName("A tapped land with no mana ability produces no mana")
+    void landWithNoManaAbilityProducesNoMana() {
+        addReadyExplorers();
+        Permanent glaciers = harness.addToBattlefieldAndReturn(player2, new ThawingGlaciers());
+        glaciers.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(glaciers.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private Permanent addReadyExplorers() {
+        return addCreatureReady(player1, new BenthicExplorers());
     }
 }

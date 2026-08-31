@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BountyOfTheHunt.class, DoublingSeason.class, FountainOfYouth.class, GrizzlyBears.class,
+        HillGiant.class, Solemnity.class})
 class BountyOfTheHuntTest extends BaseCardTest {
 
     @Test
@@ -118,6 +123,15 @@ class BountyOfTheHuntTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Must target at least one creature")
+    void mustTargetAtLeastOneCreature() {
+        harness.setHand(player1, List.of(new BountyOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
@@ -126,5 +140,63 @@ class BountyOfTheHuntTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of(artifact.getId(), 3)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the alternate cost by exiling a non-green card")
+    void cannotCastForAlternateCostWithNonGreenCard() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BountyOfTheHunt(), new FountainOfYouth()));
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, Map.of(bears.getId(), 3), 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cleanup removes all counters actually put by a counter-doubling replacement")
+    void cleanupRemovesAllCountersActuallyPut() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BountyOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castInstant(player1, 0, Map.of(bears.getId(), 3));
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not remove existing counters when Solemnity prevents placement")
+    void doesNotRemoveExistingCountersWhenPlacementIsPrevented() {
+        harness.addToBattlefield(player1, new Solemnity());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new BountyOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castInstant(player1, 0, Map.of(bears.getId(), 3));
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cleanup removal waits for its triggered-ability priority window")
+    void cleanupRemovalWaitsForPriority() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BountyOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castInstant(player1, 0, Map.of(bears.getId(), 3));
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gs.advanceStep(gd);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
     }
 }

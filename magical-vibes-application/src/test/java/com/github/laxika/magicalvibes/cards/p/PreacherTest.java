@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarnivorousPlant;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,15 +12,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Preacher.class, GrizzlyBears.class})
+@CardUsed({Preacher.class, CarnivorousPlant.class})
 class PreacherTest extends BaseCardTest {
 
     @Test
     @DisplayName("The chosen opponent chooses a creature they control")
     void opponentChoosesCreatureTheyControl() {
         Permanent preacher = addCreatureReady(player1, new Preacher());
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new CarnivorousPlant());
+        Permanent opponentCreature = addCreatureReady(player2, new CarnivorousPlant());
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -55,56 +54,61 @@ class PreacherTest extends BaseCardTest {
     @DisplayName("The ability has no effect if Preacher untaps before resolution")
     void noEffectIfPreacherUntapsBeforeResolution() {
         Permanent preacher = addCreatureReady(player1, new Preacher());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent plant = addCreatureReady(player2, new CarnivorousPlant());
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player2, bears.getId());
+        harness.handlePermanentChosen(player2, plant.getId());
         preacher.untap();
         preacher.tap();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(
-                permanent -> permanent.getId().equals(bears.getId()));
+                permanent -> permanent.getId().equals(plant.getId()));
     }
 
     @Test
     @DisplayName("Control lasts while Preacher remains tapped")
     void controlEndsWhenPreacherUntaps() {
         Permanent preacher = addCreatureReady(player1, new Preacher());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent plant = addCreatureReady(player2, new CarnivorousPlant());
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player2, bears.getId());
+        harness.handlePermanentChosen(player2, plant.getId());
         harness.passBothPriorities();
 
-        advanceToNextTurn(player1);
-        advanceToNextTurnWithMayChoice(player2, true);
+        advanceToPreacherUntap();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(preacher.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(
-                permanent -> permanent.getId().equals(bears.getId()));
+                permanent -> permanent.getId().equals(plant.getId()));
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, java.util.List.of());
-        harness.setHand(player2, java.util.List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void mayChooseNotToUntap() {
+        Permanent preacher = addCreatureReady(player1, new Preacher());
+        Permanent plant = addCreatureReady(player2, new CarnivorousPlant());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player2, plant.getId());
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+
+        advanceToPreacherUntap();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(preacher.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
+                permanent -> permanent.getId().equals(plant.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(
+                permanent -> permanent.getId().equals(plant.getId()));
     }
 
-    private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
-        harness.forceActivePlayer(currentActivePlayer);
+    private void advanceToPreacherUntap() {
         harness.setHand(player1, java.util.List.of());
         harness.setHand(player2, java.util.List.of());
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
+        harness.passUntil(player1, TurnStep.UNTAP);
     }
 }

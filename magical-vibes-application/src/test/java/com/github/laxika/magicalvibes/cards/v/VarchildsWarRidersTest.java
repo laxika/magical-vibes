@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryGargoyle;
+import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({VarchildsWarRiders.class, StormCrow.class, IvoryGargoyle.class})
 class VarchildsWarRidersTest extends BaseCardTest {
 
     @Test
@@ -53,10 +57,7 @@ class VarchildsWarRidersTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent survivor = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> "Survivor".equals(p.getCard().getName()))
-                .findFirst()
-                .orElseThrow();
+        Permanent survivor = findPermanent(player2, "Survivor");
         assertThat(survivor.getCard().getSetCode()).isEqualTo("tfallback");
         assertThat(survivor.getCard().getCollectorNumber()).isEqualTo("1");
     }
@@ -99,8 +100,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
     void twoBlockersGivesPlusOne() {
         Permanent riders = addReadyRiders(player1);
         riders.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addReadyBlocker(player2);
+        addReadyBlocker(player2);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -118,7 +119,7 @@ class VarchildsWarRidersTest extends BaseCardTest {
     void oneBlockerGivesNothing() {
         Permanent riders = addReadyRiders(player1);
         riders.setAttacking(true);
-        addReadyBears(player2);
+        addReadyBlocker(player2);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -128,22 +129,40 @@ class VarchildsWarRidersTest extends BaseCardTest {
         assertThat(riders.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Removing the only blocker before Rampage resolves gives no bonus")
+    void removingOnlyBlockerBeforeRampageResolvesGivesNoBonus() {
+        Permanent riders = addReadyRiders(player1);
+        riders.setAttacking(true);
+        addReadyGargoyle(player2);
+        harness.addMana(player2, ManaColor.WHITE, 5);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
+        harness.passBothPriorities();
+
+        assertThat(riders.getPowerModifier()).isZero();
+        assertThat(riders.getToughnessModifier()).isZero();
+    }
+
     private long survivorCount(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> "Survivor".equals(p.getCard().getName()))
-                .count();
+        return countPermanents(player, "Survivor");
     }
 
     private Permanent addReadyRiders(Player player) {
-        Permanent permanent = new Permanent(new VarchildsWarRiders());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new VarchildsWarRiders());
     }
 
-    private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+    private void addReadyBlocker(Player player) {
+        addCreatureReady(player, new StormCrow());
+    }
+
+    private void addReadyGargoyle(Player player) {
+        addCreatureReady(player, new IvoryGargoyle());
     }
 }

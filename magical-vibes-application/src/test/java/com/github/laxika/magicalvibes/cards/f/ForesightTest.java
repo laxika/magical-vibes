@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,26 +17,29 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Foresight.class, FatalLore.class, ForceOfWill.class})
 class ForesightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving searches the library and exiles the three chosen cards")
     void exilesThreeChosenCards() {
-        setupAndCast();
+        List<Card> libraryCards = setupAndCast();
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        chooseFirstCard();
-        chooseFirstCard();
-        chooseFirstCard();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
-        assertThat(gd.exiledCards.stream().map(ExiledCardEntry::card).map(Card::getName))
-                .containsExactlyInAnyOrder("Plains", "Swamp", "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(libraryCards);
+        assertThat(gd.exiledCards.stream()
+                .filter(entry -> entry.ownerId().equals(player1.getId())))
+                .allMatch(ExiledCardEntry::faceDown);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Foresight");
     }
@@ -50,9 +50,9 @@ class ForesightTest extends BaseCardTest {
         setupAndCast();
 
         harness.passBothPriorities();
-        chooseFirstCard();
-        chooseFirstCard();
-        chooseFirstCard();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
@@ -67,17 +67,15 @@ class ForesightTest extends BaseCardTest {
         setupAndCast();
 
         harness.passBothPriorities();
-        chooseFirstCard();
-        chooseFirstCard();
-        chooseFirstCard();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).add(new Plains());
+        gd.playerDecks.get(player1.getId()).add(new FatalLore());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
@@ -93,31 +91,31 @@ class ForesightTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
-        deck.add(new Plains());
+        Card onlyCard = new FatalLore();
+        deck.add(onlyCard);
 
         harness.passBothPriorities();
-        chooseFirstCard();
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.exiledCards.stream().map(ExiledCardEntry::card).map(Card::getName))
-                .containsExactly("Plains");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.exiledCards.stream()
+                .filter(entry -> entry.ownerId().equals(player1.getId())))
+                .allMatch(ExiledCardEntry::faceDown);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
     }
 
-    private void chooseFirstCard() {
-        GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-    }
-
-    private void setupAndCast() {
+    private List<Card> setupAndCast() {
         harness.setHand(player1, List.of(new Foresight()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castSorcery(player1, 0, 0);
 
         List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
         deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears()));
+        List<Card> libraryCards = List.of(new FatalLore(), new ForceOfWill(), new Foresight());
+        deck.addAll(libraryCards);
+        return libraryCards;
     }
 
     @Test
@@ -132,7 +130,27 @@ class ForesightTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player1.getId());
+        assertThat(search.params().remainingCount()).isEqualTo(3);
         assertThat(search.params().reveals()).isFalse();
         assertThat(search.params().canFailToFind()).isFalse();
+        assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.EXILE);
+        assertThat(search.params().shuffleAfterSelection()).isTrue();
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("An empty library is still shuffled after the search")
+    void emptyLibraryStillShuffles() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Foresight()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        gd.playerDecks.get(player1.getId()).clear();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 }

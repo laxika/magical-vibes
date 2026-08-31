@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AngelOfJubilation;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ForceOfWill.class, GrizzlyBears.class, Counterspell.class})
 class ForceOfWillTest extends BaseCardTest {
 
     @Test
@@ -63,12 +65,34 @@ class ForceOfWillTest extends BaseCardTest {
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.setHand(player2, List.of(new ForceOfWill(), new Shock()));
+        harness.setHand(player2, List.of(new ForceOfWill(), new GrizzlyBears()));
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player2, 0, bears.getId(), 1))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(AngelOfJubilation.class)
+    void alternateCostCannotPayLifeWhenLifePaymentsAreProhibited() {
+        harness.addToBattlefield(player1, new AngelOfJubilation());
+
+        GrizzlyBears bears = new GrizzlyBears();
+        ForceOfWill forceOfWill = new ForceOfWill();
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(forceOfWill, counterspell));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player2, 0, bears.getId(), 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forceOfWill, counterspell);
     }
 }

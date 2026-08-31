@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BallLightning.class, GrizzlyBears.class})
 class BallLightningTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Can attack immediately due to haste and deals 6 damage")
@@ -29,12 +29,7 @@ class BallLightningTest extends BaseCardTest {
         ballLightning.setSummoningSick(true);
         gd.playerBattlefields.get(player1.getId()).add(ballLightning);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -44,19 +39,12 @@ class BallLightningTest extends BaseCardTest {
     void trampleAssignsExcessDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent ballLightning = new Permanent(new BallLightning());
-        ballLightning.setSummoningSick(false);
+        Permanent ballLightning = addCreatureReady(player1, new BallLightning());
         ballLightning.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(ballLightning);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -90,6 +78,26 @@ class BallLightningTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Ball Lightning");
         assertThat(trigger.getSourcePermanentId()).isEqualTo(ballLightning.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ball Lightning");
+        harness.assertInGraveyard(player1, "Ball Lightning");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself at the beginning of an opponent's end step")
+    void sacrificesItselfAtBeginningOfOpponentsEndStep() {
+        Permanent ballLightning = addCreatureReady(player1, new BallLightning());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(ballLightning.getId());
 
         harness.passBothPriorities();
 

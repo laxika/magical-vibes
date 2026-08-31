@@ -33,7 +33,25 @@ class GaeasTouchTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Forest");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting without a basic Forest in hand does nothing")
+    void acceptingWithoutBasicForestDoesNothing() {
+        addTouch();
+        Island island = new Island();
+        harness.setHand(player1, List.of(island));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Forest"))
+                .isEmpty();
     }
 
     @Test
@@ -67,6 +85,32 @@ class GaeasTouchTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Forest ability becomes available again on a new turn")
+    void forestAbilityCanBeActivatedAgainOnNewTurn() {
+        addTouch();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("The Forest ability requires sorcery speed")
     void forestAbilityRequiresSorcerySpeed() {
         addTouch();
@@ -88,6 +132,20 @@ class GaeasTouchTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Gaea's Touch");
+        harness.assertInGraveyard(player1, "Gaea's Touch");
+    }
+
+    @Test
+    @DisplayName("The mana ability can be activated during an opponent's turn")
+    void manaAbilityWorksDuringOpponentsTurn() {
+        addTouch();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Gaea's Touch");
     }
 

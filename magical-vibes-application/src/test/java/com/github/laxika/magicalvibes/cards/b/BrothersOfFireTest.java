@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.Scarecrow;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,14 +8,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BrothersOfFire.class, BogRats.class, Scarecrow.class})
 class BrothersOfFireTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -88,17 +87,16 @@ class BrothersOfFireTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1, and 1 damage to controller")
     void deals1DamageDestroying1ToughnessAnd1ToController() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BogRats());
         addReadyBrothers(player1);
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Bog Rats");
+        harness.assertInGraveyard(player2, "Bog Rats");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -106,16 +104,15 @@ class BrothersOfFireTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target 2/2 creature, creature survives, controller takes 1 damage")
     void deals1DamageDoesNotKill2Toughness() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Scarecrow());
         addReadyBrothers(player1);
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Scarecrow");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
@@ -138,10 +135,9 @@ class BrothersOfFireTest extends BaseCardTest {
         harness.setLife(player1, 20);
         addReadyBrothers(player1);
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Scarecrow());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
 
         // Remove target before resolution
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
@@ -157,9 +153,6 @@ class BrothersOfFireTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyBrothers(Player player) {
-        Permanent perm = new Permanent(new BrothersOfFire());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BrothersOfFire());
     }
 }

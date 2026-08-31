@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MurkDwellers.class, GrizzlyBears.class})
 class MurkDwellersTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,20 @@ class MurkDwellersTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+
+        assertThat(dwellers.getPowerModifier()).isEqualTo(0);
+        assertThat(dwellers.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The +2/+0 wears off at end of combat")
+    void boostWearsOffAtEndOfCombat() {
+        Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
+        dwellers.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(dwellers.getPowerModifier()).isEqualTo(0);
         assertThat(dwellers.getToughnessModifier()).isEqualTo(0);

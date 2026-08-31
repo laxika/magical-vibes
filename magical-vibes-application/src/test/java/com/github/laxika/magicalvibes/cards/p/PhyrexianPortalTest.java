@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.ShieldSphere;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,19 +17,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PhyrexianPortal.class, ShieldSphere.class})
 class PhyrexianPortalTest extends BaseCardTest {
 
     /** Ten distinct cards so every pile member is identifiable by instance. */
     private List<Card> tenCardLibrary() {
         List<Card> library = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            library.add(new Island());
-        }
-        for (int i = 0; i < 3; i++) {
-            library.add(new Forest());
-        }
-        for (int i = 0; i < 3; i++) {
-            library.add(new Swamp());
+        for (int i = 0; i < 10; i++) {
+            library.add(new ShieldSphere());
         }
         return library;
     }
@@ -147,7 +140,7 @@ class PhyrexianPortalTest extends BaseCardTest {
     @DisplayName("Nothing happens when the library has fewer than ten cards")
     void fewerThanTenCardsDoesNothing() {
         harness.addToBattlefield(player1, new PhyrexianPortal());
-        List<Card> library = List.of(new Island(), new Forest(), new Swamp());
+        List<Card> library = List.of(new ShieldSphere(), new ShieldSphere(), new ShieldSphere());
         harness.setLibrary(player1, library);
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -176,12 +169,12 @@ class PhyrexianPortalTest extends BaseCardTest {
     @DisplayName("The ability cannot target a creature")
     void cannotTargetCreature() {
         harness.addToBattlefield(player1, new PhyrexianPortal());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ShieldSphere());
         harness.setLibrary(player1, tenCardLibrary());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        UUID bears = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears))
+        UUID shieldSphere = harness.getPermanentId(player2, "Shield Sphere");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, shieldSphere))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
