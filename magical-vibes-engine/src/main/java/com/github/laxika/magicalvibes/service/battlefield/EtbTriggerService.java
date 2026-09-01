@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -399,6 +400,19 @@ public class EtbTriggerService {
         processCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers, false);
     }
 
+    private void snapshotAttachedPermanent(GameData gameData, StackEntry entry, Permanent sourcePermanent) {
+        if (!sourcePermanent.isAttached() || sourcePermanent.getAttachedTo() == null) return;
+
+        Permanent attached = gameQueryService.findPermanentById(gameData, sourcePermanent.getAttachedTo());
+        if (attached == null) return;
+
+        entry.setAttachedPermanentSnapshot(new Permanent(attached));
+        entry.setTriggeringPermanentId(attached.getId());
+        entry.setTriggeringPermanentControllerId(
+                gameQueryService.findPermanentController(gameData, attached.getId()));
+        entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attached));
+    }
+
     /** Returns whether every possible branch is handled during entry instead of as a trigger. */
     private boolean isEntryReplacementEffect(CardEffect effect) {
         if (effect instanceof ReplacementEffect) {
@@ -722,6 +736,7 @@ public class EtbTriggerService {
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (sourcePermanent != null) {
                     etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                    snapshotAttachedPermanent(gameData, etbEntry, sourcePermanent);
                 }
                 etbEntry.setSpectacle(sourceWasCastForSpectacle);
                 etbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
@@ -754,6 +769,7 @@ public class EtbTriggerService {
                     }
                     if (sourcePermanent != null) {
                         extraEtbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                        snapshotAttachedPermanent(gameData, extraEtbEntry, sourcePermanent);
                     }
                     extraEtbEntry.setSpectacle(sourceWasCastForSpectacle);
                     extraEtbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
@@ -874,12 +890,8 @@ public class EtbTriggerService {
         // Handle targeted graveyard-return effects (return target card from your graveyard to the
         // battlefield/hand): choose the graveyard target as the trigger goes on the stack, reusing the
         // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
-        int minimumGraveyardTargets = graveyardTargetReturnEffects.stream()
-                .anyMatch(effect -> {
-                    GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(effect));
-                    return target == null || target.minTargets() > 0;
-                }) ? 1 : 0;
         for (CardEffect effect : graveyardTargetReturnEffects) {
+            int minimumGraveyardTargets = minimumGraveyardTargets(card, effect);
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                         card, controllerId, List.of(effect), null, minimumGraveyardTargets, xValue));
@@ -923,6 +935,18 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
+    }
+
+    private int minimumGraveyardTargets(Card card, CardEffect effect) {
+        int targetIndex = card.getEffectTargetIndex(effect);
+        if (targetIndex >= 0 && targetIndex < card.getSpellTargets().size()) {
+            SpellTarget target = card.getSpellTargets().get(targetIndex);
+            return target.getMinTargets();
+        }
+        if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
+            return returnEffect.upTo() ? 0 : 1;
+        }
+        return 1;
     }
 
     private static boolean isMixedPermanentAndSpellTarget(CardEffect effect) {

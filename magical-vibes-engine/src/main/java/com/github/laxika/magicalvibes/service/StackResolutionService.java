@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -309,6 +311,7 @@ public class StackResolutionService {
         entry.getEnteringCounters().forEach((counterType, count) ->
                 perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
         perm.setAlternateCost(entry.isAlternateCost());
+        perm.setCastWithWarp(entry.isCastWithWarp());
         perm.setMadness(entry.isMadness());
         if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
             perm.getGrantedKeywords().add(Keyword.HASTE);
@@ -362,6 +365,14 @@ public class StackResolutionService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
                     entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
                     entry.getConvokeCreatureIds().size());
+        }
+    }
+
+    private void queueWarpExileIfPresent(GameData gameData, StackEntry entry, Permanent permanent) {
+        if (entry.isCastWithWarp()
+                && gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    permanent.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP));
         }
     }
 
@@ -525,6 +536,10 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
         }
+        if (entry.isCastWithWarp()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    perm.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP));
+        }
         gameData.transferCardsExiledByPermanent(entry.getPhysicalCard().getId(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
@@ -635,7 +650,9 @@ public class StackResolutionService {
 
         Permanent auraPerm = new Permanent(card);
         auraPerm.setAttachedTo(creature.getId());
+        auraPerm.setCastWithWarp(entry.isCastWithWarp());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPerm);
+        queueWarpExileIfPresent(gameData, entry, auraPerm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()
@@ -721,6 +738,7 @@ public class StackResolutionService {
                 Permanent perm = createEnteringPermanent(entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
+                queueWarpExileIfPresent(gameData, entry, perm);
 
                 String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
                 String playerName = gameData.playerIdToName.get(controllerId);
@@ -748,6 +766,7 @@ public class StackResolutionService {
                         entry, card, characteristics, entry.getBestowOriginalCard() != null);
                 perm.setAttachedTo(entry.getTargetId());
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
+                queueWarpExileIfPresent(gameData, entry, perm);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
                 gameLogService.append(gameData, GameLog.builder()
@@ -818,6 +837,7 @@ public class StackResolutionService {
             // Pass cast X / kicked so "enters with X counters" replacements and ETB triggers that
             // read XValue (e.g. The Meathook Massacre) see the paid X.
             putResolvedPermanentOntoBattlefield(gameData, controllerId, enchPerm, entry);
+            queueWarpExileIfPresent(gameData, entry, enchPerm);
             Card enteredCard = enchPerm.getCard();
             logEnterBattlefield(gameData, enteredCard, controllerId);
 
@@ -881,6 +901,7 @@ public class StackResolutionService {
         Permanent perm = createEnteringPermanent(entry, card, card);
         controllerId = battlefieldEntryService.resolveEnteringController(gameData, controllerId, perm);
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
+        queueWarpExileIfPresent(gameData, entry, perm);
         Card enteredCard = perm.getCard();
         logEnterBattlefield(gameData, enteredCard, controllerId);
         handleResolvedPermanentEtb(gameData, controllerId, enteredCard, null, entry.getXValue(), entry);
@@ -919,6 +940,13 @@ public class StackResolutionService {
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
+        if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
+            return;
+        }
+        if (entry.isCastWithWarp()) {
+            gameData.queueDelayedAction(new DelayedPermanentAction(
+                    perm.getId(), DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP));
+        }
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.

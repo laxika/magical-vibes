@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -1567,6 +1568,25 @@ class StepTriggerServiceTest {
             sut.handleBeginningOfCombatTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Source-counter intervening-if skips beginning-of-combat trigger below threshold")
+        void sourceCounterThresholdInterveningIfSkipsWhenUnmet() {
+            Card card = createCardWithName("Counter Combat Card");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new SourceCounterThreshold(2, CounterType.CHARGE), new GainLifeEffect(1)));
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+
+            permanent.setCounterCount(CounterType.CHARGE, 2);
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test

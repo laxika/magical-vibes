@@ -165,6 +165,7 @@ combat damage step is processed.
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default; multi-target groups reuse `ETBTokenMultiTargetTrigger`) | End step |
 | `OPPONENT_END_STEP_TRIGGERED` | `StepTriggerService.handleEndStepTriggers` (fires only when the end-step player is an opponent of the permanent's controller; end-step player baked into `targetId` for the intervening-if `ConditionalEffect`, e.g. Predatory Advantage's `EndStepPlayerDidntCastCreatureSpell`) | Non-targeting |
 | `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfTriggeredAbilityTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or admits a graveyard card — `admits(Kind.GRAVEYARD_CARD)`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfTriggeredAbilityTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
+| `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | `PermanentRemovalService` → `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`; controller-scoped watcher for another creature controlled by the same player, after the card enters exile | Non-targeting effects push directly to the stack |
 | `ON_CONTROLLER_ARTIFACT_OR_CREATURE_CARDS_LEAVE_GRAVEYARD` (targeting effects only) | `MiscTriggerCollectorService.handleControllerArtifactOrCreatureCardsLeaveGraveyard` → `SelfTriggeredAbilityTarget`; intervening-if conditions are checked when the trigger event occurs, then permanent/player targets are collected as the ability is put on the stack | End step (reuses `TriggerTargetCollector.Options.END_STEP`) |
 | `ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD` | `GraveyardService.notifyCardsLeftGraveyard` → `TriggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers` (one trigger per nontoken creature card) | Non-targeting |
 | `ON_SELF_BECOMES_MONSTROUS` (targeting effects only) | `MonstrosityEffectHandler` → `TriggerCollectionService.checkBecomesMonstrousTriggers` → `SelfTriggeredAbilityTarget`; target selection uses the same permanent-targeting queue as other self-triggered abilities. | When monstrosity resolves |
@@ -332,6 +333,9 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `SourceCounterThreshold` conditional in this slot can fire when the source crosses the threshold),
 `ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE` (Wildwood Scourge; fires once when
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
+`ON_CONTROLLER_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE` (Terrasymbiosis; fires once when the
+controller puts one or more +1/+1 counters on a creature they control and carries the number of
+counters placed as the trigger event value),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature

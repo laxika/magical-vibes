@@ -8197,6 +8197,41 @@ public class TriggerCollectionService {
     }
 
     /**
+     * "Whenever another creature you control is put into exile from the battlefield" triggers.
+     * Controller-scoped and checked after the permanent's card has entered exile.
+     */
+    public void checkAllyCreatureExiledFromBattlefieldTriggers(GameData gameData, Permanent exiledPermanent,
+                                                               boolean wasCreature, UUID controllerId) {
+        if (!wasCreature || controllerId == null) return;
+        UUID exiledId = exiledPermanent.getId();
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : battlefield) {
+            if (perm.getId().equals(exiledId)) continue;
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD)) {
+                CardEffect resolved = resolveTriggeringPermanentConditional(
+                        gameData, perm, controllerId, exiledPermanent, effect);
+                if (resolved == null) continue;
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+                log.info("Game {} - {} triggers on another creature you control being put into exile ({})",
+                        gameData.id, perm.getCard().getName(), exiledPermanent.getCard().getName());
+            }
+        }
+    }
+
+    /**
      * "Whenever another artifact you control leaves the battlefield" triggers (e.g. Sludge Strider).
      * Called from every leave-the-battlefield path in {@link com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService}
      * (graveyard, hand, exile, library) after the permanent has been removed. Controller-scoped
@@ -9253,7 +9288,6 @@ public class TriggerCollectionService {
             for (CardEffect effect : effects) {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
                 if (resolved == null) continue;
-
                 CardEffect dispatchEffect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
                 if (dispatchEffect == null) continue;
 

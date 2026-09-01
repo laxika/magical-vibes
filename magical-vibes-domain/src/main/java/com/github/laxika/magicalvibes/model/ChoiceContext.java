@@ -741,6 +741,9 @@ public sealed interface ChoiceContext {
     /** Choosing a number at resolution for a spell with no permanent to store it on. */
     record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing odd or even at resolution for a spell with no permanent to store it on. */
+    record SpellManaValueParityChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
     record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
 

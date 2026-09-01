@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUp
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
 import com.github.laxika.magicalvibes.model.action.TransformSourceAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.GrantChosenLandwalkAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
@@ -425,6 +426,17 @@ public class StepTriggerService {
         epicService.fireUpkeepTriggers(gameData);
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP);
+
+        if (gameData.hasDelayedAction(GrantExilePlayPermissionAtNextTurn.class)) {
+            List<GrantExilePlayPermissionAtNextTurn> pendingPermissions = gameData.drainDelayedActions(
+                    GrantExilePlayPermissionAtNextTurn.class,
+                    action -> action.exiledTurnNumber() < gameData.turnNumber);
+            for (GrantExilePlayPermissionAtNextTurn action : pendingPermissions) {
+                if (gameData.findExiledCard(action.cardId()) != null) {
+                    gameData.exilePlayPermissions.put(action.cardId(), action.ownerId());
+                }
+            }
+        }
 
         // Cycle of Life: "At the beginning of your next upkeep, put a +1/+1 counter on that
         // creature." A delayed triggered ability — it uses the stack but doesn't target, so the
@@ -3779,9 +3791,17 @@ public class StepTriggerService {
             }
         }
 
-        if (gameData.hasDelayedAction(SacrificeSelfAtNextEndStepTrigger.class)) {
+        if (gameData.hasDelayedAction(SacrificeSelfAtNextEndStepTrigger.class,
+                action -> action.registeredTurnNumber() == null
+                        || (action.registeredTurnNumber() < gameData.turnNumber
+                        && action.controllerId() != null
+                        && action.controllerId().equals(gameData.activePlayerId)))) {
             List<SacrificeSelfAtNextEndStepTrigger> pendingSacrifices =
-                    gameData.drainDelayedActions(SacrificeSelfAtNextEndStepTrigger.class);
+                    gameData.drainDelayedActions(SacrificeSelfAtNextEndStepTrigger.class,
+                            action -> action.registeredTurnNumber() == null
+                                    || (action.registeredTurnNumber() < gameData.turnNumber
+                                    && action.controllerId() != null
+                                    && action.controllerId().equals(gameData.activePlayerId)));
             for (SacrificeSelfAtNextEndStepTrigger pending : pendingSacrifices) {
                 if (gameQueryService.findPermanentById(gameData, pending.permanentId()) == null) {
                     continue;
@@ -3972,6 +3992,8 @@ public class StepTriggerService {
                 DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.EXILE_AT_END_STEP);
+        permanentRemovalService.processDelayedPermanentActions(gameData,
+                DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP);
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
         permanentRemovalService.processDelayedPermanentActions(gameData,
@@ -5822,7 +5844,8 @@ public class StepTriggerService {
                 targetFilter,
                 trigger.controllerId(),
                 trigger.sourceCard(),
-                TriggerTargetCollector.Options.END_STEP);
+                TriggerTargetCollector.Options.END_STEP,
+                gameQueryService.findPermanentById(gameData, trigger.sourcePermanentId()));
         List<UUID> validTargets = result.validTargets();
         boolean optionalTarget = trigger.sourceCard().getMinTargets() == 0;
 

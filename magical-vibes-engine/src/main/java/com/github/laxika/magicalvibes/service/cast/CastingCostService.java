@@ -118,6 +118,9 @@ public class CastingCostService {
     public record CostModifierSnapshot(List<CollectedCostModifier> modifiers) {
     }
 
+    public record AlternativeCostSelection(String manaCost, boolean castsWithWarp) {
+    }
+
     record CollectedCostModifier(CostModificationHandlerBean handler, CardEffect effect, CostModificationSource source) {
     }
 
@@ -1334,7 +1337,13 @@ public class CastingCostService {
      * for the given card AND the player's mana pool can pay that alternative cost (plus any modifiers).
      */
     public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
-        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost) != null;
+        return canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost, Zone.HAND);
+    }
+
+    public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card,
+                                                            ManaPool pool, int additionalCost, Zone sourceZone) {
+        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost,
+                sourceZone) != null;
     }
 
     /**
@@ -1342,18 +1351,35 @@ public class CastingCostService {
      * or null if none exists or none is affordable.
      */
     public String findAffordableAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
+        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost, Zone.HAND);
+    }
+
+    public String findAffordableAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card,
+                                                                ManaPool pool, int additionalCost, Zone sourceZone) {
+        AlternativeCostSelection selection = findAffordableAlternativeCostSelection(
+                gameData, playerId, card, pool, additionalCost, sourceZone);
+        return selection == null ? null : selection.manaCost();
+    }
+
+    public AlternativeCostSelection findAffordableAlternativeCostSelection(GameData gameData, UUID playerId,
+                                                                            Card card, ManaPool pool,
+                                                                            int additionalCost, Zone sourceZone) {
+        if (sourceZone == null) sourceZone = Zone.HAND;
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && altCost.nonManaCost() == null
+                        && (sourceZone == Zone.HAND || !altCost.fromHandOnly())
+                        && (altCost.allowedZones() == null || altCost.allowedZones().contains(sourceZone))
+                        && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                         && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     String alternativeCostString = altCost.manaCostFor(card.getManaValue());
                     ManaCost alternativeManaCost = applyColoredManaCostReductions(
                             gameData, playerId, card, new ManaCost(alternativeCostString));
                     if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
-                        return alternativeCostString;
+                        return new AlternativeCostSelection(alternativeCostString, altCost.castsWithWarp());
                     }
                 }
             }

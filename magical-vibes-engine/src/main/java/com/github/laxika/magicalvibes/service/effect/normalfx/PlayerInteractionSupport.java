@@ -226,6 +226,11 @@ public class PlayerInteractionSupport {
     }
     public void applyDrawCards(GameData gameData, UUID playerId, int amount) {
 
+        if (amount > 0 && drawService.hasQuantumRiddlerDrawReplacement(gameData, playerId)) {
+            drawService.resolveDrawCards(gameData, playerId, amount);
+            return;
+        }
+
         for (int i = 0; i < amount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }

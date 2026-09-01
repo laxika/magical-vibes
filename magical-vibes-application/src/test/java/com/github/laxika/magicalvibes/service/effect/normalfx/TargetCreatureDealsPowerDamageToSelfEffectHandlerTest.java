@@ -77,4 +77,29 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, target, 2, player2Id);
     }
+
+    @Test
+    @DisplayName("Multiplies the target creature's power before dealing self-damage")
+    void appliesPowerMultiplier() {
+        Card spell = createCard("Cut Propulsion");
+        spell.setColor(CardColor.RED);
+        Permanent target = addPermanent(player2Id, createCreature("Wall of Air", 1, 5));
+        StackEntry entry = createEntry(spell, player1Id, target.getId());
+
+        stubDamagePreventable();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(target, 2);
+        stubCreatureSourceRedirects();
+        when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+        when(gameQueryService.getPowerBasedDamage(gd, target)).thenReturn(1);
+        when(gameQueryService.isPreventedFromDealingDamage(gd, target)).thenReturn(false);
+        when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), eq(target))).thenReturn(false);
+        when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
+        stubNoKeywordsOnSourceWithDamageSource(entry, target);
+
+        handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect(2));
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, target, 2, player2Id);
+    }
 }

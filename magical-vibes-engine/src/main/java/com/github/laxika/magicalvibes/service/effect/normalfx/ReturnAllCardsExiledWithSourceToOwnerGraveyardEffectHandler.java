@@ -32,19 +32,23 @@ public class ReturnAllCardsExiledWithSourceToOwnerGraveyardEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
+            entry.setEventValue(0);
             return;
         }
 
         List<ExiledCardEntry> cardsToReturn = gameData.exiledCards.stream()
                 .filter(exiled -> sourcePermanentId.equals(exiled.sourcePermanentId()))
                 .toList();
+        int returnedCards = 0;
         for (ExiledCardEntry exiled : cardsToReturn) {
             if (!gameData.removeFromExile(exiled.card().getId())) {
                 continue;
             }
             graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), exiled.card(), Zone.EXILE);
+            returnedCards++;
             gameLogService.append(gameData,
                     GameLog.cardThen(exiled.card(), " returns to its owner's graveyard."));
         }
+        entry.setEventValue(returnedCards);
     }
 }

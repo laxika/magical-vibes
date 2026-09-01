@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPred
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedOrWasBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastBySourceControllerThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -685,15 +686,20 @@ public class PredicateEvaluationService {
                     yield gameQueryService.effectiveBasicLandTypes(gameData, permanent)
                             .contains(hasSubtypePredicate.subtype());
                 }
-                if (gameData != null && !GameQueryService.isStaticEvaluationActive()) {
-                    yield gameQueryService.hasEffectiveSubtype(gameData, permanent, hasSubtypePredicate.subtype())
-                            || (creatureSubtype
-                            && gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING));
+                if (gameData != null && !creatureSubtype && !GameQueryService.isStaticEvaluationActive()) {
+                    yield gameQueryService.hasEffectiveSubtype(gameData, permanent, hasSubtypePredicate.subtype());
                 }
                 if (gameData != null && creatureSubtype) {
                     yield gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
                             .contains(hasSubtypePredicate.subtype())
                             || gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING);
+                }
+                if (gameData != null) {
+                    yield gameQueryService.computeStaticBonus(gameData, permanent).grantedSubtypes()
+                            .contains(hasSubtypePredicate.subtype())
+                            || permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
+                            || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
+                            || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype());
                 }
                 yield permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
                         || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
@@ -1500,6 +1506,7 @@ public class PredicateEvaluationService {
                 yield gameData.getSpellsCastThisTurn(sourceControllerId).stream()
                         .anyMatch(cast -> cast.getId().equals(cardId));
             }
+            case PermanentCastForWarpCostPredicate ignored -> permanent.isCastWithWarp();
             case PermanentOwnedBySourceControllerPredicate ignored -> {
                 yield ownedBySourceController(permanent, filterContext);
             }
@@ -2122,6 +2129,7 @@ public class PredicateEvaluationService {
                             LayerSystemService.activeStateFor(permanent.getId()), context);
             case PermanentHasSubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAdventurePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentCastForWarpCostPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasSupertypePredicate p -> gameQueryService.hasEffectiveSupertype(
                     context == null ? null : context.gameData(), permanent, p.supertype());
             case PermanentIsArtifactPredicate ignored -> matchesStaticLeaf(permanent, predicate);

@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentActivatedThisTurnPre
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCastForWarpCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -742,6 +743,18 @@ class PredicateEvaluationServiceTest {
         }
 
         @Test
+        @DisplayName("PermanentCastForWarpCostPredicate matches only warp-cast permanents")
+        void castForWarpCostPredicateMatchesOnlyWarpCasts() {
+            Permanent warped = addPermanent(player1Id, createCreature("Warped Creature", 2, 2, CardColor.RED));
+            Permanent normallyCast = addPermanent(player1Id, createCreature("Normal Creature", 2, 2, CardColor.RED));
+            warped.setCastWithWarp(true);
+
+            PermanentCastForWarpCostPredicate predicate = new PermanentCastForWarpCostPredicate();
+            assertThat(evaluator.matchesPermanentPredicate(gd, warped, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, normallyCast, predicate)).isFalse();
+        }
+
+        @Test
         @DisplayName("Name predicates reject face-down permanents with no name")
         void namePredicatesRejectFaceDownPermanents() {
             Permanent faceDownWirefly = addPermanent(player1Id,
@@ -773,8 +786,8 @@ class PredicateEvaluationServiceTest {
                     .withSourceCardId(first.getCard().getId());
             assertThat(evaluator.matchesPermanentPredicate(
                     second, new PermanentHasSameNameAsSourcePredicate(), sourceContext)).isFalse();
-            assertThat(evaluator.matchesPermanentPredicate(gd, first,
-                    new PermanentSharesNameWithAnotherPermanentPredicate())).isFalse();
+             assertThat(evaluator.matchesPermanentPredicate(gd, first,
+                     new PermanentSharesNameWithAnotherPermanentPredicate())).isFalse();
         }
 
         @Test

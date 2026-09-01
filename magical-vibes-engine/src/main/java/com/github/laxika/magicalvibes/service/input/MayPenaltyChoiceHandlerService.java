@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessCollectsEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessExilesGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -308,9 +309,9 @@ public class MayPenaltyChoiceHandlerService {
     }
 
     public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        // Presence check — the effect is a marker; wording differs from counter-unless-pays.
-        ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessEffect ce && ce.ransomKind() == CounterUnlessEffect.RansomKind.DISCARD_CARD)
+        CounterUnlessDiscardsEffect effect = ability.effects().stream()
+                .filter(CounterUnlessDiscardsEffect.class::isInstance)
+                .map(CounterUnlessDiscardsEffect.class::cast)
                 .findFirst().orElseThrow();
 
         UUID targetCardId = ability.targetCardId();
@@ -356,8 +357,19 @@ public class MayPenaltyChoiceHandlerService {
             if (!validIndices.isEmpty()) {
                 // Paying the Ward cost is the controller's own choice — not an opponent-caused discard.
                 gameData.discardCausedByOpponent = false;
+                if (effect.random()) {
+                    playerInteractionSupport.resolveRandomDiscardCards(
+                            gameData, controllerId, ability.sourceCard().getName(), effect.ransomMagnitude());
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " discards a card at random. ",
+                            targetEntry.getCard(), " is not countered."));
+                    log.info("Game {} - {} accepts counter-unless-discard for {} (random)",
+                            gameData.id, player.getUsername(), ability.sourceCard().getName());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a card to discard.", 1);
+                        "Choose a card to discard.", effect.ransomMagnitude());
 
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " discards a card. ", targetEntry.getCard(), " is not countered."));

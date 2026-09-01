@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -155,6 +156,25 @@ class AbilityActivationServiceTest {
         // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
                 .thenReturn(true);
+    }
+
+    @Nested
+    @DisplayName("activateAbility — source equipment costs")
+    class ActivateAbilitySourceEquipmentCosts {
+
+        @Test
+        @DisplayName("ExileSourceEquipmentCost requires the granting Equipment on the battlefield")
+        void exileSourceEquipmentCostRequiresGrantingEquipment() {
+            Permanent creature = addReadyPermanent(player1Id, createCreatureCard("Equipped Creature", 2, 2));
+            ActivatedAbility ability = new ActivatedAbility(
+                    false, null, List.of(new ExileSourceEquipmentCost()), "Exile the granting Equipment")
+                    .withGrantSource(UUID.randomUUID());
+
+            assertThatThrownBy(() -> service.validateActivationLegality(
+                    gameData, player1Id, creature, ability, 0, 0, new ManaPool(), 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("granting Equipment");
+        }
     }
 
     // =========================================================================

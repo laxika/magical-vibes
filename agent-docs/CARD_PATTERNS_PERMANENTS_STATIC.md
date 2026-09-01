@@ -481,3 +481,4 @@ All paths relative to `cards/`.
 
 | Controller-scoped combat attack limit | `c/Crawlspace.java` | STATIC MaximumCombatCreaturesEffect(2, Integer.MAX_VALUE, CONTROLLER) — no more than two creatures can attack the effect's controller directly; attacks against that player's planeswalkers are unrestricted |
 | Planeswalker-scoped combat attack limit | `t/TheEternalWanderer.java` | STATIC MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, SOURCE_PERMANENT) — no more than one creature can attack the effect planeswalker each combat |
+| Toughness for stationing when greater than power | `t/TapestryWarden.java` | STATIC UseToughnessForStationEffect() + AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES, PermanentToughnessGreaterThanPowerPredicate) — qualifying creatures use effective toughness when stationing Spacecraft and for combat damage |

@@ -48,6 +48,14 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
                 enterTapped, enterAttacking, returnAtRandom, false, 0);
     }
 
+    public ReturnCardExiledWithSourceToBattlefieldEffect(
+            CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+            boolean enterTapped, boolean enterAttacking, boolean targeted,
+            int additionalPlusOnePlusOneCounters) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
+                false, targeted, additionalPlusOnePlusOneCounters);
+    }
+
     public static ReturnCardExiledWithSourceToBattlefieldEffect targetedCreature(
             boolean enterTapped, int additionalPlusOnePlusOneCounters) {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(

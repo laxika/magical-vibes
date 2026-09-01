@@ -251,7 +251,7 @@ class CombatDamageServiceTest {
             return null;
         }).when(permanentRemovalService).removePermanentToGraveyard(eq(gameData), any(Permanent.class));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.findPermanentController(eq(gameData), any(UUID.class)))
                 .thenAnswer(inv -> {
@@ -326,13 +326,13 @@ class CombatDamageServiceTest {
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
                 eq(gameData), any(UUID.class), anyInt(), any(UUID.class), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(damagePreventionService.applyCombatPlayerPreventionShield(
                 eq(gameData), any(UUID.class), anyInt()))
@@ -345,7 +345,7 @@ class CombatDamageServiceTest {
 
     /** Stubs for blocked combat: isDamagePreventable and findPermanentById for triggers. */
     private void stubBlockedCombat() {
-        when(gameQueryService.isDamagePreventable(gameData)).thenReturn(false);
+        when(gameQueryService.isDamagePreventable(gameData, true)).thenReturn(false);
         when(gameQueryService.findPermanentById(eq(gameData), any(UUID.class)))
                 .thenAnswer(inv -> {
                     UUID permId = inv.getArgument(1);
@@ -361,14 +361,14 @@ class CombatDamageServiceTest {
     /** Stubs for unblocked regular (non-infect) damage reaching the player. */
     private void stubRegularPlayerDamage() {
         when(damagePreventionService.isSourceDamagePreventedForPlayer(
-                eq(gameData), any(UUID.class), any(UUID.class))).thenReturn(false);
+                eq(gameData), any(UUID.class), any(UUID.class), eq(true))).thenReturn(false);
         when(damagePreventionService.applyColorDamagePreventionForPlayer(
-                eq(gameData), any(UUID.class), any())).thenReturn(false);
+                eq(gameData), any(UUID.class), any(), eq(true))).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
-                eq(gameData), any(UUID.class), any(), anyInt()))
+                eq(gameData), any(UUID.class), any(), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.shouldDamageBeDealtAsInfect(eq(gameData), any(UUID.class)))
                 .thenReturn(false);
@@ -395,14 +395,14 @@ class CombatDamageServiceTest {
     /** Stubs for infect damage to player (poison counters via accumulatePlayerDamage path). */
     private void stubInfectToPlayer() {
         when(damagePreventionService.isSourceDamagePreventedForPlayer(
-                eq(gameData), any(UUID.class), any(UUID.class))).thenReturn(false);
+                eq(gameData), any(UUID.class), any(UUID.class), eq(true))).thenReturn(false);
         when(damagePreventionService.applyColorDamagePreventionForPlayer(
-                eq(gameData), any(UUID.class), any())).thenReturn(false);
+                eq(gameData), any(UUID.class), any(), eq(true))).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
-                eq(gameData), any(UUID.class), any(), anyInt()))
+                eq(gameData), any(UUID.class), any(), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.canPlayerGetPoisonCounters(eq(gameData), any(UUID.class)))
                 .thenReturn(true);

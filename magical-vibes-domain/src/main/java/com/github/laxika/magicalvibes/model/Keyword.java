@@ -113,12 +113,14 @@ public enum Keyword {
     CAMOUFLAGE,
     DOUBLE,
     PLOT,
+    WARP,
     AMASS,
     ASSEMBLE,
     WATERBEND,
     FIREBENDING,
     BLOW_UP,
-    DISGUISE;
+    DISGUISE,
+    STATION;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

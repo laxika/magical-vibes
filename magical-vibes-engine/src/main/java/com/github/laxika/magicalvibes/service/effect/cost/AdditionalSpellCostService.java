@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.cost;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrWarpedCardCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
@@ -153,6 +155,7 @@ public class AdditionalSpellCostService {
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
             ChooseCreatureTypeCost.class,
+            ChooseCreatureOrWarpedCardCost.class,
             BeholdAndExileCost.class,
             BeholdCost.class,
             DelveCost.class,
@@ -211,6 +214,7 @@ public class AdditionalSpellCostService {
             ChooseXValueCost chooseXValueCost,
             BeholdAndExileCost beholdCost,
             BeholdCost beholdSelectionCost,
+            ChooseCreatureOrWarpedCardCost chosenCreatureOrWarpedCardCost,
             DelveCost delveCost,
             RevealCardFromHandCost revealCardCost,
             ChooseCreatureTypeCost chooseCreatureTypeCost,
@@ -247,6 +251,7 @@ public class AdditionalSpellCostService {
                     || discardHand || discardXCardsCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
+                    || chosenCreatureOrWarpedCardCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null
                     || tieredManaCost != null
                     || spreeAdditionalManaCost != null || waterbendCost != null
@@ -287,8 +292,47 @@ public class AdditionalSpellCostService {
             List<UUID> beholdPermanentIds,
             List<Integer> beholdHandCardIndices,
             CardSubtype beholdChosenSubtype,
+            UUID chosenObjectId,
             Boolean payLifeForAdditionalCost
     ) {
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
+                             List<UUID> sacrificePermanentIds, UUID beholdPermanentId,
+                             Integer beholdHandCardIndex, List<UUID> beholdPermanentIds,
+                             List<Integer> beholdHandCardIndices, CardSubtype beholdChosenSubtype) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
+                    sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
+                    beholdHandCardIndices, beholdChosenSubtype, null, null);
+        }
+
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
+                             List<UUID> sacrificePermanentIds, UUID beholdPermanentId,
+                             Integer beholdHandCardIndex, List<UUID> beholdPermanentIds,
+                             List<Integer> beholdHandCardIndices, CardSubtype beholdChosenSubtype,
+                             UUID chosenObjectId) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
+                    sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
+                    beholdHandCardIndices, beholdChosenSubtype, chosenObjectId, null);
+        }
+
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
+                             List<UUID> sacrificePermanentIds, UUID beholdPermanentId,
+                             Integer beholdHandCardIndex, List<UUID> beholdPermanentIds,
+                             List<Integer> beholdHandCardIndices, CardSubtype beholdChosenSubtype,
+                             Boolean payLifeForAdditionalCost) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
+                    sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
+                    beholdHandCardIndices, beholdChosenSubtype, null, payLifeForAdditionalCost);
+        }
+
         public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
                              List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
                              List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
@@ -298,7 +342,7 @@ public class AdditionalSpellCostService {
             this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
                     discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
                     sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
-                    beholdHandCardIndices, null, null);
+                    beholdHandCardIndices, null, null, null);
         }
 
         public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
@@ -413,6 +457,8 @@ public class AdditionalSpellCostService {
         ChooseXValueCost chooseXValueCost = removeFirst(effects, ChooseXValueCost.class);
         BeholdAndExileCost beholdCost = removeFirst(effects, BeholdAndExileCost.class);
         BeholdCost beholdSelectionCost = removeFirst(effects, BeholdCost.class);
+        ChooseCreatureOrWarpedCardCost chosenCreatureOrWarpedCardCost =
+                removeFirst(effects, ChooseCreatureOrWarpedCardCost.class);
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
         ChooseCreatureTypeCost chooseCreatureTypeCost = removeFirst(effects, ChooseCreatureTypeCost.class);
@@ -431,8 +477,8 @@ public class AdditionalSpellCostService {
                 collectEvidenceCost, exileNCardsCost, discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
-                chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
-                chooseCreatureTypeCost, tieredManaCost,
+                chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
+                delveCost, revealCardCost, chooseCreatureTypeCost, tieredManaCost,
                 payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
                 forageOrPayManaCost);
     }
@@ -752,6 +798,16 @@ public class AdditionalSpellCostService {
                                 .count();
                         if (matchingPermanents + matchingHandCards < cost.count()) return false;
                     }
+                }
+                case ChooseCreatureOrWarpedCardCost ignored -> {
+                    boolean hasCreature = battlefield.stream()
+                            .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
+                    boolean hasWarpedCreatureCard = gameData.exiledCards.stream()
+                            .filter(entry -> playerId.equals(entry.ownerId()) && !entry.faceDown())
+                            .map(ExiledCardEntry::card)
+                            .anyMatch(exiledCard -> exiledCard.hasType(CardType.CREATURE)
+                                    && exiledCard.hasKeyword(Keyword.WARP));
+                    if (!hasCreature && !hasWarpedCreatureCard) return false;
                 }
                 default -> { }
             }
@@ -1124,9 +1180,44 @@ public class AdditionalSpellCostService {
         if (costs.beholdSelectionCost() != null && costs.beholdSelectionCost().chosenCreatureType()) {
             validateBeholdCost(gameData, player, card, costs.beholdSelectionCost(), selection);
         }
+        if (costs.chosenCreatureOrWarpedCardCost() != null) {
+            validateChosenCreatureOrWarpedCard(gameData, player, card, selection.chosenObjectId());
+        }
         if (costs.chooseCreatureTypeCost() != null) {
             validateChooseCreatureTypeCost(gameData, card, selection.beholdChosenSubtype());
         }
+    }
+
+    public record ChosenCreatureOrWarpedCard(UUID permanentId, Card card, int power) {
+    }
+
+    public ChosenCreatureOrWarpedCard validateChosenCreatureOrWarpedCard(
+            GameData gameData, Player player, Card card, UUID chosenObjectId) {
+        if (chosenObjectId == null) {
+            throw new IllegalStateException("Choose a creature you control or a warped creature card in exile to cast "
+                    + card.getName());
+        }
+
+        Permanent permanent = gameQueryService.findPermanentById(gameData, chosenObjectId);
+        if (permanent != null) {
+            if (!player.getId().equals(gameQueryService.findPermanentController(gameData, permanent.getId()))
+                    || !gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Must choose a creature you control to cast " + card.getName());
+            }
+            return new ChosenCreatureOrWarpedCard(permanent.getId(), null,
+                    Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)));
+        }
+
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(chosenObjectId);
+        if (exiledEntry == null || !player.getId().equals(exiledEntry.ownerId())
+                || exiledEntry.faceDown()
+                || !exiledEntry.card().hasType(CardType.CREATURE)
+                || !exiledEntry.card().hasKeyword(Keyword.WARP)) {
+            throw new IllegalStateException("Must choose a warped creature card you own in exile to cast "
+                    + card.getName());
+        }
+        Integer power = exiledEntry.card().getPower();
+        return new ChosenCreatureOrWarpedCard(null, exiledEntry.card(), power == null ? 0 : Math.max(0, power));
     }
 
     /** Validates the creature subtype chosen as an additional cast cost. */

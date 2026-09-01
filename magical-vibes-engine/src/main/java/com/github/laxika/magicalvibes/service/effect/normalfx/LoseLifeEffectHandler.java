@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,8 +60,14 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
+        UUID defendingPlayerId = e.recipient() == LoseLifeRecipient.DEFENDING_PLAYER
+                ? defendingPlayerId(gameData, entry) : null;
+        AmountContext amountContext = AmountContext.forStackEntry(entry, source);
+        if (defendingPlayerId != null) {
+            amountContext = amountContext.withTargetPermanentId(defendingPlayerId);
+        }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+                amountContext);
 
         UUID controllerId = entry.getControllerId();
         String sourceName = entry.getCard().getName();
@@ -70,21 +77,25 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, e, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
-            case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, entry, amount, sourceName);
+            case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, true);
         }
     }
 
-    private void defendingPlayerLosesLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+    private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
         // The attacked player/planeswalker was baked onto the combat trigger as attackedTargetId.
         UUID attackedTargetId = entry.getAttackedTargetId();
         if (attackedTargetId == null) {
-            return;
+            return null;
         }
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+        return gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
+    }
+
+    private void defendingPlayerLosesLife(GameData gameData, int amount, String sourceName,
+                                           UUID defendingPlayerId) {
         if (defendingPlayerId != null) {
             lifeSupport.applyLifeLoss(gameData, defendingPlayerId, amount, sourceName);
         }

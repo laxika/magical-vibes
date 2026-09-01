@@ -523,6 +523,8 @@ public class Permanent {
     @Setter private boolean escaped;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent was cast for its Warp cost. */
+    @Setter private boolean castWithWarp;
     /** Whether this permanent was cast for its madness cost. */
     @Setter private boolean madness;
     /** Whether this permanent was cast by paying an alternate cost. */
@@ -852,6 +854,7 @@ public class Permanent {
         this.evoked = source.evoked;
         this.escaped = source.escaped;
         this.prowl = source.prowl;
+        this.castWithWarp = source.castWithWarp;
         this.madness = source.madness;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;

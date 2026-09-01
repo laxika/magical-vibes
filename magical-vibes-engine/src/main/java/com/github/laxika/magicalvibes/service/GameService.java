@@ -765,7 +765,32 @@ public class GameService {
                 additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
                 beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
                 beholdChosenSubtype, chosenCreatureType,
-                additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty());
+                additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty(),
+                null, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                         Map<UUID, Integer> damageAssignments, List<UUID> targetIds,
+                         List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                         Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds,
+                         Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                         boolean kicked, Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                         List<UUID> imposedSacrificePermanentIds,
+                         List<UUID> additionalCostSacrificePermanentIds,
+                         List<String> repeatedAdditionalCosts, boolean buyback,
+                         UUID beholdPermanentId, Integer beholdHandCardIndex,
+                         List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
+                         CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
+                         UUID chosenAdditionalCostObjectId) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                kicked, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
+                additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
+                beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
+                beholdChosenSubtype, chosenCreatureType,
+                additionalCostSacrificePermanentIds != null && !additionalCostSacrificePermanentIds.isEmpty(),
+                null, chosenAdditionalCostObjectId);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
@@ -787,7 +812,7 @@ public class GameService {
                 kicked, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds,
                 additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
                 beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices,
-                beholdChosenSubtype, chosenCreatureType, waterbendPaid, null);
+                beholdChosenSubtype, chosenCreatureType, waterbendPaid, null, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
@@ -802,7 +827,8 @@ public class GameService {
                          UUID beholdPermanentId, Integer beholdHandCardIndex,
                          List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                          CardSubtype beholdChosenSubtype, CardSubtype chosenCreatureType,
-                         boolean waterbendPaid, Boolean payLifeForAdditionalCost) {
+                         boolean waterbendPaid, Boolean payLifeForAdditionalCost,
+                         UUID chosenAdditionalCostObjectId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
@@ -813,7 +839,7 @@ public class GameService {
                         additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback,
                         beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
                         beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType, waterbendPaid,
-                        payLifeForAdditionalCost))) return;
+                        payLifeForAdditionalCost, chosenAdditionalCostObjectId))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
@@ -824,7 +850,7 @@ public class GameService {
                     null, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                     repeatedAdditionalCosts, buyback, beholdPermanentId, beholdHandCardIndex,
                     beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType,
-                    waterbendPaid, payLifeForAdditionalCost);
+                    waterbendPaid, payLifeForAdditionalCost, chosenAdditionalCostObjectId);
         }
     }
 

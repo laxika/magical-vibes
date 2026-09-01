@@ -26,6 +26,11 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    record RemoveCounterFromTwoCreatures(StackEntry resolvingEntry, CounterType counterType,
+                                         CardEffect thenEffect)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The activating player chooses one or more other artifacts to exile as an ability cost. */
     record ActivatedAbilityExileArtifactsCost(UUID playerId, UUID sourcePermanentId, int abilityIndex,
                                                int xValue, UUID targetId, Zone targetZone,

@@ -238,6 +238,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> accumulatedChosenIds
     ) implements PermanentChoiceContext {}
 
+    /** Sothera: each opponent chooses a creature they control to exile with the source. */
+    record EachOpponentChoosesCreatureToExileWithSource(
+            Card sourceCard,
+            UUID sourcePermanentId,
+            UUID controllerId,
+            UUID choosingPlayerId,
+            List<UUID> remainingOpponentIds
+    ) implements PermanentChoiceContext {
+        public EachOpponentChoosesCreatureToExileWithSource {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+        }
+    }
+
     /** Goblin Festival: the ability controller chooses which opponent gains control of the source. */
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -569,19 +582,33 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Targeted ability whose source permanent triggered, with the target chosen as it is put on the stack. */
     record SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                       String eventDescription, UUID sourcePermanentId,
+                                      Permanent sourcePermanentSnapshot,
                                       Integer eventValue) implements PermanentChoiceContext {
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, "leaves-the-battlefield", null, null);
+            this(sourceCard, controllerId, effects, "leaves-the-battlefield", null, null, null);
         }
 
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           String eventDescription) {
-            this(sourceCard, controllerId, effects, eventDescription, null, null);
+            this(sourceCard, controllerId, effects, eventDescription, null, null, null);
         }
 
         public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           String eventDescription, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null);
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null, null);
+        }
+
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId,
+                                          Permanent sourcePermanentSnapshot) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId,
+                    sourcePermanentSnapshot, null);
+        }
+
+        public SelfTriggeredAbilityTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          String eventDescription, UUID sourcePermanentId,
+                                          Integer eventValue) {
+            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, null, eventValue);
         }
     }
 

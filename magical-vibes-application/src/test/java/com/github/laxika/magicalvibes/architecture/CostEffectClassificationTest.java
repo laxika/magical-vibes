@@ -47,6 +47,7 @@ class CostEffectClassificationTest {
             "ExilePermanentCost",
             "ExileArtifactsWithTotalManaValueCost",
             "ExileSelfCost",
+            "ExileSourceEquipmentCost",
             "CraftMaterialCost",
             "ExileSelfFromGraveyardCost",
             "ExileNCardsFromSingleGraveyardCost",

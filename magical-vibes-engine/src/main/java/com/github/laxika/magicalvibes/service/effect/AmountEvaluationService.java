@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.PlayersWithCardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
+import com.github.laxika.magicalvibes.model.amount.ChosenCreatureOrWarpedCardPower;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
@@ -166,6 +168,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsExiledWi
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -578,6 +581,8 @@ public class AmountEvaluationService {
                     triggeringSpellColorCount(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
+            case ChosenCreatureOrWarpedCardPower ignored ->
+                    chosenCreatureOrWarpedCardPower(gameData, ctx);
             case ChosenNumberOnSource ignored ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getChosenNumber();
         };
@@ -615,10 +620,55 @@ public class AmountEvaluationService {
         if (ctx.chosenPermanentId() == null) return 0;
         Permanent chosen = gameQueryService.findPermanentById(gameData, ctx.chosenPermanentId());
         if (chosen == null) {
-            return ctx.chosenPermanentPowerAtTrigger() == null
-                    ? 0 : Math.max(0, ctx.chosenPermanentPowerAtTrigger());
+            StackEntry entry = ctx.stackEntry();
+            Integer power = ctx.chosenPermanentPowerAtTrigger();
+            Integer toughness = entry == null ? null : entry.getChosenPermanentToughnessAtLastKnown();
+            if (usesToughnessForStationing(gameData, ctx)
+                    && toughness != null && power != null && toughness > power) {
+                return Math.max(0, toughness);
+            }
+            return power == null ? 0 : Math.max(0, power);
         }
-        return Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
+        int power = gameQueryService.getEffectivePower(gameData, chosen);
+        if (usesToughnessForStationing(gameData, ctx)) {
+            int toughness = gameQueryService.getEffectiveToughness(gameData, chosen);
+            if (toughness > power) {
+                return Math.max(0, toughness);
+            }
+        }
+        return Math.max(0, power);
+    }
+
+    private boolean usesToughnessForStationing(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null
+                || !ctx.sourcePermanent().getCard().hasKeyword(Keyword.STATION)
+                || ctx.controllerId() == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+        return battlefield.stream().anyMatch(permanent ->
+                !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
+                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof StationPowerModifierEffect modifier
+                                && modifier.usesToughnessInsteadOfPower()));
+    }
+
+    private int chosenCreatureOrWarpedCardPower(GameData gameData, AmountContext ctx) {
+        StackEntry entry = ctx.stackEntry();
+        if (entry == null) return 0;
+        if (entry.getChosenPermanentId() != null) {
+            Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+            if (chosen != null) {
+                return Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
+            }
+            return entry.getChosenPermanentPowerAtLastKnown() == null
+                    ? 0 : Math.max(0, entry.getChosenPermanentPowerAtLastKnown());
+        }
+        Card chosenCard = entry.getChosenObjectCard();
+        return chosenCard == null || chosenCard.getPower() == null
+                ? 0 : Math.max(0, chosenCard.getPower());
     }
 
     private int countOtherAttackersSharingCreatureTypeWithTarget(GameData gameData, AmountContext ctx) {
@@ -1495,6 +1545,10 @@ public class AmountEvaluationService {
                 .withSourceControllerId(ctx.controllerId());
         int greatest = 0;
         for (Permanent permanent : battlefield) {
+            if (amount.excludeSource() && ctx.sourcePermanent() != null
+                    && permanent.getId().equals(ctx.sourcePermanent().getId())) {
+                continue;
+            }
             if (!predicateEvaluationService.matchesPermanentPredicate(
                     permanent, amount.filter(), filterContext)) {
                 continue;

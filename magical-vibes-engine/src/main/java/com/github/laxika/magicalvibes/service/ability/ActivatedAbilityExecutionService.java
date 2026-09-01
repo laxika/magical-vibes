@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
@@ -511,6 +512,14 @@ public class ActivatedAbilityExecutionService {
         boolean shouldExileSelf = abilityEffects.stream().anyMatch(e -> e instanceof ExileSelfCost);
         if (shouldExileSelf) {
             permanentRemovalService.removePermanentToExile(gameData, permanent);
+        }
+
+        boolean shouldExileEquipment = abilityEffects.stream().anyMatch(ExileSourceEquipmentCost.class::isInstance);
+        if (shouldExileEquipment && ability.getGrantSourcePermanentId() != null) {
+            Permanent equipment = gameQueryService.findPermanentById(gameData, ability.getGrantSourcePermanentId());
+            if (equipment != null) {
+                permanentRemovalService.removePermanentToExile(gameData, equipment);
+            }
         }
 
         // "Return this permanent to its owner's hand: …" (Cycle of Life). Paid before the ability
@@ -1434,8 +1443,12 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DrawCardEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue));
-                for (int i = 0; i < amount; i++) {
-                    drawService.resolveDrawCard(gameData, playerId);
+                if (amount > 0 && drawService.hasQuantumRiddlerDrawReplacement(gameData, playerId)) {
+                    drawService.resolveDrawCards(gameData, playerId, amount);
+                } else {
+                    for (int i = 0; i < amount; i++) {
+                        drawService.resolveDrawCard(gameData, playerId);
+                    }
                 }
             } else if (effect instanceof ManaAbilityCardDrawingEffect draw) {
                 int amount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),

@@ -316,6 +316,7 @@ public class CardChoiceHandlerService {
                     if (pendingEntry != null) {
                         if (thenCondition == null || predicateEvaluationService.matchesCardPredicate(
                                 card, thenCondition, sourceCardId, gameData, playerId)) {
+                            pendingEntry.setTargetId(enteredPermanent.getId());
                             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                                     List.of(thenEffect));
                         }
@@ -850,7 +851,10 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
                     exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId());
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
+                    exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
             return;
         }
 
@@ -868,10 +872,21 @@ public class CardChoiceHandlerService {
             exileService.exileCard(gameData, playerId, card);
         }
 
-        // Grant the controlling player permission to play this card for as long as it remains
-        // exiled (e.g. Fiend of the Shadows). Does not expire at end of turn.
-        if (exileChoice.playPermissionControllerId() != null) {
-            gameData.exilePlayPermissions.put(card.getId(), exileChoice.playPermissionControllerId());
+        // Grant the configured player permission to play this card for as long as it remains exiled.
+        UUID playPermissionControllerId = exileChoice.playPermissionToChooser()
+                ? playerId : exileChoice.playPermissionControllerId();
+        if (playPermissionControllerId != null) {
+            if (exileChoice.exilePlayOpponentTax() > 0) {
+                exileSupport.grantPlayWhileExiledWithOpponentTax(
+                        gameData, card.getId(), playPermissionControllerId,
+                        exileChoice.playPermissionTaxSourceControllerId(),
+                        exileChoice.exilePlayOpponentTax());
+            } else {
+                gameData.exilePlayPermissions.put(card.getId(), playPermissionControllerId);
+            }
+            if (exileChoice.landsEnterTapped() && card.hasType(CardType.LAND)) {
+                gameData.exileCardsEnterTapped.add(card.getId());
+            }
         }
 
         if (exileChoice.returnOnSourceLeave() && sourcePermanentId != null) {
@@ -896,7 +911,10 @@ public class CardChoiceHandlerService {
             playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
                     exileChoice.playPermissionControllerId(), remainingExiles,
                     exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId());
+                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
+                    exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -905,9 +923,12 @@ public class CardChoiceHandlerService {
                     : List.of();
             inputCompletionService.publishStateAfterInput(gameData);
             playerInputService.beginExileFromHandChoice(gameData, next, sourcePermanentId,
-                    exileChoice.playPermissionControllerId(), exileChoice.cardsPerPlayer(), rest,
+                    exileChoice.playPermissionToChooser() ? null : exileChoice.playPermissionControllerId(),
+                    exileChoice.cardsPerPlayer(), rest,
                     exileChoice.cardsPerPlayer(), exileChoice.faceDown(), exileChoice.returnOnSourceLeave(),
-                    exileChoice.untapPermanentId());
+                    exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
+                    exileChoice.playPermissionTaxSourceControllerId(),
+                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped());
         } else {
             gameData.interaction.clearAwaitingInput();
 

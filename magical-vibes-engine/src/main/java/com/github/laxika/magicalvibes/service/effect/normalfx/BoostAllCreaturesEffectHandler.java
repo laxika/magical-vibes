@@ -5,8 +5,12 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -55,8 +59,7 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
-                permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
-                permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                applyBoost(gameData, entry, permanent, powerBoost, toughnessBoost, boost.duration());
                 count[0]++;
             }
         };
@@ -82,10 +85,25 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(String.format(" gives %+d/%+d to %d creature(s) until end of turn.",
-                        powerBoost, toughnessBoost, count[0]))
+                .text(String.format(" gives %+d/%+d to %d creature(s) %s.",
+                        powerBoost, toughnessBoost, count[0],
+                        boost.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                                ? "until your next turn" : "until end of turn"))
                 .build());
 
         log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
+    }
+
+    private void applyBoost(GameData gameData, StackEntry entry, Permanent target,
+                            int powerBoost, int toughnessBoost, GrantDuration duration) {
+        if (duration == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), null, entry.getControllerId(),
+                    new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
+                    target.getId(), null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+        } else {
+            target.setPowerModifier(target.getPowerModifier() + powerBoost);
+            target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+        }
     }
 }

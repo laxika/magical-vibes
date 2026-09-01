@@ -92,6 +92,8 @@ public class StackEntry {
     @Setter private boolean castWithOmen;
     /** Whether this spell was cast via Adventure; after resolving, its physical card is exiled with permission to cast the front face. */
     @Setter private boolean castWithAdventure;
+    /** Whether this permanent spell was cast for its Warp cost. */
+    @Setter private boolean castWithWarp;
     /**
      * Whether this spell was cast transformed without paying its mana cost after a Siege battle
      * was defeated. Enters as the back face (like Disturb) but uses normal spell disposition on fizzle.
@@ -245,6 +247,12 @@ public class StackEntry {
      * that permanent's power as the ability resolves.
      */
     @Setter private UUID chosenPermanentId;
+    /** Last-known effective power of a permanent chosen by this stack object. */
+    @Setter private Integer chosenPermanentPowerAtLastKnown;
+    /** Last-known effective toughness of a permanent chosen for stationing. */
+    @Setter private Integer chosenPermanentToughnessAtLastKnown;
+    /** Card chosen from exile for a creature-or-warped-card cost. */
+    @Setter private Card chosenObjectCard;
     /** Permanents placed onto the battlefield by the preceding library search. */
     @Setter private List<UUID> searchedPermanentIds = List.of();
     /**
@@ -628,6 +636,7 @@ public class StackEntry {
         this.castWithDisturb = source.castWithDisturb;
         this.castWithOmen = source.castWithOmen;
         this.castWithAdventure = source.castWithAdventure;
+        this.castWithWarp = source.castWithWarp;
         this.castTransformed = source.castTransformed;
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
@@ -678,6 +687,9 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
         this.attachedPermanentSnapshot = source.attachedPermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.chosenPermanentPowerAtLastKnown = source.chosenPermanentPowerAtLastKnown;
+        this.chosenPermanentToughnessAtLastKnown = source.chosenPermanentToughnessAtLastKnown;
+        this.chosenObjectCard = source.chosenObjectCard;
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;

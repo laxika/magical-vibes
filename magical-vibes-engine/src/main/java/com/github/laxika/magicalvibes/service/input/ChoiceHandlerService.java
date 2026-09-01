@@ -423,6 +423,10 @@ public class ChoiceHandlerService {
             handleSpellNumberChoice(gameData, player, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellManaValueParityChoice) {
+            handleSpellManaValueParityChoice(gameData, player, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ManaValueParityChoice ctx) {
             handleManaValueParityChoice(gameData, player, colorName, ctx);
             return;
@@ -4784,6 +4788,26 @@ public class ChoiceHandlerService {
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses " + chosenNumber + "."));
         log.info("Game {} - {} chooses number {} for a spell", gameData.id, player.getUsername(), chosenNumber);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSpellManaValueParityChoice(GameData gameData, Player player, String parityName) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(parityName)) {
+            throw new IllegalStateException("Invalid mana value parity choice");
+        }
+
+        com.github.laxika.magicalvibes.model.ManaValueParity parity =
+                com.github.laxika.magicalvibes.model.ManaValueParity.valueOf(parityName);
+        gameData.chosenSpellManaValueParity = parity;
+        gameData.interaction.clearAwaitingInput();
+
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses "
+                + parityName.toLowerCase() + "."));
+        log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(),
+                parityName.toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

@@ -1760,9 +1760,8 @@ public class CastingPermissionService {
             }
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
-            UUID permittedPlayer = gameData.exilePlayPermissions.get(entry.card().getId());
             if (gameData.exilePlayAnyManaTypeWhileExiled.contains(entry.card().getId())
-                    && playerId.equals(permittedPlayer)) {
+                    && hasExilePlayPermission(gameData, playerId, entry.card().getId())) {
                 anyManaIds.add(entry.card().getId());
             }
         }
@@ -1783,6 +1782,14 @@ public class CastingPermissionService {
             }
         }
         return anyManaIds;
+    }
+
+    /** Returns whether the player has an active direct permission to play the exiled card. */
+    public boolean hasExilePlayPermission(GameData gameData, UUID playerId, UUID cardId) {
+        if (!playerId.equals(gameData.exilePlayPermissions.get(cardId))) return false;
+        Condition condition = gameData.exilePlayPermissionConditions.get(cardId);
+        return condition == null || conditionEvaluationService.isMet(
+                gameData, condition, ConditionContext.forCasting(playerId));
     }
 
     public boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {
@@ -2059,7 +2066,7 @@ public class CastingPermissionService {
         // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
         if (gameData.exilePlayAnyManaType.contains(cardId)
                 || (gameData.exilePlayAnyManaTypeWhileExiled.contains(cardId)
-                && playerId.equals(gameData.exilePlayPermissions.get(cardId)))) return true;
+                && hasExilePlayPermission(gameData, playerId, cardId))) return true;
 
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
