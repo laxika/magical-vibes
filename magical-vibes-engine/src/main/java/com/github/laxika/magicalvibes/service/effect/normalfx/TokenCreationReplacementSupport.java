@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -53,6 +54,50 @@ public final class TokenCreationReplacementSupport {
         }
     }
 
+    static int additionalMapTokenCount(GameData gameData, UUID controllerId,
+                                       CreateTokenEffect token, int amount) {
+        if (amount <= 0 || !isArtifactToken(token)) {
+            return 0;
+        }
+        return additionalMapTokenCount(gameData, controllerId);
+    }
+
+    static int additionalMapTokenCount(GameData gameData, UUID controllerId,
+                                       Card tokenCard, int amount) {
+        if (amount <= 0 || tokenCard == null || !tokenCard.hasType(CardType.ARTIFACT)) {
+            return 0;
+        }
+        return additionalMapTokenCount(gameData, controllerId);
+    }
+
+    static CreateTokenEffect additionalMapToken(CreateTokenEffect token) {
+        CreateTokenEffect map = CreateTokenEffect.ofMapToken(1);
+        return new CreateTokenEffect(
+                CardType.ARTIFACT,
+                1,
+                map.tokenName(),
+                0,
+                0,
+                map.color(),
+                map.colors(),
+                map.subtypes(),
+                map.keywords(),
+                map.additionalTypes(),
+                false,
+                token.tapped() || token.tappedAndAttacking(),
+                map.tokenEffects(),
+                map.tokenAbilities(),
+                token.exileAtEndOfCombat(),
+                token.exileAtEndStep(),
+                false,
+                token.initialPlusOnePlusOneCounters(),
+                Set.of());
+    }
+
+    static CreateTokenEffect additionalMapToken(boolean tapped, boolean tappedAndAttacking) {
+        return CreateTokenEffect.ofMapToken(1).withTapped(tapped || tappedAndAttacking);
+    }
+
     /** Returns the Frog token blueprint when Quina's token-creation replacement is active. */
     public static CreateTokenEffect additionalFrogTokenIfApplicable(GameData gameData,
                                                                       UUID controllerId,
@@ -84,5 +129,26 @@ public final class TokenCreationReplacementSupport {
             }
         }
         return false;
+    }
+
+    private static int additionalMapTokenCount(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof AddMapTokenToArtifactTokenCreationEffect) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private static boolean isArtifactToken(CreateTokenEffect token) {
+        return token.primaryType() == CardType.ARTIFACT
+                || (token.additionalTypes() != null && token.additionalTypes().contains(CardType.ARTIFACT));
     }
 }

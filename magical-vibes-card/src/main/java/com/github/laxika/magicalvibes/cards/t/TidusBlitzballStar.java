@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FIN", collectorNumber = "246")
+@CardRegistration(set = "FIN", collectorNumber = "512")
 public class TidusBlitzballStar extends Card {
 
     public TidusBlitzballStar() {

@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessContro
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
+import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -116,6 +117,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreatureUnlessControllerPaysEffectHandler returnTargetCreatureUnlessControllerPaysEffectHandler;
     private final CounterSupport counterSupport;
+    private final WaterbendPaymentService waterbendPaymentService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerTakesDamageUnlessPaysEffectHandler eachPlayerTakesDamageUnlessPaysEffectHandler;
@@ -231,6 +233,49 @@ public class MayPenaltyChoiceHandlerService {
             }
         } else {
             counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleCounterUnlessWaterbendsChoice(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability) {
+        CounterUnlessEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessEffect ce
+                        && ce.ransomKind() == CounterUnlessEffect.RansomKind.PAY_WATERBEND)
+                .map(CounterUnlessEffect.class::cast)
+                .findFirst().orElseThrow();
+        int amount = effect.ransomMagnitude();
+        UUID targetCardId = ability.targetCardId();
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-waterbend target no longer on stack", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                || gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        String costText = "{" + amount + "} using waterbend";
+        if (accepted && waterbendPaymentService.canPay(gameData, player.getId(), amount)) {
+            waterbendPaymentService.pay(gameData, player.getId(), amount, ability.sourceCard());
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
+        } else {
+            counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, false, List.of());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -562,19 +607,20 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> validIndices = new ArrayList<>();
             if (hand != null) {
                 for (int i = 0; i < hand.size(); i++) {
-                    if (effect.requiredType() == null || hand.get(i).getType() == effect.requiredType()) {
+                    if (predicateEvaluationService.matchesCardPredicate(hand.get(i), effect.discardPredicate(),
+                            sourceCard.getId(), gameData, controllerId)) {
                         validIndices.add(i);
                     }
                 }
             }
 
-            if (!validIndices.isEmpty()) {
-                String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
+            if (validIndices.size() >= effect.discardCount()) {
+                String typeName = effect.discardDescription();
                 gameData.discardCausedByOpponent = false;
 
                 if (effect.random()) {
                     // Pillaging Horde: the discard is at random, so no player choice is needed.
-                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), 1);
+                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), effect.discardCount());
                     log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
@@ -583,10 +629,13 @@ public class MayPenaltyChoiceHandlerService {
                 DiscardFollowUp followUp = effect.thenEffect() == null
                         ? DiscardFollowUp.NONE
                         : DiscardFollowUp.thenEffectWithDiscardedManaValue(sourceCard, effect.thenEffect());
+                String discardDescription = effect.discardCount() == 1
+                        ? "a " + typeName
+                        : effect.discardCount() + " " + typeName + "s";
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.", 1, followUp);
+                        "Choose " + discardDescription + " to discard.", effect.discardCount(), followUp);
 
-                String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
+                String logEntry = player.getUsername() + " chooses to discard " + discardDescription + ".";
                 gameLogService.append(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
                 return;

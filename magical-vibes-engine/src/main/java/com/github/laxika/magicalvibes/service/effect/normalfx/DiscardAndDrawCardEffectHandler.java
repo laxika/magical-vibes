@@ -37,8 +37,13 @@ public class DiscardAndDrawCardEffectHandler implements NormalEffectHandlerBean 
             return;
         }
         gameData.discardCausedByOpponent = false;
-        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, e.discardAmount(),
-                DiscardFollowUp.rummage(e.drawAmount()));
-    
+        if (e.random()) {
+            playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId,
+                    entry.getCard().getName(), e.discardAmount());
+            playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawAmount());
+        } else {
+            playerInteractionSupport.resolveDiscardCards(gameData, controllerId, e.discardAmount(),
+                    DiscardFollowUp.rummage(e.drawAmount()));
+        }
     }
 }

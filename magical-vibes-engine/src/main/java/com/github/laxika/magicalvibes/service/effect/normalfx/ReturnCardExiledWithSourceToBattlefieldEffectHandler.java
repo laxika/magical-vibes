@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -92,6 +93,13 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             return;
         }
 
+        if (returnEffect.returnAtRandom()) {
+            Card chosen = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
+            returnToBattlefield(gameData, controllerId, chosen, sourceName,
+                    returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking());
+            return;
+        }
+
         if (matching.size() == 1) {
             returnToBattlefield(gameData, controllerId, matching.getFirst(), sourceName,
                     returnEffect.grantedSubtype(), returnEffect.enterTapped(),
@@ -137,6 +145,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             return;
         }
         Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
         if (grantedSubtype != null) {
             permanent.getGrantedSubtypes().add(grantedSubtype);
         }

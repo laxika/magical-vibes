@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.cards.g.GoblinDeathraiders;
+import com.github.laxika.magicalvibes.cards.g.GuanYuSaintedWarrior;
 import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AysenCrusader.class, BeastWalkers.class, GoblinDeathraiders.class, FolkOfAnHavva.class})
+@CardUsed({AysenCrusader.class, BeastWalkers.class, GoblinDeathraiders.class, FolkOfAnHavva.class,
+        GuanYuSaintedWarrior.class})
 class AysenCrusaderTest extends BaseCardTest {
 
     @Test
@@ -55,5 +57,24 @@ class AysenCrusaderTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(3);
+    }
+
+    @Test
+    void countsDualSubtypePermanentOnce() {
+        Permanent crusader = addCreatureReady(player1, new AysenCrusader());
+        addCreatureReady(player1, new GuanYuSaintedWarrior());
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(3);
+    }
+
+    @Test
+    void updatesWhenMatchingPermanentLeaves() {
+        Permanent crusader = addCreatureReady(player1, new AysenCrusader());
+        Permanent soldier = addCreatureReady(player1, new BeastWalkers());
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(3);
+        gd.playerBattlefields.get(player1.getId()).remove(soldier);
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(2);
     }
 }

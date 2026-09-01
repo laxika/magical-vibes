@@ -24,6 +24,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControl
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "211")
+@CardRegistration(set = "FIN", collectorNumber = "392")
+@CardRegistration(set = "FIN", collectorNumber = "475")
+@CardRegistration(set = "FIN", collectorNumber = "537")
 public class VanilleCheerfulLCie extends Card {
 
     private static final String PARTNER_NAME = "Fang, Fearless l'Cie";

@@ -1,22 +1,25 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.Diminish;
+import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AnHavvaConstable.class, AnabaAncestor.class, FolkOfAnHavva.class})
 class AnHavvaConstableTest extends BaseCardTest {
 
     @Test
     @DisplayName("Alone it counts itself: 2/2")
     void aloneCountsItself() {
-        Permanent constable = addConstable(player1);
+        Permanent constable = addCreatureReady(player1, new AnHavvaConstable());
 
         assertThat(gqs.getEffectivePower(gd, constable)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, constable)).isEqualTo(2);
@@ -25,9 +28,9 @@ class AnHavvaConstableTest extends BaseCardTest {
     @Test
     @DisplayName("Each green creature adds one toughness")
     void greenCreaturesAddToughness() {
-        Permanent constable = addConstable(player1);
-        addCreature(player1, new GrizzlyBears());
-        addCreature(player1, new GrizzlyBears());
+        Permanent constable = addCreatureReady(player1, new AnHavvaConstable());
+        addCreatureReady(player1, new FolkOfAnHavva());
+        addCreatureReady(player1, new FolkOfAnHavva());
 
         assertThat(gqs.getEffectiveToughness(gd, constable)).isEqualTo(4);
     }
@@ -35,8 +38,8 @@ class AnHavvaConstableTest extends BaseCardTest {
     @Test
     @DisplayName("Green creatures on any battlefield count")
     void opponentGreenCreaturesCount() {
-        Permanent constable = addConstable(player1);
-        addCreature(player2, new GrizzlyBears());
+        Permanent constable = addCreatureReady(player1, new AnHavvaConstable());
+        addCreatureReady(player2, new FolkOfAnHavva());
 
         assertThat(gqs.getEffectiveToughness(gd, constable)).isEqualTo(3);
     }
@@ -44,20 +47,25 @@ class AnHavvaConstableTest extends BaseCardTest {
     @Test
     @DisplayName("Non-green creatures do not count")
     void nonGreenCreaturesDontCount() {
-        Permanent constable = addConstable(player1);
-        addCreature(player1, new HillGiant());
+        Permanent constable = addCreatureReady(player1, new AnHavvaConstable());
+        addCreatureReady(player1, new AnabaAncestor());
 
         assertThat(gqs.getEffectiveToughness(gd, constable)).isEqualTo(2);
     }
 
-    private Permanent addConstable(Player player) {
-        Permanent perm = new Permanent(new AnHavvaConstable());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @CardUsed(Diminish.class)
+    @DisplayName("A base P/T setter overrides its characteristic-defining toughness")
+    void basePowerToughnessSetterOverridesCharacteristicDefiningToughness() {
+        Permanent constable = addCreatureReady(player1, new AnHavvaConstable());
+        addCreatureReady(player1, new FolkOfAnHavva());
 
-    private void addCreature(Player player, Card card) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(card));
+        harness.setHand(player1, List.of(new Diminish()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, constable.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, constable)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, constable)).isEqualTo(1);
     }
 }

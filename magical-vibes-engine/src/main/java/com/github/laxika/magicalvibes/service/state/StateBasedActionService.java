@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +74,8 @@ public class StateBasedActionService {
         boolean anyPerformed;
         int passes = 0;
         do {
-            anyPerformed = destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            anyPerformed = enforceCounterLimits(gameData);
+            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
             anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
@@ -178,6 +180,7 @@ public class StateBasedActionService {
 
         for (UUID cardId : removedTokenIds) {
             gameData.exiledCardEggCounters.remove(cardId);
+            gameData.exiledCardScreamCounters.remove(cardId);
             gameData.exiledCardDreamCounters.remove(cardId);
             gameData.exiledCardHitCounters.remove(cardId);
             gameData.spellsWithDreamCounterOnResolution.remove(cardId);
@@ -185,6 +188,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithSilverCounters.remove(cardId);
             gameData.exiledCardsWithIceCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
+            gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
             gameData.exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             gameData.exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
@@ -279,13 +283,21 @@ public class StateBasedActionService {
 
         try {
             for (DeathEntry entry : toDie) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                if (controllerId != null) {
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
+                }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
                     if (controllerId != null) {
                         gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
+                                entry.permanent().getId(),
+                                List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                        gameData, entry.permanent(), EffectSlot.ON_ANY_CREATURE_DIES)));
                     }
                 }
             }
@@ -318,13 +330,42 @@ public class StateBasedActionService {
         } finally {
             gameData.simultaneousDyingCreatures.clear();
             gameData.simultaneousDyingControllers.clear();
+            gameData.simultaneousDyingPermanents.clear();
+            gameData.simultaneousDyingPermanentControllers.clear();
             gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
         return !toDie.isEmpty() || replacementPerformed;
+    }
+
+    private boolean enforceCounterLimits(GameData gameData) {
+        boolean changed = false;
+        List<Permanent> permanents = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
+        for (Permanent permanent : permanents) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || permanent.isLosesAllAbilitiesPermanently()) {
+                continue;
+            }
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>(
+                    permanent.getCard().getEffects(EffectSlot.STATIC));
+            effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+            for (com.github.laxika.magicalvibes.model.effect.CardEffect effect : effects) {
+                if (!(effect instanceof CounterLimitEffect limit)
+                        || permanent.isStaticEffectSuppressed(effect.getClass())) {
+                    continue;
+                }
+                int current = permanent.getCounterCount(limit.counterType());
+                if (current > limit.maximum()) {
+                    permanent.setCounterCount(limit.counterType(), limit.maximum());
+                    changed = true;
+                }
+            }
+        }
+        return changed;
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed

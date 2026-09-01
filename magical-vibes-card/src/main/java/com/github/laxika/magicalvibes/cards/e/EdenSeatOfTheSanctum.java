@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "277")
+@CardRegistration(set = "FIN", collectorNumber = "355")
 public class EdenSeatOfTheSanctum extends Card {
 
     public EdenSeatOfTheSanctum() {

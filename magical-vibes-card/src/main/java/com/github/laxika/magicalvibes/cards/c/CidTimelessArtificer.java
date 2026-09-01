@@ -18,6 +18,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "216")
+@CardRegistration(set = "FIN", collectorNumber = "407")
+@CardRegistration(set = "FIN", collectorNumber = "408")
+@CardRegistration(set = "FIN", collectorNumber = "409")
+@CardRegistration(set = "FIN", collectorNumber = "410")
+@CardRegistration(set = "FIN", collectorNumber = "411")
+@CardRegistration(set = "FIN", collectorNumber = "412")
+@CardRegistration(set = "FIN", collectorNumber = "413")
+@CardRegistration(set = "FIN", collectorNumber = "414")
+@CardRegistration(set = "FIN", collectorNumber = "415")
+@CardRegistration(set = "FIN", collectorNumber = "416")
+@CardRegistration(set = "FIN", collectorNumber = "417")
+@CardRegistration(set = "FIN", collectorNumber = "418")
+@CardRegistration(set = "FIN", collectorNumber = "419")
+@CardRegistration(set = "FIN", collectorNumber = "420")
+@CardRegistration(set = "FIN", collectorNumber = "480")
 public class CidTimelessArtificer extends Card {
 
     public CidTimelessArtificer() {

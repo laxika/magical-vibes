@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "39")
+@CardRegistration(set = "FIN", collectorNumber = "329")
+@CardRegistration(set = "FIN", collectorNumber = "434")
 public class VenatHeartOfHydaelyn extends Card {
 
     public VenatHeartOfHydaelyn() {

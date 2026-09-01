@@ -78,7 +78,9 @@ public class ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffectHandler
 
         Card card = exiled.card();
         UUID ownerId = exiled.ownerId();
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, new Permanent(card));
+        Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(ownerId) + " returns ", card,
                 " from exile to the battlefield."));

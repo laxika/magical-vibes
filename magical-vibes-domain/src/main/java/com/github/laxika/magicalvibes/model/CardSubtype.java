@@ -68,6 +68,7 @@ public enum CardSubtype {
     SPIRIT("Spirit"),
     SQUIRREL("Squirrel"),
     STARFISH("Starfish"),
+    SNAIL("Snail"),
     GRAVEBORN("Graveborn"),
     INKLING("Inkling"),
     AURA("Aura"),
@@ -174,6 +175,8 @@ public enum CardSubtype {
     THOPTER("Thopter"),
     THRULL("Thrull"),
     EQUIPMENT("Equipment"),
+    FORTIFICATION("Fortification"),
+    LEMUR("Lemur"),
     LIZARD("Lizard"),
     LLAMA("Llama"),
     LHURGOYF("Lhurgoyf"),
@@ -234,6 +237,7 @@ public enum CardSubtype {
     PLANT("Plant"),
     PRISM("Prism"),
     KRAKEN("Kraken"),
+    TENTACLE("Tentacle"),
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
     TYVAR("Tyvar"),
@@ -277,7 +281,8 @@ public enum CardSubtype {
     TOWN("Town"),
     ROBOT("Robot"),
     NEPHILIM("Nephilim"),
-    SAND("Sand");
+    SAND("Sand"),
+    RIGGER("Rigger");
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,

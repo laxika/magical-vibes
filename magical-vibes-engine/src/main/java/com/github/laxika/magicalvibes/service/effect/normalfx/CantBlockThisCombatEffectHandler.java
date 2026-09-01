@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,7 +29,11 @@ public class CantBlockThisCombatEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        CantBlockThisCombatEffect cantBlockEffect = (CantBlockThisCombatEffect) effect;
+        UUID affectedPermanentId = cantBlockEffect.selfTargeting()
+                ? entry.getSourcePermanentId()
+                : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, affectedPermanentId);
         if (target == null) {
             return;
         }

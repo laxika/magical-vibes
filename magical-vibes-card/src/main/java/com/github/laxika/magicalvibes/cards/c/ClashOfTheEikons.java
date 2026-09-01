@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "180")
+@CardRegistration(set = "FIN", collectorNumber = "341")
 public class ClashOfTheEikons extends Card {
 
     public ClashOfTheEikons() {

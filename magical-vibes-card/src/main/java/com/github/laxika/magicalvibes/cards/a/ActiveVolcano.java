@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "43")
+@CardRegistration(set = "LEG", collectorNumber = "130")
 public class ActiveVolcano extends Card {
 
     public ActiveVolcano() {

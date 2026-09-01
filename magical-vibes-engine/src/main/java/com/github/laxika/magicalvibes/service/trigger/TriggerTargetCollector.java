@@ -91,7 +91,8 @@ public class TriggerTargetCollector {
 
     /**
      * Options controlling trigger-slot–specific differences. Use the predefined constants:
-     * {@link #DEATH}, {@link #ATTACK}, {@link #END_STEP}, {@link #UPKEEP}, {@link #DAY_NIGHT}.
+     * {@link #DEATH}, {@link #DELAYED_DEATH}, {@link #ATTACK}, {@link #END_STEP},
+     * {@link #UPKEEP}, {@link #DAY_NIGHT}.
      *
      * @param creaturesOnly            when {@code true}, permanent candidates are restricted to
      *                                 creatures. Used by death triggers such as Black Cat.
@@ -119,6 +120,7 @@ public class TriggerTargetCollector {
                           boolean useEffectTargetPredicate) {
 
         public static final Options DEATH = new Options(true, true, false, true);
+        public static final Options DELAYED_DEATH = new Options(false, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, true, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);
@@ -184,6 +186,13 @@ public class TriggerTargetCollector {
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
 
+        if (targetFilter instanceof PermanentPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
+            canTargetPlayers = false;
+        } else if (targetFilter instanceof PlayerPredicateTargetFilter) {
+            canTargetPermanents = false;
+        }
+
         // An effect narrows the player half on its own only when it says so through
         // CardEffect.targetPlayerRelation() (Scalding Tongs' "target opponent or planeswalker").
         // The declared target cannot express it: playerOrPlaneswalker() is shared with "target
@@ -237,6 +246,9 @@ public class TriggerTargetCollector {
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
+            if (effectPredicate != null) {
+                creaturesOnly = false;
+            }
 
             // Effects that declare a cross-kind target — CR 115.4's anyTarget() (Flameblast Dragon
             // attack trigger, Form of the Dragon upkeep) or playerOrPlaneswalker() (Scalding Tongs)

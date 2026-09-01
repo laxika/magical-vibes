@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "229")
+@CardRegistration(set = "THB", collectorNumber = "182")
 public class NessianHornbeetle extends Card {
 
     public NessianHornbeetle() {

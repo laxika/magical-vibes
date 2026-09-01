@@ -11,7 +11,8 @@ import java.util.List;
  * normal mana costs.
  */
 public record CastSpellsFromGraveyardEffect(CardPredicate filter, List<CastingCost> additionalCosts,
-                                            CounterType enterWithCounter, int enterWithCounterCount)
+                                            CounterType enterWithCounter, int enterWithCounterCount,
+                                            boolean onlyDuringControllerTurn)
         implements CastSpellsFromGraveyardPermission {
 
     public CastSpellsFromGraveyardEffect {
@@ -25,12 +26,18 @@ public record CastSpellsFromGraveyardEffect(CardPredicate filter, List<CastingCo
     }
 
     public CastSpellsFromGraveyardEffect(CardPredicate filter) {
-        this(filter, List.of(), null, 0);
+        this(filter, List.of(), null, 0, false);
     }
 
     public CastSpellsFromGraveyardEffect(CardPredicate filter, List<? extends CastingCost> additionalCosts,
                                          CounterType enterWithCounter) {
         this(filter, List.copyOf(additionalCosts), enterWithCounter,
-                enterWithCounter == null ? 0 : 1);
+                enterWithCounter == null ? 0 : 1, false);
+    }
+
+    public CastSpellsFromGraveyardEffect(CardPredicate filter,
+                                         List<? extends CastingCost> additionalCosts,
+                                         boolean onlyDuringControllerTurn) {
+        this(filter, List.copyOf(additionalCosts), null, 0, onlyDuringControllerTurn);
     }
 }

@@ -17,6 +17,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "10")
+@CardRegistration(set = "FIN", collectorNumber = "375")
+@CardRegistration(set = "FIN", collectorNumber = "427")
+@CardRegistration(set = "FIN", collectorNumber = "520")
+@CardRegistration(set = "FIN", collectorNumber = "564")
 public class CloudMidgarMercenary extends Card {
 
     public CloudMidgarMercenary() {

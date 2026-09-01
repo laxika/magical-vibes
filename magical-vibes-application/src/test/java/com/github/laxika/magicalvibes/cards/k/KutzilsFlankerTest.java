@@ -68,26 +68,20 @@ class KutzilsFlankerTest extends BaseCardTest {
     void exilesTargetPlayersGraveyard() {
         harness.setGraveyard(player2, List.of(new Forest(), new Shock()));
 
-        castFlanker(2, player2.getId());
-        resolveCreatureAndEtb();
+        castFlanker(2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
     }
 
     private void castFlanker(int mode) {
-        castFlanker(mode, null);
-    }
-
-    private void castFlanker(int mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new KutzilsFlanker()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        if (targetId == null) {
-            harness.castCreature(player1, 0, mode);
-        } else {
-            harness.castCreature(player1, 0, mode, targetId);
-        }
+        harness.castCreature(player1, 0, mode);
     }
 
     private Permanent findFlanker() {

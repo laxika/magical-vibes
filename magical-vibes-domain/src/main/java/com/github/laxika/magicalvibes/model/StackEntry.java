@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -60,6 +61,8 @@ public class StackEntry {
     @Setter private TargetFilter targetFilter;
     /** Per-position filters declared by a multi-target activated ability. */
     @Setter private List<TargetFilter> targetFilters = List.of();
+    /** Cross-target restriction declared by a multi-target activated ability. */
+    @Setter private MultiTargetConstraint multiTargetConstraint;
     @Setter private boolean copy;
     @Setter private boolean nonTargeting;
     /** Whether an effect already placed the physical spell card in its final zone. */
@@ -69,6 +72,8 @@ public class StackEntry {
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
     @Setter private boolean castWithFlashback;
+    /** Whether this spell was cast using an escape permission. */
+    @Setter private boolean castWithEscape;
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
     /**
@@ -97,6 +102,8 @@ public class StackEntry {
     /** Whether a permanent resolved from this spell enters the battlefield tapped. */
     @Setter private boolean entersTapped;
     @Setter private Zone sourceZone;
+    /** Cards exiled from the graveyard to pay this spell's delve cost. */
+    @Setter private List<UUID> delvedCardIds = List.of();
     /**
      * Overrides the card's disposition owner when this spell is controlled by someone other than its
      * owner (e.g. cast from an opponent's hand via Sen Triplets). Null for the overwhelming majority of
@@ -105,6 +112,8 @@ public class StackEntry {
      */
     @Setter private UUID ownerIdOverride;
     @Setter private boolean kicked;
+    /** Whether this spell's optional Gift was promised while casting it. */
+    @Setter private boolean giftPromised;
 
     /** Whether this spell paid a kicker or multikicker cost. */
     public boolean wasKicked() {
@@ -133,6 +142,8 @@ public class StackEntry {
     @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** Whether this spell's optional waterbend additional cost was paid. */
+    @Setter private boolean waterbendCostPaid;
     /**
      * The individual mana payments the caster chose for this spell's
      * {@link com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost}, one entry
@@ -184,8 +195,9 @@ public class StackEntry {
      * (parallel to {@link #xValue}, but for trigger-event data rather than cast-time data), or set by
      * an earlier effect on the same entry (e.g. excess damage from a damage effect). Read back by the
      * {@code EventValue} dynamic amount at resolution.
-     */
+    */
     @Setter private int eventValue;
+    @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
     @Setter private ManaColor producedManaColor;
     @Setter private Integer dyingPermanentManaValue;
@@ -244,11 +256,17 @@ public class StackEntry {
     @Setter private List<UUID> triggeringCardIds = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
+    /** Card ids of permanents sacrificed as an activated-ability cost, retained for later effects. */
+    @Setter private List<UUID> sacrificedCardIds = List.of();
     /** Last-known card of the permanent sacrificed as an additional cost to cast this spell. */
     @Setter private Card sacrificedCardSnapshot;
+    /** Last-known card discarded as an activation cost, when an effect refers to that card. */
+    @Setter private Card discardedCardSnapshot;
     @Setter private Permanent sacrificedPermanentSnapshot;
     /** Effective power of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedPower;
+    /** Effective color count of the permanent sacrificed during resolution, when snapshotted. */
+    @Setter private int sacrificedColorCount;
     /** Effective toughness of the permanent sacrificed as an additional cost, when snapshotted. */
     @Setter private int sacrificedToughness;
     /** Permanents tapped to pay this spell's convoke cost, captured for effects that refer to them. */
@@ -310,6 +328,8 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /** Keywords this spell gains while it is on the stack. */
+    private final Set<Keyword> grantedKeywordsWhileOnStack = EnumSet.noneOf(Keyword.class);
     /**
      * Bloodthirst granted to this creature spell while it is on the stack (Bloodlord of Vaasgoth:
      * "it gains bloodthirst 3"). Per CR 702.54c each instance of bloodthirst applies separately, so
@@ -592,6 +612,7 @@ public class StackEntry {
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.castWithEscape = source.castWithEscape;
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard =
@@ -604,12 +625,14 @@ public class StackEntry {
         this.castFaceDown = source.castFaceDown;
         this.entersTapped = source.entersTapped;
         this.sourceZone = source.sourceZone;
+        this.delvedCardIds = source.delvedCardIds.isEmpty() ? List.of() : new ArrayList<>(source.delvedCardIds);
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.waterbendCostPaid = source.waterbendCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
         this.castWhenSorceryCouldNotBeCast = source.castWhenSorceryCouldNotBeCast;
@@ -632,6 +655,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
+        this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
@@ -653,10 +677,14 @@ public class StackEntry {
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
         this.sacrificedCardId = source.sacrificedCardId;
+        this.sacrificedCardIds = source.sacrificedCardIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.sacrificedCardIds);
         this.sacrificedCardSnapshot = source.sacrificedCardSnapshot;
+        this.discardedCardSnapshot = source.discardedCardSnapshot;
         this.sacrificedPermanentSnapshot = source.sacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.sacrificedPermanentSnapshot);
         this.sacrificedPower = source.sacrificedPower;
+        this.sacrificedColorCount = source.sacrificedColorCount;
         this.sacrificedToughness = source.sacrificedToughness;
         this.sacrificedCard = source.sacrificedCard;
         this.exiledCostCardId = source.exiledCostCardId;
@@ -669,6 +697,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.convokeCreatureIds);
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
         this.targetFilters = source.targetFilters.isEmpty() ? List.of() : new ArrayList<>(source.targetFilters);
+        this.multiTargetConstraint = source.multiTargetConstraint;
         this.targetIdOverriddenForEffectResolution = source.targetIdOverriddenForEffectResolution;
         this.targetIdsFromAssignments = source.targetIdsFromAssignments;
         this.primaryTargetStoredSeparately = source.primaryTargetStoredSeparately;
@@ -676,6 +705,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
         source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
                 this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
@@ -771,6 +801,12 @@ public class StackEntry {
 
     public Card getCard() {
         return castCard != null ? castCard : card;
+    }
+
+    /** Whether this stack object has the given printed or cast-time-granted keyword. */
+    public boolean hasKeyword(Keyword keyword) {
+        return getCard() != null && (getCard().getKeywords().contains(keyword)
+                || grantedKeywordsWhileOnStack.contains(keyword));
     }
 
     public void setCastCard(Card castCard) {
@@ -1067,6 +1103,11 @@ public class StackEntry {
         if (group < 0) {
             return getTargetIds();
         }
+        if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && !targetIds.contains(targetId)
+                && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
+            return List.of(targetId);
+        }
         if (targetIds.isEmpty()) {
             // On an aura the lone targetId is the enchant target (group 0), never a later
             // group's target — an effect bound to a later group simply has no target chosen.
@@ -1094,6 +1135,11 @@ public class StackEntry {
                 : targeting.getEffectTargetIndex(effect);
         if (group < 0) {
             return null;
+        }
+        if (!primaryTargetStoredSeparately && targetZone == Zone.STACK && targetId != null
+                && !targetIds.contains(targetId)
+                && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)) {
+            return List.of(targetId);
         }
         if (targetIds.isEmpty()) {
             if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {

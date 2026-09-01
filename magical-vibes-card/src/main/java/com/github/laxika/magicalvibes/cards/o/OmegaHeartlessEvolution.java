@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "236")
+@CardRegistration(set = "FIN", collectorNumber = "347")
+@CardRegistration(set = "FIN", collectorNumber = "501")
 public class OmegaHeartlessEvolution extends Card {
 
     public OmegaHeartlessEvolution() {

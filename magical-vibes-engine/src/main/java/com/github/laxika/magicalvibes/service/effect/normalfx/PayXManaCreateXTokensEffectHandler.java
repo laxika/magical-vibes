@@ -85,6 +85,6 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
         String prompt = "You may pay " + manaCost + " for " + cardName
                 + ". Choose X (0 = don't pay). Create X tokens.";
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true));
+                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, cardName, true, manaCost));
     }
 }

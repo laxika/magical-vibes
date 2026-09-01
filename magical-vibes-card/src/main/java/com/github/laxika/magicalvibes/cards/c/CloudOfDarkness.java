@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FIN", collectorNumber = "217")
+@CardRegistration(set = "FIN", collectorNumber = "481")
 public class CloudOfDarkness extends Card {
 
     public CloudOfDarkness() {

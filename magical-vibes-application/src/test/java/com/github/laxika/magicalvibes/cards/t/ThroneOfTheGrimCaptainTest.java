@@ -46,6 +46,9 @@ class ThroneOfTheGrimCaptainTest extends BaseCardTest {
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new VampireNoble());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
+        assertThat(gs.canActivateAbility(gd, player1.getId(), throne, 1,
+                gd.playerManaPools.get(player1.getId()))).isTrue();
+
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -62,16 +65,20 @@ class ThroneOfTheGrimCaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Crafting fails when the available materials do not cover all required types")
     void rejectsMissingRequiredCreatureType() {
-        harness.addToBattlefieldAndReturn(player1, new ThroneOfTheGrimCaptain());
+        Permanent throne = harness.addToBattlefieldAndReturn(player1, new ThroneOfTheGrimCaptain());
         harness.addToBattlefieldAndReturn(player1, new ThrashingBrontodon());
         harness.addToBattlefieldAndReturn(player1, new ThrashingBrontodon());
         harness.addToBattlefieldAndReturn(player1, new ThrashingBrontodon());
         harness.addToBattlefieldAndReturn(player1, new ThrashingBrontodon());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
+        assertThat(gs.canActivateAbility(gd, player1.getId(), throne, 1,
+                gd.playerManaPools.get(player1.getId()))).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("one of each required creature type");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(throne);
     }
 
     @Test

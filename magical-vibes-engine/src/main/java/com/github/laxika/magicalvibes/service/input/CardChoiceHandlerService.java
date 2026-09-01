@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -176,6 +177,7 @@ public class CardChoiceHandlerService {
         String drawAndRepeatLabel = null;
         UUID attachEquipmentCardId = null;
         UUID exileSourceIfDeclinedId = null;
+        UUID returnSourceToHandId = null;
         Integer sacrificeUnlessPayGenericReduction = null;
         CounterType artifactCounterType = null;
         int artifactCounterCount = 0;
@@ -216,6 +218,7 @@ public class CardChoiceHandlerService {
             targetId = thc.targetId();
             isTargeted = true;
             exileSourceIfDeclinedId = thc.exileSourceIfDeclinedId();
+            returnSourceToHandId = thc.returnSourceToHandId();
         } else {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -262,7 +265,27 @@ public class CardChoiceHandlerService {
             Card card = hand.remove(cardIndex);
 
             if (isTargeted) {
-                resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
+                Permanent sourceToReturn = returnSourceToHandId == null
+                        ? null
+                        : gameQueryService.findPermanentById(gameData, returnSourceToHandId);
+                boolean exchangeSourceStillPresent = returnSourceToHandId == null
+                        || (sourceToReturn != null && sourceToReturn.isAttached()
+                        && targetId.equals(sourceToReturn.getAttachedTo()));
+                if (!exchangeSourceStillPresent) {
+                    hand.add(cardIndex, card);
+                } else {
+                    boolean entered = resolveTargetedCardChoice(gameData, player, playerId, card, targetId);
+                    if (entered && returnSourceToHandId != null) {
+                        Permanent source = gameQueryService.findPermanentById(gameData, returnSourceToHandId);
+                        if (source != null) {
+                            Card returnedCard = source.getCard();
+                            if (permanentRemovalService.removePermanentToHand(gameData, source)) {
+                                gameLogService.append(gameData,
+                                        GameLog.cardThen(returnedCard, " is returned to its owner's hand."));
+                            }
+                        }
+                    }
+                }
             } else {
                 UUID sourceCardId = gameData.pendingEffectResolutionEntry == null
                         || gameData.pendingEffectResolutionEntry.getCard() == null
@@ -932,6 +955,47 @@ public class CardChoiceHandlerService {
         }
     }
 
+    /** Answers the Nexus of Becoming hand-card choice and queues the copy of the selected card. */
+    public void handleExileCardFromHandAndCreateTokenCopyChosen(
+            GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice choice =
+                gameData.interaction.activeInteraction(
+                        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            log.warn("Game {} - {} sent invalid card index {}, re-prompting",
+                    gameData.id, player.getUsername(), cardIndex);
+            interactionHandlerRegistry.requestActiveDecision(gameData);
+            return;
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Card chosenCard = hand.remove(cardIndex);
+        exileService.exileCard(gameData, player.getId(), chosenCard);
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", chosenCard, " from hand."));
+
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(new CreateTokenCopyOfCardEffect(
+                            chosenCard, choice.effect().tokenCopyEffect())));
+            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        }
+    }
+
     public void handleRevealedHandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.RevealedHandChoice revealedHandChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -1018,7 +1082,7 @@ public class CardChoiceHandlerService {
                     false, revealedHandChoice.shuffleIntoLibraryMode(), false,
                     revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep(),
                     revealedHandChoice.exilePlayOpponentTax(), revealedHandChoice.chosenCardCondition(),
-                    revealedHandChoice.chosenCardThenEffect()));
+                    revealedHandChoice.chosenCardThenEffect(), revealedHandChoice.libraryPosition()));
         } else {
             finishRevealedHandChoice(gameData, player, revealedHandChoice, chosenCards);
         }
@@ -1085,6 +1149,7 @@ public class CardChoiceHandlerService {
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
         boolean shuffleIntoLibraryMode = revealedHandChoice.shuffleIntoLibraryMode();
         boolean discardThenDrawMode = revealedHandChoice.discardThenDrawMode();
+        int libraryPosition = revealedHandChoice.libraryPosition();
 
         gameData.interaction.clearAwaitingInput();
 
@@ -1221,19 +1286,21 @@ public class CardChoiceHandlerService {
 
             drawService.resolveDrawCard(gameData, targetPlayerId);
         } else {
-            // Put chosen cards on top of library
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);
 
-            // Insert in reverse order so first chosen ends up on top
             for (int i = chosenCards.size() - 1; i >= 0; i--) {
-                deck.addFirst(chosenCards.get(i));
+                int insertIndex = Math.min(libraryPosition, deck.size());
+                deck.add(insertIndex, chosenCards.get(i));
             }
 
             String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+            String placement = libraryPosition == 0
+                    ? "on top of " + targetName + "'s library"
+                    : ordinal(libraryPosition) + " from the top of " + targetName + "'s library";
             gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(player.getUsername() + " puts "), chosenCards)
-                            .text(" on top of " + targetName + "'s library.").build());
-            log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
+                            .text(" " + placement + ".").build());
+            log.info("Game {} - {} puts {} {}", gameData.id, player.getUsername(), cardNames, placement);
         }
 
         if (revealedHandChoice.chosenCardThenEffect() != null
@@ -1271,6 +1338,14 @@ public class CardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private String ordinal(int zeroBasedPosition) {
+        return switch (zeroBasedPosition) {
+            case 1 -> "second";
+            case 2 -> "third";
+            default -> (zeroBasedPosition + 1) + "th";
+        };
     }
 
     /** Answers a choice to put one card from a target player's revealed hand onto the battlefield. */
@@ -1697,7 +1772,7 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card, UUID targetId) {
+    private boolean resolveTargetedCardChoice(GameData gameData, Player player, UUID playerId, Card card, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
             Permanent auraPerm = new Permanent(card);
@@ -1712,11 +1787,13 @@ public class CardChoiceHandlerService {
                     .text(".")
                     .build());
             log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
+            return true;
         } else {
             gameData.addCardToHand(playerId, card);
             gameLogService.append(gameData,
                     GameLog.cardThen(card, " can't be attached (target left the battlefield)."));
             log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
+            return false;
         }
     }
 

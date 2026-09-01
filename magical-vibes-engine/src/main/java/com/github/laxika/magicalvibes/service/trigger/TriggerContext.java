@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -45,6 +46,8 @@ public sealed interface TriggerContext {
             return castZone == Zone.HAND;
         }
     }
+
+    record GiftGiven(UUID giverId) implements TriggerContext {}
 
     /** Context for "whenever a spell or ability you control counters a spell" triggers. */
     record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
@@ -93,8 +96,11 @@ public sealed interface TriggerContext {
     /** Context for controller-surveil triggers. */
     record Surveil(UUID surveilingPlayerId) implements TriggerContext {}
 
+    record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
+    /** Context for controller forage triggers. */
+    record Forage(UUID foragingPlayerId) implements TriggerContext {}
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
@@ -255,7 +261,7 @@ public sealed interface TriggerContext {
     record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
                            int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
 
-    /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
+    /** Context for triggers watching a permanent being turned face up. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
 
     /** Context for a permanent controlled by a player transforming. */
@@ -504,6 +510,10 @@ public sealed interface TriggerContext {
     record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
             implements TriggerContext {}
 
+    /** Context for ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
+    record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount)
+            implements TriggerContext {}
+
     /** Context for ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
     record CreatureCardPutIntoGraveyardFromLibrary(Card creatureCard, UUID graveyardOwnerId)
             implements TriggerContext {}
@@ -640,4 +650,8 @@ public sealed interface TriggerContext {
     }
 
     record Crime(UUID committingPlayerId) implements TriggerContext {}
+
+    /** Context for an attacking creature causing one of its triggered abilities to trigger. */
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
+            implements TriggerContext {}
 }

@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureThenBoo
 import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPermanentLeavesEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "127")
+@CardRegistration(set = "FIN", collectorNumber = "384")
+@CardRegistration(set = "FIN", collectorNumber = "455")
+@CardRegistration(set = "FIN", collectorNumber = "529")
+@CardRegistration(set = "FIN", collectorNumber = "589")
+@CardRegistration(set = "FIN", collectorNumber = "591")
 public class ZenosYaeGalvus extends Card {
 
     public ZenosYaeGalvus() {

@@ -18,7 +18,7 @@ import java.util.List;
  */
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
-                              Condition choicesMaxCondition)
+                              Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget)
         implements CombatDamageTriggerContextEffect {
 
     public static final String NO_MODE_LABEL = "Choose no modes";
@@ -30,12 +30,27 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     }
 
     public ChooseOneEffect {
-        if (choicesRequired < 1) {
-            throw new IllegalArgumentException("choicesRequired must be >= 1");
+        if (choicesRequired < 0) {
+            throw new IllegalArgumentException("choicesRequired must be >= 0");
         }
         if (choicesMax < choicesRequired) {
             throw new IllegalArgumentException("choicesMax must be >= choicesRequired");
         }
+        modeCosts = modeCosts == null ? List.of() : List.copyOf(modeCosts);
+        if (modeBudget < 0) {
+            throw new IllegalArgumentException("modeBudget must be >= 0");
+        }
+        if (modeBudget > 0 && (modeCosts.size() != options.size()
+                || modeCosts.stream().anyMatch(cost -> cost == null || cost < 1))) {
+            throw new IllegalArgumentException("Budgeted modes require one positive cost per mode");
+        }
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired,
+                           int choicesMax, boolean allModesWhenOptionalCostPaid,
+                           boolean modesMayRepeat, Condition choicesMaxCondition) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
+                modesMayRepeat, choicesMaxCondition, List.of(), 0);
     }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
@@ -105,6 +120,12 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         return new ChooseOneEffect(options, false, choicesRequired, choicesRequired, false, true);
     }
 
+    public static ChooseOneEffect budgetedModes(List<ChooseOneOption> options, List<Integer> modeCosts,
+                                                 int modeBudget) {
+        return new ChooseOneEffect(options, false, 0, modeBudget, false, true, null,
+                modeCosts, modeBudget);
+    }
+
     /**
      * Encodes a modal selection for casting. Exact choose-one ({@code choicesRequired == choicesMax == 1})
      * uses a 0-based mode index; any multi-mode or variable-count spell uses a negative bitmask
@@ -113,6 +134,66 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
      */
     public static int encodeModeSelection(int choicesRequired, int... modeIndices) {
         return encodeModeSelection(choicesRequired, choicesRequired, modeIndices);
+    }
+
+    public static int encodeModeSelection(ChooseOneEffect modal, int... modeIndices) {
+        if (!modal.isBudgeted()) {
+            return encodeModeSelection(modal.choicesRequired(), modal.choicesMax(), modeIndices);
+        }
+        long encoded = 0;
+        long base = (long) modal.modeBudget() + 1;
+        int totalCost = 0;
+        int[] counts = new int[modal.options().size()];
+        for (int modeIndex : modeIndices) {
+            if (modeIndex < 0 || modeIndex >= counts.length) {
+                throw new IllegalArgumentException("Invalid mode index: " + modeIndex);
+            }
+            counts[modeIndex]++;
+            totalCost += modal.modeCosts().get(modeIndex);
+        }
+        if (totalCost > modal.modeBudget()) {
+            throw new IllegalArgumentException("Mode selections exceed the modal budget");
+        }
+        long place = 1;
+        for (int count : counts) {
+            encoded += place * count;
+            place *= base;
+        }
+        return (int) (-encoded - 1);
+    }
+
+    public static int encodeBudgetedModeSelection(int modeBudget, List<Integer> modeCosts,
+                                                   int... modeIndices) {
+        if (modeBudget < 1 || modeCosts == null || modeCosts.isEmpty()) {
+            throw new IllegalArgumentException("Budgeted modal requires a positive budget and modes");
+        }
+        long encoded = 0;
+        long base = (long) modeBudget + 1;
+        int totalCost = 0;
+        int[] counts = new int[modeCosts.size()];
+        for (int modeIndex : modeIndices) {
+            if (modeIndex < 0 || modeIndex >= modeCosts.size()) {
+                throw new IllegalArgumentException("Invalid mode index: " + modeIndex);
+            }
+            Integer modeCost = modeCosts.get(modeIndex);
+            if (modeCost == null || modeCost < 1) {
+                throw new IllegalArgumentException("Mode costs must be positive");
+            }
+            counts[modeIndex]++;
+            totalCost += modeCost;
+            if (totalCost > modeBudget) {
+                throw new IllegalArgumentException("Mode selections exceed the modal budget");
+            }
+        }
+        long place = 1;
+        for (int count : counts) {
+            encoded += place * count;
+            place *= base;
+        }
+        if (encoded > Integer.MAX_VALUE - 1L) {
+            throw new IllegalArgumentException("Modal selection encoding exceeds integer range");
+        }
+        return (int) (-encoded - 1);
     }
 
     /** Variable-count / ranged modal encoding ({@code choicesMin}..{@code choicesMax}). */
@@ -140,6 +221,27 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     }
 
     public List<Integer> decodeModeIndices(int xValue, int effectiveChoicesMax) {
+        if (isBudgeted()) {
+            if (xValue >= 0) {
+                throw new IllegalStateException("Invalid budgeted mode encoding: " + xValue);
+            }
+            long encoded = -(long) xValue - 1;
+            long base = (long) modeBudget + 1;
+            List<Integer> chosen = new java.util.ArrayList<>();
+            int totalCost = 0;
+            for (int i = 0; i < options.size(); i++) {
+                int count = (int) (encoded % base);
+                encoded /= base;
+                for (int j = 0; j < count; j++) {
+                    chosen.add(i);
+                    totalCost += modeCosts.get(i);
+                }
+            }
+            if (encoded != 0 || totalCost > modeBudget) {
+                throw new IllegalStateException("Invalid budgeted modal selection");
+            }
+            return chosen;
+        }
         if (choicesRequired == 1 && choicesMax == 1) {
             if (xValue < 0 || xValue >= options.size()) {
                 throw new IllegalStateException("Invalid mode index: " + xValue);
@@ -215,6 +317,10 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     /** True when this modal allows a variable number of modes (e.g. "choose one or more"). */
     public boolean variableModeCount() {
         return choicesMax > choicesRequired;
+    }
+
+    public boolean isBudgeted() {
+        return modeBudget > 0;
     }
 
     /**

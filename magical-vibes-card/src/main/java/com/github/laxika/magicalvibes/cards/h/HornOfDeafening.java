@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "100")
+@CardRegistration(set = "LEG", collectorNumber = "280")
 public class HornOfDeafening extends Card {
 
     public HornOfDeafening() {

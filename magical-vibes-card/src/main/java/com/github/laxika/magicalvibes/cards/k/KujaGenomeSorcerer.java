@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "232")
+@CardRegistration(set = "FIN", collectorNumber = "399")
+@CardRegistration(set = "FIN", collectorNumber = "497")
+@CardRegistration(set = "FIN", collectorNumber = "544")
 public class KujaGenomeSorcerer extends Card {
 
     public KujaGenomeSorcerer() {

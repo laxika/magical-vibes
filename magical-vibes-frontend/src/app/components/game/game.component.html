@@ -819,6 +819,28 @@
     </div>
   }
 
+  @if (choice.targeting.selectingGraveyardCastExile) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>Exile {{ choice.targeting.graveyardCastExileCount }} {{ choice.targeting.graveyardCastExileLabel || 'other cards' }} to cast {{ choice.targeting.graveyardCastExileCardName }}.</h2>
+        <div class="reveal-hand-cards">
+          @for (entry of choice.targeting.graveyardCastExileChoices; track entry.index) {
+            <app-card-display [card]="entry.card"
+              [class.alternate-cost-selected]="choice.targeting.isGraveyardCastExileSelected(entry.index)"
+              class="choosable-card"
+              (click)="choice.targeting.toggleGraveyardCastExile(entry.index)"
+              (mouseenter)="onCardHover(entry.card)"
+              (mouseleave)="onCardHoverEnd()" />
+          }
+        </div>
+        <button class="btn-keep"
+          [disabled]="choice.targeting.graveyardCastExileSelectedIndices().length !== choice.targeting.graveyardCastExileCount"
+          (click)="choice.targeting.confirmGraveyardCastExile()">Confirm</button>
+        <button class="btn-cancel-combat" (click)="choice.targeting.cancelGraveyardCastExile()">Cancel</button>
+      </div>
+    </div>
+  }
+
   @if (choice.revealingHand) {
     <div class="reveal-hand-layer" [class.reveal-hand-modal]="choice.choosingFromRevealedHand">
       <div class="reveal-hand-window"

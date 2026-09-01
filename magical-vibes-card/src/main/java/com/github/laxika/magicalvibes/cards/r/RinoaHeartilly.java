@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "237")
+@CardRegistration(set = "FIN", collectorNumber = "502")
 public class RinoaHeartilly extends Card {
 
     public RinoaHeartilly() {

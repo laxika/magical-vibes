@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "80")
+@CardRegistration(set = "LEG", collectorNumber = "245")
 public class Nebuchadnezzar extends Card {
 
     public Nebuchadnezzar() {

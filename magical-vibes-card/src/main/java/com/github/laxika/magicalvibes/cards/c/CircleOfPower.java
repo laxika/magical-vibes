@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "92")
+@CardRegistration(set = "FIN", collectorNumber = "583")
 public class CircleOfPower extends Card {
 
     public CircleOfPower() {

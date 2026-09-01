@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "99")
+@CardRegistration(set = "FIN", collectorNumber = "381")
+@CardRegistration(set = "FIN", collectorNumber = "446")
+@CardRegistration(set = "FIN", collectorNumber = "526")
 public class FangFearlessLCie extends Card {
 
     public FangFearlessLCie() {

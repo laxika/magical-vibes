@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomPermanentFromGraveyardCreateTappedTokenCopyEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "242")
+@CardRegistration(set = "FIN", collectorNumber = "348")
+@CardRegistration(set = "FIN", collectorNumber = "508")
 public class SinSpirasPunishment extends Card {
 
     public SinSpirasPunishment() {

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -17,8 +16,7 @@ public class VampireWarlord extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(false, false, false, true), new RegenerateEffect()),
-                "Sacrifice another creature: Regenerate Vampire Warlord.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice another creature: Regenerate Vampire Warlord."
         ));
     }
 }

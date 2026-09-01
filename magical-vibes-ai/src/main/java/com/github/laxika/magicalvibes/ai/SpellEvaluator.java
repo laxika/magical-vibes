@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoardWipeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -101,6 +103,20 @@ public class SpellEvaluator {
         double value = evaluateAbilityEffects(gameData, ability.getEffects(), aiPlayerId)
                 - evaluateAbilityCosts(gameData, ability, permanent, aiPlayerId);
 
+        List<Card> estimatedExiledCards = estimatedGraveyardCardsExiledForCost(
+                gameData, ability, aiPlayerId);
+        if (!estimatedExiledCards.isEmpty()) {
+            for (CardEffect effect : ability.getEffects()) {
+                if (effect instanceof AllowPlayMatchingCardsFromGraveyardThisTurnEffect permission) {
+                    value -= estimatedExiledCards.stream()
+                            .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                                    card, permission.filter(), card.getId()))
+                            .mapToDouble(this::graveyardPlayPermissionValue)
+                            .sum();
+                }
+            }
+        }
+
         Integer loyaltyCost = ability.getLoyaltyCost();
         if (loyaltyCost != null) {
             if (loyaltyCost > 0) {
@@ -156,6 +172,12 @@ public class SpellEvaluator {
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .toList();
                 cost += boardEvaluator.bestSacrificeCost(gameData, creatures, aiPlayerId, opponentId);
+            } else if (effect instanceof ExileNCardsFromGraveyardCost graveyardCost) {
+                cost += matchingGraveyardCards(gameData, aiPlayerId, graveyardCost).stream()
+                        .sorted(Comparator.comparingDouble(this::graveyardExileCost))
+                        .limit(graveyardCost.count())
+                        .mapToDouble(this::graveyardExileCost)
+                        .sum();
             } else {
                 // Scalar resources: life paid and/or charge counters removed from the source.
                 cost += costEffect.lifePaid(gameData.getLife(aiPlayerId)) * 1.5;
@@ -202,6 +224,13 @@ public class SpellEvaluator {
             return amountEvaluationService.evaluate(gameData, scry.count(),
                     AmountContext.forEstimation(aiPlayerId)) * 2.0;
         }
+        if (effect instanceof AllowPlayMatchingCardsFromGraveyardThisTurnEffect permission) {
+            return gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of()).stream()
+                    .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                            card, permission.filter(), card.getId()))
+                    .mapToDouble(this::graveyardPlayPermissionValue)
+                    .sum();
+        }
         // +1/+1 counters on all own creatures
         if (effect instanceof PutCounterOnEachControlledPermanentEffect counters
                 && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
@@ -225,6 +254,37 @@ public class SpellEvaluator {
         // Fall through to the standard effect evaluation
         return evaluateSingleEffect(gameData, null, effect, aiPlayerId, opponentId,
                 aiBattlefield, oppBattlefield);
+    }
+
+    private List<Card> estimatedGraveyardCardsExiledForCost(
+            GameData gameData, ActivatedAbility ability, UUID playerId) {
+        return ability.getEffects().stream()
+                .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                .map(ExileNCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .map(cost -> matchingGraveyardCards(gameData, playerId, cost).stream()
+                        .sorted(Comparator.comparingDouble(this::graveyardExileCost))
+                        .limit(cost.count())
+                        .toList())
+                .orElse(List.of());
+    }
+
+    private List<Card> matchingGraveyardCards(
+            GameData gameData, UUID playerId, ExileNCardsFromGraveyardCost cost) {
+        return gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(card -> cost.requiredType() == null || card.hasType(cost.requiredType()))
+                .filter(card -> cost.predicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(
+                        card, cost.predicate(), card.getId()))
+                .toList();
+    }
+
+    private double graveyardExileCost(Card card) {
+        return 1.0 + card.getManaValue() * 0.5;
+    }
+
+    private double graveyardPlayPermissionValue(Card card) {
+        return 4.0 + card.getManaValue() * 0.5;
     }
 
     private double evaluateTargetTapValue(GameData gameData, List<Permanent> opponentBattlefield,
@@ -333,7 +393,9 @@ public class SpellEvaluator {
     private boolean isDrawEffect(CardEffect effect) {
         if (effect instanceof CardDrawingEffect) return true;
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isDrawEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isDrawEffect);
         }
         return false;
     }
@@ -350,7 +412,9 @@ public class SpellEvaluator {
             return true;
         }
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isBoardWipeEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isBoardWipeEffect);
         }
         return false;
     }
@@ -425,7 +489,9 @@ public class SpellEvaluator {
         // check must read the amount or it would score every reveal as a lifegain spell.
         if (effect instanceof LifeGainEffect gain) return !gain.gainsNoLife();
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isLifeGainEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isLifeGainEffect);
         }
         return false;
     }
@@ -449,7 +515,10 @@ public class SpellEvaluator {
         if (effect instanceof ChooseOneEffect coe) {
             double bestValue = 0;
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                double optionValue = evaluateEtbEffect(gameData, card, option.effect(), aiPlayerId, opponentId);
+                double optionValue = option.effects().stream()
+                        .mapToDouble(modeEffect -> evaluateEtbEffect(
+                                gameData, card, modeEffect, aiPlayerId, opponentId))
+                        .sum();
                 bestValue = Math.max(bestValue, optionValue);
             }
             return bestValue;
@@ -524,7 +593,7 @@ public class SpellEvaluator {
         if (effect instanceof ChooseOneEffect coe) {
             double bestValue = 0;
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                double optionValue = evaluateSingleEffect(gameData, card, option.effect(),
+                double optionValue = evaluateEffects(gameData, card, option.effects(),
                         aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
                 bestValue = Math.max(bestValue, optionValue);
             }
@@ -1396,7 +1465,9 @@ public class SpellEvaluator {
 
     private boolean isRemovalEffect(CardEffect effect) {
         if (effect instanceof ChooseOneEffect coe) {
-            return coe.options().stream().anyMatch(o -> isRemovalEffect(o.effect()));
+            return coe.options().stream()
+                    .flatMap(option -> option.effects().stream())
+                    .anyMatch(this::isRemovalEffect);
         }
         // Single-target removal (destroy/exile/bounce) or creature-hitting damage counts as
         // removal; player-only damage (canDamageCreatures() == false) does not, matching the

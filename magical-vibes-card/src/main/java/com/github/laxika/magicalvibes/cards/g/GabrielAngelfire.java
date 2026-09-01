@@ -4,21 +4,18 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.RampageEffect;
 
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "76")
+@CardRegistration(set = "LEG", collectorNumber = "226")
 public class GabrielAngelfire extends Card {
 
     public GabrielAngelfire() {
@@ -35,8 +32,7 @@ public class GabrielAngelfire extends Card {
         )));
     }
 
-    private static BoostSelfEffect rampageThree() {
-        Scaled bonus = new Scaled(new Sum(new CreaturesBlockingSource(), new Fixed(-1)), 3);
-        return new BoostSelfEffect(bonus, bonus);
+    private static RampageEffect rampageThree() {
+        return new RampageEffect(3);
     }
 }

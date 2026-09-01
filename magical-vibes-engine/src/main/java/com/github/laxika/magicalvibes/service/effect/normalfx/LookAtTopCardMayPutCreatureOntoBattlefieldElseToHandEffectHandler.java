@@ -62,7 +62,7 @@ public class LookAtTopCardMayPutCreatureOntoBattlefieldElseToHandEffectHandler
 
         // Non-creature: put into hand (no choice).
         deck.removeFirst();
-        gameData.playerHands.get(controllerId).add(topCard);
+        gameData.addCardToHand(controllerId, topCard);
         gameLogService.append(gameData,
                 GameLog.text(playerName + " puts the top card into their hand (" + sourceName + ")."));
         log.info("Game {} - {} puts {} into hand from library top ({})",

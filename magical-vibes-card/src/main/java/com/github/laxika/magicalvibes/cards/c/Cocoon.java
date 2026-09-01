@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "59")
+@CardRegistration(set = "LEG", collectorNumber = "178")
 public class Cocoon extends Card {
 
     public Cocoon() {

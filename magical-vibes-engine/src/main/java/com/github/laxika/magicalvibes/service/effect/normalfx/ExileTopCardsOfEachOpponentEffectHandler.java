@@ -2,20 +2,22 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardsOfEachOpponentEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,8 +26,8 @@ public class ExileTopCardsOfEachOpponentEffectHandler implements NormalEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ExileTopCardsOfEachOpponentEffect exileEffect = (ExileTopCardsOfEachOpponentEffect) effect;
-        if (exileEffect.count() <= 0) {
+        int count = ((ExileTopCardsOfEachOpponentEffect) effect).count();
+        if (count <= 0) {
             return;
         }
 
@@ -35,16 +37,19 @@ public class ExileTopCardsOfEachOpponentEffectHandler implements NormalEffectHan
                 continue;
             }
             var library = gameData.playerDecks.get(opponentId);
-            if (library == null) {
+            if (library == null || library.isEmpty()) {
                 continue;
             }
 
-            int remaining = exileEffect.count();
-            while (remaining > 0 && !library.isEmpty()) {
+            int toExile = Math.min(count, library.size());
+            for (int i = 0; i < toExile; i++) {
                 Card card = library.removeFirst();
                 exileService.exileCard(gameData, opponentId, card);
-                remaining--;
             }
+
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(opponentId) + " exiles the top " + toExile
+                            + " card" + (toExile == 1 ? "" : "s") + " of their library."));
         }
     }
 }

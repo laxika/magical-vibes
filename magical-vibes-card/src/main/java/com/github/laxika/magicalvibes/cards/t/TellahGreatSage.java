@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "244")
+@CardRegistration(set = "FIN", collectorNumber = "349")
+@CardRegistration(set = "FIN", collectorNumber = "510")
 public class TellahGreatSage extends Card {
 
     public TellahGreatSage() {

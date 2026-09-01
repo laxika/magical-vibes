@@ -58,9 +58,23 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (request.fromExileCardId() != null) {
-            gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
-                    listOrEmpty(request.convokeCreatureIds()));
+            if (request.waterbendPaid() != null
+                    || request.additionalCostSacrificePermanentIds() != null
+                    && !request.additionalCostSacrificePermanentIds().isEmpty()) {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()), waterbendPaid(request));
+            } else {
+                gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(),
+                        request.targetId(), listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.convokeCreatureIds()));
+            }
+            return;
+        }
+        if (Boolean.TRUE.equals(request.alternateCost())) {
+            gameService.playCardWithAlternateCost(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()));
             return;
         }
         if (Boolean.TRUE.equals(request.morph())) {
@@ -83,6 +97,11 @@ public class PlayCardRequestDispatchService {
                 ? CardSubtype.valueOf(request.beholdCreatureType()) : null;
         CardSubtype chosenCreatureType = request.chosenCreatureType() != null
                 ? CardSubtype.valueOf(request.chosenCreatureType()) : null;
+        if (Boolean.TRUE.equals(request.giftPromised())) {
+            gameService.playCardWithGift(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), request.damageAssignments(), listOrEmpty(request.targetIds()), true);
+            return;
+        }
         // The empty-to-null normalization on the two list costs mirrors the presence checks the
         // former per-field branches keyed on, so an empty list still means "cost not used".
         if (request.sharedColorDiscardHandCardIndex() != null) {
@@ -115,7 +134,8 @@ public class PlayCardRequestDispatchService {
                     Boolean.TRUE.equals(request.buyback()),
                     request.beholdPermanentId(), request.beholdHandCardIndex(),
                     listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
-                    chosenBeholdType, null, request.chosenAdditionalCostObjectId());
+                    chosenBeholdType, null, waterbendPaid(request), request.payLifeForAdditionalCost(),
+                    request.chosenAdditionalCostObjectId());
             return;
         }
         gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
@@ -129,7 +149,8 @@ public class PlayCardRequestDispatchService {
                 request.repeatedAdditionalCosts() != null ? request.repeatedAdditionalCosts() : List.of(),
                 Boolean.TRUE.equals(request.buyback()), request.beholdPermanentId(), request.beholdHandCardIndex(),
                 listOrEmpty(request.beholdPermanentIds()), listOrEmpty(request.beholdHandCardIndices()),
-                chosenBeholdType, chosenCreatureType, request.chosenAdditionalCostObjectId());
+                chosenBeholdType, chosenCreatureType, waterbendPaid(request),
+                request.payLifeForAdditionalCost(), request.chosenAdditionalCostObjectId());
     }
 
     private static <T> List<T> listOrEmpty(List<T> list) {
@@ -138,6 +159,13 @@ public class PlayCardRequestDispatchService {
 
     private static <T> List<T> nullIfEmpty(List<T> list) {
         return list == null || list.isEmpty() ? null : list;
+    }
+
+    private static boolean waterbendPaid(PlayCardRequest request) {
+        return Boolean.TRUE.equals(request.waterbendPaid())
+                || (request.waterbendPaid() == null
+                && request.additionalCostSacrificePermanentIds() != null
+                && !request.additionalCostSacrificePermanentIds().isEmpty());
     }
 
     private static boolean isPlotAlternateCast(GameData gameData, Player player, PlayCardRequest request) {

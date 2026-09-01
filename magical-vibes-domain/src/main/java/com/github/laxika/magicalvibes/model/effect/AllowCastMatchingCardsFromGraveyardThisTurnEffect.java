@@ -16,15 +16,24 @@ public record AllowCastMatchingCardsFromGraveyardThisTurnEffect(
         CardPredicate filter,
         boolean singleUse,
         CounterType entryCounterType,
-        CardSubtype grantedSubtype) implements CardEffect {
+        CardSubtype grantedSubtype,
+        ForageOrPayManaCost additionalCost,
+        CounterType enterWithCounter,
+        int enterWithCounterCount) implements CardEffect {
 
     public AllowCastMatchingCardsFromGraveyardThisTurnEffect(CardPredicate filter) {
-        this(filter, false, null, null);
+        this(filter, false, null, null, null, null, 0);
+    }
+
+    public AllowCastMatchingCardsFromGraveyardThisTurnEffect(
+            CardPredicate filter, ForageOrPayManaCost additionalCost,
+            CounterType enterWithCounter, int enterWithCounterCount) {
+        this(filter, false, null, null, additionalCost, enterWithCounter, enterWithCounterCount);
     }
 
     public static AllowCastMatchingCardsFromGraveyardThisTurnEffect oneShotWithEntryEffects(
             CardPredicate filter, CounterType entryCounterType, CardSubtype grantedSubtype) {
         return new AllowCastMatchingCardsFromGraveyardThisTurnEffect(
-                filter, true, entryCounterType, grantedSubtype);
+                filter, true, entryCounterType, grantedSubtype, null, null, 0);
     }
 }

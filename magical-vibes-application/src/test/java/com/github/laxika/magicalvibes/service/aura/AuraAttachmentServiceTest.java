@@ -261,7 +261,7 @@ class AuraAttachmentServiceTest {
 
             service.removeOrphanedAuras(gd);
 
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Darksteel Axe becomes unattached (equipped creature left the battlefield).")));
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Darksteel Axe becomes unattached (attached permanent left the battlefield).")));
         }
 
         @Test

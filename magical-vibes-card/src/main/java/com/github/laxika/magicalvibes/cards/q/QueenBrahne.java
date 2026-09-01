@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "149")
+@CardRegistration(set = "FIN", collectorNumber = "464")
 public class QueenBrahne extends Card {
 
     public QueenBrahne() {

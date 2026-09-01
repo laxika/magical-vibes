@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteControllerLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -147,6 +148,19 @@ class BattlefieldPlacementServiceTest {
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
 
         assertThat(entering.getChosenNumber()).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Chooses a random number when the permanent enters")
+    void choosesRandomNumberWhenPermanentEnters() {
+        Card card = new Card();
+        card.setName("Random Number Permanent");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseRandomNumberOnEnterEffect(2, 4));
+        Permanent entering = new Permanent(card);
+
+        putPermanentOntoBattlefield(service, gd, player1Id, entering);
+
+        assertThat(entering.getChosenNumber()).isBetween(2, 4);
     }
 
     @Test

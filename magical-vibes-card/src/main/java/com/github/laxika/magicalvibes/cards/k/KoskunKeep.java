@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 
 import java.util.List;
 
@@ -26,19 +27,11 @@ public class KoskunKeep extends Card {
                 "{1}, {T}: Add {R}."
         ));
 
-        // "Add {B} or {G}" is two separate mana abilities, one per color option.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new AwardManaEffect(ManaColor.BLACK, 1)),
-                "{2}, {T}: Add {B}."
-        ));
-
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                "{2}",
-                List.of(new AwardManaEffect(ManaColor.GREEN, 1)),
-                "{2}, {T}: Add {G}."
+                List.of(new AwardManaOfColorsEffect(List.of(ManaColor.BLACK, ManaColor.GREEN))),
+                "{2}, {T}: Add {B} or {G}."
         ));
     }
 }

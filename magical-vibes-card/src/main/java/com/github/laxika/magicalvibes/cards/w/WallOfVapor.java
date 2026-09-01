@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "27")
+@CardRegistration(set = "LEG", collectorNumber = "84")
 public class WallOfVapor extends Card {
 
     public WallOfVapor() {

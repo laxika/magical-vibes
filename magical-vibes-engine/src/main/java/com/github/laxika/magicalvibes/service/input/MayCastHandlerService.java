@@ -97,9 +97,15 @@ public class MayCastHandlerService {
                 }
                 deck.removeFirst();
 
-                List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-                StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
-                        ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+                StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
+                boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
+                        || cardToCast.hasType(CardType.ARTIFACT)
+                        || cardToCast.hasType(CardType.ENCHANTMENT)
+                        || cardToCast.hasType(CardType.PLANESWALKER)
+                        || cardToCast.hasType(CardType.BATTLE);
+                List<CardEffect> spellEffects = isPermanentSpell
+                        ? List.of()
+                        : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
 
                 if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
                     // Targeted spell — need to choose target before putting on stack
@@ -240,7 +246,7 @@ public class MayCastHandlerService {
                 if (validTargets.isEmpty()) {
                     switch (notPlayedDestination) {
                         case HAND -> {
-                            gameData.playerHands.get(player.getId()).add(cardToPlay);
+                            gameData.addCardToHand(player.getId(), cardToPlay);
                             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                                     " can't be cast and is put into " + playerName + "'s hand."));
                         }
@@ -445,6 +451,19 @@ public class MayCastHandlerService {
         return validTargets;
     }
 
+    private static StackEntryType mapCardTypeToSpellType(Card card) {
+        return switch (card.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + card.getType());
+        };
+    }
+
     private void bottomTopCardOfLibrary(GameData gameData, List<Card> deck, Card card, String playerName) {
         if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
@@ -458,7 +477,7 @@ public class MayCastHandlerService {
                                     Card card, String playerName) {
         if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
-            gameData.playerHands.get(playerId).add(card);
+            gameData.addCardToHand(playerId, card);
         }
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is put into " + playerName + "'s hand."));
@@ -890,7 +909,9 @@ public class MayCastHandlerService {
         if (cardToPlay.hasType(CardType.LAND)) {
             gameData.removeFromExile(cardToPlay.getId());
             gameData.recordCardPlayedFromExile(player.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            Permanent permanent = new Permanent(cardToPlay);
+            permanent.setEnteredFromExile(true);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
             gameLogService.append(gameData,
                     GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));

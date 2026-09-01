@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FIN", collectorNumber = "151")
+@CardRegistration(set = "FIN", collectorNumber = "388")
+@CardRegistration(set = "FIN", collectorNumber = "465")
+@CardRegistration(set = "FIN", collectorNumber = "533")
 public class RaubahnBullOfAlaMhigo extends Card {
 
     public RaubahnBullOfAlaMhigo() {

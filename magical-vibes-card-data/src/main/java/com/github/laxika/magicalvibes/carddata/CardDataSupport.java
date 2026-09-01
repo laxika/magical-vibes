@@ -48,6 +48,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Split second", Keyword.SPLIT_SECOND);
         KEYWORD_MAP.put("Fading", Keyword.FADING);
         KEYWORD_MAP.put("Vanishing", Keyword.VANISHING);
+        KEYWORD_MAP.put("Graft", Keyword.GRAFT);
+        KEYWORD_MAP.put("Fortify", Keyword.FORTIFY);
         KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
         KEYWORD_MAP.put("Backup", Keyword.BACKUP);
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
@@ -69,6 +71,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Plainswalk", Keyword.PLAINSWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
+        KEYWORD_MAP.put("Poisonous", Keyword.POISONOUS);
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
@@ -121,6 +124,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Delve", Keyword.DELVE);
         KEYWORD_MAP.put("Dredge", Keyword.DREDGE);
         KEYWORD_MAP.put("Modular", Keyword.MODULAR);
+        KEYWORD_MAP.put("Prowess", Keyword.PROWESS);
+        KEYWORD_MAP.put("Dash", Keyword.DASH);
         KEYWORD_MAP.put("Sunburst", Keyword.SUNBURST);
         KEYWORD_MAP.put("Prototype", Keyword.PROTOTYPE);
         KEYWORD_MAP.put("Rebound", Keyword.REBOUND);
@@ -140,6 +145,9 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Amass", Keyword.AMASS);
         KEYWORD_MAP.put("Plot", Keyword.PLOT);
         KEYWORD_MAP.put("Warp", Keyword.WARP);
+        KEYWORD_MAP.put("Assemble", Keyword.ASSEMBLE);
+        KEYWORD_MAP.put("Waterbend", Keyword.WATERBEND);
+        KEYWORD_MAP.put("Firebending", Keyword.FIREBENDING);
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
         KEYWORD_MAP.put("Disguise", Keyword.DISGUISE);
         KEYWORD_MAP.put("Station", Keyword.STATION);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "83")
+@CardRegistration(set = "LEG", collectorNumber = "256")
 public class RubiniaSoulsinger extends Card {
 
     public RubiniaSoulsinger() {

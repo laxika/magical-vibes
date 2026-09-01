@@ -20,11 +20,13 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
+import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -75,6 +77,9 @@ class DrawServiceTest {
 
     @Mock
     private DredgeSupport dredgeSupport;
+
+    @Mock
+    private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     @InjectMocks
     private DrawService sut;
@@ -166,6 +171,24 @@ class DrawServiceTest {
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(crawler.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Psychosis Crawler's ability triggers.")));
         }
+    }
+
+    @Test
+    @DisplayName("pushes a graveyard second-draw may-pay trigger onto the stack")
+    void graveyardSecondDrawTriggerPushesMayPayAbility() {
+        Card wolfbat = createCard("Wolfbat", CardType.CREATURE);
+        wolfbat.addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_DRAWS_SECOND_CARD,
+                new MayPayManaEffect("{B}", new BoostSelfEffect(1, 1), "Pay {B}?"));
+        gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(wolfbat)));
+        gd.cardsDrawnThisTurn.put(player1Id, 2);
+
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard()).isEqualTo(wolfbat);
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .singleElement().isInstanceOf(MayPayManaEffect.class);
     }
 
     @Test

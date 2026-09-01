@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustChosenCounterOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardFromExileIntoOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -91,6 +94,22 @@ public class ExileTargetValidators {
         }
     }
 
+    @ValidatesTarget(ReturnToHandEffect.class)
+    public void validateReturnToHandTarget(TargetValidationContext ctx, ReturnToHandEffect effect) {
+        if (effect.scope() != BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD
+                || ctx.targetZone() != Zone.EXILE) {
+            return;
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Effect requires a target card");
+        }
+        ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
+        Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
+        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
+            throw new IllegalStateException("Target card must be suspended");
+        }
+    }
+
     @ValidatesTarget(ReturnTargetCardFromGraveyardOrExileToHandEffect.class)
     public void validateReturnTargetCardFromGraveyardOrExile(
             TargetValidationContext ctx, ReturnTargetCardFromGraveyardOrExileToHandEffect effect) {
@@ -163,6 +182,21 @@ public class ExileTargetValidators {
     @ValidatesTarget(PutTargetCardFromExileIntoOwnersGraveyardEffect.class)
     public void validatePutTargetCardFromExileIntoOwnersGraveyard(
             TargetValidationContext ctx, PutTargetCardFromExileIntoOwnersGraveyardEffect effect) {
+        if (ctx.targetZone() != Zone.EXILE) {
+            throw new IllegalStateException("Effect requires an exile target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Effect requires a target card");
+        }
+        ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
+        if (exiled == null || exiled.faceDown()) {
+            throw new IllegalStateException("Target card must be face up in exile");
+        }
+    }
+
+    @ValidatesTarget(ShuffleTargetCardFromExileIntoOwnersLibraryEffect.class)
+    public void validateShuffleTargetCardFromExileIntoOwnersLibrary(
+            TargetValidationContext ctx, ShuffleTargetCardFromExileIntoOwnersLibraryEffect effect) {
         if (ctx.targetZone() != Zone.EXILE) {
             throw new IllegalStateException("Effect requires an exile target");
         }

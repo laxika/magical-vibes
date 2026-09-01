@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "208")
+@CardRegistration(set = "FIN", collectorNumber = "345")
+@CardRegistration(set = "FIN", collectorNumber = "474")
 public class TorgalAFineHound extends Card {
 
     public TorgalAFineHound() {

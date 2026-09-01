@@ -43,6 +43,9 @@ public class ExileGraveyardCardCreateTokenIfCreatureEffectHandler implements Nor
         if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
             targetCardId = entry.getTargetCardIds().getFirst();
         }
+        if (targetCardId == null && e.upToOne()) {
+            return;
+        }
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData,

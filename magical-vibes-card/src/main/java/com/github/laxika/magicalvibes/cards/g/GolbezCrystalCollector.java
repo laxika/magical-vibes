@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "225")
+@CardRegistration(set = "FIN", collectorNumber = "395")
+@CardRegistration(set = "FIN", collectorNumber = "490")
+@CardRegistration(set = "FIN", collectorNumber = "540")
 public class GolbezCrystalCollector extends Card {
 
     public GolbezCrystalCollector() {

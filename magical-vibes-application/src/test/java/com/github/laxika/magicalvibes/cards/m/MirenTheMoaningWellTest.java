@@ -38,6 +38,7 @@ class MirenTheMoaningWellTest extends BaseCardTest {
         if (gd.interaction.activeInteraction() != null) {
             harness.handlePermanentChosen(player1, spider.getId());
         }
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 4);

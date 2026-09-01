@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "175")
+@CardRegistration(set = "FIN", collectorNumber = "469")
 public class BartzAndBoko extends Card {
 
     public BartzAndBoko() {

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "219")
+@CardRegistration(set = "FIN", collectorNumber = "484")
 public class TheEmperorOfPalamecia extends Card {
 
     public TheEmperorOfPalamecia() {

@@ -163,6 +163,27 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
         }
 
         @Test
+        @DisplayName("Filters positive library placement choices and carries the position")
+        void filtersAndCarriesLibraryPosition() {
+            Card card = createCard("Lost Hours");
+            var effect = ChooseCardsFromTargetHandEffect.putIntoLibraryAtPosition(1, List.of(CardType.LAND), 2);
+            StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+            Card land = createCard("Forest");
+            land.setType(CardType.LAND);
+            Card spell = createCard("Lightning Bolt");
+            spell.setType(CardType.INSTANT);
+            gd.playerHands.get(player2Id).addAll(List.of(land, spell));
+
+            resolveEffect(gd, entry, effect);
+
+            verify(cardRevealService).revealHandToAllPlayers(gd, player2Id);
+            verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                    i instanceof PendingInteraction.RevealedHandChoice rhc
+                            && rhc.validIndices().equals(List.of(1))
+                            && rhc.libraryPosition() == 2));
+        }
+
+        @Test
         @DisplayName("Logs empty hand when target has no cards")
         void emptyHand() {
             Card card = createCard("Lapse of Certainty");

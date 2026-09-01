@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "238")
+@CardRegistration(set = "FIN", collectorNumber = "503")
 public class RufusShinra extends Card {
 
     public RufusShinra() {

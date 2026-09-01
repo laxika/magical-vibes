@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformed
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "104")
+@CardRegistration(set = "FIN", collectorNumber = "363")
+@CardRegistration(set = "FIN", collectorNumber = "448")
 public class JechtReluctantGuardian extends Card {
 
     public JechtReluctantGuardian() {

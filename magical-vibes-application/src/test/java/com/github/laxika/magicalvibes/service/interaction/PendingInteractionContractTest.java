@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
+import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -58,10 +60,12 @@ class PendingInteractionContractTest {
     /** Records that only wait in the queue and are serviced by beginning a promptable kind. */
     private static final Set<Class<?>> QUEUE_ONLY_CARRIERS = Set.of(
             PermanentChoiceContext.class,
+            PendingAllureOfTheUnknownChoice.class,
             PendingSphinxAmbassadorChoice.class,
             PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,
             PendingOpponentChoosesCardToHandRestToGraveyard.class,
+            PendingMemoriesReturningChoice.class,
             PendingMurmursFromBeyondChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
@@ -81,6 +85,7 @@ class PendingInteractionContractTest {
             PendingWhimsOfTheFates.class,
             PendingValkiCopyChoice.class,
             PendingValkiHandExileChoice.class,
+            PendingInteraction.PortentOfCalamityState.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(

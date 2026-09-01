@@ -13,12 +13,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -83,6 +86,7 @@ class CombatDamageServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private LifeSupport lifeSupport;
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
@@ -119,7 +123,7 @@ class CombatDamageServiceTest {
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
         combatDamageService = new CombatDamageService(gameQueryService,
                 predicateEvaluationService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
+                conditionEvaluationService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 gameLogService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
@@ -233,6 +237,12 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                 eq(gameData), any(Permanent.class), any(Permanent.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySelfDamagePreventionShield(
+                        eq(gameData), any(Permanent.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyCreaturePreventionShieldWithoutSelfDamagePrevention(
+                        eq(gameData), any(Permanent.class), anyInt(), eq(true)))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         // The SBA check decides deaths from the live battlefield, so the removal mock must
         // actually remove — otherwise the casualty diff and the SBA repeat passes see ghosts.
         lenient().doAnswer(inv -> {
@@ -258,6 +268,12 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
                         eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
+                        eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         // Soltari Guerrillas' "next combat damage to an opponent hits a creature instead" redirect is
         // a pass-through here — no such shield is set up. Only the player-damage path calls it.
@@ -1218,6 +1234,26 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Conditional combat damage discard effect snapshots the damage amount")
+        void conditionalCombatDamageDiscardEffectSnapshotsDamageAmount() {
+            ControllerHandEmpty condition = new ControllerHandEmpty();
+            addAttackerWithEffect("Jagged Poppet", 3, 3,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new ConditionalEffect(condition,
+                            new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER)));
+            when(conditionEvaluationService.isMet(eq(gameData), eq(condition), any())).thenReturn(true);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            StackEntry triggerEntry = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream()
+                            .anyMatch(e -> e instanceof ConditionalEffect))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(triggerEntry.getEventValue()).isEqualTo(3);
         }
 
         @Test

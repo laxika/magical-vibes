@@ -16,10 +16,10 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Resolves {@link SacrificeSelfAtEndStepEffect} by scheduling the source permanent for sacrifice at
- * the beginning of the next end step. The delayed ability is put on the stack by
- * {@code StepTriggerService.handleEndStepTriggers}. Used by Brackwater Elemental's attack/block
- * trigger.
+ * Resolves {@link SacrificeSelfAtEndStepEffect} by scheduling the source permanent, or the
+ * attached permanent for its attached form, for sacrifice at the beginning of the next end step.
+ * The delayed ability is put on the stack by {@code StepTriggerService.handleEndStepTriggers}.
+ * Used by Brackwater Elemental's attack/block trigger.
  */
 @Component
 @RequiredArgsConstructor
@@ -36,7 +36,10 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        var sacrifice = (SacrificeSelfAtEndStepEffect) effect;
+        UUID sourceId = sacrifice.attachedPermanent()
+                ? entry.getTargetId()
+                : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         if (sourceId == null) {
             return;
         }

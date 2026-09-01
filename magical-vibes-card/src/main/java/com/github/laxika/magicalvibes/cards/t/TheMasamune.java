@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "264")
+@CardRegistration(set = "FIN", collectorNumber = "353")
 public class TheMasamune extends Card {
 
     public TheMasamune() {

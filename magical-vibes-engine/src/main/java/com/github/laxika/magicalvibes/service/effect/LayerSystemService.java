@@ -307,7 +307,8 @@ public class LayerSystemService {
                                     Map<UUID, BasePt> basePt7b,
                                     Set<UUID> switchedPt7d,
                                     Map<UUID, List<ModifierLine>> provenance,
-                                    Map<UUID, List<GrantedEffectAttribution>> grantedEffectProvenance) {
+                                    Map<UUID, List<GrantedEffectAttribution>> grantedEffectProvenance,
+                                    Map<UUID, Integer> devotionModifiers) {
 
         /** Records one display-only attribution line for the given permanent — which source
          *  contributed which keyword/base-P/T/switch during this pass. Written at the layer
@@ -665,6 +666,7 @@ public class LayerSystemService {
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
+                h = mix(h, entry.sourcePermanentId() == null ? 0 : entry.sourcePermanentId().hashCode());
             }
         }
         long imprintedSum = 0;
@@ -717,6 +719,8 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
         h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
+        h = mix(h, p.getLastChosenExiledCard() == null
+                ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));
 
         for (Map.Entry<CounterType, Integer> counter : p.getCounters().entrySet()) {
             h = mix(h, counter.getKey().ordinal());
@@ -806,6 +810,13 @@ public class LayerSystemService {
         h = mix(h, card.getEffects(EffectSlot.STATIC).size());
         // Chosen-as-enters protection is seeded from this slot in layer 6.
         h = mix(h, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).size());
+        for (EffectSlot slot : EffectSlot.values()) {
+            h = mix(h, card.getEffects(slot).size());
+        }
+        h = mix(h, card.getActivatedAbilities().size());
+        h = mix(h, card.getGraveyardActivatedAbilities().size());
+        h = mix(h, card.getHandActivatedAbilities().size());
+        h = mix(h, card.getStackActivatedAbilities().size());
         return h;
     }
 
@@ -869,6 +880,23 @@ public class LayerSystemService {
         }
     }
 
+    /** Returns the accumulated devotion modifier for the given controller. */
+    public int devotionModifierFor(GameData gameData, UUID controllerId) {
+        if (gameData == null || controllerId == null) {
+            return 0;
+        }
+        Pass active = activePass(gameData);
+        if (active != null && active.board != null) {
+            return active.board.devotionModifiers().getOrDefault(controllerId, 0);
+        }
+        Pass pass = beginPass(gameData);
+        try {
+            return pass.board.devotionModifiers().getOrDefault(controllerId, 0);
+        } finally {
+            endPass(pass);
+        }
+    }
+
     // ===== board computation =====
 
     private record PermanentSlot(UUID controllerId, Permanent permanent, int position) {
@@ -904,7 +932,8 @@ public class LayerSystemService {
                 new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
-                new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>());
+                new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>(),
+                new HashMap<>());
         // Publish the in-flight board immediately: nested queries made by handlers during the
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
@@ -935,6 +964,7 @@ public class LayerSystemService {
         }
 
         applyLayer3(gameData, slots, slotsById, board);
+        applyDevotionModifiers(gameData, slots, slotsById, board);
         applyLayer4(gameData, slots, slotsById, board);
 
         // Runtime one-shot type state not yet migrated to floating effects, applied with legacy
@@ -1042,7 +1072,8 @@ public class LayerSystemService {
             }
         }
         int graveyardPosition = slots.size();
-        for (UUID controllerId : gameData.orderedPlayerIds) {
+        if (!gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+            for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
             if (graveyard == null) {
                 continue;
@@ -1068,6 +1099,7 @@ public class LayerSystemService {
                     instances.add(new EffectInstance(source, rewritten, effect, null,
                             classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
                 }
+            }
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -1316,7 +1348,8 @@ public class LayerSystemService {
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
-                new HashSet<>(board.switchedPt7d()), new HashMap<>(), new HashMap<>());
+                new HashSet<>(board.switchedPt7d()), new HashMap<>(), new HashMap<>(),
+                new HashMap<>(board.devotionModifiers()));
         LayeredBoardState saved = pass.board;
         pass.board = trialBoard;
         try {
@@ -1343,6 +1376,27 @@ public class LayerSystemService {
                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L3_TEXT),
                 slots, slotsById, board, this::applyL3Instance);
+    }
+
+    private void applyDevotionModifiers(GameData gameData, List<PermanentSlot> slots,
+                                        Map<UUID, PermanentSlot> slotsById,
+                                        LayeredBoardState board) {
+        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES)) {
+            PermanentSlot source = instance.source();
+            if (source == null || instance.floating() != null || source.controllerId() == null) {
+                continue;
+            }
+            StaticEffectHandler handler = staticEffectRegistry.getSelfHandler(instance.effect());
+            if (handler == null) {
+                continue;
+            }
+            StaticBonusAccumulator harvested = new StaticBonusAccumulator();
+            handler.apply(new StaticEffectContext(source.permanent(), source.permanent(),
+                    source.controllerId(), true, gameData), instance.effect(), harvested);
+            if (harvested.getDevotionBonus() != 0) {
+                board.devotionModifiers().merge(source.controllerId(), harvested.getDevotionBonus(), Integer::sum);
+            }
+        }
     }
 
     private void applyL3Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
@@ -1445,7 +1499,7 @@ public class LayerSystemService {
             }
             case GrantCardTypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, grant.cardType(), null));
@@ -2091,7 +2145,8 @@ public class LayerSystemService {
                                     Permanent sourcePermanent, UUID sourceControllerId,
                                     UUID sourcePermanentId) {
         if (filter == null) return true;
-        FilterContext context = sourcePermanent == null && sourceControllerId == null ? null
+        FilterContext context = sourcePermanent == null && sourceControllerId == null
+                && sourcePermanentId == null ? null
                 : (gameData == null ? FilterContext.empty() : FilterContext.of(gameData))
                 .withSourceControllerId(sourceControllerId)
                 .withSourcePermanentSnapshot(sourcePermanent)

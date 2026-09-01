@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "234")
+@CardRegistration(set = "FIN", collectorNumber = "499")
 public class LockeCole extends Card {
 
     public LockeCole() {

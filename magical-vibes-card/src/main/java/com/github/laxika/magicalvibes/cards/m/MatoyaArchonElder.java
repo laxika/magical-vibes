@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "62")
+@CardRegistration(set = "FIN", collectorNumber = "439")
 public class MatoyaArchonElder extends Card {
 
     public MatoyaArchonElder() {

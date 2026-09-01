@@ -67,26 +67,30 @@ public class ExileAllPermanentsUntilSourceLeavesEffectHandler implements NormalE
             }
         });
 
-        for (Permanent perm : toExile) {
-            Card card = perm.getOriginalCard();
-            UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-            UUID ownerId = gameData.stolenCreatures.getOrDefault(perm.getId(), controllerId);
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent perm : toExile) {
+                Card card = perm.getOriginalCard();
+                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                UUID ownerId = gameData.stolenCreatures.getOrDefault(perm.getId(), controllerId);
 
-            if (sourcePermanentId != null) {
-                permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
-            } else {
-                permanentRemovalService.removePermanentToExile(gameData, perm);
+                if (sourcePermanentId != null) {
+                    permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
+                } else {
+                    permanentRemovalService.removePermanentToExile(gameData, perm);
+                }
+
+                gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
+                log.info("Game {} - {} exiles {} until it leaves the battlefield",
+                        gameData.id, entry.getCard().getName(), card.getName());
+
+                if (sourcePermanentId != null) {
+                    gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
+                            new PendingExileReturn(card, ownerId, e.returnTapped()));
+                }
             }
-
-            
-            gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
-            log.info("Game {} - {} exiles {} until it leaves the battlefield",
-                    gameData.id, entry.getCard().getName(), card.getName());
-
-            if (sourcePermanentId != null) {
-                gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
-                        new PendingExileReturn(card, ownerId, e.returnTapped()));
-            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

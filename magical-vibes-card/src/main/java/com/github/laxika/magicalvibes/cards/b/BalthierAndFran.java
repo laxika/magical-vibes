@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "213")
+@CardRegistration(set = "FIN", collectorNumber = "319")
+@CardRegistration(set = "FIN", collectorNumber = "393")
+@CardRegistration(set = "FIN", collectorNumber = "477")
+@CardRegistration(set = "FIN", collectorNumber = "538")
 public class BalthierAndFran extends Card {
 
     public BalthierAndFran() {

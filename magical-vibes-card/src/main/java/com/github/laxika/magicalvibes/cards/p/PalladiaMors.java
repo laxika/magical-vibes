@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "82")
+@CardRegistration(set = "LEG", collectorNumber = "247")
 public class PalladiaMors extends Card {
 
     public PalladiaMors() {

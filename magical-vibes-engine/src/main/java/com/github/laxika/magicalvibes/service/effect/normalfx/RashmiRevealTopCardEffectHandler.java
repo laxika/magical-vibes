@@ -51,7 +51,7 @@ public class RashmiRevealTopCardEffectHandler implements NormalEffectHandlerBean
 
         if (topCard.hasType(CardType.LAND) || topCard.getManaValue() >= rashmiEffect.spellManaValue()) {
             deck.removeFirst();
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.cardThen(topCard,
                     " is put into " + gameData.playerIdToName.get(controllerId) + "'s hand."));
             return;

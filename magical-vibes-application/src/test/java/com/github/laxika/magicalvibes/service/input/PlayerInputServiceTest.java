@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -38,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -343,6 +345,45 @@ class PlayerInputServiceTest {
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
             assertThat(msg.maxCount()).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("Counter assignment choices")
+    class CounterAssignmentChoices {
+
+        @Test
+        @DisplayName("Saga distribution requires every remaining counter on the final target")
+        void sagaDistributionRequiresEveryRemainingCounterOnFinalTarget() {
+            UUID firstTargetId = UUID.randomUUID();
+            UUID finalTargetId = UUID.randomUUID();
+            ChoiceContext.SagaChapterCounterAssignment context =
+                    new ChoiceContext.SagaChapterCounterAssignment(
+                            createCard("Saga", CardType.ENCHANTMENT), PLAYER1_ID, List.of(),
+                            UUID.randomUUID(), "II", CounterType.PLUS_ONE_PLUS_ONE,
+                            List.of(firstTargetId, finalTargetId), Map.of(firstTargetId, 1), 7, 1);
+
+            svc.beginSagaChapterCounterAssignmentChoice(gd, PLAYER1_ID, context);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                    .containsExactly("6");
+        }
+
+        @Test
+        @DisplayName("Triggered distribution requires every remaining counter on the final target")
+        void triggeredDistributionRequiresEveryRemainingCounterOnFinalTarget() {
+            UUID firstTargetId = UUID.randomUUID();
+            UUID finalTargetId = UUID.randomUUID();
+            ChoiceContext.CounterDistributionAssignment context =
+                    new ChoiceContext.CounterDistributionAssignment(
+                            createCreature("Source"), PLAYER1_ID, List.of(), UUID.randomUUID(),
+                            CounterType.PLUS_ONE_PLUS_ONE, List.of(firstTargetId, finalTargetId),
+                            Map.of(firstTargetId, 2), 7, 1);
+
+            svc.beginCounterDistributionAssignmentChoice(gd, PLAYER1_ID, context);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                    .containsExactly("5");
         }
     }
 

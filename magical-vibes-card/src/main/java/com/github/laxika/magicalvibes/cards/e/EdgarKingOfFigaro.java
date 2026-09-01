@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EdgarKingOfFigaroEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "51")
+@CardRegistration(set = "FIN", collectorNumber = "436")
 public class EdgarKingOfFigaro extends Card {
 
     public EdgarKingOfFigaro() {

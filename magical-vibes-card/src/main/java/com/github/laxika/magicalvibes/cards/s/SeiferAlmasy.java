@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "156")
+@CardRegistration(set = "FIN", collectorNumber = "389")
+@CardRegistration(set = "FIN", collectorNumber = "534")
 public class SeiferAlmasy extends Card {
 
     public SeiferAlmasy() {

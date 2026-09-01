@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -96,7 +97,6 @@ public class GameViewProjectionFactory {
         List<List<PermanentView>> battlefields = getBattlefields(gameData);
         Map<UUID, FaceDownReveal> faceDownReveals = collectFaceDownReveals(gameData);
         List<StackEntryView> stack = getStackViews(gameData);
-        List<List<CardView>> graveyards = getGraveyardViews(gameData);
         List<Integer> deckSizes = getDeckSizes(gameData);
         List<Integer> handSizes = getHandSizes(gameData);
         List<Integer> lifeTotals = getLifeTotals(gameData);
@@ -110,6 +110,7 @@ public class GameViewProjectionFactory {
             if (!recipientIds.contains(playerId)) {
                 continue;
             }
+            List<List<CardView>> graveyards = getGraveyardViews(gameData, playerId);
             List<CardSubtype> playerGranted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, playerId);
             List<CardView> hand = gameData.playerHands.getOrDefault(playerId, List.of())
                     .stream().map(c -> createHandCardView(gameData, playerId, c, playerGranted)).toList();
@@ -335,6 +336,10 @@ public class GameViewProjectionFactory {
     }
 
     List<List<CardView>> getGraveyardViews(GameData data) {
+        return getGraveyardViews(data, null);
+    }
+
+    List<List<CardView>> getGraveyardViews(GameData data, UUID viewerId) {
         List<List<CardView>> graveyards = new ArrayList<>();
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> gy = data.playerGraveyards.get(pid);
@@ -344,8 +349,16 @@ public class GameViewProjectionFactory {
                         List<CardSubtype> cardGranted = new ArrayList<>(granted);
                         cardGranted.addAll(gameQueryService.computeGrantedGraveyardSubtypesForOwnedCreatureCard(
                                 data, pid, c));
+                        var filteredPermission = viewerId != null && viewerId.equals(pid)
+                                ? castingPermissionService.findFilteredGraveyardPermission(data, pid, c)
+                                : Optional.<CastingPermissionService.FilteredGraveyardPermission>empty();
                         return cardViewFactory.createForGraveyard(c, cardGranted,
-                                gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c));
+                                gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(data, pid, c),
+                                gameQueryService.graveyardCardsHaveLostAllAbilities(data),
+                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileCount())
+                                        .orElse(0),
+                                filteredPermission.map(permission -> permission.permission().additionalGraveyardExileLabel())
+                                        .orElse(null));
                     }).toList()
                     : new ArrayList<>());
         }
@@ -384,26 +397,34 @@ public class GameViewProjectionFactory {
             }
         }
 
-        boolean reveals = allHandsRevealed || opponentRevealsOwnHand || opponentHandRevealedBySource(gameData, playerId);
-        if (!reveals) {
+        boolean fullHandRevealed = allHandsRevealed
+                || opponentRevealsOwnHand
+                || opponentHandRevealedBySource(gameData, playerId);
+        if (!fullHandRevealed) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) return List.of();
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof RevealOpponentHandsEffect) {
-                        reveals = true;
-                        break;
+            if (bf != null) {
+                for (Permanent perm : bf) {
+                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof RevealOpponentHandsEffect) {
+                            fullHandRevealed = true;
+                            break;
+                        }
                     }
+                    if (fullHandRevealed) break;
                 }
-                if (reveals) break;
             }
         }
-        if (!reveals) return List.of();
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (!opponentId.equals(playerId)) {
                 List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(gameData, opponentId);
-                return gameData.playerHands.getOrDefault(opponentId, List.of())
-                        .stream().map(c -> cardViewFactory.create(c, granted)).toList();
+                List<Card> opponentHand = gameData.playerHands.getOrDefault(opponentId, List.of());
+                boolean revealEntireOpponentHand = fullHandRevealed;
+                return opponentHand.stream()
+                        .filter(card -> revealEntireOpponentHand
+                                || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId())))
+                        .map(c -> cardViewFactory.create(c, granted, List.of(),
+                                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, opponentId, c)))
+                        .toList();
             }
         }
         return List.of();
@@ -638,6 +659,14 @@ public class GameViewProjectionFactory {
                     || castableFromExileWithSource.contains(card.getId())
                     || foretellPermission;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent();
+            boolean hasExileAbility = card.getActivatedAbilities().stream()
+                    .anyMatch(ActivatedAbility::isExileOnly);
+            if (hasExileAbility && !hasPermission && !hasExileCast) {
+                if (canActivateExileAbilityNow(gameData, playerId, card, pool, isActivePlayer, isMainPhase, stackEmpty)) {
+                    playable.add(exileCardView(gameData, playerId, card));
+                }
+                continue;
+            }
             if (!hasPermission && !hasExileCast) {
                 continue;
             }
@@ -716,12 +745,50 @@ public class GameViewProjectionFactory {
                     }
                     if (playWithoutPaying || canAfford) {
                         playable.add(cardViewFactory.create(card));
+                    } else if (castingPermissionService.hasWaterbendCastFromExiledWithSourcePermission(
+                            gameData, playerId, card.getId())
+                            && canPayWaterbendFromExile(gameData, playerId, card.getManaValue())) {
+                        playable.add(cardViewFactory.create(card));
                     }
                 }
             }
         }
 
         return playable;
+    }
+
+    private boolean canActivateExileAbilityNow(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                                boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
+        for (ActivatedAbility ability : card.getActivatedAbilities().stream()
+                .filter(ActivatedAbility::isExileOnly)
+                .toList()) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
+                    && (!isActivePlayer || !isMainPhase || !stackEmpty)) {
+                continue;
+            }
+            if (ability.getManaCost() == null) {
+                return true;
+            }
+            if (pool != null && new ManaCost(ability.getManaCost()).canPay(pool, 0)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean canPayWaterbendFromExile(GameData gameData, UUID playerId, int amount) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        int availableMana = pool == null ? 0 : pool.getTotal();
+        if (availableMana >= amount) {
+            return true;
+        }
+        int untappedEligible = (int) gameData.playerBattlefields
+                .getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
+                        || gameQueryService.isCreature(gameData, permanent))
+                .count();
+        return untappedEligible >= amount - availableMana;
     }
 
     private CardView exileCardView(GameData gameData, UUID playerId, Card card) {
@@ -779,7 +846,7 @@ public class GameViewProjectionFactory {
         if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
             return playable;
         }
-        if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY)) {
+        if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY, playerId)) {
             return playable;
         }
 
@@ -848,7 +915,8 @@ public class GameViewProjectionFactory {
     }
 
     private CardView createHandCardView(GameData gameData, UUID playerId, Card card, List<CardSubtype> grantedSubtypes) {
-        CardView view = cardViewFactory.create(card, grantedSubtypes);
+        CardView view = cardViewFactory.create(card, grantedSubtypes, List.of(),
+                gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, playerId, card));
         if (view.hasAlternateCastingCost()) {
             return view;
         }
@@ -912,7 +980,7 @@ public class GameViewProjectionFactory {
                 getPoisonCounters(data),
                 getEnergyCounters(data),
                 getStackViews(data),
-                getGraveyardViews(data),
+                getGraveyardViews(data, playerId),
                 getSpeeds(data),
                 data.dayNight
         );

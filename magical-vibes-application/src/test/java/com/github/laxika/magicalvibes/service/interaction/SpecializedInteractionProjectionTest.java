@@ -131,6 +131,23 @@ class SpecializedInteractionProjectionTest {
         assertThat(discard.prompt()).isEqualTo("Choose a card for Bob to discard.");
     }
 
+    @Test
+    void activatedAbilityGraveyardExileChoiceProjectsItsRequiredSelectionRange() {
+        Card first = card("First");
+        Card second = card("Second");
+        Card third = card("Third");
+
+        InteractionPromptMessage message = prompt(
+                new PendingInteraction.ActivatedAbilityGraveyardExileCostChoice(
+                        controllerId, UUID.randomUUID(), 0, null, null,
+                        List.of(first, second, third), "Choose two cards.", 2, 2, false));
+
+        assertThat(message.shape()).isEqualTo(InteractionShape.MULTI_CARD_PICK);
+        assertThat(message.minCount()).isEqualTo(2);
+        assertThat(message.maxCount()).isEqualTo(2);
+        assertThat(message.cardIds()).containsExactly(first.getId(), second.getId(), third.getId());
+    }
+
     private InteractionPromptMessage prompt(PendingInteraction interaction) {
         return (InteractionPromptMessage) projections.project(gameData, interaction).orElseThrow();
     }

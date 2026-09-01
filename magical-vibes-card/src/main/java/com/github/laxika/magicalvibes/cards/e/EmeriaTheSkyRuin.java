@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,12 +23,11 @@ public class EmeriaTheSkyRuin extends Card {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanentCount(7, new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
-                ReturnCardFromGraveyardEffect.builder()
+                new MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
-                        .upTo(true)
-                        .build()));
+                        .build(), "Return target creature card from your graveyard to the battlefield?")));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
     }
 }

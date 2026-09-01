@@ -5,11 +5,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * on what the mana can be spent on, an additional effect on whatever it is spent on, or a delayed
  * triggered ability that fires when it is spent. None of these change the mana's type.
  *
- * <p>The constant also fixes <em>how</em> the colour is chosen. {@link #FLASHBACK_ONLY},
+ * <p>The constant usually fixes <em>how</em> the colour is chosen. {@link #FLASHBACK_ONLY},
  * {@link #EXILED_SPELL_ONLY}, and {@link #SUBTYPE_SPELL_OR_ABILITY} are the "add N mana in any
- * combination of colors" wordings, where the controller picks a colour per mana; every other
- * constant is "add N mana of any one color", where a single pick colours the whole batch. That is
- * why the axis is derived here rather than carried as a separate component on the effect.
+ * combination of colors" wordings, where the controller picks a colour per mana. A
+ * {@link #SUBTYPE_SPELL} effect may also explicitly carry that wording, so the axis is carried
+ * separately on the effect when needed.
  */
 public enum ManaSpendRestriction {
 
@@ -53,6 +53,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast creature spells of any type (Ancient Ziggurat, Somberwald Sage). */
     CREATURE_SPELL_ONLY,
     CREATURE_OR_ENCHANTMENT_SPELL_ONLY,
+
+    /** Spendable only to cast multicolored spells (Pillar of the Paruns). */
+    MULTICOLORED_SPELLS,
 
     /** Spendable only to cast creature spells of the effect's printed subtype (The Seedcore). */
     SUBTYPE_CREATURE_SPELL,
@@ -107,6 +110,8 @@ public enum ManaSpendRestriction {
 
     /** Spendable only to cast spells with mana value 4 or greater (Ashling, Rimebound). */
     MANA_VALUE_AT_LEAST_FOUR,
+
+    CREATURE_SPELL_MANA_VALUE_AT_LEAST_FOUR_OR_X,
 
     /**
      * Spendable only to cast Cleric, Rogue, Warrior, or Wizard spells or activate abilities of those

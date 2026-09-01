@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "26")
+@CardRegistration(set = "FIN", collectorNumber = "430")
 public class MinwuWhiteMage extends Card {
 
     public MinwuWhiteMage() {

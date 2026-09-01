@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerMayDrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -49,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
@@ -61,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsC
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -80,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -259,6 +264,10 @@ class StepTriggerServiceTest {
         gd.playerHands.put(player2Id, new ArrayList<>());
         gd.playerGraveyards.put(player1Id, new ArrayList<>());
         gd.playerGraveyards.put(player2Id, new ArrayList<>());
+        lenient().when(gameQueryService.getEffectiveGraveyardEffects(
+                        eq(gd), any(Card.class), any(EffectSlot.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
+                        .getEffects(invocation.getArgument(2)));
     }
 
     @Nested
@@ -436,6 +445,60 @@ class StepTriggerServiceTest {
             ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
                     gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(((PayEchoCost) echo.forcedCost()).echoCost()).isEqualTo("{13}");
+        }
+
+        @Test
+        @DisplayName("Discard echo cost is carried into the upkeep trigger")
+        void discardEchoCostIsCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Discard Echo");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            DiscardCardTypeCost discardCost = new DiscardCardTypeCost(null, null);
+            gd.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(), discardCost, card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(((PayEchoCost) echo.forcedCost()).handCardCost()).isSameAs(discardCost);
+        }
+
+        @Test
+        @DisplayName("Echo paid effects are carried into the upkeep trigger")
+        void echoPaidEffectsAreCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Echo Payment Trigger");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            EachOtherPlayerMayDrawUpToNCardsEffect paidEffect =
+                    new EachOtherPlayerMayDrawUpToNCardsEffect(3);
+            gd.queueDelayedAction(new EchoAtNextUpkeep(
+                    permanent.getId(), "{0}", List.of(paidEffect), card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(echo.paidEffects()).containsExactly(paidEffect);
+        }
+
+        @Test
+        @DisplayName("Non-mana echo cost is carried into the upkeep trigger")
+        void nonManaEchoCostIsCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Sacrifice Echo");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            SacrificeMultiplePermanentsCost sacrificeCost =
+                    new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate());
+            gd.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(), sacrificeCost, card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(((PayEchoCost) echo.forcedCost()).cost()).isSameAs(sacrificeCost);
         }
 
         @Test
@@ -2035,7 +2098,8 @@ class StepTriggerServiceTest {
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, target);
             verify(lifeSupport).applyGainLife(
-                    gd, player1Id, 4, "Spinal Embrace", sourceCard, StackEntryType.TRIGGERED_ABILITY);
+                    gd, player1Id, 4, "Spinal Embrace", sourceCard,
+                    StackEntryType.TRIGGERED_ABILITY, player1Id);
             assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStep.class)).isEmpty();
         }
 
@@ -2357,6 +2421,26 @@ class StepTriggerServiceTest {
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
+        }
+
+        @Test
+        @DisplayName("Queues a graveyard target choice for a precombat main trigger")
+        void queuesGraveyardTargetChoice() {
+            Card source = createCardWithName("Klothys, God of Destiny");
+            source.addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
+                    new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
+                            new CardTypePredicate(CardType.LAND),
+                            new GainLifeEffect(1),
+                            new GainLifeEffect(1)));
+            Card land = createCardWithName("Forest");
+            land.setType(CardType.LAND);
+            gd.playerGraveyards.get(player1Id).add(land);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+            sut.handlePrecombatMainTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
         }
     }
 

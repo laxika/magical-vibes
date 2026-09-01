@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "35")
+@CardRegistration(set = "FIN", collectorNumber = "358")
 public class SummonChocoMog extends Card {
 
     public SummonChocoMog() {
