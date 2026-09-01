@@ -1272,7 +1272,7 @@ Prefer `EventValue` for numbers known only at trigger/resolution time; `XValue` 
 
 Effects that only differ in HOW A NUMBER
 IS COMPUTED must be a single record parameterized with `DynamicAmount` � see
-`BoostSelfEffect(DynamicAmount, DynamicAmount)` (replaced the entire `BoostSelfPer*` family),
+`BoostSelfEffect(DynamicAmount, DynamicAmount[, EffectDuration])` (replaced the entire `BoostSelfPer*` family; defaults to end of turn and supports end-of-combat floating boosts),
 `SetPowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness)` (the CDA sibling �
 sets P/T on a 0/0 base via the selfOnly `SetPowerToughnessToAmountSelfEffectHandler`; replaced the
 entire `PowerToughnessEqualTo*` family and the ooze-token `BoostSelfBySlimeCountersOnLinkedPermanentEffect`),

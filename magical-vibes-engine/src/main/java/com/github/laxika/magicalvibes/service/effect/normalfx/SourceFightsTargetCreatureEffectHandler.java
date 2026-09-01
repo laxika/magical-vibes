@@ -42,6 +42,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId != null
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
 
         String cardName = entry.getCard().getName();
 
@@ -50,6 +51,8 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         int sourcePower;
         if (source != null) {
             sourcePower = gameQueryService.getPowerBasedDamage(gameData, source);
+        } else if (sourceSnapshot != null) {
+            sourcePower = gameQueryService.getPowerBasedDamage(gameData, sourceSnapshot);
         } else {
             sourcePower = Math.max(0, entry.getCard().getPower() != null ? entry.getCard().getPower() : 0);
         }

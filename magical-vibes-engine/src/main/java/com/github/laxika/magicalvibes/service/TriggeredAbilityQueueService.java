@@ -967,6 +967,7 @@ public class TriggeredAbilityQueueService {
         return effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
                         || EffectResolution.targetsSpellOnStack(effect));
     }
 

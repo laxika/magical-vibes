@@ -64,9 +64,11 @@ class CaldaiaStrongarmTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent strongarm = findPermanent(player1, "Caldaia Strongarm");
+        harness.handlePermanentChosen(player1, strongarm.getId());
+        harness.passBothPriorities();
+
         assertThat(gqs.hasKeyword(gd, strongarm, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

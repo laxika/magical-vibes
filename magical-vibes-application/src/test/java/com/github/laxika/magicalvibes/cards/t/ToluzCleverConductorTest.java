@@ -52,7 +52,7 @@ class ToluzCleverConductorTest extends BaseCardTest {
         discardByName("Grizzly Bears");
         harness.passBothPriorities();
 
-        harness.sacrificePermanent(player1, 0, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, toluz));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(discarded);

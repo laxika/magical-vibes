@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -88,6 +89,7 @@ public class GameTestHarness {
     private static TriggerCollectionService staticTriggerCollectionService;
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
+    private static CombatService staticCombatService;
     private static com.github.laxika.magicalvibes.service.combat.block.CombatBlockService staticCombatBlockService;
     private static StateBasedActionService staticStateBasedActionService;
     private static LifeSupport staticLifeSupport;
@@ -125,6 +127,7 @@ public class GameTestHarness {
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
         staticCombatAttackService = context.getBean(CombatAttackService.class);
+        staticCombatService = context.getBean(CombatService.class);
         staticCombatBlockService = context.getBean(com.github.laxika.magicalvibes.service.combat.block.CombatBlockService.class);
         staticStateBasedActionService = context.getBean(StateBasedActionService.class);
         staticLifeSupport = context.getBean(LifeSupport.class);
@@ -178,6 +181,7 @@ public class GameTestHarness {
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
+    private final CombatService combatService;
     private final com.github.laxika.magicalvibes.service.combat.block.CombatBlockService combatBlockService;
     private final StateBasedActionService stateBasedActionService;
     private final LifeSupport lifeSupport;
@@ -215,6 +219,7 @@ public class GameTestHarness {
         triggerCollectionService = staticTriggerCollectionService;
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
+        combatService = staticCombatService;
         combatBlockService = staticCombatBlockService;
         stateBasedActionService = staticStateBasedActionService;
         lifeSupport = staticLifeSupport;
@@ -334,6 +339,11 @@ public class GameTestHarness {
      */
     public void runStateBasedActions() {
         mutationCoordinator.mutate(gameData, () -> stateBasedActionService.performStateBasedActions(gameData));
+    }
+
+    /** Deals the current combat's damage without advancing priority or resolving resulting triggers. */
+    public void resolveCombatDamage() {
+        mutationCoordinator.mutate(gameData, () -> combatService.resolveCombatDamage(gameData));
     }
 
     /**

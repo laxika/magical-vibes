@@ -880,8 +880,8 @@ public class GraveyardService {
         }
         perm.setOpponentDrawRegenerationShield(perm.getOpponentDrawRegenerationShield() - 1);
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-        UUID opponentId = controllerId == null ? null : gameQueryService.getOpponentId(gameData, controllerId);
+        UUID opponentId = perm.getOpponentDrawRegenerationShieldRecipients().isEmpty()
+                ? null : perm.getOpponentDrawRegenerationShieldRecipients().removeFirst();
         if (opponentId == null) {
             return;
         }

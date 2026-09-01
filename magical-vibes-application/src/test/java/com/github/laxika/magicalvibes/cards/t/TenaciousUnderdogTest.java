@@ -78,6 +78,7 @@ class TenaciousUnderdogTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent underdog = findPermanent(player1, "Tenacious Underdog");
         assertThat(gqs.hasKeyword(gd, underdog, Keyword.HASTE)).isTrue();

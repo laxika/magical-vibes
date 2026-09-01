@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -580,11 +581,16 @@ public class StackResolutionService {
 
         // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
         // happens as part of the entering process before state-based actions are checked.
-        if (!perm.isFaceDown() && !gameData.interaction.isAwaitingInput()) {
-            handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
+        boolean awaitingEntryMayChoice = gameData.interaction.activeInteraction()
+                instanceof PendingInteraction.MayAbilityChoice;
+        if (!perm.isFaceDown()
+                && (!gameData.interaction.isAwaitingInput() || awaitingEntryMayChoice)) {
+            if (!gameData.interaction.isAwaitingInput()) {
+                handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
+            }
             int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
             handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);
-        } else {
+        } else if (perm.isFaceDown()) {
             battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, enteredCard);
         }
         checkLegendRuleIfIdle(gameData, controllerId);

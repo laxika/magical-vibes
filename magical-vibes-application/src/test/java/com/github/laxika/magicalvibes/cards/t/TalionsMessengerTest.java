@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.github.laxika.magicalvibes.cards.f.FaerieInvaders;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -35,7 +36,7 @@ class TalionsMessengerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, faerie.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(faerie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -70,9 +71,10 @@ class TalionsMessengerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
-        harness.handlePermanentChosen(player1, opponentFaerie.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentFaerie.getId()))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(opponentFaerie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

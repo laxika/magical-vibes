@@ -2940,9 +2940,13 @@ public class SpellCastingService {
             ManaPool.ManaValueAtLeastFiveOrXSpellManaState manaValueAtLeastFiveOrXMana =
                     manaValueAtLeastFiveOrX && pool.getManaValueAtLeastFiveOrXOnlyManaTotal() > 0
                             ? pool.promoteManaValueAtLeastFiveOrXOnlyMana() : null;
+            List<UUID> affordabilityTargetIds = !targetIds.isEmpty()
+                    ? targetIds : targetId != null ? List.of(targetId) : List.of();
+            int targetBasedCostReduction = castingCostService.computeTargetBasedCostReduction(
+                    gameData, playerId, card, affordabilityTargetIds);
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, card, effectiveXValue, null, kicked, collectEvidenceCostPaid)
-                    + targetingTax + (hasXCost ? 0 : perTargetCost);
+                    + targetingTax + (hasXCost ? 0 : perTargetCost) - targetBasedCostReduction;
             boolean usingBattlefieldAlternativeCost = false;
             ManaPool.NoncreatureSpellManaState noncreatureMana = !card.hasType(CardType.CREATURE)
                     ? pool.promoteNoncreatureSpellOnlyMana()
@@ -7170,6 +7174,9 @@ public class SpellCastingService {
             );
             stackEntry.setSourceZone(Zone.GRAVEYARD);
             stackEntry.setCastWithWarp(castWithWarp);
+            if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
+                stackEntry.setAlternateCost(true);
+            }
             stackEntry.setCasualtyCostPaid(
                     additionalCosts.casualtyCost() != null && sacrificePermanentId != null);
             grantedFilterPermission.ifPresent(permission -> {
@@ -7277,9 +7284,14 @@ public class SpellCastingService {
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution()) {
                 stackEntry.setExileInsteadOfGraveyard(true);
             }
+            if (isGrantedCyclingGraveyardCast
+                    && filteredGraveyardPermission.orElseThrow().permission().exileAfterResolution()) {
+                stackEntry.setExileInsteadOfGraveyard(true);
+            }
             if (isGrantedGraveyardPlay
-                    && castingPermissionService.graveyardCastFilterPermissionExiles(
-                    gameData, card, playerId)) {
+                    && grantedFilterPermission.map(
+                            GameData.GraveyardCastFilterPermission::exileInsteadOfGraveyard)
+                    .orElse(false)) {
                 stackEntry.setExileInsteadOfGraveyard(true);
             }
             if (grantedInstantOrSorceryCast) {

@@ -189,7 +189,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (grant.scope() == GrantScope.ALL_CREATURES) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                    .withSourceControllerId(entry.getControllerId());
+                    .withSourceControllerId(entry.getControllerId())
+                    .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             final int[] count = {0};
             gameData.forEachPermanent((playerId, permanent) -> {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
@@ -395,7 +396,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        if (source == null || source.getBandId() == null) {
+        if (source == null || !source.isAttacking() || source.getBandId() == null) {
             return List.of();
         }
         UUID bandId = source.getBandId();

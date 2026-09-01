@@ -85,8 +85,8 @@ class ScarwoodBanditsTest extends BaseCardTest {
         activate(bandits, artifact);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player2.getId());
-        harness.handleMayAbilityChosen(player2, false);
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
     }
 
     @Test

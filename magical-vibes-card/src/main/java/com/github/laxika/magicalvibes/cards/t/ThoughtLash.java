@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 
 import java.util.List;
 
@@ -15,11 +16,10 @@ import java.util.List;
 public class ThoughtLash extends Card {
 
     public ThoughtLash() {
-        // Cumulative upkeep—Exile the top card of your library, plus the companion trigger "When a
-        // player doesn't pay this enchantment's cumulative upkeep, that player exiles all cards
-        // from their library" — both resolve on the unpaid branch alongside the sacrifice.
+        // The library-exile ability triggers separately when the cumulative upkeep is not paid.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                CumulativeUpkeepEffect.exileTopCard(List.of(new ExileControllerLibraryEffect())));
+                CumulativeUpkeepEffect.exileTopCard(List.of(new QueueReflexiveAbilityEffect(
+                        new ExileControllerLibraryEffect()))));
 
         // Exile the top card of your library: Prevent the next 1 damage that would be dealt to you
         // this turn.

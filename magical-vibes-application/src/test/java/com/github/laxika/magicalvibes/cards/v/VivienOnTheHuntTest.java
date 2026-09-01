@@ -76,6 +76,7 @@ class VivienOnTheHuntTest extends BaseCardTest {
         Card creatureThree = new HillGiant();
         Card instant = new Shock();
         Card land = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(creatureOne, creatureTwo, creatureThree, instant, land));
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -98,6 +99,7 @@ class VivienOnTheHuntTest extends BaseCardTest {
     void plusOneMayChooseZeroCreatures() {
         addReadyVivien(3);
         Card creature = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(creature, new Shock(), new Shock(), new Shock(), new Shock()));
 
         harness.activateAbility(player1, 0, 1, null, null);

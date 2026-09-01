@@ -64,6 +64,6 @@ class BrokenDamTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(horsemanId)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessage("Target must be a creature without horsemanship");
     }
 }

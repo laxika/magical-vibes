@@ -38,6 +38,7 @@ class UrabraskHereticPraetorTest extends BaseCardTest {
         Card laterCard = new Forest();
         harness.addToBattlefield(player1, new UrabraskHereticPraetor());
         harness.setLibrary(player2, List.of(replacedCard, laterCard));
+        harness.setHand(player2, List.of());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -58,6 +59,7 @@ class UrabraskHereticPraetorTest extends BaseCardTest {
         Card drawnCard = new Forest();
         harness.addToBattlefield(player1, new UrabraskHereticPraetor());
         harness.setLibrary(player2, List.of(replacedCard, drawnCard));
+        harness.setHand(player2, List.of());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();

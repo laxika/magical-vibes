@@ -54,7 +54,7 @@ class KikusShadowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 harness.getPermanentId(player2, "Plains")))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessage("Target must be a creature");
 
         harness.assertOnBattlefield(player2, "Plains");
     }

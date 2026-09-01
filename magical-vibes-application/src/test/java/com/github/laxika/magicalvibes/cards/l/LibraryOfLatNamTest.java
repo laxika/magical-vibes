@@ -95,6 +95,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LibraryOfLatNam()));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
     }
 
     private void setupLibrary() {

@@ -57,7 +57,7 @@ class PumpkinBombardmentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> castPumpkinBombardment(target.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Must discard a card or pay {2}");
     }
 
     @Test

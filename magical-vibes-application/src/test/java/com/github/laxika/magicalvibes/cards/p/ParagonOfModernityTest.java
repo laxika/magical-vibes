@@ -56,6 +56,7 @@ class ParagonOfModernityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(paragon.getPowerModifier()).isEqualTo(1);

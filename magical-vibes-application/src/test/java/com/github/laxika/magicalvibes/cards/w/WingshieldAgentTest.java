@@ -58,9 +58,8 @@ class WingshieldAgentTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }

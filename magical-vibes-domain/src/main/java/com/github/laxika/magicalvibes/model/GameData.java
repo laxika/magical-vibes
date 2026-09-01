@@ -2071,6 +2071,9 @@ public class GameData {
     /** Active this turn: affectedPlayerId -> creatures allowed to attack by a pile effect. */
     public final Map<UUID, Set<UUID>> attackableCreaturesThisTurn = new ConcurrentHashMap<>();
 
+    /** Creatures that were able to attack as each player reached their declare-attackers step this turn. */
+    public final Map<UUID, Set<UUID>> creaturesAbleToAttackAtDeclareAttackersThisTurn = new ConcurrentHashMap<>();
+
     /** Active this turn: affectedPlayerId -> creatures allowed to block by a pile effect. */
     public final Map<UUID, Set<UUID>> blockableCreaturesThisTurn = new ConcurrentHashMap<>();
 
@@ -5094,6 +5097,8 @@ public class GameData {
         this.chosenAttackersNextTurn.forEach((playerId, ids) -> copy.chosenAttackersNextTurn.put(playerId, Set.copyOf(ids)));
         this.chosenAttackersThisTurn.forEach((playerId, ids) -> copy.chosenAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.attackableCreaturesThisTurn.forEach((playerId, ids) -> copy.attackableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
+        this.creaturesAbleToAttackAtDeclareAttackersThisTurn.forEach((playerId, ids) ->
+                copy.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, Set.copyOf(ids)));
         this.blockableCreaturesThisTurn.forEach((playerId, ids) -> copy.blockableCreaturesThisTurn.put(playerId, Set.copyOf(ids)));
         copy.otherCreaturesCantAttackExemptCreatureIds.addAll(this.otherCreaturesCantAttackExemptCreatureIds);
         copy.peaceTalksTurnsRemaining = this.peaceTalksTurnsRemaining;

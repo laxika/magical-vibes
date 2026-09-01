@@ -205,10 +205,8 @@ public class LifeSupport {
             return;
         }
 
-        amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
-        gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.text(

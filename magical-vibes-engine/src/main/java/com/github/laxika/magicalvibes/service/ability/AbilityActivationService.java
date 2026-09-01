@@ -5068,11 +5068,15 @@ public class AbilityActivationService {
      * if nothing legal is found.
      */
     private Permanent resolveActivationSource(GameData gameData, UUID activatorId, int permanentIndex, Integer abilityIndex) {
+        int idx = abilityIndex != null ? abilityIndex : 0;
         List<Permanent> own = gameData.playerBattlefields.get(activatorId);
         if (own != null && permanentIndex >= 0 && permanentIndex < own.size()) {
-            return own.get(permanentIndex);
+            Permanent candidate = own.get(permanentIndex);
+            List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, candidate);
+            if (idx >= 0 && idx < abilities.size()) {
+                return candidate;
+            }
         }
-        int idx = abilityIndex != null ? abilityIndex : 0;
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
             if (entry.getKey().equals(activatorId)) {
                 continue;

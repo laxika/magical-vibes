@@ -124,7 +124,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         advanceToEndStep(player1);
         resolveAllTriggers();
 
-        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
         assertThat(ajani.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
     }
 

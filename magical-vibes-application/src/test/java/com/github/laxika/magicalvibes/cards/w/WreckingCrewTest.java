@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,6 +44,9 @@ class WreckingCrewTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 2));
 
         harness.assertLife(player2, 18);
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);

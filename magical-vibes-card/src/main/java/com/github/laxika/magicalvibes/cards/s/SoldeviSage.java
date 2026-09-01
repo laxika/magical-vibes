@@ -23,7 +23,7 @@ public class SoldeviSage extends Card {
                 null,
                 List.of(new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate()),
                         new DrawCardEffect(3),
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
+                        DiscardEffect.cardsDrawnThisResolution(1, DiscardRecipient.CONTROLLER)),
                 "{T}, Sacrifice two lands: Draw three cards, then discard one of them."
         ));
     }

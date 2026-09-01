@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RobTheArchives.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({RobTheArchives.class, Forest.class, GrizzlyBears.class, Ornithopter.class})
 class RobTheArchivesTest extends BaseCardTest {
 
     @Test
@@ -74,7 +74,7 @@ class RobTheArchivesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot pay casualty with a creature below the required power")
     void rejectsUnderpoweredCasualtyCreature() {
-        Permanent casualtyCreature = addCreatureReady(player1, new LlanowarElves());
+        Permanent casualtyCreature = addCreatureReady(player1, new Ornithopter());
         harness.setHand(player1, List.of(new RobTheArchives()));
         addMana();
 

@@ -3968,7 +3968,8 @@ public class StepTriggerService {
                 if (permanent == null
                         || !action.controllerId().equals(
                                 gameQueryService.findPermanentController(gameData, permanent.getId()))
-                        || permanent.getCard().getManaValue() > action.maxManaValue()) {
+                        || permanent.getCard().getManaValue() > action.maxManaValue()
+                        || gameQueryService.cantBeSacrificed(gameData, permanent)) {
                     continue;
                 }
 

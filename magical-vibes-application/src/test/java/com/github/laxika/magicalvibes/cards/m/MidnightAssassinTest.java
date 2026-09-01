@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MidnightAssassin.class, ColossalDreadmaw.class, GrizzlyBears.class})
+@CardUsed({MidnightAssassin.class, GiantSpider.class, GrizzlyBears.class})
 class MidnightAssassinTest extends BaseCardTest {
 
     @Test
@@ -37,7 +37,7 @@ class MidnightAssassinTest extends BaseCardTest {
     @DisplayName("Deathtouch destroys a larger blocker in combat")
     void deathtouchDestroysLargerBlocker() {
         Permanent assassin = addCreatureReady(player1, new MidnightAssassin());
-        Permanent blocker = addCreatureReady(player2, new ColossalDreadmaw());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(assassin)));
         harness.beginBlockerDeclarationInput();

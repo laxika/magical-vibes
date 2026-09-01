@@ -23,6 +23,7 @@ class MaestrosAscendancyTest extends BaseCardTest {
     @DisplayName("Casts an instant from the graveyard by sacrificing a creature and exiles it")
     void castsInstantBySacrificingCreatureAndExilesIt() {
         harness.addToBattlefield(player1, new MaestrosAscendancy());
+        harness.setHand(player1, List.of());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Shock shock = new Shock();
         harness.setGraveyard(player1, List.of(shock));
@@ -45,6 +46,7 @@ class MaestrosAscendancyTest extends BaseCardTest {
     @DisplayName("Requires a creature and allows only one graveyard cast each turn")
     void requiresCreatureAndIsLimitedToOneCastPerTurn() {
         harness.addToBattlefield(player1, new MaestrosAscendancy());
+        harness.setHand(player1, List.of());
         Shock first = new Shock();
         Shock second = new Shock();
         harness.setGraveyard(player1, List.of(first, second));
@@ -52,7 +54,7 @@ class MaestrosAscendancyTest extends BaseCardTest {
         prepareMainPhase();
 
         assertThat(harness.getGameActionAvailabilityService()
-                .getPlayableCardIndices(gd, player1.getId())).isEmpty();
+                .getPlayableFlashbackIndices(gd, player1.getId())).isEmpty();
         assertThatThrownBy(() -> harness.castFromGraveyardWithSacrifices(
                 player1, 0, player2.getId(), List.of()))
                 .isInstanceOf(IllegalStateException.class);
@@ -60,14 +62,14 @@ class MaestrosAscendancyTest extends BaseCardTest {
         Permanent firstCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent secondCreature = addCreatureReady(player1, new GrizzlyBears());
         assertThat(harness.getGameActionAvailabilityService()
-                .getPlayableCardIndices(gd, player1.getId())).containsExactly(0, 1);
+                .getPlayableFlashbackIndices(gd, player1.getId())).containsExactly(0, 1);
 
         harness.castFromGraveyardWithSacrifices(
                 player1, 0, player2.getId(), List.of(firstCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(harness.getGameActionAvailabilityService()
-                .getPlayableCardIndices(gd, player1.getId())).isEmpty();
+                .getPlayableFlashbackIndices(gd, player1.getId())).isEmpty();
         assertThatThrownBy(() -> harness.castFromGraveyardWithSacrifices(
                 player1, 0, player2.getId(), List.of(secondCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
@@ -77,12 +79,13 @@ class MaestrosAscendancyTest extends BaseCardTest {
     @DisplayName("Does not cast a permanent card from the graveyard")
     void onlyCastsInstantsAndSorceries() {
         harness.addToBattlefield(player1, new MaestrosAscendancy());
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         prepareMainPhase();
 
         assertThat(harness.getGameActionAvailabilityService()
-                .getPlayableCardIndices(gd, player1.getId())).isEmpty();
+                .getPlayableFlashbackIndices(gd, player1.getId())).isEmpty();
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }

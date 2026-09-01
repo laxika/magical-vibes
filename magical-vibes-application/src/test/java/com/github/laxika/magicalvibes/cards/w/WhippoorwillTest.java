@@ -45,6 +45,7 @@ class WhippoorwillTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Drudge Skeletons"));
@@ -69,6 +70,7 @@ class WhippoorwillTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 17);
     }

@@ -15,7 +15,7 @@ public class SpitefulVisions extends Card {
         addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1));
 
         // Whenever a player draws a card, this enchantment deals 1 damage to that player.
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

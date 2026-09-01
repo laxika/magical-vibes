@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
@@ -123,10 +124,10 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                         } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
-                            // "blocks or becomes blocked by a [filter] creature, ... that creature"
-                            // (e.g. Venom). Auto-target the combat opponent; the effect's handler
-                            // re-checks the filter at resolution.
-                            if (combatOpponent != null) {
+                            if (combatOpponent != null
+                                    && (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
+                                    || predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, combatOpponent, destroyEffect.filter()))) {
                                 effectsForStack.add(effect);
                                 autoTargetOpponent = true;
                             }
@@ -297,9 +298,12 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                             } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
-                                // Auto-target this blocker; the handler re-checks the filter (Venom).
-                                transformedEffects.add(effect);
-                                autoTargetBlocker = true;
+                                if (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
+                                        || predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, destroyEffect.filter())) {
+                                    transformedEffects.add(effect);
+                                    autoTargetBlocker = true;
+                                }
                             } else {
                                 transformedEffects.add(effect);
                             }

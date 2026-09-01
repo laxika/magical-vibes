@@ -20,21 +20,22 @@ class MurkDwellersTest extends BaseCardTest {
     @DisplayName("Unblocked attacker gets +2/+0")
     void unblockedGetsBoost() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
+        int powerBefore = gqs.getEffectivePower(gd, dwellers);
         dwellers.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of()); // no blocks — Murk Dwellers is unblocked
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
-        assertThat(dwellers.getPowerModifier()).isEqualTo(2);
-        assertThat(dwellers.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dwellers)).isEqualTo(powerBefore + 2);
     }
 
     @Test
     @DisplayName("A blocked attacker does not get the boost")
     void blockedGetsNoBoost() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
+        int powerBefore = gqs.getEffectivePower(gd, dwellers);
         dwellers.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -42,41 +43,35 @@ class MurkDwellersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dwellers.getPowerModifier()).isEqualTo(0);
-        assertThat(dwellers.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dwellers)).isEqualTo(powerBefore);
     }
 
     @Test
     @DisplayName("The +2/+0 wears off at end of combat")
     void boostWearsOffAtEndOfCombat() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
+        int powerBefore = gqs.getEffectivePower(gd, dwellers);
         dwellers.setAttacking(true);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(dwellers.getPowerModifier()).isEqualTo(0);
-        assertThat(dwellers.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dwellers)).isEqualTo(powerBefore);
     }
 
     @Test
-    @DisplayName("The +2/+0 wears off at end of turn")
-    void boostWearsOff() {
+    @DisplayName("The +2/+0 affects combat damage but does not persist after combat")
+    void boostAffectsCombatDamageButDoesNotPersist() {
         Permanent dwellers = addCreatureReady(player1, new MurkDwellers());
+        int powerBefore = gqs.getEffectivePower(gd, dwellers);
         dwellers.setAttacking(true);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(dwellers.getPowerModifier()).isEqualTo(2);
-
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(dwellers.getPowerModifier()).isEqualTo(0);
-        assertThat(dwellers.getToughnessModifier()).isEqualTo(0);
+        harness.assertLife(player2, 20 - powerBefore - 2);
+        assertThat(gqs.getEffectivePower(gd, dwellers)).isEqualTo(powerBefore);
     }
 }

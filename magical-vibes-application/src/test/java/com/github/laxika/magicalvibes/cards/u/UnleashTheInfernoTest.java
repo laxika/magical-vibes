@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.k.KeeningStone;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UnleashTheInferno.class, AladdinsRing.class, ChandraNalaar.class, DarksteelRelic.class,
-        KeeningStone.class, RagingGoblin.class, WallOfStone.class})
+        FountainOfYouth.class, KeeningStone.class, RagingGoblin.class, WallOfStone.class})
 class UnleashTheInfernoTest extends BaseCardTest {
 
     @Test
@@ -35,6 +36,7 @@ class UnleashTheInfernoTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ineligibleArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, eligibleArtifact.getId());
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Raging Goblin");
         harness.assertNotOnBattlefield(player2, "Keening Stone");
@@ -47,7 +49,7 @@ class UnleashTheInfernoTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new WallOfStone());
         harness.addToBattlefield(player2, new DarksteelRelic());
 
-        cast(creature);
+        castAndResolve(creature);
 
         assertThat(creature.getMarkedDamage()).isEqualTo(7);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -59,7 +61,7 @@ class UnleashTheInfernoTest extends BaseCardTest {
     void countsPlaneswalkerExcessDamage() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 2);
-        Permanent eligibleArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+        Permanent eligibleArtifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         Permanent ineligibleArtifact = harness.addToBattlefieldAndReturn(player2, new KeeningStone());
 
         cast(planeswalker);
@@ -67,9 +69,10 @@ class UnleashTheInfernoTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ineligibleArtifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, eligibleArtifact.getId());
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
-        harness.assertNotOnBattlefield(player2, "Darksteel Relic");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertOnBattlefield(player2, "Keening Stone");
     }
 
@@ -80,18 +83,24 @@ class UnleashTheInfernoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void cast(Permanent target) {
+        castAndResolve(target);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    private void castAndResolve(Permanent target) {
         harness.setHand(player1, List.of(new UnleashTheInferno()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 }

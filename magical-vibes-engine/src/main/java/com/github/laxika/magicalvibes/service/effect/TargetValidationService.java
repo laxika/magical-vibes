@@ -160,6 +160,9 @@ public class TargetValidationService {
         if (target == null) {
             return;
         }
+        if (!predicate.admits(TargetPredicate.Kind.PERMANENT)) {
+            throw new IllegalStateException("Target must be a player");
+        }
         if (restriction != null) {
             FilterContext filterContext = sourceFilterContext(ctx);
             if (!predicateEvaluationService.matchesPermanentPredicate(target, restriction, filterContext)) {

@@ -229,6 +229,7 @@ public class TurnCleanupService {
             p.setDamageDestructionShield(0);
             p.setRegenerationShield(0);
             p.setOpponentDrawRegenerationShield(0);
+            p.getOpponentDrawRegenerationShieldRecipients().clear();
             p.setMinusOneCounterRegenerationShield(0);
             p.setPlusOnePlusOneCounterRegenerationShield(0);
             p.getGainControlRegenerationShields().clear();

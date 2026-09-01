@@ -463,7 +463,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 player1Id, "Test source", new ArrayList<>(List.of(effect)));
 
         when(predicateEvaluationService.matchesCardPredicate(
-                eq(land), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+                eq(land), eq(filter), eq(entry.getCard().getId()), eq(gd),
+                isNull(), isNull(), isNull(), eq(0))).thenReturn(true);
 
         returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 

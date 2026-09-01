@@ -50,7 +50,7 @@ class TheFallenTest extends BaseCardTest {
     }
 
     @Test
-    void forgetsRecipientsWhenItLeavesBeforeUpkeepTriggerResolves() {
+    void triggeredAbilityKeepsItsRecipientsWhenSourceLeavesBeforeResolution() {
         Permanent fallen = addCreatureReady(player1, new TheFallen());
 
         declareAttackers(List.of(0));
@@ -67,7 +67,7 @@ class TheFallenTest extends BaseCardTest {
         });
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 
     @Test

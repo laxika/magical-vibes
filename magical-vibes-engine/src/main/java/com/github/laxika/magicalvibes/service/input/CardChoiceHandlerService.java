@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
@@ -262,6 +263,14 @@ public class CardChoiceHandlerService {
             }
 
             List<Card> hand = gameData.playerHands.get(playerId);
+            Card selectedCard = hand.get(cardIndex);
+            if (!isTargeted && gameQueryService.isCardBlockedFromEnteringFromZone(
+                    gameData, selectedCard, Zone.HAND)) {
+                gameLogService.append(gameData, GameLog.cardThen(
+                        selectedCard, " can't enter the battlefield; it stays in hand."));
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
+            }
             Card card = hand.remove(cardIndex);
 
             if (isTargeted) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShakedownHeavy.class, Forest.class})
+@CardUsed({ShakedownHeavy.class, Forest.class, GrizzlyBears.class})
 class ShakedownHeavyTest extends BaseCardTest {
 
     @Test
     @DisplayName("The defending player may have its controller draw, untap it, and remove it from combat")
     void defendingPlayerAccepts() {
         Permanent heavy = addCreatureReady(player1, new ShakedownHeavy());
+        addCreatureReady(player2, new GrizzlyBears());
         setDeck(player1, List.of(new Forest()));
         int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
         int defendingHandBefore = gd.playerHands.get(player2.getId()).size();
@@ -34,6 +36,7 @@ class ShakedownHeavyTest extends BaseCardTest {
         assertThat(heavy.isAttacking()).isTrue();
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(defendingHandBefore);
@@ -45,6 +48,7 @@ class ShakedownHeavyTest extends BaseCardTest {
     @DisplayName("The defending player may decline")
     void defendingPlayerDeclines() {
         Permanent heavy = addCreatureReady(player1, new ShakedownHeavy());
+        addCreatureReady(player2, new GrizzlyBears());
         setDeck(player1, List.of(new Forest()));
         int controllerHandBefore = gd.playerHands.get(player1.getId()).size();
 

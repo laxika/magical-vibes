@@ -74,7 +74,7 @@ class InduceDespairTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, target.getId(), 1))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessage("Revealed card must be creature card");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
     }

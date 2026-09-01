@@ -20,6 +20,7 @@ class MoraleTest extends BaseCardTest {
     void boostsAttackingCreatures() {
         Permanent attacker = addCreatureReady(player1, new Pikemen());
         Permanent nonAttacker = addCreatureReady(player1, new Pikemen());
+        addCreatureReady(player2, new Pikemen());
 
         declareAttackers(List.of(0));
 
@@ -27,45 +28,47 @@ class MoraleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacking creature gets +1/+1
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
         // Non-attacking creature is unaffected
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(1);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(1);
     }
 
     @Test
     void boostsOpponentsAttackingCreatures() {
         Permanent opponentAttacker = addCreatureReady(player2, new Pikemen());
+        addCreatureReady(player1, new Pikemen());
 
         declareAttackers(player2, List.of(0));
 
         harness.castFromHand(player1, new Morale(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(opponentAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentAttacker)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Morale effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
         Permanent attacker = addCreatureReady(player1, new Pikemen());
+        addCreatureReady(player2, new Pikemen());
 
         declareAttackers(List.of(0));
 
         harness.castFromHand(player1, new Morale(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
     }
 }

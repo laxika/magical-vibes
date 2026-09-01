@@ -539,6 +539,13 @@ public class CombatAttackService {
                     attackable, mustAttack, availableTargets, taxPerCreature, mustAttackWithAtLeastOne);
         });
 
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of());
+        Set<UUID> ableToAttack = prompt.attackableIndices().stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .map(index -> battlefield.get(index).getId())
+                .collect(Collectors.toSet());
+        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(gameData.activePlayerId, ableToAttack);
+
         if (prompt.attackableIndices().isEmpty()) {
             UUID activeId = gameData.activePlayerId;
             String playerName = gameData.playerIdToName.get(activeId);
@@ -627,6 +634,11 @@ public class CombatAttackService {
         }
 
         // Empty declaration is always valid — no tax or target validation needed
+        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, attackable.stream()
+                .map(battlefield::get)
+                .map(Permanent::getId)
+                .collect(Collectors.toSet()));
+
         if (attackerIndices.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());

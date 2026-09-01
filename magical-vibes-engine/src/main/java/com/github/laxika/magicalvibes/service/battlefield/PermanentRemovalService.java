@@ -1363,6 +1363,14 @@ public class PermanentRemovalService {
                 }
             }
         }
+        for (Permanent source : gameData.simultaneousDyingCreatures.values()) {
+            if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                    .getOrDefault(source.getId(), Set.of()).contains(cardId)
+                    && (hasExileDamagedCreaturesInsteadOfDying(source)
+                    || auraOnSourceExilesDamagedCreatures(gameData, source.getId()))) {
+                return true;
+            }
+        }
         return false;
     }
 

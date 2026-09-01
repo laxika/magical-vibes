@@ -8583,6 +8583,9 @@ public class TriggerCollectionService {
                     registration.sourcePermanentId());
             delayedEntry.setEventValue(Math.max(0, dyingPermanentPower));
             delayedEntry.setDyingPermanentManaValue(Math.max(0, dyingPermanentManaValue));
+            delayedEntry.setTriggeringCardId(dyingPermanentCardId);
+            delayedEntry.setTriggeringCardGraveyardEntryVersion(
+                    gameData.graveyardEntryVersion(dyingPermanentCardId));
             gameData.stack.add(delayedEntry);
 
             log.info("Game {} - Delayed death trigger: {} triggers (a creature it damaged died this turn)",

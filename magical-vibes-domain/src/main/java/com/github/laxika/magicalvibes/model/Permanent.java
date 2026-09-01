@@ -107,6 +107,8 @@ public class Permanent {
      *  consumed first, so a rider shield is only spent once it is all that is left. Reset at turn
      *  cleanup alongside {@link #regenerationShield}. */
     @Setter private int opponentDrawRegenerationShield;
+    /** The opponent chosen for each Soldevi Sentry regeneration shield, in grant order. */
+    private final List<UUID> opponentDrawRegenerationShieldRecipients = new ArrayList<>();
     /** How many of this permanent's {@link #regenerationShield}s carry Matopi Golem's rider — when
      *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
@@ -706,6 +708,8 @@ public class Permanent {
         this.damageDestructionShield = source.damageDestructionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
+        this.opponentDrawRegenerationShieldRecipients.addAll(
+                source.opponentDrawRegenerationShieldRecipients);
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.plusOnePlusOneCounterRegenerationShield = source.plusOnePlusOneCounterRegenerationShield;
         this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);

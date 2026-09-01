@@ -19,9 +19,9 @@ class ProfessionalFaceBreakerTest extends BaseCardTest {
     @Test
     @DisplayName("Creates only one Treasure when multiple creatures deal combat damage to a player")
     void createsOneTreasureForMultipleCombatDamageDealers() {
-        harness.addToBattlefield(player1, new ProfessionalFaceBreaker());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ProfessionalFaceBreaker());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
@@ -32,8 +32,8 @@ class ProfessionalFaceBreakerTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a Treasure exiles the top card with permission to play it this turn")
     void sacrificeTreasureExilesTopCardWithPlayPermission() {
-        harness.addToBattlefield(player1, new ProfessionalFaceBreaker());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ProfessionalFaceBreaker());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(1));
         resolveAllTriggers();

@@ -32,9 +32,8 @@ class MayhemPatrolTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }

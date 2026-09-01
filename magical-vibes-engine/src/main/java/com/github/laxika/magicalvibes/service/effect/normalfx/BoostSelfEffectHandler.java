@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -43,12 +46,21 @@ public class BoostSelfEffectHandler implements NormalEffectHandlerBean {
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
 
-        self.setPowerModifier(self.getPowerModifier() + powerBoost);
-        self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
+        if (boost.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+            self.setPowerModifier(self.getPowerModifier() + powerBoost);
+            self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
+        } else {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
+                    new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
+                    self.getId(), null, null, boost.duration(), 0));
+        }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(self.getCard())
-                .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))
+                .text(String.format(" gets %+d/%+d %s.", powerBoost, toughnessBoost,
+                        boost.duration() == EffectDuration.UNTIL_END_OF_COMBAT
+                                ? "until end of combat" : "until end of turn"))
                 .build());
 
         log.info("Game {} - {} gets {}/{}", gameData.id, self.getCard().getName(), powerBoost, toughnessBoost);

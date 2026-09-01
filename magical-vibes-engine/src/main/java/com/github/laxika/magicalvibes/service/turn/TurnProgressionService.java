@@ -109,6 +109,7 @@ public class TurnProgressionService {
         }
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
+            gameData.expireEndOfCombatFloatingEffects();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
@@ -540,6 +541,7 @@ public class TurnProgressionService {
         // if it didn't attack.
         gameData.chosenAttackersThisTurn.clear();
         gameData.attackableCreaturesThisTurn.clear();
+        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.clear();
         gameData.blockableCreaturesThisTurn.clear();
         Set<UUID> chosenAttackers = gameData.chosenAttackersNextTurn.remove(nextActive);
         if (chosenAttackers != null) {

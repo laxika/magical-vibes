@@ -42,7 +42,8 @@ class RiveteersCharmTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(first, second, third);
 
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromExile(player1, second.getId());
         harness.passBothPriorities();
 

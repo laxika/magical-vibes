@@ -40,6 +40,7 @@ class ZiatorasEnvoyTest extends BaseCardTest {
     @DisplayName("A spell above the damage limit goes directly to hand")
     void putsTooExpensiveSpellIntoHand() {
         ColossalDreadmaw dreadmaw = new ColossalDreadmaw();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(dreadmaw));
         addAttackingEnvoy();
 

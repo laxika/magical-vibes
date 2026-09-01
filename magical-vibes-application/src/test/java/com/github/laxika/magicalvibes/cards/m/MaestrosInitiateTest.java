@@ -24,6 +24,7 @@ class MaestrosInitiateTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(initiate));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateGraveyardAbility(player1, 0);
 
@@ -33,11 +34,11 @@ class MaestrosInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test

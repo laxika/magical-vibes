@@ -61,7 +61,7 @@ class LightningAxeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, target.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Must discard a card or pay {5}");
     }
 
     @Test

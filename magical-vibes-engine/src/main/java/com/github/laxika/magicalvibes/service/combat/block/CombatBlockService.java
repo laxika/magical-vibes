@@ -1706,6 +1706,8 @@ public class CombatBlockService {
                 attacker.getId(),
                 attacker.getId()
         );
+        trigger.setNonTargeting(true);
+        trigger.setSourcePermanentSnapshot(new Permanent(attacker));
         trigger.setAttackedTargetId(attacker.getAttackTarget());
         gameData.stack.add(trigger);
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),

@@ -30,6 +30,7 @@ class VampireScrivenerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent scrivener = findPermanent(player1, "Vampire Scrivener");
         assertThat(scrivener.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

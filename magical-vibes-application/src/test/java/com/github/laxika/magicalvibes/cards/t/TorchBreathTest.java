@@ -27,7 +27,7 @@ class TorchBreathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TorchBreath()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstantForX(player1, 0, 2, List.of(target.getId()));
+        harness.castInstant(player1, 0, 2, target.getId());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         harness.passBothPriorities();
@@ -42,7 +42,7 @@ class TorchBreathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TorchBreath()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstantForX(player1, 0, 2, List.of(target.getId()));
+        harness.castInstant(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -58,7 +58,7 @@ class TorchBreathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TorchBreath()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstantForX(player1, 0, 2, List.of(planeswalker.getId()));
+        harness.castInstant(player1, 0, 2, planeswalker.getId());
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
@@ -72,10 +72,10 @@ class TorchBreathTest extends BaseCardTest {
         harness.setHand(player1, List.of(torchBreath));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.setHand(player2, List.of(new Cancel()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstantForX(player1, 0, 2, List.of(target.getId()));
+        harness.castInstant(player1, 0, 2, target.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, torchBreath.getId());
         harness.passBothPriorities();
@@ -91,7 +91,7 @@ class TorchBreathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TorchBreath()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 2, List.of(player2.getId())))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

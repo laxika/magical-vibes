@@ -66,6 +66,7 @@ class TopiaryStomperTest extends BaseCardTest {
     @DisplayName("Can attack with seven lands")
     void canAttackWithSevenLands() {
         addCreatureReady(player1, new TopiaryStomper());
+        addCreatureReady(player2, new GrizzlyBears());
         addForests(player1, 7);
 
         declareAttackers(player1, List.of(0));

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +69,9 @@ class ParkHeightsPegasusTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
         recordEntered(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
