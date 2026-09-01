@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMess
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -45,11 +47,19 @@ import java.util.stream.Collectors;
 public class InteractionPromptProjectionRegistry {
 
     private final CardViewFactory cardViewFactory;
+    private final GameQueryService gameQueryService;
     private final Map<Class<? extends PendingInteraction>, ProjectionStrategy<?>> strategies =
             new LinkedHashMap<>();
 
     public InteractionPromptProjectionRegistry(CardViewFactory cardViewFactory) {
+        this(cardViewFactory, null);
+    }
+
+    @Autowired
+    public InteractionPromptProjectionRegistry(CardViewFactory cardViewFactory,
+                                                GameQueryService gameQueryService) {
         this.cardViewFactory = cardViewFactory;
+        this.gameQueryService = gameQueryService;
 
         register(PendingInteraction.XValueChoice.class, this::projectXValueChoice);
         register(PendingInteraction.AlternateCastXValueChoice.class, this::projectAlternateCastXValueChoice);
@@ -1277,7 +1287,9 @@ public class InteractionPromptProjectionRegistry {
         // The accept/decline shape carries no card list, so the looked-at cards are named in the
         // prompt text; it is delivered only to the deciding player, so the information stays private.
         String names = interaction.lookedAt().stream().map(Card::getName).collect(Collectors.joining(", "));
-        boolean canPayLife = gameData.getLife(interaction.playerId()) >= 1;
+        boolean canPayLife = gameData.getLife(interaction.playerId()) >= 1
+                && (gameQueryService == null
+                || gameQueryService.canPlayerLifeChange(gameData, interaction.playerId()));
         return InteractionPromptMessage.acceptDecline(
                 "Top of your library: " + names + ". Pay 1 life to put them on the bottom and look at five more?",
                 canPayLife,

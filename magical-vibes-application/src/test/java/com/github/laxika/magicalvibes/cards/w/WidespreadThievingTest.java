@@ -33,6 +33,7 @@ class WidespreadThievingTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
         Permanent thieving = findPermanent(player1, "Widespread Thieving");

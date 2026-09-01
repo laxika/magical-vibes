@@ -29,7 +29,6 @@ class CivilServantTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, citizen.getId());
 
         assertThat(citizen.isTapped()).isTrue();
         assertThat(servant.getEffectivePower()).isEqualTo(3);
@@ -78,7 +77,7 @@ class CivilServantTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, citizen.getId());
+        assertThat(citizen.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

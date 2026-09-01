@@ -61,12 +61,12 @@ class CormelaGlamourThiefTest extends BaseCardTest {
 
         destroyCormela(cormela);
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0);
+        assertThat(choice.validCardIds()).containsExactly(opt.getId());
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(opt.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Opt");
@@ -81,9 +81,9 @@ class CormelaGlamourThiefTest extends BaseCardTest {
 
         destroyCormela(cormela);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
-        harness.handleGraveyardCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Opt");

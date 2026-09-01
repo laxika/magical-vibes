@@ -25,6 +25,7 @@ class ForgeBossTest extends BaseCardTest {
         addSacrificeMana();
 
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -36,14 +37,16 @@ class ForgeBossTest extends BaseCardTest {
     void triggersOnlyOnceEachTurnForCreatures() {
         harness.addToBattlefield(player1, new ForgeBoss());
         harness.addToBattlefield(player1, new BodyDropper());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         addSacrificeMana();
 
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, firstSacrifice.getId());
         resolveAllTriggers();
 
         Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, secondSacrifice.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);

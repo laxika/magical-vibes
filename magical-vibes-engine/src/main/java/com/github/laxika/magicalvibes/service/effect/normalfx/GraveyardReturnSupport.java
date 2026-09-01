@@ -1205,6 +1205,24 @@ public class GraveyardReturnSupport {
                 logVerbPhrase, logSuffix);
     }
 
+    public void putTargetedGraveyardCardsOnTopInChosenOrder(GameData gameData, StackEntry entry) {
+        List<Card> movedCards = new ArrayList<>();
+        processTargetedGraveyardTargets(gameData, entry, entry.getTargetCardIds(),
+                (graveyard, card) -> movedCards.add(card),
+                " puts ", " on top of their library from graveyard.");
+        if (movedCards.isEmpty()) {
+            return;
+        }
+        UUID controllerId = entry.getControllerId();
+        if (movedCards.size() == 1) {
+            gameData.playerDecks.get(controllerId).addFirst(movedCards.getFirst());
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, movedCards, false, controllerId,
+                "Put these cards on top of your library in any order."));
+    }
+
     public void processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,
                                                 BiConsumer<List<Card>, Card> cardConsumer,
                                                 String logVerbPhrase, String logSuffix) {

@@ -54,7 +54,7 @@ class RooftopNuisanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getSkipUntapCount()).isEqualTo(2);
+        assertThat(target.getSkipUntapCount()).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).contains(firstDraw, secondDraw);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(casualtyCreature.getId()));

@@ -32,6 +32,7 @@ class GlamorousOutlawTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())

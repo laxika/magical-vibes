@@ -75,6 +75,7 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

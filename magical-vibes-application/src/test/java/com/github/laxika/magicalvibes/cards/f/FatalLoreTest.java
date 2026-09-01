@@ -60,6 +60,7 @@ class FatalLoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(rangerA.getId(), rangerB.getId()));
         harness.passBothPriorities();
 
@@ -81,14 +82,12 @@ class FatalLoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.handleMultiplePermanentsChosen(player1, List.of(chieftain.getId()));
-
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, 0, null, null);
-
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chieftain.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
@@ -103,6 +102,7 @@ class FatalLoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -132,6 +132,7 @@ class FatalLoreTest extends BaseCardTest {
 
     private void setupAndCast() {
         harness.castFromHand(player1, new FatalLore(), "{2}{B}{B}");
+        harness.passBothPriorities();
     }
 
     private void stockLibrary(Player player) {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.b.BrokersVeteran;
+import com.github.laxika.magicalvibes.cards.c.CivilServant;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -18,14 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ObscuraCharm.class, BrokersVeteran.class, Divination.class, GrizzlyBears.class,
+@CardUsed({ObscuraCharm.class, CivilServant.class, Divination.class, GrizzlyBears.class,
         HillGiant.class, JaceBeleren.class})
 class ObscuraCharmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns a target multicolored permanent with mana value 3 or less tapped")
     void returnsMulticoloredPermanentTapped() {
-        Card returnedCard = new BrokersVeteran();
+        Card returnedCard = new CivilServant();
         harness.setGraveyard(player1, List.of(returnedCard));
         harness.setHand(player1, List.of(new ObscuraCharm()));
         addCharmMana(player1);

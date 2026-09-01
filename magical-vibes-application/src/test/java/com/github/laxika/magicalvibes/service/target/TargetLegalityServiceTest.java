@@ -2265,14 +2265,21 @@ class TargetLegalityServiceTest {
                     new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
                     player1Id, source)).isTrue();
 
-            powerMatchingCard.setPower(3);
-            powerMatchingCard.setToughness(4);
-            assertThat(sut.matchesStackEntryPredicate(gd, powerMatchingEntry,
+            Card toughnessMatchingCard = createCreature("Toughness match", CardColor.GREEN);
+            toughnessMatchingCard.setManaCost("{2}");
+            toughnessMatchingCard.setPower(3);
+            toughnessMatchingCard.setToughness(4);
+            StackEntry toughnessMatchingEntry = new StackEntry(toughnessMatchingCard, player2Id);
+            assertThat(sut.matchesStackEntryPredicate(gd, toughnessMatchingEntry,
                     new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
                     player1Id, source)).isTrue();
 
-            powerMatchingCard.setToughness(3);
-            assertThat(sut.matchesStackEntryPredicate(gd, powerMatchingEntry,
+            Card nonmatchingCard = createCreature("No match", CardColor.GREEN);
+            nonmatchingCard.setManaCost("{2}");
+            nonmatchingCard.setPower(3);
+            nonmatchingCard.setToughness(3);
+            StackEntry nonmatchingEntry = new StackEntry(nonmatchingCard, player2Id);
+            assertThat(sut.matchesStackEntryPredicate(gd, nonmatchingEntry,
                     new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
                     player1Id, source)).isFalse();
 

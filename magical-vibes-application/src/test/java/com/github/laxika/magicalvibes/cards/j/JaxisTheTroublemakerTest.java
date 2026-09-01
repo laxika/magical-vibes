@@ -31,6 +31,8 @@ class JaxisTheTroublemakerTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         Permanent token = findToken(player1);
         assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
@@ -48,6 +50,8 @@ class JaxisTheTroublemakerTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         Permanent token = findToken(player1);
 

@@ -113,6 +113,11 @@ public record ExileGraveyardCardsEffect(
                 null, null, false, false, false, null, false, true);
     }
 
+    public static ExileGraveyardCardsEffect upToOneTargetFromAnyGraveyard() {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                null, null, false, false, false, null, false, true);
+    }
+
     @Override
     public boolean choosesGraveyardCards() {
         return switch (scope) {

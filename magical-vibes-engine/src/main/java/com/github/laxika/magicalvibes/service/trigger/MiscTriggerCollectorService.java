@@ -385,7 +385,8 @@ public class MiscTriggerCollectorService {
         if (as.sacrificedCard() == null
                 || !predicateEvaluationService.matchesPermanentPredicate(
                         new Permanent(as.sacrificedCard()), conditional.predicate(),
-                        FilterContext.of(match.gameData())
+                        new FilterContext(null, match.permanent().getCard().getId(),
+                                match.controllerId(), null, match.permanent(), match.permanent().getId())
                                 .withSourceCardId(match.permanent().getCard().getId())
                                 .withSourceControllerId(match.controllerId())
                                 .withSourcePermanentId(match.permanent().getId())
@@ -434,8 +435,10 @@ public class MiscTriggerCollectorService {
         TriggerContext.OpponentPermanentSacrificed sacrificed =
                 (TriggerContext.OpponentPermanentSacrificed) ctx;
         if (sacrificed.sacrificedCard() == null
-                || !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
-                new Permanent(sacrificed.sacrificedCard()), conditional.predicate())) {
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                new Permanent(sacrificed.sacrificedCard()), conditional.predicate(),
+                new FilterContext(null, match.permanent().getCard().getId(),
+                        match.controllerId(), null, match.permanent(), match.permanent().getId()))) {
             return false;
         }
 

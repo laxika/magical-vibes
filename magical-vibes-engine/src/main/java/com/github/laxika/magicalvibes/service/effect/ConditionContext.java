@@ -234,7 +234,8 @@ public record ConditionContext(
         return new ConditionContext(entry.getControllerId(), sourcePermanentId,
                 entry.getSourcePermanentSnapshot(), entry.getCard(), entry.isKicked(), entry.isBuyback(),
                 entry.isProwl(), entry.isMadness(), entry.isCastForForetell(), entry.isOverloaded(),
-                entry.getSourceZone(), entry.getXValue(), entry.getTargetId(), null, false,
+                entry.getSourceZone(), entry.getXValue(), entry.getTargetId(),
+                entry.getExiledCostCardSnapshot(), false,
                 entry.isPutCounterCostPaid(), entry.isBeholdCostPaid(), entry.getTriggeringPermanentId(),
                 entry.getTriggeringPermanentPowerAtTrigger(), entry.getSacrificedCard() != null
                         ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot(),

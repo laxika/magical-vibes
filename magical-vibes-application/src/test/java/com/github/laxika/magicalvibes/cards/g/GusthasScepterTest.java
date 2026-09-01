@@ -84,6 +84,9 @@ class GusthasScepterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleCardChosen(player1, 0);
+
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards)
                 .anyMatch(e -> e.card().getName().equals("Grizzly Bears")
@@ -173,6 +176,7 @@ class GusthasScepterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castInstant(player2, 0, scepter.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.exiledCards).noneMatch(e -> scepter.getId().equals(e.sourcePermanentId()));
@@ -194,6 +198,8 @@ class GusthasScepterTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(scepter.getId()));
+        harness.passBothPriorities();
+
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.exiledCards).noneMatch(e -> scepter.getId().equals(e.sourcePermanentId()));
     }

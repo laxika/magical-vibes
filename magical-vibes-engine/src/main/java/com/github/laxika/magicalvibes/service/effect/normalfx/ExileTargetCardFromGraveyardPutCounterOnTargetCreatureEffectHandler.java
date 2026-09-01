@@ -31,7 +31,10 @@ public class ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exileEffect = (ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect) effect;
-        List<UUID> graveyardTargets = entry.targetsForGroup(exileEffect.graveyardTargetGroup());
+        List<UUID> graveyardTargets = entry.getTargetCardIdsForEffect(effect);
+        if (graveyardTargets.isEmpty()) {
+            graveyardTargets = entry.targetsForGroup(exileEffect.graveyardTargetGroup());
+        }
         if (graveyardTargets.isEmpty()) {
             return;
         }
@@ -46,11 +49,15 @@ public class ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffectHandler
             return;
         }
 
-        List<UUID> creatureTargets = entry.targetsForGroup(exileEffect.creatureTargetGroup());
-        if (creatureTargets.isEmpty()) {
+        UUID creatureTargetId = entry.getTargetId();
+        if (creatureTargetId == null) {
+            List<UUID> creatureTargets = entry.targetsForGroup(exileEffect.creatureTargetGroup());
+            creatureTargetId = creatureTargets.isEmpty() ? null : creatureTargets.getFirst();
+        }
+        if (creatureTargetId == null) {
             return;
         }
-        Permanent targetCreature = gameQueryService.findPermanentById(gameData, creatureTargets.getFirst());
+        Permanent targetCreature = gameQueryService.findPermanentById(gameData, creatureTargetId);
         if (targetCreature == null || !gameQueryService.isCreature(gameData, targetCreature)
                 || !entry.getControllerId().equals(gameData.findControllerOf(targetCreature))) {
             return;

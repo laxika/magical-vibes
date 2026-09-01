@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEff
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -119,6 +120,9 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
             GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
             return new Target(copy.filter(), scope, "to exile and copy", 1, 0);
+        }
+        if (effect instanceof ExileTargetCardFromGraveyardAndGainLifeEffect exile) {
+            return new Target(exile.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndMayCastCopyEffect copy) {
             return new Target(copy.filter(), copy.scope(), "to exile", 1, 1);

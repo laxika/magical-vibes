@@ -27,9 +27,6 @@ public class Duplicity extends Card {
         // At the beginning of your end step, discard a card.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
 
-        // When you lose control of this enchantment, put all cards exiled with this enchantment into
-        // their owner's graveyard. Handled as an SBA-timed control watch
-        // (StateBasedActionService.putExiledCardsIntoGraveyardOnControlLoss), which also fires when
-        // the enchantment leaves the battlefield.
+        // The entry effect also registers the control-loss trigger for cards it exiles.
     }
 }

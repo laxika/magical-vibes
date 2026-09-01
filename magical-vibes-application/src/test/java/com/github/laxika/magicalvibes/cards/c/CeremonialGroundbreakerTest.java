@@ -59,6 +59,7 @@ class CeremonialGroundbreakerTest extends BaseCardTest {
     private void castBriefcase() {
         harness.setHand(player1, List.of(new CouriersBriefcase()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();

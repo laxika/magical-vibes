@@ -2395,9 +2395,15 @@ public class SpellCastingService {
                     && (targetId != null || targetIds != null && !targetIds.isEmpty())
                     && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0);
+            boolean suppliedDeclaredTarget = (targetId != null || targetIds != null && !targetIds.isEmpty())
+                    && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
+                    gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0);
             if (suppliedGiftTarget) {
                 // Gift can change the spell's target filter. The selected target is validated
                 // against the gifted filter below after the prepared effects are known.
+            } else if (suppliedDeclaredTarget) {
+                // The generic playability query cannot account for the identity of a target supplied
+                // with the cast. Full target legality is validated below.
             } else if (selectingModalBackFace && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0)) {
                 // The generic hand query admits either face; casting validates the selected face.
@@ -3206,7 +3212,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Must target a " + filterLabel + " in your graveyard");
             }
         } else if (unwrappedNeedsTarget && needsImmediateGraveyardEffectTargeting
-                && !hasGraveyardTargetInTargetIds) {
+                && !hasGraveyardTargetInTargetIds && !targetingSpellOnStack) {
             // Non-ReturnCard graveyard targets with no permanent groups still require a target.
             if (card.getMaxTargets() == 0) {
                 throw new IllegalStateException("Must target a card in a graveyard");
@@ -7927,8 +7933,6 @@ public class SpellCastingService {
             throw new IllegalStateException("Spell requires a target");
         }
 
-        commitExileCast(gameData, playerId, exileCardId, sourceFreeCast,
-                collectionCounterPermission, copy);
         commitExileCast(gameData, playerId, exileCardId, sourceFreeCast && !waterbendCast,
                 collectionCounterPermission, copy);
 

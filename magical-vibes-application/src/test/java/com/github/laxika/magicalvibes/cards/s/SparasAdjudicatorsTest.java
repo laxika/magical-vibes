@@ -66,6 +66,7 @@ class SparasAdjudicatorsTest extends BaseCardTest {
     @Test
     void landGrantEndsWhenSparasAdjudicatorsIsCastFromExile() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         SparasAdjudicators adjudicators = new SparasAdjudicators();
         harness.setHand(player1, List.of(adjudicators));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
@@ -79,7 +80,7 @@ class SparasAdjudicatorsTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
         land.untap();
 
-        harness.castFromExile(player1, adjudicators.getId());
+        harness.castFromExile(player1, adjudicators.getId(), target.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

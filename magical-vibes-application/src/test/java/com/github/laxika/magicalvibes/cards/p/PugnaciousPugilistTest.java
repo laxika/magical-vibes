@@ -74,6 +74,7 @@ class PugnaciousPugilistTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent pugilist = findPermanent(player1, "Pugnacious Pugilist");
         assertThat(gqs.hasKeyword(gd, pugilist, Keyword.HASTE)).isTrue();

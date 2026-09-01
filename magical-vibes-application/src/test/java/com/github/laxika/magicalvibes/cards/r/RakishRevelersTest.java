@@ -27,6 +27,7 @@ class RakishRevelersTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent citizen = findPermanent(player1, "Citizen");
         assertThat(citizen.getEffectivePower()).isEqualTo(1);

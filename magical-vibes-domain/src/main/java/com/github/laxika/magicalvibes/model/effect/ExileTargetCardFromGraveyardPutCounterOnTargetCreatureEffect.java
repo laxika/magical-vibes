@@ -15,7 +15,6 @@ public record ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCards(
-                null, GraveyardSearchScope.ALL_GRAVEYARDS));
+        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.ALL_GRAVEYARDS));
     }
 }

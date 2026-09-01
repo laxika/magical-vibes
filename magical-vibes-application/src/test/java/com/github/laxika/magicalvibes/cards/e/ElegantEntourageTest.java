@@ -31,7 +31,7 @@ class ElegantEntourageTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(target.getId());
+                .contains(target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

@@ -21,7 +21,7 @@ public class PrimitiveJustice extends Card {
         // and the target group scales with it.
         addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{1}{R}", "{1}{G}")));
 
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
         ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());

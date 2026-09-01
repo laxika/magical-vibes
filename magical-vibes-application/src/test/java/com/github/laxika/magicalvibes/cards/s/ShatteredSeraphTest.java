@@ -26,6 +26,7 @@ class ShatteredSeraphTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
     }

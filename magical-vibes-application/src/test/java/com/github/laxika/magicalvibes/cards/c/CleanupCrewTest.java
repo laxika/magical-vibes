@@ -49,7 +49,7 @@ class CleanupCrewTest extends BaseCardTest {
 
         castCleanupCrew();
         harness.handleListChoice(player1, "Exile target card from a graveyard.");
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
         harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player2, "Shock");

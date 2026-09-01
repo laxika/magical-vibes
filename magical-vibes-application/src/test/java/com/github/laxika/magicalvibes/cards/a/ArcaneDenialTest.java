@@ -69,6 +69,7 @@ class ArcaneDenialTest extends BaseCardTest {
     void upkeepDraws() {
         counterHomeGuard();
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         // The caster's draw is automatic; the countered spell's controller chooses.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -86,6 +87,7 @@ class ArcaneDenialTest extends BaseCardTest {
     void mayDeclineToDraw() {
         counterHomeGuard();
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.handleXValueChosen(player1, 0);
@@ -120,6 +122,7 @@ class ArcaneDenialTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(2);
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
 

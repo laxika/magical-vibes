@@ -77,6 +77,8 @@ class GadwicksFirstDuelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);

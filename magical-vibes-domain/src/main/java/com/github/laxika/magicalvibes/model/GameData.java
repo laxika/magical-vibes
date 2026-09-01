@@ -375,7 +375,8 @@ public class GameData {
      * controller changes or the permanent leaves the battlefield, every card exiled with it is put
      * into its owner's graveyard ("When you lose control of this artifact, ...").
      */
-    public final Map<UUID, UUID> exiledCardsToGraveyardOnControlLossWatch = new ConcurrentHashMap<>();
+    public final Map<UUID, ExiledCardsControlLossWatch> exiledCardsToGraveyardOnControlLossWatch =
+            new ConcurrentHashMap<>();
     /**
      * Debt of Loyalty: permanent id → the player who gains control of it because its regeneration
      * shield was just spent. Regeneration happens inside the state-based-action sweep, which is

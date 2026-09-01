@@ -64,6 +64,7 @@ class LagrellaTheMagpieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, lagrellaId);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent returnedOwnBear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))

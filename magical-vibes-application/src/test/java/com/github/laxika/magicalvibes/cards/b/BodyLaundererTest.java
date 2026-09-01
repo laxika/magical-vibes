@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,12 @@ class BodyLaundererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        int grizzlyBearsIndex = gd.playerHands.get(player1.getId()).indexOf(
+                gd.playerHands.get(player1.getId()).stream()
+                        .filter(card -> card.getName().equals("Grizzly Bears"))
+                        .findFirst()
+                        .orElseThrow());
+        harness.handleCardChosen(player1, grizzlyBearsIndex);
 
         assertThat(bodyLaunderer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -84,6 +90,9 @@ class BodyLaundererTest extends BaseCardTest {
     }
 
     private void destroyBodyLaunderer() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.castSorcery(player2, 0, 0);

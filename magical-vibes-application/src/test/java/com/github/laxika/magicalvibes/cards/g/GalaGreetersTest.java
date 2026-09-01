@@ -87,7 +87,9 @@ class GalaGreetersTest extends BaseCardTest {
     private void castCreatureAndChoose(String mode) {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, mode);
+        harness.passBothPriorities();
     }
 }

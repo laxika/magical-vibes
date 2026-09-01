@@ -1439,8 +1439,19 @@ public class PredicateEvaluationService {
                                 || card.getId().equals(originalCardId));
             }
             case PermanentCrewedBySourceThisTurnPredicate ignored -> {
+                if (gameData != null && filterContext != null
+                        && filterContext.sourcePermanentId() != null) {
+                    yield gameData.creaturesThatCrewedPermanentThisTurn
+                            .getOrDefault(filterContext.sourcePermanentId(), Set.of())
+                            .contains(permanent.getId());
+                }
                 Permanent sourcePermanent = filterContext == null
                         ? null : filterContext.sourcePermanentSnapshot();
+                if (sourcePermanent == null && gameData != null && filterContext != null
+                        && filterContext.sourcePermanentId() != null) {
+                    sourcePermanent = gameQueryService.findPermanentById(
+                            gameData, filterContext.sourcePermanentId());
+                }
                 yield sourcePermanent != null
                         && sourcePermanent.getCreaturesThatCrewedThisTurn().contains(permanent.getId());
             }

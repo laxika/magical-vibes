@@ -31,7 +31,7 @@ class CapennaExpressTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, express)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(treasure);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(treasure.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(treasure.getCard());
     }
 
     @Test

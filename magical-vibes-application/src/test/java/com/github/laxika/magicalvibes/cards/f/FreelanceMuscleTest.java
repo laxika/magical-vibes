@@ -27,8 +27,8 @@ class FreelanceMuscleTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, muscle)).isEqualTo(10);
-        assertThat(gqs.getEffectiveToughness(gd, muscle)).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, muscle)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, muscle)).isEqualTo(12);
     }
 
     @Test
@@ -43,8 +43,8 @@ class FreelanceMuscleTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(gqs.getEffectivePower(gd, muscle)).isEqualTo(9);
-        assertThat(gqs.getEffectiveToughness(gd, muscle)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, muscle)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, muscle)).isEqualTo(12);
     }
 
     @Test
@@ -67,7 +67,7 @@ class FreelanceMuscleTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(gqs.getEffectivePower(gd, muscle)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, muscle)).isEqualTo(12);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();

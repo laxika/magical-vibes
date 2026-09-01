@@ -90,5 +90,6 @@ class EvelynTheCovetousTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

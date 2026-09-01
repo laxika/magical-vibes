@@ -1372,8 +1372,10 @@ public class MayPenaltyChoiceHandlerService {
         log.info("Game {} - {} chooses {} for {} (Misfortune)", gameData.id, opponentName,
                 accepted ? "counters-and-life" : "shrink-and-burn", controllerName);
 
-        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
-                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0));
+        StackEntry continuation = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0);
+        continuation.setSpellDamageContinuation(true);
+        gameData.stack.add(continuation);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

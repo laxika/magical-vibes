@@ -20,7 +20,7 @@ class VoiceOfTheVerminTest extends BaseCardTest {
     @Test
     @DisplayName("Enters with a shield counter")
     void entersWithShieldCounter() {
-        Permanent voice = addCreatureReady(player1, new VoiceOfTheVermin());
+        Permanent voice = harness.enterBattlefieldAndReturn(player1, new VoiceOfTheVermin());
 
         assertThat(voice.getCounterCount(CounterType.SHIELD)).isOne();
     }

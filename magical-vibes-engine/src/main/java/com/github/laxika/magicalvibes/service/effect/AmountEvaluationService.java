@@ -1884,7 +1884,9 @@ public class AmountEvaluationService {
 
     private int imprintedCardManaValue(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
-        Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
+        Card imprinted = ctx.stackEntry() != null && ctx.stackEntry().getExiledCostCardSnapshot() != null
+                ? ctx.stackEntry().getExiledCostCardSnapshot()
+                : gameData.getImprintedCard(ctx.sourcePermanent().getCard());
         return imprinted == null ? 0 : imprinted.getManaValue();
     }
 

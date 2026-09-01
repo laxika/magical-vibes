@@ -19,14 +19,14 @@ class FalcoSparaPactweaverTest extends BaseCardTest {
 
     @Test
     void entersWithShieldCounter() {
-        Permanent falco = harness.addToBattlefieldAndReturn(player1, new FalcoSparaPactweaver());
+        Permanent falco = harness.enterBattlefieldAndReturn(player1, new FalcoSparaPactweaver());
 
         assertThat(falco.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
     }
 
     @Test
     void castsSpellFromLibraryTopByRemovingCounterFromCreature() {
-        Permanent falco = harness.addToBattlefieldAndReturn(player1, new FalcoSparaPactweaver());
+        Permanent falco = harness.enterBattlefieldAndReturn(player1, new FalcoSparaPactweaver());
         Card bears = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);

@@ -21,15 +21,14 @@ public class Martyrdom extends Card {
     public Martyrdom() {
         // Until end of turn, target creature you control gains "{0}: The next 1 damage that would be
         // dealt to target creature, planeswalker, or player this turn is dealt to this creature
-        // instead." Only you may activate this ability — the grant lasts only until end of turn and
-        // goes on a creature you control, whose controller is the only legal activator by default.
+        // instead." The granted ability remembers the spell's controller as its only legal activator.
         ActivatedAbility grantedAbility = new ActivatedAbility(
                 false,
                 "{0}",
                 List.of(new RedirectNextDamageEffect(RedirectRole.TARGET, RedirectRole.SOURCE_PERMANENT,
                         1, TargetPredicates.anyTarget())),
                 "{0}: The next 1 damage that would be dealt to target creature, planeswalker, or player this turn is dealt to this creature instead."
-        );
+        ).withActivatableOnlyByGrantingPlayer();
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.SPELL, new GrantActivatedAbilityEffect(
                 grantedAbility,

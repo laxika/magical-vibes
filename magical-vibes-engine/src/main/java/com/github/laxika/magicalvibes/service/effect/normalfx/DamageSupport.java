@@ -930,6 +930,15 @@ public class DamageSupport {
             if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)
                     && !(targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
                     && gameQueryService.isCreature(gameData, targetPermanent))) {
+                if (!cantBeRedirected) {
+                    UUID sourcePermanentId = entry.getSourcePermanentId();
+                    rawDamage = damagePreventionService.applyCreatureRedirectShields(
+                            gameData, targetPermanent.getId(), sourcePermanentId, rawDamage);
+                    processSourceRedirectDamage(gameData);
+                    if (rawDamage <= 0) {
+                        return 0;
+                    }
+                }
                 Permanent damageSourcePermanent = entry.getSourcePermanentId() == null
                         ? null
                         : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -1573,7 +1582,8 @@ public class DamageSupport {
             return;
         }
         if (entry.getEntryType() != StackEntryType.INSTANT_SPELL
-                && entry.getEntryType() != StackEntryType.SORCERY_SPELL) {
+                && entry.getEntryType() != StackEntryType.SORCERY_SPELL
+                && !entry.isSpellDamageContinuation()) {
             return;
         }
         gameData.recordRedSpellDamageToPlayer(playerId, entry.getControllerId());

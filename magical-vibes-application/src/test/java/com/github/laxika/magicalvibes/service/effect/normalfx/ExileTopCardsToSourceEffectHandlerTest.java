@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -141,7 +142,8 @@ class ExileTopCardsToSourceEffectHandlerTest {
 
         handler.resolve(gd, entry(sourceCard, effect, null, source.getId()), effect);
 
-        assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).containsEntry(source.getId(), player1Id);
+        assertThat(gd.exiledCardsToGraveyardOnControlLossWatch)
+                .containsEntry(source.getId(), new ExiledCardsControlLossWatch(player1Id, sourceCard));
     }
 
     @Test

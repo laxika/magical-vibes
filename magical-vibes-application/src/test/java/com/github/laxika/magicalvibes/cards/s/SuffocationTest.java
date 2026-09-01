@@ -67,6 +67,7 @@ class SuffocationTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);

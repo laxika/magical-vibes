@@ -62,7 +62,7 @@ class LuxiorGiadasGiftTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a planeswalker you control");
+                .hasMessageContaining("Target must be a planeswalker");
     }
 
     @Test

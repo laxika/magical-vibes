@@ -23,11 +23,12 @@ class GetawayCarTest extends BaseCardTest {
 
         crewCar(player1, crewer);
         declareAttackers(List.of(0));
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(crewer.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(crewer.getId());
 
         harness.handlePermanentChosen(player1, crewer.getId());
         harness.passBothPriorities();

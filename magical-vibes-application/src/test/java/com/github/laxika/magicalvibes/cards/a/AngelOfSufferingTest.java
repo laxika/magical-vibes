@@ -62,8 +62,8 @@ class AngelOfSufferingTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 20);
-        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
     }
 
     @Test

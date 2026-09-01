@@ -191,6 +191,8 @@ public class StackEntry {
     @Setter private CardSubtype beholdChosenSubtype;
     @Setter private CardSubtype chosenCreatureType;
     @Setter private Card damageSourceCard;
+    /** Whether a continuation entry still deals damage as part of resolving its source spell. */
+    @Setter private boolean spellDamageContinuation;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
     /**
@@ -654,6 +656,7 @@ public class StackEntry {
         this.beholdChosenSubtype = source.beholdChosenSubtype;
         this.chosenCreatureType = source.chosenCreatureType;
         this.damageSourceCard = source.damageSourceCard;
+        this.spellDamageContinuation = source.spellDamageContinuation;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;

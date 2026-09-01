@@ -54,7 +54,7 @@ public final class BlockLegalityContext {
      */
     final Map<UUID, List<Permanent>> attachedByHostId;
 
-    /** Union of printed card subtypes on the defender battlefield, for landwalk checks. */
+    /** Union of card subtypes and effective basic land types on the defender battlefield. */
     final Set<CardSubtype> defenderCardSubtypes;
 
     /** Landwalk keywords specifically ignored by board-wide static effects. */

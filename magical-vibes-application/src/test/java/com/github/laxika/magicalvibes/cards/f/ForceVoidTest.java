@@ -92,6 +92,7 @@ class ForceVoidTest extends BaseCardTest {
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gd.activePlayerId = player1.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore + 1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckBefore - 1);

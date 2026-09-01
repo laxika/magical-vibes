@@ -750,9 +750,11 @@ public class ValidTargetService {
             }
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) {
-                minTargets = graveyardEffect.count();
+                minTargets = graveyardEffect.allowZeroTargets() ? 0 : graveyardEffect.count();
                 maxTargets = graveyardEffect.count();
-                prompt = "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
+                prompt = graveyardEffect.allowZeroTargets()
+                        ? "Select up to " + graveyardEffect.count() + " target cards from an opponent's graveyard"
+                        : "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
                 break;
             }
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
@@ -765,7 +767,7 @@ public class ValidTargetService {
             // "Exile up to N target cards from a single graveyard" (Rag Dealer): "up to" allows zero
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
-                    && graveyardEffect.count() > 1) {
+                    && (graveyardEffect.count() > 1 || graveyardEffect.allowZeroTargets())) {
                 minTargets = 0;
                 maxTargets = graveyardEffect.count();
                 prompt = "Select up to " + graveyardEffect.count() + " target cards from a single graveyard";

@@ -4750,8 +4750,10 @@ public class TriggerCollectionService {
         UUID controllerId = tappedPermanentControllerId;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            List<EffectRegistration> registrations = new ArrayList<>(
-                    perm.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED));
+            List<EffectRegistration> registrations = gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                    ? new ArrayList<>()
+                    : new ArrayList<>(perm.getCard().getEffectRegistrations(
+                    EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED));
             perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
             perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()

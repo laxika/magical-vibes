@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -499,45 +500,40 @@ public class StateBasedActionService {
         return !toSacrifice.isEmpty();
     }
 
-    /**
-     * CR 704.5k — the world rule: if two or more permanents have the supertype world, all except the
-     * one that has had it for the shortest amount of time are put into their owners' graveyards; on a
-     * tie for the shortest, all of them are. {@link Permanent#getTimestamp()} (CR 613.7, stamped on
-     * entry) is the "how long" ordering, so the newest world permanent is the one with the highest
-     * timestamp and it survives only when it holds that timestamp alone.
-     */
-    /**
-     * Gustha's Scepter: "When you lose control of this artifact, put all cards exiled with this
-     * artifact into their owner's graveyard." A player loses control both when another player gains
-     * control of it and when it leaves the battlefield, so both cases empty the pile. Modeled as an
-     * SBA-timed check like {@link #sacrificeCreaturesOnSeraphControlLoss} — the engine has no
-     * control-change triggered-ability slot.
-     */
+    /** Queues the registered control-loss ability when its watched permanent changes controller or leaves. */
     private boolean putExiledCardsIntoGraveyardOnControlLoss(GameData gameData) {
         if (gameData.exiledCardsToGraveyardOnControlLossWatch.isEmpty()) return false;
 
-        boolean anyMoved = false;
+        boolean anyQueued = false;
         for (UUID permanentId : new ArrayList<>(gameData.exiledCardsToGraveyardOnControlLossWatch.keySet())) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            UUID previousController = gameData.exiledCardsToGraveyardOnControlLossWatch.get(permanentId);
+            var watch = gameData.exiledCardsToGraveyardOnControlLossWatch.get(permanentId);
+            UUID previousController = watch.controllerId();
             UUID currentController = permanent != null ? gameData.findControllerOf(permanent) : null;
-            if (permanent != null && previousController != null && previousController.equals(currentController)) {
+            if (permanent != null && previousController.equals(currentController)) {
                 continue;
             }
 
-            for (var exiled : new ArrayList<>(gameData.exiledCards)) {
-                if (!permanentId.equals(exiled.sourcePermanentId())) continue;
-                Card card = exiled.card();
-                gameData.removeFromExile(card.getId());
-                graveyardService.addCardToGraveyard(gameData, exiled.ownerId(), card);
-                gameLogService.append(gameData, GameLog.cardThen(card,
-                        " is put into its owner's graveyard (its controller lost control of the permanent that exiled it)."));
-                log.info("Game {} - {} put into graveyard on exiler control loss", gameData.id, card.getName());
-                anyMoved = true;
+            boolean hasLinkedCards = gameData.exiledCards.stream()
+                    .anyMatch(exiled -> permanentId.equals(exiled.sourcePermanentId()));
+            if (hasLinkedCards) {
+                Card sourceCard = watch.sourceCard();
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        previousController,
+                        sourceCard.getName() + "'s control-loss ability",
+                        List.of(new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect()),
+                        null,
+                        permanentId);
+                trigger.setNonTargeting(true);
+                gameData.enqueueTrigger(trigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+                anyQueued = true;
             }
             gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
         }
-        return anyMoved;
+        return anyQueued;
     }
 
     private boolean applyWorldRule(GameData gameData) {

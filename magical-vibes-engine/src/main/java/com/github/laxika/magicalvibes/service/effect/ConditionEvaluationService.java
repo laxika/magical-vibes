@@ -3011,7 +3011,9 @@ public class ConditionEvaluationService {
     private boolean imprintedCardMatches(GameData gameData, ConditionContext ctx, ImprintedCardMatches condition) {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
-        Card imprintedCard = gameData.getImprintedCard(source.getCard());
+        Card imprintedCard = ctx.triggeringCard() != null
+                ? ctx.triggeringCard()
+                : gameData.getImprintedCard(source.getCard());
         boolean discardedCard = "discarded card".equals(condition.subject());
         return imprintedCard != null
                 && (discardedCard || gameData.findExiledCard(imprintedCard.getId()) != null)

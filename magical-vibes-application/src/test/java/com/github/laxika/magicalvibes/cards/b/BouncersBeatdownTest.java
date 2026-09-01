@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BouncersBeatdown.class, GrizzlyBears.class, HillGiant.class, ScatheZombies.class})
+@CardUsed({BouncersBeatdown.class, CrawWurm.class, GrizzlyBears.class, HillGiant.class, ScatheZombies.class})
 class BouncersBeatdownTest extends BaseCardTest {
 
     @Test
@@ -51,7 +52,7 @@ class BouncersBeatdownTest extends BaseCardTest {
     @DisplayName("Deals damage equal to the greatest power among creatures you control")
     void dealsGreatestControlledPowerAsDamage() {
         harness.addToBattlefield(player1, new HillGiant());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
         harness.setHand(player1, List.of(new BouncersBeatdown()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -2033,9 +2033,14 @@ public class AbilityActivationService {
             recordHandAbilityActivationUse(gameData, card, idx);
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
-            resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
-            gameData.priorityPassedBy.clear();
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            if (isManaAbility(ability, abilityEffects)) {
+                resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
+                gameData.priorityPassedBy.clear();
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
+            } else {
+                completeHandAbilityActivation(gameData, player, card, ability, idx, effectiveXValue,
+                        targetId, stackSizeBeforeCosts);
+            }
             return;
         }
         completeHandAbilityActivationAfterCosts(gameData, player, card, ability, idx, effectiveXValue,
@@ -3446,7 +3451,7 @@ public class AbilityActivationService {
                 effectiveXValue, damageAssignments);
 
         if (permanentChoiceCosts.isEmpty()
-                && ability.getTargetFilter() != null && ability.getMinTargets() > 0
+                && ability.getTargetFilter() != null && ability.getEffectiveMinTargets(effectiveXValue) > 0
                 && targetId == null && (targetIds == null || targetIds.isEmpty())) {
             throw new IllegalStateException("Ability requires a target");
         }
@@ -3919,11 +3924,14 @@ public class AbilityActivationService {
             }
         }
 
+        Card exiledGraveyardCardSnapshot = null;
         if (exileGraveyardCost != null) {
             if (exileGraveyardCost.anyGraveyard()) {
-                payAnyGraveyardExileCost(gameData, player, exileGraveyardCost, exileAnyGraveyardCardIds);
+                exiledGraveyardCardSnapshot = payAnyGraveyardExileCost(
+                        gameData, player, exileGraveyardCost, exileAnyGraveyardCardIds);
             } else {
-                payGraveyardExileCost(gameData, player, exileGraveyardCost, exileGraveyardCardIndex);
+                exiledGraveyardCardSnapshot = payGraveyardExileCost(
+                        gameData, player, exileGraveyardCost, exileGraveyardCardIndex);
             }
         }
 
@@ -4235,9 +4243,9 @@ public class AbilityActivationService {
         }
 
         // Pay exile-top-of-library cost (e.g. Royal Herbalist)
-        if (exileTopLibraryCost.isPresent()) {
-            payExileTopOfLibraryCost(gameData, playerId, permanent, exileTopLibraryCost.get());
-        }
+        Card exiledTopCardSnapshot = exileTopLibraryCost
+                .map(cost -> payExileTopOfLibraryCost(gameData, playerId, permanent, cost))
+                .orElse(null);
 
         // Pay discard-your-hand cost
         if (discardHandCost) {
@@ -4429,7 +4437,8 @@ public class AbilityActivationService {
         Zone resolutionTargetZone = targetZone;
         completeActivationAndRecord(gameData, player, permanent, ability, activationEffects,
                 effectiveXValue, resolutionTargetId, resolutionTargetZone, nonTargeting, effectiveIndex,
-                targetIds, damageAssignments, discardedCardSnapshot);
+                targetIds, damageAssignments, discardedCardSnapshot,
+                exiledTopCardSnapshot != null ? exiledTopCardSnapshot : exiledGraveyardCardSnapshot);
     }
 
     private void validatePreventDividedDamageAssignments(GameData gameData, UUID playerId,
@@ -5231,6 +5240,11 @@ public class AbilityActivationService {
             throw new IllegalStateException("Only your opponents may activate this ability");
         }
 
+        if (ability.isActivatableOnlyByGrantingPlayer()
+                && !playerId.equals(ability.getGrantingPlayerId())) {
+            throw new IllegalStateException("Only the player who granted this ability may activate it");
+        }
+
         // Pithing Needle check: block non-mana activated abilities of the chosen name
         validateNotBlockedByPithingNeedle(gameData, permanent, ability);
 
@@ -5797,6 +5811,19 @@ public class AbilityActivationService {
         activatedAbilityExecutionService.completeActivationAfterCosts(
                 gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
                 nonTargeting, targetIds, damageAssignments, discardedCardSnapshot);
+    }
+
+    private void completeActivationAndRecord(GameData gameData, Player player, Permanent permanent,
+                                              ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                              int xValue, UUID targetId, Zone targetZone,
+                                              boolean nonTargeting, int abilityIndex, List<UUID> targetIds,
+                                              Map<UUID, Integer> damageAssignments, Card discardedCardSnapshot,
+                                              Card exiledCostCardSnapshot) {
+        recordAbilityActivationUse(gameData, permanent, abilityIndex);
+        activatedAbilityExecutionService.completeActivationAfterCosts(
+                gameData, player, permanent, ability, abilityEffects, xValue, targetId, targetZone,
+                nonTargeting, targetIds, damageAssignments, List.of(), discardedCardSnapshot,
+                exiledCostCardSnapshot);
     }
 
     public void handleCraftMaterialChosen(GameData gameData, Player player,
@@ -7118,16 +7145,18 @@ public class AbilityActivationService {
         }
     }
 
-    private void payExileTopOfLibraryCost(GameData gameData, UUID playerId, Permanent permanent,
+    private Card payExileTopOfLibraryCost(GameData gameData, UUID playerId, Permanent permanent,
                                           ExileTopCardOfLibraryCost cost) {
         int count = cost.count();
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
+        Card lastExiledCard = null;
         for (int i = 0; i < count; i++) {
             if (deck == null || deck.isEmpty()) {
                 throw new IllegalStateException("Not enough cards in library to exile (need " + count + ")");
             }
             Card topCard = deck.removeFirst();
+            lastExiledCard = topCard;
             exileService.exileCard(gameData, playerId, topCard);
             // Remember the exiled card so the ability's effect can look at it at resolution
             // (Storm Elemental's "if the exiled card is a snow land").
@@ -7139,6 +7168,7 @@ public class AbilityActivationService {
             log.info("Game {} - {} exiles {} from library top as activation cost",
                     gameData.id, playerName, topCard.getName());
         }
+        return lastExiledCard;
     }
 
     private void payDiscardHandCost(GameData gameData, Player player) {
@@ -7740,7 +7770,7 @@ public class AbilityActivationService {
                 "Choose a " + typeName + "card from your graveyard to exile as an activation cost."));
     }
 
-    private void payGraveyardExileCost(GameData gameData, Player player, ExileCardFromGraveyardCost cost,
+    private Card payGraveyardExileCost(GameData gameData, Player player, ExileCardFromGraveyardCost cost,
                                        Integer exileCardIndex) {
         if (exileCardIndex == null) {
             throw new IllegalStateException("Must choose a card to exile from graveyard");
@@ -7768,9 +7798,10 @@ public class AbilityActivationService {
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles " , exiled, " from graveyard as an activation cost."));
         log.info("Game {} - {} exiles {} from graveyard as activation cost", gameData.id, player.getUsername(), exiled.getName());
+        return exiled;
     }
 
-    private void payAnyGraveyardExileCost(GameData gameData, Player player,
+    private Card payAnyGraveyardExileCost(GameData gameData, Player player,
                                            ExileCardFromGraveyardCost cost,
                                            List<UUID> selectedCardIds) {
         if (selectedCardIds == null || selectedCardIds.size() != 1) {
@@ -7792,6 +7823,7 @@ public class AbilityActivationService {
                 " from graveyard as an activation cost."));
         log.info("Game {} - {} exiles {} from a graveyard as activation cost",
                 gameData.id, player.getUsername(), selected.getName());
+        return selected;
     }
 
     private void clearPendingAbilityActivation(GameData gameData) {

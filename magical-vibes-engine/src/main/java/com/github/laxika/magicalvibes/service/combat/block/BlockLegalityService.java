@@ -151,6 +151,9 @@ public class BlockLegalityService {
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
             defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
+            if (gameQueryService.isLand(gameData, defender)) {
+                defenderCardSubtypes.addAll(gameQueryService.effectiveBasicLandTypes(gameData, defender));
+            }
         }
         return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
                 globalAttackOrBlockRestrictions, tappedBlockPermissions, attachedByHostId,

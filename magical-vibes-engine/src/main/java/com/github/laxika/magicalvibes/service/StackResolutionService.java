@@ -553,9 +553,19 @@ public class StackResolutionService {
             logEnterBattlefield(gameData, enteredCard, controllerId);
         }
 
+        NumberChoiceEffect numberChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(NumberChoiceEffect.class::isInstance)
+                .map(NumberChoiceEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (numberChoice != null && !numberChoice.chooseRandomly()) {
+            playerInputService.beginNumberChoice(gameData, controllerId, perm.getId(),
+                    numberChoice.minNumber(), numberChoice.maxNumber());
+        }
+
         // "As enters" phylactery counter placement — replacement effect (MTG Rule 614.1c),
         // happens as part of the entering process before state-based actions are checked.
-        if (!perm.isFaceDown()) {
+        if (!perm.isFaceDown() && !gameData.interaction.isAwaitingInput()) {
             handlePhylacteryCounterPlacement(gameData, controllerId, enteredCard, entry.getTargetId());
             int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
             handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);

@@ -2217,7 +2217,7 @@ public class StepTriggerService {
                 ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
         List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
                 gameData, playerTargetFilter,
-                new ArrayList<>(gameData.orderedPlayerIds), trigger.controllerId(),
+                new ArrayList<>(gameData.orderedPlayerIds), trigger.choosingPlayerId(),
                 trigger.sourcePermanentId());
 
         if (trigger.anyNumberTargets()) {
@@ -4934,7 +4934,6 @@ public class StepTriggerService {
                                     gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
                             continue;
                         }
-                        innerEffect = conditional.wrapped();
                     }
 
                     if (innerEffect instanceof MayEffect may) {

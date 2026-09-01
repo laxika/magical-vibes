@@ -31,8 +31,10 @@ class NightClubberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test

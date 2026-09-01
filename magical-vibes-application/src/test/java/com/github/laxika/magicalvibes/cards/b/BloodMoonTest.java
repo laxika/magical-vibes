@@ -90,11 +90,10 @@ class BloodMoonTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
+
+        harness.passBothPriorities();
         harness.assertLife(player1, 20);
     }
 

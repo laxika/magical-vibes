@@ -298,7 +298,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
                     3, null, null, false);
 
-            verify(lifeSupport).applyLifeLoss(gameData, player1Id, 3, "Krumar Initiate");
+            verify(lifeSupport).applyLifePayment(gameData, player1Id, 3, "Krumar Initiate");
             assertThat(gameData.stack).hasSize(1);
         }
 

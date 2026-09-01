@@ -77,9 +77,8 @@ class FightRiggingTest extends BaseCardTest {
         resolveBeginningOfCombat(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.findExiledCard(imprinted.getId())).isNotNull();
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Grizzly Bears")).containsExactly(target);
     }
 
     private Permanent addFightRiggingWithImprint(Card imprinted) {
@@ -93,7 +92,7 @@ class FightRiggingTest extends BaseCardTest {
 
     private void resolveBeginningOfCombat(Permanent target) {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

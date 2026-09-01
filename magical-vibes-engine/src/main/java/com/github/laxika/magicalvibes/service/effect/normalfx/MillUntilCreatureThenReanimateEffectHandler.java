@@ -67,16 +67,20 @@ public class MillUntilCreatureThenReanimateEffectHandler implements NormalEffect
      */
     private Card millUntilCreature(GameData gameData, UUID targetPlayerId, int max) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        for (int i = 0; i < max; i++) {
+        int cardsPutIntoGraveyard = 0;
+        while (cardsPutIntoGraveyard < max) {
             if (deck == null || deck.isEmpty()) {
                 return null;
             }
-            Card milled = deck.getFirst();
-            graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
-            if (milled.hasType(CardType.CREATURE) && graveyard != null && graveyard.contains(milled)) {
-                return milled;
+            List<Card> milled = graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
+            Card creature = milled.stream()
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .findFirst()
+                    .orElse(null);
+            if (creature != null) {
+                return creature;
             }
+            cardsPutIntoGraveyard += milled.stream().filter(card -> !card.isToken()).count();
         }
         return null;
     }
