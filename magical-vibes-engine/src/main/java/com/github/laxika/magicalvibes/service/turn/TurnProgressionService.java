@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
+import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedBeginningOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageToken;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
@@ -296,6 +298,7 @@ public class TurnProgressionService {
                     p.setBlockedThisCombat(false);
                 });
                 gameData.combatBlockOpponentIdsThisCombat.clear();
+                processTargetCreatureMustAttackNextCombat(gameData);
                 if (additionalCombatPhase) {
                     processAdditionalCombatBeginningEffects(gameData);
                 }
@@ -325,7 +328,7 @@ public class TurnProgressionService {
                     return;
                 }
                 // CR 514.2: Remove damage and end "until end of turn" effects
-                turnCleanupService.applyCleanupResets(gameData);
+                applyCleanupResets(gameData);
             }
         } else {
             advanceTurn(gameData);
@@ -385,6 +388,26 @@ public class TurnProgressionService {
             ));
             gameLogService.append(gameData,
                     GameLog.cardThen(pending.sourceCard(), "'s additional combat trigger triggers."));
+        }
+    }
+
+    private void processTargetCreatureMustAttackNextCombat(GameData gameData) {
+        List<TargetCreatureMustAttackNextCombat> pendingActions =
+                gameData.drainDelayedActions(TargetCreatureMustAttackNextCombat.class);
+        for (TargetCreatureMustAttackNextCombat pending : pendingActions) {
+            Permanent target = findPermanentOnAnyBattlefield(gameData, pending.permanentId());
+            if (target == null) {
+                continue;
+            }
+            UUID controllerId = gameData.findControllerOf(target);
+            if (!gameData.activePlayerId.equals(controllerId)) {
+                gameData.queueDelayedAction(pending);
+                continue;
+            }
+            target.setMustAttackThisCombat(true);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(target.getCard(), " must attack this combat if able."));
+            log.info("Game {} - {} must attack this combat if able", gameData.id, target.getCard().getName());
         }
     }
 
@@ -552,6 +575,7 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.cardPutIntoExileThisTurn = false;
         gameData.turnsTakenByPlayer.merge(nextActive, 1, Integer::sum);
         gameData.currentStep = TurnStep.first();
         gameData.additionalUpkeepsRemaining = 0;
@@ -668,6 +692,7 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
         gameData.clearDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class);
         gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
+        gameData.clearDelayedActions(DelayedBeginningOfCombatTrigger.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageSourcesWithLegendaryThisTurn.clear();
@@ -691,6 +716,7 @@ public class TurnProgressionService {
         List<Card> handAtTurnStart = gameData.playerHands.get(nextActive);
         gameData.handSizeAtTurnStart.put(nextActive, handAtTurnStart == null ? 0 : handAtTurnStart.size());
         gameData.permanentsDealtDamageThisTurn.clear();
+        gameData.permanentsDealtNoncombatDamageThisTurn.clear();
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.damageDealtToPermanentsBySourceThisTurn.clear();
         gameData.damageSourceNamesThisTurn.clear();
@@ -941,6 +967,7 @@ public class TurnProgressionService {
     }
 
     public void applyCleanupResets(GameData gameData) {
+        stepTriggerService.handleCleanupTriggers(gameData);
         turnCleanupService.applyCleanupResets(gameData);
     }
 

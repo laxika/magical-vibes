@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MaralenFaeAscendant.class, ElvishWarrior.class, GrizzlyBears.class, Opt.class})
 class MaralenFaeAscendantTest extends BaseCardTest {
 
     @Test
@@ -33,7 +35,7 @@ class MaralenFaeAscendantTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).containsExactly(player2.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

@@ -160,17 +160,33 @@ public class MayCastHandlerService {
      * library, or stays on top).
      */
     public void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        Card cardToPlay = ability.sourceCard();
-        String playerName = player.getUsername();
-        List<Card> deck = gameData.playerDecks.get(player.getId());
         LookDestination notPlayedDestination = ability.effects().stream()
                 .filter(e -> e instanceof RevealTopCardMayPlayFreeEffect)
                 .map(e -> ((RevealTopCardMayPlayFreeEffect) e).notPlayedDestination())
                 .findFirst().orElse(LookDestination.EXILE);
+        handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability,
+                notPlayedDestination, true);
+    }
+
+    public void handleLookAtTopCardMayPlayLandOrCastFreeChoice(GameData gameData, Player player,
+                                                                boolean accepted,
+                                                                PendingMayAbility ability) {
+        handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability,
+                LookDestination.HAND, false);
+    }
+
+    private void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted,
+                                                     PendingMayAbility ability,
+                                                     LookDestination notPlayedDestination,
+                                                     boolean publiclyRevealed) {
+        Card cardToPlay = ability.sourceCard();
+        String playerName = player.getUsername();
+        List<Card> deck = gameData.playerDecks.get(player.getId());
 
         if (!accepted) {
             switch (notPlayedDestination) {
-                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName);
+                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName,
+                        publiclyRevealed);
                 case EXILE -> exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
                 case BOTTOM_OF_LIBRARY -> bottomTopCardOfLibrary(gameData, deck, cardToPlay, playerName);
                 default -> {
@@ -247,8 +263,7 @@ public class MayCastHandlerService {
                     switch (notPlayedDestination) {
                         case HAND -> {
                             gameData.addCardToHand(player.getId(), cardToPlay);
-                            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
-                                    " can't be cast and is put into " + playerName + "'s hand."));
+                            logCardPutIntoHand(gameData, cardToPlay, playerName, publiclyRevealed);
                         }
                         case EXILE -> {
                             // No valid targets — exile the card instead
@@ -474,14 +489,24 @@ public class MayCastHandlerService {
     }
 
     private void putTopCardIntoHand(GameData gameData, UUID playerId, List<Card> deck,
-                                    Card card, String playerName) {
+                                    Card card, String playerName, boolean publiclyRevealed) {
         if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
             gameData.addCardToHand(playerId, card);
         }
-        gameLogService.append(gameData, GameLog.cardThen(card,
-                " is put into " + playerName + "'s hand."));
+        logCardPutIntoHand(gameData, card, playerName, publiclyRevealed);
         log.info("Game {} - {} puts {} into hand", gameData.id, playerName, card.getName());
+    }
+
+    private void logCardPutIntoHand(GameData gameData, Card card, String playerName,
+                                    boolean publiclyRevealed) {
+        if (publiclyRevealed) {
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " is put into " + playerName + "'s hand."));
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.text(playerName + " puts the top card of their library into their hand."));
+        }
     }
 
     private void exileTopCardFromLibrary(GameData gameData, UUID playerId, List<Card> deck, Card card, String playerName) {

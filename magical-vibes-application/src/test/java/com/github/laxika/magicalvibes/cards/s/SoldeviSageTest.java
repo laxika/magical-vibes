@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +18,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoldeviSage.class, Forest.class, GrizzlyBears.class, Island.class, Plains.class})
 class SoldeviSageTest extends BaseCardTest {
 
-    private void seedLibrary(int count) {
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        }
+    private void seedLibrary() {
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(),
+                new GrizzlyBears(),
+                new GrizzlyBears(),
+                new GrizzlyBears(),
+                new GrizzlyBears()
+        ));
     }
 
     @Test
@@ -32,7 +37,7 @@ class SoldeviSageTest extends BaseCardTest {
         Permanent sage = addCreatureReady(player1, new SoldeviSage());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
-        seedLibrary(5);
+        seedLibrary();
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -52,7 +57,7 @@ class SoldeviSageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.setHand(player1, List.of());
-        seedLibrary(5);
+        seedLibrary();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -65,13 +70,30 @@ class SoldeviSageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only cards drawn by the ability can be discarded")
+    void onlyDrawnCardsCanBeDiscarded() {
+        addCreatureReady(player1, new SoldeviSage());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Plains()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
     @DisplayName("Prompts which lands to sacrifice when more than two are available")
     void promptsForLandChoiceWithMoreThanTwoLands() {
         addCreatureReady(player1, new SoldeviSage());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Plains());
-        seedLibrary(5);
+        seedLibrary();
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -86,7 +108,8 @@ class SoldeviSageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Plains());
-        seedLibrary(5);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        seedLibrary();
 
         UUID forestId = findPermanent(player1, "Forest").getId();
         UUID islandId = findPermanent(player1, "Island").getId();
@@ -97,6 +120,7 @@ class SoldeviSageTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Soldevi Sage");
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Island");
@@ -107,7 +131,7 @@ class SoldeviSageTest extends BaseCardTest {
     void cannotActivateWithoutTwoLands() {
         addCreatureReady(player1, new SoldeviSage());
         harness.addToBattlefield(player1, new Forest());
-        seedLibrary(5);
+        seedLibrary();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -121,7 +145,7 @@ class SoldeviSageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(sage);
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
-        seedLibrary(5);
+        seedLibrary();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

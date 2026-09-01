@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MindBomb.class, GrizzlyBears.class, HillGiant.class, AirElemental.class})
 class MindBombTest extends BaseCardTest {
 
     @Test
@@ -43,11 +45,10 @@ class MindBombTest extends BaseCardTest {
         harness.assertLife(player2, 17);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(c -> c.getName())
-                .contains("Grizzly Bears");
+                .anyMatch(c -> c instanceof GrizzlyBears);
         assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(c -> c.getName())
-                .containsExactly("Grizzly Bears");
+                .singleElement()
+                .isInstanceOf(GrizzlyBears.class);
     }
 
     @Test
@@ -78,7 +79,59 @@ class MindBombTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(c -> c.getName())
-                .contains("Grizzly Bears", "Hill Giant", "Air Elemental");
+                .anyMatch(c -> c instanceof GrizzlyBears);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c instanceof HillGiant);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c instanceof AirElemental);
+    }
+
+    @Test
+    @DisplayName("Damage is not dealt until the chosen cards have been discarded")
+    void damageWaitsForDiscardToComplete() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new MindBomb(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        harness.assertLife(player1, 20);
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Damage waits until every player has chosen how many cards to discard")
+    void damageWaitsForEveryPlayerChoice() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new MindBomb(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.handleXValueChosen(player2, 0);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 }

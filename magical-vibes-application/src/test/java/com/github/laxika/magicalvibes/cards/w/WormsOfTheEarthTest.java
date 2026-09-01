@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GaeasTouch;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WormsOfTheEarth.class, Forest.class})
+@CardUsed({WormsOfTheEarth.class, Forest.class, GaeasTouch.class})
 class WormsOfTheEarthTest extends BaseCardTest {
 
     @Test
@@ -29,6 +29,51 @@ class WormsOfTheEarthTest extends BaseCardTest {
 
         assertThat(harness.getGameActionAvailabilityService()
                 .getPlayableCardIndices(gd, player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The active player receives the first upkeep choice")
+    void activePlayerChoosesFirst() {
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Worms of the Earth");
+    }
+
+    @Test
+    @DisplayName("Lands cannot enter the battlefield from hand")
+    void preventsLandsEnteringFromHand() {
+        harness.addToBattlefield(player1, new WormsOfTheEarth());
+        harness.addToBattlefield(player1, new GaeasTouch());
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(forest));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Forest"))
+                .isEmpty();
     }
 
     @Test
@@ -103,6 +148,6 @@ class WormsOfTheEarthTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player1, "Worms of the Earth");
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 }

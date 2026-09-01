@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -31,16 +32,22 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnTargetCardFromExileToHandEffect) effect;
-        if (entry.getTargetZone() != Zone.EXILE || entry.getTargetId() == null) {
+        List<UUID> targetIds = entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        }
+        UUID targetId = targetIds.stream().findFirst().orElse(null);
+        if ((entry.getTargetZone() != null && entry.getTargetZone() != Zone.EXILE) || targetId == null) {
             String fizzleLog = entry.getDescription() + " fizzles (no valid exile target).";
             gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
         }
 
-        Card targetCard = gameQueryService.findCardInExileById(gameData, entry.getTargetId());
+        Card targetCard = gameQueryService.findCardInExileById(gameData, targetId);
+        var targetEntry = gameData.findExiledCard(targetId);
         String filterLabel = CardPredicateUtils.describeFilter(e.filter());
 
-        if (targetCard == null) {
+        if (targetCard == null || targetEntry == null) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in exile).";
             gameLogService.append(gameData, GameLog.text(fizzleLog));
             return;
@@ -57,8 +64,7 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         gameData.removeFromExile(targetCard.getId());
 
         // Put into owner's hand
-        UUID controllerId = entry.getControllerId();
-        gameData.addCardToHand(controllerId, targetCard);
+        gameData.playerHands.get(targetEntry.ownerId()).add(targetCard);
 
         gameLogService.append(gameData, GameLog.textCardText(entry.getDescription() + " returns " , targetCard, " from exile to hand."));
     }

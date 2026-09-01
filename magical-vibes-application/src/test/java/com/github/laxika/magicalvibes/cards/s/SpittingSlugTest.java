@@ -60,6 +60,53 @@ class SpittingSlugTest extends BaseCardTest {
     }
 
     @Test
+    void payingWhenBlockingGivesSlugFirstStrike() {
+        Permanent slug = addReadySlug(player2);
+        Permanent attacker = addReadyBear(player1);
+        attacker.setAttacking(true);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void acceptingWithoutEnoughManaGivesFirstStrikeToEveryBlocker() {
+        Permanent slug = addReadySlug(player1);
+        slug.setAttacking(true);
+        Permanent blocker = addReadyBear(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void decliningAfterSpittingSlugLeavesCombatStillAffectsItsBlocker() {
+        Permanent slug = addReadySlug(player1);
+        slug.setAttacking(true);
+        Permanent blocker = addReadyBear(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player1.getId()).remove(slug);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Declining when blocking gives first strike to every creature blocked by the Slug")
     void decliningWhenBlockingGivesFirstStrikeToEveryBlockedCreature() {
         harness.addToBattlefield(player2, new HighGround());

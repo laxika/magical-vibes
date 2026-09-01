@@ -15,7 +15,7 @@ public class WordOfBinding extends Card {
     public WordOfBinding() {
         // Tap X target creatures.
         // Single X-scaled creature target group: each targeted creature is tapped.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)

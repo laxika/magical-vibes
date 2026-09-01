@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
@@ -39,6 +40,8 @@ import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTapped
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -63,6 +66,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -130,6 +134,9 @@ public class ChoiceHandlerService {
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
+
+    @Autowired @Lazy
+    private DestructionSupport destructionSupport;
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport
@@ -205,6 +212,11 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.SpellOnlyManaColorChoice ctx) {
             handleSpellOnlyManaColorChosen(gameData, player, colorName, ctx);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.TreasureManaColorChoice ctx) {
+            handleTreasureManaColorChosen(gameData, player, colorName, colorChoice.options(), ctx);
             return;
         }
 
@@ -365,6 +377,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice ctx) {
             handleCreateTokensPerPermanentOfChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.JinnieFayTokenChoice ctx) {
+            handleJinnieFayTokenChoice(gameData, player, colorName, colorChoice, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx) {
@@ -599,6 +615,10 @@ public class ChoiceHandlerService {
             handleRemoveChosenCountersChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveOneCounterChoice ctx) {
+            handleRemoveOneCounterChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
             handleDismantleCounterTypeChoice(gameData, colorName, ctx);
             return;
@@ -647,6 +667,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
+            handleEnchantedPermanentManaOrLifePaymentChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.IndulgentTormentorChoice ctx) {
@@ -1236,6 +1260,36 @@ public class ChoiceHandlerService {
 
         // Resume any remaining effects of the spell/ability that paused for this mana-color choice
         // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleTreasureManaColorChosen(GameData gameData, Player player, String colorName,
+                                                List<String> options,
+                                                ChoiceContext.TreasureManaColorChoice ctx) {
+        if (!options.contains(colorName)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
+
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
+                ManaColor.valueOf(colorName));
+        gameData.interaction.clearAwaitingInput();
+
+        PendingManaActivation parkedActivation = gameData.pendingRevertableManaActivation;
+        gameData.pendingRevertableManaActivation = null;
+
+        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
+        manaPool.add(manaColor, ctx.amount());
+        manaPool.addTreasureManaTag(manaColor, ctx.amount());
+        resolveProducedManaTriggers(gameData, manaColor);
+        if (parkedActivation != null && parkedActivation.playerId().equals(ctx.playerId())) {
+            completeParkedManaActivation(gameData, parkedActivation, ctx.playerId(), ctx.amount());
+        }
+
+        String manaWord = ctx.amount() == 1 ? "one" : String.valueOf(ctx.amount());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + manaWord + " "
+                + colorName.toLowerCase() + " mana."));
+        log.info("Game {} - {} adds {} {} Treasure mana", gameData.id,
+                player.getUsername(), manaWord, colorName.toLowerCase());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2131,6 +2185,30 @@ public class ChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleRemoveOneCounterChoice(GameData gameData, String choice,
+            ChoiceContext.RemoveOneCounterChoice ctx) {
+        if (!ctx.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid counter choice: " + choice);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        CounterType counterType = ctx.counterTypes().stream()
+                .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
+        if (target != null
+                && ctx.controllerId().equals(gameQueryService.findPermanentController(gameData, ctx.targetId()))
+                && target.getCounterCount(counterType) > 0) {
+            permanentCounterSupport.removeCounterFromPermanent(gameData, target, counterType, 1);
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setEventValue(1);
+            }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     /** Completes Dismantle's counter-type choice and then chooses a controlled artifact if needed. */
     private void handleDismantleCounterTypeChoice(GameData gameData, String choice,
             ChoiceContext.DismantleCounterTypeChoice ctx) {
@@ -2940,6 +3018,31 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleJinnieFayTokenChoice(GameData gameData, Player player, String choice,
+                                             PendingInteraction.ColorChoice colorChoice,
+                                             ChoiceContext.JinnieFayTokenChoice ctx) {
+        if (!colorChoice.options().contains(choice)) {
+            throw new IllegalArgumentException("Invalid Jinnie Fay token choice: " + choice);
+        }
+        gameData.interaction.clearAwaitingInput();
+        boolean replace = !JinnieFayTokenReplacementEffect.ORIGINAL_OPTION.equals(choice);
+        boolean cat = JinnieFayTokenReplacementEffect.CAT_OPTION.equals(choice);
+        CreateTokenEffect replacement = replace
+                ? com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport
+                .jinnieFayToken(ctx.originalToken(), ctx.amount(), cat)
+                : ctx.originalToken();
+        List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterJinnieFayChoice(
+                gameData, ctx.controllerId(), replacement, ctx.amount(), ctx.sourceSetCode(),
+                replace ? (cat ? 2 : 3) : ctx.power(), replace ? (cat ? 2 : 1) : ctx.toughness());
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            pendingEntry.getCreatedPermanentIds().addAll(createdIds);
+        }
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " chooses " + choice + " for ", ctx.sourceCard(), "."));
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     /** Treva, the Renewer: count every permanent of the chosen color on every battlefield. */
     private void handleGainLifePerPermanentOfChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx) {
@@ -3216,6 +3319,50 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEnchantedPermanentManaOrLifePaymentChoice(
+            GameData gameData, String chosen,
+            ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);
+        }
+
+        boolean paid = false;
+        if (ctx.payManaOption().equals(chosen)) {
+            ManaCost cost = new ManaCost(ctx.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(ctx.affectedPlayerId());
+            if (pool != null && cost.canPay(pool)) {
+                cost.pay(pool);
+                paid = true;
+            }
+        } else if (ctx.payLifeOption().equals(chosen)
+                && gameQueryService.canPlayerLifeChange(gameData, ctx.affectedPlayerId())
+                && gameData.getLife(ctx.affectedPlayerId()) >= ctx.lifeCost()) {
+            lifeSupport.applyLifePayment(
+                    gameData, ctx.affectedPlayerId(), ctx.lifeCost(), ctx.sourceCardName());
+            paid = true;
+        } else if (!ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
+            throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);
+        }
+
+        if (!paid) {
+            Permanent aura = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            Permanent enchanted = aura != null && aura.isAttached()
+                    ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) : null;
+            if (enchanted != null) {
+                destructionSupport.tryDestroyAndLog(gameData, enchanted, ctx.sourceCardName());
+            }
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        if (gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionIndex++;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SubtypeChoice ctx) {
@@ -3522,7 +3669,7 @@ public class ChoiceHandlerService {
         }
 
         if (paid > 0) {
-            lifeSupport.applyLifeLoss(gameData, player.getId(), paid, ctx.card().getName());
+            lifeSupport.applyLifePayment(gameData, player.getId(), paid, ctx.card().getName());
         }
 
         gameLogService.append(gameData, GameLog.textCardText(

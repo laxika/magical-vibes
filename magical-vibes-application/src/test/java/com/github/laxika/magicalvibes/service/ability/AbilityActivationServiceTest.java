@@ -147,7 +147,7 @@ class AbilityActivationServiceTest {
         gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
         // No Mana Reflection in these tests — every mana production is 1x.
-        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
         lenient().when(castingCostService.getImposedSacrificeRequirementForAbility(
                         eq(gameData), any()))
@@ -545,6 +545,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -574,6 +575,7 @@ class AbilityActivationServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isEqualTo(3);
             verify(activatedAbilityExecutionService, times(0)).completeActivationAfterCosts(
                     any(), any(), any(), any(), any(), anyInt(), any(), any(), anyBoolean(), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -602,6 +604,7 @@ class AbilityActivationServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).getTotal()).isZero();
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -797,6 +800,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -854,6 +858,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -907,6 +912,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -941,6 +947,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 
@@ -975,6 +982,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
     }
@@ -1252,6 +1260,7 @@ class AbilityActivationServiceTest {
 
             verify(activatedAbilityExecutionService).completeActivationAfterCosts(
                     eq(gameData), eq(player1), eq(perm), any(), any(), eq(0), eq(null), eq(null), eq(true), any(), any(),
+                    org.mockito.ArgumentMatchers.anyList(), org.mockito.ArgumentMatchers.<Card>isNull(),
                     org.mockito.ArgumentMatchers.<Card>isNull());
         }
 

@@ -19,10 +19,5 @@ public class PlagueSliver extends Card {
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
                 GrantScope.ALL_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.UPKEEP_TRIGGERED,
-                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
-                GrantScope.SELF,
-                new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

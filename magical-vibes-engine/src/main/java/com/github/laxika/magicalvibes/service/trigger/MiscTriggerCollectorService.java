@@ -385,7 +385,8 @@ public class MiscTriggerCollectorService {
         if (as.sacrificedCard() == null
                 || !predicateEvaluationService.matchesPermanentPredicate(
                         new Permanent(as.sacrificedCard()), conditional.predicate(),
-                        FilterContext.of(match.gameData())
+                        new FilterContext(null, match.permanent().getCard().getId(),
+                                match.controllerId(), null, match.permanent(), match.permanent().getId())
                                 .withSourceCardId(match.permanent().getCard().getId())
                                 .withSourceControllerId(match.controllerId())
                                 .withSourcePermanentId(match.permanent().getId())
@@ -434,8 +435,10 @@ public class MiscTriggerCollectorService {
         TriggerContext.OpponentPermanentSacrificed sacrificed =
                 (TriggerContext.OpponentPermanentSacrificed) ctx;
         if (sacrificed.sacrificedCard() == null
-                || !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
-                new Permanent(sacrificed.sacrificedCard()), conditional.predicate())) {
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                new Permanent(sacrificed.sacrificedCard()), conditional.predicate(),
+                new FilterContext(null, match.permanent().getCard().getId(),
+                        match.controllerId(), null, match.permanent(), match.permanent().getId()))) {
             return false;
         }
 
@@ -915,6 +918,33 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleConditionalOnControllerLifeGain(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeGain.lifeGainedAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller life gain during controller's turn",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 
@@ -1782,6 +1812,23 @@ public class MiscTriggerCollectorService {
         return enqueueNoncombatDamageTrigger(match, effect);
     }
 
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtNoncombatDamageToOpponentMay(TriggerMatchContext match,
+            MayEffect effect, TriggerContext ctx) {
+        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
+        if (match.permanent() == null || !match.controllerId().equals(damage.sourceControllerId())) {
+            return false;
+        }
+
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), effect,
+                null, match.permanent().getId(), damage.damageAmount());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on noncombat damage to opponent (may ability)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     @CollectsTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
             slot = EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
     private boolean handleNoncombatDamageToDamagedPlayerPermanent(TriggerMatchContext match,
@@ -2146,6 +2193,33 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life loss", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleConditionalOnControllerLifeLoss(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeLoss.lifeLostAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller life loss during controller's turn",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

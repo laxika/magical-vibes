@@ -2,16 +2,21 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
+import com.github.laxika.magicalvibes.cards.s.SorrowsPath;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodMoon.class, Forest.class, Glimmerpost.class, SorrowsPath.class})
 class BloodMoonTest extends BaseCardTest {
 
     @Test
@@ -20,7 +25,7 @@ class BloodMoonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Glimmerpost());
         harness.addToBattlefield(player1, new BloodMoon());
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
@@ -29,8 +34,7 @@ class BloodMoonTest extends BaseCardTest {
     @Test
     @DisplayName("Nonbasic land's subtypes are overridden to Mountain")
     void nonbasicLandSubtypesOverriddenToMountain() {
-        harness.addToBattlefield(player1, new Glimmerpost());
-        Permanent glimmerpost = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent glimmerpost = harness.addToBattlefieldAndReturn(player1, new Glimmerpost());
         harness.addToBattlefield(player1, new BloodMoon());
 
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, glimmerpost);
@@ -46,7 +50,7 @@ class BloodMoonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new BloodMoon());
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
@@ -55,8 +59,7 @@ class BloodMoonTest extends BaseCardTest {
     @Test
     @DisplayName("Basic land's subtypes are not overridden")
     void basicLandSubtypesNotOverridden() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new BloodMoon());
 
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
@@ -73,9 +76,37 @@ class BloodMoonTest extends BaseCardTest {
         Permanent bloodMoon = gd.playerBattlefields.get(player1.getId()).get(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(bloodMoon);
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands lose their printed triggered abilities")
+    void nonbasicLandLosesPrintedTriggeredAbilities() {
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.addToBattlefield(player1, new SorrowsPath());
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands entering under Blood Moon do not trigger printed abilities")
+    void nonbasicLandEnteringUnderBloodMoonDoesNotTriggerPrintedAbility() {
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.setHand(player1, List.of(new Glimmerpost()));
+        harness.setLife(player1, 20);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }

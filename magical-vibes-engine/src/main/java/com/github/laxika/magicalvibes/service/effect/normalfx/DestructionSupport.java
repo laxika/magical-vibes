@@ -309,7 +309,6 @@ public class DestructionSupport {
         Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
-        gameData.recordSacrificedPermanent(playerId, sacrificedCard);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());

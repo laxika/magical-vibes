@@ -453,6 +453,38 @@ class LibraryChoiceHandlerServiceTest {
     }
 
     @Test
+    @DisplayName("Bounded top-of-library search takes two cards before graveyarding the rest")
+    void boundedTopOfLibrarySearchTakesTwoCards() {
+        Card first = createCard("First");
+        Card second = createCard("Second");
+        Card third = createCard("Third");
+        List<Card> sourceCards = new ArrayList<>(List.of(first, second, third));
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, new ArrayList<>(sourceCards))
+                .canFailToFind(true)
+                .remainingCount(2)
+                .sourceCards(sourceCards)
+                .restToGraveyard(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.TOP_OF_LIBRARY)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose up to two", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        PendingInteraction.LibrarySearch next =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(next.params().cards()).containsExactly(second, third);
+        assertThat(next.params().remainingCount()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(first);
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(second, first);
+        verify(graveyardService).addCardToGraveyard(gd, player1Id, third, Zone.LIBRARY);
+        verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
+    }
+
+    @Test
     @DisplayName("Face-down exile search can leave casting permission to a source static effect")
     void faceDownExileSearchCanSkipSeparateCastPermission() {
         Card first = createCard("First");

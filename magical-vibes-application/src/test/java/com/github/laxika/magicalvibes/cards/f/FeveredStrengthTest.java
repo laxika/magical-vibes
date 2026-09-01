@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshnodsCylix;
+import com.github.laxika.magicalvibes.cards.s.SoldeviHeretic;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,23 +17,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FeveredStrength.class, SoldeviHeretic.class, AshnodsCylix.class})
 class FeveredStrengthTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving gives the target +2/+0 and schedules a draw instead of drawing now")
     void boostsAndSchedulesDraw() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new FeveredStrength()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        castFeveredStrength(target.getId());
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
@@ -45,22 +40,17 @@ class FeveredStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new FeveredStrength()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        castFeveredStrength(target.getId());
 
+        int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
@@ -68,36 +58,65 @@ class FeveredStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at cleanup")
     void boostWearsOff() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new FeveredStrength()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        castFeveredStrength(target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can target a creature an opponent controls")
+    void canTargetOpponentCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SoldeviHeretic());
+
+        castFeveredStrength(target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("If the target leaves before resolution, the spell fizzles without scheduling the draw")
+    void targetLeavingBeforeResolutionFizzlesSpell() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
+        prepareFeveredStrength();
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        harness.assertInHand(player1, "Soldevi Heretic");
+        harness.assertInGraveyard(player1, "Fevered Strength");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new SoldeviHeretic());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AshnodsCylix());
+        prepareFeveredStrength();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    private void castFeveredStrength(UUID targetId) {
+        prepareFeveredStrength();
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+    }
+
+    private void prepareFeveredStrength() {
         harness.setHand(player1, List.of(new FeveredStrength()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
     }
 }

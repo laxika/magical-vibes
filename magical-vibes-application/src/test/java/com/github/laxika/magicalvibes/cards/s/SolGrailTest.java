@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(SolGrail.class)
 class SolGrailTest extends BaseCardTest {
 
     @Test
@@ -22,7 +24,7 @@ class SolGrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SolGrail()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castCreature(player1, 0);
+        harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Sol Grail");
@@ -68,10 +70,9 @@ class SolGrailTest extends BaseCardTest {
 
     private Permanent addReadyGrail(Player player, CardColor chosenColor) {
         SolGrail card = new SolGrail();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
         perm.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

@@ -50,6 +50,11 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
         return List.of();
     }
 
+    /** True if a spell cast through this permission is exiled instead of returned to its graveyard. */
+    default boolean exileAfterResolution() {
+        return false;
+    }
+
     /** Counter applied to a permanent cast with this permission as it enters. */
     default CounterType enterWithCounter() {
         return null;

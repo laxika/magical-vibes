@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ManaClash.class, ChanceEncounter.class})
 class ManaClashTest extends BaseCardTest {
 
     @Test
@@ -22,8 +26,7 @@ class ManaClashTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ManaClash()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // The loop resolved fully — nothing left on the stack (no infinite loop).
         assertThat(gd.stack).isEmpty();
@@ -47,6 +50,18 @@ class ManaClashTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startLife - (int) controllerTails);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(startLife - (int) opponentTails);
+    }
+
+    @Test
+    void doesNotTriggerCoinFlipWinAbilities() {
+        Permanent chanceEncounter = harness.enterBattlefieldAndReturn(player1, new ChanceEncounter());
+        harness.setHand(player1, List.of(new ManaClash()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(chanceEncounter.getCounterCount(CounterType.LUCK)).isZero();
     }
 
     @Test

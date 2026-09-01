@@ -400,12 +400,14 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness, boolean wasCreature) implements TriggerContext {
+                                   int dyingCreatureToughness, boolean wasCreature,
+                                   List<UUID> dyingPermanentCardIds) implements TriggerContext {
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
             this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
-                    dyingCreaturePower, dyingCreatureToughness, true);
+                    dyingCreaturePower, dyingCreatureToughness, true,
+                    dyingCreatureCardId == null ? List.of() : List.of(dyingCreatureCardId));
         }
 
         @Override
@@ -603,14 +605,21 @@ public sealed interface TriggerContext {
      * this event (already summed across every simultaneous target).
      */
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
-                             int totalDamage, Map<UUID, Integer> damageToPlayers) implements TriggerContext {
+                             int totalDamage, Map<UUID, Integer> damageToPlayers,
+                             UUID singleCreatureSpellTargetId,
+                             Map<UUID, Integer> damageToPermanents) implements TriggerContext {
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
-            this(sourceCard, sourceControllerId, null, totalDamage, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of());
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
                                  Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers);
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of());
+        }
+
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                                 int totalDamage, Map<UUID, Integer> damageToPlayers) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of());
         }
     }
 

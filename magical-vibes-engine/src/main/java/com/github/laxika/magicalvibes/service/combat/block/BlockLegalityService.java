@@ -153,6 +153,9 @@ public class BlockLegalityService {
         Set<CardSubtype> defenderCardSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (Permanent defender : defenders) {
             defenderCardSubtypes.addAll(defender.getCard().getSubtypes());
+            if (gameQueryService.isLand(gameData, defender)) {
+                defenderCardSubtypes.addAll(gameQueryService.effectiveBasicLandTypes(gameData, defender));
+            }
         }
         return new BlockLegalityContext(gameData, defenders, globalBlockRestrictions,
                 globalAttackOrBlockRestrictions, tappedBlockPermissions, attachedByHostId,
@@ -484,7 +487,8 @@ public class BlockLegalityService {
         boolean cantBeBlockedByPowerLessThanIslandCount = false;
         List<AttackerRestriction> restrictions = new ArrayList<>();
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
-        if (!attacker.isFaceDown()) {
+        if (!attacker.isFaceDown() && !bonus.losesAllAbilities() && !bonus.losesAllNonManaAbilities()
+                && !attacker.isLosesAllAbilitiesUntilEndOfTurn()) {
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof BlockabilityRestrictionEffect restriction) {
                     restrictions.add(new AttackerRestriction(attacker, restriction));

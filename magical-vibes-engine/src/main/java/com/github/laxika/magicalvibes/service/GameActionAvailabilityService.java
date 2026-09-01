@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -374,6 +375,12 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
             pool.promoteNoncreatureSpellOnlyMana();
         }
+        if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
+                && pool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual) : new ManaPool(pool);
+            pool.promoteExactlyThreeColorSpellOnlyMana();
+        }
         if (card.hasType(CardType.CREATURE) && pool.getCreatureSpellOrAbilityManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual)
@@ -386,6 +393,14 @@ public class GameActionAvailabilityService {
                     ? new VirtualManaPool(virtual)
                     : new ManaPool(pool);
             pool.promoteCreatureOrEnchantmentSpellOnlyMana();
+        }
+        if ((card.getManaValue() >= 5
+                || card.getParsedManaCost() != null && card.getParsedManaCost().hasX())
+                && pool.getManaValueAtLeastFiveOrXOnlyManaTotal() > 0) {
+            pool = pool instanceof VirtualManaPool virtual
+                    ? new VirtualManaPool(virtual)
+                    : new ManaPool(pool);
+            pool.promoteManaValueAtLeastFiveOrXOnlyMana();
         }
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
@@ -423,7 +438,8 @@ public class GameActionAvailabilityService {
                 .toList();
         boolean allEffectTargetsOptional = !declaredTargetEffects.isEmpty()
                 && declaredTargetEffects.stream()
-                .allMatch(effect -> effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
+                        || effect instanceof ReturnCardFromGraveyardEffect returnEffect
                         && returnEffect.upTo());
         boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
@@ -1153,7 +1169,20 @@ public class GameActionAvailabilityService {
             var disturb = graveyardAbilitiesSuppressed
                     ? Optional.<DisturbCast>empty()
                     : card.getCastingOption(DisturbCast.class);
-            Card castHalf = flashback.isPresent() ? card.graveyardCastHalf() : card;
+            boolean grantedAdventure = flashback.isEmpty()
+                    && card.getCastingOption(AdventureCast.class).isPresent()
+                    && card.getBackFaceCard() != null
+                    && (card.getBackFaceCard().hasType(CardType.SORCERY)
+                    || card.getBackFaceCard().hasType(CardType.INSTANT))
+                    && castingPermissionService.hasGrantedGraveyardAdventureCastPermission(
+                    gameData, card, playerId);
+            Card castHalf = flashback.isPresent()
+                    ? card.graveyardCastHalf()
+                    : grantedAdventure ? card.getBackFaceCard() : card;
+            if (grantedAdventure && !gameQueryService.canCastSpellFromZone(
+                    gameData, castHalf, Zone.GRAVEYARD, playerId)) {
+                continue;
+            }
             if (castingPermissionService.isSpellLimitReached(gameData, playerId, castHalf)) {
                 continue;
             }
@@ -1277,7 +1306,7 @@ public class GameActionAvailabilityService {
 
             if (flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast && !isGraveyardCast
                     && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isJumpStart && !isRetrace
-                    && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery) {
+                    && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery && !grantedAdventure) {
                 continue;
             }
 
@@ -1307,7 +1336,8 @@ public class GameActionAvailabilityService {
                         .getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             } else if (isGraveyardCast || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
                     || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace
-                    || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery) {
+                    || isJumpStart || isGrantedCyclingGraveyardCast || isMayCastTopInstantOrSorcery
+                    || grantedAdventure) {
                 manaCostStr = castHalf.getManaCost() != null ? castHalf.getManaCost() : card.getManaCost();
             } else {
                 manaCostStr = flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
@@ -1417,6 +1447,19 @@ public class GameActionAvailabilityService {
                 }
             } else if (cost instanceof DiscardCardCastingCost) {
                 if (gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
+                    return false;
+                }
+            } else if (cost instanceof SacrificePermanentsCost sacrificeCost) {
+                long matchingPermanents = gameData.playerBattlefields
+                        .getOrDefault(playerId, List.of())
+                        .stream()
+                        .filter(permanent -> gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                                || !gameQueryService.isCreature(gameData, permanent))
+                        .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, sacrificeCost.filter(),
+                                FilterContext.of(gameData).withSourceControllerId(playerId)))
+                        .count();
+                if (matchingPermanents < sacrificeCost.count()) {
                     return false;
                 }
             } else {

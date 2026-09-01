@@ -92,7 +92,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
-                resolveMayPutOneOnTopRestToGraveyard(gameData, entry, lookCount);
+                resolveMayPutOnTopRestToGraveyard(gameData, entry, lookCount, chooseCount);
             } else {
                 resolvePutOneOnTop(gameData, entry, e, lookCount);
             }
@@ -184,6 +184,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .destination(e.chosenDestination())
                         .grantHaste(e.grantHaste())
                         .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                        .enterWithCounters(e.battlefieldEntryReplacement())
                         .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep()
                                 ? entry.getControllerId() : null)
                         .build(),
@@ -202,10 +203,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .prompt("You may put one of these cards onto the battlefield.")
                     .grantHaste(e.grantHaste())
                     .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                    .enterWithCounters(e.battlefieldEntryReplacement())
                     .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep()
                             ? entry.getControllerId() : null)
                     .destination(e.chosenDestination())
-                            .build(),
+                    .build(),
                     "You may put one of these cards onto the battlefield.",
                     true));
             return;
@@ -231,7 +233,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
                 e.battlefieldSelectionFollowUp(), false, false, false,
-                e.selectedCardMayGoToHandIfBattlefieldDeclined()));
+                e.selectedCardMayGoToHandIfBattlefieldDeclined(), e.battlefieldEntryReplacement()));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====
@@ -285,15 +287,21 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 params.build(), prompt, e.optional()));
     }
 
-    private void resolveMayPutOneOnTopRestToGraveyard(GameData gameData, StackEntry entry, int lookCount) {
+    private void resolveMayPutOnTopRestToGraveyard(
+            GameData gameData, StackEntry entry, int lookCount, int chooseCount) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
         if (result == null) return;
 
-        String prompt = "You may put one card on top of your library. The rest go into your graveyard.";
+        int maxCount = Math.min(chooseCount, result.topCards().size());
+        String prompt = maxCount == 1
+                ? "You may put one card on top of your library. The rest go into your graveyard."
+                : "You may put up to " + maxCount
+                        + " cards on top of your library. The rest go into your graveyard.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(result.controllerId(), result.topCards())
                         .canFailToFind(true)
+                        .remainingCount(maxCount)
                         .sourceCards(new ArrayList<>(result.topCards()))
                         .restToGraveyard(true)
                         .shuffleAfterSelection(false)
@@ -543,7 +551,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 controllerId, topCards, cardIds,
                 false, true, false, false, true, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
-                        + " into your hand and exile the rest."));
+                        + " into your hand and exile the rest.",
+                false, Math.min(chooseCount, topCards.size()), false));
     }
 
     // ===== rest on the bottom of the library (Stress Dream / Shrine / Jar of Eyeballs;

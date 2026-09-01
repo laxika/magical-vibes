@@ -25,9 +25,10 @@ import org.springframework.stereotype.Component;
  * <p>The flow is driven one player at a time and re-runs on every interaction completion, mirroring
  * {@link EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler}. Each player's turn is an
  * {@link PendingInteraction.XValueChoice} for the discard count (capped at {@code min(amount, hand
- * size)}); the chosen count fixes the damage ({@code amount - chosen}), which is dealt immediately.
- * A non-zero choice then runs the discard selection, re-running this handler afterwards (via
- * {@code rerunCurrentEffectAfterInteraction}) to advance. Progress reuses {@link GameData#eachPlayerRummage}.
+ * size)}). A non-zero choice then runs the discard selection, re-running this handler afterwards
+ * (via {@code rerunCurrentEffectAfterInteraction}) to advance. Damage is dealt only after every
+ * player has made their choice and every chosen discard has completed. Progress reuses
+ * {@link GameData#eachPlayerRummage}.
  */
 @Slf4j
 @Component
@@ -57,6 +58,7 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
             state.pendingDraw = 0;
             state.currentPlayerId = null;
             state.remaining.clear();
+            state.chosenAmounts.clear();
             state.remaining.addLast(gameData.activePlayerId);
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(gameData.activePlayerId)) {
@@ -72,7 +74,7 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
             int chosenCount = gameData.chosenXValue;
             gameData.chosenXValue = null;
             UUID playerId = state.currentPlayerId;
-            dealDamage(gameData, entry, playerId, amount - chosenCount);
+            state.chosenAmounts.put(playerId, chosenCount);
 
             if (chosenCount <= 0) {
                 beginNextPlayer(gameData, entry, amount, cardName);
@@ -93,8 +95,8 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
 
     /**
      * Begins the next remaining player's discard choice. A player who cannot discard anything
-     * ({@code min(amount, hand size) == 0}) is dealt the full {@code amount} immediately and skipped.
-     * When no players remain, clears the flow so resolution can continue.
+     * ({@code min(amount, hand size) == 0}) records a zero-card choice and is skipped. When no
+     * players remain, deals the deferred damage and clears the flow so resolution can continue.
      */
     private void beginNextPlayer(GameData gameData, StackEntry entry, int amount, String cardName) {
         EachPlayerRummageState state = gameData.eachPlayerRummage;
@@ -105,7 +107,7 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
             int handSize = hand == null ? 0 : hand.size();
             int maxDiscard = Math.min(amount, handSize);
             if (maxDiscard <= 0) {
-                dealDamage(gameData, entry, nextPlayerId, amount);
+                state.chosenAmounts.put(nextPlayerId, 0);
                 continue;
             }
             String prompt = "Discard up to " + maxDiscard + " card" + (maxDiscard != 1 ? "s" : "")
@@ -113,6 +115,9 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.XValueChoice(nextPlayerId, maxDiscard, prompt, cardName));
             return;
+        }
+        for (var selection : state.chosenAmounts.entrySet()) {
+            dealDamage(gameData, entry, selection.getKey(), amount - selection.getValue());
         }
         state.reset();
     }

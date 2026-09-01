@@ -295,6 +295,7 @@ public class TurnCleanupService {
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersWithDamageFromMatchingSourcesPrevented.clear();
         gameData.playerNextDamageFromMatchingSourcesPrevented.clear();
+        gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.playersGatheringTokensThisTurn.clear();
         gameData.playersExilingUncastEnteringCreaturesThisTurn.clear();
@@ -338,6 +339,7 @@ public class TurnCleanupService {
         gameData.pendingNextDrawReturnPermanents.clear();
         gameData.pendingNextDrawDiscardOpponents.clear();
         gameData.pendingNextDrawFromExiledPile.clear();
+        gameData.pendingNextDrawExileTopCard.clear();
         gameData.pendingMysticReflections.clear();
         gameData.activeMysticReflectionsForEntryBatch.clear();
         gameData.drawStepFirstDrawTaken.clear();
@@ -455,6 +457,8 @@ public class TurnCleanupService {
             }
             return false;
         });
+        gameData.graveyardAdventureCastPermissions.entrySet()
+                .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
 
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {

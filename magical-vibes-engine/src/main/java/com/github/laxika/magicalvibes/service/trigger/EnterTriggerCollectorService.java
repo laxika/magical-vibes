@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -332,6 +334,16 @@ public class EnterTriggerCollectorService {
     })
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        match.permanent().getCard(), match.controllerId(), List.of(effect)));
+            }
+            logTriggered(match);
+            return true;
+        }
         // A targeting effect can't be pushed straight onto the stack with a pre-set target — queue a
         // pending choice so the controller picks one as the ability goes on the stack (CR 603.3d).
         // Permanent-targeting effects (e.g. Reaper King's "destroy target permanent") always route
@@ -354,6 +366,21 @@ public class EnterTriggerCollectorService {
         }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
                 findEnteringPermanentId(match, pe.enteringCard()));
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyCreatureEnterTurnScopedModal(TriggerMatchContext match,
+                                                             ChooseModeNotYetChosenThisTurnEffect effect,
+                                                             TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(effect.options()),
+                    match.permanent().getId(), true));
+        }
         logTriggered(match);
         return true;
     }

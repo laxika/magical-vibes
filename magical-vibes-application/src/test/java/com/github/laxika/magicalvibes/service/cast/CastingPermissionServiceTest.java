@@ -315,6 +315,26 @@ class CastingPermissionServiceTest {
             assertThat(svc.canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gd, player1Id, spell)).isTrue();
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
         }
+
+        @Test
+        @DisplayName("tracks a once-each-turn top-library permission per source permanent")
+        void tracksOnceEachTurnPermissionPerSource() {
+            Card sourceCard = new Card();
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    AllowCastFromTopOfLibraryEffect.onceEachTurn(Set.of(CardType.INSTANT)));
+            Permanent source = new Permanent(sourceCard);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isTrue();
+            svc.markTopLibraryCastPermissionUsed(gd, player1Id, instant);
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isFalse();
+
+            gd.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isTrue();
+        }
     }
 
     @Test
@@ -332,6 +352,24 @@ class CastingPermissionServiceTest {
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, stashed.getId())).isTrue();
         assertThat(svc.hasAnyManaTypePermission(gd, player1Id, stashed.getId())).isTrue();
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, stashed.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("collection counters grant one controller-only any-mana exile cast each turn")
+    void collectionCountersGrantExileCastingPermission() {
+        Card evelyn = new Card();
+        evelyn.addEffect(EffectSlot.STATIC,
+                AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(evelyn));
+
+        Card collected = new Card();
+        gd.addToExileWithCollectionCounter(player2Id, collected, player1Id);
+
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasAnyManaTypePermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, collected.getId())).isFalse();
+        assertThat(svc.consumeCollectionCounterPermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, collected.getId())).isFalse();
     }
 
     @Nested

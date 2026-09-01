@@ -24,9 +24,6 @@ public class GusthasScepter extends Card {
                 List.of(new PutCardExiledWithSourceIntoHandEffect()),
                 "{T}: Return a card you own exiled with this artifact to your hand."));
 
-        // When you lose control of this artifact, put all cards exiled with this artifact into
-        // their owner's graveyard. Handled as an SBA-timed control watch
-        // (StateBasedActionService.putExiledCardsIntoGraveyardOnControlLoss), which also fires when
-        // the artifact leaves the battlefield.
+        // The first effect also registers the control-loss trigger for cards it exiles.
     }
 }

@@ -42,7 +42,18 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
-            gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            List<UUID> counterCostPermanentIds = listOrEmpty(request.exileCounterCostPermanentIds());
+            if (counterCostPermanentIds.isEmpty()) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId());
+            } else {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        counterCostPermanentIds);
+            }
+            return;
+        }
+        if (Boolean.TRUE.equals(request.adventure()) && Boolean.TRUE.equals(request.fromGraveyard())) {
+            gameService.playAdventureCardFromGraveyard(gameData, player, request.cardIndex(), request.xValue(),
+                    request.targetId(), listOrEmpty(request.targetIds()), request.damageAssignments());
             return;
         }
         if (Boolean.TRUE.equals(request.flashback())) {
@@ -84,7 +95,7 @@ public class PlayCardRequestDispatchService {
         }
         if (Boolean.TRUE.equals(request.adventure())) {
             gameService.playAdventureCard(gameData, player, request.cardIndex(), request.xValue(),
-                    request.targetId(), listOrEmpty(request.targetIds()));
+                    request.targetId(), listOrEmpty(request.targetIds()), request.damageAssignments());
             return;
         }
         if (isPlotAlternateCast(gameData, player, request)) {

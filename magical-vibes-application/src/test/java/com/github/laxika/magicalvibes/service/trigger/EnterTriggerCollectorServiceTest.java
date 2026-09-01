@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -234,6 +237,36 @@ class EnterTriggerCollectorServiceTest {
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ally-creature turn-scoped modal queues mode selection")
+    void allyCreatureTurnScopedModalQueuesModeSelection() {
+        Card source = new Card();
+        source.setName("Gala Greeters");
+        source.addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                        new ChooseOneEffect.ChooseOneOption("First mode", new GainLifeEffect(1)),
+                        new ChooseOneEffect.ChooseOneOption("Second mode", new GainLifeEffect(1)))));
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+        Card entering = enteringCreature(2, 2);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingInteractions)
+                .filteredOn(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                .hasSize(1);
+        var pending = gd.pendingInteractions.stream()
+                .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
+                .findFirst()
+                .orElseThrow();
+        assertThat(pending.modesResetEachTurn()).isTrue();
+        assertThat(pending.sourcePermanentId()).isEqualTo(sourcePermanent.getId());
     }
 
     @Test
@@ -496,6 +529,18 @@ class EnterTriggerCollectorServiceTest {
         service.checkAnyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2));
 
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ally-creature scan queues a graveyard target choice for optional exile")
+    void allyCreatureQueuesGraveyardTargeting() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard());
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2), 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
     }
 
     @Test

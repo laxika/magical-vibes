@@ -13,11 +13,13 @@ import java.util.UUID;
  * @param elseEffect   optional "if you don't, [effect]" half resolved when the choosing player declines
  *                   (Petals of Insight's "Otherwise, draw three cards"); {@code null} means
  *                   declining simply does nothing
- * @param choicePlayer identifies the player who makes the choice
+ * @param choicePlayer identifies the player who makes the choice; {@code DEFENDING_PLAYER} uses
+ *                            the player attacked by an attack trigger
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
-        TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect {
+        TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
+        SacrificedPermanentManaValueAwareEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -70,5 +72,13 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     public boolean sourceIsTriggeringPermanent() {
         return wrapped instanceof TriggeringPermanentSourceEffect source
                 && source.sourceIsTriggeringPermanent();
+    }
+
+    @Override
+    public MayEffect boundToSacrificedPermanentManaValue(int manaValue) {
+        CardEffect boundWrapped = wrapped instanceof SacrificedPermanentManaValueAwareEffect aware
+                ? aware.boundToSacrificedPermanentManaValue(manaValue)
+                : wrapped;
+        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
     }
 }

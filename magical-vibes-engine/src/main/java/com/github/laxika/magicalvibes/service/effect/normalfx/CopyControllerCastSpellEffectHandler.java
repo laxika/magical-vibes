@@ -76,6 +76,9 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             copyCard.setSupertypes(Set.copyOf(supertypes));
         }
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
+        if (e.startingLoyaltyFromX()) {
+            copyEntry.setStartingLoyalty(copyEntry.getXValue());
+        }
         if (e.grantHasteToPermanentSpell() && isPermanentSpell(spellSnapshot.getEntryType())) {
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }

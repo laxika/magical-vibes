@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
@@ -1527,6 +1528,19 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.copyOf(set.cardTypes())));
+                }
+            }
+            case RemoveCardTypeFromAttachedPermanentEffect remove -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(gameData, instance, remove.scope(), null,
+                        slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.removeCardType(remove.cardType());
+                    List<CardType> retainedTypes = List.copyOf(state.getCardTypes());
+                    state.overrideCardTypes(retainedTypes);
+                    record(board, instance, target, new L4Contribution(
+                            List.of(), false, false, null, null, true,
+                            retainedTypes));
                 }
             }
             case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored -> {

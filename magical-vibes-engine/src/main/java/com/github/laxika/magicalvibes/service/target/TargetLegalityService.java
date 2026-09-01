@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.OpponentPreviouslyDamagedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceCombatThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
@@ -84,10 +85,12 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotTargetedByNamedCreatureAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -304,7 +307,8 @@ public class TargetLegalityService {
                     effect instanceof TargetedGraveyardCardsEffect
                             || effect instanceof ExileCardsFromGraveyardEffect
                             || effect instanceof ExileGraveyardCardsEffect graveyardEffect
-                            && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD
+                            && (graveyardEffect.allowZeroTargets()
+                            || graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
                             || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
                             && returnEffect.minTargets() == 0)
                     || effects.stream().anyMatch(effect ->
@@ -380,7 +384,8 @@ public class TargetLegalityService {
             }
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) {
-                if (targetCardIds.size() != graveyardEffect.count()) {
+                if ((!graveyardEffect.allowZeroTargets() || !targetCardIds.isEmpty())
+                        && targetCardIds.size() != graveyardEffect.count()) {
                     throw new IllegalStateException("Must select exactly " + graveyardEffect.count() + " target cards");
                 }
                 UUID sharedGraveyardOwnerId = null;
@@ -2550,8 +2555,20 @@ public class TargetLegalityService {
             for (int i = 0; i < declaredTargetIds.size(); i++) {
                 UUID targetId = declaredTargetIds.get(i);
                 TargetFilter targetFilter = targetFilters.get(i);
+                List<CardEffect> exiledTargetEffects = exiledCardTargetEffectsForDeclaredPosition(
+                        gameData, entry, i);
                 boolean legal;
-                if (targetFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
+                if (!exiledTargetEffects.isEmpty()
+                        && gameQueryService.findCardInExileById(gameData, targetId) != null) {
+                    legal = isExiledCardLegalOnResolution(gameData, entry, targetId, exiledTargetEffects);
+                } else if (!exiledTargetEffects.isEmpty()
+                        && exiledTargetEffects.stream().noneMatch(effect ->
+                        effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.SPELL))) {
+                    legal = false;
+                } else if (targetFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter) {
                     // A graveyard target group's positions live in a graveyard, not on the battlefield
                     // (Spelltwine). It stays legal as long as the card is still in a graveyard.
                     Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
@@ -2807,6 +2824,67 @@ public class TargetLegalityService {
         return targetFizzled;
     }
 
+    private boolean isExiledCardLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
+                                                   List<CardEffect> exiledTargetEffects) {
+        return targetValidationService.checkEffectTargets(
+                exiledTargetEffects,
+                new TargetValidationContext(gameData, targetId, Zone.EXILE,
+                        entry.getCard(), entry.getXValue(), entry.getControllerId(),
+                        entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
+                        entry.getTriggeringPermanentPowerAtTrigger()))
+                .isEmpty();
+    }
+
+    private List<CardEffect> exiledCardTargetEffectsForDeclaredPosition(GameData gameData, StackEntry entry,
+                                                                         int targetPosition) {
+        Card targetingCard = entry.getTargetingCard();
+        if (targetingCard != null && !targetingCard.getSpellTargets().isEmpty()) {
+            int groupIndex = targetGroupForDeclaredPosition(gameData, entry, targetPosition);
+            if (groupIndex >= 0) {
+                List<CardEffect> groupEffects = entry.getEffectsToResolve().stream()
+                        .filter(effect -> targetingCard.isEffectBoundToTargetGroup(effect, groupIndex))
+                        .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                        .toList();
+                if (targetingCard.bindsEffectToTargetGroup(groupIndex)) {
+                    return groupEffects;
+                }
+            }
+        }
+        return entry.getEffectsToResolve().stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                .toList();
+    }
+
+    private int targetGroupForDeclaredPosition(GameData gameData, StackEntry entry, int targetPosition) {
+        Card card = entry.getTargetingCard();
+        if (card == null) {
+            return -1;
+        }
+
+        int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;
+        int remaining = entry.getDeclaredTargetIds().size();
+        int consumed = 0;
+        for (SpellTarget group : card.getSpellTargets()) {
+            if (group.getIndex() < firstFlatGroup || !entry.isTargetGroupActive(group.getIndex())) {
+                continue;
+            }
+            int declaredSize = group.getIndex() < entry.getTargetGroupSizes().size()
+                    ? entry.getTargetGroupSizes().get(group.getIndex())
+                    : effectiveGroupMaxTargets(gameData, entry.getControllerId(),
+                            entry.getSourcePermanentSnapshot(), group, entry.getXValue(), entry.isKicked());
+            int size = Math.min(Math.max(declaredSize, 0), remaining);
+            if (targetPosition < consumed + size) {
+                return group.getIndex();
+            }
+            consumed += size;
+            remaining -= size;
+            if (remaining == 0) {
+                break;
+            }
+        }
+        return -1;
+    }
+
     private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (card == null) {
@@ -3013,6 +3091,9 @@ public class TargetLegalityService {
     private TargetFilter primaryTargetFilter(StackEntry entry) {
         if (entry.getTargetFilter() != null) {
             return entry.getTargetFilter();
+        }
+        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+            return null;
         }
         Card targetingCard = entry.getTargetingCard();
         if (targetingCard == null) {
@@ -3870,6 +3951,18 @@ public class TargetLegalityService {
             int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return manaValue == gameQueryService.getEffectivePower(gameData, source);
         }
+        if (predicate instanceof StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate) {
+            if (source == null) {
+                return false;
+            }
+            int chosenNumber = source.getChosenNumber();
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            Integer power = stackEntry.getCard().getPower();
+            Integer toughness = stackEntry.getCard().getToughness();
+            return chosenNumber > 0 && (manaValue == chosenNumber
+                    || power != null && power == chosenNumber
+                    || toughness != null && toughness == chosenNumber);
+        }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());
             return stackEntry.getCard().getManaValue() <= count;
@@ -3921,6 +4014,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryCastFromZonePredicate castFrom) {
             return stackEntry.getSourceZone() == castFrom.sourceZone();
+        }
+        if (predicate instanceof StackEntryIsCopyPredicate) {
+            return stackEntry.isCopy();
         }
         if (predicate instanceof StackEntryKickedPredicate) {
             return stackEntry.wasKicked();
@@ -4174,6 +4270,11 @@ public class TargetLegalityService {
                             .anyMatch(card -> card.hasType(CardType.SORCERY));
             case PlayerLostLifeThisTurnPredicate ignored ->
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
+            case OpponentPreviouslyDamagedBySourcePredicate ignored ->
+                    controllerId != null && !controllerId.equals(targetPlayerId)
+                            && sourcePermanentId != null
+                            && gameData.damageRecipientsBySource
+                            .getOrDefault(sourcePermanentId, Set.of()).contains(targetPlayerId);
             case PlayerDamagedBySourceThisTurnPredicate ignored ->
                     wasDamagedBySourceThisTurn(gameData, sourcePermanentId, targetPlayerId);
             case PlayerDamagedBySourceCombatThisTurnPredicate ignored ->

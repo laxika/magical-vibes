@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
@@ -321,7 +322,9 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 if (filter == null
-                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, predicateSourceCardId)) {
+                        || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, filter, predicateSourceCardId, gameData, playerId, null,
+                        pending.eventValue())) {
                     matchingCards.add(graveyardCard);
                 }
             }
@@ -358,6 +361,10 @@ public class TriggeredAbilityQueueService {
         gameData.graveyardTargetOperation.card = pending.dyingCard();
         gameData.graveyardTargetOperation.controllerId = pending.controllerId();
         gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+        gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = pending.eventValue() != null
+                ? pending.eventValue()
+                : pending.sourcePermanentSnapshot() == null
+                ? null : pending.sourcePermanentSnapshot().getEffectivePower();
 
         String zoneLabel = switch (target.scope()) {
             case ALL_GRAVEYARDS -> "a graveyard";
@@ -747,12 +754,20 @@ public class TriggeredAbilityQueueService {
                                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            if (optionalTarget) {
-                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), result.validTargets(),
-                        List.of(pending.controllerId()),
+            List<UUID> validPlayerTargets = result.validTargets().stream()
+                    .filter(gameData.playerIds::contains)
+                    .toList();
+            List<UUID> validPermanentTargets = result.validTargets().stream()
+                    .filter(id -> !gameData.playerIds.contains(id))
+                    .toList();
+            if (optionalTarget || result.canTargetPlayers()) {
+                List<UUID> playerChoices = optionalTarget && !validPlayerTargets.contains(pending.controllerId())
+                        ? new ArrayList<>(List.of(pending.controllerId())) : validPlayerTargets;
+                playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), validPermanentTargets,
+                        playerChoices,
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             } else {
-                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validPermanentTargets,
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             }
 
@@ -866,15 +881,16 @@ public class TriggeredAbilityQueueService {
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
         if (needsTarget) {
-            if (sourceCard.getSpellTargets().size() > 1) {
+            Card targetingCard = prepareTriggeredModalTargeting(sourceCard, chosenModes);
+            if (targetingCard.getSpellTargets().size() > 1) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        sourceCard, controllerId, effects, sourcePermanentId,
+                        targetingCard, controllerId, effects, sourcePermanentId,
                         List.of(), 0, 0));
             } else {
-                TargetFilter targetFilter = chosenModes.size() == 1
-                        ? chosenModes.getFirst().targetFilter() : null;
+                TargetFilter targetFilter = targetingCard.getSpellTargets().isEmpty()
+                        ? null : targetingCard.getSpellTargets().getFirst().getFilter();
                 gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
+                        targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
             }
             return;
         }
@@ -889,6 +905,43 @@ public class TriggeredAbilityQueueService {
                 sourcePermanentId);
         entry.setTriggeringCardId(triggeringCardId);
         gameData.stack.add(entry);
+    }
+
+    private Card prepareTriggeredModalTargeting(Card sourceCard,
+                                                 List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+        Card targetingCard = sourceCard.createRuntimeCopy();
+        targetingCard.clearRuntimeSpellTargets();
+        targetingCard.setCastTimeTargetFilter(null);
+        for (ChooseOneEffect.ChooseOneOption mode : chosenModes) {
+            if (mode.targetFilters() != null) {
+                for (int i = 0; i < mode.targetFilters().size(); i++) {
+                    SpellTarget target = targetingCard.target(mode.targetFilters().get(i));
+                    if (i < mode.effects().size()) {
+                        targetingCard.registerEffectTargetIndex(mode.effects().get(i), target.getIndex());
+                    }
+                }
+            } else if (mode.targetFilter() != null || needsFlatModalTargetGroup(mode.effects())) {
+                SpellTarget target = declareTriggeredModalTarget(targetingCard, mode);
+                for (CardEffect modeEffect : mode.effects()) {
+                    targetingCard.registerEffectTargetIndex(modeEffect, target.getIndex());
+                }
+            }
+        }
+        return targetingCard;
+    }
+
+    private SpellTarget declareTriggeredModalTarget(Card card, ChooseOneEffect.ChooseOneOption mode) {
+        if (mode.minTargets() != 1 || mode.maxTargets() != 1) {
+            return card.target(mode.targetFilter(), mode.minTargets(), mode.maxTargets());
+        }
+        return card.target(mode.targetFilter());
+    }
+
+    private static boolean needsFlatModalTargetGroup(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || EffectResolution.targetsSpellOnStack(effect));
     }
 
     public void processNextDiscardControllerTriggerTarget(GameData gameData) {

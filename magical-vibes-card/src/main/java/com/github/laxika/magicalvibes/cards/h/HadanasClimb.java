@@ -25,7 +25,8 @@ public class HadanasClimb extends Card {
                         new ConditionalEffect(
                                 new TargetPermanentMatches(
                                         new PermanentHasAtLeastCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE, 3)),
-                                new TransformSelfEffect()));
+                                new TransformSelfEffect(),
+                                false));
     }
 
     @Override

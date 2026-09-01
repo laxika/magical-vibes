@@ -8,25 +8,25 @@ import java.util.UUID;
 
 /**
  * The spell whose effective cast cost is being computed: the game state, the player
- * casting it, the card itself, and the cast mode and source details relevant to cost modifiers.
+ * casting it, the card itself, and the cast mode, source, and choices relevant to cost modifiers.
  */
 public record CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                       boolean flashbackCost, int xValue, boolean plottingFromHand,
                                       Zone sourceZone, boolean castFaceDown,
-                                      boolean collectEvidenceCostPaid) {
+                                      boolean collectEvidenceCostPaid, boolean kicked) {
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell) {
-        this(gameData, castingPlayerId, spell, false, 0, false, null, false, false);
+        this(gameData, castingPlayerId, spell, false, 0, false, null, false, false, false);
     }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                    boolean flashbackCost) {
-        this(gameData, castingPlayerId, spell, flashbackCost, 0, false, null, false, false);
+        this(gameData, castingPlayerId, spell, flashbackCost, 0, false, null, false, false, false);
     }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                    boolean flashbackCost, int xValue) {
-        this(gameData, castingPlayerId, spell, flashbackCost, xValue, false, null, false, false);
+        this(gameData, castingPlayerId, spell, flashbackCost, xValue, false, null, false, false, false);
     }
 
     public boolean fromGraveyard() {

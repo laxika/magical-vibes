@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
@@ -45,6 +47,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
@@ -492,6 +496,21 @@ class DeathTriggerCollectorServiceTest {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
             assertThat(entry.getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
+        }
+
+        @Test
+        @DisplayName("Preserves alternate-cost state for a conditional death trigger")
+        void preservesAlternateCostState() {
+            Card card = createCreature("Blitz Creature", 2, 2);
+            var effect = new ConditionalEffect(new CastForAlternateCost(), new DrawCardEffect(1));
+            Permanent perm = new Permanent(card);
+            perm.setAlternateCost(true);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().isAlternateCost()).isTrue();
         }
 
         @Test
@@ -1103,6 +1122,25 @@ class DeathTriggerCollectorServiceTest {
             assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
             assertThat(pending.sourcePermanentSnapshot()).isNotNull();
             assertThat(pending.effects()).containsExactly(effect.wrapped());
+        }
+
+        @Test
+        @DisplayName("Controller conditional queues a non-targeted trigger without target choice")
+        void controllerConditionalQueuesNonTargetedTrigger() {
+            Card watcher = createCreature("Syr Ginger, the Meal Ender", 3, 1);
+            Permanent perm = new Permanent(watcher);
+            var effect = new TriggeringArtifactControllerConditionalEffect(SequenceEffect.of(
+                    new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1)));
+            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
+
+            assertThat(svc.handleArtifactGraveyardControllerConditional(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            assertThat(gd.pendingInteractions).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isNull();
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect.wrapped());
         }
 
         @Test

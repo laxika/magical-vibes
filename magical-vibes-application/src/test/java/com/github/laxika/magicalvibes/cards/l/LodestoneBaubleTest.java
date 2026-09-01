@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LodestoneBauble.class, Forest.class, Island.class, HillGiant.class, GrizzlyBears.class})
 class LodestoneBaubleTest extends BaseCardTest {
 
     private Permanent addBauble() {
@@ -76,12 +78,62 @@ class LodestoneBaubleTest extends BaseCardTest {
         assertThat(scheduled.getFirst().count()).isEqualTo(1);
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player2.getId()).get(handBefore).getId()).isEqualTo(forest.getId());
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    void allowsNoTargets() {
+        Permanent bauble = addBauble();
+
+        harness.setLibrary(player1, new ArrayList<>(List.of(new HillGiant())));
+
+        harness.activateAbilityWithGraveyardTargets(player1, baubleIndex(bauble), 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(bauble.getCard().getId());
+    }
+
+    @Test
+    void offersBasicLandsFromEitherGraveyard() {
+        Permanent bauble = addBauble();
+
+        Card ownForest = new Forest();
+        Card opponentIsland = new Island();
+        Card nonBasic = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownForest, nonBasic));
+        harness.setGraveyard(player2, List.of(opponentIsland));
+
+        ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, bauble.getCard(), bauble.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), baubleIndex(bauble));
+
+        assertThat(response.validGraveyardCardIds())
+                .containsExactlyInAnyOrder(ownForest.getId(), opponentIsland.getId());
+    }
+
+    @Test
+    void reportsOptionalTargetRange() {
+        Permanent bauble = addBauble();
+
+        Card forest = new Forest();
+        harness.setGraveyard(player1, List.of(forest));
+
+        ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, bauble.getCard(), bauble.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), baubleIndex(bauble));
+
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(response.minTargets()).isZero();
+        softly.assertThat(response.maxTargets()).isEqualTo(4);
+        softly.assertAll();
     }
 
     @Test

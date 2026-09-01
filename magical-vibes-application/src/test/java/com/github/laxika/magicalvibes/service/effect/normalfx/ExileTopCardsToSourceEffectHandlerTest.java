@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
@@ -139,7 +142,8 @@ class ExileTopCardsToSourceEffectHandlerTest {
 
         handler.resolve(gd, entry(sourceCard, effect, null, source.getId()), effect);
 
-        assertThat(gd.exiledCardsToGraveyardOnControlLossWatch).containsEntry(source.getId(), player1Id);
+        assertThat(gd.exiledCardsToGraveyardOnControlLossWatch)
+                .containsEntry(source.getId(), new ExiledCardsControlLossWatch(player1Id, sourceCard));
     }
 
     @Test
@@ -266,6 +270,29 @@ class ExileTopCardsToSourceEffectHandlerTest {
 
         assertThat(gd.exiledCards.stream().anyMatch(e -> e.sourcePermanentId() != null)).isFalse();
         assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Uses the active Adventure face for persistent exile permissions")
+    void usesAdventureFaceForPersistentPermission() {
+        Card sourceCard = card("Decadent Dragon");
+        Card adventureFace = card("Expensive Taste");
+        adventureFace.addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+                false, null, false, false, 0, null, false, false, false, true));
+        sourceCard.setBackFaceCard(adventureFace);
+        gd.playerDecks.get(player2Id).add(card("Exiled card"));
+
+        var effect = new ExileTopCardsToSourceEffect(1, true, false,
+                LibraryScope.TARGET_OPPONENT, true);
+        StackEntry adventureEntry = entry(sourceCard, effect, player2Id, null);
+        adventureEntry.setCastWithAdventure(true);
+        stubExileFaceDown();
+
+        handler.resolve(gd, adventureEntry, effect);
+
+        Card exiledCard = gd.getPlayerExiledCards(player2Id).getFirst();
+        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1Id);
+        assertThat(gd.playerDecks.get(player2Id)).isEmpty();
     }
 
     @Test

@@ -126,6 +126,8 @@ public enum CounterType {
     PLUS_ZERO_PLUS_TWO,
     SCREAM,
     SHELL,
+    SHIELD,
+    SKEWER,
     SLEIGHT,
     SLEEP,
     SLIME,
@@ -161,6 +163,7 @@ public enum CounterType {
     DECAYED,
     FLYING,
     FIRST_STRIKE,
+    VIGILANCE,
     DOUBLE_STRIKE,
     HEXPROOF,
     INDESTRUCTIBLE,
@@ -177,6 +180,7 @@ public enum CounterType {
             case DEATHTOUCH -> Keyword.DEATHTOUCH;
             case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;
+            case VIGILANCE -> Keyword.VIGILANCE;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
             case REACH -> Keyword.REACH;

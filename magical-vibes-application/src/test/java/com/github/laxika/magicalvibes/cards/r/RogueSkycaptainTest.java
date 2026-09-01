@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RogueSkycaptain.class})
 class RogueSkycaptainTest extends BaseCardTest {
 
     @Test
@@ -26,6 +29,47 @@ class RogueSkycaptainTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(captain);
         assertThat(captain.getCounterCount(CounterType.WAGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Paying multiple wages charges two mana for each wage counter")
+    void payingMultipleWagesChargesPerCounter() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
+        captain.setCounterCount(CounterType.WAGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(captain.getCounterCount(CounterType.WAGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(captain);
+        assertThat(captain.getCounterCount(CounterType.WAGE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Unable to pay all wages leaves the mana pool untouched and transfers the captain")
+    void unableToPayAllWagesTransfersCaptainWithoutPartialPayment() {
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
+        captain.setCounterCount(CounterType.WAGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(captain.getCounterCount(CounterType.WAGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        // Keep the game in upkeep so the assertion observes the pool before step-boundary mana drain.
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(captain.getCounterCount(CounterType.WAGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(captain);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(captain);
     }
 
     @Test

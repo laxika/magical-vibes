@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
@@ -58,6 +57,7 @@ import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -85,6 +85,7 @@ public class EtbTriggerService {
     private final EtbEffectResolver etbEffectResolver;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
 
     public EtbTriggerService(GameQueryService gameQueryService,
                              GameLogService gameLogService,
@@ -94,7 +95,8 @@ public class EtbTriggerService {
                              ETBTokenTargetService etbTokenTargetService,
                              EtbEffectResolver etbEffectResolver,
                              AmountEvaluationService amountEvaluationService,
-                             PredicateEvaluationService predicateEvaluationService) {
+                             PredicateEvaluationService predicateEvaluationService,
+                             GraveyardTargetingSupport graveyardTargetingSupport) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
@@ -104,6 +106,7 @@ public class EtbTriggerService {
         this.etbEffectResolver = etbEffectResolver;
         this.amountEvaluationService = amountEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.graveyardTargetingSupport = graveyardTargetingSupport;
     }
 
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
@@ -244,7 +247,9 @@ public class EtbTriggerService {
                 .areOpponentPermanentETBTriggersSuppressed(gameData, controllerId);
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
-        List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed
+        boolean printedAbilitiesRemoved = enteringPermanent != null
+                && gameQueryService.hasLostPrintedAbilities(gameData, enteringPermanent);
+        List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed || printedAbilitiesRemoved
                 ? new ArrayList<>()
                 : new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
@@ -602,6 +607,7 @@ public class EtbTriggerService {
             // are excluded; they passed through cast-time target selection.
             boolean hasDynamicTargetCount = card.hasDynamicTargetCount();
             boolean etbNeedsTarget = otherEffects.stream()
+                    .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
@@ -617,11 +623,12 @@ public class EtbTriggerService {
                             && (!card.isAura() || card.getEffectTargetIndex(e) != 0)
                             && (ce.targetSpec().admits(TargetPredicate.Kind.PLAYER) || ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            // MayPayManaEffect ETBs never take a cast-time target (see EffectResolution), so a
-            // targeting pay/else ability (Knight of the Mists) must choose as the trigger goes
-            // on the stack — including the just-entered permanent as a legal choice.
+            // Non-reflexive MayPayManaEffect ETBs never take a cast-time target (see
+            // EffectResolution), so a targeting pay/else ability (Knight of the Mists) must choose
+            // as the trigger goes on the stack — including the just-entered permanent as a legal
+            // choice.
             boolean mayPayManaNeedsTarget = otherEffects.stream()
-                    .anyMatch(e -> e instanceof MayPayManaEffect
+                    .anyMatch(e -> e instanceof MayPayManaEffect mayPay && !mayPay.targetAfterPayment()
                             && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
@@ -868,9 +875,10 @@ public class EtbTriggerService {
         // battlefield/hand): choose the graveyard target as the trigger goes on the stack, reusing the
         // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
         int minimumGraveyardTargets = graveyardTargetReturnEffects.stream()
-                .anyMatch(effect -> !(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
-                        ? !effect.hasOptionalTarget()
-                        : !returnEffect.upTo()) ? 1 : 0;
+                .anyMatch(effect -> {
+                    GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(effect));
+                    return target == null || target.minTargets() > 0;
+                }) ? 1 : 0;
         for (CardEffect effect : graveyardTargetReturnEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(

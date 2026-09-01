@@ -535,6 +535,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (Rith token-per-permanent)", gameData.id, playerName);
     }
 
+    public void beginJinnieFayTokenChoice(GameData gameData, UUID controllerId, Card sourceCard,
+                                           CreateTokenEffect originalToken, int amount, int power,
+                                           int toughness, String sourceSetCode) {
+        ChoiceContext.JinnieFayTokenChoice ctx = new ChoiceContext.JinnieFayTokenChoice(
+                controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode);
+        List<String> options = List.of(
+                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.CAT_OPTION,
+                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.DOG_OPTION,
+                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.ORIGINAL_OPTION);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, options,
+                sourceCard.getName() + " — Choose Cat, Dog, or original tokens."));
+    }
+
     public void beginGainLifePerPermanentOfChosenColorChoice(GameData gameData, UUID controllerId,
             Card sourceCard, StackEntryType sourceEntryType) {
         ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx =
@@ -1364,6 +1378,16 @@ public class PlayerInputService {
                 playerId, null, null, context, context.options(),
                 sourceCardName + " — Choose up to " + remainingSelections + " counters to remove."));
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
+    }
+
+    public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,
+                                             String sourceCardName, List<CounterType> counterTypes) {
+        ChoiceContext.RemoveOneCounterChoice context = new ChoiceContext.RemoveOneCounterChoice(
+                targetId, playerId, sourceCardName, counterTypes);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, context, context.options(),
+                sourceCardName + " — Choose a counter to remove."));
+        log.info("Game {} - Awaiting {} to choose one counter to remove from {}", gameData.id, playerId, targetId);
     }
 
     /** Dismantle: choose whether the copied counter count becomes +1/+1 or charge counters. */

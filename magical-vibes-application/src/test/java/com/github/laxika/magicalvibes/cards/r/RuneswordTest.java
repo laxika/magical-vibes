@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BogRats;
+import com.github.laxika.magicalvibes.cards.d.DiabolicMachine;
+import com.github.laxika.magicalvibes.cards.n.NiallSilvain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Runesword.class, BogRats.class, DiabolicMachine.class, NiallSilvain.class})
 class RuneswordTest extends BaseCardTest {
 
     @Test
@@ -27,6 +32,33 @@ class RuneswordTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(basePower + 2);
         assertThat(sword.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an attacking creature controlled by an opponent")
+    void targetsOpponentsAttackingCreature() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addAttacker(player2);
+        int basePower = gqs.getEffectivePower(gd, attacker);
+
+        activate(sword, attacker);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(basePower + 2);
+    }
+
+    @Test
+    @DisplayName("The power boost wears off at end of turn")
+    void boostWearsOffAtEndOfTurn() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addAttacker();
+        int basePower = gqs.getEffectivePower(gd, attacker);
+
+        activate(sword, attacker);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(basePower);
     }
 
     @Test
@@ -47,9 +79,8 @@ class RuneswordTest extends BaseCardTest {
     void exilesCreatureDamagedByTarget() {
         Permanent sword = addSwordReady();
         Permanent attacker = addAttacker();
-        Permanent skeletons = new Permanent(new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
-        gd.playerBattlefields.get(player2.getId()).add(skeletons);
+        Permanent creature = addCreatureReady(player2, new NiallSilvain());
+        creature.setRegenerationShield(1);
 
         activate(sword, attacker);
 
@@ -57,34 +88,56 @@ class RuneswordTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
-        harness.assertNotInGraveyard(player2, "Drudge Skeletons");
-        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Drudge Skeletons"))).isTrue();
+        harness.assertNotOnBattlefield(player2, "Niall Silvain");
+        harness.assertNotInGraveyard(player2, "Niall Silvain");
+        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Niall Silvain"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exiles a creature that dies at the same time as the targeted creature")
+    void exilesCreatureDyingAtSameTimeAsTarget() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addBogRatsAttacker();
+        addCreatureReady(player2, new NiallSilvain());
+
+        activate(sword, attacker);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bog Rats");
+        harness.assertNotInGraveyard(player2, "Niall Silvain");
+        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Niall Silvain"))).isTrue();
     }
 
     @Test
     @DisplayName("Requires an attacking creature as its target")
     void requiresAttackingCreature() {
         Permanent sword = addSwordReady();
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = addCreatureReady(player1, new NiallSilvain());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(sword), 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addSwordReady() {
-        Permanent sword = new Permanent(new Runesword());
-        sword.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sword);
-        return sword;
+        return harness.addToBattlefieldAndReturn(player1, new Runesword());
     }
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        return addAttacker(player1);
+    }
+
+    private Permanent addAttacker(Player player) {
+        Permanent attacker = addCreatureReady(player, new DiabolicMachine());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        return attacker;
+    }
+
+    private Permanent addBogRatsAttacker() {
+        Permanent attacker = addCreatureReady(player1, new BogRats());
+        attacker.setAttacking(true);
         return attacker;
     }
 
