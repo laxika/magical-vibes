@@ -79,6 +79,7 @@ All paths relative to `cards/`.
 | X-cost mass destroy (combat damage gated) | `s/SteelHellkite.java` | BoostSelfEffect pump + DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect with maxActivationsPerTurn=1 — X-cost, once per turn, only affects damaged player's permanents |
 | Loyalty (no target) | `a/AjaniOutlandChaperone.java` | `(+1, effects, false, description)` |
 | Loyalty (with target filter) | `a/AjaniOutlandChaperone.java` | `(-2, effects, true, description, filter)` |
+| Planeswalker with optional resolution-time creature sacrifice tutor, any-number milled-creature hand selection, and Rhino Warrior token | `v/VivienOnTheHunt.java` | +2 `MayEffect(SacrificePermanentThenEffect(PermanentIsCreaturePredicate(), SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanentEffect(), "a creature", false, false), "Sacrifice a creature?")`; +1 `MillControllerAndPutAnyNumberOfMilledCreaturesIntoHandEffect(5)`; −1 `CreateTokenEffect("Rhino", 4, 4, GREEN, [RHINO, WARRIOR])` |
 
 ## Planeswalkers
 

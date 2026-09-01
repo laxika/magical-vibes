@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryRepla
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
@@ -871,7 +872,7 @@ public class BattlefieldPlacementService {
      * entering permanent always enters; only the older copies leave.
      */
     private void applySacrificeOtherPermanentsWithSameName(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (losesNonManaAbilitiesAsLandEnters(gameData, permanent)) {
             return;
         }
         boolean present = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -892,6 +893,24 @@ public class BattlefieldPlacementService {
         if (!doomed.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
+    }
+
+    private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, Permanent permanent) {
+        if (!permanent.getCard().hasType(CardType.LAND)) {
+            return false;
+        }
+        boolean[] losesAbilities = {false};
+        gameData.forEachPermanent((ignored, source) -> {
+            if (losesAbilities[0] || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
+                return;
+            }
+            losesAbilities[0] = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(LosesAllNonManaAbilitiesEffect.class::isInstance)
+                    .map(LosesAllNonManaAbilitiesEffect.class::cast)
+                    .anyMatch(effect -> effect.scope() == GrantScope.ALL_LANDS
+                            || effect.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF);
+        });
+        return losesAbilities[0];
     }
 
     /**

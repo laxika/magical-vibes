@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "141")
+@CardRegistration(set = "SNC", collectorNumber = "14")
 public class GiadaFontOfHope extends Card {
 
     public GiadaFontOfHope() {

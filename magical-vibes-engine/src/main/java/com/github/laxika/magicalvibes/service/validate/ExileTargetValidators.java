@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AdjustChosenCounterOnTargetEf
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardFromExileIntoOwnersLibraryEffect;
@@ -194,9 +195,29 @@ public class ExileTargetValidators {
         }
     }
 
+    @ValidatesTarget(PutTargetCardFromExileOnBottomOfOwnersLibraryEffect.class)
+    public void validatePutTargetCardFromExileOnBottomOfOwnersLibrary(
+            TargetValidationContext ctx, PutTargetCardFromExileOnBottomOfOwnersLibraryEffect effect) {
+        validateFaceUpExileCard(ctx);
+        ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
+        if (effect.notOwnedOnly() && ctx.sourceControllerId() != null
+                && ctx.sourceControllerId().equals(exiled.ownerId())) {
+            throw new IllegalStateException("Target card must not be owned by the ability controller");
+        }
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                exiled.card(), effect.filter(), null)) {
+            String label = CardPredicateUtils.describeFilter(effect.filter());
+            throw new IllegalStateException("Target card must be a " + label);
+        }
+    }
+
     @ValidatesTarget(ShuffleTargetCardFromExileIntoOwnersLibraryEffect.class)
     public void validateShuffleTargetCardFromExileIntoOwnersLibrary(
             TargetValidationContext ctx, ShuffleTargetCardFromExileIntoOwnersLibraryEffect effect) {
+        validateFaceUpExileCard(ctx);
+    }
+
+    private void validateFaceUpExileCard(TargetValidationContext ctx) {
         if (ctx.targetZone() != Zone.EXILE) {
             throw new IllegalStateException("Effect requires an exile target");
         }

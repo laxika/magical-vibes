@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /** Handles Wand of Ith's pay-or-discard decision for the revealed card. */
@@ -28,6 +31,9 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
     private final RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHandler effectHandler;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,12 +59,11 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost;
         if (accepted && canPay) {
-            int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-            gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeLoss);
+            lifeSupport.applyLifePayment(gameData, playerId, lifeCost, ability.sourceCard().getName());
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+                    player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to keep {} ({})", gameData.id,
-                    player.getUsername(), lifeLoss, revealed.getName(), ability.sourceCard().getName());
+                    player.getUsername(), lifeCost, revealed.getName(), ability.sourceCard().getName());
         } else {
             effectHandler.discardCard(gameData, playerId, revealed.getId(), ability.sourceCard(),
                     ability.sourceControllerId());

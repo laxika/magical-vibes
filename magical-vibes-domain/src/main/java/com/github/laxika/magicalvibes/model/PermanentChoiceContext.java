@@ -246,6 +246,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentGainsControlOfSource(UUID sourcePermanentId, String sourceCardName)
             implements PermanentChoiceContext {}
 
+    /** Discerning Financier: the controller chooses another player to gain control of a target permanent. */
+    record ChooseAnotherPlayerGainsControlOfTargetPermanent(
+            UUID controllerId, UUID targetPermanentId, String sourceCardName)
+            implements PermanentChoiceContext {}
+
     /** Rohgahh of Kher Keep: the ability controller chooses which opponent gains the tapped permanents. */
     record ChooseOpponentGainsControlOfSourceAndMatchingPermanents(
             UUID choosingPlayerId,
@@ -357,15 +362,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** A resolving effect asks its controller which of its chosen targets receives a counter. */
     record PutCounterOnEitherTarget(Card sourceCard, UUID controllerId, CounterType counterType,
-                                    List<UUID> targetIds) implements PermanentChoiceContext {
+                                    List<UUID> targetIds, List<CounterType> remainingCounterTypes)
+            implements PermanentChoiceContext {
+        public PutCounterOnEitherTarget(Card sourceCard, UUID controllerId, CounterType counterType,
+                                        List<UUID> targetIds) {
+            this(sourceCard, controllerId, counterType, targetIds, List.of());
+        }
+
         public PutCounterOnEitherTarget {
             targetIds = List.copyOf(targetIds);
+            remainingCounterTypes = List.copyOf(remainingCounterTypes);
         }
     }
     /** Barrin's Spite: the creatures' controller picks which target to sacrifice; the other returns
      *  to its owner's hand. */
     record SacrificeOneOfTwoThenReturnOtherToHand(UUID sacrificingPlayerId, Card sourceCard, UUID controllerId,
                                                   UUID firstPermanentId, UUID secondPermanentId) implements PermanentChoiceContext {}
+
+    /** Incriminate: the shared controller picks which of the two targeted creatures to sacrifice. */
+    record SacrificeOneOfTwo(UUID sacrificingPlayerId, UUID firstPermanentId, UUID secondPermanentId)
+            implements PermanentChoiceContext {}
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
@@ -401,6 +417,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AnyOpponentSacrificeCreatureForTapAndGainLifeAndDraw(
             UUID sacrificingPlayerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffect effect)
+            implements PermanentChoiceContext {}
+
+    /** Reservoir Kraken: the accepting opponent is picking which untapped creature to tap. */
+    record AnyOpponentMayTapCreatureForToken(
+            UUID tappingPlayerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect effect)
             implements PermanentChoiceContext {}
 
     /** Argothian Wurm: the accepting player is picking which land to sacrifice. */
@@ -1098,8 +1120,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
 
-    /** Heart-Piercer Manticore: choose the creature whose sacrifice creates the reflexive trigger. */
-    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
+    /** Choose the creature whose sacrifice creates the reflexive trigger. */
+    record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
+                                                   List<CardEffect> reflexiveFollowUps)
+            implements PermanentChoiceContext {
+        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) {
+            this(controllerId, sourceCard, List.of());
+        }
+
+        public SacrificeAnotherCreatureDealPowerDamage {
+            reflexiveFollowUps = List.copyOf(reflexiveFollowUps);
+        }
+    }
 
     record SacrificeAnotherCreatureGainLifeAndDraw(UUID controllerId, Card sourceCard) implements PermanentChoiceContext {}
 
@@ -1238,6 +1270,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
+
+    record ChooseNonlandPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                                         boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                         List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                         List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChooseNonlandPermanentAsEnter {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+    }
 
     record ChooseEquipmentToAttachAsEnter(UUID equipmentPermanentId, UUID controllerId, Card card,
                                           UUID targetId, boolean wasCastFromHand, int etbMode, int xValue,
@@ -1656,6 +1699,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                              UUID controllerPermanentId) implements PermanentChoiceContext {}
 
     record ChooseOwnCreatureGrantKeyword(Keyword keyword) implements PermanentChoiceContext {}
+
+    /** Chooses a controlled permanent from which a counter will be removed. */
+    record RemoveCounterFromChosenOwnPermanent(PermanentPredicate permanentFilter)
+            implements PermanentChoiceContext {}
 
     record SuspectChosenOtherCreature() implements PermanentChoiceContext {}
 

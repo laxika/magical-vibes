@@ -631,6 +631,11 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
             }
+            if (gameQueryService.getEffectiveCardColors(gameData, card).size() == 3
+                    && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteExactlyThreeColorSpellOnlyMana();
+            }
             if ((card.hasType(CardType.CREATURE) || card.hasType(CardType.ENCHANTMENT))
                     && cardPool.getCreatureOrEnchantmentSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(cardPool);
@@ -884,9 +889,18 @@ public class GameViewProjectionFactory {
                 && gameData.getLife(playerId) >= topCard.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData);
-        if (freeTopPlay || canPayLifeAlternative || castingCostService.hasAlternativeZeroCostFromBattlefield(
-                gameData, playerId, topCard, Zone.LIBRARY)) {
-            playable.add(cardViewFactory.create(topCard));
+        boolean alternativeZeroCost = castingCostService.hasAlternativeZeroCostFromBattlefield(
+                gameData, playerId, topCard, Zone.LIBRARY);
+        CardView topCardView = cardViewFactory.create(topCard);
+        if (!freeTopPlay && !lifeTopPlay && !canPayLifeAlternative && !alternativeZeroCost) {
+            int counterCost = castingPermissionService.findAdditionalCounterCostFromTopOfLibrary(
+                    gameData, playerId, topCard).orElse(0);
+            if (counterCost > 0) {
+                topCardView = topCardView.toBuilder().exileCastCounterCost(counterCost).build();
+            }
+        }
+        if (freeTopPlay || canPayLifeAlternative || alternativeZeroCost) {
+            playable.add(topCardView);
         } else {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, topCard, topCard.getParsedManaCost());
@@ -895,6 +909,11 @@ public class GameViewProjectionFactory {
             if (!topCard.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(pool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
+            }
+            if (gameQueryService.getEffectiveCardColors(gameData, topCard).size() == 3
+                    && cardPool.getExactlyThreeColorSpellOnlyManaTotal() > 0) {
+                cardPool = new ManaPool(cardPool);
+                cardPool.promoteExactlyThreeColorSpellOnlyMana();
             }
             int additionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, topCard, 0, Zone.LIBRARY);
@@ -907,7 +926,7 @@ public class GameViewProjectionFactory {
                         gameData, playerId, topCard, pool, additionalCost, Zone.LIBRARY);
             }
             if (canAfford) {
-                playable.add(cardViewFactory.create(topCard));
+                playable.add(topCardView);
             }
         }
 

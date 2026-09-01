@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OmenOfFire.class, Island.class, Mountain.class, Plains.class, GrizzlyBears.class,
+        SavannahLions.class})
 class OmenOfFireTest extends BaseCardTest {
 
     private void cast() {
@@ -40,6 +43,20 @@ class OmenOfFireTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Mountain");
         harness.assertInHand(player1, "Island");
         harness.assertInHand(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen Island to its owner's hand")
+    void returnsStolenIslandToOwner() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent stolenIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        gd.stolenCreatures.put(stolenIsland.getId(), player1.getId());
+        harness.setHand(player2, List.of());
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
     @Test

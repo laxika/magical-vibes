@@ -2061,15 +2061,16 @@ public class CardChoiceHandlerService {
         if (pending == null) {
             return;
         }
-        gameData.pendingConnive = null;
-        if (discardedCard.hasType(CardType.LAND)) {
-            return;
+        gameData.pendingConnive = pending.remainingDiscards() > 1
+                ? new PendingConnive(pending.sourcePermanentId(), pending.remainingDiscards() - 1)
+                : null;
+        if (!discardedCard.hasType(CardType.LAND)) {
+            Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            if (source == null) {
+                return;
+            }
+            permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
         }
-        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {

@@ -1139,6 +1139,11 @@ public class Permanent {
         return counters.getOrDefault(counterType, 0);
     }
 
+    /** Returns the total number of counters on this permanent, regardless of counter type. */
+    public int getTotalCounterCount() {
+        return counters.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
     public int getPlusOnePlusOneCounters() {
         return getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
     }

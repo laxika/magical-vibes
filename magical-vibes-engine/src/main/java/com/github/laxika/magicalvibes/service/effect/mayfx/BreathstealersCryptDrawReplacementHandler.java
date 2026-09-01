@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BreathstealersCryptDrawReplac
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,6 +39,9 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -98,12 +104,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
         boolean paid = accepted && canPay;
 
         if (paid) {
-            int lifeLoss = effect.lifeCost()
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-            gameData.playerLifeTotals.put(playerId, gameData.getLife(playerId) - lifeLoss);
-            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, lifeLoss);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeLoss + " life. (", ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to keep drawn creature ({})",
                     gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {

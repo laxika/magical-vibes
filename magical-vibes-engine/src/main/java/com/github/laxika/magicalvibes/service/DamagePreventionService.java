@@ -321,6 +321,15 @@ public class DamagePreventionService {
             }
             return 0;
         }
+        boolean damageUnpreventable = permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                || !gameQueryService.isDamagePreventable(gameData)
+                || (damageSource != null
+                && gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, isCombatDamage));
+        if (damage > 0 && consumeShieldCounter(gameData, permanent)) {
+            if (!damageUnpreventable) {
+                return 0;
+            }
+        }
         if (permanent.isDamageCantBePreventedOrRedirectedThisTurn()) return damage;
         // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its
         // controller's next turn begins.
@@ -515,6 +524,17 @@ public class DamagePreventionService {
         return damage;
     }
 
+    public boolean consumeShieldCounter(GameData gameData, Permanent permanent) {
+        int shields = permanent.getCounterCount(CounterType.SHIELD);
+        if (shields <= 0) {
+            return false;
+        }
+        permanent.setCounterCount(CounterType.SHIELD, shields - 1);
+        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " loses a shield counter."));
+        log.info("Game {} - {} loses a shield counter", gameData.id, permanent.getCard().getName());
+        return true;
+    }
+
     public int applySelfDamagePreventionShield(GameData gameData, Permanent permanent, int damage) {
         if (damage <= 0 || permanent.isDamageCantBePreventedOrRedirectedThisTurn()
                 || !gameQueryService.isDamagePreventable(gameData)) {
@@ -573,6 +593,11 @@ public class DamagePreventionService {
 
         if (gameQueryService.isDamageFromPermanentSourceToCreaturePrevented(
                 gameData, damageSource, permanent, isCombatDamage)) {
+            return 0;
+        }
+
+        if (gameQueryService.isDamageFromMatchingSourcePreventedForControlledCreature(
+                gameData, permanent, damageSource)) {
             return 0;
         }
 

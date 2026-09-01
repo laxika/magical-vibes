@@ -426,6 +426,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  driven by the same tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED} — so it fires
      *  on any tap (for mana or forced, e.g. Icy Manipulator), not just taps for mana. */
     ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
+    /** Triggers whenever the controller of this permanent taps an opponent's permanent.
+     *  Wrap the effect in {@code TriggeringPermanentConditionalEffect} to filter by the tapped
+     *  permanent. Checked from {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}
+     *  with the player who was instructed to tap the permanent, so an opponent tapping their own
+     *  permanent does not trigger this slot. */
+    ON_CONTROLLER_TAPS_OPPONENT_PERMANENT,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
@@ -762,6 +768,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
      *  entering artifact. Checked in {@code TriggerCollectionService.checkAllyArtifactEntersTriggers}. */
     GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+    /** Triggers whenever an enchantment the controller controls enters the battlefield, while this card
+     *  is in the controller's graveyard. Like {@link #ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD} but fired
+     *  from the graveyard. Checked in {@code TriggerCollectionService.checkAllyEnchantmentEntersTriggers}. */
+    GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
     /** "Whenever an opponent is dealt damage by a red instant or sorcery spell you control or by a red
      *  planeswalker you control" — fired from the controller's graveyard (Chandra's Phoenix). Checked in
      *  {@code TriggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers}, called from

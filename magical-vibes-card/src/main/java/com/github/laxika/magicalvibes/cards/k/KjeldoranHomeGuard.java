@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceAtEndOfCombatEffect;
 
@@ -26,6 +27,6 @@ public class KjeldoranHomeGuard extends Card {
         addEffect(EffectSlot.ON_ATTACK, new PutCounterOnSourceAtEndOfCombatEffect(
                 CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN));
         addEffect(EffectSlot.ON_BLOCK, new PutCounterOnSourceAtEndOfCombatEffect(
-                CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN));
+                CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN), TriggerMode.ONCE_PER_BLOCK);
     }
 }

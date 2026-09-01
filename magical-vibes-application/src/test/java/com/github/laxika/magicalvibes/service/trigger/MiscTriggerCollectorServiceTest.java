@@ -304,6 +304,42 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("controller life-gain conditional trigger queues its wrapped effect")
+    void controllerLifeGainConditionalTriggerQueuesWrappedEffect() {
+        Permanent perm = createPermanent("Vampire Scrivener");
+        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
+        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerContext.LifeGain(player1Id, 3));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("controller life-loss conditional trigger queues its wrapped effect")
+    void controllerLifeLossConditionalTriggerQueuesWrappedEffect() {
+        Permanent perm = createPermanent("Vampire Scrivener");
+        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
+        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), EffectSlot.ON_CONTROLLER_LOSES_LIFE, effect,
+                new TriggerContext.LifeLoss(player1Id, 2));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEventValue()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("energy-gain default trigger queues the original effect")
     void energyGainDefaultTriggerQueuesEffect() {
         Permanent perm = createPermanent("Fabrication Module");

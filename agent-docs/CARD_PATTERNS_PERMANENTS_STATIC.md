@@ -1,10 +1,13 @@
 ﻿# Card Patterns: Static Permanents & Auras
 
+| Choose a nonland permanent and copy its activated abilities | `s/SchemingFence.java` | ON_ENTER_BATTLEFIELD `ChooseNonlandPermanentOnEnterEffect` + STATIC `ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(PermanentIsChosenPermanentPredicate)` + `GainActivatedAbilitiesOfChosenPermanentEffect` + `SpendManaAsAnyColorForActivatedAbilitiesEffect` |
 Non-Human creature-type-count anthem: `d/DiligentZookeeper.java` uses `BoostNonHumanCreaturesByCreatureTypeCountEffect(10)` for +1/+1 per creature type, capped at +10/+10; subtype counts use the layered characteristic state.
 
 | Attack cost paid by returning a permanent | `f/FloodtideSerpent.java` | STATIC `CantAttackUnlessEffect(new ControlsPermanentCount(1, filter), desc)` + `CantAttackUnlessReturnToHandEffect(1, filter, desc)` — the controller returns a matching permanent to its owner's hand as attackers are declared |
 
 | Choose a creature type as an additional cast cost; P/T equal matching creatures | `c/CallerOfTheHunt.java` | SPELL ChooseCreatureTypeCost + STATIC SetPowerToughnessToAmountEffect(PermanentCount(AllOf(IsCreature, PermanentHasSourceChosenSubtypePredicate), ANY_PLAYER), same) - the cast-time choice is stored on the entering permanent and the count updates with the battlefield |
+
+| Aura that forces creatures to attack its enchanted creature's controller | `p/PublicEnemy.java` | target(`TargetFilters.creature()`) + STATIC `CreaturesMustAttackEnchantedCreatureControllerEffect()` + ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD `DrawCardEffect()` — the static requirement follows the Aura's current attachment and applies only when a matching creature can attack that player |
 
 All paths relative to `cards/`.
 
@@ -22,6 +25,7 @@ All paths relative to `cards/`.
 
 ## Static permanents
 
+| Owned Adventure card in exile grants haste | `h/HowlingGalefang.java` | STATIC ConditionalEffect(new CardsInExileMatchingAtLeast(1, new CardHasAdventurePredicate()), StaticBoostEffect(0, 0, [HASTE], SELF)) — haste as long as the controller owns an Adventure card in exile |
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Oil-counter trigger plus counter-based anthem | `i/IchorplateGolem.java` | ON_ALLY_CREATURE_ENTERS_BATTLEFIELD `EnteringCreatureHasCountersConditionalEffect(OIL, PutCountersOnEnteringCreatureEffect(OIL, 1, false, OIL))` plus STATIC `StaticBoostEffect(1, 1, ALL_OWN_CREATURES, PermanentHasCountersPredicate(OIL))` |
@@ -255,7 +259,7 @@ All paths relative to `cards/`.
 | Double damage to opponents + prevent half to you | `g/GiselaBladeOfGoldnight.java` | STATIC DoubleDamageToOpponentsAndTheirPermanentsEffect + STATIC PreventHalfDamageToControllerAndTheirPermanentsEffect — recipient-scoped pair; the doubler is read via GameQueryService.getDamageToRecipientMultiplier at the four damage entry points, the half-prevention via DamagePreventionService.applyHalfDamagePrevention from applyPlayerPreventionShield / applyCreaturePreventionShield. Never both on one damage event: the doubler skips its own controller, the prevention only covers its own controller |
 | Spell damage bonus to opponents + spell damage prevention to you | `r/RemKarolusStalwartSlayer.java` | STATIC AdditionalDamageToOpponentsAndTheirPermanentsEffect(1) + STATIC PreventSpellDamageToControllerAndPermanentsEffect — recipient-scoped pair; only damage from spells on the stack is affected, and the bonus applies regardless of spell controller |
 | Double damage to controller and self | `g/GoldnightCastigator.java` | STATIC DoubleDamageToControllerAndSelfEffect — recipient-scoped replacement; doubles all damage dealt to its controller or to the Castigator itself, but not to other permanents its controller controls |
-| Multiply mana produced (tap for mana) | `m/ManaReflection.java`, `n/NyxbloomAncient.java` | STATIC ManaReflectionEffect — tapping any permanent for mana produces the configured multiple of that mana; Mana Reflection is 2× and Nyxbloom Ancient is 3×, global and multiplicative via GameQueryService.manaProductionMultiplier |
+| Multiply mana produced (tap for mana) | `m/ManaReflection.java`, `n/NyxbloomAncient.java`, `v/VirtueOfStrength.java` | STATIC `ManaReflectionEffect` — tapping a matching permanent for mana produces its configured multiple; Mana Reflection uses the all-permanent 2× form, Nyxbloom Ancient the all-permanent 3× form, and Virtue of Strength a basic-land predicate with 3×. Multiple effects are multiplicative via `GameQueryService.manaProductionMultiplier` |
 | Twist basic-land mana colors | `n/NakedSingularity.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{3}") + STATIC NakedSingularityManaEffect — Plains→{R}, Island→{G}, Swamp→{W}, Mountain→{U}, Forest→{B}; same plumbing as Reality Twist |
 | Lands produce fixed color | `i/InfernalDarkness.java` | UPKEEP_TRIGGERED CumulativeUpkeepEffect("{B}", 1) + STATIC ReplaceLandManaWithColorEffect(BLACK) — amount unchanged; global via GameQueryService.fixedLandManaColor |
 | Symmetric land-tap mana doubling | `m/ManaFlare.java` | ON_ANY_PLAYER_TAPS_LAND `AddOneOfEachManaTypeProducedByLandEffect(false)` — every player's land tap adds one extra mana of a type it produced (controller-scoped variant `true` = Vorinclex) |
@@ -287,6 +291,7 @@ All paths relative to `cards/`.
 | Grant replicate equal to mana cost to instants and sorceries | `d/DjinnIlluminatus.java` | STATIC GrantSpellCastingAbilityToSpellsEffect(Keyword.REPLICATE, CardAnyOfPredicate(type instant/sorcery)) — matching spells gain a repeatable additional cost equal to their mana cost and copy themselves once per payment |
 | Conditional keywords while any creature has -1/-1 | `t/TenaciousHunter.java` | STATIC ConditionalEffect(AnyPlayerControlsPermanent(AllOf(IsCreature, HasCounters(MINUS_ONE_MINUS_ONE))), GrantKeywordEffect(Set.of(VIGILANCE, DEATHTOUCH), SELF)) |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
+| Counter threshold among controlled creatures | `b/BackstreetBruiser.java` | STATIC ConditionalEffect(new ControlledCreatureCounterCountAtLeast(2), CanAttackAsThoughNoDefenderEffect) |
 | Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect) + ConditionalEffect(new Metalcraft(), StaticBoostEffect) |
 | Metalcraft boost only | `c/CarapaceForger.java` | STATIC ConditionalEffect(new Metalcraft(), StaticBoostEffect(2, 2, SELF)) |
 | Metalcraft boost + ignore defender | `s/SpireSerpent.java` | STATIC ConditionalEffect(new Metalcraft(), StaticBoostEffect) + ConditionalEffect(new Metalcraft(), CanAttackAsThoughNoDefenderEffect) |

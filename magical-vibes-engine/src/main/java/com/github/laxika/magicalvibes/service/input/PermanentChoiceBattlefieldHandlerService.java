@@ -74,6 +74,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCr
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentAndReturnTargetCardsFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeLandPutSourceOnTopEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMaySacrificeCreatureToCounterSpellEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler;
@@ -175,6 +176,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureYouGainControlEffectHandler eachOpponentChoosesCreatureYouGainControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToExileWithSourceEffectHandler eachOpponentChoosesCreatureToExileWithSourceEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffectHandler tapAndChooseOpponentGainsControlHandler;
     private final OpponentChoosesPermanentToSacrificeEffectHandler opponentChoosesPermanentToSacrificeEffectHandler;
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
@@ -183,6 +185,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndCounterSourceEffectHandler anyOpponentSacrificeForTapAndCounterHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AnyOpponentMaySacrificeCreatureTapAndGainLifeAndDrawSourceEffectHandler anyOpponentSacrificeForTapAndGainLifeAndDrawHandler;
+    private final AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler anyOpponentMayTapCreatureHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesCreatureTheyControlTokenCopyEffectHandler opponentChoosesCreatureTheyControlTokenCopyEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureThenBoostOthersEffectHandler chooseOpponentCreatureThenBoostOthersEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
@@ -215,6 +218,18 @@ public class PermanentChoiceBattlefieldHandlerService {
                     com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE, 1);
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Incriminate: the shared controller picked which of the two targets to sacrifice. */
+    public void handleSacrificeOneOfTwo(GameData gameData, UUID permanentId,
+                                        PermanentChoiceContext.SacrificeOneOfTwo context) {
+        Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        destructionSupport.sacrificeAndLog(gameData, chosen, context.sacrificingPlayerId());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -545,7 +560,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handlePutCounterOnEitherTarget(GameData gameData, UUID permanentId,
                                                 PermanentChoiceContext.PutCounterOnEitherTarget context) {
-        putCounterOnEitherTargetEffectHandler.placeCounter(gameData, permanentId, context);
+        putCounterOnEitherTargetEffectHandler.continueCounterPlacement(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -775,6 +790,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             PermanentChoiceContext.ChooseOpponentGainsControlOfSource context) {
         chooseOpponentGainsControlOfSourceEffectHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChooseAnotherPlayerGainsControlOfTargetPermanent(
+            GameData gameData, UUID playerId,
+            PermanentChoiceContext.ChooseAnotherPlayerGainsControlOfTargetPermanent context) {
+        chooseAnotherPlayerGainsControlOfTargetPermanentEffectHandler.completeChoice(gameData, playerId, context);
     }
 
     public void handleTapAndChooseOpponentGainsControl(GameData gameData, UUID playerId,
@@ -1027,6 +1048,14 @@ public class PermanentChoiceBattlefieldHandlerService {
         anyOpponentSacrificeForTapAndGainLifeAndDrawHandler.advance(
                 gameData, context.sourceCard(), context.effect(), context.sacrificingPlayerId(), true);
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Reservoir Kraken: the accepting opponent picked which untapped creature to tap. */
+    public void handleAnyOpponentMayTapCreatureForToken(GameData gameData, UUID permanentId,
+                                                         PermanentChoiceContext.AnyOpponentMayTapCreatureForToken context) {
+        anyOpponentMayTapCreatureHandler.accept(
+                gameData, context.sourceCard(), context.effect(), context.tappingPlayerId(), permanentId);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1860,13 +1889,17 @@ public class PermanentChoiceBattlefieldHandlerService {
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
         queuePowerDamageReflexiveTrigger(
-                gameData, ctx.controllerId(), ctx.sourceCard(), sourcePermanentId, power);
+                gameData, ctx.controllerId(), ctx.sourceCard(), sourcePermanentId, power,
+                ctx.reflexiveFollowUps());
     }
 
     private void queuePowerDamageReflexiveTrigger(GameData gameData, UUID controllerId,
                                                    Card sourceCard, UUID sourcePermanentId,
-                                                   int power) {
+                                                   int power, List<CardEffect> reflexiveFollowUps) {
         CardEffect damageEffect = new DealDamageToAnyTargetEffect(power);
+        List<CardEffect> reflexiveEffects = new ArrayList<>();
+        reflexiveEffects.add(damageEffect);
+        reflexiveEffects.addAll(reflexiveFollowUps);
         TargetPredicate targetPredicate = damageEffect.targetSpec().targetPredicate();
         FilterContext filterContext = new FilterContext(
                 gameData, sourceCard.getId(), controllerId, null, null);
@@ -1886,7 +1919,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.MayAbilityTriggerTarget(
-                        sourceCard, controllerId, List.of(damageEffect), sourcePermanentId, null));
+                        sourceCard, controllerId, reflexiveEffects, sourcePermanentId, null));
         playerInputService.beginAnyTargetChoice(
                 gameData, controllerId, validPermanentTargets,
                 new ArrayList<>(gameData.orderedPlayerIds),
@@ -2389,6 +2422,43 @@ public class PermanentChoiceBattlefieldHandlerService {
         battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
                 context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());
 
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    public void handleChooseNonlandPermanentAsEnter(
+            GameData gameData, UUID chosenPermanentId,
+            PermanentChoiceContext.ChooseNonlandPermanentAsEnter context) {
+        Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+        Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
+        if (entering == null) {
+            throw new IllegalStateException("Entering permanent no longer exists");
+        }
+        if (chosenPermanentId.equals(context.controllerId())) {
+            battlefieldEntryService.processCreatureETBEffects(
+                    gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
+                    context.etbMode(), context.xValue(), context.kicked(), context.targetIds(),
+                    context.repeatedAdditionalCosts(), context.convokeCreatureIds());
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (chosen == null || chosen.getId().equals(entering.getId())
+                || gameQueryService.isLand(gameData, chosen)) {
+            throw new IllegalStateException("Chosen permanent is not a nonland permanent");
+        }
+
+        entering.setChosenPermanentId(chosenPermanentId);
+        gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
+        log.info("Game {} - {} chooses {}", gameData.id,
+                entering.getCard().getName(), chosen.getCard().getName());
+
+        battlefieldEntryService.processCreatureETBEffects(
+                gameData, context.controllerId(), context.card(), context.targetId(), context.wasCastFromHand(),
+                context.etbMode(), context.xValue(), context.kicked(), context.targetIds(),
+                context.repeatedAdditionalCosts(), context.convokeCreatureIds());
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }

@@ -425,7 +425,7 @@ class StackResolutionServiceTest {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
             when(cloneService.prepareCloneReplacementEffect(
-                    any(), any(), any(), any(), anyInt(), any(), anyBoolean())).thenReturn(true);
+                    any(), any(), any(), any(), anyInt(), anyInt(), any(), anyBoolean())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 

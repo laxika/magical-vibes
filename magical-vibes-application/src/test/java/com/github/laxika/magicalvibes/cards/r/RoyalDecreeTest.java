@@ -11,11 +11,22 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        RoyalDecree.class,
+        DrudgeSkeletons.class,
+        Forest.class,
+        GrizzlyBears.class,
+        Mountain.class,
+        Plains.class,
+        RagingGoblin.class,
+        Swamp.class
+})
 class RoyalDecreeTest extends BaseCardTest {
 
     @Test
@@ -142,6 +153,25 @@ class RoyalDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep costs one white mana per age counter")
+    void paysCumulativeUpkeepForEachAgeCounter() {
+        Permanent decree = harness.addToBattlefieldAndReturn(player1, new RoyalDecree());
+        decree.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(decree.getCounterCount(CounterType.AGE)).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(decree);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
     @DisplayName("Declining cumulative upkeep sacrifices Royal Decree")
     void declineSacrifices() {
         Permanent decree = harness.addToBattlefieldAndReturn(player1, new RoyalDecree());
@@ -151,7 +181,7 @@ class RoyalDecreeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(decree);
-        harness.assertInGraveyard(player1, "Royal Decree");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(decree.getCard());
     }
 
     private void tap(Permanent permanent) {

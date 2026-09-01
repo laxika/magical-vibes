@@ -559,7 +559,10 @@ public class GraveyardReturnSupport {
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
-                            grantedEffect, p.getId(), null, null, EffectDuration.PERMANENT, 0));
+                            grantedEffect, p.getId(), null, null,
+                            effect.battlefieldEffectGrantDuration() == null
+                                    ? EffectDuration.PERMANENT
+                                    : effect.battlefieldEffectGrantDuration(), 0));
                 }
             }
             break;
@@ -1100,6 +1103,7 @@ public class GraveyardReturnSupport {
                 .mandatory(effect.mandatory() || effect.greatestPower())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -1170,6 +1174,7 @@ public class GraveyardReturnSupport {
                 .mandatory(effect.mandatory())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .cardPool(cardPool);
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -1212,6 +1217,24 @@ public class GraveyardReturnSupport {
                                                 String logVerbPhrase, String logSuffix) {
         processTargetedGraveyardTargets(gameData, entry, targetCardIds, cardConsumer,
                 logVerbPhrase, logSuffix);
+    }
+
+    public void putTargetedGraveyardCardsOnTopInChosenOrder(GameData gameData, StackEntry entry) {
+        List<Card> movedCards = new ArrayList<>();
+        processTargetedGraveyardTargets(gameData, entry, entry.getTargetCardIds(),
+                (graveyard, card) -> movedCards.add(card),
+                " puts ", " on top of their library from graveyard.");
+        if (movedCards.isEmpty()) {
+            return;
+        }
+        UUID controllerId = entry.getControllerId();
+        if (movedCards.size() == 1) {
+            gameData.playerDecks.get(controllerId).addFirst(movedCards.getFirst());
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, movedCards, false, controllerId,
+                "Put these cards on top of your library in any order."));
     }
 
     public void processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,

@@ -156,6 +156,8 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
+        gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
+                copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
         gameData.cloneOperation.copyColor = copyEffect.copyColor();
         gameData.cloneOperation.entersTapped = copyEffect.entersTapped();
         gameData.cloneOperation.landPlay = landPlay;
@@ -208,6 +210,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.xValue = xValue;
         gameData.cloneOperation.copyCardFilter = null;
         gameData.cloneOperation.graveyardCopyChoicePending = true;
@@ -255,6 +258,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of(CardSubtype.ZOMBIE);
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
         gameData.cloneOperation.landPlay = false;
@@ -365,6 +369,8 @@ public class CloneService {
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
         Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        boolean shieldCounterIfControllerControlsCopiedPermanent =
+                gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
         boolean copyColor = gameData.cloneOperation.copyColor;
         boolean entersTapped = gameData.cloneOperation.entersTapped;
         boolean landPlay = gameData.cloneOperation.landPlay;
@@ -394,6 +400,7 @@ public class CloneService {
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
         gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
         gameData.cloneOperation.landPlay = false;
@@ -452,6 +459,11 @@ public class CloneService {
                 }
                 if (addTypeAppropriateCounters) {
                     applyTypeAppropriateCounters(gameData, controllerId, perm);
+                }
+                if (shieldCounterIfControllerControlsCopiedPermanent
+                        && targetPerm != null
+                        && controllerId.equals(gameQueryService.findPermanentController(gameData, targetPerm.getId()))) {
+                    applyAdditionalShieldCounter(gameData, controllerId, perm);
                 }
                 if (entersTapped) {
                     perm.tap();
@@ -517,6 +529,15 @@ public class CloneService {
                 log.info("Game {} - {} enters as copy with {} additional +1/+1 counter(s)",
                         gameData.id, perm.getCard().getName(), count);
             }
+        }
+    }
+
+    private void applyAdditionalShieldCounter(GameData gameData, UUID controllerId, Permanent perm) {
+        if (gameQueryService.cantHaveCountersForController(gameData, perm, controllerId)) return;
+        int count = gameQueryService.replaceCounters(gameData, perm, controllerId, CounterType.SHIELD, 1);
+        if (count > 0) {
+            perm.setCounterCount(CounterType.SHIELD,
+                    perm.getCounterCount(CounterType.SHIELD) + count);
         }
     }
 

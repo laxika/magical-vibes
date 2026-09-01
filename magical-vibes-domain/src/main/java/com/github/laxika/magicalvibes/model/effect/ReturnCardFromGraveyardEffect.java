@@ -245,6 +245,8 @@ import java.util.Set;
  * @param battlefieldEffectGrants static effects continuously granted to each returned battlefield permanent
  * @param eventCardIdsOnly       when {@code true}, restricts a resolution-time graveyard choice to cards whose
  *                               ids were recorded by a preceding event on the current stack entry
+ * @param battlefieldEffectGrantDuration duration of the floating effects in
+ *                                      {@link #battlefieldEffectGrants}; defaults to {@link EffectDuration#PERMANENT}
  * @param targetGroup          positional graveyard-card target group resolved by this effect, or
  *                             {@code -1} when the effect uses the ordinary target path
  */
@@ -320,8 +322,10 @@ public record ReturnCardFromGraveyardEffect(
         boolean exileAtNextUpkeep,
         List<CardEffect> battlefieldEffectGrants,
         boolean eventCardIdsOnly,
+        EffectDuration battlefieldEffectGrantDuration,
         int targetGroup
-) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect {
+) implements CombatDamageAmountAwareEffect, TargetCardGroupEffect,
+        SacrificedPermanentManaValueAwareEffect {
 
     /**
      * Partial builder class providing default values. Booleans default to {@code false},
@@ -335,6 +339,7 @@ public record ReturnCardFromGraveyardEffect(
         private List<CardSubtype> grantSubtypes = List.of();
         private Set<CounterType> enterWithCounters = Set.of();
         private List<CardEffect> battlefieldEffectGrants = List.of();
+        private EffectDuration battlefieldEffectGrantDuration = EffectDuration.PERMANENT;
         private int targetGroup = -1;
     }
 
@@ -362,6 +367,15 @@ public record ReturnCardFromGraveyardEffect(
     @Override
     public List<Integer> targetGroups() {
         return targetGroup < 0 ? List.of() : List.of(targetGroup);
+    }
+
+    @Override
+    public ReturnCardFromGraveyardEffect boundToSacrificedPermanentManaValue(int manaValue) {
+        CardPredicate manaValueFilter = new CardMaxManaValuePredicate(manaValue - 1);
+        CardPredicate combinedFilter = filter == null
+                ? manaValueFilter
+                : new CardAllOfPredicate(List.of(filter, manaValueFilter));
+        return toBuilder().filter(combinedFilter).build();
     }
 
     @Override

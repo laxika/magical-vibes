@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -52,20 +54,55 @@ public class PutCounterOnEitherTargetPermanentEffectHandler implements NormalEff
 
     public void placeCounter(GameData gameData, UUID permanentId,
                              PermanentChoiceContext.PutCounterOnEitherTarget context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null || !context.targetIds().contains(permanentId)) {
+        if (!context.targetIds().contains(permanentId)) {
             return;
         }
-
         StackEntry entry = gameData.pendingEffectResolutionEntry;
         if (entry == null) {
             entry = new StackEntry(context.sourceCard(), context.controllerId());
         }
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, context.counterType(), 1);
+        placeCounter(gameData, entry, permanentId, context.counterType());
+    }
+
+    public void beginCounterPlacement(GameData gameData, StackEntry entry,
+                                      List<UUID> targetIds, List<CounterType> counterTypes) {
+        List<UUID> liveTargetIds = targetIds.stream()
+                .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null)
+                .toList();
+        if (liveTargetIds.isEmpty() || counterTypes.isEmpty()) {
+            return;
+        }
+
+        Card sourceCard = entry.getCard();
+        UUID controllerId = entry.getControllerId();
+        CounterType counterType = counterTypes.getFirst();
+        List<CounterType> remainingCounterTypes = counterTypes.subList(1, counterTypes.size());
+        if (liveTargetIds.size() == 1) {
+            placeCounter(gameData, entry, liveTargetIds.getFirst(), counterType);
+            beginCounterPlacement(gameData, entry, liveTargetIds, remainingCounterTypes);
+            return;
+        }
+
+        PermanentChoiceContext.PutCounterOnEitherTarget context =
+                new PermanentChoiceContext.PutCounterOnEitherTarget(
+                        sourceCard, controllerId, counterType, liveTargetIds, remainingCounterTypes);
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginPermanentChoice(gameData, controllerId, liveTargetIds, context,
+                "Choose a token to receive a " + counterType.name().toLowerCase() + " counter.");
+    }
+
+    public void continueCounterPlacement(GameData gameData, UUID permanentId,
+                                         PermanentChoiceContext.PutCounterOnEitherTarget context) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            entry = new StackEntry(context.sourceCard(), context.controllerId());
+        }
+        placeCounter(gameData, entry, permanentId, context.counterType());
+        beginCounterPlacement(gameData, entry, context.targetIds(), context.remainingCounterTypes());
     }
 
     private void placeCounter(GameData gameData, StackEntry entry, UUID permanentId,
-                               com.github.laxika.magicalvibes.model.CounterType counterType) {
+                              CounterType counterType) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target != null) {
             permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, counterType, 1);

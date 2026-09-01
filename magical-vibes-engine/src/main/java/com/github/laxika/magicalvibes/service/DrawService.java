@@ -173,6 +173,17 @@ public class DrawService {
             return;
         }
 
+        Integer pendingExileTopCard = gameData.pendingNextDrawExileTopCard.get(playerId);
+        if (pendingExileTopCard != null && pendingExileTopCard > 0) {
+            if (pendingExileTopCard == 1) {
+                gameData.pendingNextDrawExileTopCard.remove(playerId);
+            } else {
+                gameData.pendingNextDrawExileTopCard.put(playerId, pendingExileTopCard - 1);
+            }
+            resolveNextDrawExileTopCardMayPlayThisTurn(gameData, playerId);
+            return;
+        }
+
         // Mark this draw as the player's turn-based draw-step draw before any replacement is applied,
         // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
         // see a stable answer even if their source enters play later in the turn.
@@ -1158,6 +1169,30 @@ public class DrawService {
                 false));
     }
 
+    /** Urabrask, Heretic Praetor's replaced draw: exile the top card and let its owner play it this turn. */
+    private void resolveNextDrawExileTopCardMayPlayThisTurn(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + "'s library is empty; the replaced draw exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCard(gameData, playerId, exiled);
+        gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles ").card(exiled)
+                .text(" from the top of their library instead of drawing (may play it this turn).")
+                .build());
+        log.info("Game {} - {} exiles {} instead of drawing (Urabrask)",
+                gameData.id, playerName, exiled.getName());
+    }
+
     void performDrawCard(GameData gameData, UUID playerId) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
@@ -1413,9 +1448,10 @@ public class DrawService {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
+                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                     // Targeted draw trigger: the controller must choose a target before the ability
-                    // goes on the stack.
+                    // goes on the stack. This includes player-only targets such as "target opponent".
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                             perm.getCard(),
                             drawingPlayerId,

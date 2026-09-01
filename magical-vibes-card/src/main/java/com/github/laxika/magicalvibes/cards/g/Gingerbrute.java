@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "219")
+@CardRegistration(set = "WOE", collectorNumber = "246")
 public class Gingerbrute extends Card {
 
     public Gingerbrute() {

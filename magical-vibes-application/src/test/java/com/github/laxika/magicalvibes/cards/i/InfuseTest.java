@@ -98,6 +98,7 @@ class InfuseTest extends BaseCardTest {
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gameData.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gameData));
+        harness.passBothPriorities();
 
         assertThat(gameData.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gameData.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

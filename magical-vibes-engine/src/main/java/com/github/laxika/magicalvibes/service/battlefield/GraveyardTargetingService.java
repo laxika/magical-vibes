@@ -540,7 +540,7 @@ public class GraveyardTargetingService {
             }
             gameLogService.append(gameData, GameLog.cardThen(card,
                     "'s attack trigger has no valid graveyard targets."));
-            log.info("Game {} - {} attack graveyard trigger skipped (no valid targets)",
+            log.info("Game {} - {} attack graveyard trigger pushed with 0 targets",
                     gameData.id, card.getName());
             return;
         }
@@ -1055,6 +1055,8 @@ public class GraveyardTargetingService {
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
                     if ((trackedIds == null || trackedIds.contains(graveyardCard.getId()))
+                            && (maxTotalManaValue <= 0
+                            || graveyardCard.getManaValue() <= maxTotalManaValue)
                             && predicateEvaluationService.matchesCardPredicate(
                                     graveyardCard, filter, card.getId(), gameData, graveyardOwner,
                                     null, null, xValue)) {
@@ -1085,8 +1087,14 @@ public class GraveyardTargetingService {
                 ? "Choose any number of target " + filterLabel + "s from " + zoneLabel(source) + "."
                 : "Choose up to " + maxTargetsCap + " target " + filterLabel + "s"
                 + (singleGraveyard ? " from a single graveyard" : " from " + zoneLabel(source)) + ".";
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
-                minTargets, maxTotalManaValue, prompt);
+        if (maxTotalManaValue != null) {
+            playerInputService.beginMultiGraveyardChoiceWithMaximumManaValue(
+                    gameData, controllerId, matchingCards, maxTargets, minTargets,
+                    maxTotalManaValue, prompt);
+        } else {
+            playerInputService.beginMultiGraveyardChoice(
+                    gameData, controllerId, matchingCards, maxTargets, minTargets, prompt);
+        }
     }
 
     /**

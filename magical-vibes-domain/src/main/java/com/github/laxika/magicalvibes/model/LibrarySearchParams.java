@@ -62,6 +62,7 @@ public record LibrarySearchParams(
         boolean grantExilePlayPermission,
         boolean allowAnyManaType,
         boolean withoutPayingManaCost,
+        Integer mayCastManaValueAtMost,
         UUID returnToHandAtControllerEndStepId
 ) {
     public LibrarySearchParams {
@@ -93,7 +94,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                 placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
-                returnToHandAtControllerEndStepId);
+                mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
@@ -109,7 +110,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                 placeBattlefieldCardsSimultaneously, allow,
                 grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
-                returnToHandAtControllerEndStepId);
+                mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
     }
 
     public static class Builder {
@@ -161,6 +162,7 @@ public record LibrarySearchParams(
         private boolean grantExilePlayPermission = true;
         private boolean allowAnyManaType = true;
         private boolean withoutPayingManaCost;
+        private Integer mayCastManaValueAtMost;
         private UUID returnToHandAtControllerEndStepId;
 
         private Builder(UUID playerId, List<Card> cards) {
@@ -395,6 +397,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder mayCastManaValueAtMost(Integer mayCastManaValueAtMost) {
+            this.mayCastManaValueAtMost = mayCastManaValueAtMost;
+            return this;
+        }
+
         public Builder returnToHandAtControllerEndStepId(UUID returnToHandAtControllerEndStepId) {
             this.returnToHandAtControllerEndStepId = returnToHandAtControllerEndStepId;
             return this;
@@ -413,7 +420,7 @@ public record LibrarySearchParams(
                     battlefieldIfChosenPredicate, battlefieldIfChosenTapped,
                     placeBattlefieldCardsSimultaneously, allowCastFromLibraryWhileSearching,
                     grantExilePlayPermission, allowAnyManaType, withoutPayingManaCost,
-                    returnToHandAtControllerEndStepId);
+                    mayCastManaValueAtMost, returnToHandAtControllerEndStepId);
         }
     }
 }

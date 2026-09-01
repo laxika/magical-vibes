@@ -239,6 +239,11 @@ public class CastingCostService {
                 xValue);
     }
 
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue, boolean kicked) {
+        return getCastCostModifier(gameData, playerId, card, buildCostModifierSnapshot(gameData, playerId),
+                false, xValue, false, null, false, false, kicked);
+    }
+
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue, Zone sourceZone) {
         return getCastCostModifier(gameData, playerId, card,
                 buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, false);
@@ -249,6 +254,13 @@ public class CastingCostService {
         return getCastCostModifier(gameData, playerId, card,
                 buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, false,
                 collectEvidenceCostPaid);
+    }
+
+    public int getCastCostModifier(GameData gameData, UUID playerId, Card card, int xValue,
+                                   Zone sourceZone, boolean kicked, boolean collectEvidenceCostPaid) {
+        return getCastCostModifier(gameData, playerId, card,
+                buildCostModifierSnapshot(gameData, playerId), false, xValue, false, sourceZone, false,
+                collectEvidenceCostPaid, kicked);
     }
 
     public int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
@@ -350,6 +362,14 @@ public class CastingCostService {
                                     CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
                                     boolean plottingFromHand, Zone sourceZone, boolean castFaceDown,
                                     boolean collectEvidenceCostPaid) {
+        return getCastCostModifier(gameData, playerId, card, snapshot, flashbackCost, xValue,
+                plottingFromHand, sourceZone, castFaceDown, collectEvidenceCostPaid, false);
+    }
+
+    private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
+                                    CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
+                                    boolean plottingFromHand, Zone sourceZone, boolean castFaceDown,
+                                    boolean collectEvidenceCostPaid, boolean kicked) {
         synchronized (gameData) {
             List<Card> hand = gameData.playerHands.get(playerId);
             int handIndex = plottingFromHand || (sourceZone != null && sourceZone != Zone.HAND)
@@ -368,11 +388,11 @@ public class CastingCostService {
                     return gameQueryService.withFreshQueryScope(gameData,
                             () -> getCastCostModifierFromCurrentState(
                                     gameData, playerId, card, snapshot, flashbackCost, xValue,
-                                    plottingFromHand, sourceZone, castFaceDown, collectEvidenceCostPaid));
+                                    plottingFromHand, sourceZone, castFaceDown, collectEvidenceCostPaid, kicked));
                 }
                 return getCastCostModifierFromCurrentState(gameData, playerId, card, snapshot,
                         flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
-                        collectEvidenceCostPaid);
+                        collectEvidenceCostPaid, kicked);
             } finally {
                 if (previewHand != null) {
                     gameData.playerHands.put(playerId, hand);
@@ -400,10 +420,10 @@ public class CastingCostService {
     private int getCastCostModifierFromCurrentState(
             GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot,
             boolean flashbackCost, int xValue, boolean plottingFromHand, Zone sourceZone,
-            boolean castFaceDown, boolean collectEvidenceCostPaid) {
+            boolean castFaceDown, boolean collectEvidenceCostPaid, boolean kicked) {
         CostModificationContext context = new CostModificationContext(gameData, playerId, card,
                 flashbackCost, xValue, plottingFromHand, sourceZone, castFaceDown,
-                collectEvidenceCostPaid);
+                collectEvidenceCostPaid, kicked);
         int delta = 0;
         List<CollectedCostModifier> afterOtherModifiers = new ArrayList<>();
         var exilePlayCostModifier = gameData.exilePlayCostModifiers.get(card.getId());
@@ -968,7 +988,8 @@ public class CastingCostService {
                                         .withSourceCardId(perm.getOriginalCard().getId())
                                         .withSourceControllerId(pid)
                                         .withSourcePermanentId(perm.getId()))) {
-                        reduction += reducingEffect.genericCostReduction();
+                        reduction += evaluateActivatedAbilityCostReduction(
+                                gameData, reducingEffect, perm, pid);
                     }
                 }
             }
@@ -1477,7 +1498,12 @@ public class CastingCostService {
         }
 
         var lifeCost = altCast.getCost(LifeCastingCost.class);
-        if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) return false;
+        if (lifeCost.isPresent()
+                && (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || gameData.getLife(playerId) < lifeCost.get().amount())) {
+            return false;
+        }
 
         var sacCost = altCast.getCost(SacrificePermanentsCost.class);
         if (sacCost.isPresent()) {
@@ -1567,7 +1593,9 @@ public class CastingCostService {
                 return battlefield.stream()
                         .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                         .map(this::manaCostOf)
-                        .anyMatch(reduction -> cost.canPayAfterReduction(pool, reduction));
+                        .anyMatch(reduction -> manaCost.get().treasureManaOnly()
+                                ? pool.canPayWithTreasureManaAfterReduction(cost, reduction)
+                                : cost.canPayAfterReduction(pool, reduction));
             }
             // Emerge: optimistically reduce by the highest mana value among sacrificeable permanents.
             int emergeReduction = 0;
@@ -1582,7 +1610,9 @@ public class CastingCostService {
                     ? getCastCostModifierForFaceDownSpell(gameData, playerId, card)
                     : card.getKeywords().contains(Keyword.PLOT)
                     ? getPlotCostModifier(gameData, playerId, card) : -emergeReduction;
-            if (!cost.canPay(pool, additionalCost)) return false;
+            if (!(manaCost.get().treasureManaOnly()
+                    ? pool.canPayWithTreasureMana(cost, additionalCost)
+                    : cost.canPay(pool, additionalCost))) return false;
         }
 
         return true;

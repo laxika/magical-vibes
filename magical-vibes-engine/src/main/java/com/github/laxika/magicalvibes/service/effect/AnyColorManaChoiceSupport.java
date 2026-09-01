@@ -254,8 +254,11 @@ public final class AnyColorManaChoiceSupport {
         }
 
         ChoiceContext choice = switch (effect.restriction()) {
-            case NONE, INSTANT_SORCERY_COPY ->
-                    new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
+            case NONE, INSTANT_SORCERY_COPY -> effect.restriction() == ManaSpendRestriction.NONE
+                    && sourceCard != null
+                    && sourceCard.getSubtypes().contains(CardSubtype.TREASURE)
+                    ? new ChoiceContext.TreasureManaColorChoice(playerId, amount)
+                    : new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount);
             case SPELL_ONLY ->
                     new ChoiceContext.SpellOnlyManaColorChoice(playerId, fromCreature, amount, false);
             case MULTICOLORED_SPELLS ->

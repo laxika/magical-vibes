@@ -708,7 +708,7 @@ public class DeathTriggerCollectorService {
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect)), null,
+                    sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(triggerEffect)), sd.dyingPower(),
                     new Permanent(match.permanent())
             ));
         } else {
@@ -726,6 +726,9 @@ public class DeathTriggerCollectorService {
                     sourcePermanentId
             );
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            // Preserve cast-mode state for conditional abilities that resolve after the permanent
+            // has left the battlefield, such as a blitz-only death trigger.
+            entry.setAlternateCost(match.permanent().isAlternateCost());
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
             entry.setEventValue(sd.dyingPower());
             match.gameData().stack.add(entry);
@@ -965,8 +968,8 @@ public class DeathTriggerCollectorService {
     boolean handleReturnEnchantedCreatureToBattlefield(TriggerMatchContext match,
             ReturnEnchantedCreatureToBattlefieldOnDeathEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        CardEffect effectForStack = epd.dyingCreatureCardId() != null
-                ? new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(epd.dyingCreatureCardId(),
+        CardEffect effectForStack = !epd.dyingPermanentCardIds().isEmpty()
+                ? new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(epd.dyingPermanentCardIds(),
                         effect.underAuraControllersControl(), effect.enterTapped(), effect.enterWithCounter())
                 : effect;
         addEnchantedPermanentDeathEntry(match, effectForStack);
@@ -1388,6 +1391,20 @@ public class DeathTriggerCollectorService {
             CardEffect baked = snapshotArtifactManaValue(triggerEffect, ag.artifactManaValue());
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(baked))));
+            logArtifactGraveyard(match);
+            return true;
+        }
+
+        if (triggerEffect.targetSpec().declaredTarget() == null) {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(triggerEffect)),
+                    null,
+                    match.permanent().getId()
+            ));
             logArtifactGraveyard(match);
             return true;
         }

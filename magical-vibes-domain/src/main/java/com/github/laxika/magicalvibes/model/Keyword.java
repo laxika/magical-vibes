@@ -51,6 +51,7 @@ public enum Keyword {
     DAYBOUND,
     NIGHTBOUND,
     KICKER,
+    BARGAIN,
     CREW,
     EXPLORE,
     EXPLOIT,

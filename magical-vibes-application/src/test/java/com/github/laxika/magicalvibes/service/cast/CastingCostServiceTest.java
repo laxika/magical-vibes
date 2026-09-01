@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -918,6 +920,30 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Dynamic symmetric activated-ability reductions use the reducing permanent")
+        void dynamicSymmetricReductionUsesReducingPermanent() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+                    new PermanentAllOfPredicate(List.of(
+                            new PermanentIsCreaturePredicate(),
+                            new PermanentControlledBySourceControllerPredicate())),
+                    new SourcePower()));
+            Permanent reducingPermanent = new Permanent(reducer);
+            gd.playerBattlefields.get(player1Id).add(reducingPermanent);
+
+            Permanent creature = new Permanent(new Card());
+            ActivatedAbility ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    false, "{3}", List.of(), "Creature ability");
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                    .thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, reducingPermanent)).thenReturn(2);
+
+            assertThat(svc.getActivatedAbilityActivationCostReduction(gd, creature, ability))
+                    .isEqualTo(2);
+        }
+
+        @Test
         @DisplayName("Other-only equip cost reduction excludes the source Equipment")
         void otherOnlyEquipCostReductionExcludesSourceEquipment() {
             Card whip = new Card();
@@ -1591,6 +1617,28 @@ class CastingCostServiceTest {
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
 
             gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificeCreatureOrDiscardCardOrPayLifeCost — true for any of its three options")
+        void sacrificeCreatureOrDiscardCardOrPayLifeCost() {
+            Card spell = spellWith(new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
+            gd.playerHands.get(player1Id).add(spell);
+            gd.playerLifeTotals.put(player1Id, 3);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerLifeTotals.put(player1Id, 4);
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerLifeTotals.put(player1Id, 3);
+            gd.playerHands.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+
+            gd.playerHands.get(player1Id).clear();
+            Permanent creature = new Permanent(graveyardCard("Fodder", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }
 

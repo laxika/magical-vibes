@@ -43,6 +43,22 @@ class PsychicAllergyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not deal damage for a token of the chosen color")
+    void excludesMatchingColorTokensFromDamageCount() {
+        castAndChooseBlue();
+        harness.addToBattlefield(player2, new AirElemental());
+        AirElemental token = new AirElemental();
+        token.setToken(true);
+        harness.addToBattlefield(player2, token);
+        harness.setLife(player2, 10);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+    }
+
+    @Test
     @DisplayName("Destroys itself when its controller cannot sacrifice two Islands")
     void destroysItselfWithoutTwoIslands() {
         castAndChooseBlue();
@@ -70,5 +86,21 @@ class PsychicAllergyTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Psychic Allergy");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Island"));
+    }
+
+    @Test
+    @DisplayName("Destroys itself when its controller declines to sacrifice two Islands")
+    void destroysItselfWhenSacrificeIsDeclined() {
+        castAndChooseBlue();
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Psychic Allergy");
+        harness.assertInGraveyard(player1, "Psychic Allergy");
     }
 }

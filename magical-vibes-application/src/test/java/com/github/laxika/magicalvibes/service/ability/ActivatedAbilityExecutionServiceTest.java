@@ -155,7 +155,7 @@ class ActivatedAbilityExecutionServiceTest {
                 .thenAnswer(inv -> inv.getArgument(1) instanceof Fixed f ? f.value() : 0);
 
         // No Mana Reflection in these tests — every mana production is 1x.
-        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
         lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
@@ -299,7 +299,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects,
                     3, null, null, false);
 
-            verify(lifeSupport).applyLifeLoss(gameData, player1Id, 3, "Krumar Initiate");
+            verify(lifeSupport).applyLifePayment(gameData, player1Id, 3, "Krumar Initiate");
             assertThat(gameData.stack).hasSize(1);
         }
 

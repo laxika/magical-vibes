@@ -84,6 +84,29 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
             return;
         }
 
+        if (e.bargainedBattlefieldMaxManaValue() != null && entry.wasKicked()) {
+            List<Card> eligibleCards = entry.getTargetCardIdsForEffect(e).stream()
+                    .map(cardId -> gameData.playerGraveyards
+                            .getOrDefault(entry.getControllerId(), List.of()).stream()
+                            .filter(card -> card.getId().equals(cardId))
+                            .findFirst()
+                            .orElse(null))
+                    .filter(card -> card != null
+                            && (e.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                            card, e.filter(), entry.getCard().getId(), gameData, entry.getControllerId()))
+                            && card.getManaValue() <= e.bargainedBattlefieldMaxManaValue())
+                    .toList();
+            if (!eligibleCards.isEmpty()) {
+                gameData.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume = true;
+                gameData.graveyardTargetOperation.resolutionTimeBargainedReturnTargetCardIds =
+                        List.copyOf(entry.getTargetCardIdsForEffect(e));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                        entry.getControllerId(), eligibleCards, 1,
+                        "Choose up to one of those cards to put onto the battlefield instead of returning it to hand."));
+                return;
+            }
+        }
+
         graveyardReturnSupport.processTargetedGraveyardCards(gameData, entry,
                 entry.getTargetCardIdsForEffect(effect),
                 (graveyard, card) -> {

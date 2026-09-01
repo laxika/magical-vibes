@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceContr
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -1441,6 +1442,33 @@ public class DamageTriggerCollectorService {
             triggered = true;
         }
         return triggered;
+    }
+
+    @CollectsTrigger(value = DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect.class,
+            slot = EffectSlot.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
+    private boolean handleSingleTargetCreatureSpellDealsDamage(TriggerMatchContext match,
+            DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (match.permanent() == null || sd.singleCreatureSpellTargetId() == null) return false;
+
+        int damage = sd.damageToPermanents().getOrDefault(sd.singleCreatureSpellTargetId(), 0);
+        if (damage <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT))),
+                null,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        return true;
     }
 
     @CollectsTrigger(value = ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect.class,

@@ -63,6 +63,7 @@ class BoneHarvestTest extends BaseCardTest {
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gd.activePlayerId = player2.getId();
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

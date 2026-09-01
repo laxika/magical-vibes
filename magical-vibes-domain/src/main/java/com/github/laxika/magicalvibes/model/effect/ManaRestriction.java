@@ -70,6 +70,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with exactly three colors. */
+    record ExactlyThreeColorSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addExactlyThreeColorSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with exactly three colors only";
+        }
+    }
+
     record CreatureSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -404,6 +417,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "costs that contain {X} only";
+        }
+    }
+
+    /** Mana spendable only to cast spells with mana value 5 or greater or with {X} in their costs. */
+    record ManaValueAtLeastFiveOrXCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addManaValueAtLeastFiveOrXOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with mana value 5 or greater or {X} in their costs only";
         }
     }
 

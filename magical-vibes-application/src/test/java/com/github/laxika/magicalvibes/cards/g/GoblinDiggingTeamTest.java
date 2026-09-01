@@ -1,19 +1,16 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.c.CarnivorousPlant;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinDiggingTeam.class, CarnivorousPlant.class})
 class GoblinDiggingTeamTest extends BaseCardTest {
 
     @Test
@@ -22,21 +19,17 @@ class GoblinDiggingTeamTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new GoblinDiggingTeam());
-        Permanent team = findPermanent(player1, "Goblin Digging Team");
-        team.setSummoningSick(false);
-
-        Permanent wall = addWall(player2);
+        Permanent team = addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new CarnivorousPlant());
 
         int teamIdx = gd.playerBattlefields.get(player1.getId()).indexOf(team);
         harness.activateAbility(player1, teamIdx, 0, null, wall.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(wall.getId()));
-        // Source sacrificed as part of the cost.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(team.getId()));
+        harness.assertNotOnBattlefield(player2, "Carnivorous Plant");
+        harness.assertInGraveyard(player2, "Carnivorous Plant");
+        harness.assertNotOnBattlefield(player1, "Goblin Digging Team");
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
     }
 
     @Test
@@ -45,15 +38,12 @@ class GoblinDiggingTeamTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new GoblinDiggingTeam());
-        Permanent team = findPermanent(player1, "Goblin Digging Team");
-        team.setSummoningSick(false);
+        Permanent team = addCreatureReady(player1, new GoblinDiggingTeam());
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent nonWall = harness.addToBattlefieldAndReturn(player2, new GoblinDiggingTeam());
 
         int teamIdx = gd.playerBattlefields.get(player1.getId()).indexOf(team);
-        assertThatThrownBy(() -> harness.activateAbility(player1, teamIdx, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, teamIdx, 0, null, nonWall.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -66,19 +56,9 @@ class GoblinDiggingTeamTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinDiggingTeam());
         // Summoning sick by default.
 
-        Permanent wall = addWall(player2);
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new CarnivorousPlant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, wall.getId()))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addWall(Player player) {
-        Card wallCard = new GrizzlyBears();
-        wallCard.setSubtypes(List.of(CardSubtype.WALL));
-        Permanent perm = new Permanent(wallCard);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

@@ -28,7 +28,8 @@ public class LodestoneBauble extends Card {
                                 CardPredicateUtils.basicLand(), 4)),
                 "{1}, {T}, Sacrifice this artifact: Put up to four target basic land cards from a "
                         + "player's graveyard on top of their library in any order. That player draws "
-                        + "a card at the beginning of the next turn's upkeep."
+                        + "a card at the beginning of the next turn's upkeep.",
+                List.of(), 0, 4
         ));
     }
 }

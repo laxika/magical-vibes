@@ -23,7 +23,7 @@ public class KrovikanHorror extends Card {
     public KrovikanHorror() {
         // At the beginning of the end step, if this card is in your graveyard with a creature card
         // directly above it, you may return this card to your hand. Intervening-if on the ordered
-        // graveyard is checked at trigger time.
+        // graveyard is checked both as the ability triggers and as it resolves.
         addEffect(EffectSlot.GRAVEYARD_END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new CardDirectlyAboveSelfInGraveyard(new CardTypePredicate(CardType.CREATURE)),

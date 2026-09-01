@@ -68,6 +68,7 @@ public sealed interface ChoiceContext {
     }
 
     record PersistentManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
+    record TreasureManaColorChoice(UUID playerId, int amount) implements ChoiceContext {}
     record ExiledSpellManaColorChoice(UUID playerId, boolean fromCreature, int amount)
             implements ChoiceContext {}
     record GraveyardManaColorChoice(UUID playerId, boolean fromCreature, int amount) implements ChoiceContext {}
@@ -1172,6 +1173,11 @@ public sealed interface ChoiceContext {
                                                        com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                                        String sourceSetCode) implements ChoiceContext {}
 
+    record JinnieFayTokenChoice(UUID controllerId, Card sourceCard,
+                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect originalToken,
+                                int amount, int power, int toughness, String sourceSetCode)
+            implements ChoiceContext {}
+
     /** The controller chooses a color at resolution, then gains one life per matching permanent. */
     record GainLifePerPermanentOfChosenColorChoice(UUID controllerId, Card sourceCard,
                                                    StackEntryType sourceEntryType) implements ChoiceContext {}
@@ -1363,6 +1369,20 @@ public sealed interface ChoiceContext {
                 case MINUS_ONE_MINUS_ONE -> "-1/-1 counters";
                 default -> counterType.name().toLowerCase().replace('_', ' ') + " counters";
             };
+        }
+    }
+
+    record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                  List<CounterType> counterTypes) implements ChoiceContext {
+
+        public RemoveOneCounterChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream()
+                    .map(RemoveChosenCountersChoice::counterLabel)
+                    .toList();
         }
     }
 
@@ -1563,6 +1583,22 @@ public sealed interface ChoiceContext {
 
         public static String payOption(String repeatManaCost) {
             return "Pay " + repeatManaCost;
+        }
+    }
+
+    /** Chooses how to pay, or not pay, an enchanted permanent's upkeep penalty. */
+    record EnchantedPermanentManaOrLifePaymentChoice(
+            UUID affectedPlayerId, String sourceCardName, UUID sourcePermanentId,
+            String manaCost, int lifeCost) implements ChoiceContext {
+
+        public static final String DECLINE = "Don't pay";
+
+        public String payManaOption() {
+            return "Pay " + manaCost;
+        }
+
+        public String payLifeOption() {
+            return "Pay " + lifeCost + " life";
         }
     }
 

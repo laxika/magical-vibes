@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.d.Disallow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IvoryGargoyle.class})
 class IvoryGargoyleTest extends BaseCardTest {
 
     @Test
@@ -18,12 +23,12 @@ class IvoryGargoyleTest extends BaseCardTest {
         killGargoyle(player1);
 
         harness.assertInGraveyard(player1, "Ivory Gargoyle");
-        assertThat(findPermanentOrNull(player1, "Ivory Gargoyle")).isNull();
+        harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities(); // advance to the end step, processing the delayed return
 
-        assertThat(findPermanentOrNull(player1, "Ivory Gargoyle")).isNotNull();
+        harness.assertOnBattlefield(player1, "Ivory Gargoyle");
         harness.assertNotInGraveyard(player1, "Ivory Gargoyle");
     }
 
@@ -89,28 +94,69 @@ class IvoryGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanentOrNull(player1, "Ivory Gargoyle")).isNull();
+        harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
         harness.assertNotInGraveyard(player1, "Ivory Gargoyle");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Ivory Gargoyle"));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
 
-        assertThat(findPermanentOrNull(player1, "Ivory Gargoyle")).isNull();
+        harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
+    }
+
+    @Test
+    @CardUsed({Disallow.class})
+    @DisplayName("Countering the death ability counters both of its instructions")
+    void counteringDeathAbilityCountersBothInstructions() {
+        harness.setHand(player2, List.of(new Disallow()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new IvoryGargoyle());
+        gargoyle.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, gargoyle.getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ivory Gargoyle");
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Returns to its owner's battlefield and skips its controller's draw step")
+    void returnsToOwnerAndSkipsControllerDrawStep() {
+        IvoryGargoyle card = new IvoryGargoyle();
+        card.setOwnerId(player1.getId());
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player2, card);
+        gd.stolenCreatures.put(gargoyle.getId(), player1.getId());
+        killGargoyle(gargoyle);
+
+        harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ivory Gargoyle");
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.skipNextDrawStepCount.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
     }
 
     private void killGargoyle(Player player) {
-        Permanent gargoyle = harness.addToBattlefieldAndReturn(player, new IvoryGargoyle());
-        gargoyle.setMarkedDamage(2);
-        harness.runStateBasedActions();
-        harness.passBothPriorities(); // resolve the delayed-return death trigger
-        harness.passBothPriorities(); // resolve the skip-draw-step death trigger
+        killGargoyle(harness.addToBattlefieldAndReturn(player, new IvoryGargoyle()));
     }
 
-    private Permanent findPermanentOrNull(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .findFirst()
-                .orElse(null);
+    private void killGargoyle(Permanent gargoyle) {
+        gargoyle.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities(); // resolve the skip-draw-step death trigger
+        harness.passBothPriorities(); // resolve the delayed-return death trigger
     }
 }

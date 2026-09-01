@@ -631,9 +631,22 @@ public class GameTestHarness {
                 targetIds != null ? targetIds : List.of());
     }
 
+    public void castAdventure(Player player, int cardIndex, int xValue,
+                               Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, xValue, null, List.of(),
+                damageAssignments);
+    }
+
     public void castAdventure(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
+    }
+
+    public void castAdventureFromGraveyard(Player player, int graveyardCardIndex) {
+        ensurePriority(player);
+        gameService.playAdventureCardFromGraveyard(gameData, player, graveyardCardIndex, 0, null,
+                List.of(), null);
     }
 
     public void foretell(Player player, int cardIndex) {
@@ -1358,6 +1371,11 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, targetId);
     }
 
+    public void castFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null, counterCostPermanentIds);
+    }
+
     public void castAndResolveFromLibraryTop(Player player) {
         castFromLibraryTop(player);
         passBothPriorities();
@@ -1365,6 +1383,11 @@ public class GameTestHarness {
 
     public void castAndResolveFromLibraryTop(Player player, UUID targetId) {
         castFromLibraryTop(player, targetId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
+        castFromLibraryTop(player, counterCostPermanentIds);
         passBothPriorities();
     }
 

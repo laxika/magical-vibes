@@ -220,6 +220,8 @@ public class TriggerTargetCollector {
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
                     ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
+                    .withSourcePermanentId(sourcePermanentSnapshot == null
+                            ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
                     : null;
 

@@ -1081,14 +1081,36 @@ public class GameService {
 
     public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
                                   UUID targetId, List<UUID> targetIds) {
+        playAdventureCard(gameData, player, cardIndex, xValue, targetId, targetIds, null);
+    }
+
+    public void playAdventureCard(GameData gameData, Player player, int cardIndex, Integer xValue,
+                                  UUID targetId, List<UUID> targetIds,
+                                  Map<UUID, Integer> damageAssignments) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> playAdventureCard(gameData, actionPlayer, cardIndex, xValue, targetId, targetIds))) return;
+                () -> playAdventureCard(gameData, actionPlayer, cardIndex, xValue, targetId, targetIds,
+                        damageAssignments))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playAdventureCard(gameData, player, cardIndex, xValue, targetId,
-                    targetIds != null ? targetIds : List.of());
+                    targetIds != null ? targetIds : List.of(), damageAssignments);
+        }
+    }
+
+    public void playAdventureCardFromGraveyard(GameData gameData, Player player, int cardIndex,
+                                                Integer xValue, UUID targetId, List<UUID> targetIds,
+                                                Map<UUID, Integer> damageAssignments) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> playAdventureCardFromGraveyard(gameData, actionPlayer, cardIndex, xValue,
+                        targetId, targetIds, damageAssignments))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playAdventureCardFromGraveyard(gameData, player, cardIndex, xValue,
+                    targetId, targetIds != null ? targetIds : List.of(), damageAssignments);
         }
     }
 
@@ -1487,13 +1509,20 @@ public class GameService {
     }
 
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, List.of());
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId))) return;
+                () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
+                        counterCostPermanentIds))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId);
+            spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
+                    counterCostPermanentIds != null ? counterCostPermanentIds : List.of());
         }
     }
 

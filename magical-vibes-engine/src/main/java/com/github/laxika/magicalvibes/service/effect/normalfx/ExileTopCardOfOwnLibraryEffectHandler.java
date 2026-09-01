@@ -46,6 +46,7 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
                 exileService.exileCard(gameData, controllerId, topCard, sourcePermanentId);
+                gameData.setImprintedCard(entry.getCard(), topCard);
             } else {
                 exileService.exileCard(gameData, controllerId, topCard);
             }
