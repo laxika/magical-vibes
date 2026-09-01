@@ -428,6 +428,7 @@ public class TargetPolarityClassifier {
             entry("ExileTopCardMayDealDamageOrPlayEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ExileTopUntilNonlandDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
+            entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandToHandRestToBottomDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
@@ -477,6 +478,8 @@ public class TargetPolarityClassifier {
             entry("RegisterDelayedWatchedCreaturesCombatDamageEffect", TargetPolarity.NEUTRAL),
             // Feint can save either an attacker or its blockers depending on the combat state.
             entry("TapAndPreventCombatDamageByTargetAndBlockersEffect", TargetPolarity.NEUTRAL),
+            entry("TurnTargetCreatureFaceDownEffect", TargetPolarity.NEUTRAL),
+            entry("TurnTargetCreatureFaceUpEffect", TargetPolarity.NEUTRAL),
 
             // The target's side comes out ahead: pumps, shields, blinks, lure, animation.
             entry("AnimatePermanentsEffect", TargetPolarity.BENEFICIAL),

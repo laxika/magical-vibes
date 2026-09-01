@@ -1055,7 +1055,7 @@ public class GraveyardTargetingService {
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
                     if ((trackedIds == null || trackedIds.contains(graveyardCard.getId()))
-                            && (maxTotalManaValue <= 0
+                            && (maxTotalManaValue == null || maxTotalManaValue <= 0
                             || graveyardCard.getManaValue() <= maxTotalManaValue)
                             && predicateEvaluationService.matchesCardPredicate(
                                     graveyardCard, filter, card.getId(), gameData, graveyardOwner,

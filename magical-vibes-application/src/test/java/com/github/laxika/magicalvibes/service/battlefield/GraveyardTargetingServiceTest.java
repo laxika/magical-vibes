@@ -193,6 +193,29 @@ class GraveyardTargetingServiceTest {
     }
 
     @Test
+    @DisplayName("graveyard return targeting accepts effects without a total mana value cap")
+    void handleReturnToHandTargeting_acceptsNoMaximumManaValue() {
+        Card source = new Card();
+        source.setName("Pull from the Deep");
+        Card instant = new Card();
+        instant.setName("Instant");
+        instant.setType(CardType.INSTANT);
+        gd.playerGraveyards.get(player1Id).add(instant);
+        ReturnTargetCardsFromGraveyardToHandEffect effect =
+                new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.INSTANT), 1);
+        when(predicateEvaluationService.matchesCardPredicate(
+                eq(instant), eq(effect.filter()), eq(source.getId()), eq(gd), eq(player1Id),
+                isNull(), isNull(), isNull())).thenReturn(true);
+
+        service.handleUpToNGraveyardSpellTargeting(gd, player1Id, source,
+                StackEntryType.SORCERY_SPELL, effect, 1, List.of(effect), 0);
+
+        verify(playerInputService).beginMultiGraveyardChoice(
+                eq(gd), eq(player1Id), argThat(cards -> cards.contains(instant)),
+                eq(1), eq(0), anyString());
+    }
+
+    @Test
     @DisplayName("handleGraveyardCardsExileETBTargeting tracks a source permanent for source exiles")
     void handleGraveyardCardsExileETBTargeting_tracksSourcePermanent() {
         Card card = new Card();
