@@ -592,7 +592,9 @@ public class GraveyardChoiceHandlerService {
         StackEntryType pendingEntryTypeCheck = gameData.graveyardTargetOperation.entryType;
         int pendingXValueCheck = gameData.graveyardTargetOperation.xValue;
         boolean isAnyNumber = gameData.graveyardTargetOperation.anyNumber;
-        if (pendingEntryTypeCheck != null && !isAnyNumber && cardIds.size() != pendingXValueCheck) {
+        if (pendingEntryTypeCheck != null && !isAnyNumber
+                && multiGraveyardChoice.minCount() > 0
+                && cardIds.size() != pendingXValueCheck) {
             throw new IllegalStateException("Must choose exactly " + pendingXValueCheck + " targets, but chose " + cardIds.size());
         }
 

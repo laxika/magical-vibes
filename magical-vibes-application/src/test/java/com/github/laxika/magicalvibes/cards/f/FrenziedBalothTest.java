@@ -65,7 +65,9 @@ class FrenziedBalothTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));
-        resolveCombat(player2);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        harness.resolveCombatDamage();
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerDamagePreventionShields).containsEntry(player1.getId(), 5);

@@ -2827,8 +2827,11 @@ public class CombatDamageService {
         // Malignus: the part of the damage dealt by sources whose damage can't be prevented is a floor
         // no prevention step below may go under. Redirection and replacement steps still see (and may
         // move) the whole amount, so the floor is re-clamped after each of them.
-        int unpreventable = Math.min(state.damageToDefendingPlayer,
-                state.unpreventableDamageToDefendingPlayer * playerMultiplier);
+        boolean combatDamageCantBePrevented = gameQueryService.isCombatDamageCantBePrevented(gameData);
+        int unpreventable = combatDamageCantBePrevented
+                ? state.damageToDefendingPlayer
+                : Math.min(state.damageToDefendingPlayer,
+                        state.unpreventableDamageToDefendingPlayer * playerMultiplier);
         // Deep Wood: prevent all damage attacking creatures would deal to the defending player this turn.
         if (damagePreventionService.isCombatDamageFromAttackersPreventedForPlayer(gameData, defenderId)) {
             state.damageToDefendingPlayer = unpreventable;
@@ -2843,8 +2846,10 @@ public class CombatDamageService {
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
         unpreventable = Math.min(unpreventable, state.damageToDefendingPlayer);
-        state.poisonDamageToDefendingPlayer = damagePreventionService.applyCombatPlayerPreventionShield(
-                gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        if (!combatDamageCantBePrevented) {
+            state.poisonDamageToDefendingPlayer = damagePreventionService.applyCombatPlayerPreventionShield(
+                    gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        }
         processPendingRedirectDamage(gameData);
         boolean lichReplaced = damageSupport.applyNefariousLichReplacement(gameData, defenderId,
                 state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer) > 0;

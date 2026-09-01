@@ -32,6 +32,7 @@ class HaliyaAscendantCadetTest extends BaseCardTest {
 
         assertThat(haliya.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
+        haliya.setSummoningSick(false);
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, haliya.getId());
         harness.passBothPriorities();

@@ -38,6 +38,8 @@ class AphettoVultureTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(zombie.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(zombie);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(vulture, nonZombie);
@@ -56,8 +58,10 @@ class AphettoVultureTest extends BaseCardTest {
         destroyVulture();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(zombie.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(vulture, zombie);

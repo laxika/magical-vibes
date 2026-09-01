@@ -33,6 +33,9 @@ public class ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffectHandler
         var exileEffect = (ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect) effect;
         List<UUID> graveyardTargets = entry.getTargetCardIdsForEffect(effect);
         if (graveyardTargets.isEmpty()) {
+            graveyardTargets = entry.getTargetCardIds();
+        }
+        if (graveyardTargets.isEmpty()) {
             graveyardTargets = entry.targetsForGroup(exileEffect.graveyardTargetGroup());
         }
         if (graveyardTargets.isEmpty()) {
@@ -49,11 +52,8 @@ public class ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffectHandler
             return;
         }
 
-        UUID creatureTargetId = entry.getTargetId();
-        if (creatureTargetId == null) {
-            List<UUID> creatureTargets = entry.targetsForGroup(exileEffect.creatureTargetGroup());
-            creatureTargetId = creatureTargets.isEmpty() ? null : creatureTargets.getFirst();
-        }
+        List<UUID> creatureTargets = entry.targetsForGroup(exileEffect.creatureTargetGroup());
+        UUID creatureTargetId = creatureTargets.isEmpty() ? entry.getTargetId() : creatureTargets.getFirst();
         if (creatureTargetId == null) {
             return;
         }

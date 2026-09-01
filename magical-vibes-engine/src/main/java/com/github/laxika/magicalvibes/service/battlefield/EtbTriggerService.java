@@ -946,7 +946,9 @@ public class EtbTriggerService {
         if (effect instanceof ReturnCardFromGraveyardEffect returnEffect) {
             return returnEffect.upTo() ? 0 : 1;
         }
-        return 1;
+        GraveyardTargetingSupport.Target graveyardTarget =
+                graveyardTargetingSupport.findTarget(List.of(effect));
+        return graveyardTarget == null ? 1 : graveyardTarget.minTargets();
     }
 
     private static boolean isMixedPermanentAndSpellTarget(CardEffect effect) {

@@ -490,6 +490,11 @@ public class CombatBlockService {
                         if (hasEquipmentAttached(gameData, attacker)) {
                             resolvedBlockEffects.add(e);
                         }
+                    } else if (e instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, attacker, destroyEffect.filter())) {
+                            resolvedBlockEffects.add(e);
+                        }
                     } else {
                         resolvedBlockEffects.add(e);
                     }
@@ -644,6 +649,11 @@ public class CombatBlockService {
                                 // (e.g. Catacomb Dragon's nonartifact, non-Dragon blocker).
                                 if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, permConditional.predicate())) {
                                     filteredEffects.add(permConditional.wrapped());
+                                }
+                            } else if (e instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                                if (predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, destroyEffect.filter())) {
+                                    filteredEffects.add(e);
                                 }
                             } else {
                                 filteredEffects.add(e);
@@ -882,6 +892,11 @@ public class CombatBlockService {
                 if (hasEquipmentAttached(gameData, attacker)) {
                     resolvedEffects.add(effect);
                 }
+            } else if (effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                if (predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, attacker, destroyEffect.filter())) {
+                    resolvedEffects.add(effect);
+                }
             } else {
                 resolvedEffects.add(effect);
             }
@@ -966,6 +981,11 @@ public class CombatBlockService {
                 } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, conditional.predicate())) {
                         filteredEffects.add(conditional.wrapped());
+                    }
+                } else if (effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, blocker, destroyEffect.filter())) {
+                        filteredEffects.add(effect);
                     }
                 } else {
                     filteredEffects.add(effect);

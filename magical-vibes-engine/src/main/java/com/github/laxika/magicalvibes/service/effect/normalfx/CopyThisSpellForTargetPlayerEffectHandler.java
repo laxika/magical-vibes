@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class CopyThisSpellForTargetPlayerEffectHandler implements NormalEffectHa
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,7 +33,10 @@ public class CopyThisSpellForTargetPlayerEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+        if (targetPlayerId != null && !gameData.playerIds.contains(targetPlayerId)) {
+            targetPlayerId = gameQueryService.findPermanentController(gameData, targetPlayerId);
+        }
+        if (targetPlayerId == null) {
             return;
         }
 

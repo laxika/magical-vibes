@@ -42,7 +42,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -64,7 +65,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -121,7 +123,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 3, player1Id, blazeCard, null);
             }
 
             @Test

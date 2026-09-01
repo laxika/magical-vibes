@@ -3971,6 +3971,11 @@ public class GameQueryService {
             }
             if (sourceState != null) {
                 for (CardEffect effect : sourceState.getGrantedStaticEffects()) {
+                    // This wrapper marks the triggered ability now possessed by the source;
+                    // it is not another static ability that can grant itself onward.
+                    if (effect instanceof GrantTriggeredAbilityEffect) {
+                        continue;
+                    }
                     StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
                     if (handler != null) {
                         handler.apply(context, effect, accumulator);
@@ -4126,6 +4131,10 @@ public class GameQueryService {
         }
         if (state != null) {
             for (CardEffect effect : state.getGrantedStaticEffects()) {
+                // The wrapper is returned below as a granted ability, not re-applied as a grant.
+                if (effect instanceof GrantTriggeredAbilityEffect) {
+                    continue;
+                }
                 StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
                 if (selfHandler != null) {
                     selfHandler.apply(new StaticEffectContext(

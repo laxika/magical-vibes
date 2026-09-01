@@ -1682,13 +1682,6 @@ public class TargetLegalityService {
     public void validateMixedSpellAndPermanentTargets(GameData gameData, Card card, List<UUID> targetIds,
                                                        UUID controllerId, int xValue, boolean giftPromised,
                                                        List<CardEffect> selectedEffects) {
-        if (card.getSpellTargets().size() <= 1) {
-            for (UUID targetId : targetIds) {
-                validateSpellTargeting(gameData, card, targetId, null, controllerId, true, xValue,
-                        false, giftPromised);
-            }
-            return;
-        }
         int firstPermanentGroupIndex = selectedEffects.stream()
                 .filter(effect -> card.getEffectTargetIndex(effect) == 0)
                 .anyMatch(EffectResolution::targetsSpellOnStack) ? 1 : 0;
@@ -2775,7 +2768,8 @@ public class TargetLegalityService {
                                 targetFizzled = true;
                             }
                         }
-                        if (!targetFizzled && targetValidationService.checkEffectTargets(
+                        if (!targetFizzled && entry.getTargetCardIds().isEmpty()
+                                && targetValidationService.checkEffectTargets(
                                 entry.getEffectsToResolve(),
                                 new TargetValidationContext(gameData, entry.getTargetId(), entry.getTargetZone(),
                                         entry.getCard(), entry.getXValue(), entry.getControllerId(),
@@ -3048,7 +3042,7 @@ public class TargetLegalityService {
                 return false;
             }
         }
-        if (entry.getTargetIds().isEmpty()
+        if (entry.getTargetIds().isEmpty() && entry.getTargetCardIds().isEmpty()
                 && targetValidationService.checkEffectTargets(entry.getEffectsToResolve(),
                 new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
                         entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),

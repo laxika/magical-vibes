@@ -24,9 +24,10 @@ class RiptideEntrancerTest extends BaseCardTest {
 
         resolveCombatUnblocked();
 
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Riptide Entrancer");
         harness.assertInGraveyard(player1, "Riptide Entrancer");
@@ -46,7 +47,6 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         resolveCombatUnblocked();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(target.getId())
@@ -60,6 +60,8 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombatUnblocked();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player1, "Riptide Entrancer");

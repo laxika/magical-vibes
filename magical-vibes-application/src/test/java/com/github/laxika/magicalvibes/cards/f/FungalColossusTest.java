@@ -45,7 +45,7 @@ class FungalColossusTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test

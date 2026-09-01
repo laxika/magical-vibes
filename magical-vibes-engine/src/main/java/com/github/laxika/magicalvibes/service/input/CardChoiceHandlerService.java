@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -775,6 +776,16 @@ public class CardChoiceHandlerService {
                     return;
                 }
             } else if (hasPreboundTarget) {
+                if (thenEffect instanceof MayEffect && gameData.pendingEffectResolutionEntry != null) {
+                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                    int pendingIndex = gameData.pendingEffectResolutionIndex;
+                    pendingEntry.insertEffectsToResolve(pendingIndex, List.of(thenEffect));
+                    effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, pendingIndex);
+                    if (!gameData.pendingMayAbilities.isEmpty()) {
+                        playerInputService.processNextMayAbility(gameData);
+                    }
+                    return;
+                }
                 StackEntry thenEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
