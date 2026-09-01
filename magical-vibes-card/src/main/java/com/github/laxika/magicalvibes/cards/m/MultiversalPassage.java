@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenBasicLandTypeEffect;
 
 @CardRegistration(set = "SPM", collectorNumber = "180")
+@CardRegistration(set = "SPM", collectorNumber = "206")
 public class MultiversalPassage extends Card {
 
     public MultiversalPassage() {

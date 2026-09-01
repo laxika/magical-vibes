@@ -112,6 +112,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
             gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
+            amount *= gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - amount);
 
@@ -164,7 +165,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
-            totalLifeLost += amount;
+            totalLifeLost += amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
         }
 
         if (controllerGainsLifeLost(gameData, entry, e) && totalLifeLost > 0) {

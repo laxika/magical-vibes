@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
@@ -175,6 +176,35 @@ class ImprintFromTopCardsEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
+                        .isEqualTo(LibrarySearchDestination.EXILE_IMPRINT);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params()
+                        .grantExilePlayPermission()).isFalse();
                 verifyNoInteractions(sessionManager);
+            }
+
+            @Test
+            @DisplayName("Multiple cards use random bottoming and carry the imprint follow-up")
+            void multipleCardsUseRandomBottomingAndImprintFollowUp() {
+                stubCardViewFactory();
+                gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
+                gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
+                gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
+                gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
+                UUID sourcePermanentId = UUID.randomUUID();
+
+                ImprintFromTopCardsEffect effect = new ImprintFromTopCardsEffect(4, true);
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Collector's Cage"),
+                        player1Id, "Collector's Cage", List.of(effect), null, sourcePermanentId);
+
+                imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
+
+                PendingInteraction.LibrarySearch search =
+                        gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+                assertThat(search.params().destination())
+                        .isEqualTo(LibrarySearchDestination.EXILE_ONE_FACE_DOWN_REST_TO_BOTTOM_RANDOM);
+                assertThat(search.params().grantExilePlayPermission()).isFalse();
+                assertThat(search.params().followUp().imprintSourcePermanentId())
+                        .isEqualTo(sourcePermanentId);
             }
 }

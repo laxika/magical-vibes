@@ -7,11 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,18 +18,18 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Renewal.class, Forest.class, GrizzlyBears.class, Plains.class})
 class RenewalTest extends BaseCardTest {
 
-    private UUID castRenewalSacrificingLand() {
+    private void castRenewalSacrificingLand() {
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of(new Renewal()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        GameData gd = harness.getGameData();
         UUID landId = gd.playerBattlefields.get(player1.getId()).getFirst().getId();
         harness.castSorceryWithSacrifice(player1, 0, landId);
-        return landId;
     }
 
     @Test
@@ -45,6 +44,19 @@ class RenewalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Forest"));
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting cannot sacrifice a nonland permanent")
+    void cannotSacrificeNonland() {
+        Permanent creature = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        harness.setHand(player1, List.of(new Renewal()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Sacrifice");
     }
 
     @Test
@@ -70,7 +82,7 @@ class RenewalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard().getName()).isEqualTo("Plains");
@@ -83,6 +95,21 @@ class RenewalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The basic land search may be declined")
+    void canFailToFindBasicLand() {
+        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+
+        castRenewalSacrificingLand();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
         harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
@@ -90,16 +117,15 @@ class RenewalTest extends BaseCardTest {
         castRenewalSacrificingLand();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

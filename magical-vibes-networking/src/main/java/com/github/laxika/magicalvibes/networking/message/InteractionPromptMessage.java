@@ -99,6 +99,12 @@ public record InteractionPromptMessage(
                 null, maxCount, null, null, null, null, null, null);
     }
 
+    public static InteractionPromptMessage multiCardPick(List<UUID> cardIds, List<CardView> cards,
+                                                         int minCount, int maxCount, String prompt) {
+        return of(InteractionShape.MULTI_CARD_PICK, prompt, null, cards, cardIds, null, null,
+                null, maxCount, null, null, null, null, null, null, minCount, null);
+    }
+
     public static InteractionPromptMessage multiPermanentPick(List<UUID> permanentIds, int maxCount,
                                                               String prompt) {
         return multiPermanentPick(permanentIds, null, maxCount, prompt);

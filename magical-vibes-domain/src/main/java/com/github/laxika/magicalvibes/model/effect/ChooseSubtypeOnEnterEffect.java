@@ -9,7 +9,7 @@ import java.util.List;
  * requires a creature type choice as it enters the battlefield ("As ~ enters, choose a creature type.").
  */
 public record ChooseSubtypeOnEnterEffect(List<CardSubtype> allowedSubtypes, boolean opponentChooses)
-        implements CardEffect {
+        implements SubtypeChoiceOnEnterEffect {
 
     public ChooseSubtypeOnEnterEffect() {
         this(List.of(), false);

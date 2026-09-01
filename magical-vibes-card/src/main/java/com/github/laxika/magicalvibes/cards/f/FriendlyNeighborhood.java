@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "8")
+@CardRegistration(set = "SPM", collectorNumber = "246")
 public class FriendlyNeighborhood extends Card {
 
     public FriendlyNeighborhood() {

@@ -61,6 +61,12 @@ public class LookAtTopCardMayRevealMatchingToHandHandler implements MayEffectHan
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", topCard, " and puts it into their hand."));
                 gameData.addCardToHand(controllerId, topCard);
+                if (!effect.effectsIfCardPutIntoHand().isEmpty()
+                        && gameData.pendingEffectResolutionEntry != null) {
+                    gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                            gameData.pendingEffectResolutionIndex,
+                            effect.effectsIfCardPutIntoHand());
+                }
                 log.info("Game {} - {} reveals {} to hand", gameData.id, player.getUsername(), topCard.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;

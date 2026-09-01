@@ -25,13 +25,20 @@ public class SurveilThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (!surveilThen.queueReflexiveAbility()) {
+            entry.setEventValue(0);
+        }
+
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
         if (effectIndex < 0) {
             throw new IllegalStateException("SurveilThenEffect is not part of the resolving entry");
         }
 
+        CardEffect continuation = surveilThen.queueReflexiveAbility()
+                ? new QueueReflexiveAbilityEffect(surveilThen.thenEffect())
+                : surveilThen.thenEffect();
         entry.insertEffectsToResolve(effectIndex + 1, List.of(
                 new SurveilEffect(surveilThen.count()),
-                new QueueReflexiveAbilityEffect(surveilThen.thenEffect())));
+                continuation));
     }
 }

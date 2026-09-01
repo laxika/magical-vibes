@@ -22,7 +22,7 @@ import java.util.UUID;
  * {@code remainingTargetPlayerTopSearches} is the remainder of a search where each of several
  * targeted players searches their own library for a card and puts it on top (Scheming Symmetry);
  * {@code opponentExileChoice} prompts the opponent after the Distant Memories exile;
- * {@code imprintSourcePermanentId} receives the imprinted card at EXILE_IMPRINT completion;
+ * {@code imprintSourcePermanentId} receives the imprinted card when the face-down exile completes;
      * {@code secondBoundedPick} begins the next bounded pick (may reveal a card of its type or
      * subtype from the same looked-at cards to hand, then dispose the rest) after the prior pick
      * resolves — Gift of the Gargantuan, Benefaction of Rhonas, and Kaalia, Zenith Seeker;
@@ -69,7 +69,12 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     List<UUID> remainingEachPlayerLandToBattlefieldSearches,
                                     SelectedCardFollowUp selectedCardFollowUp) {
 
-    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+    public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
+                                       boolean useSelectedCardManaValue) {
+
+        public SelectedCardFollowUp(CardPredicate predicate, CardEffect effect) {
+            this(predicate, effect, false);
+        }
     }
 
     /** Completion data for Grim Reminder's reveal-only library search. */
@@ -171,7 +176,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public static SecondBoundedPick cardType(CardType type, List<CardType> remaining,
                                                  boolean randomRest, LibrarySearchDestination destination) {
-            return new SecondBoundedPick(type, false, null, List.of(), randomRest, remaining, destination);
+            return cardType(type, remaining, false, randomRest, destination);
+        }
+
+        public static SecondBoundedPick cardType(CardType type, List<CardType> remaining,
+                                                 boolean restToGraveyard, boolean randomRest,
+                                                 LibrarySearchDestination destination) {
+            return new SecondBoundedPick(type, restToGraveyard, null, List.of(), randomRest,
+                    remaining, destination);
         }
 
         public static SecondBoundedPick terminal(boolean randomRest) {
@@ -193,30 +205,43 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /**
      * A "for each of these permanents, you may search your library for a card with the same name and
      * put it onto the battlefield" queue: the {@code names} still to be searched for, whether only
-     * creature cards qualify ({@code creatureOnly}, Doubling Chant) and where the found card goes.
+     * creature cards qualify ({@code creatureOnly}, Doubling Chant), whether each search is optional,
+     * and where the found card goes.
      */
     public record SameNamePickQueue(List<String> names, boolean creatureOnly,
-                                    LibrarySearchDestination destination) {
+                                    LibrarySearchDestination destination,
+                                    UUID libraryOwnerId, UUID battlefieldControllerId,
+                                    boolean optional) {
+
+        public SameNamePickQueue(List<String> names, boolean creatureOnly,
+                                 LibrarySearchDestination destination) {
+            this(names, creatureOnly, destination, null, null, true);
+        }
 
         public SameNamePickQueue {
             names = List.copyOf(names);
         }
 
         public SameNamePickQueue withNames(List<String> remaining) {
-            return new SameNamePickQueue(remaining, creatureOnly, destination);
+            return new SameNamePickQueue(remaining, creatureOnly, destination,
+                    libraryOwnerId, battlefieldControllerId, optional);
         }
     }
 
     /**
-     * The remaining "search your library for a basic land card and put it into your hand" picks of a
-     * Cultivate-style search: how many picks are still owed and, when non-null, the land
-     * {@code subtype} the found cards must have.
+     * The remaining "search your library for a land card and put it into your hand" picks of a
+     * Cultivate-style search: how many picks are still owed, the land {@code subtype} the found
+     * cards must have, and whether they must be basic lands.
      */
-    public record BasicLandToHandPick(int count, CardSubtype subtype) {
+    public record BasicLandToHandPick(int count, CardSubtype subtype, boolean basicOnly) {
+
+        public BasicLandToHandPick(int count, CardSubtype subtype) {
+            this(count, subtype, true);
+        }
 
         /** The same pick with one card taken off the remaining count (null once none are left). */
         public BasicLandToHandPick decremented() {
-            return count <= 1 ? null : new BasicLandToHandPick(count - 1, subtype);
+            return count <= 1 ? null : new BasicLandToHandPick(count - 1, subtype, basicOnly);
         }
     }
 
@@ -347,12 +372,33 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 new SelectedCardFollowUp(predicate, effect));
     }
 
+    public static LibrarySearchFollowUp forSelectedCardWithManaValue(
+            CardPredicate predicate, CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), null, null, List.of(), null, null, null, List.of(),
+                new SelectedCardFollowUp(predicate, effect, true));
+    }
+
+    /** Runs a selected-card follow-up before putting the unchosen bounded-pick cards back randomly. */
+    public static LibrarySearchFollowUp forSelectedCardWithRandomRest(
+            CardPredicate predicate, CardEffect effect) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0,
+                false, List.of(), List.of(), SecondBoundedPick.terminal(true), null, List.of(), null,
+                null, null, List.of(), new SelectedCardFollowUp(predicate, effect));
+    }
+
     /**
      * {@code count} further basic land cards to hand, restricted to {@code subtype} when non-null
      * (Nissa's Pilgrimage searches for basic Forest cards only).
      */
     public static LibrarySearchFollowUp forBasicLandToHand(int count, CardSubtype subtype) {
         return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype), null, List.of(), false, null, null, List.of(), 0, false, List.of(), null, null,
+                List.of(), null, null, null);
+    }
+
+    /** Further land-subtype cards to hand, including nonbasic cards with that subtype. */
+    public static LibrarySearchFollowUp forLandSubtypeToHand(int count, CardSubtype subtype) {
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype, false), null, List.of(), false, null, null, List.of(), 0, false, List.of(), null, null,
                 List.of(), null, null, null);
     }
 
@@ -399,11 +445,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /** Begins the next one-card pick for each remaining card type. */
     public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types,
                                                                LibrarySearchDestination destination) {
+        return forCardTypeBoundedPick(types, destination, false);
+    }
+
+    public static LibrarySearchFollowUp forCardTypeBoundedPick(List<CardType> types,
+                                                               LibrarySearchDestination destination,
+                                                               boolean restToGraveyard) {
         if (types.isEmpty()) {
-            return forBoundedPick(SecondBoundedPick.terminal(true, destination));
+            return forBoundedPick(new SecondBoundedPick(null, restToGraveyard, null,
+                    List.of(), !restToGraveyard, List.of(), destination));
         }
         return forBoundedPick(SecondBoundedPick.cardType(
-                types.getFirst(), types.subList(1, types.size()), true, destination));
+                types.getFirst(), types.subList(1, types.size()), restToGraveyard,
+                !restToGraveyard, destination));
     }
 
     /** Begins a bounded subtype-pick flow, optionally randomizing the cards left on the bottom. */
@@ -476,6 +530,25 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                                       LibrarySearchDestination destination) {
         return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
                 new SameNamePickQueue(names, creatureOnly, destination), List.of(), null, null, null);
+    }
+
+    /** The same-name queue with a separately searched library and battlefield controller. */
+    public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
+                                                      LibrarySearchDestination destination,
+                                                      UUID libraryOwnerId, UUID battlefieldControllerId) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
+                new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId, true),
+                List.of(), null, null, null);
+    }
+
+    /** The same-name queue with explicit mandatory-versus-optional searches. */
+    public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
+                                                      LibrarySearchDestination destination,
+                                                      UUID libraryOwnerId, UUID battlefieldControllerId,
+                                                      boolean optional) {
+        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), 0, false, List.of(), null,
+                new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId, optional),
+                List.of(), null, null, null);
     }
 
     /** The queue of colours still to search for, one card per colour to hand (Conflux). */

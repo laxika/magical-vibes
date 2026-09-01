@@ -11,14 +11,20 @@ import java.util.UUID;
  * under {@code controllerId}'s control per CR 110.2a, which may differ from its owner.
  */
 public record PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId,
-                                                CardSubtype grantedSubtype)
+                                                CardSubtype grantedSubtype, boolean enterTapped,
+                                                boolean enterAttacking)
         implements PendingInteraction {
 
     public PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId) {
-        this(toBattlefield, controllerId, null);
+        this(toBattlefield, controllerId, null, false, false);
+    }
+
+    public PendingReturnExiledWithSourceCard(boolean toBattlefield, UUID controllerId,
+                                             CardSubtype grantedSubtype) {
+        this(toBattlefield, controllerId, grantedSubtype, false, false);
     }
 
     public PendingReturnExiledWithSourceCard() {
-        this(false, null, null);
+        this(false, null, null, false, false);
     }
 }

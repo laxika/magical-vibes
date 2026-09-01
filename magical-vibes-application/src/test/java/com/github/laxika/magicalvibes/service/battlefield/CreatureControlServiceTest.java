@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -34,6 +36,7 @@ import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,6 +127,20 @@ class CreatureControlServiceTest {
                     .noneMatch(p -> p.getId().equals(bear.getId()));
             assertThat(gd.playerBattlefields.get(player2Id))
                     .anyMatch(p -> p.getId().equals(bear.getId()));
+        }
+
+        @Test
+        @DisplayName("Ends source-controlled exile play permissions on control change")
+        void endsSourceControlledExilePlayPermissionsOnControlChange() {
+            Permanent source = addCreature(player1Id, "Source");
+            UUID exiledCardId = UUID.randomUUID();
+            gd.exilePlayPermissions.put(exiledCardId, player1Id);
+            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+
+            applySteal(player2Id, source, EffectDuration.PERMANENT, null);
+
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
         }
 
         @Test
@@ -255,6 +272,28 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
             assertThat(gd.stolenCreatures).containsEntry(bear.getId(), player2Id);
+        }
+
+        @Test
+        @DisplayName("Queues the registered Equipment unattach trigger when temporary control ends")
+        void queuesEquipmentUnattachTriggerOnControlLoss() {
+            Permanent creature = addCreature(player1Id, "Grizzly Bears");
+            Card equipmentCard = createCreatureCard("Test Equipment");
+            equipmentCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+            Permanent equipment = new Permanent(equipmentCard);
+            equipment.setAttachedTo(creature.getId());
+            gd.playerBattlefields.get(player2Id).add(equipment);
+            Card sourceCard = createCreatureCard("Stolen Uniform");
+            gd.registerControlLossUnattachTrigger(equipment.getId(), player1Id, sourceCard);
+
+            applySteal(player1Id, equipment, EffectDuration.UNTIL_END_OF_TURN, null);
+            gd.expireEndOfTurnFloatingEffects();
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(equipment);
+            assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         }
 
         @Test

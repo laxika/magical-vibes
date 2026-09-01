@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,7 @@ public class DistributeCountersAmongControlledCreaturesEffectHandler implements 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -39,7 +44,7 @@ public class DistributeCountersAmongControlledCreaturesEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DistributeCountersAmongControlledCreaturesEffect) effect;
-        List<Permanent> creatures = controlledCreatures(gameData, entry.getControllerId());
+        List<Permanent> creatures = eligibleCreatures(gameData, entry.getControllerId(), e.permanentFilter());
         int total = amountEvaluationService.evaluate(gameData, e.total(),
                 AmountContext.forStackEntry(entry, null));
 
@@ -89,14 +94,29 @@ public class DistributeCountersAmongControlledCreaturesEffectHandler implements 
         clearState(gameData);
     }
 
-    private List<Permanent> controlledCreatures(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return List.of();
+    private List<Permanent> eligibleCreatures(GameData gameData, UUID controllerId,
+                                               PermanentPredicate filter) {
+        if (filter == null) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) {
+                return List.of();
+            }
+            return battlefield.stream()
+                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .toList();
         }
-        return battlefield.stream()
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .toList();
+
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        List<Permanent> eligible = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, context)) {
+                    eligible.add(permanent);
+                }
+            }
+        }
+        return eligible;
     }
 
     private Permanent nextUnassigned(List<Permanent> creatures, Map<UUID, Integer> assignments) {

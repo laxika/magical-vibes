@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "142")
+@CardRegistration(set = "SPM", collectorNumber = "214")
 public class ScarletSpiderBenReilly extends Card {
 
     public ScarletSpiderBenReilly() {

@@ -61,7 +61,8 @@ class UnsealTheNecropolisTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, indexOfCard(player1, creature));
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(noncreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);

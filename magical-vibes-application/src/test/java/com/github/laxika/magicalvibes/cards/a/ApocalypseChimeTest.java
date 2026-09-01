@@ -8,21 +8,30 @@ import com.github.laxika.magicalvibes.cards.s.SpectralBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ApocalypseChime.class, AetherStorm.class, CemeteryGate.class, Forest.class,
+        GrizzlyBears.class, MesaFalcon.class, SpectralBears.class})
 class ApocalypseChimeTest extends BaseCardTest {
 
     /** Chime on player1's battlefield with two mana available in their main phase. */
     private void chimeReady() {
+        prepareChime(player1, TurnStep.PRECOMBAT_MAIN, 2);
+    }
+
+    private void prepareChime(Player activePlayer, TurnStep step, int mana) {
         harness.addToBattlefield(player1, new ApocalypseChime());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, mana);
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(step);
         harness.clearPriorityPassed();
     }
 
@@ -39,6 +48,7 @@ class ApocalypseChimeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new MesaFalcon());
         harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new AetherStorm());
 
         ringChime();
 
@@ -50,6 +60,30 @@ class ApocalypseChimeTest extends BaseCardTest {
                 .containsExactly("Forest");
         harness.assertInGraveyard(player1, "Spectral Bears");
         harness.assertInGraveyard(player2, "Mesa Falcon");
+        harness.assertInGraveyard(player2, "Aether Storm");
+    }
+
+    @Test
+    @DisplayName("The ability can be activated outside the main phase")
+    void canActivateOutsideMainPhase() {
+        prepareChime(player1, TurnStep.END_STEP, 2);
+        harness.addToBattlefield(player2, new SpectralBears());
+
+        ringChime();
+
+        harness.assertInGraveyard(player2, "Spectral Bears");
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated without its two-mana cost")
+    void cannotActivateWithoutEnoughMana() {
+        prepareChime(player1, TurnStep.PRECOMBAT_MAIN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Apocalypse Chime");
+        harness.assertNotInGraveyard(player1, "Apocalypse Chime");
     }
 
     @Test
@@ -89,5 +123,18 @@ class ApocalypseChimeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly("Spectral Bears");
+    }
+
+    @Test
+    @DisplayName("A permanent with an HML spell name is also destroyed")
+    void destroysPermanentWithHomelandsSpellName() {
+        chimeReady();
+        Card renamedPermanent = new GrizzlyBears();
+        renamedPermanent.setName("An-Havva Inn");
+        harness.addToBattlefield(player2, renamedPermanent);
+
+        ringChime();
+
+        harness.assertInGraveyard(player2, "An-Havva Inn");
     }
 }

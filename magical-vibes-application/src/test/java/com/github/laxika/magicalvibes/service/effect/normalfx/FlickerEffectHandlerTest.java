@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -114,6 +115,51 @@ class FlickerEffectHandlerTest {
         card.setType(CardType.PLANESWALKER);
         card.setLoyalty(3);
         return card;
+    }
+
+    @Nested
+    @DisplayName("TARGET, immediate with additional end step")
+    class TargetImmediateWithAdditionalEndStep {
+
+        @Test
+        @DisplayName("Adds an end step only when the flicker resolves during the first end step")
+        void addsEndStepOnlyDuringFirstEndStep() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Y'shtola Rhul");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithAdditionalEndStep();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            gd.currentStep = TurnStep.END_STEP;
+            gd.endStepsThisTurn = 1;
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.additionalEndStepsPending).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Does not add an end step when the flicker resolves during an additional end step")
+        void doesNotAddEndStepDuringAdditionalEndStep() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Y'shtola Rhul");
+            FlickerEffect effect = FlickerEffect.flickerTargetWithAdditionalEndStep();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            gd.currentStep = TurnStep.END_STEP;
+            gd.endStepsThisTurn = 2;
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.additionalEndStepsPending).isZero();
+        }
     }
 
     @Nested

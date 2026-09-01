@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "162")
+@CardRegistration(set = "SPM", collectorNumber = "277")
 public class DocOcksTentacles extends Card {
 
     public DocOcksTentacles() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "39")
+@CardRegistration(set = "SPM", collectorNumber = "220")
 public class NormanOsborn extends Card {
 
     public NormanOsborn() {

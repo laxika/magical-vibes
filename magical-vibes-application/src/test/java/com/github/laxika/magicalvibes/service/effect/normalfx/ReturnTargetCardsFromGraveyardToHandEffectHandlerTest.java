@@ -81,6 +81,13 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().doAnswer(invocation -> {
+            UUID handOwnerId = invocation.getArgument(2);
+            Card card = invocation.getArgument(3);
+            gd.addCardToHand(handOwnerId, card);
+            return null;
+        }).when(permanentRemovalService).addCardToHandFromGraveyard(
+                eq(gd), any(UUID.class), any(UUID.class), any(Card.class));
         returnTargetCardsToHandHandler = new ReturnTargetCardsFromGraveyardToHandEffectHandler(support);
 
     }

@@ -12,27 +12,21 @@ import java.util.UUID;
  */
 public record CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                       boolean flashbackCost, int xValue, boolean plottingFromHand,
-                                      Zone sourceZone, boolean castingFaceDown) {
-
-    public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
-                                   boolean flashbackCost, int xValue, boolean plottingFromHand,
-                                   Zone sourceZone) {
-        this(gameData, castingPlayerId, spell, flashbackCost, xValue, plottingFromHand,
-                sourceZone, false);
-    }
+                                      Zone sourceZone, boolean castFaceDown,
+                                      boolean collectEvidenceCostPaid) {
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell) {
-        this(gameData, castingPlayerId, spell, false, 0, false, null);
+        this(gameData, castingPlayerId, spell, false, 0, false, null, false, false);
     }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                    boolean flashbackCost) {
-        this(gameData, castingPlayerId, spell, flashbackCost, 0, false, null);
+        this(gameData, castingPlayerId, spell, flashbackCost, 0, false, null, false, false);
     }
 
     public CostModificationContext(GameData gameData, UUID castingPlayerId, Card spell,
                                    boolean flashbackCost, int xValue) {
-        this(gameData, castingPlayerId, spell, flashbackCost, xValue, false, null);
+        this(gameData, castingPlayerId, spell, flashbackCost, xValue, false, null, false, false);
     }
 
     public boolean fromGraveyard() {

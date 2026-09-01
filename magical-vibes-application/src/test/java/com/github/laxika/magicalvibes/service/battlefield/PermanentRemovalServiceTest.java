@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -173,7 +174,7 @@ class PermanentRemovalServiceTest {
         when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         when(gameQueryService.isArtifact(target)).thenReturn(false);
         when(graveyardService.addCardToGraveyard(eq(gd), eq(ownerId), any(Card.class), eq(Zone.BATTLEFIELD),
-                any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
+                any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
     }
 
     // =========================================================================
@@ -217,7 +218,7 @@ class PermanentRemovalServiceTest {
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(token);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(token.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(token), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(token), eq(false), eq(false));
             verify(gameLogService).append(eq(gd),
                     argThat((GameLogEntry logEntry) -> logEntry.plainText().equals("Spark Token is sacrificed.")));
         }
@@ -341,7 +342,27 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false), eq(false));
+        }
+
+        @Test
+        @DisplayName("Returns an enchanted creature to hand through a static replacement")
+        void returnsEnchantedCreatureToHandInsteadOfGraveyard() {
+            Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            Card magemark = createEnchantment("Necromancer's Magemark");
+            magemark.addEffect(EffectSlot.STATIC,
+                    new ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect());
+            addPermanent(player1Id, magemark);
+            when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
+            when(gameQueryService.isEnchanted(gd, bears)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player1Id);
+
+            boolean result = prs.removePermanentToGraveyard(gd, bears);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
+            assertThat(gd.playerHands.get(player1Id)).contains(bears.getOriginalCard());
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(Card.class), any(), any(), any(UUID.class));
         }
 
         @Test
@@ -424,7 +445,7 @@ class PermanentRemovalServiceTest {
             prs.removePermanentToGraveyard(gd, stolen);
 
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(stolen.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(stolen), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(stolen), eq(false), eq(false));
             verify(graveyardService, never()).addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
                     any(), any(), any(UUID.class));
         }
@@ -461,7 +482,7 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
             int deathsBefore = gd.creatureDeathCountThisTurn.getOrDefault(player1Id, 0);
 
             prs.removePermanentToGraveyard(gd, artifact);
@@ -493,7 +514,7 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
 
             prs.removePermanentToGraveyard(gd, artifact);
 
@@ -509,7 +530,7 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isArtifact(enchantment)).thenReturn(false);
             when(gameQueryService.isEnchantment(gd, enchantment)).thenReturn(true);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
 
             prs.removePermanentToGraveyard(gd, enchantment);
 
@@ -607,7 +628,7 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
 
             prs.removePermanentToGraveyard(gd, equipment);
@@ -615,9 +636,9 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(equipment);
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(equipment.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(equipment), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(equipment), eq(false), eq(false));
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
         }
     }
 
@@ -708,6 +729,21 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Uses the card owner when no stolen-permanent record exists")
+        void usesCardOwnerWhenOwnershipRecordIsAbsent() {
+            Card card = createCreature("Grizzly Bears");
+            card.setOwnerId(player2Id);
+            Permanent permanent = addPermanent(player1Id, card);
+
+            prs.removePermanentToHand(gd, permanent);
+
+            assertThat(gd.playerHands.get(player2Id))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.playerHands.get(player1Id))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
         @DisplayName("Exiled card returns to battlefield when source permanent is bounced")
         void exileReturnOnLeave() {
             Permanent source = addPermanent(player1Id, createCreature("Serra Angel"));
@@ -744,10 +780,12 @@ class PermanentRemovalServiceTest {
             Card tokenCard = createCreature("Saproling");
             tokenCard.setToken(true);
             Permanent token = addPermanent(player1Id, tokenCard);
+            when(gameQueryService.findPermanentController(gd, token.getId())).thenReturn(player1Id);
 
             prs.removePermanentToHand(gd, token);
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
+            verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
             verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
         }
     }
@@ -770,6 +808,20 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(exileService).exileCard(gd, player1Id, bears.getOriginalCard());
+        }
+
+        @Test
+        @DisplayName("Ends source-controlled exile play permissions when source leaves")
+        void endsSourceControlledExilePlayPermissionsWhenSourceLeaves() {
+            Permanent source = addPermanent(player1Id, createCreature("Source"));
+            UUID exiledCardId = UUID.randomUUID();
+            gd.exilePlayPermissions.put(exiledCardId, player1Id);
+            gd.exilePlayPermissionSourcePermanents.put(exiledCardId, source.getId());
+
+            prs.removePermanentToExile(gd, source);
+
+            assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCardId);
+            assertThat(gd.exilePlayPermissionSourcePermanents).doesNotContainKey(exiledCardId);
         }
 
         @Test
@@ -807,14 +859,14 @@ class PermanentRemovalServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
             when(graveyardService.addCardToGraveyard(eq(gd), eq(player1Id), any(Card.class),
-                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false))).thenReturn(true);
+                    eq(Zone.BATTLEFIELD), any(UUID.class), any(Permanent.class), eq(false), eq(false))).thenReturn(true);
 
             prs.removePermanentToExile(gd, equipment);
 
             verify(exileService).exileCard(gd, player1Id, equipment.getOriginalCard());
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(creature.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
         }
 
         @Test
@@ -855,7 +907,7 @@ class PermanentRemovalServiceTest {
             assertThat(result).isTrue();
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(bears);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player1Id), eq(bears.getOriginalCard()),
-                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false));
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(bears), eq(false), eq(false));
             verify(auraAttachmentService).removeOrphanedAuras(gd);
         }
 
@@ -1013,6 +1065,8 @@ class PermanentRemovalServiceTest {
             int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
 
             assertThat(result).isEqualTo(0);
+            assertThat(creature.getMarkedDamage()).isEqualTo(3);
+            assertThat(gd.permanentsDealtDamageThisTurn).contains(creature.getId());
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("Serra Angel") && logEntry.plainText().contains("absorbs") && logEntry.plainText().contains("redirected")));
         }

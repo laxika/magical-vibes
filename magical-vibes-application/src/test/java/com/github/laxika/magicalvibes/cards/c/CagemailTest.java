@@ -90,6 +90,7 @@ class CagemailTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         gd.playerBattlefields.get(player2.getId()).remove(aura);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

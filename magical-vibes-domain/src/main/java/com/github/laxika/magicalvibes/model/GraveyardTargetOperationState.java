@@ -14,6 +14,9 @@ public class GraveyardTargetOperationState {
     public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
     public boolean resolutionTimeExileThenMayBecomeCopyResume;
+    public boolean resolutionTimeKayaSpiritsJusticeResume;
+    /** Whether a resolution-time collect-evidence choice is awaiting completion. */
+    public boolean resolutionTimeCollectEvidenceResume;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
     public boolean resolutionTimeReturnCardsToBattlefieldResume;
 
@@ -24,6 +27,7 @@ public class GraveyardTargetOperationState {
     public int xValue;
     public CardSubtype chosenCreatureType;
     public boolean anyNumber;
+    public boolean giftPromised;
     /**
      * Whether all chosen targets must come from one graveyard ("... from a single graveyard",
      * Scarab Feast). Enforced in {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}.
@@ -57,6 +61,10 @@ public class GraveyardTargetOperationState {
     public final Map<CardEffect, List<UUID>> spellGraveyardCardIdsByEffect = new IdentityHashMap<>();
     /** Whether the spell is being cast with flashback */
     public boolean flashback;
+    /** Physical hand card for an alternate-face spell whose cast face is stored in {@link #card}. */
+    public Card physicalCard;
+    /** Whether the pending spell was cast as an Adventure. */
+    public boolean castWithAdventure;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */
@@ -128,7 +136,8 @@ public class GraveyardTargetOperationState {
     /** The card chosen for the optional graveyard exile, or {@code null} for a decline. */
     public UUID resolutionTimeExileThenEffectChosenCardId;
     /**
-     * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore). When set,
+     * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore or Shrouded
+     * Lore). When set,
      * {@code GraveyardChoiceHandlerService.handleGraveyardCardChosen} only records the chosen card on
      * {@code GameData.forgottenLore} and resumes the paused resolution — the card is not moved. Set by
      * {@code ForgottenLoreEffectHandler}.
@@ -152,6 +161,12 @@ public class GraveyardTargetOperationState {
     public UUID scroungeChosenCardId;
     /** Whether a resolution-time target-opponent graveyard choice is awaiting an answer. */
     public boolean resolutionTimeScroungeResume;
+    /** Whether an opponent's resolution-time graveyard choice returns the card to its owner's hand. */
+    public boolean resolutionTimeOpponentChoosesCardToHandResume;
+    /** Opponent selected by the controller for the resolution-time graveyard choice. */
+    public UUID opponentChoosesCardToHandChosenOpponentId;
+    /** Card selected by the opponent for the resolution-time graveyard choice. */
+    public UUID opponentChoosesCardToHandChosenCardId;
     /**
      * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
      * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the
@@ -181,6 +196,12 @@ public class GraveyardTargetOperationState {
 
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
     }
+
+    public record DeadlyCoverUpContext(UUID chosenCardId) {
+    }
+
+    /** Resolution-time choice state for Deadly Cover-Up's non-targeting graveyard exile. */
+    public DeadlyCoverUpContext resolutionTimeDeadlyCoverUp;
 
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter) {

@@ -55,7 +55,9 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
             gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - drainAmount);
+            int lifeLoss = drainAmount
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
+            gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - lifeLoss);
 
             gameLogService.append(gameData, GameLog.textCardText(targetName + " loses " + drainAmount + " life (" , entry.getCard(), ")."));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, drainAmount, entry.getCard().getName());

@@ -236,17 +236,19 @@ public class LibrarySearchSupport {
      * pick from the follow-up's same-name queue (Clarion Ultimatum, Doubling Chant). Each queue entry
      * is one permanent's name; the queue's own destination and creature-only restriction apply to
      * every pick, and the advanced remainder rides the begun search. Names with no matching card in
-     * the library are skipped. Returns true if a search was initiated, false if the queue is
-     * exhausted or absent, search is prevented, or the library is empty.
+     * the library are skipped. A queue may also identify a different library owner and battlefield
+     * controller, as used by Dichotomancy. Returns true if a search was initiated, false if the
+     * queue is exhausted or absent, search is prevented, or the library is empty.
      */
     public boolean startNextSameNamePick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
-        if (isSearchPrevented(gameData, playerId)) return false;
-
         SameNamePickQueue queue = followUp.remainingSameNamePicks();
         if (queue == null) return false;
 
+        UUID libraryOwnerId = queue.libraryOwnerId() != null ? queue.libraryOwnerId() : playerId;
+        if (isSearchPrevented(gameData, playerId, libraryOwnerId, true, playerId)) return false;
+
         boolean tapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
-        List<Card> deck = gameData.playerDecks.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         List<String> remaining = new ArrayList<>(queue.names());
         while (!remaining.isEmpty()) {
             String name = remaining.remove(0);
@@ -260,13 +262,18 @@ public class LibrarySearchSupport {
             if (matches.isEmpty()) {
                 continue;
             }
-            String prompt = "You may search your library for a " + (queue.creatureOnly() ? "creature card" : "card")
+            String libraryDescription = queue.libraryOwnerId() == null
+                    ? "your library" : gameData.playerIdToName.get(libraryOwnerId) + "'s library";
+            String prompt = (queue.optional() ? "You may search " : "Search ") + libraryDescription + " for a "
+                    + (queue.creatureOnly() ? "creature card" : "card")
                     + " named " + name + " and put it onto the battlefield" + (tapped ? " tapped." : ".");
             sendLibrarySearchToPlayer(gameData, playerId,
                     LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .targetPlayerId(queue.libraryOwnerId())
                             .canFailToFind(true)
                             .filterCardName(name)
                             .destination(queue.destination())
+                            .battlefieldControllerId(queue.battlefieldControllerId())
                             .followUp(followUp.withRemainingSameNamePicks(queue.withNames(remaining)))
                             .build(), prompt, true);
             return true;
@@ -568,6 +575,14 @@ public class LibrarySearchSupport {
 
     public boolean checkSearchRestriction(GameData gameData, UUID searchingPlayerId,
                                           UUID libraryOwnerId, UUID causingControllerId) {
+        if (gameData.playersCantSearchLibrariesThisTurn) {
+            String playerName = gameData.playerIdToName.get(searchingPlayerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + "'s library search is prevented this turn."));
+            log.info("Game {} - {} search prevented this turn", gameData.id, playerName);
+            return false;
+        }
+
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;

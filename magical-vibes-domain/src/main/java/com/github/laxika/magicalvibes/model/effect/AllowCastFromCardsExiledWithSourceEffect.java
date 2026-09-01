@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
@@ -24,6 +25,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                         than cards tracked with this source permanent
  * @param persistsAfterSourceLeaves whether matching cards retain an explicit play/cast permission
  *                                  after the source permanent leaves the battlefield
+ * @param grantsFlash whether matching cards may be cast as though they had flash
+ * @param waterbendManaValue whether matching cards may be cast during the controller's turn by
+ *                           waterbending an amount equal to the card's mana value
+ * @param entryCounterType counter placed on a permanent cast with this permission, or {@code null}
+ *                         when no entry counter is granted
  */
 public record AllowCastFromCardsExiledWithSourceEffect(
         boolean anyManaType,
@@ -37,23 +43,28 @@ public record AllowCastFromCardsExiledWithSourceEffect(
         boolean withoutPayingManaCost,
         ExileAccessScope accessScope,
         boolean stashCounterOnly,
-        boolean persistsAfterSourceLeaves)
+        boolean persistsAfterSourceLeaves,
+        boolean grantsFlash,
+        boolean waterbendManaValue,
+        CounterType entryCounterType)
         implements CardEffect {
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType) {
         this(anyManaType, null, false, false, 0, null, false, false, false,
-                ExileAccessScope.CONTROLLER, false, false);
+                ExileAccessScope.CONTROLLER, false, false, false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, ExileAccessScope accessScope) {
-        this(anyManaType, null, false, false, 0, null, false, false, false, accessScope, false, false);
+        this(anyManaType, null, false, false, 0, null, false, false, false,
+                accessScope, false, false, false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
                                                      boolean ownOnly, boolean controllerTurnOnly,
                                                      int additionalCounterCost) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
-                null, false, false, false, ExileAccessScope.CONTROLLER, false, false);
+                null, false, false, false, ExileAccessScope.CONTROLLER, false, false,
+                false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
@@ -63,7 +74,7 @@ public record AllowCastFromCardsExiledWithSourceEffect(
                                                      boolean withoutPayingManaCost) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
                 manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost,
-                ExileAccessScope.CONTROLLER, false, false);
+                ExileAccessScope.CONTROLLER, false, false, false, false, null);
     }
 
     public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
@@ -74,12 +85,37 @@ public record AllowCastFromCardsExiledWithSourceEffect(
                                                      boolean persistsAfterSourceLeaves) {
         this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
                 manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost,
-                ExileAccessScope.CONTROLLER, false, persistsAfterSourceLeaves);
+                ExileAccessScope.CONTROLLER, false, persistsAfterSourceLeaves, false, false, null);
+    }
+
+    public AllowCastFromCardsExiledWithSourceEffect(boolean anyManaType, CardPredicate filter,
+                                                     boolean ownOnly, boolean controllerTurnOnly,
+                                                     int additionalCounterCost, DynamicAmount manaValueLimit,
+                                                     boolean oncePerTurn, boolean thisTurnOnly,
+                                                     boolean withoutPayingManaCost,
+                                                     boolean persistsAfterSourceLeaves, boolean grantsFlash) {
+        this(anyManaType, filter, ownOnly, controllerTurnOnly, additionalCounterCost,
+                manaValueLimit, oncePerTurn, thisTurnOnly, withoutPayingManaCost,
+                ExileAccessScope.CONTROLLER, false, persistsAfterSourceLeaves, grantsFlash, false, null);
     }
 
     public static AllowCastFromCardsExiledWithSourceEffect forStashCounters(boolean anyManaType) {
         return new AllowCastFromCardsExiledWithSourceEffect(
                 anyManaType, null, false, true, 0, null, false, false, false,
-                ExileAccessScope.CONTROLLER, true, false);
+                ExileAccessScope.CONTROLLER, true, false, false, false, null);
+    }
+
+    public static AllowCastFromCardsExiledWithSourceEffect forWaterbendManaValue(CardPredicate filter) {
+        return new AllowCastFromCardsExiledWithSourceEffect(
+                false, filter, false, true, 0, null, false, false, false,
+                ExileAccessScope.CONTROLLER, false, false, false, true, null);
+    }
+
+    /** Static source-linked permission that places {@code entryCounterType} on entered permanents. */
+    public static AllowCastFromCardsExiledWithSourceEffect withEntryCounter(
+            CardPredicate filter, CounterType entryCounterType) {
+        return new AllowCastFromCardsExiledWithSourceEffect(
+                 false, filter, true, false, 0, null, false, false, false,
+                ExileAccessScope.CONTROLLER, false, false, false, false, entryCounterType);
     }
 }

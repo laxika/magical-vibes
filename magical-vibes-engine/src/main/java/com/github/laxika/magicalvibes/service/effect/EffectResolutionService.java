@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,9 +12,12 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,6 +57,7 @@ public class EffectResolutionService {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
     private final GameOutcomeService gameOutcomeService;
     // ObjectProvider breaks the construction-time cycle StateBasedActionService -> LegendRuleService
     // -> PlayerInputService -> (interaction handlers) -> EffectResolutionService.
@@ -120,6 +125,14 @@ public class EffectResolutionService {
         for (int i = startIndex; i < effects.size(); i++) {
             CardEffect effect = effects.get(i);
             CardEffect effectToResolve = effect;
+            int effectOccurrence = 0;
+            for (int previous = 0; previous < i; previous++) {
+                if (effects.get(previous) == effect) {
+                    effectOccurrence++;
+                }
+            }
+            int resolvingTargetGroup = entry.getCard().getEffectTargetIndex(effect, effectOccurrence);
+            entry.setResolvingEffectTargetGroup(resolvingTargetGroup >= 0 ? resolvingTargetGroup : null);
 
             // Resolution-time conditions that depend on the target (e.g. TargetPermanentMatches)
             // must see this effect's group target, not the raw entry.targetId — for a multi-target
@@ -139,7 +152,8 @@ public class EffectResolutionService {
                         && (conditional.condition() instanceof ColorSpentToCast
                         || conditional.condition() instanceof SnowManaSpentToCast);
                 if (!evaluatedWhenEtbTriggered
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                        entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
@@ -156,6 +170,13 @@ public class EffectResolutionService {
             }
 
             // CR 603.5 — resolution-time "you may" re-entry after player responded
+            if (effectToResolve instanceof MayEffect may
+                    && shouldSkipAcceptedOncePerTurnMay(gameData, entry, may)) {
+                log.info("Game {} - {}'s once-per-turn may ability already resolved", gameData.id,
+                        entry.getCard().getName());
+                continue;
+            }
+
             if (effectToResolve instanceof MayEffect may && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;
                 gameData.resolvedMayAccepted = null;
@@ -235,7 +256,8 @@ public class EffectResolutionService {
             // after the re-entry branches above have unwrapped it. Apply the same condition logic
             // here before dispatching the now-unwrapped effect.
             if (effectToResolve != effect && effectToResolve instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
+                        entry.getEventValue())) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
@@ -258,7 +280,7 @@ public class EffectResolutionService {
             // the Card's SpellTarget declarations (StackEntry.targetsForEffect slices the flat
             // target list by group). Single-target handlers read the remapped targetId; handlers
             // that support several targets per group consult targetsForEffect themselves.
-            int targetIdx = entry.getCard().getEffectTargetIndex(effect);
+            int targetIdx = resolvingTargetGroup;
             UUID savedTargetId = entry.getTargetId();
             if (targetIdx >= 0) {
                 List<UUID> groupTargets = entry.targetsForEffect(effect);
@@ -267,11 +289,28 @@ public class EffectResolutionService {
                 }
             }
 
-            EffectHandler handler = registry.getHandler(effectToResolve);
-            if (handler != null) {
-                handler.resolve(gameData, entry, effectToResolve);
-            } else {
-                log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
+            boolean skipEffect = false;
+            if (effectToResolve instanceof MayEffect may
+                    && may.choicePlayer() == MayChoicePlayer.TARGET_PLAYER
+                    && may.wrapped() instanceof SacrificePermanentsEffect sacrifice
+                    && sacrifice.recipient() == SacrificeRecipient.TARGET_PLAYER
+                    && entry.getTargetId() != null
+                    && !sacrificePermanentsEffectHandler.hasLegalSacrificeChoice(
+                    gameData, entry, sacrifice, entry.getTargetId())) {
+                if (may.elseEffect() == null) {
+                    skipEffect = true;
+                } else {
+                    effectToResolve = may.elseEffect();
+                }
+            }
+
+            if (!skipEffect) {
+                EffectHandler handler = registry.getHandler(effectToResolve);
+                if (handler != null) {
+                    handler.resolve(gameData, entry, effectToResolve);
+                } else {
+                    log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
+                }
             }
 
             // Restore original targetId after multi-target override
@@ -300,6 +339,7 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        entry.setResolvingEffectTargetGroup(null);
         // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast
         // ConditionalEffect on resume, like Cankerous Thirst); StackResolutionService only clears
@@ -310,6 +350,7 @@ public class EffectResolutionService {
             gameData.clearSpellCastManaSpentByColor(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpent(entry.getCard().getId());
             gameData.clearSpellCastSnowManaSpentByColor(entry.getCard().getId());
+            gameData.clearSpellCastCaveManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
         // Lethally-damaged creatures die at the state-based action check that follows this
@@ -318,5 +359,15 @@ public class EffectResolutionService {
         // Now that the whole resolution's damage is dealt, queue any "whenever a [color] source deals
         // damage" reflections (Justice) once per source with the summed total (CR ruling).
         damageSupport.flushSourceDamageReflections(gameData);
+    }
+
+    private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
+        if (entry.getSourcePermanentId() == null
+                || !(may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy)) {
+            return false;
+        }
+        return copy.markSourceOncePerTurnOnAccept()
+                && !copy.accepted()
+                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
     }
 }

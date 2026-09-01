@@ -25,8 +25,7 @@ public class DarkPrivilege extends Card {
                 false,
                 null,
                 List.of(new SacrificeCreatureCost(), new RegenerateEffect()),
-                "Sacrifice a creature: Regenerate enchanted creature.",
-                TargetFilters.creatureYouControl()
+                "Sacrifice a creature: Regenerate enchanted creature."
         ));
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,10 +9,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +30,9 @@ import org.springframework.stereotype.Component;
  *   <li>DISCARD / EXILE reuse {@link PlayerInteractionSupport#resolveHandRevealAndChoose} (type
  *       filtering + "reveals their hand" flow); DISCARD sets {@code discardCausedByOpponent} and
  *       EXILE forwards the source permanent id when {@code returnOnSourceLeave}.</li>
- *   <li>TOP_OF_LIBRARY reveals every card ("looks at ... hand") with no type filter and begins a
- *       put-on-top choice; the final ordering is applied by the RevealedHandChoice answer handler.</li>
+ *   <li>TOP_OF_LIBRARY normally reveals every card ("looks at ... hand") with no type filter and
+ *       begins a put-on-top choice. A positive library position enables filtered placement at that
+ *       position; the final placement is applied by the RevealedHandChoice answer handler.</li>
  *   <li>SHUFFLE_INTO_LIBRARY uses the public hand-reveal flow and shuffles only after a card is
  *       chosen; an empty hand therefore causes no shuffle.</li>
  * </ul>
@@ -43,6 +47,8 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final CardRevealService cardRevealService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -85,24 +91,21 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
             case EXILE -> {
                 UUID sourcePermanentId = e.returnOnSourceLeave() || e.imprintOnSource()
                         ? entry.getSourcePermanentId() : null;
-                if (e.grantPlayPermission() || e.returnAtNextEndStep()) {
-                    playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
-                            e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
-                            e.upTo(), e.exileAllCopiesOfChosenNames(), 0, e.imprintOnSource(),
-                            e.grantPlayPermission(), e.returnAtNextEndStep(), e.exilePlayOpponentTax());
-                } else {
-                    playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
-                            e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
-                            e.upTo(), e.exileAllCopiesOfChosenNames(), e.imprintOnSource());
-                }
+                playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(gameData, entry, count,
+                        e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
+                        e.upTo(), e.exileAllCopiesOfChosenNames(), e.declineFallbackDiscardCount(),
+                        e.imprintOnSource(), e.revealHand(), e.grantPlayPermission(),
+                        e.returnAtNextEndStep(), e.exilePlayOpponentTax(),
+                        e.chosenCardCondition(), e.chosenCardThenEffect());
             }
-            case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);
+            case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count, e);
             case SHUFFLE_INTO_LIBRARY ->
                     playerInteractionSupport.resolveHandRevealAndChooseToShuffleIntoLibrary(gameData, entry, count);
         }
     }
 
-    private void resolveToTopOfLibrary(GameData gameData, StackEntry entry, int count) {
+    private void resolveToTopOfLibrary(GameData gameData, StackEntry entry, int count,
+                                       ChooseCardsFromTargetHandEffect effect) {
         UUID targetPlayerId = entry.getTargetId();
         UUID casterId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -110,30 +113,80 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         String casterName = gameData.playerIdToName.get(casterId);
 
         if (hand == null || hand.isEmpty()) {
-            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            if (effect.libraryPosition() > 0 && effect.revealHand()) {
+                cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+            } else {
+                String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+                gameLogService.append(gameData, GameLog.text(logEntry));
+                log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            }
             return;
         }
 
-        // Log and reveal hand to caster
-        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-
-        int cardsToChoose = Math.min(count, hand.size());
-
-        // Build valid indices (all cards in hand)
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            validIndices.add(i);
+        if (effect.libraryPosition() > 0 && effect.revealHand()) {
+            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
+        } else {
+            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+            String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
+            gameLogService.append(gameData, GameLog.text(logEntry));
         }
+
+        int position = effect.libraryPosition();
+
+        List<Integer> validIndices = new ArrayList<>();
+        UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
+        for (int i = 0; i < hand.size(); i++) {
+            Card handCard = hand.get(i);
+            boolean valid = position == 0 || matchesChoiceFilter(gameData, entry, effect, handCard, sourceCardId,
+                    targetPlayerId);
+            if (valid) {
+                validIndices.add(i);
+            }
+        }
+        if (validIndices.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    casterName + " cannot choose a card (" + targetName + "'s hand contains no valid choices)."));
+            log.info("Game {} - {}'s hand has no valid library-placement choices for {}",
+                    gameData.id, targetName, casterName);
+            return;
+        }
+
+        int cardsToChoose = Math.min(count, validIndices.size());
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, false, false, List.of(), null,
-                "Choose a card to put on top of " + targetName + "'s library.", false, false));
+                choicePrompt(effect, targetName, position), false, false, false, null, null, 0,
+                effect.filter(), false, false, false, false, false, false, 0, position));
 
-        log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
-                gameData.id, casterName, cardsToChoose, targetName);
+        log.info("Game {} - {} choosing {} card(s) from {}'s hand for library placement at position {}",
+                gameData.id, casterName, cardsToChoose, targetName, position);
+    }
+
+    private boolean matchesChoiceFilter(GameData gameData, StackEntry entry,
+                                         ChooseCardsFromTargetHandEffect effect, Card card,
+                                         UUID sourceCardId, UUID targetPlayerId) {
+        boolean typeMatches = effect.includedTypes().isEmpty()
+                ? !effect.excludedTypes().contains(card.getType())
+                : effect.includedTypes().contains(card.getType())
+                || card.getAdditionalTypes().stream().anyMatch(effect.includedTypes()::contains);
+        return typeMatches && (effect.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                card, effect.filter(), sourceCardId, gameData, targetPlayerId, null, null, entry.getXValue()));
+    }
+
+    private String choicePrompt(ChooseCardsFromTargetHandEffect effect, String targetName, int position) {
+        if (position == 2 && effect.excludedTypes().contains(CardType.LAND)) {
+            return "Choose a nonland card to put third from the top of " + targetName + "'s library.";
+        }
+        return position == 0
+                ? "Choose a card to put on top of " + targetName + "'s library."
+                : "Choose a card to put " + ordinal(position) + " from the top of " + targetName + "'s library.";
+    }
+
+    private String ordinal(int zeroBasedPosition) {
+        return switch (zeroBasedPosition) {
+            case 1 -> "second";
+            case 2 -> "third";
+            default -> (zeroBasedPosition + 1) + "th";
+        };
     }
 }

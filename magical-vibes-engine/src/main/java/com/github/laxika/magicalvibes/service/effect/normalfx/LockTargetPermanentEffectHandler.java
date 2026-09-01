@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -50,6 +51,16 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     private void lockOne(GameData gameData, StackEntry entry, LockTargetPermanentEffect lock, UUID targetId) {
         if (targetId == null) {
             return;
+        }
+        if (lock.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                || lock.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                || lock.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                || lock.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
+                || lock.duration() == EffectDuration.WHILE_ATTACHED) {
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            if (sourcePermanentId == null || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+                return;
+            }
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {

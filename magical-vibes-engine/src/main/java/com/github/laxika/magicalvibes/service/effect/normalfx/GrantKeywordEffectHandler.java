@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -142,6 +144,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES) {
+            resolveTargetAndSharingCreatures(gameData, entry, grant);
+            return;
+        }
+
         if (grant.scope() == GrantScope.ENCHANTED_CREATURE
                 || grant.scope() == GrantScope.ENCHANTED_PERMANENT
                 || grant.scope() == GrantScope.EQUIPPED_CREATURE) {
@@ -155,7 +162,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             if (grant.grantCondition() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    target, grant.grantCondition(), resolutionFilterContext(gameData, entry))) {
                 return;
             }
 
@@ -264,7 +272,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             // Optional grant condition: the target stays legal either way; only the keyword grant
             // is conditional (e.g. Vampire's Zeal grants first strike only if the target is a Vampire).
             if (grant.grantCondition() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    target, grant.grantCondition(), resolutionFilterContext(gameData, entry))) {
                 continue;
             }
 
@@ -292,6 +301,68 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" gains " + keywordNames + " " + durationLabel(grant.duration()) + ".").build());
             log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
         }
+    }
+
+    private FilterContext resolutionFilterContext(GameData gameData, StackEntry entry) {
+        return FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                .withXValue(entry.getXValue());
+    }
+
+    private void resolveTargetAndSharingCreatures(GameData gameData, StackEntry entry,
+                                                   GrantKeywordEffect grant) {
+        UUID targetId = entry.targetsForEffect(grant).stream()
+                .findFirst()
+                .orElse(entry.getTargetId());
+        if (targetId == null) {
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+
+        Set<CardColor> targetColors = gameQueryService.getEffectiveColors(gameData, target);
+        List<Permanent> affectedPermanents = new ArrayList<>();
+        gameData.forEachPermanent((ignored, permanent) -> {
+            if (gameQueryService.isCreature(gameData, permanent)
+                    && (permanent.getId().equals(targetId)
+                    || (!targetColors.isEmpty()
+                    && gameQueryService.getEffectiveColors(gameData, permanent).stream()
+                    .anyMatch(targetColors::contains)))) {
+                affectedPermanents.add(permanent);
+            }
+        });
+
+        int count = 0;
+        for (Permanent permanent : affectedPermanents) {
+            Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
+            if (grantableKeywords.isEmpty()) {
+                continue;
+            }
+
+            addLegacyBucket(permanent, grant.duration(), grantableKeywords);
+            UUID floatingSourceId = grant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                    ? entry.getSourcePermanentId()
+                    : null;
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), floatingSourceId, entry.getControllerId(),
+                    new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
+                            grant.duration(), grant.grantCondition()),
+                    permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+            count++;
+        }
+
+        String keywordNames = formatKeywords(grant.keywords());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                .text(" gives " + keywordNames + " to " + count + " creature(s) "
+                        + durationLabel(grant.duration()) + ".").build());
+        log.info("Game {} - {} grants {} to {} color-sharing creature(s)", gameData.id,
+                entry.getCard().getName(), grant.keywords(), count);
     }
 
     void grantToPermanent(GameData gameData, StackEntry entry, Permanent permanent, Set<Keyword> keywords) {

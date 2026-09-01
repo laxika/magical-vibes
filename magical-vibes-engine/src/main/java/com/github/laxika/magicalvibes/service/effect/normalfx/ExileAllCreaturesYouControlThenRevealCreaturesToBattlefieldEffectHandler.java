@@ -61,11 +61,16 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
         }
 
         // Step 2: Exile all creatures
-        for (Permanent creature : creaturesToExile) {
-            String creatureName = creature.getCard().getName();
-            permanentRemovalService.removePermanentToExile(gameData, creature);
-            String exileLog = controllerName + " exiles " + creatureName + ".";
-            gameLogService.append(gameData, GameLog.text(exileLog));
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent creature : creaturesToExile) {
+                String creatureName = creature.getCard().getName();
+                permanentRemovalService.removePermanentToExile(gameData, creature);
+                String exileLog = controllerName + " exiles " + creatureName + ".";
+                gameLogService.append(gameData, GameLog.text(exileLog));
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         // Step 3: Reveal cards from the top of the library until finding that many creature cards

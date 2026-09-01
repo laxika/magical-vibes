@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedE
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "152")
+@CardRegistration(set = "SPM", collectorNumber = "230")
 public class SpiderWomanStunningSavior extends Card {
 
     public SpiderWomanStunningSavior() {

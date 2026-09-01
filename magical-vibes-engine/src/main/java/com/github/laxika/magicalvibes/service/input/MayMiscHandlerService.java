@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
@@ -163,7 +164,12 @@ public class MayMiscHandlerService {
         }
 
         if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
+            boolean wasTapped = sourcePermanent.isTapped();
             sourcePermanent.untap();
+            if (wasTapped && gameData.currentStep == TurnStep.UNTAP
+                    && controllerId.equals(gameData.untapStepPlayerId)) {
+                gameData.untapStepUntappedPermanentCount++;
+            }
             // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
             creatureControlService.onSourceUntapped(gameData, sourcePermanent);
             // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.
@@ -463,10 +469,11 @@ public class MayMiscHandlerService {
         boolean canPayLife = lifeCost <= 0 || gameData.getLife(controllerId) >= lifeCost;
         if (accepted && canPayLife && deck != null && !deck.isEmpty()) {
             if (lifeCost > 0) {
+                int lifeLoss = lifeCost * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
                 int life = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, life - lifeCost);
-                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeCost);
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life."));
+                gameData.playerLifeTotals.put(controllerId, life - lifeLoss);
+                triggerCollectionService.checkLifePaymentTriggers(gameData, controllerId, lifeLoss);
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " pays " + lifeLoss + " life."));
             }
             Card topCard = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, libraryOwnerId, topCard, Zone.LIBRARY);
@@ -484,9 +491,11 @@ public class MayMiscHandlerService {
     public void handleExploreMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
+        Card exploredCard = deck.isEmpty() ? null : deck.getFirst();
 
         if (accepted && !deck.isEmpty()) {
             Card topCard = deck.removeFirst();
+            exploredCard = topCard;
             graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " puts ").card(topCard).text(" into their graveyard.").build());
@@ -499,7 +508,7 @@ public class MayMiscHandlerService {
         }
 
         // Explore is complete — check for "whenever a creature you control explores" triggers
-        triggerCollectionService.checkExploreTriggers(gameData, controllerId);
+        triggerCollectionService.checkExploreTriggers(gameData, controllerId, exploredCard);
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
@@ -590,7 +599,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} puts {} onto the battlefield (Believe)",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the top card into their hand."));
             log.info("Game {} - {} puts {} into hand from library top (Believe)",
@@ -629,7 +638,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} puts {} onto the battlefield from library top",
                     gameData.id, player.getUsername(), topCard.getName());
         } else {
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the top card into their hand."));
             log.info("Game {} - {} puts {} into hand from library top",

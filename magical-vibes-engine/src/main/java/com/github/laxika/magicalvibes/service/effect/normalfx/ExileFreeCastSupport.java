@@ -117,6 +117,7 @@ public class ExileFreeCastSupport {
                 spellType, card, playerId, card.getName(),
                 spellEffects, 0, (UUID) null, null
         );
+        stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         stackEntry.setSourceZone(Zone.EXILE);
         gameData.stack.add(stackEntry);
 

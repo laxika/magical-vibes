@@ -57,8 +57,18 @@ public class GrantedTriggeredAbilitySupport {
             GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
+        return grantedTriggeredEffects(gameData, permanent, null, slot);
+    }
+
+    /**
+     * Controller-aware form for collecting abilities from a permanent snapshot after it has left
+     * the battlefield.
+     */
+    public List<CardEffect> grantedTriggeredEffects(
+            GameData gameData, Permanent permanent, UUID controllerId, EffectSlot slot) {
         List<CardEffect> result = new ArrayList<>();
-        for (CardEffect granted : gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects()) {
+        for (CardEffect granted : gameQueryService.computeStaticBonus(
+                gameData, permanent, controllerId).grantedEffects()) {
             if (granted instanceof GrantTriggeredAbilityEffect grant && grant.slot() == slot) {
                 result.add(grant.grantedEffect());
             }

@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -77,6 +79,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MurmursFromBeyondEffectHandler murmursFromBeyondEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler animalMagnetismEffectHandler;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
     private LibraryChoiceHandlerService service;
@@ -106,11 +109,13 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
                 murmursFromBeyondEffectHandler,
                 animalMagnetismEffectHandler,
+                memoriesReturningEffectHandler,
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
-                permanentControlSupport, permanentCounterSupport);
+                permanentControlSupport, permanentCounterSupport,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class));
         registry.register(new LibraryRevealChoiceInteractionHandler(service));
         registry.register(new LibraryReorderInteractionHandler(
                 gameLogService, mock(WarpWorldService.class), inputCompletionService));
@@ -265,6 +270,30 @@ class LibraryChoiceHandlerServiceTest {
 
         verify(permanentCounterSupport).placeCounterOnPermanent(
                 eq(gd), isNull(), any(), eq(CounterType.STUN), eq(1));
+    }
+
+    @Test
+    @DisplayName("Scopes a library return-to-hand action to its configured controller")
+    void scopesLibraryReturnToHandActionToConfiguredController() {
+        Card creature = createCard("Creature", CardType.CREATURE);
+        gd.playerDecks.get(player1Id).add(creature);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(creature))
+                .canFailToFind(true)
+                .sourceCards(new ArrayList<>(List.of(creature)))
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .destination(LibrarySearchDestination.BATTLEFIELD)
+                .returnToHandAtEndStep(true)
+                .returnToHandAtControllerEndStepId(player2Id)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                params, "Choose a creature", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .anyMatch(action -> action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP
+                        && player2Id.equals(action.controllerId()));
     }
 
     @Test
@@ -728,7 +757,8 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
             // Dino should have been put onto battlefield
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
 
             // Remaining cards should be on bottom of library (not in graveyard)
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
@@ -777,7 +807,8 @@ class LibraryChoiceHandlerServiceTest {
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(), any());
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class));
             verify(exileService).exileCard(gd, player1Id, land);
             verify(exileService).exileCard(gd, player1Id, instant);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());

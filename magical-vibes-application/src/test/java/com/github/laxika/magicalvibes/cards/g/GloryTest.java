@@ -57,7 +57,7 @@ class GloryTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

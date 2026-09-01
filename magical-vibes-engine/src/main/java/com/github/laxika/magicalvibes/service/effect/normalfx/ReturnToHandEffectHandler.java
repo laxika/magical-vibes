@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -33,7 +34,8 @@ import org.springframework.stereotype.Component;
  * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents),
  * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller),
  * {@code TARGET_CHOSEN_CREATURE_TYPE} (the chosen target creatures matching the cast-time type),
- * {@code AURAS_ATTACHED_TO_TARGET}, and {@code ENCHANTED} (the permanent the source Aura is on).
+ * {@code AURAS_ATTACHED_TO_TARGET}, {@code ENCHANTED} (the permanent the source Aura is on), and
+ * {@code ENCHANTED_AND_AURAS} (that permanent and all its attached Auras).
  */
 @Slf4j
 @Component
@@ -58,6 +60,8 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         var e = (ReturnToHandEffect) effect;
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
+            case TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD ->
+                    resolveTargetNonlandPermanentOrSuspendedCard(gameData, entry, e);
             case TARGET_CHOSEN_CREATURE_TYPE -> resolveTargetChosenCreatureType(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
             case TRIGGERING -> resolveTriggering(gameData, entry, e);
@@ -67,6 +71,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);
             case AURAS_ATTACHED_TO_TARGET -> resolveAurasAttachedToTarget(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry, e);
+            case ENCHANTED_AND_AURAS -> resolveEnchantedAndAuras(gameData, entry, e);
             case GRANTING_EQUIPMENT -> resolveGrantingEquipment(gameData, entry, e);
         }
     }
@@ -103,6 +108,32 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         bounceAll(gameData, entry, List.of(enchanted));
+    }
+
+    private void resolveEnchantedAndAuras(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        UUID hostId = e.enchantedPermanentId();
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (hostId == null) {
+            hostId = aura != null && aura.isAttached()
+                    ? aura.getAttachedTo()
+                    : entry.getSourcePermanentSnapshot() == null
+                            ? null
+                            : entry.getSourcePermanentSnapshot().getAttachedTo();
+        }
+        Permanent enchanted = hostId == null ? null : gameQueryService.findPermanentById(gameData, hostId);
+        if (enchanted == null) {
+            return;
+        }
+
+        List<Permanent> toReturn = new ArrayList<>();
+        UUID finalHostId = hostId;
+        gameData.forEachBattlefield((playerId, battlefield) ->
+                toReturn.addAll(battlefield.stream()
+                        .filter(p -> p.getCard().isAura() && p.isAttached()
+                                && finalHostId.equals(p.getAttachedTo()))
+                        .toList()));
+        toReturn.add(enchanted);
+        bounceAll(gameData, entry, toReturn);
     }
 
     private void resolveTriggering(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
@@ -144,6 +175,32 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         if (e.lifeLoss() > 0) {
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    private void resolveTargetNonlandPermanentOrSuspendedCard(
+            GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+        if (entry.getTargetZone() != Zone.EXILE) {
+            resolveTarget(gameData, entry, e);
+            return;
+        }
+
+        UUID targetId = entry.getTargetId();
+        if (targetId == null) {
+            return;
+        }
+
+        var exiled = gameData.findExiledCard(targetId);
+        Integer timeCounters = gameData.exiledCardTimeCounters.get(targetId);
+        if (exiled == null || exiled.faceDown() || timeCounters == null || timeCounters <= 0) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription()
+                    + " fizzles (target card is no longer suspended)."));
+            return;
+        }
+
+        gameData.removeFromExile(targetId);
+        gameData.addCardToHand(exiled.ownerId(), exiled.card());
+        gameLogService.append(gameData, GameLog.textCardText(
+                entry.getDescription() + " returns ", exiled.card(), " from exile to its owner's hand."));
     }
 
     private void resolveTargetChosenCreatureType(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
@@ -201,12 +258,14 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
             } else {
+                int lifeLoss = e.lifeLoss()
+                        * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
                 int currentLife = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, currentLife - e.lifeLoss());
+                gameData.playerLifeTotals.put(controllerId, currentLife - lifeLoss);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + e.lifeLoss() + " life (" , entry.getCard(), ")."));
-                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
+                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));
+                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, lifeLoss, entry.getCard().getName());
             }
         }
     }
@@ -291,17 +350,22 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
 
     private int bounceAll(GameData gameData, StackEntry entry, List<Permanent> toReturn) {
         int returnedControlledNontokens = 0;
-        for (Permanent permanent : toReturn) {
-            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            boolean controlledNontoken = entry.getControllerId().equals(controllerId)
-                    && !permanent.getCard().isToken();
-            boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
-            if (returned && controlledNontoken) {
-                returnedControlledNontokens++;
-            }
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (Permanent permanent : toReturn) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+                boolean controlledNontoken = entry.getControllerId().equals(controllerId)
+                        && !permanent.getCard().isToken();
+                boolean returned = permanentRemovalService.removePermanentToHand(gameData, permanent);
+                if (returned && controlledNontoken) {
+                    returnedControlledNontokens++;
+                }
 
-            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
-            log.info("Game {} - {} returned to owner's hand by {}", gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                log.info("Game {} - {} returned to owner's hand by {}", gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         if (!toReturn.isEmpty()) {

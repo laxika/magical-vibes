@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -46,9 +47,19 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SearchTargetLibraryEffect e = (SearchTargetLibraryEffect) effect;
+        resolveForTargetPlayer(gameData, entry, (SearchTargetLibraryEffect) effect, entry.getTargetId(),
+                LibrarySearchFollowUp.NONE);
+    }
+
+    void resolveForTargetPlayer(GameData gameData, StackEntry entry, SearchTargetLibraryEffect effect,
+                                UUID targetPlayerId) {
+        resolveForTargetPlayer(gameData, entry, effect, targetPlayerId, LibrarySearchFollowUp.NONE);
+    }
+
+    void resolveForTargetPlayer(GameData gameData, StackEntry entry, SearchTargetLibraryEffect effect,
+                                UUID targetPlayerId, LibrarySearchFollowUp followUp) {
+        SearchTargetLibraryEffect e = effect;
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetId();
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
@@ -97,7 +108,8 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                 .remainingCount(count)
                 .canFailToFind(e.canFailToFind())
                 .destination(e.destination())
-                .filterPredicate(filter);
+                .filterPredicate(filter)
+                .followUp(followUp);
         if (grantsPlayPermission(e.destination())) {
             // Grinning Totem reads the source card back out of the params when it queues
             // ExileToOwnerGraveyardAtNextUpkeep for the card left unplayed.

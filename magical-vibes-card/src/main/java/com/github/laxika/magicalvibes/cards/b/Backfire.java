@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageE
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "62")
+@CardRegistration(set = "LEG", collectorNumber = "47")
 public class Backfire extends Card {
 
     public Backfire() {

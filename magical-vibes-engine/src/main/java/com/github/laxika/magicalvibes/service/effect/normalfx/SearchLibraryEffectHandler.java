@@ -59,16 +59,21 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryEffect) effect, LibrarySearchFollowUp.NONE);
+        doResolve(gameData, entry, (SearchLibraryEffect) effect, LibrarySearchFollowUp.NONE, null);
     }
 
     void resolveWithFollowUp(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
                              LibrarySearchFollowUp followUp) {
-        doResolve(gameData, entry, effect, followUp);
+        doResolve(gameData, entry, effect, followUp, null);
+    }
+
+    void resolveWithTotalManaValueCap(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
+                                      int maxTotalManaValue) {
+        doResolve(gameData, entry, effect, LibrarySearchFollowUp.NONE, maxTotalManaValue);
     }
 
     private void doResolve(GameData gameData, StackEntry entry, SearchLibraryEffect effect,
-                           LibrarySearchFollowUp followUp) {
+                           LibrarySearchFollowUp followUp, Integer totalManaValueBound) {
         UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
                 ? entry.getActivePlayerId() : entry.getControllerId();
         if (controllerId == null) return;
@@ -82,7 +87,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         CardPredicate filter = effect.filter();
         ManaValueBound bound = effect.manaValueBound();
-        boolean restricted = filter != null || bound != null;
+        boolean restricted = filter != null || bound != null || totalManaValueBound != null;
         Integer boundValue = bound == null ? null
                 : amountEvaluationService.evaluate(gameData, bound.amount(), amountContext) + bound.offset();
 
@@ -90,6 +95,9 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            if (effect.shuffleAfterSelection()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty."
                     + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
@@ -108,11 +116,19 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         Predicate<Card> deckFilter = card ->
                 (filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
                         && matchesBound(card, boundValue, bound)
+                        && (totalManaValueBound == null || card.getManaValue() <= totalManaValueBound)
                         && (!putsOntoBattlefield(effect.destination())
                         || !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY));
         List<Card> matchingCards = deck.stream().filter(deckFilter).toList();
 
         String baseDesc = describe(filter, boundValue, bound);
+        if (totalManaValueBound != null) {
+            baseDesc += " with total mana value " + totalManaValueBound + " or less";
+        }
+
+        if (totalManaValueBound != null) {
+            count = Math.min(count, matchingCards.size());
+        }
 
         if (matchingCards.isEmpty()) {
             if (!librarySearchSupport.librarySearchCastableCards(gameData, controllerId).isEmpty()) {
@@ -127,10 +143,12 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                                 .filterPredicate(restricted ? filter : null)
                                 .requireDifferentNames(effect.requireDifferentNames())
                                 .manaValueBound(boundValue, bound != null && bound.exact())
+                                .totalManaValueBound(totalManaValueBound)
                                 .grantHaste(effect.grantHaste())
                                 .exileAtEndStep(effect.exileAtEndStep())
                                 .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                                 .animateFound(effect.animateFound())
+                                .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
                                 .battlefieldCounter(effect.battlefieldCounter())
                                 .followUp(followUp)
                                 .shuffleAfterSelection(effect.shuffleAfterSelection())
@@ -164,10 +182,12 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         .filterPredicate(restricted ? filter : null)
                         .requireDifferentNames(effect.requireDifferentNames())
                         .manaValueBound(boundValue, bound != null && bound.exact())
+                        .totalManaValueBound(totalManaValueBound)
                         .grantHaste(effect.grantHaste())
                         .exileAtEndStep(effect.exileAtEndStep())
                         .returnToHandAtEndStep(effect.returnToHandAtEndStep())
                         .animateFound(effect.animateFound())
+                        .placeBattlefieldCardsSimultaneously(effect.animateFound() != null)
                         .battlefieldCounter(effect.battlefieldCounter())
                         .followUp(followUp)
                         .enterWithCounters(effect.enterWithCounters())

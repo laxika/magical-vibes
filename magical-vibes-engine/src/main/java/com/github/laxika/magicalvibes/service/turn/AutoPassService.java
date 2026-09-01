@@ -105,6 +105,11 @@ public class AutoPassService {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         }
 
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            stepTriggerService.processNextPucasMischiefTarget(gameData);
+        }
+
         // Process any pending spell-target triggers (e.g. Livewire Lash)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
@@ -189,7 +194,9 @@ public class AutoPassService {
         }
 
         // Process any pending draw targeted triggers (Niv-Mizzet, the Firemind)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+        if (!gameData.interaction.isAwaitingInput()
+                && (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))) {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
         }
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "165")
+@CardRegistration(set = "SPM", collectorNumber = "278")
 public class InterdimensionalWebWatch extends Card {
 
     public InterdimensionalWebWatch() {

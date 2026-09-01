@@ -168,7 +168,9 @@ public class BrilliantUltimatumSupport {
         }
 
         gameData.removeFromExile(card.getId());
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+        Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
         gameLogService.append(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());

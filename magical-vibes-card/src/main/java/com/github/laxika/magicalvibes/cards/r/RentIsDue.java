@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "11")
+@CardRegistration(set = "SPM", collectorNumber = "247")
 public class RentIsDue extends Card {
 
     public RentIsDue() {

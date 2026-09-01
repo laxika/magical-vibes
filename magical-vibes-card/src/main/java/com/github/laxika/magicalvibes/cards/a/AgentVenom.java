@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "49")
+@CardRegistration(set = "SPM", collectorNumber = "255")
 public class AgentVenom extends Card {
 
     public AgentVenom() {

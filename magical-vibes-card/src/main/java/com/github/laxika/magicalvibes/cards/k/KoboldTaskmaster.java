@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "TSB", collectorNumber = "65")
+@CardRegistration(set = "LEG", collectorNumber = "156")
 public class KoboldTaskmaster extends Card {
 
     public KoboldTaskmaster() {

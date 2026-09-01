@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "155")
 @CardRegistration(set = "ONS", collectorNumber = "227")
+@CardRegistration(set = "MKM", collectorNumber = "144")
 @CardRegistration(set = "SPM", collectorNumber = "88")
 @CardRegistration(set = "BTD", collectorNumber = "45")
 @CardRegistration(set = "AER", collectorNumber = "98")

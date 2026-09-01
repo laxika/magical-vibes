@@ -20,6 +20,7 @@ import java.util.List;
  */
 @CardRegistration(set = "5ED", collectorNumber = "217")
 @CardRegistration(set = "4ED", collectorNumber = "183")
+@CardRegistration(set = "LEG", collectorNumber = "140")
 public class CrimsonManticore extends Card {
 
     public CrimsonManticore() {

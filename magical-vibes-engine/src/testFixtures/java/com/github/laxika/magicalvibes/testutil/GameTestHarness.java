@@ -614,9 +614,26 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, null, List.of(), convokeCreatureIds);
     }
 
+    public void castFromExileWithWaterbend(Player player, UUID exileCardId, List<UUID> waterbendPermanentIds) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, null,
+                List.of(), List.of(), waterbendPermanentIds, true);
+    }
+
     public void castFromExile(Player player, UUID exileCardId, UUID targetId) {
         ensurePriority(player);
         gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
+    }
+
+    public void castAdventure(Player player, int cardIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, null,
+                targetIds != null ? targetIds : List.of());
+    }
+
+    public void castAdventure(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
     }
 
     public void foretell(Player player, int cardIndex) {
@@ -1028,6 +1045,52 @@ public class GameTestHarness {
     public void castInstant(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
+    }
+
+    public void castCreatureWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castArtifactWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castInstantWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castInstantWithGift(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                                    boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, targetIds, giftPromised);
+    }
+
+    public void castSorceryWithGift(Player player, int cardIndex, List<UUID> targetIds,
+                                    boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, null, null, targetIds, giftPromised);
+    }
+
+    public void castSorceryWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castInstantWithLifeOrManaAdditionalCost(Player player, int cardIndex, UUID targetId,
+                                                        boolean payLife) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                null, null, List.of(), List.of(), null, null, false, payLife);
     }
 
     public void castInstantWithBehold(Player player, int cardIndex, UUID targetId,
@@ -1562,6 +1625,11 @@ public class GameTestHarness {
     public void activateGraveyardAbility(Player player, int graveyardCardIndex, int abilityIndex, UUID targetId) {
         ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null, targetId);
+    }
+
+    public void activateExileAbility(Player player, UUID cardId) {
+        ensurePriority(player);
+        gameService.activateExiledAbility(gameData, player, cardId, 0, null, null);
     }
 
     public void activateHandAbility(Player player, int handCardIndex, UUID targetId) {

@@ -36,6 +36,8 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileUpToOneCardFromGraveyardEffect exileEffect =
+                (ExileUpToOneCardFromGraveyardEffect) effect;
         UUID controllerId = entry.getControllerId();
 
         List<Card> graveyardCards = new ArrayList<>();
@@ -54,6 +56,9 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
 
         gameData.graveyardTargetOperation.resolutionTimeExileResume = true;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, graveyardCards, 1,
-                "Choose up to one target card from a graveyard to exile.");
+                exileEffect.mandatory() ? 1 : 0,
+                exileEffect.mandatory()
+                        ? "Choose one target card from a graveyard to exile."
+                        : "Choose up to one target card from a graveyard to exile.");
     }
 }

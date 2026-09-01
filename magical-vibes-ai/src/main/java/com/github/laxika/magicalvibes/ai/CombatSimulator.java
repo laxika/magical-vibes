@@ -977,7 +977,7 @@ public class CombatSimulator {
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
                 || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
                 || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
-                || hasLandwalkAgainstDefender(perm, bonus, defenderBattlefield);
+                || hasLandwalkAgainstDefender(gameData, perm, bonus, defenderBattlefield);
 
         // Temporarily stolen creatures (e.g. via Act of Treason) have no permanent value to the
         // controller — they will be returned at end of turn regardless. Treat their combat loss
@@ -1012,9 +1012,12 @@ public class CombatSimulator {
         );
     }
 
-    private boolean hasLandwalkAgainstDefender(Permanent attacker, GameQueryService.StaticBonus bonus,
+    private boolean hasLandwalkAgainstDefender(GameData gameData, Permanent attacker,
+                                                GameQueryService.StaticBonus bonus,
                                                 List<Permanent> defenderBattlefield) {
-        if (defenderBattlefield == null) return false;
+        if (defenderBattlefield == null
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData)
+                || CombatHelper.isLandwalkIgnoredForBlocking(gameData, attacker.getId())) return false;
         for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
             if (gameQueryService.hasKeyword(attacker, bonus, entry.getKey())
                     && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {

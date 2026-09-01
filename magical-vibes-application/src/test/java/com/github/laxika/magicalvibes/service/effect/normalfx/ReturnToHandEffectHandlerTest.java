@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -80,6 +81,7 @@ class ReturnToHandEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         bounceSupport = new BounceSupport(gameQueryService, predicateEvaluationService, gameLogService,
                 permanentRemovalService, stateTriggerService);
@@ -332,6 +334,45 @@ class ReturnToHandEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
+        }
+
+        @Test
+        @DisplayName("Returns the enchanted permanent and every Aura attached to it")
+        void returnsEnchantedPermanentAndAttachedAuras() {
+            Card auraCard = createCard("Mark of Eviction");
+            Permanent sourceAura = createAura("Mark of Eviction", null);
+            Permanent host = createCreature("Grizzly Bears");
+            sourceAura.setAttachedTo(host.getId());
+            Permanent ownAura = createAura("Armor of Faith", host.getId());
+            Permanent opponentAura = createAura("Essence Flare", host.getId());
+            gd.playerBattlefields.get(player1Id).add(sourceAura);
+            gd.playerBattlefields.get(player1Id).add(ownAura);
+            gd.playerBattlefields.get(player2Id).add(host);
+            gd.playerBattlefields.get(player2Id).add(opponentAura);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.enchantedAndAuras();
+            StackEntry entry = entryWithSource(auraCard, player1Id, List.of(effect), sourceAura.getId());
+
+            when(gameQueryService.findPermanentById(gd, sourceAura.getId())).thenReturn(sourceAura);
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(permanentRemovalService).removePermanentToHand(gd, sourceAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, ownAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, opponentAura);
+            verify(permanentRemovalService).removePermanentToHand(gd, host);
+            verify(permanentRemovalService).removeOrphanedAuras(gd);
+        }
+
+        private Permanent createAura(String name, UUID attachedTo) {
+            Card card = createCard(name);
+            card.setType(CardType.ENCHANTMENT);
+            card.setSubtypes(List.of(CardSubtype.AURA));
+            Permanent permanent = new Permanent(card);
+            permanent.setAttachedTo(attachedTo);
+            return permanent;
         }
     }
 

@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -117,6 +119,26 @@ class ETBTokenTargetServiceTest {
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Snapcaster Mage's enter-the-battlefield ability has no valid spell targets.")));
+    }
+
+    @Test
+    @DisplayName("processNextETBSpellTargetTrigger includes permanent targets for a mixed target effect")
+    void processNextETBSpellTargetTrigger_includesPermanentTargetsForMixedEffect() {
+        Permanent target = new Permanent(new Card());
+        gd.playerBattlefields.get(player1Id).add(target);
+
+        Card sourceCard = new Card();
+        sourceCard.setName("Venser, Shaper Savant");
+        var effect = new ReturnTargetSpellOrPermanentToHandEffect();
+        sourceCard.target(TargetFilters.permanent()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, effect);
+        gd.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                sourceCard, player1Id, List.of(effect), null, false, null));
+
+        service.processNextETBSpellTargetTrigger(gd);
+
+        verify(playerInputService).beginAnyTargetChoice(
+                gd, player1Id, List.of(target.getId()), List.of(),
+                "Venser, Shaper Savant's ability — Choose a target.");
     }
 
     @Test

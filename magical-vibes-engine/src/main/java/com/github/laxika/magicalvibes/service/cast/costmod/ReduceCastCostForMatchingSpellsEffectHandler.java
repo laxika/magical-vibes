@@ -40,7 +40,7 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         if (reduce.plotFromHandOnly() != context.plottingFromHand()) {
             return 0;
         }
-        if (reduce.faceDownOnly() && !context.castingFaceDown()) {
+        if (reduce.faceDownOnly() && !context.castFaceDown()) {
             return 0;
         }
         if (!reduce.sourceZones().isEmpty()
@@ -53,7 +53,7 @@ public class ReduceCastCostForMatchingSpellsEffectHandler implements CostModific
         if (!predicateEvaluationService.matchesCardPredicate(
                 context.spell(), reduce.predicate(),
                 source.sourcePermanent() == null ? null : source.sourcePermanent().getCard().getId(),
-                context.gameData(), context.castingPlayerId())) {
+                context.gameData(), context.castingPlayerId(), null, null, context.xValue())) {
             return 0;
         }
         // Evaluated against the source permanent so source-relative amounts (counters on this

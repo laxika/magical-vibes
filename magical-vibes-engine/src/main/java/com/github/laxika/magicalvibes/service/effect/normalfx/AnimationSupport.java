@@ -19,11 +19,15 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -84,6 +88,15 @@ public class AnimationSupport {
                 duration, 0));
     }
 
+    private void addDynamicAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry,
+                                                         Permanent target,
+                                                         AnimatePermanentsEffect effect) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()), target.getId(),
+                null, null, effect.duration(), 0));
+    }
+
     private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
                                                  CardColor color,
                                                  EffectDuration duration) {
@@ -135,10 +148,11 @@ public class AnimationSupport {
             return;
         }
         for (UUID targetId : targetIds) {
-            if (effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
-                animateOneUntilNextTurn(gameData, entry, effect, targetId);
-            } else {
-                animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
+            switch (effect.duration()) {
+                case UNTIL_YOUR_NEXT_TURN -> animateOneUntilNextTurn(gameData, entry, effect, targetId);
+                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED ->
+                        animateOneWhileSourceTapped(gameData, entry, effect, targetId);
+                default -> animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
         }
     }
@@ -212,7 +226,12 @@ public class AnimationSupport {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
+            if (effect.dynamicPowerToughness()) {
+                addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
+            } else {
+                addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
+                        EffectDuration.UNTIL_END_OF_TURN);
+            }
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
@@ -236,6 +255,61 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
+    }
+
+    private void animateOneWhileSourceTapped(GameData gameData, StackEntry entry,
+                                             AnimatePermanentsEffect effect, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null || entry.getSourcePermanentId() == null) {
+            return;
+        }
+
+        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        EffectDuration duration = effect.duration();
+
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, duration);
+        addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(), duration);
+
+        if (effect.cardTypeOverriding()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new SetCardTypesEffect(effect.grantedCardTypes(), GrantScope.TARGET),
+                    target.getId(), null, null, duration, 0));
+        } else {
+            addAnimationCardTypeFloatingEffect(gameData, entry, target, CardType.CREATURE, duration);
+            for (CardType cardType : effect.grantedCardTypes()) {
+                addAnimationCardTypeFloatingEffect(gameData, entry, target, cardType, duration);
+            }
+        }
+        for (CardSubtype subtype : effect.grantedSubtypes()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,
+                    duration, 0));
+        }
+        if (!effect.grantedKeywords().isEmpty()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
+                    target.getId(), null, null, duration, 0));
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                " becomes a " + power + "/" + toughness + " creature for as long as "
+                        + entry.getCard().getName() + " remains tapped."));
+        log.info("Game {} - {} becomes a {}/{} creature while {} remains tapped",
+                gameData.id, target.getCard().getName(), power, toughness, entry.getCard().getName());
+    }
+
+    private void addAnimationCardTypeFloatingEffect(GameData gameData, StackEntry entry,
+                                                    Permanent target, CardType cardType,
+                                                    EffectDuration duration) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
+                duration, 0));
     }
 
     private void applyAnimatedColors(Permanent permanent, AnimatePermanentsEffect effect) {
@@ -458,6 +532,21 @@ public class AnimationSupport {
             animatePermanently(gameData, target, effect, power, toughness,
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
         }
+    }
+
+    public void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        if (entry.getChosenPermanentId() == null) {
+            return;
+        }
+        Permanent chosen = gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());
+        if (chosen == null) {
+            return;
+        }
+        AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+        animatePermanently(gameData, chosen, effect, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }
 
     /**

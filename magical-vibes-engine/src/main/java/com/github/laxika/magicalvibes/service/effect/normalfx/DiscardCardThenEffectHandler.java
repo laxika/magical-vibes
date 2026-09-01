@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
@@ -25,9 +26,9 @@ import org.springframework.stereotype.Component;
 public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -78,12 +79,19 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                 preservedTargetId = entry.getTargetIds().getFirst();
             }
         }
-        playerInputService.beginDiscardChoice(gameData, discardPlayerId, validIndices,
-                entry.getCard().getName() + " — Choose " + e.cardDescription() + " to discard.",
-                1, DiscardFollowUp.thenEffect(entry.getCard(),
+        Permanent currentSource = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent sourceSnapshot = currentSource == null
+                ? entry.getSourcePermanentSnapshot() : new Permanent(currentSource);
+        DiscardFollowUp followUp = DiscardFollowUp.thenEffect(entry.getCard(),
                         e.useEntryTarget() && preservedTargetId == null ? null : e.thenEffect(),
                         e.condition(), e.useEntryTarget() ? preservedTargetId : null,
-                        e.alternateCardType(), e.alternateThenEffect()));
+                        e.alternateCardType(), e.alternateThenEffect())
+                .withSourceContext(entry.getSourcePermanentId(),
+                        sourceSnapshot, entry.getEventValue());
+        playerInputService.beginDiscardChoice(gameData, discardPlayerId, validIndices,
+                entry.getCard().getName() + " — Choose " + e.cardDescription() + " to discard.",
+                1, followUp);
 
         String logEntry = playerName + " is choosing " + e.cardDescription() + " to discard.";
         gameLogService.append(gameData, GameLog.text(logEntry));

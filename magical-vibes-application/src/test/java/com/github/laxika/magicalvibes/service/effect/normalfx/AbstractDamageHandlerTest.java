@@ -72,9 +72,16 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(eq(gd), any(), any(), any())).thenReturn(1);
         lenient().when(gameQueryService.getPermanentDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.getSourceDamageMultiplier(eq(gd), any(), any(Permanent.class))).thenReturn(1);
+        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         lenient().when(gameQueryService.hasProtectionFromDamageSource(
                 eq(gd), any(Permanent.class), any(Card.class), any())).thenReturn(false);
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gd), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(gameQueryService.applyDamageReplacementEffects(
+                        eq(gd), any(StackEntry.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
+                        eq(gd), anyInt(), any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(1));
         // Reflect Damage is a pass-through when no replacement shield is set up.
         lenient().when(damagePreventionService.applyReflectDamageToSourceControllerShield(
@@ -129,6 +136,12 @@ abstract class AbstractDamageHandlerTest {
                 .thenAnswer(inv -> inv.getArgument(2));
         lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                         eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
+                        eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         setUpHandler();
     }

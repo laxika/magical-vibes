@@ -10,7 +10,7 @@ public sealed interface CastingCost permits ManaCastingCost, LifeCastingCost, Di
         SacrificeXPermanentsCastingCost,
         TapUntappedPermanentsCost, ReturnPermanentsCost, ExileCardsFromHandCastingCost,
         ExileTopCardsFromGraveyardCastingCost, ExileCardFromGraveyardCastingCost,
-        ExileXCardsFromGraveyardCastingCost,
+        ExileXCardsFromGraveyardCastingCost, ExileNCardsFromGraveyardCastingCost,
         EachOpponentGainsLifeCastingCost,
         RevealCardsFromHandCastingCost, RemoveCountersFromControlledCreaturesCastingCost,
         RemoveXCountersFromControlledPermanentsCastingCost {

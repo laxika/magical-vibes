@@ -159,7 +159,9 @@ public class RaceEvaluator {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof ChooseOneEffect coe) {
                 for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                    maxDamage = Math.max(maxDamage, getSingleEffectFaceDamage(option.effect()));
+                    for (CardEffect modeEffect : option.effects()) {
+                        maxDamage = Math.max(maxDamage, getSingleEffectFaceDamage(modeEffect));
+                    }
                 }
                 continue;
             }

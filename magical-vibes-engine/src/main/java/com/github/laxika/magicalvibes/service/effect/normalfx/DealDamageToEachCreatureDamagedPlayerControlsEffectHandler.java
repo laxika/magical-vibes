@@ -31,14 +31,16 @@ public class DealDamageToEachCreatureDamagedPlayerControlsEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (DealDamageToEachCreatureDamagedPlayerControlsEffect) effect;
 
         UUID damagedPlayerId = entry.getTargetId();
         if (damagedPlayerId == null) return;
 
         int damageDealt = entry.getXValue();
-        if (damageDealt <= 0) return;
+        int damage = e.fixedDamage() != null ? e.fixedDamage() : damageDealt;
+        if (damage <= 0) return;
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, damageDealt, entry);
+        damage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThis
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "XLN", collectorNumber = "48")
+@CardRegistration(set = "LCI", collectorNumber = "48")
 public class ChartACourse extends Card {
 
     public ChartACourse() {

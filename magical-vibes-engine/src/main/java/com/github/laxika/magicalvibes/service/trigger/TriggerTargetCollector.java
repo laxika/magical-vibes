@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -24,7 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -44,12 +47,29 @@ import java.util.UUID;
  * across every slot that offers targets via the {@code pendingXxxTriggerTargets} queues.
  */
 @Service
-@RequiredArgsConstructor
 public class TriggerTargetCollector {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;
+    private final TargetValidationService targetValidationService;
+
+    @Autowired
+    public TriggerTargetCollector(GameQueryService gameQueryService,
+                                  PredicateEvaluationService predicateEvaluationService,
+                                  TargetLegalityService targetLegalityService,
+                                  TargetValidationService targetValidationService) {
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.targetLegalityService = targetLegalityService;
+        this.targetValidationService = targetValidationService;
+    }
+
+    public TriggerTargetCollector(GameQueryService gameQueryService,
+                                  PredicateEvaluationService predicateEvaluationService,
+                                  TargetLegalityService targetLegalityService) {
+        this(gameQueryService, predicateEvaluationService, targetLegalityService, null);
+    }
 
     /**
      * Result of a target-collection pass.
@@ -65,12 +85,14 @@ public class TriggerTargetCollector {
     public record Result(List<UUID> validTargets,
                          boolean canTargetPlayers,
                          boolean canTargetPermanents,
+                         boolean canTargetExiledCards,
                          boolean opponentOnly) {
     }
 
     /**
      * Options controlling trigger-slot–specific differences. Use the predefined constants:
-     * {@link #DEATH}, {@link #ATTACK}, {@link #END_STEP}, {@link #UPKEEP}, {@link #DAY_NIGHT}.
+     * {@link #DEATH}, {@link #DELAYED_DEATH}, {@link #ATTACK}, {@link #END_STEP},
+     * {@link #UPKEEP}, {@link #DAY_NIGHT}.
      *
      * @param creaturesOnly            when {@code true}, permanent candidates are restricted to
      *                                 creatures. Used by death triggers such as Black Cat.
@@ -98,6 +120,7 @@ public class TriggerTargetCollector {
                           boolean useEffectTargetPredicate) {
 
         public static final Options DEATH = new Options(true, true, false, true);
+        public static final Options DELAYED_DEATH = new Options(false, true, false, true);
         public static final Options ATTACK = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, true, true, true);
         public static final Options UPKEEP = new Options(false, true, true, true);
@@ -159,6 +182,16 @@ public class TriggerTargetCollector {
         boolean canTargetPermanents = effects.stream()
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean canTargetExiledCards = effects.stream()
+                .map(e -> unwrap(e, options))
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+
+        if (targetFilter instanceof PermanentPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
+            canTargetPlayers = false;
+        } else if (targetFilter instanceof PlayerPredicateTargetFilter) {
+            canTargetPermanents = false;
+        }
 
         // An effect narrows the player half on its own only when it says so through
         // CardEffect.targetPlayerRelation() (Scalding Tongs' "target opponent or planeswalker").
@@ -213,6 +246,9 @@ public class TriggerTargetCollector {
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
+            if (effectPredicate != null) {
+                creaturesOnly = false;
+            }
 
             // Effects that declare a cross-kind target — CR 115.4's anyTarget() (Flameblast Dragon
             // attack trigger, Form of the Dragon upkeep) or playerOrPlaneswalker() (Scalding Tongs)
@@ -281,7 +317,29 @@ public class TriggerTargetCollector {
             }
         }
 
-        return new Result(validTargets, canTargetPlayers, canTargetPermanents, opponentOnly);
+        if (canTargetExiledCards && targetValidationService != null) {
+            List<CardEffect> exiledEffects = effects.stream()
+                    .map(e -> unwrap(e, options))
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                    .toList();
+            for (var exiledEntry : gameData.exiledCards) {
+                if (exiledEntry.faceDown()) {
+                    continue;
+                }
+                UUID cardId = exiledEntry.card().getId();
+                boolean valid = exiledEffects.stream().anyMatch(effect ->
+                        targetValidationService.checkEffectTargets(
+                                List.of(effect),
+                                new TargetValidationContext(gameData, cardId, Zone.EXILE, sourceCard,
+                                        0, controllerId, sourcePermanentSnapshot)).isEmpty());
+                if (valid) {
+                    validTargets.add(cardId);
+                }
+            }
+        }
+
+        return new Result(validTargets, canTargetPlayers, canTargetPermanents,
+                canTargetExiledCards, opponentOnly);
     }
 
     /**

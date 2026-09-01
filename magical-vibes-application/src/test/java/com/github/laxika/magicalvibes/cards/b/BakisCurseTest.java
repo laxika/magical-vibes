@@ -1,47 +1,41 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Firebreathing;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyArmor;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.Carapace;
+import com.github.laxika.magicalvibes.cards.r.RysorianBadger;
+import com.github.laxika.magicalvibes.cards.t.Torture;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BakisCurse.class, Carapace.class, RysorianBadger.class, Torture.class})
 class BakisCurseTest extends BaseCardTest {
 
-    private Permanent attachAura(com.github.laxika.magicalvibes.model.Player owner,
-                                 com.github.laxika.magicalvibes.model.Card aura, Permanent creature) {
+    private void attachAura(Player owner, Card aura, Permanent creature) {
         Permanent auraPerm = new Permanent(aura);
         auraPerm.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(owner.getId()).add(auraPerm);
-        return auraPerm;
     }
 
     private void castCurse() {
-        harness.setHand(player1, List.of(new BakisCurse()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BakisCurse(), "{2}{U}{U}");
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Deals 2 damage per Aura attached to that creature")
     void dealsTwoDamagePerAura() {
-        Permanent oneAura = addCreatureReady(player1, new GrizzlyBears());
-        attachAura(player1, new HolyStrength(), oneAura);
+        Permanent oneAura = addCreatureReady(player1, new RysorianBadger());
+        attachAura(player1, new Carapace(), oneAura);
 
-        Permanent twoAuras = addCreatureReady(player2, new GrizzlyBears());
-        attachAura(player2, new HolyStrength(), twoAuras);
-        attachAura(player2, new HolyArmor(), twoAuras);
+        Permanent twoAuras = addCreatureReady(player2, new RysorianBadger());
+        attachAura(player2, new Carapace(), twoAuras);
+        attachAura(player2, new Carapace(), twoAuras);
 
         castCurse();
 
@@ -52,7 +46,7 @@ class BakisCurseTest extends BaseCardTest {
     @Test
     @DisplayName("Unenchanted creatures take no damage")
     void unenchantedCreatureTakesNoDamage() {
-        Permanent bare = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bare = addCreatureReady(player2, new RysorianBadger());
 
         castCurse();
 
@@ -64,13 +58,24 @@ class BakisCurseTest extends BaseCardTest {
     @Test
     @DisplayName("A creature dies when the Aura-scaled damage is lethal")
     void lethalDamageDestroysCreature() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        attachAura(player2, new Firebreathing(), bears);
-        attachAura(player2, new Firebreathing(), bears);
+        Permanent creature = addCreatureReady(player2, new RysorianBadger());
+        attachAura(player2, new Torture(), creature);
+        attachAura(player2, new Torture(), creature);
 
         castCurse();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(bears.getId()));
+                .noneMatch(p -> p.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Counts an Aura controlled by another player")
+    void countsAuraControlledByAnotherPlayer() {
+        Permanent creature = addCreatureReady(player2, new RysorianBadger());
+        attachAura(player1, new Carapace(), creature);
+
+        castCurse();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
     }
 }

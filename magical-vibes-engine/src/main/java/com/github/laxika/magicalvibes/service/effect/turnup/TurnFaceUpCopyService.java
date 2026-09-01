@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -18,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -45,6 +49,7 @@ public class TurnFaceUpCopyService {
     private final TurnProgressionService turnProgressionService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     public void turnFaceUpWithoutCost(GameData gameData, Permanent permanent) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -59,8 +64,10 @@ public class TurnFaceUpCopyService {
                 .map(TurnFaceUpReplacementEffect.class::cast)
                 .toList();
         for (TurnFaceUpReplacementEffect replacement : replacements) {
+            int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
+                    AmountContext.forEnteringPermanent(controllerId, permanent, 0));
             permanentCounterSupport.applyPlusOnePlusOneCounters(
-                    gameData, null, permanent, replacement.counterCount());
+                    gameData, null, permanent, counterCount);
         }
         if (prepareChoice(gameData, permanent, controllerId)) {
             return;
@@ -71,7 +78,7 @@ public class TurnFaceUpCopyService {
     public boolean prepareChoice(GameData gameData, Permanent source, UUID controllerId) {
         TurnFaceUpCopyEffect effect = findCopyEffect(source.getCard());
         if (effect == null) {
-            return false;
+            return preparePowerToughnessChoice(gameData, source, controllerId);
         }
 
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
@@ -84,7 +91,7 @@ public class TurnFaceUpCopyService {
             }
         });
         if (validTargets.isEmpty()) {
-            return false;
+            return preparePowerToughnessChoice(gameData, source, controllerId);
         }
 
         gameData.interaction.setPermanentChoiceContext(
@@ -112,6 +119,9 @@ public class TurnFaceUpCopyService {
             }
         }
 
+        if (preparePowerToughnessChoice(gameData, source, controllerId)) {
+            return;
+        }
         finishTurnFaceUp(gameData, controllerId, sourcePermanentId);
     }
 
@@ -128,12 +138,20 @@ public class TurnFaceUpCopyService {
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is turned face up."));
         triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(gameData, controllerId, source);
+        triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
+        triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
 
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
                 .filter(effect -> !(effect instanceof ReplacementEffect))
                 .filter(effect -> turnFaceUpTriggerConditionIsMet(gameData, source, controllerId, effect))
                 .toList();
         if (!effects.isEmpty()) {
+            if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        source.getCard(), controllerId, modal, source.getId()));
+                turnProgressionService.resolveAutoPass(gameData);
+                return;
+            }
             boolean targetsSpell = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
             boolean targetsPlayer = effects.stream()
@@ -183,6 +201,19 @@ public class TurnFaceUpCopyService {
                 .map(TurnFaceUpCopyEffect.class::cast)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private boolean preparePowerToughnessChoice(GameData gameData, Permanent source, UUID controllerId) {
+        PowerToughnessFormChoiceEffect effect = source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .filter(PowerToughnessFormChoiceEffect.class::isInstance)
+                .map(PowerToughnessFormChoiceEffect.class::cast)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return false;
+        }
+        playerInputService.beginPowerToughnessFormChoice(gameData, controllerId, source.getId(),
+                effect.forms(), true);
+        return true;
     }
 
     private boolean turnFaceUpTriggerConditionIsMet(GameData gameData, Permanent source,

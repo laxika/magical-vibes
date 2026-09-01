@@ -7,13 +7,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -26,8 +31,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import lombok.RequiredArgsConstructor;
@@ -141,11 +148,86 @@ public class PlayerInputService {
                                 boolean faceDown, int faceDownPower, int faceDownToughness,
                                 Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
                                 boolean returnToHandAtEndStep) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
+                false, null, null, null, null);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, CardPredicate enterTappedAndAttackingIf) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
+                false, null, null, enterTappedAndAttackingIf, null);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, CardEffect thenEffect, CardPredicate thenCondition) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
+                false, thenEffect, thenCondition, null, null);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, UUID blockingAttackerId) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, enterAttacking, drawAndRepeat, drawAndRepeatPredicate,
+                drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness,
+                faceDownCardTypes, returnExiledSourceCardId, returnToHandAtEndStep,
+                false, null, null, null, blockingAttackerId);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel, boolean putAnyNumber,
+                                boolean faceDown, int faceDownPower, int faceDownToughness,
+                                Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                                boolean returnToHandAtEndStep, boolean cloaked,
+                                CardEffect thenEffect, CardPredicate thenCondition,
+                                CardPredicate enterTappedAndAttackingIf,
+                                UUID blockingAttackerId) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
                 attachEquipmentCardId, enterAttacking, null, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
-                returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep));
+                returnExiledSourceCardId, null, null, 0, returnToHandAtEndStep,
+                cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId));
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking, boolean drawAndRepeat,
+                                CardPredicate drawAndRepeatPredicate, String drawAndRepeatLabel,
+                                boolean putAnyNumber, boolean faceDown, int faceDownPower,
+                                int faceDownToughness, Set<CardType> faceDownCardTypes,
+                                UUID returnExiledSourceCardId, boolean returnToHandAtEndStep,
+                                boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste,
+                sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, drawAndRepeat,
+                drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown,
+                faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId,
+                returnToHandAtEndStep, cloaked, thenEffect, thenCondition, null, null);
     }
 
     public void beginCardChoiceWithArtifactCounters(GameData gameData, UUID playerId, List<Integer> validIndices,
@@ -180,13 +262,29 @@ public class PlayerInputService {
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                         UUID targetId, UUID exileSourceIfDeclinedId) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
-                playerId, new ArrayList<>(validIndices), targetId, prompt, exileSourceIfDeclinedId));
+                playerId, new ArrayList<>(validIndices), targetId, prompt, exileSourceIfDeclinedId, null));
+    }
+
+    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                        UUID targetId, UUID exileSourceIfDeclinedId, UUID returnSourceToHandId) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
+                playerId, new ArrayList<>(validIndices), targetId, prompt,
+                exileSourceIfDeclinedId, returnSourceToHandId));
     }
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
                 playerId, new ArrayList<>(validIds), List.of(),
                 gameData.interaction.permanentChoiceContext(), prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
+    }
+
+    public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds,
+                                     PermanentChoiceContext context, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
+                playerId, new ArrayList<>(validIds), List.of(), context, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
@@ -234,10 +332,7 @@ public class PlayerInputService {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
         int remaining = context.total() - assigned;
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
-        int maxForTarget = remaining - (remainingTargets - 1);
-        List<String> options = IntStream.rangeClosed(1, maxForTarget)
-                .mapToObj(Integer::toString)
-                .toList();
+        List<String> options = counterAssignmentOptions(remaining, remainingTargets);
         String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
@@ -249,14 +344,19 @@ public class PlayerInputService {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();
         int remaining = context.total() - assigned;
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
-        int maxForTarget = remaining - (remainingTargets - 1);
-        List<String> options = java.util.stream.IntStream.rangeClosed(1, maxForTarget)
-                .mapToObj(Integer::toString)
-                .toList();
+        List<String> options = counterAssignmentOptions(remaining, remainingTargets);
         String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options,
                 "Choose how many " + counterLabel + " counters to put on the target creature."));
+    }
+
+    private static List<String> counterAssignmentOptions(int remaining, int remainingTargets) {
+        int minForTarget = remainingTargets == 1 ? remaining : 1;
+        int maxForTarget = remaining - (remainingTargets - 1);
+        return IntStream.rangeClosed(minForTarget, maxForTarget)
+                .mapToObj(Integer::toString)
+                .toList();
     }
 
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
@@ -267,6 +367,22 @@ public class PlayerInputService {
                                           int maxCount, int minCount, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
                 playerId, new ArrayList<>(cards), maxCount, prompt, minCount));
+    }
+
+    public void beginMultiGraveyardChoiceWithMinimumManaValue(GameData gameData, UUID playerId,
+                                                               List<Card> cards, int maxCount,
+                                                               int minimumTotalManaValue, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt, 0, false,
+                minimumTotalManaValue, null));
+    }
+
+    public void beginMultiGraveyardChoiceWithMaximumManaValue(GameData gameData, UUID playerId,
+                                                               List<Card> cards, int maxCount,
+                                                               int minCount, int maximumTotalManaValue,
+                                                               String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount, maximumTotalManaValue));
     }
 
     public void beginAsEntersCounterTypeChoice(GameData gameData,
@@ -560,6 +676,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose protection (you and your permanents)", gameData.id, playerName);
     }
 
+    public void beginControllerProtectionColorChoice(GameData gameData, UUID controllerId) {
+        ChoiceContext.ControllerProtectionColorChoice ctx =
+                new ChoiceContext.ControllerProtectionColorChoice(controllerId);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx,
+                List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"), "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
+    }
+
     public void beginRelicBindModeChoice(GameData gameData, UUID controllerId, Card sourceCard) {
         ChoiceContext.RelicBindModeChoice ctx = new ChoiceContext.RelicBindModeChoice(sourceCard, controllerId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -615,7 +742,9 @@ public class PlayerInputService {
             optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
         }
         String prompt = effect.variableModeCount()
-                ? sourceCard.getName() + " - Choose one or more modes, or Done."
+                ? effect.choicesRequired() == 0
+                ? sourceCard.getName() + " - Choose up to " + effect.choicesMax() + " modes, or Done."
+                : sourceCard.getName() + " - Choose one or more modes, or Done."
                 : effect.choicesRequired() > 1
                 ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
                 : sourceCard.getName() + " - Choose one.";
@@ -646,8 +775,14 @@ public class PlayerInputService {
     public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
             List<Integer> modeIndices) {
+        beginLibraryCastModeChoice(gameData, controllerId, cardToCast, effect, spellType, modeIndices, null);
+    }
+
+    public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
+            List<Integer> modeIndices, Integer discoverValue) {
         ChoiceContext.LibraryCastModeChoice ctx = new ChoiceContext.LibraryCastModeChoice(
-                cardToCast, controllerId, effect, spellType, modeIndices);
+                cardToCast, controllerId, effect, spellType, modeIndices, discoverValue);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();
@@ -656,6 +791,31 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a cast mode for {}", gameData.id, playerName,
+                cardToCast.getName());
+    }
+
+    public void beginExileFreeCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
+            List<Integer> chosenModeIndices, List<Integer> offeredModeIndices,
+            int maximumChoices, boolean copy) {
+        ChoiceContext.ExileFreeCastModeChoice ctx = new ChoiceContext.ExileFreeCastModeChoice(
+                cardToCast, controllerId, effect, spellType, chosenModeIndices,
+                offeredModeIndices, maximumChoices, copy);
+        List<String> optionLabels = new java.util.ArrayList<>(offeredModeIndices.stream()
+                .map(effect.options()::get)
+                .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
+                .toList());
+        if (chosenModeIndices.size() >= effect.choicesRequired()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
+        String prompt = maximumChoices > 1
+                ? cardToCast.getName() + " - Choose modes, or Done."
+                : cardToCast.getName() + " - Choose one.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, optionLabels, prompt));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a free-cast mode for {}", gameData.id, playerName,
                 cardToCast.getName());
     }
 
@@ -673,17 +833,43 @@ public class PlayerInputService {
             return;
         }
         beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, List.of());
+                modesResetEachTurn, false, List.of());
     }
 
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
             boolean modesResetEachTurn,
             List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, false, chosenModes, null);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn, boolean consumeModes,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, consumeModes, chosenModes, null);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
+            UUID triggeringCardId) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, false, chosenModes, triggeringCardId);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn, boolean consumeModes,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
+            UUID triggeringCardId) {
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
                         sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                        chosenModes);
+                        consumeModes, chosenModes, triggeringCardId);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> !chosenModes.contains(option))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
@@ -691,8 +877,14 @@ public class PlayerInputService {
         if (effect.optional() && chosenModes.isEmpty()) {
             optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.NO_MODE_LABEL);
         }
+        if (effect.variableModeCount() && chosenModes.size() >= effect.choicesRequired()) {
+            optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
+        String prompt = effect.variableModeCount()
+                ? sourceCard.getName() + " - Choose one or more modes, or Done."
+                : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, optionLabels, sourceCard.getName() + " - Choose one."));
+                controllerId, null, null, ctx, optionLabels, prompt));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a triggered mode for {}", gameData.id, playerName,
@@ -784,7 +976,8 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
                                    List<CardSubtype> allowedSubtypes, boolean landPlay) {
-        beginSubtypeChoice(gameData, playerId, permanentId, allowedSubtypes, landPlay, false);
+        beginSubtypeChoice(gameData, playerId, permanentId, allowedSubtypes, landPlay,
+                "Choose a creature type.");
     }
 
     public void beginSubtypeChoice(GameData gameData, UUID controllerId, UUID permanentId,
@@ -794,8 +987,60 @@ public class PlayerInputService {
             beginSubtypeChoiceByOpponent(gameData, controllerId, permanentId, allowedSubtypes, landPlay);
             return;
         }
+        beginSubtypeChoice(gameData, controllerId, permanentId, allowedSubtypes, landPlay,
+                "Choose a creature type.");
+    }
 
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                   SubtypeChoiceOnEnterEffect choiceEffect) {
+        if (choiceEffect instanceof ChooseSubtypeForSourceEffect) {
+            beginSubtypeChoiceForSource(gameData, playerId, permanentId, choiceEffect.allowedSubtypes());
+            return;
+        }
+        if (choiceEffect instanceof ChooseSubtypeOnEnterEffect chooseSubtype && chooseSubtype.opponentChooses()) {
+            beginSubtypeChoiceByOpponent(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), false);
+            return;
+        }
+        beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), false,
+                choiceEffect.choicePrompt());
+    }
+
+    public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                   SubtypeChoiceOnEnterEffect choiceEffect, boolean landPlay) {
+        if (choiceEffect instanceof ChooseSubtypeForSourceEffect) {
+            beginSubtypeChoiceForSource(gameData, playerId, permanentId, choiceEffect.allowedSubtypes());
+            return;
+        }
+        if (choiceEffect instanceof ChooseSubtypeOnEnterEffect chooseSubtype && chooseSubtype.opponentChooses()) {
+            beginSubtypeChoiceByOpponent(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), landPlay);
+            return;
+        }
+        beginSubtypeChoice(gameData, playerId, permanentId, choiceEffect.allowedSubtypes(), landPlay,
+                choiceEffect.choicePrompt());
+    }
+
+    private void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                    List<CardSubtype> allowedSubtypes, boolean landPlay, String prompt) {
         ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId, landPlay);
+
+        List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
+                ? Arrays.stream(CardSubtype.values())
+                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                .toList()
+                : List.copyOf(allowedSubtypes);
+        List<String> creatureTypes = choices.stream()
+                .map(CardSubtype::name)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, creatureTypes, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {}: {}", gameData.id, playerName, prompt);
+    }
+
+    public void beginSubtypeChoiceForSource(GameData gameData, UUID playerId, UUID permanentId,
+                                            List<CardSubtype> allowedSubtypes) {
+        ChoiceContext.SourceSubtypeChoice choiceContext = new ChoiceContext.SourceSubtypeChoice(permanentId);
 
         List<CardSubtype> choices = allowedSubtypes == null || allowedSubtypes.isEmpty()
                 ? Arrays.stream(CardSubtype.values())
@@ -808,10 +1053,10 @@ public class PlayerInputService {
                 .map(CardSubtype::name)
                 .toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
+                playerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
 
-        String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to secretly choose a creature type", gameData.id, playerName);
     }
 
     private void beginSubtypeChoiceByOpponent(GameData gameData, UUID controllerId, UUID permanentId,
@@ -1147,6 +1392,19 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a Primal Clay shape", gameData.id, playerName);
     }
 
+    public void beginPowerToughnessFormChoice(GameData gameData, UUID playerId, UUID permanentId,
+                                              List<PowerToughnessForm> forms, boolean turnFaceUp) {
+        ChoiceContext.PowerToughnessFormChoice choiceContext =
+                new ChoiceContext.PowerToughnessFormChoice(permanentId, forms, turnFaceUp);
+        List<String> options = forms.stream().map(PowerToughnessForm::label).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a base power and toughness."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a base power and toughness", gameData.id, playerName);
+    }
+
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {
         ChoiceContext.PermanentTypeChoice choiceContext = new ChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
 
@@ -1342,9 +1600,14 @@ public class PlayerInputService {
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
             CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.DESERT,
+            CardSubtype.CAVE,
             CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.AURA,
             CardSubtype.EQUIPMENT, CardSubtype.LOCUS
     );
+
+    static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
+    }
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
         beginCardNameChoice(gameData, playerId, card, excludedTypes, false);
@@ -1518,7 +1781,22 @@ public class PlayerInputService {
     public void beginChooseNameRevealHandDiscardChoice(GameData gameData, UUID choosingPlayerId,
                                                        UUID targetPlayerId, List<CardType> excludedTypes) {
         ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext =
-                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId);
+                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId, false);
+        beginChooseNameRevealHandDiscardChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes,
+                choiceContext);
+    }
+
+    public void beginChooseNameRevealHandDiscardOneOrDrawChoice(GameData gameData, UUID choosingPlayerId,
+                                                                UUID targetPlayerId, List<CardType> excludedTypes) {
+        ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext =
+                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId, true);
+        beginChooseNameRevealHandDiscardChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes,
+                choiceContext);
+    }
+
+    private void beginChooseNameRevealHandDiscardChoice(
+            GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes,
+            ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext) {
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
         String excludedLabel = excludedTypes.stream()
                 .map(type -> type.name().toLowerCase())
@@ -1552,6 +1830,28 @@ public class PlayerInputService {
                 controllerId, null, null, new ChoiceContext.AssemblyHallCreatureCardChoice(controllerId),
                 creatureNames, "Choose a creature card in your hand to reveal."));
         log.info("Game {} - Awaiting {} to choose a creature card in hand for Assembly Hall",
+                gameData.id, playerName);
+    }
+
+    /** Begins Infernal Tutor's choice of a card name from the controller's hand. */
+    public void beginInfernalTutorCardChoice(GameData gameData, UUID controllerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
+        List<String> cardNames = hand.stream()
+                .map(Card::getName)
+                .distinct()
+                .sorted()
+                .toList();
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        if (cardNames.isEmpty()) {
+            log.info("Game {} - {} has no card in hand for Infernal Tutor", gameData.id, playerName);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, new ChoiceContext.InfernalTutorCardChoice(controllerId),
+                cardNames, "Choose a card in your hand to reveal."));
+        log.info("Game {} - Awaiting {} to choose a card in hand for Infernal Tutor",
                 gameData.id, playerName);
     }
 
@@ -1796,6 +2096,11 @@ public class PlayerInputService {
      * The candidate list is built by the effect handler, so the interaction arrives whole.
      */
     public void beginAttachAurasChoice(GameData gameData, PendingInteraction.AttachAurasChoice interaction) {
+        interactionHandlerRegistry.begin(gameData, interaction);
+    }
+
+    public void beginReturnAurasFromGraveyardChoice(
+            GameData gameData, PendingInteraction.ReturnAurasFromGraveyardChoice interaction) {
         interactionHandlerRegistry.begin(gameData, interaction);
     }
 

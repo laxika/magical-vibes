@@ -398,6 +398,21 @@ class MayCastHandlerServiceTest {
         }
 
         @Test
+        @DisplayName("Non-targeted creature uses CREATURE_SPELL type without spell effects")
+        void nonTargetedCreatureUsesCreatureType() {
+            Card card = createCreature("Grizzly Bears");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+
+            svc.handleCastFromLibraryChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Non-targeted spell clears priorityPassedBy")
         void nonTargetedSpellClearsPriorityPassedBy() {
             Card card = createSorcery("Divination");
@@ -602,7 +617,8 @@ class MayCastHandlerServiceTest {
         }
 
         private void allowGraveyardCasting() {
-            when(gameQueryService.canCastSpellFromZone(eq(gd), any(Card.class), eq(Zone.GRAVEYARD)))
+            when(gameQueryService.canCastSpellFromZone(
+                    eq(gd), any(Card.class), eq(Zone.GRAVEYARD), eq(PLAYER1_ID)))
                     .thenReturn(true);
         }
 
@@ -625,7 +641,8 @@ class MayCastHandlerServiceTest {
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
-            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD)).thenReturn(false);
+            when(gameQueryService.canCastSpellFromZone(
+                    gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(false);
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
 
@@ -900,6 +917,31 @@ class MayCastHandlerServiceTest {
             assertThat(gd.playerManaPools.get(PLAYER1_ID).getTotal()).isEqualTo(2);
             verify(interactionHandlerRegistry, never()).begin(any(), any());
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+        }
+    }
+
+    @Nested
+    @DisplayName("Casting a card from a specific graveyard")
+    class SpecificGraveyardCast {
+
+        @Test
+        @DisplayName("Casts an opponent's non-targeted spell for free with exile replacement")
+        void castsOpponentSpellWithExileReplacement() {
+            Card card = createSorcery("Borrowed Spell");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
+            PendingMayAbility ability = abilityFor(card);
+            when(gameQueryService.canCastSpellFromZone(gd, card, Zone.GRAVEYARD, PLAYER1_ID)).thenReturn(true);
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
+
+            svc.handleCastFromSpecificGraveyardChoice(gd, player1, true, ability, PLAYER2_ID);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry stackEntry = gd.stack.getFirst();
+            assertThat(stackEntry.isExileInsteadOfGraveyard()).isTrue();
+            assertThat(stackEntry.getOwnerIdOverride()).isEqualTo(PLAYER2_ID);
+            assertThat(stackEntry.getSourceZone()).isEqualTo(Zone.GRAVEYARD);
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, card.getId());
         }
     }
 }

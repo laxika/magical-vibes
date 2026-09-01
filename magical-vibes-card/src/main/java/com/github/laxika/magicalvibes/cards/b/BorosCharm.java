@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -24,8 +27,9 @@ public class BorosCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Boros Charm deals 4 damage to target player or planeswalker",
                         new DealDamageToTargetPlayerOrPlaneswalkerEffect(4),
-                        new PermanentPredicateTargetFilter(
+                        new AnyTargetPredicateTargetFilter(
                                 new PermanentIsPlaneswalkerPredicate(),
+                                new PlayerRelationPredicate(PlayerRelation.ANY),
                                 "Target must be a player or planeswalker."
                         )
                 ),

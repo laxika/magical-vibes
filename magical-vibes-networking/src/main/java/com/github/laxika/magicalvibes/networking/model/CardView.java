@@ -70,6 +70,8 @@ public record CardView(
         boolean alternateCostDiscardsHandCard,
         boolean alternateCostRevealsHandCard,
         boolean graveyardCastRequiresDiscard,
+        int graveyardCastExileCount,
+        String graveyardCastExileLabel,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         List<ActivatedAbilityView> handActivatedAbilities,
         List<ActivatedAbilityView> exileActivatedAbilities,
@@ -84,10 +86,15 @@ public record CardView(
         int modalChoicesRequired,
         int modalChoicesMax,
         boolean modalOptional,
+        boolean modalModesMayRepeat,
         List<ModalOptionView> modalOptions,
         int exileCastCounterCost,
         boolean additionalChooseCreatureType,
         List<String> additionalCreatureTypeChoices,
+        int additionalCostLifePayment,
+        String additionalCostManaCost,
+        boolean alternateCostCollectEvidence,
+        int alternateCostCollectEvidenceAmount,
         CardView prepareSpell
 ) {
 }

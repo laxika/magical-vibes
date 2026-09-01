@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "44")
 @CardRegistration(set = "5ED", collectorNumber = "63")
 @CardRegistration(set = "CHR", collectorNumber = "12")
+@CardRegistration(set = "LEG", collectorNumber = "36")
 public class ShieldWall extends Card {
 
     public ShieldWall() {

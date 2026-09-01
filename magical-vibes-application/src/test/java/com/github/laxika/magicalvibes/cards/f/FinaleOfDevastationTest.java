@@ -44,7 +44,8 @@ class FinaleOfDevastationTest extends BaseCardTest {
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == graveyardBear);
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).doesNotContain(graveyardBear);
-        assertThat(harness.getGameData().playerDecks.get(player1.getId())).containsExactly(libraryBear, libraryAirElemental);
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(libraryBear, libraryAirElemental);
     }
 
     @Test

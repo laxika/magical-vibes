@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -45,12 +45,45 @@ public interface CostEffect extends CardEffect {
     }
 
     /**
+     * The number of untapped permanents chosen through {@link #consumedPermanentFilter()} that
+     * paying this cost taps, or {@code null} when the cost does not tap chosen permanents.
+     */
+    default DynamicAmount tappedPermanentCount() {
+        return null;
+    }
+
+    /**
+     * True when permanents tapped through {@link #tappedPermanentCount()} must be creatures in
+     * addition to matching {@link #consumedPermanentFilter()}.
+     */
+    default boolean tappedPermanentMustBeCreature() {
+        return false;
+    }
+
+    /**
+     * True when the ability's source cannot be chosen through
+     * {@link #consumedPermanentFilter()} to pay this cost.
+     */
+    default boolean excludesSourceFromConsumedPermanents() {
+        return false;
+    }
+
+    /**
      * True when paying this cost sacrifices the source permanent itself (e.g. "Sacrifice this
      * creature: ...") rather than a payer-chosen permanent. Distinct from
      * {@link #consumedPermanentFilter()}, which selects among other battlefield permanents.
      */
     default boolean consumesSourcePermanent() {
         return false;
+    }
+
+    /**
+     * True when paying this cost sacrifices a battlefield permanent chosen by the payer.
+     * Creature-specific sacrifice costs inherit this from {@link #sacrificesChosenCreature()};
+     * broader sacrifice costs override it directly.
+     */
+    default boolean sacrificesChosenPermanent() {
+        return sacrificesChosenCreature();
     }
 
     /**
@@ -121,11 +154,4 @@ public interface CostEffect extends CardEffect {
         return null;
     }
 
-    /**
-     * An additional predicate the graveyard cards consumed by this cost must match, or
-     * {@code null} when the type facet is sufficient.
-     */
-    default CardPredicate consumedGraveyardCardPredicate() {
-        return null;
-    }
 }
