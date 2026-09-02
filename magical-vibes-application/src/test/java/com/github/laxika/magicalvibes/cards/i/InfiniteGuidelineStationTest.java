@@ -80,6 +80,7 @@ class InfiniteGuidelineStationTest extends BaseCardTest {
         harness.addToBattlefield(player1, multicoloredPermanent());
         Card firstDraw = new Card();
         Card secondDraw = new Card();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
 
         declareAttackers(List.of(battlefieldIndex(station)));

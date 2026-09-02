@@ -49,7 +49,8 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, target, 3, player2Id);
+        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                gd, target, 3, player2Id, target.getCard(), target.getId());
     }
 
     @Test
@@ -75,7 +76,8 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
 
         // Lethal marked damage — the SBA check after resolution performs the destruction.
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, target, 2, player2Id);
+        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                gd, target, 2, player2Id, target.getCard(), target.getId());
     }
 
     @Test
@@ -100,6 +102,7 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect(2));
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, target, 2, player2Id);
+        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                gd, target, 2, player2Id, target.getCard(), target.getId());
     }
 }

@@ -41,7 +41,7 @@ class LostInSpaceTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard(), targetOwnerTopCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(surveilledCard);
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Lost in Space");
     }
 

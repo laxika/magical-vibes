@@ -87,6 +87,8 @@ class DiscardCardThenEffectHandlerTest extends AbstractPlayerInteractionHandlerT
         gd.playerHands.get(player2Id).add(discard);
         UUID targetId = UUID.randomUUID();
         when(gameQueryService.findPermanentController(gd, targetId)).thenReturn(player2Id);
+        when(predicateEvaluationService.matchesCardPredicate(eq(discard), isNull(), any()))
+                .thenReturn(true);
 
         CreateTokenEffect copy = new CreateTokenEffect("Copy", 1, 1,
                 CardColor.BLUE, List.of(CardSubtype.ILLUSION), Set.of(), Set.of());

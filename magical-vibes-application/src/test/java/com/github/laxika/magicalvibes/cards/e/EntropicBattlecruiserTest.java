@@ -101,6 +101,7 @@ class EntropicBattlecruiserTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
@@ -115,5 +116,6 @@ class EntropicBattlecruiserTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
     }
 }

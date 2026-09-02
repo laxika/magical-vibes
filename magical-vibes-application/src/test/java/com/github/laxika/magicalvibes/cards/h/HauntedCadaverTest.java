@@ -22,6 +22,7 @@ class HauntedCadaverTest extends BaseCardTest {
         addAttacker();
 
         resolveCombat();
+        chooseDamagedPlayer();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -47,6 +48,7 @@ class HauntedCadaverTest extends BaseCardTest {
         addAttacker();
 
         resolveCombat();
+        chooseDamagedPlayer();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -74,5 +76,10 @@ class HauntedCadaverTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new HauntedCadaver());
         attacker.setAttacking(true);
         return attacker;
+    }
+
+    private void chooseDamagedPlayer() {
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
     }
 }

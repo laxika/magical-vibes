@@ -1690,6 +1690,7 @@ public class TriggeredAbilityQueueService {
                     break;
                 } else if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
+                    minTargets = returnEffect.upTo() ? 0 : 1;
                     scope = returnEffect.source();
                     break;
                 } else if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
@@ -1911,8 +1912,9 @@ public class TriggeredAbilityQueueService {
             gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
             int declaredMinTargets = declaredMinimumTargetCount(pending.sourceCard(), pending.effects());
-            int describedMinTargets = declaredMinTargets >= 0
-                    ? declaredMinTargets : describedTarget == null ? 0 : describedTarget.minTargets();
+            int describedMinTargets = returnEffect != null && returnEffect.upTo()
+                    ? 0 : declaredMinTargets >= 0
+                            ? declaredMinTargets : describedTarget == null ? 0 : describedTarget.minTargets();
             int minTargets = Math.max(pending.minCount(), describedMinTargets);
             if (matchingCards.isEmpty() && minTargets == 0) {
                 pushSpellGraveyardTriggeredAbilityWithoutTargets(gameData, pending);

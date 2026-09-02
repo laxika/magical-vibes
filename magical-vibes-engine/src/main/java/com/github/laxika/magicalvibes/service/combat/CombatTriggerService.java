@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -193,8 +194,7 @@ public class CombatTriggerService {
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                if (perm.getCard().getSpellTargets().size() > 1
-                                        || etbTokenTargetService.needsSlotBySlotTargetSelection(perm.getCard())) {
+                                if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                     perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
@@ -243,6 +243,21 @@ public class CombatTriggerService {
                 }
             }
         });
+    }
+
+    private boolean needsSlotBySlotTargetSelection(Card card, List<CardEffect> effects) {
+        Set<Integer> boundGroups = effects.stream()
+                .map(card::getEffectTargetIndex)
+                .filter(index -> index >= 0)
+                .collect(java.util.stream.Collectors.toSet());
+        if (boundGroups.isEmpty()) {
+            return card.getSpellTargets().size() > 1
+                    || etbTokenTargetService.needsSlotBySlotTargetSelection(card);
+        }
+        return boundGroups.size() > 1 || card.getSpellTargets().stream()
+                .filter(group -> boundGroups.contains(group.getIndex()))
+                .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
+                        || group.getDynamicMinTargets() != null);
     }
 
     private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {

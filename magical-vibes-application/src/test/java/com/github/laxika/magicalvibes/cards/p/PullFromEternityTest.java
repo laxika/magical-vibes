@@ -40,6 +40,6 @@ class PullFromEternityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, exiledCard.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("face up");
+                .hasMessageContaining("not found in exile");
     }
 }

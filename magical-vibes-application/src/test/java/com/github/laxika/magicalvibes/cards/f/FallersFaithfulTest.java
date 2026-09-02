@@ -19,6 +19,7 @@ class FallersFaithfulTest extends BaseCardTest {
     @DisplayName("ETB destroys an undamaged creature and its controller draws two cards")
     void destroysUndamagedCreatureAndItsControllerDrawsTwo() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         castFallersFaithful(target);
@@ -33,6 +34,7 @@ class FallersFaithfulTest extends BaseCardTest {
     void destroysDamagedCreatureWithoutDrawing() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         castFallersFaithful(target);
@@ -64,6 +66,8 @@ class FallersFaithfulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Faller's Faithful");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -71,8 +75,9 @@ class FallersFaithfulTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FallersFaithful()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 }

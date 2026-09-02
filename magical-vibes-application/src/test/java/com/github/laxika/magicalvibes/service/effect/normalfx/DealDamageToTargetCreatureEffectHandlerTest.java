@@ -72,7 +72,8 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 3, player1Id, burnCard, null);
             }
 
             @Test

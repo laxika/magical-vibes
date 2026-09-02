@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
@@ -41,6 +42,8 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +64,21 @@ public class DiscardTriggerCollectorService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
+    private final ConditionEvaluationService conditionEvaluationService;
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleConditionalDiscard(TriggerMatchContext match,
+            ConditionalEffect trigger, TriggerContext ctx) {
+        if (trigger.interveningIf()
+                && !conditionEvaluationService.isMet(match.gameData(), trigger.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+        UUID triggeringPlayerId = ctx instanceof TriggerContext.Discard discard
+                ? discard.discardingPlayerId() : null;
+        return enqueueDiscardTrigger(match, trigger, "conditional effect", triggeringPlayerId);
+    }
 
     @CollectsTrigger(value = OpponentCausedDiscardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
@@ -623,16 +641,25 @@ public class DiscardTriggerCollectorService {
     }
 
     private boolean enqueueDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what) {
+        return enqueueDiscardTrigger(match, trigger, what, null);
+    }
+
+    private boolean enqueueDiscardTrigger(TriggerMatchContext match, CardEffect trigger, String what,
+            UUID triggeringPlayerId) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()));
+                triggeringPlayerId,
+                match.permanent().getId());
+        if (triggeringPlayerId != null) {
+            entry.setNonTargeting(true);
+        }
+        gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on discard ({})", gameData.id, sourceCard.getName(), what);
         return true;

@@ -36,6 +36,8 @@ public class SokkaTenaciousTactician extends Card {
                         GrantScope.OWN_CREATURES,
                         ally));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+                new SpellCastTriggerEffect(noncreatureSpell, List.of(new BoostSelfEffect(1, 1))));
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(noncreatureSpell, List.of(
                         new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.ALLY), Set.of(), Set.of())

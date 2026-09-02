@@ -20,7 +20,8 @@ class MistformWallTest extends BaseCardTest {
     void hasDefenderAsWall() {
         Permanent wall = addReadyWall();
 
-        assertThat(gqs.effectiveCreatureSubtypes(gd, wall)).containsExactly(CardSubtype.ILLUSION, CardSubtype.WALL);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, wall))
+                .containsExactlyInAnyOrder(CardSubtype.ILLUSION, CardSubtype.WALL);
         assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
     }
 
@@ -60,7 +61,8 @@ class MistformWallTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.effectiveCreatureSubtypes(gd, wall)).containsExactly(CardSubtype.ILLUSION, CardSubtype.WALL);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, wall))
+                .containsExactlyInAnyOrder(CardSubtype.ILLUSION, CardSubtype.WALL);
         assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
     }
 

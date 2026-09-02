@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -41,7 +42,8 @@ public class EntropicBattlecruiser extends Card {
         ));
 
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new ConditionalEffect(
-                new SourceCounterThreshold(1, CounterType.CHARGE), new LoseLifeEffect(3)));
+                new SourceCounterThreshold(1, CounterType.CHARGE),
+                new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER)));
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),

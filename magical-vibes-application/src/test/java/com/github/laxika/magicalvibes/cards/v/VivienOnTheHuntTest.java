@@ -50,7 +50,7 @@ class VivienOnTheHuntTest extends BaseCardTest {
         assertThat(vivien.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Benalish Knight");
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tooSmall, tooLarge);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(tooSmall, tooLarge);
     }
 
     @Test

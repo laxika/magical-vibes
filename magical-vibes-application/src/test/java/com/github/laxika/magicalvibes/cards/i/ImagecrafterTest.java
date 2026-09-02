@@ -63,6 +63,7 @@ class ImagecrafterTest extends BaseCardTest {
 
     private Permanent addImagecrafter() {
         Permanent imagecrafter = harness.addToBattlefieldAndReturn(player1, new Imagecrafter());
+        imagecrafter.setSummoningSick(false);
         harness.forceActivePlayer(player1);
         return imagecrafter;
     }

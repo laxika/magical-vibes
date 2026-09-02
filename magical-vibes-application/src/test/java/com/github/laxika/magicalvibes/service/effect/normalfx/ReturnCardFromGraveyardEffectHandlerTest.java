@@ -329,7 +329,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 entry.setEventCardIds(List.of(destroyedCreature.getId()));
 
                 when(predicateEvaluationService.matchesCardPredicate(
-                        eq(destroyedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull())).thenReturn(true);
+                        eq(destroyedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
+                        isNull(), isNull(), anyInt())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -337,7 +338,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                         i instanceof PendingInteraction.GraveyardChoice gc
                                 && gc.cardPool().equals(List.of(destroyedCreature))));
                 verify(predicateEvaluationService, never()).matchesCardPredicate(
-                        eq(unrelatedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull());
+                        eq(unrelatedCreature), eq(filter), eq(entry.getCard().getId()), eq(gd), isNull(),
+                        isNull(), isNull(), anyInt());
             }
 
             @Test

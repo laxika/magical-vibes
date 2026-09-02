@@ -27,6 +27,7 @@ class KavLandseekerTest extends BaseCardTest {
     @DisplayName("The Lander is sacrificed at the end step on its controller's next turn")
     void sacrificesLanderAtEndStepOnControllersNextTurn() {
         castKavLandseeker();
+        harness.setHand(player2, List.of());
         Permanent lander = findPermanents(player1, "Lander").getFirst();
 
         harness.passUntil(player1, TurnStep.END_STEP);
@@ -35,6 +36,9 @@ class KavLandseekerTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.END_STEP);
         assertThat(findPermanents(player1, "Lander")).contains(lander);
 
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(findPermanents(player1, "Lander")).contains(lander);
 
