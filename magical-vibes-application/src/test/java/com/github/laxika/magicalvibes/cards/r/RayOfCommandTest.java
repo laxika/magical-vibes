@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.cards.z.ZealousConscripts;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,18 +16,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RayOfCommand.class, KjeldoranWarrior.class, IcyManipulator.class})
 class RayOfCommandTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving untaps the target, gains control of it, and grants haste")
     void resolvesUntapGainControlAndHaste() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
         target.tap();
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
@@ -42,12 +42,11 @@ class RayOfCommandTest extends BaseCardTest {
         // Run on the creature owner's (player2's) turn so the cleanup control-revert is observable
         // before player2's next untap step would clear the tap.
         harness.forceActivePlayer(player2);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
 
@@ -62,35 +61,36 @@ class RayOfCommandTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Taps the creature immediately if another effect takes control of it")
-    void tapsImmediatelyWhenAnotherEffectTakesControl() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+    @DisplayName("Taps the creature when the control-loss trigger resolves")
+    void tapsWhenControlLossTriggerResolves() {
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.setHand(player2, List.of(new ZealousConscripts()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castCreature(player2, 0, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
         assertThat(target.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Cannot target a creature you control")
     void cannotTargetOwnCreature() {
-        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new KjeldoranWarrior()); // valid target so spell is playable
+        Permanent ownCreature = addCreatureReady(player1, new KjeldoranWarrior());
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -102,14 +102,31 @@ class RayOfCommandTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears()); // valid target so spell is playable
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        addCreatureReady(player2, new KjeldoranWarrior()); // valid target so spell is playable
+        Permanent artifact = new Permanent(new IcyManipulator());
+        gd.playerBattlefields.get(player2.getId()).add(artifact);
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature an opponent controls");
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target leaves the battlefield before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
     }
 }

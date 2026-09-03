@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(GameOfChaos.class)
 class GameOfChaosTest extends BaseCardTest {
 
     @Test
@@ -24,8 +27,7 @@ class GameOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GameOfChaos()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve first flip -> flip-again prompt
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int c1 = gd.playerLifeTotals.get(player1.getId());
         int o1 = gd.playerLifeTotals.get(player2.getId());
@@ -46,8 +48,7 @@ class GameOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GameOfChaos()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int c1 = gd.playerLifeTotals.get(player1.getId());
         int o1 = gd.playerLifeTotals.get(player2.getId());
@@ -67,8 +68,7 @@ class GameOfChaosTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GameOfChaos()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         int c1 = gd.playerLifeTotals.get(player1.getId());
         int o1 = gd.playerLifeTotals.get(player2.getId());
@@ -83,7 +83,28 @@ class GameOfChaosTest extends BaseCardTest {
         assertThat(o2 - o1).isEqualTo(-(c2 - c1));
 
         // The second flip's winner is prompted to flip again.
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        PendingInteraction.MayAbilityChoice nextChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(nextChoice).isNotNull();
+        UUID expectedDecider = (c2 > c1) ? player1.getId() : player2.getId();
+        assertThat(nextChoice.playerId()).isEqualTo(expectedDecider);
+    }
+
+    @Test
+    @DisplayName("Life loss does not end the spell before the flip-again choice")
+    void lifeLossWaitsUntilGameOfChaosEnds() {
+        gd.playerLifeTotals.put(player1.getId(), 1);
+        gd.playerLifeTotals.put(player2.getId(), 1);
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        Player decider = deciderPlayer();
+        harness.handleMayAbilityChosen(decider, false);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test

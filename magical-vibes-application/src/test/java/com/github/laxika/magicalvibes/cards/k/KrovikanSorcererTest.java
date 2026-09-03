@@ -5,12 +5,11 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KrovikanSorcerer.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class,
+        ScatheZombies.class})
 class KrovikanSorcererTest extends BaseCardTest {
 
     // ===== Ability 0: discard a nonblack card, draw a card =====
@@ -25,7 +26,7 @@ class KrovikanSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Nonblack ability only allows discarding nonblack cards as cost")
     void nonblackAbilityRestrictsToNonblackCards() {
-        addReadySorcerer(player1);
+        addCreatureReady(player1, new KrovikanSorcerer());
         harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -37,11 +38,27 @@ class KrovikanSorcererTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nonblack ability allows colorless cards")
+    void nonblackAbilityAllowsColorlessCards() {
+        Permanent sorcerer = addCreatureReady(player1, new KrovikanSorcerer());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Island()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(sorcerer.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Island");
+    }
+
+    @Test
     @DisplayName("Discarding a nonblack card pays the cost and draws one card")
     void nonblackAbilityDrawsOneCard() {
-        Permanent sorcerer = addReadySorcerer(player1);
+        Permanent sorcerer = addCreatureReady(player1, new KrovikanSorcerer());
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest(), new Island()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -63,7 +80,7 @@ class KrovikanSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Black ability only allows discarding black cards as cost")
     void blackAbilityRestrictsToBlackCards() {
-        addReadySorcerer(player1);
+        addCreatureReady(player1, new KrovikanSorcerer());
         harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -77,9 +94,9 @@ class KrovikanSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Discarding a black card draws two cards then discards one")
     void blackAbilityDrawsTwoThenDiscardsOne() {
-        addReadySorcerer(player1);
+        addCreatureReady(player1, new KrovikanSorcerer());
         harness.setHand(player1, List.of(new ScatheZombies()));
-        setDeck(player1, List.of(new Forest(), new Island(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Mountain()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleCardChosen(player1, 0); // pay cost — discard Scathe Zombies
@@ -100,9 +117,9 @@ class KrovikanSorcererTest extends BaseCardTest {
     @Test
     @DisplayName("Black ability only allows discarding one of the two cards it drew")
     void blackAbilityRestrictsDiscardToDrawnCards() {
-        addReadySorcerer(player1);
+        addCreatureReady(player1, new KrovikanSorcerer());
         harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
-        setDeck(player1, List.of(new Forest(), new Island()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleCardChosen(player1, 1);
@@ -113,17 +130,4 @@ class KrovikanSorcererTest extends BaseCardTest {
                 .containsExactly(1, 2);
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadySorcerer(Player player) {
-        Permanent perm = new Permanent(new KrovikanSorcerer());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }

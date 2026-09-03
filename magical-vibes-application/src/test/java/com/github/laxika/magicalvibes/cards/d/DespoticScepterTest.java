@@ -1,29 +1,30 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DespoticScepter.class, DrudgeSkeletons.class, Forest.class})
 class DespoticScepterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a permanent its controller owns")
     void destroysOwnPermanent() {
         harness.addToBattlefield(player1, new DespoticScepter());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .doesNotContain(bears);
+                .doesNotContain(forest);
     }
 
     @Test
@@ -59,14 +60,14 @@ class DespoticScepterTest extends BaseCardTest {
     @DisplayName("Ability taps the Scepter and cannot be activated again while tapped")
     void abilityRequiresTapping() {
         Permanent scepter = harness.addToBattlefieldAndReturn(player1, new DespoticScepter());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        harness.activateAbility(player1, 0, null, bears.getId());
-        harness.passBothPriorities();
-
+        harness.activateAbility(player1, 0, null, forest.getId());
         assertThat(scepter.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Permanent is already tapped");
+
+        harness.passBothPriorities();
     }
 }

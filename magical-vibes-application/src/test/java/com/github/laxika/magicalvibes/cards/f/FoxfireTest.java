@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Foxfire.class, BalduvianBears.class, ZuranSpellcaster.class})
 class FoxfireTest extends BaseCardTest {
 
     @Test
@@ -55,33 +57,35 @@ class FoxfireTest extends BaseCardTest {
         // A 3/3 blocker would normally kill the 2/2 attacker; combat damage to it is prevented.
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(attacker.getId()));
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Balduvian Bears");
     }
 
     @Test
-    @DisplayName("Noncombat damage to the target creature is not prevented")
-    void doesNotPreventNoncombatDamage() {
-        Permanent attacker = addAttacker(player1, player2, 2, 2);
+    @DisplayName("Prevents combat damage only for the targeted creature")
+    void preventsCombatDamageOnlyForTarget() {
+        harness.setLife(player2, 20);
+        Permanent targetAttacker = addAttacker(player1, player2, 2, 2);
+        addAttacker(player1, player2, 2, 2);
 
-        castFoxfire(attacker);
+        castFoxfire(targetAttacker);
+        resolveCombat();
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
-        assertThat(gd.creaturesWithAllDamagePrevented).doesNotContain(attacker.getId());
+        harness.assertLife(player2, 18);
     }
 
     @Test
     @DisplayName("Noncombat damage to the target creature still applies")
     void noncombatDamageStillAppliesToTargetCreature() {
         Permanent attacker = addAttacker(player1, player2, 3, 3);
+        Permanent spellcaster = addCreatureReady(player2, new ZuranSpellcaster());
 
         castFoxfire(attacker);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, attacker.getId());
+        int spellcasterIndex = gd.playerBattlefields.get(player2.getId()).indexOf(spellcaster);
+        harness.activateAbility(player2, spellcasterIndex, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +111,7 @@ class FoxfireTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttacker() {
-        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bystander = addCreatureReady(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new Foxfire()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -116,7 +120,16 @@ class FoxfireTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can target an attacking creature controlled by an opponent")
+    void canTargetOpponentsAttacker() {
+        Permanent attacker = addAttacker(player2, player1, 2, 2);
+        attacker.tap();
+
+        castFoxfire(attacker);
+
+        assertThat(attacker.isTapped()).isFalse();
+    }
 
     private void castFoxfire(Permanent target) {
         harness.setHand(player1, List.of(new Foxfire()));
@@ -127,26 +140,22 @@ class FoxfireTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
-        perm.setSummoningSick(false);
+        Card card = new BalduvianBears().createRuntimeCopy();
+        card.setPower(power);
+        card.setToughness(toughness);
+        Permanent perm = addCreatureReady(owner, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
     private Permanent addBlocker(Player owner, int power, int toughness, int blockedAttackerIndex) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
-        perm.setSummoningSick(false);
+        Card card = new BalduvianBears().createRuntimeCopy();
+        card.setPower(power);
+        card.setToughness(toughness);
+        Permanent perm = addCreatureReady(owner, card);
         perm.setBlocking(true);
         perm.addBlockingTarget(blockedAttackerIndex);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 }

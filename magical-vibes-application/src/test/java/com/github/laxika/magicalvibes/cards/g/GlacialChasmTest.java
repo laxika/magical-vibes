@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlacialChasm.class, Forest.class, LightningBolt.class, GrizzlyBears.class})
 class GlacialChasmTest extends BaseCardTest {
 
     @Test
@@ -28,7 +30,7 @@ class GlacialChasmTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player1, 0); // plays the land via playCard
+        harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
@@ -47,11 +49,9 @@ class GlacialChasmTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
         harness.passBothPriorities();
-        Permanent chasm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> "Glacial Chasm".equals(p.getCard().getName()))
-                .findFirst().orElseThrow();
+        Permanent chasm = findPermanent(player1, "Glacial Chasm");
         harness.handleMultiplePermanentsChosen(player1, List.of(chasm.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(chasm);
@@ -83,16 +83,8 @@ class GlacialChasmTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new GlacialChasm());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player2, List.of(0));
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(player2, List.of(0));
 
         harness.assertLife(player1, 20);
     }
@@ -121,17 +113,10 @@ class GlacialChasmTest extends BaseCardTest {
     void controlledCreaturesCannotAttack() {
         harness.addToBattlefield(player1, new GlacialChasm());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(bearsIndex)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(bearsIndex)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -141,19 +126,11 @@ class GlacialChasmTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new GlacialChasm());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
         // The declaration is legal (player2's Chasm restricts only player2's creatures); the
         // damage it would deal is then prevented because player2 controls the Chasm.
-        gs.declareAttackers(gd, player1, List.of(bearsIndex));
+        declareAttackers(player1, List.of(0));
 
         harness.assertLife(player2, 20);
     }
@@ -192,6 +169,33 @@ class GlacialChasmTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(chasm);
         harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void upkeepTriggersOnlyDuringControllerUpkeep() {
+        Permanent chasm = harness.addToBattlefieldAndReturn(player1, new GlacialChasm());
+
+        advanceToUpkeep(player2);
+
+        assertThat(chasm.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(chasm);
+    }
+
+    @Test
+    @DisplayName("Cannot pay cumulative upkeep when life total is too low")
+    void cannotPayUpkeepWhenLifeIsInsufficient() {
+        Permanent chasm = harness.addToBattlefieldAndReturn(player1, new GlacialChasm());
+        chasm.setCounterCount(CounterType.AGE, 1);
+        harness.setLife(player1, 3);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(chasm);
+        harness.assertInGraveyard(player1, "Glacial Chasm");
+        harness.assertLife(player1, 3);
     }
 
     @Test

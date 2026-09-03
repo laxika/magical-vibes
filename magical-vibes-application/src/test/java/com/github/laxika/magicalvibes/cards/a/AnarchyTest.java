@@ -5,15 +5,15 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Anarchy.class, GrizzlyBears.class, Ornithopter.class, Pacifism.class, Plains.class,
+        SerraAngel.class})
 class AnarchyTest extends BaseCardTest {
 
     @Test
@@ -45,13 +45,26 @@ class AnarchyTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys white non-creature permanents such as Auras")
     void destroysWhiteEnchantments() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new Pacifism());
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(creature.getId());
         castAnarchy();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(AvacynAngelOfHope.class)
+    @DisplayName("Does not destroy an indestructible white permanent")
+    void sparesIndestructibleWhitePermanent() {
+        harness.addToBattlefield(player2, new AvacynAngelOfHope());
+        harness.addToBattlefield(player1, new SerraAngel());
+        castAnarchy();
+
+        harness.assertOnBattlefield(player2, "Avacyn, Angel of Hope");
+        harness.assertNotOnBattlefield(player1, "Serra Angel");
     }
 
     @Test
@@ -65,9 +78,7 @@ class AnarchyTest extends BaseCardTest {
     }
 
     private void castAnarchy() {
-        harness.setHand(player1, List.of(new Anarchy()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Anarchy(), "{2}{R}{R}");
         harness.passBothPriorities();
     }
 }

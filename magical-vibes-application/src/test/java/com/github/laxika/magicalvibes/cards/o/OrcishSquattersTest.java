@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,29 +15,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OrcishSquatters.class, Forest.class, BalduvianBears.class})
 class OrcishSquattersTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent atk = new Permanent(new OrcishSquatters());
-        atk.setSummoningSick(false);
-        atk.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atk);
-        return atk;
+        Permanent attacker = addCreatureReady(player1, new OrcishSquatters());
+        attacker.setAttacking(true);
+        return attacker;
     }
 
     private Permanent addDefenderLand() {
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(forest);
-        return forest;
+        return harness.addToBattlefieldAndReturn(player2, new Forest());
     }
 
-    private void advanceToMayChoice() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    private void advanceToMayChoice(Permanent target) {
+        prepareDeclareBlockers();
         // Defender declares no blocks, so Orcish Squatters is unblocked and its trigger fires.
         gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 
@@ -44,18 +46,20 @@ class OrcishSquattersTest extends BaseCardTest {
     @DisplayName("Accepting and choosing a land gains control of it and prevents combat damage")
     void acceptGainsControlAndPreventsDamage() {
         Permanent forest = addDefenderLand();
+        Permanent otherForest = addDefenderLand();
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
+        advanceToMayChoice(forest);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        resolveAllTriggers();
 
         // Player 1 now controls the land.
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherForest);
+        harness.assertLife(player2, 20);
 
         // The attacker assigns no combat damage this turn.
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -67,10 +71,9 @@ class OrcishSquattersTest extends BaseCardTest {
         Permanent forest = addDefenderLand();
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
+        advanceToMayChoice(forest);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
 
@@ -87,10 +90,9 @@ class OrcishSquattersTest extends BaseCardTest {
         Permanent forest = addDefenderLand();
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
+        advanceToMayChoice(forest);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        resolveAllTriggers();
 
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
@@ -105,61 +107,65 @@ class OrcishSquattersTest extends BaseCardTest {
         Permanent forest = addDefenderLand();
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
+        advanceToMayChoice(forest);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        harness.assertLife(player2, 18);
     }
 
     @Test
-    @DisplayName("Accepting but choosing no land leaves control unchanged and deals combat damage")
-    void acceptChooseNothing() {
+    @DisplayName("The land target is chosen before the may decision")
+    void targetIsChosenBeforeMayDecision() {
         Permanent forest = addDefenderLand();
-        Permanent attacker = addAttacker();
+        addCreatureReady(player2, new BalduvianBears());
+        addAttacker();
 
-        advanceToMayChoice();
-        harness.handleMayAbilityChosen(player1, true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(forest.getId());
+
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
     }
 
     @Test
-    @DisplayName("Accepting with no land to take has no effect")
-    void noLandsNoEffect() {
+    @DisplayName("Without a legal land target, the ability is not put on the stack")
+    void noLandTargetMeansNoTrigger() {
         // Defender controls only a creature, no lands.
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        Permanent attacker = addAttacker();
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        addAttacker();
 
-        advanceToMayChoice();
-        harness.handleMayAbilityChosen(player1, true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(gd.stack).isEmpty();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
     }
 
     @Test
     @DisplayName("A blocked attacker does not trigger the ability")
     void blockedNoTrigger() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new BalduvianBears());
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

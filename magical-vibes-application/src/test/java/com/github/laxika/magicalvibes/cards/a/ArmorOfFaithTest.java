@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArmorOfFaith.class, GrizzlyBears.class, FountainOfYouth.class})
 class ArmorOfFaithTest extends BaseCardTest {
 
     // ===== Static +1/+1 boost =====
@@ -23,9 +26,7 @@ class ArmorOfFaithTest extends BaseCardTest {
     void enchantedCreatureGetsBoost() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new ArmorOfFaith());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        addArmorAttachedTo(player1, bearsPerm);
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
@@ -38,9 +39,7 @@ class ArmorOfFaithTest extends BaseCardTest {
     void activatedAbilityBoostsToughness() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new ArmorOfFaith());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        addArmorAttachedTo(player1, bearsPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -59,9 +58,7 @@ class ArmorOfFaithTest extends BaseCardTest {
     void abilityStacksMultipleActivations() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new ArmorOfFaith());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        addArmorAttachedTo(player1, bearsPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -78,9 +75,7 @@ class ArmorOfFaithTest extends BaseCardTest {
     void abilityBoostWearsOffAtEndOfTurn() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new ArmorOfFaith());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        addArmorAttachedTo(player1, bearsPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 1, null, null);
@@ -104,9 +99,7 @@ class ArmorOfFaithTest extends BaseCardTest {
     void staticBoostStopsWhenRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new ArmorOfFaith());
-        auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
+        Permanent auraPerm = addArmorAttachedTo(player1, bearsPerm);
 
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
 
@@ -133,15 +126,33 @@ class ArmorOfFaithTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new ArmorOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Activated ability can boost a creature controlled by another player")
+    void activatedAbilityBoostsCreatureControlledByAnotherPlayer() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        addArmorAttachedTo(player1, bearsPerm);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+    }
+
+    private Permanent addArmorAttachedTo(Player controller, Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new ArmorOfFaith());
+        aura.setAttachedTo(creature.getId());
+        return aura;
     }
 }

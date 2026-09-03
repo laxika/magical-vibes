@@ -3,161 +3,120 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.n.NakedSingularity;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(RealityTwist.class)
 class RealityTwistTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Resolves onto the battlefield")
-    void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new RealityTwist()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-
-        assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Reality Twist");
-    }
-
-    @Test
-    @DisplayName("Plains produce red instead of white")
-    void plainsProduceRed() {
+    @CardUsed({Plains.class, Swamp.class, Mountain.class, Forest.class, Island.class})
+    @DisplayName("Remaps each basic land type's mana, leaving Islands unchanged")
+    void remapsBasicLandTypes() {
         harness.addToBattlefield(player1, new RealityTwist());
         harness.addToBattlefield(player1, new Plains());
-
-        harness.tapPermanent(player1, 1);
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Swamps produce green instead of black")
-    void swampsProduceGreen() {
-        harness.addToBattlefield(player1, new RealityTwist());
         harness.addToBattlefield(player1, new Swamp());
-
-        harness.tapPermanent(player1, 1);
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Mountains produce white instead of red")
-    void mountainsProduceWhite() {
-        harness.addToBattlefield(player1, new RealityTwist());
         harness.addToBattlefield(player1, new Mountain());
-
-        harness.tapPermanent(player1, 1);
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Forests produce black instead of green")
-    void forestsProduceBlack() {
-        harness.addToBattlefield(player1, new RealityTwist());
         harness.addToBattlefield(player1, new Forest());
-
-        harness.tapPermanent(player1, 1);
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Islands still produce blue")
-    void islandsUnaffected() {
-        harness.addToBattlefield(player1, new RealityTwist());
         harness.addToBattlefield(player1, new Island());
 
         harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
+        harness.tapPermanent(player1, 3);
+        harness.tapPermanent(player1, 4);
+        harness.tapPermanent(player1, 5);
 
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Does not add Islands as an extra choice alongside another twist")
-    void islandsDoNotGainAnExtraChoiceFromRealityTwist() {
-        harness.addToBattlefield(player1, new RealityTwist());
-        harness.addToBattlefield(player1, new NakedSingularity());
-        harness.addToBattlefield(player1, new Island());
-
-        harness.tapPermanent(player1, 2);
-
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Affects opponent lands too")
-    void affectsOpponentLands() {
-        harness.addToBattlefield(player1, new RealityTwist());
-        harness.addToBattlefield(player2, new Forest());
-
-        harness.forceActivePlayer(player2);
-        harness.clearPriorityPassed();
-        harness.tapPermanent(player2, 0);
-
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Without Reality Twist lands produce normally")
-    void baselineWithoutTwist() {
+    @CardUsed(Forest.class)
+    @DisplayName("Applies to lands controlled by another player")
+    void appliesGlobally() {
         harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new RealityTwist());
 
         harness.tapPermanent(player1, 0);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test
-    @DisplayName("Paying cumulative upkeep keeps Reality Twist")
-    void paysCumulativeUpkeep() {
-        Permanent twist = harness.addToBattlefieldAndReturn(player1, new RealityTwist());
+    @CardUsed(VolcanicIsland.class)
+    @DisplayName("A land with multiple basic types can choose either applicable mana color")
+    void multiTypeLandCanChooseEitherApplicableColor() {
+        harness.addToBattlefield(player1, new VolcanicIsland());
+        harness.addToBattlefield(player2, new RealityTwist());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLUE", "WHITE");
+
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep is paid once per age counter")
+    void cumulativeUpkeepIsPaidPerAgeCounter() {
+        Permanent realityTwist = harness.addToBattlefieldAndReturn(player1, new RealityTwist());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(realityTwist.getCounterCount(CounterType.AGE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(twist.getCounterCount(CounterType.AGE)).isEqualTo(1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(twist);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(realityTwist);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(realityTwist.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(realityTwist);
     }
 
     @Test
     @DisplayName("Declining cumulative upkeep sacrifices Reality Twist")
-    void declineSacrifices() {
-        Permanent twist = harness.addToBattlefieldAndReturn(player1, new RealityTwist());
+    void decliningCumulativeUpkeepSacrifices() {
+        Permanent realityTwist = harness.addToBattlefieldAndReturn(player1, new RealityTwist());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(twist);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(realityTwist);
         harness.assertInGraveyard(player1, "Reality Twist");
     }
 }

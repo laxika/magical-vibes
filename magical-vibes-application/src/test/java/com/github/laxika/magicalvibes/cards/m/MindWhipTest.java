@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MindWhip.class, BalduvianBears.class, Forest.class})
 class MindWhipTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can enchant a creature with Mind Whip")
     void canEnchantCreature() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
 
         harness.setHand(player1, List.of(new MindWhip()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -29,7 +30,7 @@ class MindWhipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Mind Whip")
+                .anyMatch(p -> p.getCard() instanceof MindWhip
                         && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
     }
@@ -37,8 +38,8 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a non-creature permanent")
     void cannotEnchantNonCreature() {
-        Permanent land = addLand(player2);
-        addCreatureReady(player2, new GrizzlyBears()); // legal target so the Aura is playable
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        addCreatureReady(player2, new BalduvianBears()); // legal target so the Aura is playable
 
         harness.setHand(player1, List.of(new MindWhip()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -51,7 +52,7 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted controller pays {3} — no damage, creature stays untapped")
     void paysToAvoidPenalty() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -70,7 +71,7 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Declining payment deals 2 damage and taps the enchanted creature")
     void declineDamagesAndTaps() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -86,7 +87,7 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting without enough mana applies the penalty")
     void cannotPayAppliesPenalty() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -101,7 +102,7 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger during the Aura controller's upkeep")
     void doesNotFireDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
         attachMindWhip(creature);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -116,10 +117,9 @@ class MindWhipTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger still taps the last enchanted creature if Mind Whip leaves before resolution")
     void triggerUsesLastEnchantedCreatureAfterAuraLeaves() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent aura = new Permanent(new MindWhip());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MindWhip());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
@@ -133,14 +133,7 @@ class MindWhipTest extends BaseCardTest {
     }
 
     private void attachMindWhip(Permanent creature) {
-        Permanent aura = new Permanent(new MindWhip());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MindWhip());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-    }
-
-    private Permanent addLand(Player player) {
-        Permanent land = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(land);
-        return land;
     }
 }

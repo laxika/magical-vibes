@@ -5,13 +5,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TimeBomb.class, GrizzlyBears.class})
 class TimeBombTest extends BaseCardTest {
 
     // ===== Upkeep trigger =====
@@ -21,13 +22,20 @@ class TimeBombTest extends BaseCardTest {
     void upkeepTriggerAddsTimeCounter() {
         Permanent bomb = addReadyBomb(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // upkeep trigger goes on stack
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(bomb.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does not fire during an opponent's upkeep")
+    void upkeepTriggerOnlyFiresDuringControllerUpkeep() {
+        Permanent bomb = addReadyBomb(player1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(bomb.getCounterCount(CounterType.TIME)).isZero();
     }
 
     // ===== Activated ability: mass damage =====
@@ -102,13 +110,19 @@ class TimeBombTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Activated ability requires one generic mana")
+    void activatedAbilityRequiresGenericMana() {
+        addReadyBomb(player1);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.activateAbility(player1, 0, null, null)
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
     // ===== Helper methods =====
 
     private Permanent addReadyBomb(Player player) {
-        TimeBomb card = new TimeBomb();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new TimeBomb());
     }
 }

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Deflection.class, Boomerang.class, CounselOfTheSoratami.class, GrizzlyBears.class, LavaAxe.class})
 class DeflectionTest extends BaseCardTest {
 
     @Test
@@ -37,6 +41,55 @@ class DeflectionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, counsel.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("single target");
+    }
+
+    @Test
+    @CardUsed(ArcTrail.class)
+    @DisplayName("Casting Deflection cannot target a spell with multiple targets")
+    void castingRejectsMultiTargetSpell() {
+        GrizzlyBears bears1 = new GrizzlyBears();
+        GrizzlyBears bears2 = new GrizzlyBears();
+        harness.addToBattlefield(player1, bears1);
+        harness.addToBattlefield(player2, bears2);
+        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        ArcTrail arcTrail = new ArcTrail();
+        harness.setHand(player1, List.of(arcTrail));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, List.of(bears1PermId, bears2PermId));
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, arcTrail.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("single target");
+    }
+
+    @Test
+    @CardUsed(IcyManipulator.class)
+    @DisplayName("Casting Deflection cannot target a single-target activated ability")
+    void castingRejectsActivatedAbility() {
+        IcyManipulator icyManipulator = new IcyManipulator();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, icyManipulator);
+        harness.addToBattlefield(player1, bears);
+        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, bearsPermId);
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, icyManipulator.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell");
     }
 
     @Test

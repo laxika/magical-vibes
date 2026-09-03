@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DiabolicVision.class, BalduvianBears.class, FyndhornElves.class, Plains.class,
+        Island.class, Mountain.class})
 class DiabolicVisionTest extends BaseCardTest {
 
     private void castVision() {
@@ -30,12 +33,13 @@ class DiabolicVisionTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen card goes to hand and the rest go back on top in the chosen order")
     void chosenCardToHandRestOnTop() {
-        Card c0 = new GrizzlyBears();
-        Card c1 = new Shock();
+        Card c0 = new BalduvianBears();
+        Card c1 = new FyndhornElves();
         Card c2 = new Plains();
-        Card c3 = new LlanowarElves();
-        Card c4 = new HillGiant();
-        harness.setLibrary(player1, List.of(c0, c1, c2, c3, c4));
+        Card c3 = new Island();
+        Card c4 = new Mountain();
+        Card belowTopFive = new BalduvianBears();
+        harness.setLibrary(player1, List.of(c0, c1, c2, c3, c4, belowTopFive));
 
         castVision();
 
@@ -45,7 +49,7 @@ class DiabolicVisionTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(c0, c1, c2, c3, c4);
 
         // Put Plains (index 2) into hand.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(2));
+        harness.handleCardChosen(player1, 2);
         assertThat(gd.playerHands.get(player1.getId())).contains(c2);
 
         // The remaining four are reordered back on top.
@@ -57,20 +61,20 @@ class DiabolicVisionTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 1, 0, 2)));
 
-        assertThat(gd.playerDecks.get(player1.getId())).startsWith(c4, c1, c0, c3);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(c4, c1, c0, c3, belowTopFive);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("With fewer than five cards, the leftovers still go back on top")
     void worksWithSmallLibrary() {
-        Card c0 = new GrizzlyBears();
-        Card c1 = new Shock();
+        Card c0 = new BalduvianBears();
+        Card c1 = new FyndhornElves();
         harness.setLibrary(player1, List.of(c0, c1));
 
         castVision();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(c0);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(c1);
@@ -80,12 +84,24 @@ class DiabolicVisionTest extends BaseCardTest {
     @Test
     @DisplayName("A one-card library simply puts that card into hand")
     void singleCardLibraryGoesToHand() {
-        Card only = new Shock();
+        Card only = new Island();
         harness.setLibrary(player1, List.of(only));
 
         castVision();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(only);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With an empty library, Diabolic Vision does nothing")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+
+        castVision();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

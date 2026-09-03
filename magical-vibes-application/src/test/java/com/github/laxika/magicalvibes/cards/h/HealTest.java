@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,27 +19,27 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Heal.class, BalduvianBears.class, ZuranSpellcaster.class})
 class HealTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Heal adds a 1-damage prevention shield to the target creature")
     void addsPreventionShieldToCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Balduvian Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Balduvian Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Resolving Heal targeting a player adds a 1-damage prevention shield")
     void addsPreventionShieldToPlayer() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -52,8 +54,8 @@ class HealTest extends BaseCardTest {
     @DisplayName("Heal prevents only the next 1 damage to a targeted player")
     void preventsOnlyNextDamageToPlayer() {
         harness.setLife(player2, 20);
-        addReadySpellcaster();
-        addReadySpellcaster();
+        addCreatureReady(player1, new ZuranSpellcaster());
+        addCreatureReady(player1, new ZuranSpellcaster());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -72,13 +74,13 @@ class HealTest extends BaseCardTest {
     @Test
     @DisplayName("Heal prevents only the next 1 damage to a targeted creature")
     void preventsOnlyNextDamageToCreature() {
-        addReadySpellcaster();
-        addReadySpellcaster();
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new ZuranSpellcaster());
+        addCreatureReady(player1, new ZuranSpellcaster());
+        harness.addToBattlefield(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -87,7 +89,7 @@ class HealTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Balduvian Bears");
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
         assertThat(bears.getDamagePreventionShield()).isZero();
     }
@@ -95,12 +97,12 @@ class HealTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Heal schedules a draw at the next upkeep, not immediately")
     void schedulesDrawAtNextUpkeep() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         GameData gd = harness.getGameData();
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Balduvian Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -115,12 +117,12 @@ class HealTest extends BaseCardTest {
     @Test
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalduvianBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         GameData gd = harness.getGameData();
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Balduvian Bears");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -137,10 +139,20 @@ class HealTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
-    private Permanent addReadySpellcaster() {
-        Permanent spellcaster = new Permanent(new ZuranSpellcaster());
-        spellcaster.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(spellcaster);
-        return spellcaster;
+    @Test
+    @DisplayName("The prevention shield expires at the end of the turn")
+    void preventionShieldExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of(new Heal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
     }
 }

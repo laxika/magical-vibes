@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(Portent.class)
 class PortentTest extends BaseCardTest {
 
     // ===== Look at / reorder target's library =====
@@ -30,8 +32,7 @@ class PortentTest extends BaseCardTest {
         Card top1 = targetDeck.get(1);
         Card top2 = targetDeck.get(2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         PendingInteraction.LibraryReorder reorder =
@@ -39,6 +40,27 @@ class PortentTest extends BaseCardTest {
         assertThat(reorder.cards()).containsExactly(top0, top1, top2);
         assertThat(reorder.deckOwnerId()).isEqualTo(player2.getId());
         assertThat(reorder.playerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Reordering uses all available cards when the target's library has fewer than three")
+    void reorderingUsesAllAvailableCardsInShortLibrary() {
+        Card first = new Portent();
+        Card second = new Portent();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new Portent()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactly(first, second);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first);
     }
 
     @Test
@@ -50,8 +72,7 @@ class PortentTest extends BaseCardTest {
         List<Card> targetDeck = gd.playerDecks.get(player2.getId());
         Card originallyThird = targetDeck.get(2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Controller decides: put the original third card on top.
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
@@ -69,8 +90,7 @@ class PortentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Portent()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
 
@@ -88,8 +108,7 @@ class PortentTest extends BaseCardTest {
 
         int targetDeckSize = gd.playerDecks.get(player2.getId()).size();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, true);
@@ -107,8 +126,7 @@ class PortentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Portent()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
@@ -125,8 +143,7 @@ class PortentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Portent()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
         harness.handleMayAbilityChosen(player1, false);
@@ -152,8 +169,7 @@ class PortentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Portent()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);

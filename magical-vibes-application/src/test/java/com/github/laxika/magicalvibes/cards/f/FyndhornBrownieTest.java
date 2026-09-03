@@ -2,24 +2,26 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FyndhornBrownie.class, SnowCoveredForest.class})
 class FyndhornBrownieTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability taps the Brownie")
     void activatingTapsBrownie() {
-        Permanent brownie = addReadyBrownie(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
         addBrownieMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -30,8 +32,8 @@ class FyndhornBrownieTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps a tapped creature")
     void untapsTappedCreature() {
-        addReadyBrownie(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
         target.tap();
         addBrownieMana(player1);
 
@@ -44,8 +46,8 @@ class FyndhornBrownieTest extends BaseCardTest {
     @Test
     @DisplayName("Can untap own tapped creature")
     void canUntapOwnCreature() {
-        addReadyBrownie(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new FyndhornBrownie());
+        Permanent ownCreature = addCreatureReady(player1, new FyndhornBrownie());
         ownCreature.tap();
         addBrownieMana(player1);
 
@@ -58,18 +60,31 @@ class FyndhornBrownieTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
-        addReadyBrownie(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
+    @DisplayName("Cannot activate ability when the Brownie is already tapped")
+    void cannotActivateWhenAlreadyTapped() {
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        brownie.tap();
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
+        addBrownieMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        addReadyBrownie(player1);
-        Permanent land = new Permanent(new com.github.laxika.magicalvibes.cards.f.Forest());
+        addCreatureReady(player1, new FyndhornBrownie());
+        Permanent land = new Permanent(new SnowCoveredForest());
         gd.playerBattlefields.get(player2.getId()).add(land);
         addBrownieMana(player1);
 
@@ -81,8 +96,8 @@ class FyndhornBrownieTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyBrownie(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
         addBrownieMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -99,10 +114,4 @@ class FyndhornBrownieTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 2);
     }
 
-    private Permanent addReadyBrownie(Player player) {
-        Permanent perm = new Permanent(new FyndhornBrownie());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

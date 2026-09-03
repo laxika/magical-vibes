@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,25 +15,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Brainstorm.class, Island.class, KjeldoranWarrior.class})
 class BrainstormTest extends BaseCardTest {
 
     private List<Card> fiveCards() {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            cards.add(i % 2 == 0 ? new GrizzlyBears() : new Shock());
+            cards.add(i % 2 == 0 ? new Island() : new KjeldoranWarrior());
         }
         return cards;
     }
 
     private void castBrainstorm(List<Card> library) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(library);
-
-        harness.setHand(player1, List.of(new Brainstorm()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castInstant(player1, 0);
+        harness.setLibrary(player1, library);
+        harness.castFromHand(player1, new Brainstorm(), "{U}");
         harness.passBothPriorities();
     }
 
@@ -46,6 +42,18 @@ class BrainstormTest extends BaseCardTest {
                 .containsExactly(library.get(0), library.get(1), library.get(2));
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+    }
+
+    @Test
+    @DisplayName("Requires exactly two cards when at least two cards are available")
+    void requiresExactlyTwoCardsWhenAvailable() {
+        castBrainstorm(fiveCards());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
+                    assertThat(choice.minCount()).isEqualTo(2);
+                    assertThat(choice.maxCount()).isEqualTo(2);
+                });
     }
 
     @Test
@@ -71,10 +79,8 @@ class BrainstormTest extends BaseCardTest {
     @DisplayName("Can put a card that was already in hand on top")
     void choosesFromEntireHand() {
         List<Card> library = fiveCards();
-        Card alreadyInHand = new Shock();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(library);
+        Card alreadyInHand = new KjeldoranWarrior();
+        harness.setLibrary(player1, library);
 
         harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -91,11 +97,9 @@ class BrainstormTest extends BaseCardTest {
     @Test
     @DisplayName("Puts all available cards back when the library has fewer than three cards")
     void handlesShortLibrary() {
-        Card libraryCard = new GrizzlyBears();
-        Card alreadyInHand = new Shock();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(libraryCard);
+        Card libraryCard = new Island();
+        Card alreadyInHand = new KjeldoranWarrior();
+        harness.setLibrary(player1, List.of(libraryCard));
 
         harness.setHand(player1, List.of(new Brainstorm(), alreadyInHand));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -106,5 +110,20 @@ class BrainstormTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(alreadyInHand, libraryCard);
+    }
+
+    @Test
+    @DisplayName("Requires every available card when fewer than two cards are available")
+    void requiresEveryAvailableCardWhenLibraryIsShort() {
+        Card libraryCard = new Island();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.castFromHand(player1, new Brainstorm(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class, choice -> {
+                    assertThat(choice.minCount()).isEqualTo(1);
+                    assertThat(choice.maxCount()).isEqualTo(1);
+                });
     }
 }

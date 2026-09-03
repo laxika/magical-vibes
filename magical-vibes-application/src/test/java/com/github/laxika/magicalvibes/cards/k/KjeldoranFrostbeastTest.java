@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.r.Regeneration;
+import com.github.laxika.magicalvibes.cards.s.ScaledWurm;
+import com.github.laxika.magicalvibes.cards.s.ShieldBearer;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,27 +16,27 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KjeldoranFrostbeast.class, Regeneration.class, ScaledWurm.class, ShieldBearer.class})
 class KjeldoranFrostbeastTest extends BaseCardTest {
 
     @Test
     @DisplayName("Every creature blocking Kjeldoran Frostbeast is destroyed at end of combat")
     void allBlockersDestroyedAtEndOfCombat() {
-        Permanent frostbeast = addReadyFrostbeast(player1);
+        Permanent frostbeast = addCreatureReady(player1, new KjeldoranFrostbeast());
         frostbeast.setAttacking(true);
-        Permanent spider1 = addReadySpider(player2);
-        Permanent spider2 = addReadySpider(player2);
+        Permanent blocker1 = addCreatureReady(player2, new ShieldBearer());
+        Permanent blocker2 = addCreatureReady(player2, new ShieldBearer());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
         resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).hasSize(2);
 
         harness.passBothPriorities();
 
-        // Both 2/4 blockers survive the Frostbeast's combat damage; the end-of-combat
+        // Both blockers survive the Frostbeast's combat damage; the end-of-combat
         // destruction is what kills them.
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(spider1.getId(), 1, spider2.getId(), 1));
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(blocker1.getId(), 1, blocker2.getId(), 1));
 
         harness.passBothPriorities();
 
@@ -45,48 +47,72 @@ class KjeldoranFrostbeastTest extends BaseCardTest {
     @Test
     @DisplayName("A creature blocked by Kjeldoran Frostbeast is destroyed at end of combat")
     void blockedAttackerDestroyedAtEndOfCombat() {
-        Permanent attacker = addReadySpider(player1);
+        Permanent attacker = addCreatureReady(player1, new ShieldBearer());
         attacker.setAttacking(true);
-        addReadyFrostbeast(player2);
+        addCreatureReady(player2, new KjeldoranFrostbeast());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
+        resolveAllTriggers();
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
-
-        harness.passBothPriorities();
-        harness.assertInGraveyard(player1, "Giant Spider");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getOriginalCard());
     }
 
     @Test
     @DisplayName("An unblocked Kjeldoran Frostbeast destroys nothing")
     void unblockedDestroysNothing() {
-        Permanent frostbeast = addReadyFrostbeast(player1);
+        Permanent frostbeast = addCreatureReady(player1, new KjeldoranFrostbeast());
         frostbeast.setAttacking(true);
-        addReadySpider(player2);
+        Permanent blocker = addCreatureReady(player2, new ShieldBearer());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
-        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
 
-    private Permanent addReadyFrostbeast(Player player) {
-        return addReady(player, new KjeldoranFrostbeast());
+    @Test
+    @DisplayName("A Kjeldoran Frostbeast that dies in combat does not destroy its former blocker")
+    void sourceDyingInCombatDoesNotDestroyFormerBlocker() {
+        Permanent frostbeast = addCreatureReady(player1, new KjeldoranFrostbeast());
+        frostbeast.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ScaledWurm());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveAllTriggers();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(frostbeast.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
 
-    private Permanent addReadySpider(Player player) {
-        return addReady(player, new GiantSpider());
-    }
+    @Test
+    @DisplayName("A regenerated Kjeldoran Frostbeast does not destroy a creature it no longer blocks")
+    void regeneratedSourceDoesNotDestroyCreatureRemovedFromCombat() {
+        Permanent frostbeast = addCreatureReady(player1, new KjeldoranFrostbeast());
+        frostbeast.setAttacking(true);
+        Permanent regeneration = harness.addToBattlefieldAndReturn(player1, new Regeneration());
+        regeneration.setAttachedTo(frostbeast.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent blocker = addCreatureReady(player2, new ScaledWurm());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveAllTriggers();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(frostbeast.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
 }

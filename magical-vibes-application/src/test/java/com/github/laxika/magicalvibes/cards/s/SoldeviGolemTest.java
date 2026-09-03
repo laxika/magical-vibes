@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import java.util.List;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoldeviGolem.class, IcyManipulator.class, KjeldoranWarrior.class})
 class SoldeviGolemTest extends BaseCardTest {
 
     @Test
@@ -19,7 +20,7 @@ class SoldeviGolemTest extends BaseCardTest {
     void acceptUntapsBoth() {
         Permanent golem = addReadyGolem(player1);
         golem.tap();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
         target.tap();
 
         triggerUpkeep(player1);
@@ -36,7 +37,7 @@ class SoldeviGolemTest extends BaseCardTest {
     void declineLeavesBothTapped() {
         Permanent golem = addReadyGolem(player1);
         golem.tap();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
         target.tap();
 
         triggerUpkeep(player1);
@@ -53,17 +54,10 @@ class SoldeviGolemTest extends BaseCardTest {
     void doesNotUntapDuringUntapStep() {
         Permanent golem = addReadyGolem(player1);
         golem.tap();
-        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new KjeldoranWarrior());
         other.tap();
 
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
 
         assertThat(golem.isTapped()).isTrue();
         assertThat(other.isTapped()).isFalse();
@@ -74,7 +68,7 @@ class SoldeviGolemTest extends BaseCardTest {
     void untappedOpponentCreatureIsNotLegal() {
         Permanent golem = addReadyGolem(player1);
         golem.tap();
-        Permanent untapped = addCreatureReady(player2, new GrizzlyBears());
+        Permanent untapped = addCreatureReady(player2, new KjeldoranWarrior());
 
         triggerUpkeep(player1);
         harness.passBothPriorities();
@@ -88,13 +82,63 @@ class SoldeviGolemTest extends BaseCardTest {
     void ownTappedCreatureIsNotLegal() {
         Permanent golem = addReadyGolem(player1);
         golem.tap();
-        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent own = addCreatureReady(player1, new KjeldoranWarrior());
         own.tap();
 
         triggerUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped noncreature is not a legal target")
+    void noncreatureIsNotLegalTarget() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        artifact.tap();
+
+        triggerUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("If the target becomes untapped before resolution, the Golem stays tapped")
+    void targetBecomesUntappedBeforeResolution() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+        target.tap();
+
+        triggerUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent golem = addReadyGolem(player1);
+        golem.tap();
+        Permanent target = addCreatureReady(player2, new KjeldoranWarrior());
+
+        harness.performUntapStep(player2);
+        target.tap();
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyGolem(Player player) {

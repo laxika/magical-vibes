@@ -1,19 +1,23 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
-import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GlacialWall;
+import com.github.laxika.magicalvibes.cards.s.SeaSpirit;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Norritt.class, BalduvianBears.class, GlacialWall.class, SeaSpirit.class})
 class NorrittTest extends BaseCardTest {
 
     private Permanent addReadyNorritt() {
@@ -30,13 +34,13 @@ class NorrittTest extends BaseCardTest {
     @DisplayName("First ability untaps target blue creature")
     void untapsTargetBlueCreature() {
         Permanent norritt = addReadyNorritt();
-        Permanent merfolk = addCreatureReady(player2, new MerfolkOfThePearlTrident());
-        merfolk.tap();
+        Permanent seaSpirit = addCreatureReady(player2, new SeaSpirit());
+        seaSpirit.tap();
 
-        harness.activateAbility(player1, 0, 0, null, merfolk.getId());
+        harness.activateAbility(player1, 0, 0, null, seaSpirit.getId());
         harness.passBothPriorities();
 
-        assertThat(merfolk.isTapped()).isFalse();
+        assertThat(seaSpirit.isTapped()).isFalse();
         assertThat(norritt.isTapped()).isTrue();
     }
 
@@ -44,7 +48,7 @@ class NorrittTest extends BaseCardTest {
     @DisplayName("First ability cannot target a nonblue creature")
     void cannotUntapNonblue() {
         addReadyNorritt();
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
         bears.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
@@ -55,21 +59,23 @@ class NorrittTest extends BaseCardTest {
     @DisplayName("Second ability forces target to attack this turn if able")
     void forcesTargetToAttack() {
         addReadyNorritt();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isMustAttackThisTurn()).isTrue();
+        declareAttackers(player2, List.of(0));
+
+        assertThat(target.isAttackedThisTurn()).isTrue();
     }
 
     @Test
     @DisplayName("At end step, destroys the target if it didn't attack")
     void destroysIfDidNotAttack() {
         addReadyNorritt();
-        Permanent lazy = addCreatureReady(player2, new GrizzlyBears());
+        Permanent lazy = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
@@ -79,14 +85,14 @@ class NorrittTest extends BaseCardTest {
         runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(lazy);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("Destroys the target if it cannot legally attack")
     void destroysIfCannotAttack() {
         addReadyNorritt();
-        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tapped = addCreatureReady(player2, new BalduvianBears());
         tapped.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
@@ -97,20 +103,20 @@ class NorrittTest extends BaseCardTest {
         runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(tapped);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("At end step, spares the target if it attacked")
     void sparesIfAttacked() {
         addReadyNorritt();
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();
-        attacker.setAttackedThisTurn(true);
+        declareAttackers(player2, List.of(0));
 
         runEndStep();
 
@@ -118,11 +124,11 @@ class NorrittTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a Wall or a summoning-sick creature")
-    void rejectsWallAndSummoningSick() {
+    @DisplayName("Cannot target a Wall or a creature not controlled since the turn began")
+    void rejectsWallAndNewlyControlledCreature() {
         addReadyNorritt();
-        Permanent wall = addCreatureReady(player2, new WallOfAir());
-        Permanent fresh = new Permanent(new GrizzlyBears());
+        Permanent wall = addCreatureReady(player2, new GlacialWall());
+        Permanent fresh = new Permanent(new BalduvianBears());
         fresh.setSummoningSick(true);
         gd.playerBattlefields.get(player2.getId()).add(fresh);
         harness.forceActivePlayer(player2);
@@ -138,7 +144,7 @@ class NorrittTest extends BaseCardTest {
     @DisplayName("Cannot target a creature not controlled by the active player")
     void rejectsNonActiveController() {
         addReadyNorritt();
-        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent own = addCreatureReady(player1, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
@@ -150,7 +156,7 @@ class NorrittTest extends BaseCardTest {
     @DisplayName("Cannot activate second ability after attackers are declared")
     void cannotActivateAfterAttackersDeclared() {
         addReadyNorritt();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
@@ -163,7 +169,7 @@ class NorrittTest extends BaseCardTest {
     @DisplayName("Cannot activate second ability during a second combat phase")
     void cannotActivateInSecondCombat() {
         addReadyNorritt();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         gd.combatPhasesThisTurn = 2;

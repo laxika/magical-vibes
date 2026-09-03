@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ZuranSpellcaster.class, BalduvianBears.class, FyndhornElves.class})
 class ZuranSpellcasterTest extends BaseCardTest {
 
     @Test
@@ -35,35 +37,33 @@ class ZuranSpellcasterTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         addReadySpellcaster(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new FyndhornElves());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Fyndhorn Elves");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Fyndhorn Elves");
+        harness.assertInGraveyard(player2, "Fyndhorn Elves");
     }
 
     @Test
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addReadySpellcaster(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        ZuranSpellcaster card = new ZuranSpellcaster();
-        Permanent spellcaster = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(spellcaster);
+        harness.addToBattlefield(player1, new ZuranSpellcaster());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -81,11 +81,24 @@ class ZuranSpellcasterTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Ability fizzles if target creature is removed before resolution")
+    void fizzlesIfTargetCreatureRemoved() {
+        addReadySpellcaster(player1);
+        harness.addToBattlefield(player2, new BalduvianBears());
+
+        UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
+        harness.activateAbility(player1, 0, null, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("fizzles"));
+    }
+
     private Permanent addReadySpellcaster(Player player) {
-        ZuranSpellcaster card = new ZuranSpellcaster();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ZuranSpellcaster());
     }
 }

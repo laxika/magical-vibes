@@ -1,16 +1,53 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({IllusionaryForces.class, BalduvianBears.class})
 class IllusionaryForcesTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Illusionary Forces cannot be blocked by a creature without flying")
+    void cannotBeBlockedByGroundCreature() {
+        Permanent forces = addCreatureReady(player1, new IllusionaryForces());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forces);
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during Illusionary Forces' controller's upkeep")
+    void cumulativeUpkeepTriggersOnlyDuringControllersUpkeep() {
+        Permanent forces = harness.addToBattlefieldAndReturn(player1, new IllusionaryForces());
+
+        advanceToUpkeep(player2);
+
+        assertThat(forces.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forces);
+    }
 
     @Test
     @DisplayName("Paying cumulative upkeep keeps Illusionary Forces")

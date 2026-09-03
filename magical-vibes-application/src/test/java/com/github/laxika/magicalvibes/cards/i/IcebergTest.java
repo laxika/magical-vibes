@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Iceberg.class)
 class IcebergTest extends BaseCardTest {
 
     @Test
@@ -77,6 +79,19 @@ class IcebergTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The mana ability can be activated during an opponent's upkeep")
+    void manaAbilityCanBeActivatedDuringOpponentsUpkeep() {
+        Permanent iceberg = addReadyIceberg(player1, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(iceberg.getCounterCount(CounterType.ICE)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot remove an ice counter when none remain")
     void cannotActivateWithoutIceCounters() {
         Permanent iceberg = addReadyIceberg(player1, 0);
@@ -88,9 +103,8 @@ class IcebergTest extends BaseCardTest {
     }
 
     private Permanent addReadyIceberg(Player player, int iceCounters) {
-        Permanent perm = new Permanent(new Iceberg());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Iceberg());
         perm.setCounterCount(CounterType.ICE, iceCounters);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

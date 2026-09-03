@@ -1,24 +1,24 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArcticFoxes;
+import com.github.laxika.magicalvibes.cards.d.DireWolves;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WitheringWisps.class, ArcticFoxes.class, DireWolves.class, Swamp.class,
+        SnowCoveredSwamp.class, SnowCoveredIsland.class})
 class WitheringWispsTest extends BaseCardTest {
 
     @Test
@@ -27,25 +27,27 @@ class WitheringWispsTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new WitheringWisps());
+        harness.addToBattlefield(player1, new ArcticFoxes());
         addSnowSwamp(player1);
-        harness.addToBattlefield(player2, new FugitiveWizard()); // 1/1 dies
-        harness.addToBattlefield(player2, new GrizzlyBears());   // 2/2 survives
+        harness.addToBattlefield(player2, new ArcticFoxes()); // 1/1 dies
+        harness.addToBattlefield(player2, new DireWolves());  // 2/2 survives
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertNotOnBattlefield(player1, "Arctic Foxes");
+        harness.assertNotOnBattlefield(player2, "Arctic Foxes");
+        harness.assertOnBattlefield(player2, "Dire Wolves");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
     @DisplayName("Cannot be activated at all with no snow Swamps")
     void cannotActivateWithoutSnowSwamps() {
         harness.addToBattlefield(player1, new WitheringWisps());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -60,7 +62,7 @@ class WitheringWispsTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new WitheringWisps());
         addSnowSwamp(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -69,7 +71,7 @@ class WitheringWispsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("snow Swamps you control");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -79,7 +81,7 @@ class WitheringWispsTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new WitheringWisps());
         addSnowSwamp(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -89,8 +91,8 @@ class WitheringWispsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -101,7 +103,7 @@ class WitheringWispsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WitheringWisps());
         addSnowSwamp(player1);
         addSnowSwamp(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -109,9 +111,9 @@ class WitheringWispsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertNotOnBattlefield(player2, "Dire Wolves");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -123,7 +125,7 @@ class WitheringWispsTest extends BaseCardTest {
     void opponentSnowSwampsDoNotCount() {
         harness.addToBattlefield(player1, new WitheringWisps());
         addSnowSwamp(player2);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -136,7 +138,19 @@ class WitheringWispsTest extends BaseCardTest {
     void plainSwampsDoNotCount() {
         harness.addToBattlefield(player1, new WitheringWisps());
         harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("snow Swamps you control");
+    }
+
+    @Test
+    @DisplayName("Snow-Covered Islands do not raise the activation limit")
+    void snowCoveredIslandsDoNotCount() {
+        harness.addToBattlefield(player1, new WitheringWisps());
+        harness.addToBattlefield(player1, new SnowCoveredIsland());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -147,7 +161,7 @@ class WitheringWispsTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices itself at end step when no creatures are on the battlefield")
     void sacrificesAtEndStepWhenNoCreatures() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new WitheringWisps()));
+        harness.addToBattlefield(player1, new WitheringWisps());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -168,7 +182,7 @@ class WitheringWispsTest extends BaseCardTest {
     @Test
     @DisplayName("Does not sacrifice itself if a creature appears before the trigger resolves")
     void doesNotSacrificeIfCreatureAppearsBeforeResolution() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new WitheringWisps()));
+        harness.addToBattlefield(player1, new WitheringWisps());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -177,7 +191,7 @@ class WitheringWispsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DireWolves());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Withering Wisps");
@@ -186,8 +200,8 @@ class WitheringWispsTest extends BaseCardTest {
     @Test
     @DisplayName("Does not sacrifice itself while a creature is on the battlefield")
     void doesNotSacrificeWhenCreaturePresent() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new WitheringWisps()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new WitheringWisps());
+        harness.addToBattlefield(player2, new DireWolves());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -199,10 +213,7 @@ class WitheringWispsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Withering Wisps");
     }
 
-    private Permanent addSnowSwamp(Player player) {
-        Permanent snowSwamp = new Permanent(new Swamp());
-        TestCards.mutableCard(snowSwamp).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player.getId()).add(snowSwamp);
-        return snowSwamp;
+    private void addSnowSwamp(Player player) {
+        harness.addToBattlefield(player, new SnowCoveredSwamp());
     }
 }

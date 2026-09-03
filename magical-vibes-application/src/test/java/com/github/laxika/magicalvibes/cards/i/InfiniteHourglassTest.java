@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({InfiniteHourglass.class, PaleBears.class})
 class InfiniteHourglassTest extends BaseCardTest {
 
     // ===== Upkeep trigger: time counters =====
@@ -22,13 +24,21 @@ class InfiniteHourglassTest extends BaseCardTest {
     void upkeepTriggerAddsTimeCounter() {
         Permanent hourglass = addHourglass(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // upkeep trigger goes on stack
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(hourglass.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does not fire during an opponent's upkeep")
+    void upkeepTriggerDoesNotFireDuringOpponentsUpkeep() {
+        Permanent hourglass = addHourglass(player1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isZero();
     }
 
     // ===== Static boost scales with time counters =====
@@ -105,6 +115,22 @@ class InfiniteHourglassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing a time counter with none on the artifact resolves as a no-op")
+    void removingCounterWithNoneOnArtifactIsNoOp() {
+        Permanent hourglass = addHourglass(player1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot activate outside an upkeep step")
     void cannotActivateOutsideUpkeep() {
         Permanent hourglass = addHourglass(player1);
@@ -123,15 +149,10 @@ class InfiniteHourglassTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addHourglass(Player owner) {
-        Permanent perm = new Permanent(new InfiniteHourglass());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(owner, new InfiniteHourglass());
     }
 
     private Permanent addBears(Player owner) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return addCreatureReady(owner, new PaleBears());
     }
 }

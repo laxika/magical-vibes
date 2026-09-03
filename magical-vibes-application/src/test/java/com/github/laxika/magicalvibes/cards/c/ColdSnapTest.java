@@ -1,37 +1,33 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ColdSnap.class, Plains.class, SnowCoveredPlains.class})
 class ColdSnapTest extends BaseCardTest {
 
-    private Permanent snowLand(Player controller) {
-        Permanent snowLand = new Permanent(new Plains());
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(controller.getId()).add(snowLand);
-        return snowLand;
+    private void addSnowLands(Player controller, int count) {
+        for (int i = 0; i < count; i++) {
+            harness.addToBattlefield(controller, new SnowCoveredPlains());
+        }
     }
 
     @Test
     @DisplayName("Deals damage to the active player equal to snow lands they control")
     void damagesActivePlayerBySnowLandCount() {
         harness.addToBattlefield(player1, new ColdSnap());
-        snowLand(player2);
-        snowLand(player2);
-        snowLand(player2);
+        addSnowLands(player2, 3);
 
         // Opponent's upkeep: only the damage trigger fires (CU is controller-only)
         advanceToUpkeep(player2);
@@ -45,8 +41,7 @@ class ColdSnapTest extends BaseCardTest {
     @DisplayName("Damages each player based on their own snow lands during their own upkeep")
     void damagesEachPlayerByOwnSnowLands() {
         harness.addToBattlefield(player1, new ColdSnap());
-        snowLand(player2);
-        snowLand(player2);
+        addSnowLands(player2, 2);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -72,7 +67,7 @@ class ColdSnapTest extends BaseCardTest {
     @DisplayName("Counts only snow lands controlled by the active player")
     void countsActivePlayersSnowLandsOnly() {
         harness.addToBattlefield(player1, new ColdSnap());
-        snowLand(player1);
+        addSnowLands(player1, 1);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -112,5 +107,27 @@ class ColdSnapTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(snap);
         harness.assertInGraveyard(player1, "Cold Snap");
+    }
+
+    @Test
+    @DisplayName("Second cumulative upkeep costs four mana")
+    void secondCumulativeUpkeepCostsFourMana() {
+        Permanent snap = harness.addToBattlefieldAndReturn(player1, new ColdSnap());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(snap.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(snap);
     }
 }

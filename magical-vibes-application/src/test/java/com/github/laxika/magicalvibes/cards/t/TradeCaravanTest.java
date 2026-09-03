@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
+import com.github.laxika.magicalvibes.cards.l.LandCap;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TradeCaravan.class, Plains.class, AysenAbbey.class})
+@CardUsed({TradeCaravan.class, Plains.class, LandCap.class})
 class TradeCaravanTest extends BaseCardTest {
 
     private void enterOpponentUpkeep() {
@@ -155,14 +155,14 @@ class TradeCaravanTest extends BaseCardTest {
     @DisplayName("Cannot target a nonbasic land")
     void cannotTargetNonbasicLand() {
         Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
-        Permanent aysenAbbey = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
+        Permanent landCap = harness.addToBattlefieldAndReturn(player1, new LandCap());
         caravan.setCounterCount(CounterType.CURRENCY, 2);
-        aysenAbbey.tap();
+        landCap.tap();
 
         enterOpponentUpkeep();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, aysenAbbey.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, landCap.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(aysenAbbey.isTapped()).isTrue();
+        assertThat(landCap.isTapped()).isTrue();
     }
 }

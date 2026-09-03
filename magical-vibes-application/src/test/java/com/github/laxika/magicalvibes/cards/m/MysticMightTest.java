@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,72 +17,90 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MysticMight.class, Forest.class, KjeldoranWarrior.class})
 class MysticMightTest extends BaseCardTest {
-
-    private Permanent setUpEnchantedForest() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new MysticMight());
-        aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-        return forest;
-    }
 
     @Test
     @DisplayName("Enchanted land's granted ability gives target creature +2/+2 until end of turn")
     void grantedAbilityBoostsCreature() {
-        Permanent forest = setUpEnchantedForest();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent forest = addAttachedMysticMight().forest();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, warrior.getId());
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(warrior.getPowerModifier()).isEqualTo(2);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Granted ability can target an opponent's creature")
     void grantedAbilityBoostsOpponentsCreature() {
-        Permanent forest = setUpEnchantedForest();
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent forest = addAttachedMysticMight().forest();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new KjeldoranWarrior());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, warrior.getId());
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(warrior.getPowerModifier()).isEqualTo(2);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Boost wears off at cleanup")
     void boostWearsOff() {
-        setUpEnchantedForest();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addAttachedMysticMight();
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, warrior.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(warrior.getPowerModifier()).isEqualTo(0);
+        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Can enchant a land you control")
+    void canEnchantLandYouControl() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new MysticMight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Mystic Might");
+        assertThat(aura.getAttachedTo()).isEqualTo(forest.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a nonland permanent")
+    void cannotEnchantNonland() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+        harness.setHand(player1, List.of(new MysticMight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() ->
+                harness.castEnchantment(player1, 0, warrior.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Paying cumulative upkeep keeps Mystic Might")
     void paysCumulativeUpkeep() {
-        Permanent aura = addAttachedMysticMight();
+        Permanent aura = addAttachedMysticMight().aura();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -99,7 +118,7 @@ class MysticMightTest extends BaseCardTest {
     @Test
     @DisplayName("Cumulative upkeep charges the cost for each age counter")
     void paysCumulativeUpkeepForEachAgeCounter() {
-        Permanent aura = addAttachedMysticMight();
+        Permanent aura = addAttachedMysticMight().aura();
         aura.setCounterCount(CounterType.AGE, 1);
 
         advanceToUpkeep(player1);
@@ -117,7 +136,7 @@ class MysticMightTest extends BaseCardTest {
     @Test
     @DisplayName("Declining cumulative upkeep sacrifices Mystic Might")
     void declineSacrifices() {
-        Permanent aura = addAttachedMysticMight();
+        Permanent aura = addAttachedMysticMight().aura();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -128,10 +147,33 @@ class MysticMightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep sacrifices Mystic Might when its cost cannot be paid")
+    void cannotPayCumulativeUpkeepSacrifices() {
+        Permanent aura = addAttachedMysticMight().aura();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        harness.assertInGraveyard(player1, "Mystic Might");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void cumulativeUpkeepTriggersOnlyDuringControllerUpkeep() {
+        Permanent aura = addAttachedMysticMight().aura();
+
+        advanceToUpkeep(player2);
+
+        assertThat(aura.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+    }
+
+    @Test
     @DisplayName("Cannot enchant a land you do not control")
     void cannotEnchantOpponentsLand() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new MysticMight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -143,7 +185,7 @@ class MysticMightTest extends BaseCardTest {
     @Test
     @DisplayName("Granted ability cannot target a noncreature")
     void cannotTargetNoncreature() {
-        setUpEnchantedForest();
+        addAttachedMysticMight();
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         assertThatThrownBy(() ->
@@ -152,10 +194,13 @@ class MysticMightTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addAttachedMysticMight() {
+    private EnchantedForest addAttachedMysticMight() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticMight());
         aura.setAttachedTo(forest.getId());
-        return aura;
+        return new EnchantedForest(forest, aura);
+    }
+
+    private record EnchantedForest(Permanent forest, Permanent aura) {
     }
 }

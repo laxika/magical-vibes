@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BrineShaman.class, BalduvianBears.class, DarkRitual.class})
 class BrineShamanTest extends BaseCardTest {
 
     // ===== {T}, Sacrifice a creature: Target creature gets +2/+2 =====
@@ -22,10 +23,9 @@ class BrineShamanTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a creature gives target creature +2/+2 and taps Brine Shaman")
     void sacrificeCreatureGivesPlusTwo() {
-        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new BrineShaman());
-        shaman.setSummoningSick(false);
+        addCreatureReady(player1, new BrineShaman());
         // Only creature player1 controls is the Shaman → sacrifice cost auto-picks it.
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -41,9 +41,8 @@ class BrineShamanTest extends BaseCardTest {
     @Test
     @DisplayName("The +2/+2 boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new BrineShaman());
-        shaman.setSummoningSick(false);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new BrineShaman());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -62,8 +61,8 @@ class BrineShamanTest extends BaseCardTest {
     @DisplayName("Can sacrifice another creature while tapping Brine Shaman")
     void canSacrificeAnotherCreatureWhileTappingShaman() {
         Permanent shaman = addCreatureReady(player1, new BrineShaman());
-        Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent fodder = addCreatureReady(player1, new BalduvianBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
@@ -84,7 +83,7 @@ class BrineShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        GrizzlyBears spell = new GrizzlyBears();
+        BalduvianBears spell = new BalduvianBears();
         harness.setHand(player2, List.of(spell));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
@@ -98,9 +97,37 @@ class BrineShamanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can sacrifice another creature to counter a creature spell")
+    void canSacrificeAnotherCreatureToCounterCreatureSpell() {
+        Permanent shaman = addCreatureReady(player1, new BrineShaman());
+        Permanent fodder = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        BalduvianBears spell = new BalduvianBears();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, 1, null, spell.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(shaman);
+        assertThat(shaman.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -110,16 +137,16 @@ class BrineShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        Shock shock = new Shock();
-        harness.setHand(player2, List.of(shock));
-        harness.addMana(player2, ManaColor.RED, 1);
+        DarkRitual darkRitual = new DarkRitual();
+        harness.setHand(player2, List.of(darkRitual));
+        harness.addMana(player2, ManaColor.BLACK, 1);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castInstant(player2, 0);
         harness.passPriority(player2);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 1, null, shock.getId())
+                harness.activateAbility(player1, 0, 1, null, darkRitual.getId())
         ).isInstanceOf(IllegalStateException.class);
     }
 }

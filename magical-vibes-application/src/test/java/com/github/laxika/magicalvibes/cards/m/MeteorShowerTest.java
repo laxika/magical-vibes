@@ -1,25 +1,26 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MeteorShower.class, BalduvianBears.class, IcyManipulator.class})
 class MeteorShowerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals X plus 1 damage divided between a creature and a player")
     void dividesDamageAmongCreatureAndPlayer() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
         harness.setHand(player1, List.of(new MeteorShower()));
         harness.addMana(player1, ManaColor.RED, 10);
 
@@ -27,9 +28,8 @@ class MeteorShowerTest extends BaseCardTest {
         harness.castSorceryForX(player1, 0, 2, Map.of(bears.getId(), 2, player2.getId(), 1));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -41,7 +41,30 @@ class MeteorShowerTest extends BaseCardTest {
         harness.castSorceryForX(player1, 0, 0, Map.of(player2.getId(), 1));
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Requires at least one target")
+    void requiresAtLeastOneTarget() {
+        harness.setHand(player1, List.of(new MeteorShower()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() ->
+                harness.castSorceryForX(player1, 0, 0, Map.of())
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void cannotTargetNoncreatureArtifact() {
+        Permanent manipulator = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        harness.setHand(player1, List.of(new MeteorShower()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() ->
+                harness.castSorceryForX(player1, 0, 0, Map.of(manipulator.getId(), 1))
+        ).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

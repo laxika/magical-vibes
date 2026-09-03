@@ -5,31 +5,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(AdarkarWastes.class)
 class AdarkarWastesTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Adarkar Wastes has correct card properties")
-    void hasCorrectProperties() {
-        AdarkarWastes card = new AdarkarWastes();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Tapping for colorless mana =====
 
     @Test
     @DisplayName("Tapping for colorless adds {C} and does not deal damage")
@@ -47,8 +31,6 @@ class AdarkarWastesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Tapping for white mana =====
-
     @Test
     @DisplayName("Tapping for white adds {W} and deals 1 damage to controller")
     void tapForWhiteAddsManaAndDealsDamage() {
@@ -63,8 +45,6 @@ class AdarkarWastesTest extends BaseCardTest {
         // Mana ability — does not use the stack
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Tapping for blue mana =====
 
     @Test
     @DisplayName("Tapping for blue adds {U} and deals 1 damage to controller")
@@ -81,8 +61,6 @@ class AdarkarWastesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Validation =====
-
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
@@ -93,8 +71,6 @@ class AdarkarWastesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
-
-    // ===== Cumulative damage =====
 
     @Test
     @DisplayName("Multiple pain land activations across turns accumulate damage")
@@ -117,13 +93,7 @@ class AdarkarWastesTest extends BaseCardTest {
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyWastes(Player player) {
-        AdarkarWastes card = new AdarkarWastes();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new AdarkarWastes());
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalduvianBears.class, CircleOfProtectionWhite.class, KjeldoranWarrior.class, WhiteScarab.class})
+@CardUsed({WhiteScarab.class, CircleOfProtectionWhite.class, BalduvianBears.class, KjeldoranWarrior.class})
 class WhiteScarabTest extends BaseCardTest {
 
     @Test
@@ -31,7 +31,7 @@ class WhiteScarabTest extends BaseCardTest {
 
         Permanent blocker = addCreatureReady(player2, new KjeldoranWarrior());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -52,7 +52,7 @@ class WhiteScarabTest extends BaseCardTest {
 
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -88,6 +88,56 @@ class WhiteScarabTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Does not boost for an opponent's non-white permanent")
+    void notBoostedWhenOpponentControlsNonWhitePermanent() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        Permanent aura = new Permanent(new WhiteScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.addToBattlefield(player2, new BalduvianBears());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boost uses the Aura controller's opponents")
+    void boostUsesAuraControllerForOpponentCondition() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        Permanent aura = new Permanent(new WhiteScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player2.getId()).add(aura);
+
+        harness.addToBattlefield(player1, new KjeldoranWarrior());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Boost ends when the opponent's white permanent leaves the battlefield")
+    void boostEndsWhenOpponentWhitePermanentLeavesBattlefield() {
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        Permanent aura = new Permanent(new WhiteScarab());
+        aura.setAttachedTo(bears.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        Permanent whitePermanent = harness.addToBattlefieldAndReturn(player2, new KjeldoranWarrior());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player2.getId()).remove(whitePermanent);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test

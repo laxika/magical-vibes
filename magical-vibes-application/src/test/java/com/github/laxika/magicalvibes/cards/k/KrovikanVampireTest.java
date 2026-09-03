@@ -1,88 +1,99 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.t.Terror;
-import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.cards.f.FolkOfThePines;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KrovikanVampire.class, BalduvianBears.class, DarkBanishing.class,
+        FolkOfThePines.class, FyndhornElves.class, WordOfUndoing.class})
 class KrovikanVampireTest extends BaseCardTest {
 
-    /** Vampire blocks/attacks and kills a Grizzly Bears in combat; leaves the game mid-turn. */
+    /** Krovikan Vampire blocks and kills a Balduvian Bears in combat. */
     private void vampireKillsBearsInCombat() {
-        harness.addToBattlefield(player1, new KrovikanVampire());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new KrovikanVampire());
+        addCreatureReady(player2, new BalduvianBears());
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).getFirst();
-        vampire.setSummoningSick(false);
-        vampire.setAttacking(true);
-
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        bears.setSummoningSick(false);
-        bears.setBlocking(true);
-        bears.addBlockingTarget(0);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        // Combat damage kills the Bears; do not advance through end step yet.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
     }
 
     private void advanceToEndStepAndResolve() {
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 
     @Test
-    @DisplayName("A creature the Vampire kills returns under its controller at end step")
+    @DisplayName("A creature the Vampire damages and kills returns under its controller at end step")
     void returnsDamagedCreatureUnderControlAtEndStep() {
         vampireKillsBearsInCombat();
         advanceToEndStepAndResolve();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("A creature the Vampire did not damage does not return when it dies")
     void noReturnForUndamagedCreature() {
-        harness.addToBattlefield(player1, new KrovikanVampire());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new KrovikanVampire());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CruelEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-
+        harness.assertInGraveyard(player2, "Balduvian Bears");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
         harness.passBothPriorities();
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("A creature the Vampire damages earlier in the turn returns when it dies later")
+    void returnsCreatureDamagedEarlierInTurnWhenItDiesLater() {
+        addCreatureReady(player1, new KrovikanVampire());
+        Permanent folk = addCreatureReady(player2, new FolkOfThePines());
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Folk of the Pines");
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castInstant(player2, 0, folk.getId());
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Folk of the Pines");
+        harness.assertNotInGraveyard(player2, "Folk of the Pines");
     }
 
     @Test
@@ -91,106 +102,149 @@ class KrovikanVampireTest extends BaseCardTest {
         vampireKillsBearsInCombat();
         advanceToEndStepAndResolve();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+
+        Permanent vampire = findPermanent(player1, "Krovikan Vampire");
+        gd.playerBattlefields.get(player1.getId()).remove(vampire);
+        gd.playerBattlefields.get(player2.getId()).add(vampire);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("All creatures the Vampire damages and kills return at end step")
+    void returnsAllDamagedCreaturesAtEndStep() {
+        addCreatureReady(player1, new KrovikanVampire());
+        Permanent firstElves = addCreatureReady(player2, new FyndhornElves());
+        Permanent secondElves = addCreatureReady(player2, new FyndhornElves());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstElves.getId(), 1,
+                secondElves.getId(), 2));
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Fyndhorn Elves")).isEqualTo(2);
+        harness.assertNotInGraveyard(player2, "Fyndhorn Elves");
+    }
+
+    @Test
+    @DisplayName("The Vampire's current controller controls the return at end step")
+    void currentControllerControlsReturnAtEndStep() {
+        vampireKillsBearsInCombat();
 
         Permanent vampire = findPermanent(player1, "Krovikan Vampire");
         gd.playerBattlefields.get(player1.getId()).remove(vampire);
         gd.playerBattlefields.get(player2.getId()).add(vampire);
 
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
+        harness.passUntil(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
     }
 
     @Test
-    @DisplayName("If the Vampire leaves before end step, nothing is returned")
+    @DisplayName("If the Vampire leaves before end step, it does not trigger")
     void noReturnIfVampireLeavesBeforeEndStep() {
-        harness.addToBattlefield(player1, new KrovikanVampire());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        vampireKillsBearsInCombat();
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-
-        // Record that Vampire damaged Bears this turn (non-combat), then destroy Bears.
-        gd.creatureCardsDamagedThisTurnBySourcePermanent
-                .computeIfAbsent(vampire.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(bears.getCard().getId());
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new CruelEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
+        Permanent vampire = findPermanent(player1, "Krovikan Vampire");
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, vampire.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.sourcesWhoseDamagedCreaturesDiedThisTurn).contains(vampire.getId());
+        harness.passUntil(player2, TurnStep.END_STEP);
 
-        // Vampire leaves before end step — ability must not trigger.
-        gd.playerBattlefields.get(player1.getId()).remove(vampire);
-        gd.playerGraveyards.get(player1.getId()).add(vampire.getCard());
-        gd.stack.clear();
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+    @Test
+    @DisplayName("A returned creature remains when the Vampire leaves the battlefield")
+    void returnedCreatureRemainsWhenVampireLeaves() {
+        vampireKillsBearsInCombat();
+        advanceToEndStepAndResolve();
+
+        Permanent vampire = findPermanent(player1, "Krovikan Vampire");
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, vampire.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Krovikan Vampire");
     }
 
     @Test
     @DisplayName("A creature that leaves and re-enters is not returned after dying")
     void doesNotReturnCreatureAfterItLeavesAndReenters() {
-        harness.addToBattlefield(player1, new KrovikanVampire());
-        harness.addToBattlefield(player2, new GiantSpider());
+        addCreatureReady(player1, new KrovikanVampire());
+        Permanent folk = addCreatureReady(player2, new FolkOfThePines());
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent spider = gd.playerBattlefields.get(player2.getId()).getFirst();
-        gd.creatureCardsDamagedThisTurnBySourcePermanent
-                .computeIfAbsent(vampire.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(spider.getCard().getId());
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
 
-        harness.setHand(player1, List.of(new Unsummon()));
+        harness.setHand(player1, List.of(new WordOfUndoing()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, spider.getId());
+        harness.castInstant(player1, 0, folk.getId());
         harness.passBothPriorities();
 
-        Card bouncedSpider = gd.playerHands.get(player2.getId()).stream()
-                .filter(card -> card.getName().equals("Giant Spider"))
+        Card bouncedFolk = gd.playerHands.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Folk of the Pines"))
                 .findFirst()
                 .orElseThrow();
-        gd.playerHands.get(player2.getId()).remove(bouncedSpider);
-        harness.addToBattlefield(player2, bouncedSpider);
-        Permanent reenteredSpider = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Giant Spider"))
-                .findFirst()
-                .orElseThrow();
-
-        harness.setHand(player2, List.of(new Terror()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(bouncedFolk));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, reenteredSpider.getId());
+        harness.addMana(player2, ManaColor.GREEN, 5);
+        harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Giant Spider");
-
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        Permanent reenteredFolk = findPermanent(player2, "Folk of the Pines");
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castInstant(player1, 0, reenteredFolk.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Giant Spider");
-        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Folk of the Pines");
+        harness.assertInGraveyard(player2, "Folk of the Pines");
+    }
+
+    @Test
+    @DisplayName("If the Vampire dies before end step, its damaged creature does not return")
+    void noReturnIfVampireDiesBeforeEndStep() {
+        addCreatureReady(player1, new KrovikanVampire());
+        Permanent firstBears = addCreatureReady(player2, new BalduvianBears());
+        Permanent secondBears = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBears.getId(), 2,
+                secondBears.getId(), 1));
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.assertInGraveyard(player1, "Krovikan Vampire");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
     }
 }

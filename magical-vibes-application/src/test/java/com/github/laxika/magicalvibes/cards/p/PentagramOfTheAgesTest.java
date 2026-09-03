@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,18 +10,22 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PentagramOfTheAges.class, BalduvianBears.class, ZuranSpellcaster.class, Incinerate.class})
 class PentagramOfTheAgesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability prompts for a source choice")
     void activatingPromptsForSourceChoice() {
         addReadyPentagram(player1);
-        addReadyGoblin(player2);
+        addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -32,16 +38,16 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     @DisplayName("Choosing a source records a one-shot prevention shield with no life gain")
     void choosingSourceRecordsShield() {
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent bears = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.playerId().equals(player1.getId())
-                        && s.sourceId().equals(goblin.getId())
+                        && s.sourceId().equals(bears.getId())
                         && !s.gainLife());
     }
 
@@ -50,14 +56,14 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     void preventsDamageWithoutGainingLife() {
         harness.setLife(player1, 20);
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent bears = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
 
-        goblin.setAttacking(true);
+        bears.setAttacking(true);
         resolveCombat(player2);
 
         // 2 damage prevented, no life gained (would be 22 under Reverse Damage)
@@ -70,8 +76,8 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         addReadyPentagram(player1);
-        Permanent chosen = addReadyGoblin(player2);
-        Permanent other = addReadyGoblin(player2);
+        Permanent chosen = addReadyBears(player2);
+        Permanent other = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -90,12 +96,12 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent bears = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
@@ -111,14 +117,14 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     @DisplayName("Answering the source choice resumes the parked resolution entry")
     void answeringSourceChoiceClearsParkedResolution() {
         addReadyPentagram(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent bears = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         assertThat(gd.pendingEffectResolutionEntry).isNotNull();
 
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gd.pendingEffectResolutionEntry).isNull();
         assertThat(gd.deferPlayerLossCheck).isFalse();
@@ -129,8 +135,8 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     void lethalDamageAfterSourceChoiceEndsGame() {
         harness.setLife(player2, 2);
         addReadyPentagram(player1);
-        Permanent attacker = addReadyGoblin(player1);
-        Permanent source = addReadyGoblin(player2);
+        Permanent attacker = addReadyBears(player1);
+        Permanent source = addReadyBears(player2);
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -143,17 +149,62 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
-    private Permanent addReadyPentagram(Player player) {
-        Permanent perm = new Permanent(new PentagramOfTheAges());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Prevents only the next damage event from the chosen source")
+    void preventsOnlyNextDamageEventFromChosenSource() {
+        harness.setLife(player1, 20);
+        addReadyPentagram(player1);
+        Permanent spellcaster = addReadySpellcaster(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spellcaster.getId());
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        spellcaster.untap();
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
     }
 
-    private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new GoblinPiker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Can choose a spell on the stack as the damage source")
+    void choosesSpellOnStackAsDamageSource() {
+        harness.setLife(player1, 20);
+        addReadyPentagram(player1);
+        harness.forceActivePlayer(player2);
+        Incinerate incinerate = new Incinerate();
+        harness.setHand(player2, List.of(incinerate));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
+                .satisfies(choice -> assertThat(choice.validIds()).contains(incinerate.getId()));
+        harness.handlePermanentChosen(player1, incinerate.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    private Permanent addReadyPentagram(Player player) {
+        return addCreatureReady(player, new PentagramOfTheAges());
+    }
+
+    private Permanent addReadyBears(Player player) {
+        return addCreatureReady(player, new BalduvianBears());
+    }
+
+    private Permanent addReadySpellcaster(Player player) {
+        return addCreatureReady(player, new ZuranSpellcaster());
     }
 }
