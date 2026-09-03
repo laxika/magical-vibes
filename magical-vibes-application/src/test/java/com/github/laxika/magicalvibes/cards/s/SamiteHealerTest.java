@@ -1,38 +1,50 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({SamiteHealer.class, GrizzlyBears.class})
 class SamiteHealerTest extends BaseCardTest {
 
-    // ===== Activation =====
-
     @Test
-    @DisplayName("Activating ability puts it on the stack")
-    void activatingPutsOnStack() {
+    @DisplayName("Activating ability puts its target on the stack")
+    void activatingPutsTargetOnStack() {
         addReadyHealer(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Samite Healer");
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Activating ability requires an any-target choice")
+    void activatingRequiresTarget() {
+        addReadyHealer(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("requires a target");
     }
 
     @Test
@@ -42,182 +54,152 @@ class SamiteHealerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(healer.isTapped()).isTrue();
     }
 
-    // ===== Resolution =====
-
     @Test
-    @DisplayName("Resolving ability sets global damage prevention shield")
-    void resolvingSetsGlobalShield() {
+    @DisplayName("Resolving ability adds a prevention shield to the target player")
+    void resolvingAddsShieldToTargetPlayer() {
         addReadyHealer(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.globalDamagePreventionShield).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.globalDamagePreventionShield).isZero();
     }
 
     @Test
-    @DisplayName("Resolving ability logs prevention message")
-    void resolvingLogsPrevention() {
+    @DisplayName("Resolving ability adds a prevention shield to the target creature")
+    void resolvingAddsShieldToTargetCreature() {
         addReadyHealer(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("damage") && log.contains("prevented"));
-    }
-
-    // ===== Prevention on creature =====
-
-    @Test
-    @DisplayName("Global shield prevents 1 combat damage to a creature")
-    void globalShieldPreventsCombatDamageToCreature() {
-        harness.getGameData().globalDamagePreventionShield = 1;
-
-        // Attacker: Grizzly Bears (2/2) — shields are applied to attackers first
-        GrizzlyBears bear1 = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear1);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
-
-        // Blocker: Grizzly Bears (2/2)
-        GrizzlyBears bear2 = new GrizzlyBears();
-        Permanent blocker = new Permanent(bear2);
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        // Attacker takes 2 damage, global shield prevents 1 → 1 effective damage < 2 toughness → survives
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        // Blocker takes 2 damage, no shield remaining → 2 >= 2 toughness → dies
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.globalDamagePreventionShield).isZero();
     }
 
     @Test
-    @DisplayName("Global shield is consumed after preventing creature damage")
-    void globalShieldConsumedAfterCreatureDamage() {
-        harness.getGameData().globalDamagePreventionShield = 1;
+    @DisplayName("Resolving ability logs a targeted prevention message")
+    void resolvingLogsTargetedPrevention() {
+        addReadyHealer(player1);
 
-        GrizzlyBears bear1 = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear1);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
-
-        GrizzlyBears bear2 = new GrizzlyBears();
-        Permanent blocker = new Permanent(bear2);
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(0);
+        assertThat(gameLogContains("The next 1 damage" + " that would be dealt to " + player2.getUsername()))
+                .isTrue();
     }
 
-    // ===== Prevention on player =====
+    @Test
+    @DisplayName("A target creature's shield prevents its next combat damage")
+    void targetCreatureShieldPreventsCombatDamage() {
+        addReadyHealer(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackers(player1, List.of(attackerIndex));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(blocker.getDamagePreventionShield()).isZero();
+    }
 
     @Test
-    @DisplayName("Global shield prevents 1 combat damage to a player")
-    void globalShieldPreventsCombatDamageToPlayer() {
+    @DisplayName("A player's shield prevents only the next 1 damage dealt to that player")
+    void targetPlayerShieldPreventsOnlyOneDamage() {
+        addReadyHealer(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.setLife(player2, 20);
-        harness.getGameData().globalDamagePreventionShield = 1;
 
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
+        harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // 2 damage - 1 prevented = 1 effective damage → 20 - 1 = 19
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        declareAttackers(player1, List.of(attackerIndex));
+        resolveCombat();
+
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.globalDamagePreventionShield).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.globalDamagePreventionShield).isZero();
     }
 
-    // ===== End of turn cleanup =====
+    @Test
+    @DisplayName("A player's shield does not prevent damage dealt to another player")
+    void targetPlayerShieldDoesNotAffectAnotherPlayer() {
+        addReadyHealer(player1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+        declareAttackers(player2, List.of(attackerIndex));
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.globalDamagePreventionShield).isZero();
+    }
 
     @Test
-    @DisplayName("Global prevention shield is cleared at end of turn")
-    void globalShieldClearedAtEndOfTurn() {
-        harness.getGameData().globalDamagePreventionShield = 1;
+    @DisplayName("A target player's prevention shield is cleared at end of turn")
+    void targetPlayerShieldClearedAtEndOfTurn() {
+        addReadyHealer(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 
-    // ===== Full integration =====
-
     @Test
-    @DisplayName("Samite Healer activation prevents next 1 combat damage to player")
-    void fullIntegrationPreventsPlayerDamage() {
-        addReadyHealer(player2);
+    @DisplayName("Targeted activation prevents the next 1 combat damage to its target player")
+    void targetedActivationPreventsPlayerDamage() {
+        Permanent healer = addReadyHealer(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        // Player2 activates healer
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(healer.isTapped()).isTrue();
 
-        // Set up combat: player1 attacks with Grizzly Bears (2/2)
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent attacker = new Permanent(bear);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        declareAttackers(player1, List.of(attackerIndex));
+        resolveCombat();
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
-        // 2 damage - 1 global prevention = 1 effective → 20 - 1 = 19
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.globalDamagePreventionShield).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
-
-    // ===== Helpers =====
 
     private Permanent addReadyHealer(Player player) {
-        SamiteHealer card = new SamiteHealer();
-        Permanent healer = new Permanent(card);
-        healer.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(healer);
-        return healer;
+        return addCreatureReady(player, new SamiteHealer());
     }
 }
-

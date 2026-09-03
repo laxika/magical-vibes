@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(BrassMan.class)
 class BrassManTest extends BaseCardTest {
 
     // ===== Doesn't untap during untap step =====
@@ -54,26 +54,32 @@ class BrassManTest extends BaseCardTest {
         assertThat(brassMan.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Brass Man stays tapped when its controller cannot pay {1}")
+    void cannotPayOneLeavesBrassManTapped() {
+        Permanent brassMan = addBrassMan(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(brassMan.isTapped()).isTrue();
+    }
+
     // ===== Helpers =====
 
     private Permanent addBrassMan(Player player, boolean tapped) {
-        Permanent perm = new Permanent(new BrassMan());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new BrassMan());
         if (tapped) {
             perm.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (untap)
+        harness.passUntil(TurnStep.UNTAP);
     }
 }

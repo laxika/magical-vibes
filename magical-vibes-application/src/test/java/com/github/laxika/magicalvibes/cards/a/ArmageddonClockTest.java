@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,25 +17,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArmageddonClock.class, GrizzlyBears.class, Shatter.class})
 class ArmageddonClockTest extends BaseCardTest {
-
-    // ===== Upkeep trigger: doom counters =====
 
     @Test
     @DisplayName("Upkeep trigger puts a doom counter on Armageddon Clock")
     void upkeepTriggerAddsDoomCounter() {
         Permanent clock = addClock(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UNTAP -> UPKEEP fires upkeep trigger
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
 
         assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(1);
     }
-
-    // ===== Draw step: damage to each player equal to doom counters =====
 
     @Test
     @DisplayName("Draw step deals damage equal to doom counters to each player")
@@ -64,7 +60,25 @@ class ArmageddonClockTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    // ===== Activated ability: {4} remove a doom counter =====
+    @Test
+    void drawStepUsesLastKnownCountersAfterClockLeaves() {
+        Permanent clock = addClock(player1);
+        clock.setCounterCount(CounterType.DOOM, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        advanceToDraw(player1);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, clock.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(clock);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
 
     @Test
     @DisplayName("Controller may remove a doom counter during their own upkeep")
@@ -115,8 +129,6 @@ class ArmageddonClockTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
     }
-
-    // ===== Helpers =====
 
     private Permanent addClock(Player owner) {
         Permanent perm = new Permanent(new ArmageddonClock());

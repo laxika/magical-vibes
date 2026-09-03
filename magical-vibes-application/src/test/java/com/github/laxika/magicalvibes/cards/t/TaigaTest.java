@@ -8,9 +8,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(Taiga.class)
 class TaigaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Taiga rejects a mana color outside its choices")
+    void rejectsUnlistedManaColor() {
+        addTaigaReady();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "BLUE"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 
     @Test
     @DisplayName("Taiga produces red mana")
@@ -37,9 +49,6 @@ class TaigaTest extends BaseCardTest {
     }
 
     private Permanent addTaigaReady() {
-        Permanent taiga = new Permanent(new Taiga());
-        taiga.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(taiga);
-        return taiga;
+        return harness.addToBattlefieldAndReturn(player1, new Taiga());
     }
 }

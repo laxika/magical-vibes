@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Spec for {@link AttackLegalityService}, the creature-level half of declare-attackers legality
- * (CR 508.1a): may this permanent be declared as an attacker at all, may it be declared against a
+ * (CR 508.1): may this permanent be declared as an attacker at all, may it be declared against a
  * given defender, and how many "attacks if able" requirements does it carry. The group-level half
  * — "can't attack alone", banding, satisfying as many requirements as possible — is enforced when
  * a declaration is submitted and belongs to {@code CombatAttackService}.
@@ -269,7 +269,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("CR 508.1a: \"can't attack unless …\" is re-evaluated against the current board")
+    @DisplayName("CR 508.1c: \"can't attack unless …\" is re-evaluated against the current board")
     void cantAttackUnlessConditionGatesAttacking() {
         // Sea Serpent: "can't attack unless defending player controls an Island".
         Permanent serpent = addCreatureReady(player1, new SeaSerpent());
@@ -525,7 +525,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("CR 508.1c: the defending player's planeswalkers are attack targets too")
+    @DisplayName("CR 508.1b: the defending player's planeswalkers are attack targets too")
     void defendingPlaneswalkersAreValidAttackTargets() {
         Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         // A permanent the attacking player controls is never one of their own attack targets.

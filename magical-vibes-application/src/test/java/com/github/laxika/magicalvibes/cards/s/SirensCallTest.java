@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NetherShadow;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SirensCall.class, GrizzlyBears.class, WallOfAir.class, NetherShadow.class})
 class SirensCallTest extends BaseCardTest {
 
     /** player1 (caster) holds Siren's Call with mana; it's player2's turn, before attackers. */
@@ -41,7 +44,11 @@ class SirensCallTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bear.isMustAttackThisTurn()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        declareAttackers(player2, List.of(0));
+        assertThat(bear.isAttackedThisTurn()).isTrue();
     }
 
     @Test
@@ -52,21 +59,65 @@ class SirensCallTest extends BaseCardTest {
         attacker.setAttackedThisTurn(true);
         Permanent wall = addCreatureReady(player2, new WallOfAir());
         // Came under control this turn (summoning sick) => didn't control it since the turn began.
-        Permanent fresh = new Permanent(new GrizzlyBears());
-        fresh.setSummoningSick(true);
-        gd.playerBattlefields.get(player2.getId()).add(fresh);
+        Permanent fresh = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         primeCall();
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         runEndStep();
+        harness.passBothPriorities();
 
         // Only the ready non-Wall creature that didn't attack is destroyed.
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(lazy)
                 .contains(attacker, wall, fresh);
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Destroys a tapped non-Wall creature that did not attack")
+    void destroysTappedNonWallCreature() {
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
+        tapped.tap();
+        primeCall();
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        runEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(tapped);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Leaves creatures on the battlefield until the delayed destruction resolves")
+    void putsDelayedDestructionOnStack() {
+        Permanent lazy = addCreatureReady(player2, new GrizzlyBears());
+        primeCall();
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(lazy);
+        assertThat(gd.stack).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires a hasty creature entering later in the turn to attack if able")
+    void requiresLaterCreatureToAttackIfAble() {
+        primeCall();
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.addToBattlefieldAndReturn(player2, new NetherShadow());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

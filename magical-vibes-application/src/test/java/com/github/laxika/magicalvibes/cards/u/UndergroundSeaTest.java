@@ -35,9 +35,8 @@ class UndergroundSeaTest extends BaseCardTest {
     }
 
     private Permanent addUndergroundSeaReady() {
-        Permanent undergroundSea = new Permanent(new UndergroundSea());
+        Permanent undergroundSea = harness.addToBattlefieldAndReturn(player1, new UndergroundSea());
         undergroundSea.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(undergroundSea);
         return undergroundSea;
     }
 }

@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,40 +14,37 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Juggernaut.class, WallOfSwords.class, GrizzlyBears.class})
 class JuggernautTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Juggernaut puts it on the battlefield")
     void castingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new Juggernaut()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Juggernaut(), "{4}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Juggernaut");
     }
 
-    // ===== Must attack =====
-
     @Test
     @DisplayName("Juggernaut must attack each combat if able")
     void mustAttackWhenAble() {
-        Permanent juggernaut = new Permanent(new Juggernaut());
-        juggernaut.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(juggernaut);
+        addCreatureReady(player1, new Juggernaut());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+    }
+
+    @Test
+    void doesNotHaveToAttackWhenTapped() {
+        Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
+        juggernaut.tap();
+
+        declareAttackers(List.of());
+
+        assertThat(juggernaut.isAttacking()).isFalse();
     }
 
     @Test
@@ -56,38 +52,21 @@ class JuggernautTest extends BaseCardTest {
     void dealsFiveDamageUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent juggernaut = new Permanent(new Juggernaut());
-        juggernaut.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(juggernaut);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        addCreatureReady(player1, new Juggernaut());
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
-    // ===== Can't be blocked by Walls =====
-
     @Test
     @DisplayName("Juggernaut cannot be blocked by a Wall")
     void cannotBeBlockedByWall() {
-        Permanent juggernaut = new Permanent(new Juggernaut());
-        juggernaut.setSummoningSick(false);
+        Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
         juggernaut.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(juggernaut);
 
-        Permanent wall = new Permanent(new AngelicWall());
-        wall.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(wall);
+        addCreatureReady(player2, new WallOfSwords());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -97,19 +76,12 @@ class JuggernautTest extends BaseCardTest {
     @Test
     @DisplayName("Juggernaut can be blocked by a non-Wall creature")
     void canBeBlockedByNonWall() {
-        Permanent juggernaut = new Permanent(new Juggernaut());
-        juggernaut.setSummoningSick(false);
+        Permanent juggernaut = addCreatureReady(player1, new Juggernaut());
         juggernaut.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(juggernaut);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

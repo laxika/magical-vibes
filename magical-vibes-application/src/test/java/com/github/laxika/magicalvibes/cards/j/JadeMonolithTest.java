@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JadeMonolith.class, GrizzlyBears.class, ProdigalSorcerer.class, LightningBolt.class})
 class JadeMonolithTest extends BaseCardTest {
 
     // ===== Activation / source choice =====
@@ -24,7 +27,7 @@ class JadeMonolithTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability targeting a creature prompts for a source choice")
     void activatingPromptsForSourceChoice() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
         Permanent creature = addReadyStats(player2, 3, 3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -35,9 +38,29 @@ class JadeMonolithTest extends BaseCardTest {
     }
 
     @Test
+    void allowsChoosingSpellOnStackAsSource() {
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent creature = addReadyStats(player2, 3, 3);
+        LightningBolt lightningBolt = new LightningBolt();
+
+        harness.setHand(player1, List.of(lightningBolt));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, creature.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, creature.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(lightningBolt.getId());
+    }
+
+    @Test
     @DisplayName("Choosing a source registers a next-event redirect shield pointing at the controller")
     void choosingSourceCreatesNextEventShield() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
         Permanent creature = addReadyStats(player2, 3, 3);
         Permanent source = addReadyStats(player2, 2, 2);
 
@@ -59,8 +82,8 @@ class JadeMonolithTest extends BaseCardTest {
     @Test
     @DisplayName("Noncombat damage from the chosen source to the target creature is dealt to the controller instead")
     void redirectsNoncombatDamageToController() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalSorcerer());
         Permanent protectedCreature = addReadyStats(player2, 3, 3);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -70,7 +93,7 @@ class JadeMonolithTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, pyromancer.getId());
 
-        // Prodigal Pyromancer pings the protected creature — the damage is redirected to Jade Monolith's controller
+        // Prodigal Sorcerer pings the protected creature; the damage is redirected to Jade Monolith's controller
         harness.activateAbility(player1, indexOf(player1, pyromancer), null, protectedCreature.getId());
         harness.passBothPriorities();
 
@@ -83,8 +106,8 @@ class JadeMonolithTest extends BaseCardTest {
     @Test
     @DisplayName("Damage from a source other than the chosen one is not redirected")
     void doesNotAffectNonMatchingSource() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalSorcerer());
         Permanent decoySource = addReadyStats(player1, 2, 2);
         Permanent protectedCreature = addReadyStats(player2, 3, 3);
 
@@ -96,7 +119,7 @@ class JadeMonolithTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, decoySource.getId());
 
-        // Pyromancer (not the chosen source) pings the protected creature — damage lands normally
+        // Prodigal Sorcerer (not the chosen source) pings the protected creature; damage lands normally
         harness.activateAbility(player1, indexOf(player1, pyromancer), null, protectedCreature.getId());
         harness.passBothPriorities();
 
@@ -109,7 +132,7 @@ class JadeMonolithTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage from the chosen attacker to the target creature is dealt to the controller instead")
     void redirectsCombatDamageToController() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
         Permanent blocker = addReadyStats(player1, 3, 3);
         Permanent attacker = addReadyStats(player2, 2, 2);
 
@@ -121,11 +144,8 @@ class JadeMonolithTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
 
         // player2 attacks with the chosen source, player1's blocker blocks it
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, blocker), 0)));
         harness.passBothPriorities();
 
@@ -139,7 +159,7 @@ class JadeMonolithTest extends BaseCardTest {
     @Test
     @DisplayName("Creature damage redirect shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
         Permanent creature = addReadyStats(player2, 3, 3);
         Permanent source = addReadyStats(player2, 2, 2);
 
@@ -160,7 +180,7 @@ class JadeMonolithTest extends BaseCardTest {
     @Test
     @DisplayName("Answering the source choice resumes the parked resolution entry")
     void answeringSourceChoiceClearsParkedResolution() {
-        Permanent monolith = addReadyPermanent(player1, new JadeMonolith());
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
         Permanent creature = addReadyStats(player2, 3, 3);
         Permanent source = addReadyStats(player2, 2, 2);
 
@@ -176,13 +196,6 @@ class JadeMonolithTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();

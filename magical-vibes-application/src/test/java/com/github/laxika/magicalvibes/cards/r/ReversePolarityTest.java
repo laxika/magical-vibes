@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BlazingTorch;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -31,9 +34,7 @@ class ReversePolarityTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new ReversePolarity()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ReversePolarity(), "{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
@@ -46,12 +47,24 @@ class ReversePolarityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
-
-        harness.setHand(player1, List.of(new ReversePolarity()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ReversePolarity(), "{W}{W}");
         harness.passBothPriorities();
-
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @CardUsed({BlazingTorch.class, GrizzlyBears.class})
+    @DisplayName("Counts damage from an equipment-granted ability as artifact damage")
+    void countsDamageFromEquipmentGrantedAbility() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent torch = harness.addToBattlefieldAndReturn(player1, new BlazingTorch());
+        torch.setAttachedTo(creature.getId());
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+
+        harness.castFromHand(player1, new ReversePolarity(), "{W}{W}");
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 }

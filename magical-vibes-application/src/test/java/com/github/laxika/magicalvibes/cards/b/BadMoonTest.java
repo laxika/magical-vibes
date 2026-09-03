@@ -2,16 +2,15 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BadMoon.class, DrudgeSkeletons.class, GrizzlyBears.class})
 class BadMoonTest extends BaseCardTest {
 
     @Test
@@ -83,13 +82,11 @@ class BadMoonTest extends BaseCardTest {
     @DisplayName("Bonus applies when Bad Moon resolves onto the battlefield")
     void bonusAppliesOnResolve() {
         harness.addToBattlefield(player1, new DrudgeSkeletons());
-        harness.setHand(player1, List.of(new BadMoon()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castFromHand(player1, new BadMoon(), "{1}{B}");
 
         Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
 
-        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);

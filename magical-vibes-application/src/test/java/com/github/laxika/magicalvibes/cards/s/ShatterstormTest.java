@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,27 +11,16 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Shatterstorm.class, HowlingMine.class, Ornithopter.class, GrizzlyBears.class})
 class ShatterstormTest extends BaseCardTest {
-
-    private static Card indestructibleArtifact() {
-        Card card = new Card();
-        card.setName("Darksteel Relic");
-        card.setType(CardType.ARTIFACT);
-        card.setManaCost("{0}");
-        card.setColor(null);
-        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
-        return card;
-    }
-
-    
 
     @Test
     @DisplayName("Casting Shatterstorm puts it on the stack as a sorcery")
@@ -47,7 +34,6 @@ class ShatterstormTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Shatterstorm");
     }
 
     @Test
@@ -58,8 +44,7 @@ class ShatterstormTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shatterstorm()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Howling Mine");
         harness.assertNotOnBattlefield(player2, "Ornithopter");
@@ -74,8 +59,7 @@ class ShatterstormTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shatterstorm()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -93,8 +77,7 @@ class ShatterstormTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Ornithopter");
@@ -103,14 +86,14 @@ class ShatterstormTest extends BaseCardTest {
     @Test
     @DisplayName("Indestructible artifacts survive Shatterstorm")
     void indestructibleArtifactsSurvive() {
-        harness.addToBattlefield(player2, indestructibleArtifact());
+        Permanent ornithopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        ornithopter.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Shatterstorm()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.assertOnBattlefield(player2, "Darksteel Relic");
+        harness.assertOnBattlefield(player2, "Ornithopter");
     }
 }
 

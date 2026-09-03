@@ -1,19 +1,16 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Onulet.class, GrizzlyBears.class, WrathOfGod.class})
 class OnuletTest extends BaseCardTest {
 
     @Test
@@ -21,13 +18,9 @@ class OnuletTest extends BaseCardTest {
     void diesFromWrathGainsLife() {
         harness.addToBattlefield(player1, new Onulet());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        GameData gd = harness.getGameData();
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         // Onulet is dead
@@ -40,31 +33,40 @@ class OnuletTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Onulet makes its controller gain 2 life when it dies")
+    void opponentOnuletGivesLifeToItsController() {
+        harness.addToBattlefield(player2, new Onulet());
+
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Onulet");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, player1LifeBefore);
+        harness.assertLife(player2, player2LifeBefore + 2);
+    }
+
+    @Test
     @DisplayName("Onulet dies in combat, controller gains 2 life")
     void diesInCombatGainsLife() {
-        Onulet onulet = new Onulet();
-        Permanent onuletPerm = new Permanent(onulet);
-        onuletPerm.setSummoningSick(false);
+        Permanent onuletPerm = addCreatureReady(player1, new Onulet());
         onuletPerm.setBlocking(true);
         onuletPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(onuletPerm);
 
         GrizzlyBears bears = new GrizzlyBears();
         bears.setPower(3);
         bears.setToughness(3);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, bears);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertInGraveyard(player1, "Onulet");
 
@@ -77,29 +79,19 @@ class OnuletTest extends BaseCardTest {
     @Test
     @DisplayName("Onulet survives combat, no life gained")
     void survivesNoLifeGain() {
-        Onulet onulet = new Onulet();
-        Permanent onuletPerm = new Permanent(onulet);
-        onuletPerm.setSummoningSick(false);
+        Permanent onuletPerm = addCreatureReady(player1, new Onulet());
         onuletPerm.setBlocking(true);
         onuletPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(onuletPerm);
 
         GrizzlyBears weakAttacker = new GrizzlyBears();
         weakAttacker.setPower(0);
         weakAttacker.setToughness(2);
-        Permanent attacker = new Permanent(weakAttacker);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, weakAttacker);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Onulet");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);

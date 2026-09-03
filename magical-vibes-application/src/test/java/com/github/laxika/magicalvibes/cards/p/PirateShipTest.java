@@ -2,21 +2,22 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.Jinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PirateShip.class, Island.class, GrizzlyBears.class})
 class PirateShipTest extends BaseCardTest {
 
     // ===== State-triggered self-sacrifice =====
@@ -57,19 +58,10 @@ class PirateShipTest extends BaseCardTest {
     @DisplayName("Can attack when defending player controls an Island")
     void canAttackWhenDefenderControlsIsland() {
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new Island()); // keep Pirate Ship from being sacrificed
+        addReadyPirateShip(player1);
         harness.addToBattlefield(player2, new Island());
 
-        Permanent pirateShip = new Permanent(new PirateShip());
-        pirateShip.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pirateShip);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -77,18 +69,9 @@ class PirateShipTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack when defending player controls no Island")
     void cannotAttackWhenDefenderControlsNoIsland() {
-        harness.addToBattlefield(player1, new Island()); // keep Pirate Ship from being sacrificed
+        addReadyPirateShip(player1);
 
-        Permanent pirateShip = new Permanent(new PirateShip());
-        pirateShip.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pirateShip);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -111,21 +94,35 @@ class PirateShipTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addReadyPirateShip(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 
-    private Permanent addReadyPirateShip(Player player) {
-        // Pirate Ship added first so it sits at battlefield index 0 for activateAbility.
-        Permanent perm = new Permanent(new PirateShip());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+    @Test
+    @CardUsed(Jinx.class)
+    @DisplayName("Sacrifices when its Island becomes another basic land type")
+    void sacrificesWhenIslandBecomesAnotherBasicLandType() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        addCreatureReady(player1, new PirateShip());
+        harness.setHand(player1, List.of(new Jinx()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, island.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Pirate Ship");
+        harness.assertInGraveyard(player1, "Pirate Ship");
+    }
+
+    private void addReadyPirateShip(Player player) {
+        addCreatureReady(player, new PirateShip());
         harness.addToBattlefield(player, new Island()); // keep Pirate Ship from being sacrificed
-        return perm;
     }
 }

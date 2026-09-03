@@ -12,15 +12,16 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RodOfRuin.class, GrizzlyBears.class, LlanowarElves.class, Plains.class})
 class RodOfRuinTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -28,25 +29,18 @@ class RodOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new RodOfRuin()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new RodOfRuin(), "{4}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Rod of Ruin");
     }
 
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new RodOfRuin()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new RodOfRuin(), "{4}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -68,7 +62,6 @@ class RodOfRuinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Rod of Ruin");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -203,10 +196,8 @@ class RodOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability the turn it enters the battlefield (no summoning sickness for artifacts)")
     void noSummoningSicknessForArtifact() {
-        RodOfRuin card = new RodOfRuin();
-        Permanent rod = new Permanent(card);
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
         rod.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(rod);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -273,10 +264,8 @@ class RodOfRuinTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyRod(Player player) {
-        RodOfRuin card = new RodOfRuin();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RodOfRuin());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

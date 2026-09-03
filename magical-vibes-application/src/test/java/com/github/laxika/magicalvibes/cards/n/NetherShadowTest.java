@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,34 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NetherShadow.class, GrizzlyBears.class, Forest.class})
 class NetherShadowTest extends BaseCardTest {
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        NetherShadow shadow = new NetherShadow();
+        harness.setGraveyard(player1, List.of(shadow,
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void doesNotPromptWhenConditionFailsBeforeResolution() {
+        NetherShadow shadow = new NetherShadow();
+        harness.setGraveyard(player1, List.of(shadow,
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        advanceToUpkeep(player1);
+        gd.playerGraveyards.get(player1.getId()).removeLast();
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(shadow.getId()));
+    }
 
     @Test
     @DisplayName("Triggers with three creature cards above it in the graveyard")
@@ -79,7 +107,7 @@ class NetherShadowTest extends BaseCardTest {
     @DisplayName("Non-creature cards above it do not count toward the threshold")
     void nonCreatureCardsAboveDoNotCount() {
         harness.setGraveyard(player1, List.of(new NetherShadow(),
-                new Shock(), new Shock(), new Shock()));
+                new Forest(), new Forest(), new Forest()));
 
         advanceToUpkeep(player1);
 

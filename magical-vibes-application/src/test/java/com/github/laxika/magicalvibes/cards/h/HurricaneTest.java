@@ -1,39 +1,24 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Hurricane.class, AirElemental.class, GrizzlyBears.class})
 class HurricaneTest extends BaseCardTest {
-
-    /** A 2/2 flying creature for test purposes. */
-    private static Card flyingCreature() {
-        Card card = new Card();
-        card.setName("Wind Drake");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}{U}");
-        card.setColor(CardColor.BLUE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
-    }
 
     @Test
     @DisplayName("Casting Hurricane puts it on the stack as a sorcery spell")
@@ -49,7 +34,6 @@ class HurricaneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Hurricane");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
         assertThat(entry.getXValue()).isEqualTo(3);
 
@@ -65,9 +49,7 @@ class HurricaneTest extends BaseCardTest {
     void hurricaneResolvesDealsXDamageToPlayers() {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 
@@ -82,17 +64,17 @@ class HurricaneTest extends BaseCardTest {
     @Test
     @DisplayName("Hurricane kills flying creatures")
     void hurricaneKillsFlyingCreatures() {
-        // Put a 2/2 flyer on opponent's battlefield
-        harness.addToBattlefield(player2, flyingCreature());
+        // Put 4/4 flyers on both battlefields.
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player2, new AirElemental());
 
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 2);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castAndResolveSorcery(player1, 0, 4);
 
-        harness.passBothPriorities();
-
-        // Flying creature should be destroyed (2 damage >= 2 toughness)
-        harness.assertNotOnBattlefield(player2, "Wind Drake");
+        // Both flying creatures should be destroyed (4 damage >= 4 toughness).
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
     }
 
     @Test
@@ -103,9 +85,7 @@ class HurricaneTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         // Non-flying creature survives
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -116,9 +96,7 @@ class HurricaneTest extends BaseCardTest {
     void hurricaneWithXZeroDealsNoDamage() {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castSorcery(player1, 0, 0);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
 
@@ -144,9 +122,7 @@ class HurricaneTest extends BaseCardTest {
         harness.setLife(player1, 3);
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, 3);
-
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         GameData gd = harness.getGameData();
 

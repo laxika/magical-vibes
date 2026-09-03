@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PowerSink.class, BirdsOfParadise.class, EvolvingWilds.class, Forest.class, GrizzlyBears.class})
 class PowerSinkTest extends BaseCardTest {
 
     private GrizzlyBears prepareCounterTarget() {
@@ -71,6 +74,26 @@ class PowerSinkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(nonManaLand.isTapped()).isFalse();
+        assertThat(manaLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not tap non-land permanents with mana abilities")
+    void doesNotTapNonLandManaSources() {
+        GrizzlyBears bears = prepareCounterTarget();
+        Permanent manaCreature = harness.addToBattlefieldAndReturn(player1, new BirdsOfParadise());
+        Permanent manaLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(manaCreature.isTapped()).isFalse();
         assertThat(manaLand.isTapped()).isTrue();
     }
 

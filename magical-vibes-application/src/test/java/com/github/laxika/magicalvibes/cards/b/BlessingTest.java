@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Blessing.class, GrizzlyBears.class, SolRing.class})
 class BlessingTest extends BaseCardTest {
 
     @Test
@@ -21,9 +23,8 @@ class BlessingTest extends BaseCardTest {
     void activatedAbilityBoostsEnchantedCreature() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new Blessing());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Blessing());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -40,9 +41,8 @@ class BlessingTest extends BaseCardTest {
     void abilityStacksMultipleActivations() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new Blessing());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Blessing());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -60,9 +60,8 @@ class BlessingTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new Blessing());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Blessing());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 1, null, null);
@@ -93,12 +92,11 @@ class BlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new SolRing());
         harness.setHand(player1, List.of(new Blessing()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Sol Ring");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

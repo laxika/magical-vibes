@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Meekstone;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        StealArtifact.class,
+        Ornithopter.class,
+        Disenchant.class,
+        Meekstone.class,
+        GrizzlyBears.class
+})
 class StealArtifactTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -24,8 +33,7 @@ class StealArtifactTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Steal Artifact targeting an artifact puts it on the stack")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new Ornithopter());
-        Permanent thopter = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         harness.setHand(player1, List.of(new StealArtifact()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -42,8 +50,7 @@ class StealArtifactTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Steal Artifact steals opponent's artifact")
     void resolvingStealsArtifact() {
-        harness.addToBattlefield(player2, new Ornithopter());
-        Permanent thopter = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         harness.setHand(player1, List.of(new StealArtifact()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -56,19 +63,38 @@ class StealArtifactTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(thopter.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Steal Artifact")
-                        && p.isAttached()
+                .anyMatch(p -> p.isAttached()
                         && p.getAttachedTo().equals(thopter.getId()));
 
         assertThat(gd.stolenCreatures).containsEntry(thopter.getId(), player2.getId());
     }
 
     @Test
+    @DisplayName("Resolving Steal Artifact steals a noncreature artifact")
+    void resolvingStealsNoncreatureArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Meekstone());
+        harness.setHand(player1, List.of(new StealArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(artifact.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(artifact.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.isAttached()
+                        && p.getAttachedTo().equals(artifact.getId()));
+        assertThat(gd.stolenCreatures).containsEntry(artifact.getId(), player2.getId());
+    }
+
+    @Test
     @DisplayName("Steal Artifact fizzles if target artifact is no longer on the battlefield")
     void fizzlesIfTargetGone() {
-        harness.addToBattlefield(player2, new Ornithopter());
-        Permanent thopter = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.setHand(player1, List.of(new StealArtifact()));
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        StealArtifact stealArtifact = new StealArtifact();
+        harness.setHand(player1, List.of(stealArtifact));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castEnchantment(player1, 0, thopter.getId());
@@ -77,25 +103,29 @@ class StealArtifactTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Steal Artifact");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(stealArtifact);
     }
 
     @Test
     @DisplayName("Artifact returns to owner when Steal Artifact is destroyed")
     void artifactReturnsWhenAuraDestroyed() {
-        harness.addToBattlefield(player2, new Ornithopter());
-        Permanent thopter = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.setHand(player1, List.of(new StealArtifact()));
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        StealArtifact stealArtifact = new StealArtifact();
+        harness.setHand(player1, List.of(stealArtifact));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castEnchantment(player1, 0, thopter.getId());
         harness.passBothPriorities();
 
-        Permanent auraPerm = findPermanent(player1, "Steal Artifact");
+        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() == stealArtifact)
+                .findFirst()
+                .orElseThrow();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Demystify()));
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
@@ -115,8 +145,7 @@ class StealArtifactTest extends BaseCardTest {
     @DisplayName("Cannot target a non-artifact permanent with Steal Artifact")
     void cannotTargetNonArtifact() {
         harness.addToBattlefield(player2, new Ornithopter()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new StealArtifact()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

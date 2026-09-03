@@ -35,9 +35,8 @@ class BayouTest extends BaseCardTest {
     }
 
     private Permanent addBayouReady() {
-        Permanent bayou = new Permanent(new Bayou());
+        Permanent bayou = harness.addToBattlefieldAndReturn(player1, new Bayou());
         bayou.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bayou);
         return bayou;
     }
 }

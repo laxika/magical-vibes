@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,37 +14,38 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Tunnel.class, LivingWall.class, GrizzlyBears.class})
 class TunnelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target Wall")
     void destroysWall() {
-        harness.addToBattlefield(player2, new AngelicWall());
+        harness.addToBattlefield(player2, new LivingWall());
         harness.setHand(player1, List.of(new Tunnel()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Angelic Wall");
+        UUID targetId = harness.getPermanentId(player2, "Living Wall");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Angelic Wall");
-        harness.assertInGraveyard(player2, "Angelic Wall");
+        harness.assertNotOnBattlefield(player2, "Living Wall");
+        harness.assertInGraveyard(player2, "Living Wall");
     }
 
     @Test
     @DisplayName("Destroyed Wall cannot be regenerated")
     void wallCannotBeRegenerated() {
-        Permanent wall = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new LivingWall());
         wall.setRegenerationShield(1);
         harness.setHand(player1, List.of(new Tunnel()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Angelic Wall");
+        UUID targetId = harness.getPermanentId(player2, "Living Wall");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Angelic Wall");
-        harness.assertInGraveyard(player2, "Angelic Wall");
+        harness.assertNotOnBattlefield(player2, "Living Wall");
+        harness.assertInGraveyard(player2, "Living Wall");
     }
 
     @Test

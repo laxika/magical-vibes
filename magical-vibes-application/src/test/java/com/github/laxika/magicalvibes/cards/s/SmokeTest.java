@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Smoke.class, GrizzlyBears.class, Forest.class})
 class SmokeTest extends BaseCardTest {
 
     @Test
@@ -66,14 +68,29 @@ class SmokeTest extends BaseCardTest {
         assertThat(bearsB.isTapped()).isFalse();
     }
 
+    @Test
+    void restrictionRemainsWhenSmokeIsTapped() {
+        Permanent smoke = addCreatureReady(player1, new Smoke());
+        smoke.tap();
+        Permanent bearsA = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsB = addCreatureReady(player1, new GrizzlyBears());
+        bearsA.tap();
+        bearsB.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bearsA.getId()));
+
+        assertThat(bearsA.isTapped()).isFalse();
+        assertThat(bearsB.isTapped()).isTrue();
+    }
+
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
     }
 }

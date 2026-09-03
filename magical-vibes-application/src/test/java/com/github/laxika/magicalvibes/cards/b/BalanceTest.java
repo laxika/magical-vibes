@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Balance.class, Bloodbriar.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Balance.class, Bloodbriar.class, Forest.class, GrizzlyBears.class, TamiyoCollectorOfTales.class})
 class BalanceTest extends BaseCardTest {
 
     private List<UUID> landIds(Player player, int limit) {
@@ -262,5 +263,56 @@ class BalanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not force an opponent with Tamiyo to sacrifice permanents")
+    void respectsOpponentEffectsCantCauseSacrifice() {
+        harness.setHand(player1, List.of(new Balance()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Tamiyo, Collector of Tales");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not force an opponent with Tamiyo to discard cards")
+    void respectsOpponentEffectsCantCauseDiscard() {
+        harness.setHand(player1, List.of(new Balance()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertOnBattlefield(player2, "Tamiyo, Collector of Tales");
+    }
+
+    @Test
+    @DisplayName("Triggers for another permanent sacrificed at the same time")
+    void triggersForAnotherPermanentSacrificedSimultaneously() {
+        harness.setHand(player1, List.of(new Balance()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        addCreatureReady(player1, new Bloodbriar());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Bloodbriar");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gameLogContains("Bloodbriar's ability triggers.")).isTrue();
     }
 }

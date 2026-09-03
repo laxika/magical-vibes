@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Breezekeeper;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +17,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Stasis.class, GrizzlyBears.class, Forest.class, Breezekeeper.class})
 class StasisTest extends BaseCardTest {
 
     private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -62,6 +64,18 @@ class StasisTest extends BaseCardTest {
         advanceToNextTurn(player1); // player2's untap step
 
         assertThat(oppBears.isTapped()).isTrue();
+    }
+
+    @Test
+    void skipPreventsPhasing() {
+        addReady(player1, new Stasis());
+        Permanent keeper = addReady(player1, new Breezekeeper());
+
+        advanceToNextTurn(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of()))
+                .doesNotContain(keeper);
     }
 
     @Test

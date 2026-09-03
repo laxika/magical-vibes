@@ -6,26 +6,19 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LordOfThePit.class, GrizzlyBears.class, GiantSpider.class})
 class LordOfThePitTest extends BaseCardTest {
-
-    private Permanent addCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     // ===== No other creatures — deals 7 damage =====
 
@@ -70,7 +63,7 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Auto-sacrifices the only other creature")
     void autoSacrificesOnlyOtherCreature() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        Permanent bears = addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -86,7 +79,7 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Lord of the Pit remains on the battlefield after sacrificing another creature")
     void lordRemainsAfterSacrifice() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -100,8 +93,8 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Prompts player to choose when multiple other creatures are present")
     void promptsChoiceWithMultipleCreatures() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        Permanent bears = addCreature(player1, new GrizzlyBears());
-        Permanent spider = addCreature(player1, new GiantSpider());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
@@ -116,8 +109,8 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Lord of the Pit itself is not in the valid sacrifice choices")
     void lordNotInValidChoices() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        Permanent bears = addCreature(player1, new GrizzlyBears());
-        Permanent spider = addCreature(player1, new GiantSpider());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
 
         Permanent lordPerm = findPermanent(player1, "Lord of the Pit");
 
@@ -131,8 +124,8 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Player chooses which creature to sacrifice")
     void playerChoosesCreatureToSacrifice() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        Permanent bears = addCreature(player1, new GrizzlyBears());
-        Permanent spider = addCreature(player1, new GiantSpider());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -200,7 +193,7 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Opponent's creatures are not valid sacrifice targets")
     void opponentCreaturesNotValidTargets() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        Permanent opponentCreature = addCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);

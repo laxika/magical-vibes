@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeaSerpent.class, Island.class, Forest.class, PhantasmalTerrain.class})
 class SeaSerpentTest extends BaseCardTest {
 
     // ===== State trigger: sacrifice when you control no Islands =====
@@ -29,6 +33,23 @@ class SeaSerpentTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Sea Serpent");
         harness.assertInGraveyard(player1, "Sea Serpent");
+    }
+
+    @Test
+    @DisplayName("Survives while a controlled land has been changed into an Island")
+    void survivesWithLandChangedIntoIsland() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent terrain = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
+        terrain.setAttachedTo(forest.getId());
+        terrain.setChosenSubtype(CardSubtype.ISLAND);
+        harness.addToBattlefield(player1, new SeaSerpent());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).contains(CardSubtype.ISLAND);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Sea Serpent");
     }
 
     @Test
@@ -54,18 +75,11 @@ class SeaSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island()); // keep serpent alive
         harness.addToBattlefield(player2, new Island());
 
-        Permanent serpent = new Permanent(new SeaSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        addCreatureReady(player1, new SeaSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        declareAttackers(List.of(1));
 
-        gs.declareAttackers(gd, player1, List.of(1));
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -73,16 +87,9 @@ class SeaSerpentTest extends BaseCardTest {
     void cannotAttackWhenDefenderHasNoIsland() {
         harness.addToBattlefield(player1, new Island()); // keep serpent alive
 
-        Permanent serpent = new Permanent(new SeaSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        addCreatureReady(player1, new SeaSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

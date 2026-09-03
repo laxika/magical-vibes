@@ -1,25 +1,31 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DwarvenWarriors.class, GiantGrowth.class, GrizzlyBears.class, HillGiant.class, Mountain.class})
 class DwarvenWarriorsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving ability makes target creature with power 2 or less unblockable")
     void resolvingMakesTargetUnblockable() {
-        addReadyWarriors(player1);
-        Permanent target = addReady(new GrizzlyBears(), player2);
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -31,8 +37,8 @@ class DwarvenWarriorsTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability taps the Warriors")
     void activatingTapsSelf() {
-        Permanent warriors = addReadyWarriors(player1);
-        Permanent target = addReady(new GrizzlyBears(), player2);
+        Permanent warriors = addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -42,8 +48,8 @@ class DwarvenWarriorsTest extends BaseCardTest {
     @Test
     @DisplayName("Unblockable resets at end of turn cleanup")
     void unblockableResetsAtEndOfTurn() {
-        addReadyWarriors(player1);
-        Permanent target = addReady(new GrizzlyBears(), player2);
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -60,21 +66,68 @@ class DwarvenWarriorsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with power greater than 2")
     void cannotTargetHighPowerCreature() {
-        addReadyWarriors(player1);
-        Permanent giant = addReady(new HillGiant(), player2);
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giant.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyWarriors(Player player) {
-        return addReady(new DwarvenWarriors(), player);
+    @Test
+    void cannotTargetNoncreaturePermanent() {
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mountain.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(Card card, Player player) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void cannotTargetCreatureWithEffectivePowerGreaterThanTwo() {
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void targetedCreatureCannotBeBlocked() {
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int targetIndex = gd.playerBattlefields.get(player1.getId()).indexOf(target);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, targetIndex))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void targetMustStillHavePowerTwoOrLessWhenAbilityResolves() {
+        addCreatureReady(player1, new DwarvenWarriors());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
 }

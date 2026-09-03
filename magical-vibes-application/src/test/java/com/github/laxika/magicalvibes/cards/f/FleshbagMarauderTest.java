@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.ThroneOfBone;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Fleshbag Marauder")
+@CardUsed({FleshbagMarauder.class, GrizzlyBears.class, GiantSpider.class})
 class FleshbagMarauderTest extends BaseCardTest {
 
     @Test
@@ -77,13 +80,14 @@ class FleshbagMarauderTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB sacrifice flow survives an interleaved may-pay cast trigger (Throne of Bone)")
+    @CardUsed(ThroneOfBone.class)
     void etbSacrificeSurvivesInterleavedMayTrigger() {
         GameData gd = harness.getGameData();
         // The opponent owns a "whenever a player casts a black spell, you may pay {1}" trigger
         // plus two creatures, so both the may-pay prompt and a real sacrifice choice interleave
         // with the Marauder's parked ETB resolution (fuzz-found dangling-park scenario).
         gd.playerBattlefields.get(player2.getId())
-                .add(new Permanent(new com.github.laxika.magicalvibes.cards.t.ThroneOfBone()));
+                .add(new Permanent(new ThroneOfBone()));
         Permanent p2Bears = new Permanent(new GrizzlyBears());
         gd.playerBattlefields.get(player2.getId()).add(p2Bears);
         gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GiantSpider()));

@@ -3,18 +3,22 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Counterspell.class, GrizzlyBears.class, LightningBolt.class, ProdigalSorcerer.class})
 class CounterspellTest extends BaseCardTest {
 
     @Test
@@ -31,7 +35,6 @@ class CounterspellTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry entry = gd.stack.getLast();
         assertThat(entry.getCard().getName()).isEqualTo("Counterspell");
@@ -55,6 +58,8 @@ class CounterspellTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Counterspell");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -63,22 +68,40 @@ class CounterspellTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, bears);
 
-        MightOfOaks might = new MightOfOaks();
-        harness.setHand(player1, List.of(might));
-        harness.addMana(player1, ManaColor.GREEN, 4);
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player1, List.of(bolt));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.setHand(player2, List.of(new Counterspell()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
+        harness.castInstant(player2, 0, bolt.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.assertInGraveyard(player1, "Might of Oaks");
-        assertThat(gd.stack)
-                .noneMatch(se -> se.getCard().getName().equals("Might of Oaks"));
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Counterspell");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target an activated ability")
+    void cannotTargetActivatedAbility() {
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player2, List.of(counterspell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, sorcerer.getCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("spell on the stack");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(counterspell);
     }
 
     @Test
@@ -95,7 +118,6 @@ class CounterspellTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
 
-        GameData gd = harness.getGameData();
         gd.stack.removeIf(se -> se.getCard().getName().equals("Grizzly Bears"));
 
         harness.passBothPriorities();

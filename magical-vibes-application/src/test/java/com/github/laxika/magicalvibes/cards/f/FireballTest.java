@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Fireball.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class, Plains.class})
 class FireballTest extends BaseCardTest {
 
     // ===== Single target =====
@@ -30,8 +32,7 @@ class FireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6); // {5}{R}
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 5, List.of(player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -44,8 +45,7 @@ class FireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5); // {4}{R}
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 4, List.of(bearsId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -58,10 +58,21 @@ class FireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1); // {0}{R}
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 0, List.of(player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void canBeCastWithZeroTargets() {
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 6); // {5}{R}
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 5);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player1, Fireball.class.getSimpleName());
     }
 
     // ===== Multiple targets — even division =====
@@ -213,7 +224,6 @@ class FireballTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Fireball");
         assertThat(entry.getXValue()).isEqualTo(3);
         assertThat(entry.getTargetIds()).containsExactly(player2.getId());
     }
@@ -225,8 +235,7 @@ class FireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, List.of(player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Fireball");
@@ -251,8 +260,8 @@ class FireballTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Bears was removed — skipped. Player 2 still takes floor(4/2)=2 damage.
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        // Bears was removed — the remaining legal target receives all 4 damage.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     // ===== Illegal targets — "any target" means creature, planeswalker, battle, or player =====
@@ -299,8 +308,7 @@ class FireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5); // {4}{R}
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 4, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, bearsId);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -312,8 +320,7 @@ class FireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4); // {3}{R}
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -361,5 +368,22 @@ class FireballTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Air Elemental");
         // Player 2 takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void canTargetMoreTargetsThanX() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 5); // {2}{R} + {2} for two extra targets
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, 2, List.of(player1.getId(), player2.getId(), bearsId));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

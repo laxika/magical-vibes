@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -565,6 +566,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Changing a landwalk word on a lord changes the walk ability it grants")
+        @CardUsed({GoblinKing.class, RagingGoblin.class})
         void textChangeRewritesGrantedLandwalk() {
             Permanent king = addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -629,6 +631,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A text change with no duration persists across turns")
+        @CardUsed({GoblinKing.class, RagingGoblin.class})
         void textChangePersistsAcrossTurns() {
             Permanent king = addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -656,6 +659,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Sequential text changes compose in timestamp order")
+        @CardUsed({GoblinKing.class, RagingGoblin.class})
         void sequentialTextChangesCompose() {
             Permanent king = addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -769,6 +773,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A layer 4 chosen-subtype grant feeds later-layer lord effects")
+        @CardUsed({Xenograft.class, GoblinKing.class, GrizzlyBears.class})
         void chosenSubtypeGrantFeedsLaterLayers() {
             Permanent xenograft = addPermanent(player1, new Xenograft());
             xenograft.setChosenSubtype(CardSubtype.GOBLIN);
@@ -1030,6 +1035,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A lord's keyword grant from before the lose-all effect is removed")
+        @CardUsed({GoblinKing.class, RagingGoblin.class, DeepFreeze.class})
         void lordGrantBeforeLoseAllIsRemoved() {
             addReady(player1, new GoblinKing());
             Permanent goblin = addReady(player1, new RagingGoblin());
@@ -1043,6 +1049,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A lord entering after the lose-all effect grants its keyword (later timestamp)")
+        @CardUsed({RagingGoblin.class, DeepFreeze.class, GoblinKing.class})
         void lordGrantAfterLoseAllApplies() {
             Permanent goblin = addReady(player1, new RagingGoblin());
             attach(player2, new DeepFreeze(), goblin);

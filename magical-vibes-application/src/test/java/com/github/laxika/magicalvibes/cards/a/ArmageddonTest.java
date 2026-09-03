@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.t.Taiga;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed(Armageddon.class)
+@CardUsed({Armageddon.class, Forest.class, Mountain.class, Island.class, GrizzlyBears.class, Taiga.class})
 class ArmageddonTest extends BaseCardTest {
 
     @Test
@@ -28,6 +29,18 @@ class ArmageddonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Mountain");
         harness.assertInGraveyard(player2, "Island");
+    }
+
+    @Test
+    @CardUsed(Taiga.class)
+    @DisplayName("Destroys nonbasic lands")
+    void destroysNonbasicLands() {
+        harness.addToBattlefield(player1, new Taiga());
+        harness.castFromHand(player1, new Armageddon(), "{3}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Taiga");
+        harness.assertInGraveyard(player1, "Taiga");
     }
 
     @Test

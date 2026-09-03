@@ -86,8 +86,7 @@ class AnimateWallTest extends BaseCardTest {
     void cannotEnchantNonWall() {
         // A legal Wall target exists (so the Aura is playable), but we aim at the non-Wall.
         addWall();
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new AnimateWall()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

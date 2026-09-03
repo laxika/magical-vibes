@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.w.Weakness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SwordsToPlowshares.class, GrizzlyBears.class, HillGiant.class, Weakness.class})
 class SwordsToPlowsharesTest extends BaseCardTest {
 
     private void giveSwords() {
@@ -27,17 +30,15 @@ class SwordsToPlowsharesTest extends BaseCardTest {
         harness.setLife(player2, 20);
         giveSwords();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         // Target removed from battlefield and moved to exile (not graveyard)
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(target.getId()));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
 
         // Grizzly Bears has power 2 → its controller (player2) gains 2 life
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+        harness.assertLife(player2, 22);
     }
 
     @Test
@@ -47,12 +48,11 @@ class SwordsToPlowsharesTest extends BaseCardTest {
         harness.setLife(player2, 20);
         giveSwords();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         // Hill Giant has power 3 → its controller gains 3 life
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Hill Giant"));
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
+        harness.assertLife(player2, 23);
     }
 
     @Test
@@ -62,12 +62,31 @@ class SwordsToPlowsharesTest extends BaseCardTest {
         harness.setLife(player1, 20);
         giveSwords();
 
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the target's power is negative")
+    void doesNotGainLifeForNegativePower() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+
+        harness.setHand(player1, List.of(new Weakness(), new Weakness()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.setLife(player2, 20);
+        giveSwords();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -91,7 +110,7 @@ class SwordsToPlowsharesTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
         assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Grizzly Bears"));
     }
 }

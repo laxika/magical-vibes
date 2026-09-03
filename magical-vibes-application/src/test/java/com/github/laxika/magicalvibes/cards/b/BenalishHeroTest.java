@@ -28,6 +28,16 @@ class BenalishHeroTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can declare a band containing only a banding creature")
+    void canDeclareBandWithOnlyBandingCreature() {
+        Permanent hero = addCreatureReady(player1, new BenalishHero());
+
+        declareBand(List.of(0), List.of(List.of(0)));
+
+        assertThat(hero.getBandId()).isNotNull();
+    }
+
+    @Test
     @DisplayName("Can band multiple banding attackers with one non-banding attacker")
     void canBandMultipleBandingAttackersWithOneNonBandingAttacker() {
         Permanent hero = addCreatureReady(player1, new BenalishHero());

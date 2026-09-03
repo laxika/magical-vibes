@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FlyingCarpet.class, GrizzlyBears.class})
 class FlyingCarpetTest extends BaseCardTest {
 
     @Test
@@ -89,10 +91,20 @@ class FlyingCarpetTest extends BaseCardTest {
     }
 
     private Permanent addReadyCarpet(Player player) {
-        FlyingCarpet card = new FlyingCarpet();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new FlyingCarpet());
+    }
+
+    @Test
+    void cannotTargetNoncreaturePermanent() {
+        Permanent carpet = addReadyCarpet(player1);
+        Permanent target = addReadyCarpet(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(carpet.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
     }
 }

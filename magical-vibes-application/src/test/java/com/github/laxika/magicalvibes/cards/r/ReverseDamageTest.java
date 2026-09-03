@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +17,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReverseDamage.class, GrizzlyBears.class, LightningBolt.class, ProdigalSorcerer.class})
 class ReverseDamageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Reverse Damage prompts for a source choice")
     void resolvingPromptsForSourceChoice() {
         castReverseDamage(player1);
-        addReadyGoblin(player2);
+        addReadyCreature(player2);
 
         harness.passBothPriorities();
 
@@ -31,14 +35,14 @@ class ReverseDamageTest extends BaseCardTest {
     @DisplayName("Choosing a source records a one-shot life-gain prevention shield")
     void choosingSourceRecordsShield() {
         castReverseDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent creature = addReadyCreature(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.playerId().equals(player1.getId())
-                        && s.sourceId().equals(goblin.getId())
+                        && s.sourceId().equals(creature.getId())
                         && s.gainLife());
     }
 
@@ -47,12 +51,12 @@ class ReverseDamageTest extends BaseCardTest {
     void preventsDamageAndGainsLife() {
         harness.setLife(player1, 20);
         castReverseDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent creature = addReadyCreature(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
 
-        goblin.setAttacking(true);
+        creature.setAttacking(true);
         resolveCombat(player2);
 
         // 2 damage prevented, 2 life gained
@@ -61,12 +65,61 @@ class ReverseDamageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents damage from a chosen spell and gains that much life")
+    void preventsDamageFromChosenSpellAndGainsLife() {
+        harness.setLife(player1, 20);
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player2, List.of(bolt));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        castReverseDamage(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(bolt.getId());
+        harness.handlePermanentChosen(player1, bolt.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A chosen permanent spell remains the source after it resolves")
+    void preventsDamageFromPermanentSpellAfterItResolves() {
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        ProdigalSorcerer sorcererSpell = new ProdigalSorcerer();
+        harness.castFromHand(player2, sorcererSpell, "{2}{U}");
+        castReverseDamage(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(sorcererSpell.getId());
+        harness.handlePermanentChosen(player1, sorcererSpell.getId());
+        harness.passBothPriorities();
+
+        Permanent sorcerer = findPermanent(player2, "Prodigal Sorcerer");
+        sorcerer.setSummoningSick(false);
+        int sorcererIndex = gd.playerBattlefields.get(player2.getId()).indexOf(sorcerer);
+        harness.activateAbility(player2, sorcererIndex, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
     @DisplayName("A different source still deals damage; the shield is untouched")
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         castReverseDamage(player1);
-        Permanent chosen = addReadyGoblin(player2);
-        Permanent other = addReadyGoblin(player2);
+        Permanent chosen = addReadyCreature(player2);
+        Permanent other = addReadyCreature(player2);
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
@@ -83,10 +136,10 @@ class ReverseDamageTest extends BaseCardTest {
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         castReverseDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent creature = addReadyCreature(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
@@ -99,15 +152,10 @@ class ReverseDamageTest extends BaseCardTest {
     }
 
     private void castReverseDamage(Player player) {
-        harness.setHand(player, List.of(new ReverseDamage()));
-        harness.addMana(player, ManaColor.WHITE, 3);
-        harness.castInstant(player, 0);
+        harness.castFromHand(player, new ReverseDamage(), "{1}{W}{W}");
     }
 
-    private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new GoblinPiker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private Permanent addReadyCreature(Player player) {
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

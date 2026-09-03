@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RiverBoa;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
+import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
+import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+@CardUsed({IslandSanctuary.class, GrizzlyBears.class, HowlingMine.class, LordOfAtlantis.class,
+        MerfolkOfThePearlTrident.class, ScrybSprites.class})
 class IslandSanctuaryTest extends BaseCardTest {
 
     /** Advance the controller to their draw step and answer the "skip your draw?" prompt. */
@@ -23,19 +27,9 @@ class IslandSanctuaryTest extends BaseCardTest {
         harness.forceActivePlayer(controller);
         gd.turnNumber = 2; // avoid the starting player's first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UPKEEP -> DRAW: Island Sanctuary offers the skip may-ability
+        harness.passUntil(controller, TurnStep.DRAW);
         harness.handleMayAbilityChosen(controller, skip);
     }
-
-    private void beginAttack(Player attacker) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
-
-    // ===== Skipping the draw grants the shield =====
 
     @Test
     @DisplayName("Skipping the draw does not draw a card")
@@ -66,9 +60,8 @@ class IslandSanctuaryTest extends BaseCardTest {
         resolveDrawStepChoice(player1, true);
 
         addCreatureReady(player2, new GrizzlyBears());
-        beginAttack(player2);
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -79,10 +72,9 @@ class IslandSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IslandSanctuary());
         resolveDrawStepChoice(player1, true);
 
-        addCreatureReady(player2, new SuntailHawk());
-        beginAttack(player2);
+        addCreatureReady(player2, new ScrybSprites());
 
-        assertThatCode(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatCode(() -> declareAttackers(player2, List.of(0)))
                 .doesNotThrowAnyException();
     }
 
@@ -92,10 +84,10 @@ class IslandSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IslandSanctuary());
         resolveDrawStepChoice(player1, true);
 
-        addCreatureReady(player2, new RiverBoa());
-        beginAttack(player2);
+        addCreatureReady(player2, new LordOfAtlantis());
+        addCreatureReady(player2, new MerfolkOfThePearlTrident());
 
-        assertThatCode(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatCode(() -> declareAttackers(player2, List.of(1)))
                 .doesNotThrowAnyException();
     }
 
@@ -106,9 +98,8 @@ class IslandSanctuaryTest extends BaseCardTest {
         resolveDrawStepChoice(player1, false);
 
         addCreatureReady(player2, new GrizzlyBears());
-        beginAttack(player2);
 
-        assertThatCode(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatCode(() -> declareAttackers(player2, List.of(0)))
                 .doesNotThrowAnyException();
     }
 
@@ -122,9 +113,36 @@ class IslandSanctuaryTest extends BaseCardTest {
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
 
         addCreatureReady(player2, new GrizzlyBears());
-        beginAttack(player2);
 
-        assertThatCode(() -> gs.declareAttackers(gd, player2, List.of(0)))
+        assertThatCode(() -> declareAttackers(player2, List.of(0)))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void additionalDrawDuringDrawStepCanBeSkipped() {
+        harness.addToBattlefield(player1, new IslandSanctuary());
+        harness.addToBattlefield(player1, new HowlingMine());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        resolveDrawStepChoice(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void shieldRemainsAfterSanctuaryLeavesBattlefield() {
+        harness.addToBattlefield(player1, new IslandSanctuary());
+        resolveDrawStepChoice(player1, true);
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                permanent -> permanent.getCard() instanceof IslandSanctuary);
+        addCreatureReady(player2, new GrizzlyBears());
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

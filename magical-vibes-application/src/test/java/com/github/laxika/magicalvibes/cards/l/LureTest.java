@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.a.AvenFisher;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Lure.class, AirElemental.class, GrizzlyBears.class, Mountain.class})
 class LureTest extends BaseCardTest {
 
     
@@ -30,8 +31,8 @@ class LureTest extends BaseCardTest {
         lure.setAttachedTo(enchantedAttacker.getId());
         gd.playerBattlefields.get(player1.getId()).add(lure);
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -56,11 +57,9 @@ class LureTest extends BaseCardTest {
         lure.setAttachedTo(enchantedAttacker.getId());
         gd.playerBattlefields.get(player1.getId()).add(lure);
 
-        Permanent untapped = readyCreature(new GrizzlyBears());
-        Permanent tapped = readyCreature(new GrizzlyBears());
+        Permanent untapped = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(untapped);
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -72,16 +71,14 @@ class LureTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures unable to block enchanted attacker are not forced by Lure")
     void unableBlockersNotForced() {
-        Permanent enchantedAttacker = attackingCreature(new AvenFisher());
+        Permanent enchantedAttacker = attackingCreature(new AirElemental());
         gd.playerBattlefields.get(player1.getId()).add(enchantedAttacker);
         Permanent lure = new Permanent(new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
         gd.playerBattlefields.get(player1.getId()).add(lure);
 
-        Permanent nonFlying = readyCreature(new GrizzlyBears());
-        Permanent flying = readyCreature(new AvenFisher());
-        gd.playerBattlefields.get(player2.getId()).add(nonFlying);
-        gd.playerBattlefields.get(player2.getId()).add(flying);
+        Permanent nonFlying = addCreatureReady(player2, new GrizzlyBears());
+        Permanent flying = addCreatureReady(player2, new AirElemental());
 
         prepareDeclareBlockers();
 
@@ -96,16 +93,25 @@ class LureTest extends BaseCardTest {
     }
 
     private Permanent attackingCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
         return permanent;
     }
 
-    private Permanent readyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("Casting Lure attaches it to a target creature")
+    void castingLureAttachesToCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Lure()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isAttached()
+                        && creature.getId().equals(permanent.getAttachedTo()));
     }
 
     // ===== Targeting restriction =====

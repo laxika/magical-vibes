@@ -1,16 +1,20 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Paralyze.class, GrizzlyBears.class, SolRing.class})
 class ParalyzeTest extends BaseCardTest {
 
     // ===== ETB tap =====
@@ -33,6 +37,41 @@ class ParalyzeTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Paralyze")
                         && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Paralyze cannot target a noncreature permanent")
+    void cannotTargetNonCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setHand(player1, List.of(new Paralyze()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The ETB tap uses the creature currently enchanted when it resolves")
+    void etbTapsCurrentEnchantedCreature() {
+        Permanent originalTarget = addCreatureReady(player2, new GrizzlyBears());
+        Permanent currentEnchantedCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Paralyze()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, originalTarget.getId());
+        harness.passBothPriorities(); // resolve the Aura spell
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Paralyze"))
+                .findFirst()
+                .orElseThrow();
+        aura.setAttachedTo(currentEnchantedCreature.getId());
+
+        harness.passBothPriorities(); // resolve the ETB trigger
+
+        assertThat(originalTarget.isTapped()).isFalse();
+        assertThat(currentEnchantedCreature.isTapped()).isTrue();
     }
 
     // ===== Doesn't untap =====

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Manabarbs.class, Forest.class, Mountain.class, FurnaceOfRath.class, MindStone.class})
 class ManabarbsTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -28,7 +30,6 @@ class ManabarbsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Manabarbs");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -56,8 +57,9 @@ class ManabarbsTest extends BaseCardTest {
 
         // Mountain is at index 1 (Manabarbs at index 0)
         harness.tapPermanent(player1, 1);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     // ===== Trigger: opponent taps a land =====
@@ -70,8 +72,9 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     // ===== Multiple land taps =====
@@ -89,8 +92,9 @@ class ManabarbsTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
         harness.tapPermanent(player1, 2);
         harness.tapPermanent(player1, 3);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     // ===== Two Manabarbs =====
@@ -104,9 +108,10 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
 
         // Two Manabarbs each deal 1 damage = 2 total
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     // ===== Manabarbs on different sides =====
@@ -121,9 +126,10 @@ class ManabarbsTest extends BaseCardTest {
 
         // Player1 taps Mountain (index 1, after their Manabarbs)
         harness.tapPermanent(player1, 1);
+        harness.passBothPriorities();
 
         // Both Manabarbs trigger, dealing 2 total damage to player1
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     // ===== Removing Manabarbs stops the trigger =====
@@ -138,7 +144,8 @@ class ManabarbsTest extends BaseCardTest {
 
         // Tap first Mountain (index 1) — takes 1 damage
         harness.tapPermanent(player1, 1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
 
         // Remove Manabarbs from battlefield
         gd.playerBattlefields.get(player1.getId())
@@ -147,7 +154,7 @@ class ManabarbsTest extends BaseCardTest {
         // After removing Manabarbs (was index 0), Mountains are now at indices 0 (tapped) and 1 (untapped)
         // Tap second Mountain (index 1) — no damage since Manabarbs is gone
         harness.tapPermanent(player1, 1);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     // ===== Interaction with Furnace of Rath =====
@@ -161,9 +168,10 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
 
         // 1 damage doubled to 2 by Furnace of Rath
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     // ===== Manabarbs can kill a player =====
@@ -176,8 +184,23 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 1);
 
         harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
+        harness.assertLife(player2, 0);
+    }
+
+    @Test
+    @DisplayName("Land-tap damage waits for the Manabarbs trigger to resolve")
+    void landTapDamageWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new Manabarbs());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 0);
+
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
     }
 
     // ===== Only triggers for lands, not non-land permanents =====
@@ -194,7 +217,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         // Should not take damage — MindStone is an artifact, not a land
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 }
 

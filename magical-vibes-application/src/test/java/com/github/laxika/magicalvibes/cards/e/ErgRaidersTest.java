@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ErgRaiders.class)
 class ErgRaidersTest extends BaseCardTest {
 
     private Permanent addErgRaiders(boolean summoningSick) {
@@ -23,7 +25,7 @@ class ErgRaidersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 
     @Test
@@ -59,14 +61,19 @@ class ErgRaidersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not deal damage when it came under control this turn")
-    void doesNotDamageWhenItCameUnderControlThisTurn() {
+    @DisplayName("Triggers but does not deal damage when it came under control this turn")
+    void triggersButDoesNotDamageWhenItCameUnderControlThisTurn() {
         harness.setLife(player1, 20);
-        addErgRaiders(true);
+        Permanent erg = addErgRaiders(true);
 
         advanceToEndStep();
 
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack).hasSize(1);
+        StackEntry trigger = gd.stack.getFirst();
+        assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(trigger.getSourcePermanentId()).isEqualTo(erg.getId());
+
+        harness.passBothPriorities();
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 }

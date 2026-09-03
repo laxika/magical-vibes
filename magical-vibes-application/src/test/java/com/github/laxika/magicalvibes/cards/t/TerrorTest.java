@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,26 +19,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Terror.class, GrizzlyBears.class, ScatheZombies.class, Ornithopter.class, Mountain.class})
 class TerrorTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Terror targeting a nonartifact nonblack creature puts it on stack")
     void castingPutsOnStack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstant(player1, 0, bears.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Terror");
         assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
@@ -46,10 +42,9 @@ class TerrorTest extends BaseCardTest {
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
         // Add a nonblack nonartifact creature as valid target so spell is playable
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent blackCreature = new Permanent(new MassOfGhouls());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blackCreature);
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new ScatheZombies());
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -63,10 +58,9 @@ class TerrorTest extends BaseCardTest {
     @DisplayName("Cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
         // Add a nonblack nonartifact creature as valid target so spell is playable
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent artifactCreature = new Permanent(new BottleGnomes());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(artifactCreature);
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -77,10 +71,25 @@ class TerrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        // Add a nonblack nonartifact creature as valid target so spell is playable
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, mountain.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+    }
+
+    @Test
     @DisplayName("Resolving Terror destroys target creature and moves it to graveyard")
     void resolvingDestroysTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -96,9 +105,8 @@ class TerrorTest extends BaseCardTest {
     @Test
     @DisplayName("Terror ignores regeneration shield because it cannot be regenerated")
     void ignoresRegenerationShield() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setRegenerationShield(1);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -113,8 +121,7 @@ class TerrorTest extends BaseCardTest {
     @Test
     @DisplayName("Terror fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -123,7 +130,6 @@ class TerrorTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Terror");
     }

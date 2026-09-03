@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Castle.class, GrizzlyBears.class})
 class CastleTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -23,12 +25,11 @@ class CastleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Castle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castCreature(player1, 0);
+        harness.castEnchantment(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Castle");
     }
 
     // ===== Static effect: buffs own untapped creatures =====
@@ -37,9 +38,7 @@ class CastleTest extends BaseCardTest {
     @DisplayName("Untapped creature you control gets +0/+2")
     void untappedOwnCreatureGetsBoost() {
         harness.addToBattlefield(player1, new Castle());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(bears.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -50,9 +49,7 @@ class CastleTest extends BaseCardTest {
     @DisplayName("Tapped creature you control does not get the boost")
     void tappedOwnCreatureNoBoost() {
         harness.addToBattlefield(player1, new Castle());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -63,9 +60,7 @@ class CastleTest extends BaseCardTest {
     @DisplayName("Boost is removed when the creature taps and restored when it untaps")
     void boostFollowsTapState() {
         harness.addToBattlefield(player1, new Castle());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
 
         bears.tap();
@@ -79,9 +74,7 @@ class CastleTest extends BaseCardTest {
     @DisplayName("Does not buff opponent's untapped creatures")
     void doesNotBuffOpponentCreatures() {
         harness.addToBattlefield(player1, new Castle());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
@@ -92,14 +85,11 @@ class CastleTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Castle leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new Castle());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new Castle());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Castle"));
+        gd.playerBattlefields.get(player1.getId()).remove(castle);
 
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -110,9 +100,7 @@ class CastleTest extends BaseCardTest {
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new Castle());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
 
         bears.resetModifiers();

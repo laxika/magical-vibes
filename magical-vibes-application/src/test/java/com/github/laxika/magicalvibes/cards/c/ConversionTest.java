@@ -2,15 +2,17 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Plateau;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Conversion.class, Mountain.class, Plains.class, Plateau.class})
 class ConversionTest extends BaseCardTest {
 
     // ===== Static: All Mountains are Plains =====
@@ -21,7 +23,7 @@ class ConversionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Conversion());
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
@@ -33,7 +35,7 @@ class ConversionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player1, new Conversion());
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
@@ -42,16 +44,24 @@ class ConversionTest extends BaseCardTest {
     @DisplayName("Also converts a Mountain the opponent controls")
     void convertsOpponentMountain() {
         harness.addToBattlefield(player2, new Mountain());
-        Permanent mountain = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.addToBattlefield(player1, new Conversion());
 
-        com.github.laxika.magicalvibes.service.battlefield.GameQueryService.StaticBonus bonus =
-                gqs.computeStaticBonus(gd, mountain);
+        harness.tapPermanent(player2, 0);
 
-        assertThat(bonus.subtypeOverriding()).isTrue();
-        assertThat(bonus.landSubtypeOverriding()).isTrue();
-        assertThat(bonus.grantedSubtypes())
-                .containsExactly(com.github.laxika.magicalvibes.model.CardSubtype.PLAINS);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Mountain Plains dual land becomes a Plains")
+    void convertsMountainPlainsDualLand() {
+        harness.addToBattlefield(player1, new Plateau());
+        harness.addToBattlefield(player1, new Conversion());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 
     @Test
@@ -59,10 +69,10 @@ class ConversionTest extends BaseCardTest {
     void redResumesWhenConversionLeaves() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Conversion());
-        Permanent conversion = gd.playerBattlefields.get(player1.getId()).get(1);
+        var conversion = gd.playerBattlefields.get(player1.getId()).get(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(conversion);
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
@@ -80,6 +90,19 @@ class ConversionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Conversion");
+        harness.assertInGraveyard(player1, "Conversion");
+    }
+
+    @Test
+    @DisplayName("Choosing to pay without enough mana sacrifices Conversion")
+    void unableToPaySacrifices() {
+        harness.addToBattlefield(player1, new Conversion());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Conversion");
         harness.assertInGraveyard(player1, "Conversion");

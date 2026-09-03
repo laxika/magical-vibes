@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CircleOfProtectionArtifacts.class, ObsianusGolem.class, GrizzlyBears.class})
 class CircleOfProtectionArtifactsTest extends BaseCardTest {
 
     @Test
@@ -100,23 +102,14 @@ class CircleOfProtectionArtifactsTest extends BaseCardTest {
     }
 
     private Permanent addReadyCircle(Player player) {
-        Permanent perm = new Permanent(new CircleOfProtectionArtifacts());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CircleOfProtectionArtifacts());
     }
 
     private Permanent addReadyArtifactCreature(Player player) {
-        Permanent perm = new Permanent(new ObsianusGolem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ObsianusGolem());
     }
 
     private Permanent addReadyNonArtifactCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

@@ -5,16 +5,17 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LeyDruid.class, Forest.class, GrizzlyBears.class})
 class LeyDruidTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -22,10 +23,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a land")
     void activatingPutsOnStack() {
-        addReadyDruid(player1);
-        harness.addToBattlefield(player2, new Forest());
-
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -38,9 +37,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability taps Ley Druid")
     void activatingTapsDruid() {
-        Permanent druid = addReadyDruid(player1);
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        Permanent druid = addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -52,9 +50,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps a tapped land")
     void untapsTappedLand() {
-        addReadyDruid(player1);
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
         target.tap();
 
         assertThat(target.isTapped()).isTrue();
@@ -68,9 +65,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Can untap an already untapped land (no-op)")
     void untapsAlreadyUntappedLand() {
-        addReadyDruid(player1);
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThat(target.isTapped()).isFalse();
 
@@ -85,9 +81,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Can untap own tapped land")
     void canUntapOwnLand() {
-        addReadyDruid(player1);
-        harness.addToBattlefield(player1, new Forest());
-        Permanent target = gd.playerBattlefields.get(player1.getId()).get(1);
+        addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
         target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -101,9 +96,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-land creature")
     void cannotTargetNonLandCreature() {
-        addReadyDruid(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).get(0);
+        addCreatureReady(player1, new LeyDruid());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -116,8 +110,7 @@ class LeyDruidTest extends BaseCardTest {
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
         harness.addToBattlefield(player1, new LeyDruid());
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -129,10 +122,9 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent druid = addReadyDruid(player1);
+        Permanent druid = addCreatureReady(player1, new LeyDruid());
         druid.tap();
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -144,9 +136,8 @@ class LeyDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target land is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyDruid(player1);
-        harness.addToBattlefield(player2, new Forest());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.activateAbility(player1, 0, null, target.getId());
 
@@ -159,12 +150,4 @@ class LeyDruidTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyDruid(Player player) {
-        Permanent perm = new Permanent(new LeyDruid());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -7,21 +7,21 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EnergyFlux.class, FountainOfYouth.class, GrizzlyBears.class})
 class EnergyFluxTest extends BaseCardTest {
 
     private void addEnergyFlux(Player controller) {
-        gd.playerBattlefields.get(controller.getId()).add(new Permanent(new EnergyFlux()));
+        harness.addToBattlefield(controller, new EnergyFlux());
     }
 
     private Permanent addFountain(Player controller) {
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(controller.getId()).add(artifact);
-        return artifact;
+        return harness.addToBattlefieldAndReturn(controller, new FountainOfYouth());
     }
 
     @Test
@@ -56,6 +56,21 @@ class EnergyFluxTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without enough mana still sacrifices the artifact")
+    void acceptingWithoutEnoughManaSacrificesArtifact() {
+        addEnergyFlux(player1);
+        addFountain(player1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve trigger -> may-pay prompt
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
     @DisplayName("Grant is global: an opponent's Energy Flux still taxes your artifact")
     void opponentsEnergyFluxTaxesYourArtifact() {
         addEnergyFlux(player2);
@@ -79,6 +94,7 @@ class EnergyFluxTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(opponentArtifact.getId()));
     }
@@ -87,12 +103,12 @@ class EnergyFluxTest extends BaseCardTest {
     @DisplayName("Non-artifact permanents are unaffected")
     void nonArtifactUnaffected() {
         addEnergyFlux(player1);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(bears.getId()));
     }

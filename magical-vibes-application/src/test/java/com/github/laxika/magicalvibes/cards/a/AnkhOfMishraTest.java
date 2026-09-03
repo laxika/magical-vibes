@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AnkhOfMishra.class, Forest.class, Mountain.class, GrizzlyBears.class})
 class AnkhOfMishraTest extends BaseCardTest {
 
     @Test
@@ -24,7 +27,7 @@ class AnkhOfMishraTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new Forest()));
-        harness.castCreature(player2, 0); // plays land via playCard
+        harness.playLand(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities(); // resolve Ankh trigger
@@ -43,7 +46,7 @@ class AnkhOfMishraTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new Mountain()));
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -63,12 +66,31 @@ class AnkhOfMishraTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.setHand(player2, List.of(new Forest()));
-        harness.castCreature(player2, 0);
+        harness.playLand(player2, 0);
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("A non-land entering does not trigger Ankh of Mishra")
+    void nonLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AnkhOfMishra());
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaVault.class, GrizzlyBears.class})
 class ManaVaultTest extends BaseCardTest {
 
     // ===== Mana ability =====
@@ -35,7 +37,7 @@ class ManaVaultTest extends BaseCardTest {
     void doesNotUntapDuringUntapStep() {
         Permanent vault = addVault(player1, true);
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(vault.isTapped()).isTrue();
     }
@@ -53,6 +55,7 @@ class ManaVaultTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(vault.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test
@@ -83,6 +86,19 @@ class ManaVaultTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An untapped Mana Vault deals no damage if it untaps before its draw-step ability resolves")
+    void untappedBeforeDrawTriggerResolvesDealsNoDamage() {
+        Permanent vault = addVault(player1, true);
+        harness.setLife(player1, 20);
+
+        advanceToDraw(player1);
+        vault.untap();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("An untapped Mana Vault deals no damage at the draw step")
     void untappedVaultDealsNoDamage() {
         addVault(player1, false);
@@ -97,12 +113,11 @@ class ManaVaultTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addVault(Player player, boolean tapped) {
-        Permanent perm = new Permanent(new ManaVault());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ManaVault());
         perm.setSummoningSick(false);
         if (tapped) {
             perm.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -115,14 +130,4 @@ class ManaVaultTest extends BaseCardTest {
         harness.passBothPriorities(); // UPKEEP -> DRAW, fires draw-step trigger
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (untap)
-    }
 }
