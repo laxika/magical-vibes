@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Polymorph.class, DrudgeSkeletons.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class})
 class PolymorphTest extends BaseCardTest {
 
     // ===== Targeting =====
@@ -43,16 +45,11 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up library: non-creature on top, creature underneath
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new FountainOfYouth());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new FountainOfYouth(), new GrizzlyBears()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
-
-        gd = harness.getGameData();
 
         // Target creature should be destroyed (in graveyard)
         harness.assertInGraveyard(player1, "Llanowar Elves");
@@ -66,6 +63,22 @@ class PolymorphTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Polymorph destroys a creature despite a regeneration shield")
+    void cannotBeRegenerated() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
+        target.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new Polymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Resolving with creature on top of library puts it directly onto the battlefield")
     void creatureOnTopGoesDirectlyToBattlefield() {
         harness.addToBattlefield(player1, new LlanowarElves());
@@ -73,15 +86,11 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up library: creature on top
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
-
-        gd = harness.getGameData();
 
         // The creature should be on the battlefield
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -98,16 +107,11 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up library with only non-creature cards
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new FountainOfYouth());
-        gd.playerDecks.get(player1.getId()).add(new FountainOfYouth());
+        harness.setLibrary(player1, List.of(new FountainOfYouth(), new FountainOfYouth()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
-
-        gd = harness.getGameData();
 
         // Target was still destroyed
         harness.assertInGraveyard(player1, "Llanowar Elves");
@@ -126,15 +130,11 @@ class PolymorphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        // Empty library
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
-
-        gd = harness.getGameData();
 
         // Target was destroyed
         harness.assertInGraveyard(player1, "Llanowar Elves");
@@ -151,16 +151,11 @@ class PolymorphTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         // Set up opponent's library with creature
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new FountainOfYouth());
-        gd.playerDecks.get(player2.getId()).add(new LlanowarElves());
+        harness.setLibrary(player2, List.of(new FountainOfYouth(), new LlanowarElves()));
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
-
-        gd = harness.getGameData();
 
         // Opponent's creature was destroyed
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -180,15 +175,12 @@ class PolymorphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Polymorph");
     }
@@ -200,9 +192,7 @@ class PolymorphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         UUID targetId = harness.getPermanentId(player1, "Llanowar Elves");
         harness.castSorcery(player1, 0, targetId);
@@ -212,7 +202,6 @@ class PolymorphTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Polymorph still goes to graveyard
         harness.assertInGraveyard(player1, "Polymorph");

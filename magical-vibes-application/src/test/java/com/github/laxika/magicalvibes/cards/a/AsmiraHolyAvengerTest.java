@@ -1,22 +1,32 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BayFalcon;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AsmiraHolyAvenger.class, BayFalcon.class, RayOfCommand.class, DarkBanishing.class})
 class AsmiraHolyAvengerTest extends BaseCardTest {
 
-    private void advanceToEndStepAndResolve() {
+    private void advanceToEndStepAndResolve(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities(); // advance to end step (queues any trigger)
-        harness.passBothPriorities(); // resolve the trigger
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 
     private Permanent addAsmira() {
@@ -31,8 +41,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
         Permanent asmira = addAsmira();
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 2, Integer::sum);
 
-        harness.forceActivePlayer(player1);
-        advanceToEndStepAndResolve();
+        advanceToEndStepAndResolve(player1);
 
         assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -44,8 +53,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 3, Integer::sum);
 
-        harness.forceActivePlayer(player1);
-        advanceToEndStepAndResolve();
+        advanceToEndStepAndResolve(player1);
 
         assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -56,8 +64,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
         Permanent asmira = addAsmira();
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
 
-        harness.forceActivePlayer(player2);
-        advanceToEndStepAndResolve();
+        advanceToEndStepAndResolve(player2);
 
         assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -67,10 +74,35 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
     void noCounterWithoutDeaths() {
         Permanent asmira = addAsmira();
 
-        harness.forceActivePlayer(player1);
-        advanceToEndStepAndResolve();
+        advanceToEndStepAndResolve(player1);
 
         assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not count an opponent-owned creature that you controlled when it died")
+    void doesNotCountOpponentOwnedCreatureThatYouControlledWhenItDied() {
+        Permanent asmira = addAsmira();
+        Permanent falcon = addCreatureReady(player2, new BayFalcon());
+
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        harness.assertInGraveyard(player2, "Bay Falcon");
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(asmira.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

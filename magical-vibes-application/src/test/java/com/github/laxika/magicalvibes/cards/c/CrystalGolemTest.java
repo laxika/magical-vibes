@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrystalGolem.class, Forest.class})
 class CrystalGolemTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,8 @@ class CrystalGolemTest extends BaseCardTest {
     @DisplayName("Only the Golem phases out — the trigger phases out no other permanent")
     void phasesOutOnlyItself() {
         Permanent golem = addGolem();
-        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentPermanent = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         advanceToEndStep(player1);
         harness.passBothPriorities(); // resolve the Golem's trigger only
@@ -64,10 +66,7 @@ class CrystalGolemTest extends BaseCardTest {
     }
 
     private Permanent addGolem() {
-        Permanent perm = new Permanent(new CrystalGolem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new CrystalGolem());
     }
 
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player player) {
@@ -79,7 +78,6 @@ class CrystalGolemTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UNTAP);
     }
 }

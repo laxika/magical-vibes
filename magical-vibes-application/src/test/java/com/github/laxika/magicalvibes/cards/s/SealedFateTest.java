@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,15 +8,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SealedFate.class, Island.class, Forest.class, Mountain.class})
 class SealedFateTest extends BaseCardTest {
 
     private void giveMana(int generic) {
@@ -34,10 +34,8 @@ class SealedFateTest extends BaseCardTest {
         Card c0 = new Island();
         Card c1 = new Forest();
         Card c2 = new Mountain();
-        Card c3 = new GrizzlyBears();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(c0, c1, c2, c3));
+        Card c3 = new SealedFate();
+        harness.setLibrary(player2, List.of(c0, c1, c2, c3));
 
         harness.castSorcery(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
@@ -67,9 +65,7 @@ class SealedFateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SealedFate()));
         giveMana(2);
 
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Forest()));
+        harness.setLibrary(player2, List.of(new Island(), new Forest()));
 
         harness.castSorcery(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
@@ -86,9 +82,7 @@ class SealedFateTest extends BaseCardTest {
         giveMana(4);
 
         Card only = new Island();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.add(only);
+        harness.setLibrary(player2, List.of(only));
 
         harness.castSorcery(player1, 0, 4, player2.getId());
         harness.passBothPriorities();
@@ -106,8 +100,7 @@ class SealedFateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SealedFate()));
         giveMana(0);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -120,10 +113,9 @@ class SealedFateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SealedFate()));
         giveMana(2);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -132,7 +124,7 @@ class SealedFateTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target self — must target an opponent")
     void cannotTargetSelf() {
-        harness.setHand(player1, new ArrayList<>(List.of(new SealedFate(), new GrizzlyBears())));
+        harness.setHand(player1, List.of(new SealedFate()));
         giveMana(2);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, player1.getId()))

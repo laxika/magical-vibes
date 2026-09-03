@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.c.CloakOfInvisibility;
+import com.github.laxika.magicalvibes.cards.f.Foratog;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.s.SandbarCrocodile;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,45 +18,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KarooMeerkat.class, Boomerang.class, CloakOfInvisibility.class, Foratog.class,
+        Incinerate.class, SandbarCrocodile.class})
 class KarooMeerkatTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Blue creature cannot block Karoo Meerkat")
     void blueCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new KarooMeerkat());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new KarooMeerkat());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Merfolk Scout", 2, 2, CardColor.BLUE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new SandbarCrocodile());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -67,19 +40,12 @@ class KarooMeerkatTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature can block Karoo Meerkat")
     void greenCreatureCanBlock() {
-        Permanent attacker = new Permanent(new KarooMeerkat());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new KarooMeerkat());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new Foratog());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -89,22 +55,16 @@ class KarooMeerkatTest extends BaseCardTest {
     @Test
     @DisplayName("Karoo Meerkat takes no combat damage from a blue creature")
     void takesNoDamageFromBlue() {
-        Permanent attacker = new Permanent(createCreature("Sea Serpent", 5, 5, CardColor.BLUE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SandbarCrocodile());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new KarooMeerkat());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new KarooMeerkat());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
+        assertThat(blocker.getMarkedDamage()).isZero();
 
         harness.assertOnBattlefield(player2, "Karoo Meerkat");
     }
@@ -112,22 +72,14 @@ class KarooMeerkatTest extends BaseCardTest {
     @Test
     @DisplayName("Karoo Meerkat dies to combat damage from a green creature")
     void takesNormalDamageFromGreen() {
-        Permanent attacker = new Permanent(createCreature("Big Green", 3, 3, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Foratog());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new KarooMeerkat());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new KarooMeerkat());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertInGraveyard(player2, "Karoo Meerkat");
     }
@@ -135,18 +87,13 @@ class KarooMeerkatTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by a blue instant")
     void cannotBeTargetedByBlueInstant() {
-        Permanent meerkat = new Permanent(new KarooMeerkat());
-        meerkat.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(meerkat);
+        Permanent meerkat = addCreatureReady(player2, new KarooMeerkat());
+        addCreatureReady(player2, new Foratog());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Blue Zap", CardColor.BLUE, "{U}")));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, meerkat.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, meerkat.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from blue");
     }
@@ -154,16 +101,31 @@ class KarooMeerkatTest extends BaseCardTest {
     @Test
     @DisplayName("Can be targeted by a red instant")
     void canBeTargetedByRedInstant() {
-        Permanent meerkat = new Permanent(new KarooMeerkat());
-        meerkat.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(meerkat);
+        Permanent meerkat = addCreatureReady(player2, new KarooMeerkat());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Red Zap", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, meerkat.getId(), null);
+        harness.castInstant(player1, 0, meerkat.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Red Zap");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Karoo Meerkat");
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a blue Aura")
+    void cannotBeEnchantedByBlueAura() {
+        Permanent meerkat = addCreatureReady(player2, new KarooMeerkat());
+
+        harness.setHand(player1, List.of(new CloakOfInvisibility()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, meerkat.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
     }
 }

@@ -1,40 +1,33 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoralFighters.class, FemerefScouts.class, ViashinoWarrior.class, Forest.class})
 class CoralFightersTest extends BaseCardTest {
 
-    private Permanent addAttacker() {
-        Permanent atk = new Permanent(new CoralFighters());
-        atk.setSummoningSick(false);
-        atk.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atk);
-        return atk;
+    private void addAttacker() {
+        addCreatureReady(player1, new CoralFighters());
     }
 
     private void setDefenderLibrary() {
-        harness.setLibrary(player2, new ArrayList<>(List.of(new GrizzlyBears(), new HillGiant(), new Forest())));
+        harness.setLibrary(player2, List.of(new FemerefScouts(), new ViashinoWarrior(), new Forest()));
     }
 
     private void attackUnblocked() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
+        declareAttackers(List.of(0));
 
         // Advance into the declare-blockers step (the defender has no blockers), firing the
         // "attacks and isn't blocked" trigger, then resolve it to present the may choice.
@@ -62,7 +55,7 @@ class CoralFightersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(libraryNames()).containsExactly("Hill Giant", "Forest", "Grizzly Bears");
+        assertThat(libraryNames()).containsExactly("Viashino Warrior", "Forest", "Femeref Scouts");
     }
 
     @Test
@@ -78,7 +71,7 @@ class CoralFightersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(libraryNames()).containsExactly("Grizzly Bears", "Hill Giant", "Forest");
+        assertThat(libraryNames()).containsExactly("Femeref Scouts", "Viashino Warrior", "Forest");
     }
 
     @Test
@@ -86,27 +79,22 @@ class CoralFightersTest extends BaseCardTest {
     void blockedNoTrigger() {
         setDefenderLibrary();
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new FemerefScouts());
 
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(libraryNames()).containsExactly("Grizzly Bears", "Hill Giant", "Forest");
+        assertThat(libraryNames()).containsExactly("Femeref Scouts", "Viashino Warrior", "Forest");
     }
 
     @Test
     @DisplayName("Empty defender library presents no choice")
     void emptyLibraryNoChoice() {
-        harness.setLibrary(player2, new ArrayList<>());
+        harness.setLibrary(player2, List.of());
         addAttacker();
 
         attackUnblocked();

@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WarpingWurm.class})
 class WarpingWurmTest extends BaseCardTest {
 
     @Test
@@ -33,9 +35,27 @@ class WarpingWurmTest extends BaseCardTest {
         advanceTurn(); // player1's untap step phases it back in
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
 
-        harness.passBothPriorities(); // resolve the phase-in trigger and the upkeep trigger
+        harness.passBothPriorities(); // resolve the phase-in trigger
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Phasing in again puts another +1/+1 counter on the Wurm")
+    void phasesInAgainWithAnotherCounter() {
+        Permanent wurm = phasedOutWurm();
+
+        advanceTurn();
+        advanceTurn();
+        harness.passBothPriorities();
+        resolveUntilPayPrompt();
+        harness.handleMayAbilityChosen(player1, false);
+
+        advanceTurn();
+        advanceTurn();
+        harness.passBothPriorities();
+
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -68,6 +88,7 @@ class WarpingWurmTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     /**

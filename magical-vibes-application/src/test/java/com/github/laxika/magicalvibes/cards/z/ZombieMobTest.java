@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.cards.s.SabertoothCobra;
+import com.github.laxika.magicalvibes.cards.s.ShallowGrave;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,49 +14,66 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ZombieMob.class, SabertoothCobra.class, DarkBanishing.class, ShallowGrave.class})
 class ZombieMobTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters with a +1/+1 counter for each creature card in controller's graveyard")
     void entersWithCountersPerCreatureCard() {
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new Shock()); // not a creature card
+        harness.setGraveyard(player1, List.of(
+                new SabertoothCobra(), new SabertoothCobra(), new DarkBanishing()));
 
         castMob();
 
-        Permanent mob = findMob();
-        assertThat(mob).isNotNull();
+        Permanent mob = findPermanent(player1, "Zombie Mob");
         assertThat(mob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Exiles all creature cards from controller's graveyard, leaving non-creature cards")
     void exilesCreatureCardsFromGraveyard() {
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player1.getId()).add(new Shock());
+        harness.setGraveyard(player1, List.of(
+                new SabertoothCobra(), new SabertoothCobra(), new DarkBanishing()));
 
         castMob();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactly("Shock");
+                .containsExactly("Dark Banishing");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactly("Grizzly Bears", "Grizzly Bears");
+                .containsExactly("Sabertooth Cobra", "Sabertooth Cobra");
     }
 
     @Test
     @DisplayName("Does not touch the opponent's graveyard")
     void leavesOpponentGraveyardAlone() {
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player2.getId()).add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new SabertoothCobra()));
+        harness.setGraveyard(player2, List.of(new SabertoothCobra()));
 
         castMob();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
-        assertThat(findMob().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Zombie Mob")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts itself when it enters from its controller's graveyard")
+    void countsItselfWhenReturnedFromGraveyard() {
+        harness.setGraveyard(player1, List.of(new SabertoothCobra(), new ZombieMob()));
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+
+        resolveAllTriggers();
+
+        Permanent mob = findPermanent(player1, "Zombie Mob");
+        assertThat(mob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Shallow Grave");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Sabertooth Cobra");
     }
 
     @Test
@@ -68,22 +85,7 @@ class ZombieMobTest extends BaseCardTest {
     }
 
     private void castMob() {
-        harness.setHand(player1, List.of(new ZombieMob()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.WHITE, 2); // 2 generic
-
-        gs.playCard(gd, player1, 0, 0, null, null);
-        harness.passBothPriorities(); // resolve the creature spell
-        harness.passBothPriorities(); // resolve the enters-the-battlefield exile trigger
-    }
-
-    private Permanent findMob() {
-        return findMob(player1);
-    }
-
-    private Permanent findMob(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Zombie Mob"))
-                .findFirst().orElse(null);
+        harness.castFromHand(player1, new ZombieMob(), "{2}{B}{B}");
+        resolveAllTriggers();
     }
 }

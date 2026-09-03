@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.cards.e.EnergyBolt;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReflectDamage.class, FemerefScouts.class, EnergyBolt.class})
 class ReflectDamageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Reflect Damage prompts for a source choice")
     void resolvingPromptsForSourceChoice() {
         castReflectDamage(player1);
-        addReadyGoblin(player2);
+        addReadySource(player2);
 
         harness.passBothPriorities();
 
@@ -31,12 +34,12 @@ class ReflectDamageTest extends BaseCardTest {
     @DisplayName("Choosing a source records a one-shot redirection shield")
     void choosingSourceRecordsShield() {
         castReflectDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent source = addReadySource(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.reflectDamageToSourceControllerShields).contains(goblin.getId());
+        assertThat(gd.reflectDamageToSourceControllerShields).contains(source.getId());
     }
 
     @Test
@@ -45,16 +48,16 @@ class ReflectDamageTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         castReflectDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent source = addReadySource(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, source.getId());
 
-        goblin.setAttacking(true);
+        source.setAttacking(true);
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 19);
         assertThat(gd.reflectDamageToSourceControllerShields).isEmpty();
     }
 
@@ -64,8 +67,8 @@ class ReflectDamageTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         castReflectDamage(player1);
-        Permanent chosen = addReadyGoblin(player2);
-        Permanent other = addReadyGoblin(player2);
+        Permanent chosen = addReadySource(player2);
+        Permanent other = addReadySource(player2);
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
@@ -73,7 +76,7 @@ class ReflectDamageTest extends BaseCardTest {
         other.setAttacking(true);
         resolveCombat(player2);
 
-        harness.assertLife(player1, 18);
+        harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
         assertThat(gd.reflectDamageToSourceControllerShields).contains(chosen.getId());
     }
@@ -84,31 +87,31 @@ class ReflectDamageTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         castReflectDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent source = addReadySource(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, source.getId());
 
-        goblin.setAttacking(true);
+        source.setAttacking(true);
         resolveCombat(player2);
         harness.assertLife(player1, 20);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 19);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        goblin.setAttacking(true);
+        source.setAttacking(true);
         resolveCombat(player2);
-        harness.assertLife(player1, 18);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         castReflectDamage(player1);
-        Permanent goblin = addReadyGoblin(player2);
+        Permanent source = addReadySource(player2);
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.handlePermanentChosen(player1, source.getId());
 
         assertThat(gd.reflectDamageToSourceControllerShields).isNotEmpty();
 
@@ -120,18 +123,25 @@ class ReflectDamageTest extends BaseCardTest {
         assertThat(gd.reflectDamageToSourceControllerShields).isEmpty();
     }
 
-    private void castReflectDamage(Player player) {
-        harness.setHand(player, List.of(new ReflectDamage()));
-        harness.addMana(player, ManaColor.COLORLESS, 3);
-        harness.addMana(player, ManaColor.RED, 1);
-        harness.addMana(player, ManaColor.WHITE, 1);
-        harness.castInstant(player, 0);
+    @Test
+    @DisplayName("A spell on the stack can be chosen as the source")
+    void spellOnStackCanBeChosenAsSource() {
+        harness.setHand(player1, List.of(new EnergyBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 1, player2.getId(), List.of());
+
+        castReflectDamage(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
-    private Permanent addReadyGoblin(Player player) {
-        Permanent perm = new Permanent(new GoblinPiker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private void castReflectDamage(Player player) {
+        harness.castFromHand(player, new ReflectDamage(), "{3}{R}{W}");
+    }
+
+    private Permanent addReadySource(Player player) {
+        return addCreatureReady(player, new FemerefScouts());
     }
 }

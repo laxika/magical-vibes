@@ -1,40 +1,66 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(DiscordantSpirit.class)
 class DiscordantSpiritTest extends BaseCardTest {
 
     private Permanent addSpirit() {
-        Permanent spirit = new Permanent(new DiscordantSpirit());
-        gd.playerBattlefields.get(player1.getId()).add(spirit);
-        return spirit;
+        return addCreatureReady(player1, new DiscordantSpirit());
     }
 
-    private void advanceToEndStepAndResolve(UUID activePlayerId) {
-        harness.forceActivePlayer(activePlayerId.equals(player1.getId()) ? player1 : player2);
+    private void advanceToEndStep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void advanceToEndStepAndResolve(Player activePlayer) {
+        advanceToEndStep(activePlayer);
+        resolveAllTriggers();
     }
 
     @Test
     @DisplayName("Gets a +1/+1 counter per damage dealt to its controller during the opponent's end step")
     void gainsCountersOnOpponentTurn() {
         Permanent spirit = addSpirit();
-        gd.recordDamageToPlayer(player1.getId(), 3);
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
 
-        advanceToEndStepAndResolve(player2.getId());
+        advanceToEndStepAndResolve(player2);
+
+        assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed(Incinerate.class)
+    @DisplayName("Counts damage dealt after the opponent's end-step trigger is put on the stack")
+    void countsDamageDealtAfterTriggerIsPutOnStack() {
+        Permanent spirit = addSpirit();
+
+        advanceToEndStep(player2);
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
@@ -44,7 +70,7 @@ class DiscordantSpiritTest extends BaseCardTest {
     void noCountersWithoutDamage() {
         Permanent spirit = addSpirit();
 
-        advanceToEndStepAndResolve(player2.getId());
+        advanceToEndStepAndResolve(player2);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -55,7 +81,7 @@ class DiscordantSpiritTest extends BaseCardTest {
         Permanent spirit = addSpirit();
         gd.recordDamageToPlayer(player2.getId(), 4);
 
-        advanceToEndStepAndResolve(player2.getId());
+        advanceToEndStepAndResolve(player2);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -66,7 +92,7 @@ class DiscordantSpiritTest extends BaseCardTest {
         Permanent spirit = addSpirit();
         gd.recordDamageToPlayer(player1.getId(), 2);
 
-        advanceToEndStepAndResolve(player1.getId());
+        advanceToEndStepAndResolve(player1);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -77,7 +103,7 @@ class DiscordantSpiritTest extends BaseCardTest {
         Permanent spirit = addSpirit();
         spirit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
 
-        advanceToEndStepAndResolve(player1.getId());
+        advanceToEndStepAndResolve(player1);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -89,7 +115,7 @@ class DiscordantSpiritTest extends BaseCardTest {
         spirit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         gd.recordDamageToPlayer(player1.getId(), 1);
 
-        advanceToEndStepAndResolve(player2.getId());
+        advanceToEndStepAndResolve(player2);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }

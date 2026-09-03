@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrystalVein;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,40 +19,40 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BarrelingAttack.class, CrystalVein.class, DarkBanishing.class, ViashinoWarrior.class})
 class BarrelingAttackTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving grants trample to the target")
     void grantsTrample() {
-        Permanent bear = readyCreature(player1);
-        castBarrelingAttack(bear);
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        castBarrelingAttack(target);
 
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
     @DisplayName("Trample wears off at end of turn")
     void trampleWearsOff() {
-        Permanent bear = readyCreature(player1);
-        castBarrelingAttack(bear);
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        castBarrelingAttack(target);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        readyCreature(player1);
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new CrystalVein());
         harness.setHand(player1, List.of(new BarrelingAttack()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID fountainId = harness.getPermanentId(player1, "Fountain of Youth");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, fountainId))
+        UUID crystalVeinId = harness.getPermanentId(player1, "Crystal Vein");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, crystalVeinId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -59,28 +60,28 @@ class BarrelingAttackTest extends BaseCardTest {
     @Test
     @DisplayName("Becoming blocked by one creature gives the target +1/+1")
     void oneBlockerGivesPlusOnePlusOne() {
-        Permanent bear = readyCreature(player1);
-        readyCreature(player2);
-        castBarrelingAttack(bear);
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
 
-        bear.setAttacking(true);
+        target.setAttacking(true);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Becoming blocked by two creatures gives the target +2/+2")
     void twoBlockersGivePlusTwoPlusTwo() {
-        Permanent bear = readyCreature(player1);
-        readyCreature(player2);
-        readyCreature(player2);
-        castBarrelingAttack(bear);
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
 
-        bear.setAttacking(true);
+        target.setAttacking(true);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -88,30 +89,53 @@ class BarrelingAttackTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The blocking bonus wears off at end of turn")
+    void blockingBonusWearsOff() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
     }
 
     @Test
     @DisplayName("Staying unblocked gives no boost")
     void unblockedGivesNoBoost() {
-        Permanent bear = readyCreature(player1);
-        castBarrelingAttack(bear);
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        castBarrelingAttack(target);
 
-        bear.setAttacking(true);
+        target.setAttacking(true);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(target.getPowerModifier()).isZero();
     }
 
     @Test
     @DisplayName("A creature that was not the target gets no boost when blocked")
     void untargetedCreatureGetsNoBoost() {
-        Permanent target = readyCreature(player1);
-        Permanent other = readyCreature(player1);
-        readyCreature(player2);
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        Permanent other = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
         castBarrelingAttack(target);
 
         other.setAttacking(true);
@@ -122,6 +146,45 @@ class BarrelingAttackTest extends BaseCardTest {
         assertThat(other.getPowerModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Casting after blockers are declared does not trigger the blocking bonus")
+    void castingAfterBlockersAreDeclaredDoesNotTriggerBonus() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        castBarrelingAttack(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A blocker removed before the trigger resolves is not counted")
+    void blockerRemovedBeforeTriggerResolvesIsNotCounted() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        Permanent blocker = addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, blocker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
     private void castBarrelingAttack(Permanent target) {
         harness.setHand(player1, List.of(new BarrelingAttack()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -130,10 +193,4 @@ class BarrelingAttackTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent readyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -193,8 +193,7 @@ class SevenLayerTest extends BaseCardTest {
     private void castMindBend(Player player, UUID targetId, String fromWord, String toWord) {
         harness.setHand(player, List.of(new MindBend()));
         harness.addMana(player, ManaColor.BLUE, 1);
-        harness.castInstant(player, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, targetId);
         harness.handleListChoice(player, fromWord);
         harness.handleListChoice(player, toWord);
     }
@@ -542,7 +541,7 @@ class SevenLayerTest extends BaseCardTest {
     }
 
     // =====================================================================================
-    // Layer 3 — text-changing effects (CR 613.2c, 612)
+    // Layer 3 — text-changing effects (CR 613.1c, 612)
     // =====================================================================================
 
     @Nested
@@ -669,14 +668,14 @@ class SevenLayerTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("A text change updates a matching color chosen as the permanent entered")
-        void textChangeUpdatesChosenColor() {
+        @DisplayName("A text change does not change a color chosen as the permanent entered")
+        void textChangeDoesNotUpdateChosenColor() {
             Permanent voice = addReady(player2, new VoiceOfAll());
             voice.setChosenColor(CardColor.BLACK);
 
             castMindBend(player1, voice.getId(), "BLACK", "RED");
 
-            assertThat(voice.getChosenColor()).isEqualTo(CardColor.RED);
+            assertThat(voice.getChosenColor()).isEqualTo(CardColor.BLACK);
         }
     }
 

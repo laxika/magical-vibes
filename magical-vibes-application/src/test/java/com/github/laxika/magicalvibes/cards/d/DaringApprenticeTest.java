@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DaringApprentice.class, Fog.class, GrizzlyBears.class})
 class DaringApprenticeTest extends BaseCardTest {
 
     @Test
@@ -22,12 +22,10 @@ class DaringApprenticeTest extends BaseCardTest {
         apprentice.setSummoningSick(false);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         // Player2 casts Grizzly Bears
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, bears, "{1}{G}");
         harness.passPriority(player2);
 
         // Player1 activates Daring Apprentice targeting Grizzly Bears
@@ -53,11 +51,9 @@ class DaringApprenticeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DaringApprentice());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, bears, "{1}{G}");
         harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
@@ -71,11 +67,9 @@ class DaringApprenticeTest extends BaseCardTest {
         apprentice.setSummoningSick(false);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, bears, "{1}{G}");
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, bears.getId());
 
@@ -89,5 +83,25 @@ class DaringApprenticeTest extends BaseCardTest {
 
         // Daring Apprentice is still sacrificed (cost was already paid)
         harness.assertInGraveyard(player1, "Daring Apprentice");
+    }
+
+    @Test
+    @DisplayName("Counters a noncreature spell")
+    void countersNoncreatureSpell() {
+        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new DaringApprentice());
+        apprentice.setSummoningSick(false);
+
+        Fog fog = new Fog();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, fog, "{G}");
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, fog.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fog");
+        harness.assertNotOnBattlefield(player2, "Fog");
+        harness.assertInGraveyard(player1, "Daring Apprentice");
+        assertThat(gd.stack).isEmpty();
     }
 }

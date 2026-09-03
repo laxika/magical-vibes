@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinEliteInfantry.class, GrizzlyBears.class, HighGround.class})
 class GoblinEliteInfantryTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,7 +25,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Goblin Elite Infantry puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new GoblinEliteInfantry()));
+        GoblinEliteInfantry card = new GoblinEliteInfantry();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);
@@ -33,20 +34,22 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Goblin Elite Infantry");
+        assertThat(entry.getCard()).isInstanceOf(GoblinEliteInfantry.class);
     }
 
     @Test
     @DisplayName("Resolving puts Goblin Elite Infantry onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new GoblinEliteInfantry()));
+        GoblinEliteInfantry card = new GoblinEliteInfantry();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof GoblinEliteInfantry);
     }
 
     // ===== Block trigger (when this creature blocks) =====
@@ -54,44 +57,34 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking pushes a triggered ability onto the stack")
     void blockTriggerPushesOntoStack() {
-        Permanent goblinPerm = addGoblinReady(player2);
+        Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Goblin Elite Infantry");
+        assertThat(entry.getCard()).isInstanceOf(GoblinEliteInfantry.class);
         assertThat(entry.getSourcePermanentId()).isEqualTo(goblinPerm.getId());
     }
 
     @Test
     @DisplayName("Resolving block trigger gives -1/-1 until end of turn")
     void blockTriggerGivesMinusOneMinusOne() {
-        Permanent goblinPerm = addGoblinReady(player2);
+        Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
         assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
@@ -104,43 +97,33 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Becoming blocked pushes a triggered ability onto the stack")
     void becomesBlockedTriggerPushesOntoStack() {
-        Permanent goblinPerm = addGoblinReady(player1);
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
         goblinPerm.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).anyMatch(entry ->
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getCard().getName().equals("Goblin Elite Infantry")
+                        && entry.getCard() instanceof GoblinEliteInfantry
                         && entry.getSourcePermanentId().equals(goblinPerm.getId()));
     }
 
     @Test
     @DisplayName("Resolving becomes-blocked trigger gives -1/-1 until end of turn")
     void becomesBlockedTriggerGivesMinusOneMinusOne() {
-        Permanent goblinPerm = addGoblinReady(player1);
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
         goblinPerm.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
         assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
@@ -148,27 +131,45 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         assertThat(goblinPerm.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Blocking multiple creatures triggers only once")
+    void blockTriggerFiresOnlyOnceWhenBlockingMultipleCreatures() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
+        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
+        attacker1.setAttacking(true);
+        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
+        attacker2.setAttacking(true);
+
+        prepareDeclareBlockers();
+        int goblinIndex = gd.playerBattlefields.get(player2.getId()).indexOf(goblinPerm);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(goblinIndex, 0),
+                new BlockerAssignment(goblinIndex, 1)));
+
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getCard() instanceof GoblinEliteInfantry))
+                .hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
+        assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
+    }
+
     // ===== Becomes blocked fires only once with multiple blockers =====
 
     @Test
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
-        Permanent goblinPerm = addGoblinReady(player1);
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
         TestCards.mutableCard(goblinPerm).setPower(4);
         TestCards.mutableCard(goblinPerm).setToughness(4);
         goblinPerm.setAttacking(true);
 
-        Permanent blocker1 = new Permanent(new GrizzlyBears());
-        blocker1.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker1);
-        Permanent blocker2 = new Permanent(new GrizzlyBears());
-        blocker2.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -177,7 +178,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
 
         // Should only have one becomes-blocked trigger for Goblin Elite Infantry
         long goblinTriggerCount = gd.stack.stream()
-                .filter(entry -> entry.getCard().getName().equals("Goblin Elite Infantry"))
+                .filter(entry -> entry.getSourcePermanentId().equals(goblinPerm.getId()))
                 .count();
         assertThat(goblinTriggerCount).isEqualTo(1);
     }
@@ -187,15 +188,12 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Both block and becomes-blocked triggers fire when two Goblin Elite Infantry face each other")
     void bothTriggersFireWhenTwoGoblinsInCombat() {
-        Permanent attackerGoblin = addGoblinReady(player1);
+        Permanent attackerGoblin = addCreatureReady(player1, new GoblinEliteInfantry());
         attackerGoblin.setAttacking(true);
 
-        Permanent blockerGoblin = addGoblinReady(player2);
+        addCreatureReady(player2, new GoblinEliteInfantry());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -203,7 +201,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack).allMatch(entry ->
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getCard().getName().equals("Goblin Elite Infantry"));
+                        && entry.getCard() instanceof GoblinEliteInfantry);
 
         // APNAP ordering: AP's trigger (becomes-blocked) on bottom, NAP's trigger (block) on top
         // NAP's trigger resolves first (LIFO)
@@ -216,23 +214,18 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("-1/-1 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
-        Permanent goblinPerm = addGoblinReady(player2);
+        Permanent goblinPerm = addCreatureReady(player2, new GoblinEliteInfantry());
         // Increase toughness so goblin survives combat damage from Bears
         TestCards.mutableCard(goblinPerm).setPower(4);
         TestCards.mutableCard(goblinPerm).setToughness(4);
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Verify -1/-1 applied (4/4 becomes 3/3 effective)
         assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
@@ -255,24 +248,19 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Block trigger fizzles if Goblin Elite Infantry is removed before resolution")
     void blockTriggerFizzlesIfRemoved() {
-        addGoblinReady(player2);
+        addCreatureReady(player2, new GoblinEliteInfantry());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Remove goblin before trigger resolves
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Stack should be empty and no crash
         assertThat(gd.stack).isEmpty();
@@ -283,53 +271,31 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @Test
     @DisplayName("Becomes-blocked trigger generates appropriate game log entry")
     void becomesBlockedTriggerGeneratesLog() {
-        Permanent goblinPerm = addGoblinReady(player1);
+        Permanent goblinPerm = addCreatureReady(player1, new GoblinEliteInfantry());
         goblinPerm.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Goblin Elite Infantry") && log.contains("becomes-blocked") && log.contains("trigger"));
+        assertThat(gameLogContains("'s becomes-blocked ability triggers.")).isTrue();
     }
 
     @Test
     @DisplayName("Block trigger generates appropriate game log entry")
     void blockTriggerGeneratesLog() {
-        addGoblinReady(player2);
+        addCreatureReady(player2, new GoblinEliteInfantry());
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
+        Permanent atkPerm = addCreatureReady(player1, new GrizzlyBears());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Goblin Elite Infantry") && log.contains("block") && log.contains("trigger"));
-    }
-
-    // ===== Helper methods =====
-
-    private Permanent addGoblinReady(Player player) {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gameLogContains("'s block ability triggers.")).isTrue();
     }
 }
 

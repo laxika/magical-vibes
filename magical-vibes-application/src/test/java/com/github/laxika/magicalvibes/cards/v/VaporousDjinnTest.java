@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(VaporousDjinn.class)
 class VaporousDjinnTest extends BaseCardTest {
 
     @Test
@@ -55,6 +57,19 @@ class VaporousDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting with only nonblue mana still phases the Djinn out")
+    void acceptWithOnlyNonblueManaPhasesOut() {
+        Permanent djinn = addDjinn();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(djinn);
+    }
+
+    @Test
     @DisplayName("A phased-out Djinn phases in during its controller's next untap step")
     void phasesBackIn() {
         Permanent djinn = addDjinn();
@@ -85,14 +100,10 @@ class VaporousDjinnTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UNTAP);
     }
 
     private Permanent addDjinn() {
-        Permanent perm = new Permanent(new VaporousDjinn());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new VaporousDjinn());
     }
 }

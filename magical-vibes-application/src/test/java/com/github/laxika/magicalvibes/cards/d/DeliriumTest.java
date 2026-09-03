@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Delirium.class, FemerefScouts.class, Forest.class})
 class DeliriumTest extends BaseCardTest {
 
     @Test
@@ -42,6 +45,42 @@ class DeliriumTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents combat damage dealt to and by the target creature in combat")
+    void preventsCombatDamageInBothDirections() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent target = addCreature(player2, 2, 2);
+        target.setAttacking(true);
+        target.setAttackTarget(player1.getId());
+        Permanent blocker = addCreature(player1, 3, 3);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.forceActivePlayer(player2);
+        castDelirium(target);
+        resolveCombat(player2);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target an already tapped creature")
+    void canTargetAlreadyTappedCreature() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player2, 20);
+        Permanent target = addCreature(player2, 3, 3);
+        target.tap();
+
+        castDelirium(target);
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("Cannot be cast during the caster's own turn")
     void cannotBeCastOnOwnTurn() {
         harness.forceActivePlayer(player1);
@@ -63,6 +102,17 @@ class DeliriumTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreature() {
+        harness.forceActivePlayer(player2);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void prepareCast() {
         harness.setHand(player1, List.of(new Delirium()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -77,12 +127,9 @@ class DeliriumTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player owner, int power, int toughness) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        Card creature = new FemerefScouts();
+        creature.setPower(power);
+        creature.setToughness(toughness);
+        return addCreatureReady(owner, creature);
     }
 }

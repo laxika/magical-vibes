@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BayFalcon;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Sandstorm.class, BayFalcon.class, GiantMantis.class})
 class SandstormTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to each attacking creature")
     void deals1DamageToEachAttackingCreature() {
         harness.forceActivePlayer(player1);
-        Permanent a1 = addAttacker(player1, player2, makeCreature("Bear", 2, 2));
-        Permanent a2 = addAttacker(player1, player2, makeCreature("Bear", 2, 2));
+        Permanent a1 = addAttacker(player1, player2, new GiantMantis());
+        Permanent a2 = addAttacker(player1, player2, new GiantMantis());
         castSandstorm();
 
         assertThat(a1.getMarkedDamage()).isEqualTo(1);
@@ -33,53 +34,34 @@ class SandstormTest extends BaseCardTest {
     @DisplayName("Kills 1-toughness attacking creatures")
     void killsOneToughnessAttackers() {
         harness.forceActivePlayer(player1);
-        addAttacker(player1, player2, makeCreature("Goblin", 2, 1));
+        addAttacker(player1, player2, new BayFalcon());
         castSandstorm();
 
-        harness.assertNotOnBattlefield(player1, "Goblin");
-        harness.assertInGraveyard(player1, "Goblin");
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        harness.assertInGraveyard(player1, "Bay Falcon");
     }
 
     @Test
     @DisplayName("Does not damage non-attacking creatures")
     void doesNotDamageNonAttackers() {
         harness.forceActivePlayer(player1);
-        addAttacker(player1, player2, makeCreature("Bear", 2, 2));
-        Permanent idle = new Permanent(makeCreature("Wall", 0, 4));
-        idle.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(idle);
+        addAttacker(player1, player2, new BayFalcon());
+        Permanent idle = addCreatureReady(player1, new GiantMantis());
         castSandstorm();
 
         assertThat(idle.getMarkedDamage()).isZero();
     }
 
-    // ===== Helpers =====
-
     private void castSandstorm() {
-        harness.setHand(player2, List.of(new Sandstorm()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new Sandstorm(), "{G}");
         harness.passBothPriorities();
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(controller, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(perm);
         return perm;
-    }
-
-    private Card makeCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
     }
 }

@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoulEcho.class, Incinerate.class, NobleElephant.class})
 class SoulEchoTest extends BaseCardTest {
 
     /**
@@ -21,8 +24,7 @@ class SoulEchoTest extends BaseCardTest {
      * player1's upkeep, targets player2 with the trigger and resolves it.
      */
     private Permanent echoAtUpkeep(int counters) {
-        harness.addToBattlefield(player1, new SoulEcho());
-        Permanent echo = findPermanent(player1, "Soul Echo");
+        Permanent echo = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
         echo.setCounterCount(CounterType.ECHO, counters);
 
         advanceToUpkeep(player1);
@@ -31,12 +33,11 @@ class SoulEchoTest extends BaseCardTest {
         return echo;
     }
 
-    /** player2 bolts player1 for 3 and lets it resolve. */
-    private void boltController() {
-        harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+    /** Player2 casts Incinerate at player1 and lets it resolve. */
+    private void incinerateController() {
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
     }
 
     @Test
@@ -54,8 +55,8 @@ class SoulEchoTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep trigger only offers opponents as targets")
     void upkeepTriggerOnlyTargetsOpponents() {
-        harness.addToBattlefield(player1, new SoulEcho());
-        findPermanent(player1, "Soul Echo").setCounterCount(CounterType.ECHO, 2);
+        Permanent echo = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
+        echo.setCounterCount(CounterType.ECHO, 2);
 
         advanceToUpkeep(player1);
 
@@ -81,9 +82,9 @@ class SoulEchoTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
-        boltController();
+        incinerateController();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
         assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(2);
     }
 
@@ -95,24 +96,94 @@ class SoulEchoTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player2, false);
 
-        boltController();
+        incinerateController();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
         assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(5);
     }
 
     @Test
-    @DisplayName("Damage beyond the remaining echo counters is dealt normally")
-    void excessDamageIsDealtNormally() {
+    @DisplayName("Damage remains replaced after the echo counters run out")
+    void damageRemainsReplacedAfterCountersRunOut() {
         Permanent echo = echoAtUpkeep(1);
         harness.setLife(player1, 20);
 
         harness.handleMayAbilityChosen(player2, true);
 
-        boltController();
+        incinerateController();
 
         assertThat(echo.getCounterCount(CounterType.ECHO)).isZero();
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Damage before the first upkeep choice is dealt normally")
+    void damageBeforeFirstUpkeepChoiceIsDealtNormally() {
+        Permanent echo = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
+        echo.setCounterCount(CounterType.ECHO, 2);
+        harness.setLife(player1, 20);
+
+        incinerateController();
+
+        harness.assertLife(player1, 17);
+        assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage at the next upkeep before its trigger resolves is dealt normally")
+    void damageAtNextUpkeepBeforeTriggerResolvesIsDealtNormally() {
+        Permanent echo = echoAtUpkeep(2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setLife(player1, 20);
+
+        incinerateController();
+
+        harness.assertLife(player1, 17);
+        assertThat(echo.getCounterCount(CounterType.ECHO)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Soul Echoes do not split one damage event between enchantments")
+    void multipleSoulEchoesDoNotSplitDamageEvent() {
+        Permanent firstEcho = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
+        Permanent secondEcho = harness.addToBattlefieldAndReturn(player1, new SoulEcho());
+        firstEcho.setCounterCount(CounterType.ECHO, 1);
+        secondEcho.setCounterCount(CounterType.ECHO, 1);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        if (gd.pendingMayAbilities.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.setLife(player1, 20);
+        incinerateController();
+
+        harness.assertLife(player1, 19);
+        assertThat(firstEcho.getCounterCount(CounterType.ECHO)
+                + secondEcho.getCounterCount(CounterType.ECHO)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Accepted replacement also applies to combat damage")
+    void acceptedReplacementAppliesToCombatDamage() {
+        Permanent echo = echoAtUpkeep(2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new NobleElephant());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(echo.getCounterCount(CounterType.ECHO)).isZero();
     }
 
     @Test
@@ -122,9 +193,9 @@ class SoulEchoTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.setLife(player1, 1);
 
-        boltController();
+        incinerateController();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(-2);
+        harness.assertLife(player1, -2);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 }

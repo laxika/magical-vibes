@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TimeAndTide.class, Breezekeeper.class, GrizzlyBears.class, Island.class, RealityRipple.class})
 class TimeAndTideTest extends BaseCardTest {
 
     @Test
@@ -98,15 +100,13 @@ class TimeAndTideTest extends BaseCardTest {
     private void castTimeAndTide() {
         harness.setHand(player1, List.of(new TimeAndTide()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void phaseOutWithRealityRipple(UUID targetId) {
         harness.setHand(player1, List.of(new RealityRipple()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void advanceToControllersUntap(Player controller) {

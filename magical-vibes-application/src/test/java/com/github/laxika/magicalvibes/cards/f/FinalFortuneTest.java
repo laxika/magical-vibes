@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
+import com.github.laxika.magicalvibes.cards.u.UginsNexus;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FinalFortune.class, PlatinumAngel.class, UginsNexus.class})
 class FinalFortuneTest extends BaseCardTest {
 
     /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
@@ -36,6 +38,16 @@ class FinalFortuneTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
+    }
+
+    private void advanceTurn() {
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passBothPriorities();
+    }
+
+    private void advanceToEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 
     @Test
@@ -58,8 +70,7 @@ class FinalFortuneTest extends BaseCardTest {
         castFinalFortune();
 
         // Reach this turn's end step without advancing the turn number.
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd); // -> END_STEP
+        advanceToEndStep();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
@@ -73,13 +84,11 @@ class FinalFortuneTest extends BaseCardTest {
         castFinalFortune();
 
         // End the current turn -> begin the extra turn (still player1, next turn number).
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        advanceTurn();
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
 
         // Reach the extra turn's end step -> delayed loss fires onto the stack.
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd); // -> END_STEP
+        advanceToEndStep();
         assertThat(gd.stack).isNotEmpty();
 
         harness.passBothPriorities(); // resolve the loss
@@ -96,14 +105,62 @@ class FinalFortuneTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PlatinumAngel());
         castFinalFortune();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        advanceTurn();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd); // -> END_STEP
+        advanceToEndStep();
         harness.passBothPriorities(); // resolve the loss trigger
 
         // Can't-lose: the trigger resolves but the player stays in the game.
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Skipping the gained extra turn prevents the delayed loss")
+    void skippingGainedExtraTurnPreventsLoss() {
+        enableAutoStop();
+        harness.addToBattlefield(player1, new UginsNexus());
+        castFinalFortune();
+
+        advanceTurn();
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Each delayed loss waits for the extra turn that created it")
+    void delayedLossesTrackTheirOwnExtraTurns() {
+        enableAutoStop();
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        harness.setHand(player1, List.of(new FinalFortune(), new FinalFortune()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
+
+        advanceTurn();
+        advanceToEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        advanceTurn();
+        advanceToEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }

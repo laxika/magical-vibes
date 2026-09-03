@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BogWraith;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.k.KaerveksPurge;
+import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
+import com.github.laxika.magicalvibes.cards.u.UrborgPanther;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +20,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({
+        Shadowbane.class,
+        UrborgPanther.class,
+        TalruumMinotaur.class,
+        FemerefArchers.class,
+        Incinerate.class,
+        KaerveksPurge.class
+})
 class ShadowbaneTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Shadowbane prompts for a source choice")
     void resolvingPromptsForSourceChoice() {
         castShadowbane(player1);
-        addReady(player2, new BogWraith());
+        addCreatureReady(player2, new UrborgPanther());
 
         harness.passBothPriorities();
 
@@ -35,16 +46,16 @@ class ShadowbaneTest extends BaseCardTest {
     void preventsDamageToControllerAndGainsLifeFromBlackSource() {
         harness.setLife(player1, 20);
         castShadowbane(player1);
-        Permanent wraith = addReady(player2, new BogWraith());
+        Permanent panther = addCreatureReady(player2, new UrborgPanther());
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, wraith.getId());
+        harness.handlePermanentChosen(player1, panther.getId());
 
-        wraith.setAttacking(true);
+        panther.setAttacking(true);
         resolveCombat(player2);
 
-        // 3 damage prevented, 3 life gained because Bog Wraith is black
-        harness.assertLife(player1, 23);
+        // 2 damage prevented, 2 life gained because Urborg Panther is black
+        harness.assertLife(player1, 22);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
@@ -53,12 +64,12 @@ class ShadowbaneTest extends BaseCardTest {
     void preventsDamageWithoutLifeGainFromNonBlackSource() {
         harness.setLife(player1, 20);
         castShadowbane(player1);
-        Permanent giant = addReady(player2, new HillGiant());
+        Permanent minotaur = addCreatureReady(player2, new TalruumMinotaur());
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, giant.getId());
+        harness.handlePermanentChosen(player1, minotaur.getId());
 
-        giant.setAttacking(true);
+        minotaur.setAttacking(true);
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);
@@ -70,22 +81,22 @@ class ShadowbaneTest extends BaseCardTest {
     void preventsDamageToControlledCreature() {
         harness.setLife(player1, 20);
         castShadowbane(player1);
-        Permanent wraith = addReady(player2, new BogWraith());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent panther = addCreatureReady(player2, new UrborgPanther());
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, wraith.getId());
+        harness.handlePermanentChosen(player1, panther.getId());
 
-        wraith.setAttacking(true);
-        bears.setBlocking(true);
-        bears.addBlockingTarget(0);
+        panther.setAttacking(true);
+        archers.setBlocking(true);
+        archers.addBlockingTarget(0);
         resolveCombat(player2);
 
-        // All 3 damage Bog Wraith assigns to the blocker is prevented, so the 2/2 survives
-        // and its controller gains 3 life because Bog Wraith is black.
+        // All 2 damage Urborg Panther assigns to the blocker is prevented, so the 2/2 survives
+        // and its controller gains 2 life because Urborg Panther is black.
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        harness.assertLife(player1, 23);
+                .anyMatch(p -> p.getCard().getName().equals("Femeref Archers"));
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -93,8 +104,8 @@ class ShadowbaneTest extends BaseCardTest {
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         castShadowbane(player1);
-        Permanent chosen = addReady(player2, new BogWraith());
-        Permanent other = addReady(player2, new HillGiant());
+        Permanent chosen = addCreatureReady(player2, new UrborgPanther());
+        Permanent other = addCreatureReady(player2, new TalruumMinotaur());
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, chosen.getId());
@@ -111,10 +122,10 @@ class ShadowbaneTest extends BaseCardTest {
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
         castShadowbane(player1);
-        Permanent wraith = addReady(player2, new BogWraith());
+        Permanent panther = addCreatureReady(player2, new UrborgPanther());
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, wraith.getId());
+        harness.handlePermanentChosen(player1, panther.getId());
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
@@ -126,16 +137,57 @@ class ShadowbaneTest extends BaseCardTest {
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Prevents damage from a chosen spell to a creature you control")
+    void preventsDamageFromChosenSpellToControlledCreature() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        Incinerate incinerate = new Incinerate();
+
+        harness.setHand(player1, List.of(incinerate, new Shadowbane()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, archers.getId());
+        StackEntry incinerateEntry = gd.stack.getLast();
+        harness.castInstant(player1, 0);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, incinerateEntry.getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(archers);
+        assertThat(archers.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Gains life when a chosen black spell's damage is prevented")
+    void gainsLifeWhenChosenBlackSpellDealsDamage() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        KaerveksPurge purge = new KaerveksPurge();
+        harness.setLife(player1, 20);
+
+        harness.setHand(player1, List.of(purge, new Shadowbane()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, 3, archers.getId());
+        StackEntry purgeEntry = gd.stack.getLast();
+        harness.castInstant(player1, 0);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, purgeEntry.getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
     private void castShadowbane(Player player) {
         harness.setHand(player, List.of(new Shadowbane()));
         harness.addMana(player, ManaColor.WHITE, 2);
         harness.castInstant(player, 0);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

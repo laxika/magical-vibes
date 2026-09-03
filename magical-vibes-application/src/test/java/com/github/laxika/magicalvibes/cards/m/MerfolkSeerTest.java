@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NettletoothDjinn;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,43 +14,36 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MerfolkSeer.class, NettletoothDjinn.class})
 class MerfolkSeerTest extends BaseCardTest {
 
     /**
-     * Puts Merfolk Seer on the battlefield blocking a lethal 5/5 attacker, advances to combat
+     * Puts Merfolk Seer on the battlefield blocking a lethal 4/4 attacker, advances to combat
      * damage so it dies, then resolves the queued death trigger up to the may-pay prompt.
      */
-    private void killInCombatUntilMayPrompt() {
-        Permanent seer = new Permanent(new MerfolkSeer());
-        seer.setSummoningSick(false);
+    private Card killInCombatUntilMayPrompt() {
+        Permanent seer = addCreatureReady(player1, new MerfolkSeer());
         seer.setBlocking(true);
         seer.addBlockingTarget(0);
-        gd.playerBattlefields.get(player1.getId()).add(seer);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        bears.setPower(5);
-        bears.setToughness(5);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new NettletoothDjinn());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities(); // advance to combat damage → Merfolk Seer dies
+        resolveCombat(player2);
         harness.passBothPriorities(); // resolve death trigger → may-pay prompt
+        return seer.getCard();
     }
 
     @Test
     @DisplayName("Dies, pay {1}{U}, draws a card")
     void diesPayDrawsCard() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Card drawnCard = new NettletoothDjinn();
+        harness.setLibrary(player1, List.of(drawnCard));
 
-        killInCombatUntilMayPrompt();
+        Card seerCard = killInCombatUntilMayPrompt();
 
-        harness.assertInGraveyard(player1, "Merfolk Seer");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(seerCard.getId()));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -57,13 +51,15 @@ class MerfolkSeerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(drawnCard.getId()));
     }
 
     @Test
     @DisplayName("Dies, decline paying {1}{U}, no card is drawn")
     void diesDeclineDrawsNothing() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Card drawnCard = new NettletoothDjinn();
+        harness.setLibrary(player1, List.of(drawnCard));
 
         killInCombatUntilMayPrompt();
 
@@ -71,6 +67,21 @@ class MerfolkSeerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(drawnCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Dies, accept paying {1}{U} without enough mana, no card is drawn")
+    void diesAcceptWithoutEnoughManaDrawsNothing() {
+        Card drawnCard = new NettletoothDjinn();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        killInCombatUntilMayPrompt();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(drawnCard.getId()));
     }
 }

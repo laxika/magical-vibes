@@ -9,15 +9,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Flare.class, GrizzlyBears.class, GarrukWildspeaker.class})
 class FlareTest extends BaseCardTest {
 
     @Test
@@ -42,14 +42,14 @@ class FlareTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to a target creature")
     void deals1DamageToCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Flare()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
         // 1 damage does not destroy a 2/2, which survives on the battlefield.
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }

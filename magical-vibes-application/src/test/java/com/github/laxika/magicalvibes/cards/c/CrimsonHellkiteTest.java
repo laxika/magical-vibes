@@ -1,35 +1,33 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrimsonHellkite.class, IronTuskElephant.class})
 class CrimsonHellkiteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating puts the ability on the stack with X and target")
     void activatingPutsAbilityOnStack() {
         addHellkiteReady(player1);
-        Permanent target = addCreature(player2);
+        Permanent target = addTargetCreature(player2);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, 2, target.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -41,7 +39,7 @@ class CrimsonHellkiteTest extends BaseCardTest {
     @DisplayName("Activating taps Crimson Hellkite and consumes X mana")
     void activatingTapsAndConsumesMana() {
         Permanent hellkite = addHellkiteReady(player1);
-        Permanent target = addCreature(player2);
+        Permanent target = addTargetCreature(player2);
         harness.addMana(player1, ManaColor.RED, 3);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -55,40 +53,38 @@ class CrimsonHellkiteTest extends BaseCardTest {
     @DisplayName("Resolving deals X damage and destroys creature when X >= toughness")
     void resolvingDestroysWhenLethal() {
         addHellkiteReady(player1);
-        Permanent target = addCreature(player2);
-        harness.addMana(player1, ManaColor.RED, 2);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.activateAbility(player1, 0, 3, target.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Iron Tusk Elephant");
+        harness.assertInGraveyard(player2, "Iron Tusk Elephant");
     }
 
     @Test
     @DisplayName("Resolving with X below toughness deals damage but does not destroy")
     void resolvingNonLethalLeavesCreature() {
         addHellkiteReady(player1);
-        Permanent target = addCreature(player2);
-        harness.addMana(player1, ManaColor.RED, 1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("deals 1 damage"));
+        harness.assertOnBattlefield(player2, "Iron Tusk Elephant");
+        assertThat(gameLogContains("deals 2 damage")).isTrue();
     }
 
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addHellkiteReady(player1);
-        Permanent target = addCreature(player2);
+        Permanent target = addTargetCreature(player2);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -96,16 +92,15 @@ class CrimsonHellkiteTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         addHellkiteReady(player1);
-        Permanent target = addCreature(player2);
+        Permanent target = addTargetCreature(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, target.getId()))
@@ -114,12 +109,29 @@ class CrimsonHellkiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot spend non-red mana on X")
+    void cannotSpendNonRedManaOnX() {
+        Permanent hellkite = addHellkiteReady(player1);
+        Permanent target = addTargetCreature(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(hellkite.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateSummoningSick() {
         CrimsonHellkite card = new CrimsonHellkite();
         Permanent perm = new Permanent(card); // summoningSick true by default
         harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
-        Permanent target = addCreature(player2);
+        Permanent target = addTargetCreature(player2);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -129,18 +141,10 @@ class CrimsonHellkiteTest extends BaseCardTest {
     }
 
     private Permanent addHellkiteReady(Player player) {
-        CrimsonHellkite card = new CrimsonHellkite();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CrimsonHellkite());
     }
 
-    private Permanent addCreature(Player player) {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent perm = new Permanent(bear);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    private Permanent addTargetCreature(Player player) {
+        return addCreatureReady(player, new IronTuskElephant());
     }
 }

@@ -1,24 +1,27 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StalkingTiger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RestlessDead.class, StalkingTiger.class})
 class RestlessDeadTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability grants a regeneration shield")
     void resolvingAbilityGrantsShield() {
-        addRestlessDeadReady(player1);
+        addCreatureReady(player1, new RestlessDead());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -32,7 +35,7 @@ class RestlessDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate the ability without enough mana")
     void cannotActivateWithoutMana() {
-        addRestlessDeadReady(player1);
+        addCreatureReady(player1, new RestlessDead());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -42,19 +45,14 @@ class RestlessDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration shield saves Restless Dead from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        Permanent dead = addRestlessDeadReady(player1);
+        Permanent dead = addCreatureReady(player1, new RestlessDead());
         dead.setRegenerationShield(1);
-        dead.setBlocking(true);
-        dead.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new StalkingTiger());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
 
@@ -68,18 +66,13 @@ class RestlessDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Without a regeneration shield Restless Dead dies in combat")
     void diesWithoutShield() {
-        Permanent dead = addRestlessDeadReady(player1);
-        dead.setBlocking(true);
-        dead.addBlockingTarget(0);
+        addCreatureReady(player1, new RestlessDead());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new StalkingTiger());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
 
@@ -87,10 +80,4 @@ class RestlessDeadTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Restless Dead");
     }
 
-    private Permanent addRestlessDeadReady(Player player) {
-        Permanent perm = new Permanent(new RestlessDead());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SightlessBrawler;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
+import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WindbornMuse;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -240,15 +242,16 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
+        @CardUsed({EkunduCyclops.class, ViashinoWarrior.class})
         @DisplayName("Conditional attack requirements follow the selected attacker group")
         void conditionalRequirementFollowsSelectedAttackerGroup() {
             Permanent cyclops = addCreatureReady(player1, new EkunduCyclops());
-            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent ally = addCreatureReady(player1, new ViashinoWarrior());
 
             List<Integer> attackable = service().getAttackableCreatureIndices(gd, player1.getId());
 
             assertThat(service().getMustAttackAlongsideIndices(
-                    gd, player1.getId(), attackable, List.of(index(bears))))
+                    gd, player1.getId(), attackable, List.of(index(ally))))
                     .containsExactly(index(cyclops));
             assertThat(service().getMustAttackAlongsideIndices(
                     gd, player1.getId(), attackable, List.of(index(cyclops))))

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Reparations.class, DarkRitual.class, Disenchant.class, GiantMantis.class, Incinerate.class})
 class ReparationsTest extends BaseCardTest {
 
     @Test
@@ -21,8 +25,9 @@ class ReparationsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Reparations());
         setUpOpponentTurn();
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -39,16 +44,17 @@ class ReparationsTest extends BaseCardTest {
     @DisplayName("Opponent spell targeting a creature you control triggers the may ability")
     void opponentSpellTargetingYourCreatureDraws() {
         harness.addToBattlefield(player1, new Reparations());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GiantMantis());
         setUpOpponentTurn();
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
+        UUID mantisId = harness.getPermanentId(player1, "Giant Mantis");
+        harness.castInstant(player2, 0, mantisId);
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
@@ -63,8 +69,9 @@ class ReparationsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Reparations());
         setUpOpponentTurn();
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -81,14 +88,15 @@ class ReparationsTest extends BaseCardTest {
     @DisplayName("Opponent spell targeting their own creature does not trigger")
     void opponentSpellTargetingOwnCreatureDoesNotTrigger() {
         harness.addToBattlefield(player1, new Reparations());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantMantis());
         setUpOpponentTurn();
 
-        harness.setHand(player2, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
+        UUID mantisId = harness.getPermanentId(player2, "Giant Mantis");
+        harness.castInstant(player2, 0, mantisId);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
@@ -98,12 +106,44 @@ class ReparationsTest extends BaseCardTest {
     void ownSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new Reparations());
 
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, player1.getId());
 
         assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent spell targeting a noncreature permanent you control does not trigger")
+    void opponentSpellTargetingYourNoncreaturePermanentDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Reparations());
+        setUpOpponentTurn();
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        UUID reparationsId = harness.getPermanentId(player1, "Reparations");
+        harness.castInstant(player2, 0, reparationsId);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Reparations");
+    }
+
+    @Test
+    @DisplayName("Opponent spell with no targets does not trigger")
+    void opponentNonTargetingSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Reparations());
+        setUpOpponentTurn();
+
+        harness.castFromHand(player2, new DarkRitual(), "{B}");
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.passBothPriorities();
     }
 
     private void setUpOpponentTurn() {

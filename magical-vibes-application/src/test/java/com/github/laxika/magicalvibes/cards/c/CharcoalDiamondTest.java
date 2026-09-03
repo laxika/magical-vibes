@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CharcoalDiamond.class})
 class CharcoalDiamondTest extends BaseCardTest {
 
     @Test
@@ -23,15 +24,14 @@ class CharcoalDiamondTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent diamond = findDiamond(player1);
+        Permanent diamond = findPermanent(player1, "Charcoal Diamond");
         assertThat(diamond.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Tapping for mana adds black mana")
     void tapForBlackMana() {
-        harness.addToBattlefield(player1, new CharcoalDiamond());
-        Permanent diamond = findDiamond(player1);
+        Permanent diamond = harness.addToBattlefieldAndReturn(player1, new CharcoalDiamond());
         diamond.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -41,7 +41,4 @@ class CharcoalDiamondTest extends BaseCardTest {
         assertThat(diamond.isTapped()).isTrue();
     }
 
-    private Permanent findDiamond(Player player) {
-        return findPermanent(player, "Charcoal Diamond");
-    }
 }

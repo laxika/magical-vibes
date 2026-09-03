@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,16 +19,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Aleatory.class, FemerefScouts.class, Island.class})
 class AleatoryTest extends BaseCardTest {
 
     private Permanent setUpAndCast() {
         harness.forceActivePlayer(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new FemerefScouts());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.setHand(player1, List.of(new Aleatory()));
+        declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.currentStep).as("step after blockers are declared").isEqualTo(TurnStep.DECLARE_BLOCKERS);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         return target;
@@ -43,11 +47,11 @@ class AleatoryTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("wins the coin flip"));
 
         if (won) {
-            assertThat(target.getEffectivePower()).isEqualTo(3);
-            assertThat(target.getEffectiveToughness()).isEqualTo(3);
-        } else {
             assertThat(target.getEffectivePower()).isEqualTo(2);
-            assertThat(target.getEffectiveToughness()).isEqualTo(2);
+            assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        } else {
+            assertThat(target.getEffectivePower()).isEqualTo(1);
+            assertThat(target.getEffectiveToughness()).isEqualTo(4);
         }
     }
 
@@ -76,9 +80,7 @@ class AleatoryTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
@@ -88,7 +90,7 @@ class AleatoryTest extends BaseCardTest {
     @DisplayName("Can be cast during the combat damage step")
     void castableDuringCombatDamage() {
         harness.forceActivePlayer(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.setHand(player1, List.of(new Aleatory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -104,7 +106,7 @@ class AleatoryTest extends BaseCardTest {
     @DisplayName("Cannot cast before blockers are declared")
     void cannotCastBeforeBlockers() {
         harness.forceActivePlayer(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.setHand(player1, List.of(new Aleatory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -119,7 +121,7 @@ class AleatoryTest extends BaseCardTest {
     @DisplayName("Cannot cast outside combat")
     void cannotCastOutsideCombat() {
         harness.forceActivePlayer(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.setHand(player1, List.of(new Aleatory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -134,16 +136,16 @@ class AleatoryTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.forceActivePlayer(player1);
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        addCreatureReady(player2, new FemerefScouts());
+        harness.addToBattlefield(player2, new Island());
         harness.setHand(player1, List.of(new Aleatory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
-        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID islandId = harness.getPermanentId(player2, "Island");
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, fountainId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, islandId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,14 +12,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JungleWurm.class, GiantMantis.class})
 class JungleWurmTest extends BaseCardTest {
 
     @Test
     @DisplayName("With a single blocker Jungle Wurm is unchanged")
     void oneBlockerGivesNoPenalty() {
-        Permanent wurm = addReadyWurm(player1);
+        Permanent wurm = addCreatureReady(player1, new JungleWurm());
         wurm.setAttacking(true);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GiantMantis());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -34,11 +35,11 @@ class JungleWurmTest extends BaseCardTest {
     @Test
     @DisplayName("With three blockers Jungle Wurm gets -2/-2 until end of turn")
     void threeBlockersGiveMinusTwo() {
-        Permanent wurm = addReadyWurm(player1);
+        Permanent wurm = addCreatureReady(player1, new JungleWurm());
         wurm.setAttacking(true);
-        addReadyBears(player2);
-        addReadyBears(player2);
-        addReadyBears(player2);
+        addCreatureReady(player2, new GiantMantis());
+        addCreatureReady(player2, new GiantMantis());
+        addCreatureReady(player2, new GiantMantis());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -57,7 +58,7 @@ class JungleWurmTest extends BaseCardTest {
     @Test
     @DisplayName("If unblocked Jungle Wurm is unchanged")
     void unblockedGivesNoPenalty() {
-        Permanent wurm = addReadyWurm(player1);
+        Permanent wurm = addCreatureReady(player1, new JungleWurm());
         wurm.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -66,18 +67,5 @@ class JungleWurmTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(wurm.getPowerModifier()).isZero();
         assertThat(wurm.getToughnessModifier()).isZero();
-    }
-
-    private Permanent addReadyWurm(Player player) {
-        Permanent permanent = new Permanent(new JungleWurm());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    private void addReadyBears(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
     }
 }

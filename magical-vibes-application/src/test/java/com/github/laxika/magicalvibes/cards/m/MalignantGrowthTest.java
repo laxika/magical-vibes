@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -7,11 +8,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MalignantGrowth.class, Disenchant.class})
 class MalignantGrowthTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -37,6 +42,28 @@ class MalignantGrowthTest extends BaseCardTest {
 
         // Normal draw + 2 extra draws
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("A draw-step trigger uses the source's last-known growth counters")
+    void drawTriggerUsesLastKnownCountersAfterSourceLeavesBattlefield() {
+        Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
+        growth.setCounterCount(CounterType.GROWTH, 2);
+
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToDraw(player2);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, growth.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(growth);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
@@ -87,6 +114,29 @@ class MalignantGrowthTest extends BaseCardTest {
 
         assertThat(growth.getCounterCount(CounterType.AGE)).isEqualTo(1);
         assertThat(growth.getCounterCount(CounterType.GROWTH)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(growth);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep costs one more mana for each additional age counter")
+    void cumulativeUpkeepScalesWithAgeCounters() {
+        Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(growth.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(growth.getCounterCount(CounterType.GROWTH)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(growth);
     }
 

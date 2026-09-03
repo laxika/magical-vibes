@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KukemssaSerpent.class, Forest.class, Island.class})
 class KukemssaSerpentTest extends BaseCardTest {
 
     @Test
@@ -50,9 +50,31 @@ class KukemssaSerpentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A land changed into an Island satisfies the no-Islands condition")
+    void landChangedIntoIslandSatisfiesNoIslandsCondition() {
+        addCreatureReady(player1, new KukemssaSerpent());
+        harness.addToBattlefield(player1, new Forest());
+
+        addCreatureReady(player2, new KukemssaSerpent());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID sacrificedIslandId = harness.getPermanentId(player2, "Island");
+
+        harness.activateAbility(player2, 0, null, forestId);
+        harness.handlePermanentChosen(player2, sacrificedIslandId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kukemssa Serpent");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Ability makes the targeted opponent land become an Island, overriding its type")
     void abilityMakesOpponentLandAnIsland() {
-        addSerpent(player1);
+        addCreatureReady(player1, new KukemssaSerpent());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Forest());
@@ -75,7 +97,7 @@ class KukemssaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Activating sacrifices an Island as a cost")
     void activationSacrificesAnIsland() {
-        addSerpent(player1);
+        addCreatureReady(player1, new KukemssaSerpent());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Forest());
@@ -96,7 +118,7 @@ class KukemssaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Land type override wears off at end of turn")
     void overrideWearsOffAtEndOfTurn() {
-        addSerpent(player1);
+        addCreatureReady(player1, new KukemssaSerpent());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Forest());
@@ -111,7 +133,10 @@ class KukemssaSerpentTest extends BaseCardTest {
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
         assertThat(forest.getEffectiveLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        forest.resetModifiers();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(forest.getEffectiveLandTypeOverride()).isNull();
     }
@@ -119,7 +144,7 @@ class KukemssaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land the controller controls")
     void cannotTargetOwnLand() {
-        addSerpent(player1);
+        addCreatureReady(player1, new KukemssaSerpent());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Forest()); // valid target so the ability is activatable
         harness.forceActivePlayer(player1);
@@ -134,15 +159,15 @@ class KukemssaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-land permanent")
     void cannotTargetNonLand() {
-        addSerpent(player1);
+        addCreatureReady(player1, new KukemssaSerpent());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Forest()); // valid target so the ability is activatable
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new KukemssaSerpent());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID serpentId = harness.getPermanentId(player2, "Kukemssa Serpent");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, serpentId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
@@ -153,9 +178,10 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Island());
-        Permanent serpent = addSerpent(player1);
+        Permanent serpent = addCreatureReady(player1, new KukemssaSerpent());
 
-        declareSerpentAttack(serpent);
+        int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
+        declareAttackers(List.of(serpentIndex));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -164,32 +190,10 @@ class KukemssaSerpentTest extends BaseCardTest {
     @DisplayName("Cannot attack when defending player controls no Island")
     void cannotAttackWhenDefenderHasNoIsland() {
         harness.addToBattlefield(player1, new Island());
-        Permanent serpent = addSerpent(player1);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent serpent = addCreatureReady(player1, new KukemssaSerpent());
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index)))
+        assertThatThrownBy(() -> declareAttackers(List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    private Permanent addSerpent(Player player) {
-        Permanent perm = new Permanent(new KukemssaSerpent());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void declareSerpentAttack(Permanent serpent) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
-        gs.declareAttackers(gd, player1, List.of(index));
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrinningTotem.class, Swamp.class})
 class GrinningTotemTest extends BaseCardTest {
 
     private StepTriggerService stepTriggerService() {
@@ -29,6 +32,20 @@ class GrinningTotemTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Ability cannot target its controller")
+    void cannotTargetController() {
+        harness.addToBattlefield(player1, new GrinningTotem());
+        Permanent totem = findPermanent(player1, "Grinning Totem");
+        totem.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grinning Totem");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -116,7 +133,7 @@ class GrinningTotemTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Caster plays the exiled land.
-        gs.playCardFromExile(gd, player1, swamp.getId(), null, null);
+        harness.castFromExile(player1, swamp.getId());
         harness.assertOnBattlefield(player1, "Swamp");
 
         // The caster's upkeep cleanup finds nothing to move — the card stays on the battlefield.

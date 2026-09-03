@@ -6,24 +6,20 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(QuirionElves.class)
 class QuirionElvesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Quirion Elves asks its controller to choose a color")
     void entersAskingForColor() {
-        harness.setHand(player1, List.of(new QuirionElves()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new QuirionElves(), "{1}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Quirion Elves");
@@ -81,22 +77,16 @@ class QuirionElvesTest extends BaseCardTest {
     @Test
     @DisplayName("A summoning-sick Quirion Elves cannot use its tap abilities")
     void summoningSickCannotTap() {
-        QuirionElves card = new QuirionElves();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(true);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new QuirionElves());
         perm.setChosenColor(CardColor.BLUE);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyElves(Player player, CardColor chosenColor) {
-        QuirionElves card = new QuirionElves();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new QuirionElves());
         perm.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
