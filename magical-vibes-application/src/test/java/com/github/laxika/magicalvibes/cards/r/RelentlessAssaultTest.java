@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,96 +14,93 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RelentlessAssault.class, Warthog.class})
 class RelentlessAssaultTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting puts Relentless Assault on the stack as a sorcery with no target")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new RelentlessAssault()));
-        harness.addMana(player1, ManaColor.RED, 4);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Relentless Assault");
         assertThat(entry.getTargetId()).isNull();
     }
 
     @Test
     @DisplayName("Resolving untaps only creatures that attacked this turn")
     void resolvingUntapsOnlyAttackedCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        List<Permanent> battlefield = harness.getGameData().playerBattlefields.get(player1.getId());
-        battlefield.forEach(p -> p.setSummoningSick(false));
+        Permanent attackedWarthog = addCreatureReady(player1, new Warthog());
+        Permanent nonAttackedWarthog = addCreatureReady(player1, new Warthog());
 
-        markAttacking(player1, List.of(0));
-        Permanent attackedBear = battlefield.get(0);
-        Permanent nonAttackedBear = battlefield.get(1);
-        nonAttackedBear.tap();
+        declareAttackers(List.of(0));
+        nonAttackedWarthog.tap();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new RelentlessAssault()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThat(attackedBear.isTapped()).isFalse();
-        assertThat(nonAttackedBear.isTapped()).isTrue();
-        assertThat(harness.getGameData().additionalCombatMainPhasePairs).isEqualTo(1);
+        assertThat(attackedWarthog.isTapped()).isFalse();
+        assertThat(nonAttackedWarthog.isTapped()).isTrue();
+        assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Additional combat begins after postcombat main when Relentless Assault resolves")
     void additionalCombatBeginsAfterPostcombatMain() {
-        harness.setHand(player1, List.of(new RelentlessAssault()));
-        harness.addMana(player1, ManaColor.RED, 4);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        harness.getGameService().advanceStep(gd);
+        gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
 
-        harness.getGameService().advanceStep(gd);
+        gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
 
-        // CR 508.8: no attacking creatures, skip directly to end of combat
-        harness.getGameService().advanceStep(gd);
+        gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
 
-        harness.getGameService().advanceStep(gd);
+        gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
 
-        harness.getGameService().advanceStep(gd);
+        gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Additional combat begins immediately after the precombat main phase")
+    void additionalCombatBeginsAfterPrecombatMain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.additionalCombatMainPhasePairs).isZero();
     }
 
     @Test
     @DisplayName("Attacked-this-turn status resets on turn change")
     void attackedThisTurnResetsOnTurnChange() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        bear.setSummoningSick(false);
+        Permanent bear = addCreatureReady(player1, new Warthog());
 
-        markAttacking(player1, List.of(0));
+        declareAttackers(List.of(0));
         assertThat(bear.isAttackedThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.getGameService().advanceStep(harness.getGameData());
+        gs.advanceStep(gd);
         assertThat(bear.isAttackedThisTurn()).isFalse();
 
         harness.forceActivePlayer(player1);
@@ -113,21 +108,10 @@ class RelentlessAssaultTest extends BaseCardTest {
         harness.clearPriorityPassed();
         bear.tap();
 
-        harness.setHand(player1, List.of(new RelentlessAssault()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(bear.isTapped()).isTrue();
-    }
-
-    private void markAttacking(Player attacker, List<Integer> attackers) {
-        GameData gd = harness.getGameData();
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        harness.getGameService().declareAttackers(gd, attacker, attackers);
     }
 }
 

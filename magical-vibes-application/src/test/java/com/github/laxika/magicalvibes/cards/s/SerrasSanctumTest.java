@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.e.ElephantGrass;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SerrasSanctum.class, ElephantGrass.class, AuraOfSilence.class, Millstone.class})
 class SerrasSanctumTest extends BaseCardTest {
 
     @Test

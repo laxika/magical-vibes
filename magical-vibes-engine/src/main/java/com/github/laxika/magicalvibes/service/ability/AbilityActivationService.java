@@ -4605,10 +4605,15 @@ public class AbilityActivationService {
         if (abilityIndex < 0 || abilityIndex >= abilities.size()) {
             return;
         }
-        if (abilities.get(abilityIndex).getEffects().stream()
-                .anyMatch(e -> e instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect
-                        || e instanceof GrantLandwalkOfSacrificedLandToTargetEffect)) {
+        boolean recordsProducedManaTypes = abilities.get(abilityIndex).getEffects().stream()
+                .anyMatch(AwardManaOfTypeSacrificedLandCouldProduceEffect.class::isInstance);
+        boolean recordsLandTypes = abilities.get(abilityIndex).getEffects().stream()
+                .anyMatch(GrantLandwalkOfSacrificedLandToTargetEffect.class::isInstance);
+        if (recordsProducedManaTypes || recordsLandTypes) {
             source.setChosenCard(sacrificed.getCard());
+        }
+        if (recordsProducedManaTypes) {
+            source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
         }
     }
 

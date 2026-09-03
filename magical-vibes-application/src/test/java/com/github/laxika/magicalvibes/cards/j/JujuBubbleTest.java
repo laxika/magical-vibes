@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.i.Impulse;
+import com.github.laxika.magicalvibes.cards.u.UndiscoveredParadise;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JujuBubble.class, Impulse.class, UndiscoveredParadise.class})
 class JujuBubbleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a spell sacrifices Juju Bubble")
     void castingSpellSacrifices() {
         harness.addToBattlefield(player1, new JujuBubble());
-        harness.setHand(player1, List.of(new Opt()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new Impulse(), "{1}{U}");
 
-        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Juju Bubble");
@@ -39,22 +39,21 @@ class JujuBubbleTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new UndiscoveredParadise()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Juju Bubble");
         harness.assertInGraveyard(player1, "Juju Bubble");
-        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Undiscovered Paradise");
     }
 
     @Test
     @DisplayName("Putting a land onto the battlefield without playing it does not sacrifice")
     void landEnteringWithoutPlayDoesNotSacrifice() {
         harness.addToBattlefield(player1, new JujuBubble());
-        harness.addToBattlefield(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new UndiscoveredParadise());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Juju Bubble");
     }
@@ -68,11 +67,8 @@ class JujuBubbleTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Opt()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new Impulse(), "{1}{U}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         harness.assertOnBattlefield(player1, "Juju Bubble");
@@ -113,8 +109,26 @@ class JujuBubbleTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThat(bubble.getCounterCount(CounterType.AGE)).isEqualTo(1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bubble);
+    }
+
+    @Test
+    @DisplayName("The second cumulative upkeep costs {2}")
+    void secondCumulativeUpkeepCostsTwo() {
+        var bubble = harness.addToBattlefieldAndReturn(player1, new JujuBubble());
+        bubble.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(bubble.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bubble);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

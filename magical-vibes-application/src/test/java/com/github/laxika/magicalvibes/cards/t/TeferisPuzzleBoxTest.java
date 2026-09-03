@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.i.Impulse;
+import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,20 +16,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TeferisPuzzleBox.class, JamuraanLion.class, Impulse.class})
 class TeferisPuzzleBoxTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid the starting player's first-turn draw skip
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities(); // advances from UPKEEP to DRAW (fires the normal draw + trigger)
     }
 
-    private List<Card> plains(int count) {
+    private List<Card> impulses(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Plains());
+            cards.add(new Impulse());
         }
         return cards;
     }
@@ -37,21 +38,18 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void activePlayerCyclesHand() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card handMarker = new GrizzlyBears();
+        Card handMarker = new JamuraanLion();
+        List<Card> library = impulses(5);
         harness.setHand(player1, List.of(handMarker));
-        harness.setLibrary(player1, plains(5)); // enough to survive the normal draw + re-draw
+        harness.setLibrary(player1, library); // enough to survive the normal draw + re-draw
 
         advanceToDraw(player1);
-        // Normal draw already pulled a Plains into hand → hand is [handMarker, Plains].
         harness.passBothPriorities(); // resolve the Puzzle Box trigger
 
-        // The old hand (marker + drawn Plains) is cycled to the bottom of the library.
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(handMarker);
         assertThat(gd.playerDecks.get(player1.getId())).contains(handMarker);
-
-        // Player drew that many fresh cards — hand size is preserved (2 cards: marker + normal draw).
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId())).allMatch(c -> c.getName().equals("Plains"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
     }
 
     @Test
@@ -59,16 +57,18 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void triggersOnOpponentDrawStep() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        Card handMarker = new GrizzlyBears();
+        Card handMarker = new JamuraanLion();
+        List<Card> library = impulses(5);
         harness.setHand(player2, List.of(handMarker));
-        harness.setLibrary(player2, plains(5));
+        harness.setLibrary(player2, library);
 
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve the Puzzle Box trigger
 
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(handMarker);
         assertThat(gd.playerDecks.get(player2.getId())).contains(handMarker);
-        assertThat(gd.playerHands.get(player2.getId())).allMatch(c -> c.getName().equals("Plains"));
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
     }
 
     @Test
@@ -76,17 +76,47 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
     void handSizeIsPreserved() {
         harness.addToBattlefield(player1, new TeferisPuzzleBox());
 
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setLibrary(player1, plains(6));
+        Card firstHandCard = new JamuraanLion();
+        Card secondHandCard = new JamuraanLion();
+        List<Card> library = impulses(6);
+        harness.setHand(player1, List.of(firstHandCard, secondHandCard));
+        harness.setLibrary(player1, library);
 
         advanceToDraw(player1);
-        // After the normal draw hand is 3 (2 bears + 1 Plains).
-        int handAfterNormalDraw = gd.playerHands.get(player1.getId()).size();
-
         harness.passBothPriorities(); // resolve the Puzzle Box trigger
 
-        // Hand is fully replaced with the same number of freshly drawn cards.
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handAfterNormalDraw);
-        assertThat(gd.playerHands.get(player1.getId())).allMatch(c -> c.getName().equals("Plains"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2), library.get(3));
+    }
+
+    @Test
+    @DisplayName("Lets the player choose the order of cards put on the bottom of their library")
+    void choosesOrderForCardsPutOnBottom() {
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+
+        Card firstHandCard = new JamuraanLion();
+        Card secondHandCard = new TeferisPuzzleBox();
+        Card normalDraw = new Impulse();
+        Card remainingLibraryCard = new Impulse();
+        harness.setHand(player1, List.of(firstHandCard, secondHandCard));
+        harness.setLibrary(player1, List.of(normalDraw, remainingLibraryCard));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.playerId()).isEqualTo(player1.getId());
+        assertThat(reorder.cards()).containsExactlyInAnyOrder(firstHandCard, secondHandCard, normalDraw);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                reorder.cards().indexOf(normalDraw),
+                reorder.cards().indexOf(secondHandCard),
+                reorder.cards().indexOf(firstHandCard))));
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(remainingLibraryCard, normalDraw, secondHandCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstHandCard);
     }
 }

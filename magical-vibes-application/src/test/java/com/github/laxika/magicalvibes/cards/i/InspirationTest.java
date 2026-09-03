@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HulkingCyclops;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Inspiration.class, HulkingCyclops.class})
 class InspirationTest extends BaseCardTest {
 
     @Test
@@ -23,8 +25,7 @@ class InspirationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
-        harness.castInstant(player1, 0, List.of(player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(player2.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 2);
         harness.assertInGraveyard(player1, "Inspiration");
@@ -38,8 +39,7 @@ class InspirationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.castInstant(player1, 0, List.of(player1.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(player1.getId()));
 
         // Started with one card (Inspiration), drew two, cast one.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore - 1 + 2);
@@ -48,7 +48,7 @@ class InspirationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player2, new HulkingCyclops());
         harness.setHand(player1, List.of(new Inspiration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

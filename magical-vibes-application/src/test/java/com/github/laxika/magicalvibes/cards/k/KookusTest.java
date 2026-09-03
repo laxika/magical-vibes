@@ -5,11 +5,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed(Kookus.class)
 class KookusTest extends BaseCardTest {
 
     @Test
@@ -30,6 +35,35 @@ class KookusTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(KeeperOfKookus.class)
+    @DisplayName("Upkeep penalty does nothing if a Keeper appears before the trigger resolves")
+    void upkeepPenaltyRechecksKeeperAtResolution() {
+        harness.setLife(player1, 20);
+        Permanent kookus = addCreatureReady(player1, new Kookus());
+
+        advanceToUpkeep(player1);
+        addCreatureReady(player1, new KeeperOfKookus());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(kookus.isMustAttackThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Upkeep penalty requires Kookus to attack when able")
+    void upkeepPenaltyRequiresAttackWhenAble() {
+        addCreatureReady(player1, new Kookus());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @CardUsed(KeeperOfKookus.class)
     @DisplayName("Upkeep does not trigger while controlling Keeper of Kookus")
     void upkeepSkippedWithKeeper() {
         harness.setLife(player1, 20);
@@ -44,6 +78,7 @@ class KookusTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(KeeperOfKookus.class)
     @DisplayName("Opponent's Keeper of Kookus does not prevent the upkeep penalty")
     void opponentsKeeperDoesNotHelp() {
         harness.setLife(player1, 20);

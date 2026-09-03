@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GuidingSpirit.class, Forest.class, GrizzlyBears.class})
 class GuidingSpiritTest extends BaseCardTest {
 
     private Permanent spirit;
@@ -32,10 +34,8 @@ class GuidingSpiritTest extends BaseCardTest {
     void putsTopCreatureOntoLibrary() {
         Forest forest = new Forest();
         GrizzlyBears bears = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).clear();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(forest, bears));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setGraveyard(player1, List.of(forest, bears));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, spiritIndex, null, player1.getId());
         harness.passBothPriorities();
@@ -52,9 +52,8 @@ class GuidingSpiritTest extends BaseCardTest {
     void nonCreatureTopIsNoOp() {
         Forest forest = new Forest();
         GrizzlyBears bears = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).clear();
-        gd.playerGraveyards.get(player1.getId()).addAll(List.of(bears, forest));
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(bears, forest));
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, spiritIndex, null, player1.getId());
         harness.passBothPriorities();
@@ -66,9 +65,8 @@ class GuidingSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Does nothing when the targeted graveyard is empty")
     void emptyGraveyardIsNoOp() {
-        gd.playerGraveyards.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new Forest());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
 
         harness.activateAbility(player1, spiritIndex, null, player2.getId());
         harness.passBothPriorities();
@@ -81,9 +79,8 @@ class GuidingSpiritTest extends BaseCardTest {
     @DisplayName("Can target an opponent whose top graveyard card is a creature")
     void canTargetOpponent() {
         GrizzlyBears bears = new GrizzlyBears();
-        gd.playerGraveyards.get(player2.getId()).clear();
-        gd.playerGraveyards.get(player2.getId()).add(bears);
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setLibrary(player2, List.of());
 
         harness.activateAbility(player1, spiritIndex, null, player2.getId());
         harness.passBothPriorities();
@@ -95,12 +92,28 @@ class GuidingSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate again while tapped")
     void cannotActivateWhileTapped() {
-        gd.playerGraveyards.get(player1.getId()).clear();
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, spiritIndex, null, player1.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, spiritIndex, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires a player target")
+    void requiresPlayerTarget() {
+        assertThatThrownBy(() -> harness.activateAbility(player1, spiritIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("target player");
+    }
+
+    @Test
+    @DisplayName("Rejects a permanent as a player target")
+    void rejectsPermanentAsPlayerTarget() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, spiritIndex, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

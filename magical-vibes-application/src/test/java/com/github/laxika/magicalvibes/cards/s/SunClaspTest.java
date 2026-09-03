@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
+import com.github.laxika.magicalvibes.cards.u.UndiscoveredParadise;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,105 +14,135 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SunClasp.class, LongbowArcher.class, UndiscoveredParadise.class})
 class SunClaspTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Sun Clasp attaches it and gives the creature +1/+3")
     void resolvingAttachesAndBoosts() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent archer = addCreatureReady(player1, new LongbowArcher());
 
         harness.setHand(player1, List.of(new SunClasp()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, archer.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Sun Clasp")
+                .anyMatch(p -> p.getCard() instanceof SunClasp
                         && p.isAttached()
-                        && p.getAttachedTo().equals(bears.getId()));
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+                        && p.getAttachedTo().equals(archer.getId()));
+        assertThat(gqs.getEffectivePower(gd, archer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, archer)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Sun Clasp does not boost other creatures")
     void doesNotBoostOtherCreatures() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent archer = addCreatureReady(player1, new LongbowArcher());
+        Permanent otherArcher = addCreatureReady(player1, new LongbowArcher());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent clasp = harness.addToBattlefieldAndReturn(player1, new SunClasp());
+        clasp.setAttachedTo(archer.getId());
 
-        Permanent clasp = new Permanent(new SunClasp());
-        clasp.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(clasp);
-
-        assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherArcher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherArcher)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Activating {W} returns enchanted creature to hand; Aura dies as orphaned")
     void activatedAbilityBouncesEnchantedCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent archer = addCreatureReady(player1, new LongbowArcher());
 
-        Permanent clasp = new Permanent(new SunClasp());
-        clasp.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(clasp);
+        Permanent clasp = harness.addToBattlefieldAndReturn(player1, new SunClasp());
+        clasp.setAttachedTo(archer.getId());
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, archer)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Sun Clasp");
-        harness.assertInGraveyard(player1, "Sun Clasp");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card instanceof LongbowArcher);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof LongbowArcher || p.getCard() instanceof SunClasp);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SunClasp);
     }
 
     @Test
     @DisplayName("Sun Clasp fizzles if the target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent archer = addCreatureReady(player1, new LongbowArcher());
 
         harness.setHand(player1, List.of(new SunClasp()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
-        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.castEnchantment(player1, 0, archer.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(archer);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Sun Clasp");
-        harness.assertNotOnBattlefield(player1, "Sun Clasp");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SunClasp);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof SunClasp);
     }
 
     @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new LongbowArcher());
+        harness.addToBattlefield(player1, new UndiscoveredParadise());
         harness.setHand(player1, List.of(new SunClasp()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent mountain = findPermanent(player1, "Mountain");
+        Permanent paradise = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof UndiscoveredParadise)
+                .findFirst()
+                .orElseThrow();
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, paradise.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Returning an opponent's enchanted creature puts it in its owner's hand")
+    void returnsOpponentCreatureToItsOwnersHand() {
+        LongbowArcher archerCard = new LongbowArcher();
+        archerCard.setOwnerId(player2.getId());
+        Permanent archer = addCreatureReady(player2, archerCard);
+
+        harness.setHand(player1, List.of(new SunClasp()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, archer.getId());
+        harness.passBothPriorities();
+
+        Permanent clasp = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof SunClasp)
+                .findFirst()
+                .orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, archer)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        int claspIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clasp);
+        harness.activateAbility(player1, claspIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .anyMatch(card -> card instanceof LongbowArcher);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard() instanceof LongbowArcher);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof SunClasp);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SunClasp);
     }
 }

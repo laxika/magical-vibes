@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EmeraldCharm.class, AirElemental.class, AngelicChorus.class, GrizzlyBears.class, Pacifism.class})
 class EmeraldCharmTest extends BaseCardTest {
 
     @Nested
@@ -38,6 +40,20 @@ class EmeraldCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(bears.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Can untap a noncreature permanent")
+        void untapsNoncreaturePermanent() {
+            Permanent chorus = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+            chorus.tap();
+            harness.setHand(player1, List.of(new EmeraldCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.castInstant(player1, 0, 0, chorus.getId());
+            harness.passBothPriorities();
+
+            assertThat(chorus.isTapped()).isFalse();
         }
     }
 
@@ -71,6 +87,17 @@ class EmeraldCharmTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.GREEN, 1);
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, aura.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Cannot target a creature")
+        void cannotTargetCreature() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new EmeraldCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, bears.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -116,9 +143,8 @@ class EmeraldCharmTest extends BaseCardTest {
     }
 
     private Permanent addAuraAttachedTo(Player player, Permanent host) {
-        Permanent aura = new Permanent(new Pacifism());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new Pacifism());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return aura;
     }
 }

@@ -1,33 +1,27 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StampedingWildebeests.class, GrizzlyBears.class, RagingGoblin.class})
 class StampedingWildebeestsTest extends BaseCardTest {
-
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
-    
 
     @Test
     @DisplayName("Triggers only during its controller upkeep")
     void triggersOnlyDuringControllerUpkeep() {
-        harness.addToBattlefield(player1, new StampedingWildebeests());
+        addCreatureReady(player1, new StampedingWildebeests());
 
         advanceToUpkeep(player2);
         assertThat(gd.stack).isEmpty();
@@ -40,10 +34,10 @@ class StampedingWildebeestsTest extends BaseCardTest {
     @Test
     @DisplayName("Prompt only includes green creatures you control")
     void promptOnlyIncludesGreenCreaturesYouControl() {
-        addPermanent(player1, new StampedingWildebeests());
-        Permanent greenCreature = addPermanent(player1, new GrizzlyBears());
-        Permanent nonGreenCreature = addPermanent(player1, new RagingGoblin());
-        Permanent opponentsGreenCreature = addPermanent(player2, new GrizzlyBears());
+        addCreatureReady(player1, new StampedingWildebeests());
+        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonGreenCreature = addCreatureReady(player1, new RagingGoblin());
+        Permanent opponentsGreenCreature = addCreatureReady(player2, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -59,8 +53,8 @@ class StampedingWildebeestsTest extends BaseCardTest {
     @Test
     @DisplayName("Can choose itself when it is the only green creature")
     void canChooseItselfWhenOnlyGreenCreature() {
-        Permanent wildebeests = addPermanent(player1, new StampedingWildebeests());
-        addPermanent(player1, new RagingGoblin());
+        Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
+        addCreatureReady(player1, new RagingGoblin());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -72,8 +66,8 @@ class StampedingWildebeestsTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen green creature is returned to owner's hand")
     void chosenGreenCreatureReturnedToOwnersHand() {
-        addPermanent(player1, new StampedingWildebeests());
-        Permanent greenCreature = addPermanent(player1, new GrizzlyBears());
+        addCreatureReady(player1, new StampedingWildebeests());
+        Permanent greenCreature = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -82,5 +76,49 @@ class StampedingWildebeestsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(greenCreature.getId()));
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled green creature to its owner's hand")
+    void returnsControlledGreenCreatureToItsOwnersHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        addCreatureReady(player1, new StampedingWildebeests());
+
+        var opponentOwnedCard = new GrizzlyBears();
+        opponentOwnedCard.setOwnerId(player2.getId());
+        Permanent opponentOwnedCreature = addCreatureReady(player1, opponentOwnedCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentOwnedCreature.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Trample assigns excess combat damage to the defending player")
+    void trampleAssignsExcessCombatDamageToDefendingPlayer() {
+        harness.setLife(player2, 20);
+
+        Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
+        wildebeests.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 3
+        ));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wildebeests);
     }
 }

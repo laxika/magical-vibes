@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.c.CloudElemental;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +15,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinRecruiter.class, GoblinSwineRider.class, CloudElemental.class})
 class GoblinRecruiterTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB prompts choice showing only Goblin cards from the library")
     void etbPromptsChoiceWithOnlyGoblins() {
         setupAndCast();
-        Card goblinA = new RagingGoblin();
-        Card goblinB = new RagingGoblin();
-        setLibrary(List.of(goblinA, new GrizzlyBears(), goblinB, new GrizzlyBears()));
+        Card goblinA = new GoblinSwineRider();
+        Card goblinB = new GoblinSwineRider();
+        harness.setLibrary(player1, List.of(goblinA, new CloudElemental(), goblinB, new CloudElemental()));
 
         resolveEtb();
 
@@ -36,8 +37,8 @@ class GoblinRecruiterTest extends BaseCardTest {
     @DisplayName("Choosing a single Goblin puts it on top without a reorder step")
     void choosingSingleGoblinPutsOnTop() {
         setupAndCast();
-        Card goblin = new RagingGoblin();
-        setLibrary(List.of(goblin, new GrizzlyBears(), new GrizzlyBears()));
+        Card goblin = new GoblinSwineRider();
+        harness.setLibrary(player1, List.of(goblin, new CloudElemental(), new CloudElemental()));
 
         resolveEtb();
         harness.handleMultipleCardsChosen(player1, List.of(goblin.getId()));
@@ -51,9 +52,9 @@ class GoblinRecruiterTest extends BaseCardTest {
     @DisplayName("Choosing multiple Goblins triggers a reorder step, then places them on top")
     void choosingMultipleGoblinsReordersOnTop() {
         setupAndCast();
-        Card goblinA = new RagingGoblin();
-        Card goblinB = new RagingGoblin();
-        setLibrary(List.of(goblinA, goblinB, new GrizzlyBears()));
+        Card goblinA = new GoblinSwineRider();
+        Card goblinB = new GoblinSwineRider();
+        harness.setLibrary(player1, List.of(goblinA, goblinB, new CloudElemental()));
 
         resolveEtb();
         harness.handleMultipleCardsChosen(player1, List.of(goblinA.getId(), goblinB.getId()));
@@ -70,11 +71,31 @@ class GoblinRecruiterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing some Goblins reveals the choice and leaves the others in the library")
+    void choosingSubsetRevealsAndLeavesUnchosenGoblinsInLibrary() {
+        setupAndCast();
+        Card chosenGoblin = new GoblinSwineRider();
+        Card unchosenGoblin = new GoblinSwineRider();
+        Card nonGoblin = new CloudElemental();
+        harness.setLibrary(player1, List.of(chosenGoblin, unchosenGoblin, nonGoblin));
+
+        resolveEtb();
+        harness.handleMultipleCardsChosen(player1, List.of(chosenGoblin.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(3);
+        assertThat(library.getFirst().getId()).isEqualTo(chosenGoblin.getId());
+        assertThat(library).contains(unchosenGoblin, nonGoblin);
+        assertThat(gameLogContains("reveals " + chosenGoblin.getName())).isTrue();
+    }
+
+    @Test
     @DisplayName("Choosing zero Goblins leaves all cards in the library")
     void choosingZeroKeepsLibrary() {
         setupAndCast();
-        Card goblin = new RagingGoblin();
-        setLibrary(List.of(goblin, new GrizzlyBears()));
+        Card goblin = new GoblinSwineRider();
+        harness.setLibrary(player1, List.of(goblin, new CloudElemental()));
 
         resolveEtb();
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -89,7 +110,7 @@ class GoblinRecruiterTest extends BaseCardTest {
     @DisplayName("No Goblins in library: no prompt, library is shuffled")
     void noGoblinsShufflesLibrary() {
         setupAndCast();
-        setLibrary(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CloudElemental(), new CloudElemental()));
 
         resolveEtb();
 
@@ -98,15 +119,7 @@ class GoblinRecruiterTest extends BaseCardTest {
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new GoblinRecruiter()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.castCreature(player1, 0);
-    }
-
-    private void setLibrary(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.castFromHand(player1, new GoblinRecruiter(), "{1}{R}");
     }
 
     private void resolveEtb() {

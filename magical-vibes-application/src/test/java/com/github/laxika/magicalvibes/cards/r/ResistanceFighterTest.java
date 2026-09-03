@@ -1,19 +1,26 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DwarvenVigilantes;
+import com.github.laxika.magicalvibes.cards.j.JungleBasin;
+import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
+import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ResistanceFighter.class, Warthog.class, JungleBasin.class, DwarvenVigilantes.class,
+        PantherWarriors.class})
 class ResistanceFighterTest extends BaseCardTest {
 
     @Test
@@ -21,7 +28,7 @@ class ResistanceFighterTest extends BaseCardTest {
     void preventsCombatDamageToPlayer() {
         harness.setLife(player1, 20);
         addReadyFighter();
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new Warthog());
 
         activateFighter(attacker);
         resolveCombat(player2);
@@ -33,7 +40,7 @@ class ResistanceFighterTest extends BaseCardTest {
     @DisplayName("Fighter is sacrificed as a cost when the ability is activated")
     void sacrificedAsCost() {
         addReadyFighter();
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new Warthog());
 
         activateFighter(attacker);
 
@@ -45,7 +52,7 @@ class ResistanceFighterTest extends BaseCardTest {
     @DisplayName("Only combat damage is prevented, not all damage")
     void combatDamageOnly() {
         addReadyFighter();
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new Warthog());
 
         activateFighter(attacker);
 
@@ -57,7 +64,7 @@ class ResistanceFighterTest extends BaseCardTest {
     @DisplayName("Prevention is cleared at end of turn")
     void preventionClearedAtEndOfTurn() {
         addReadyFighter();
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new Warthog());
 
         activateFighter(attacker);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -71,23 +78,54 @@ class ResistanceFighterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat-damage prevention does not prevent noncombat damage from the targeted creature")
+    void noncombatDamageStillDeals() {
+        addReadyFighter();
+        Permanent victim = addCreatureReady(player1, new Warthog());
+        Permanent attacker = addAttacker(player2, new DwarvenVigilantes());
+
+        activateFighter(attacker);
+        resolveUnblockedCombat();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, victim.getId());
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage from a targeted blocking creature")
+    void preventsCombatDamageFromBlockingCreature() {
+        addReadyFighter();
+        Permanent blocker = addCreatureReady(player1, new PantherWarriors());
+        Permanent attacker = addAttacker(player2, new Warthog());
+
+        activateFighter(blocker);
+        prepareDeclareBlockers(player2);
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadyFighter();
-        harness.addToBattlefield(player1, new Forest());
-        UUID forestId = harness.getPermanentId(player1, "Forest");
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new JungleBasin()).getId();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forestId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, landId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Helpers =====
 
     private void addReadyFighter() {
-        harness.addToBattlefield(player1, new ResistanceFighter());
-        gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Resistance Fighter"))
-                .forEach(p -> p.setSummoningSick(false));
+        addCreatureReady(player1, new ResistanceFighter());
     }
 
     private void activateFighter(Permanent target) {
@@ -96,11 +134,16 @@ class ResistanceFighterTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(owner, card);
-        Permanent attacker = findPermanent(owner, card.getName());
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
+    }
+
+    private void resolveUnblockedCombat() {
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passBothPriorities();
     }
 }

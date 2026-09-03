@@ -1,23 +1,29 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.Breezekeeper;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.r.RealityRipple;
+import com.github.laxika.magicalvibes.cards.d.DarkPrivilege;
+import com.github.laxika.magicalvibes.cards.k.KatabaticWinds;
+import com.github.laxika.magicalvibes.cards.m.MagmaMine;
+import com.github.laxika.magicalvibes.cards.r.RainbowEfreet;
+import com.github.laxika.magicalvibes.cards.w.Warthog;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Breezekeeper.class, DarkPrivilege.class, KatabaticWinds.class, MagmaMine.class,
+        RainbowEfreet.class, TimeAndTide.class, Warthog.class})
 class TimeAndTideTest extends BaseCardTest {
 
     @Test
@@ -37,25 +43,34 @@ class TimeAndTideTest extends BaseCardTest {
     @Test
     @DisplayName("Phases in every phased-out creature")
     void phasesInPhasedOutCreatures() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        phaseOutWithRealityRipple(bears.getId());
+        Permanent efreet = phaseOutWithRainbowEfreet();
 
         castTimeAndTide();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
-        assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of())).doesNotContain(efreet);
+    }
+
+    @Test
+    @DisplayName("Phases in phased-out creatures controlled by the opponent")
+    void phasesInOpponentsPhasedOutCreatures() {
+        Permanent efreet = phaseOutWithRainbowEfreet(player2);
+
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(efreet);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of())).doesNotContain(efreet);
     }
 
     @Test
     @DisplayName("Simultaneously phases in phased-out creatures and phases out creatures with phasing")
     void simultaneousSwap() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        phaseOutWithRealityRipple(bears.getId());
+        Permanent efreet = phaseOutWithRainbowEfreet();
         Permanent keeper = addCreatureReady(player1, new Breezekeeper());
 
         castTimeAndTide();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(keeper);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(keeper);
     }
@@ -76,47 +91,95 @@ class TimeAndTideTest extends BaseCardTest {
     @Test
     @DisplayName("Does not phase out creatures without phasing")
     void ignoresCreaturesWithoutPhasing() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent warthog = addCreatureReady(player1, new Warthog());
 
         castTimeAndTide();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(warthog);
+    }
+
+    @Test
+    @DisplayName("Does not phase out a noncreature permanent with phasing")
+    void ignoresNoncreaturePermanentsWithPhasing() {
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new KatabaticWinds());
+
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(winds);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of())).doesNotContain(winds);
+    }
+
+    @Test
+    @DisplayName("Phases attachments out with their creature and back in with it")
+    void phasesAttachmentsWithTheirHost() {
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DarkPrivilege());
+        aura.setAttachedTo(keeper.getId());
+
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(keeper, aura);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(keeper, aura);
+
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper, aura);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of()))
+                .doesNotContain(keeper, aura);
+        assertThat(aura.getAttachedTo()).isEqualTo(keeper.getId());
     }
 
     @Test
     @DisplayName("Does not phase in phased-out noncreature permanents")
     void ignoresPhasedOutNoncreatures() {
-        Permanent island = new Permanent(new Island());
-        gd.phasedOutPermanents.computeIfAbsent(player1.getId(), id -> new ArrayList<>()).add(island);
+        Permanent magmaMine = new Permanent(new MagmaMine());
+        gd.phasedOutPermanents.computeIfAbsent(player1.getId(), id -> new ArrayList<>()).add(magmaMine);
 
         castTimeAndTide();
 
-        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(magmaMine);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(magmaMine);
+    }
+
+    @Test
+    @DisplayName("Phases in a face-down creature")
+    void phasesInFaceDownCreature() {
+        Permanent faceDownCreature = new Permanent(new MagmaMine());
+        faceDownCreature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        gd.phasedOutPermanents.computeIfAbsent(player1.getId(), id -> new ArrayList<>()).add(faceDownCreature);
+
+        castTimeAndTide();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(faceDownCreature);
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of()))
+                .doesNotContain(faceDownCreature);
     }
 
     private void castTimeAndTide() {
-        harness.setHand(player1, List.of(new TimeAndTide()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TimeAndTide(), "{U}{U}");
         harness.passBothPriorities();
     }
 
-    private void phaseOutWithRealityRipple(UUID targetId) {
-        harness.setHand(player1, List.of(new RealityRipple()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, targetId);
+    private Permanent phaseOutWithRainbowEfreet() {
+        return phaseOutWithRainbowEfreet(player1);
+    }
+
+    private Permanent phaseOutWithRainbowEfreet(Player controller) {
+        Permanent efreet = addCreatureReady(controller, new RainbowEfreet());
+        harness.addMana(controller, ManaColor.BLUE, 2);
+        int efreetIndex = gd.playerBattlefields.get(controller.getId()).indexOf(efreet);
+        harness.activateAbility(controller, efreetIndex, null, null);
         harness.passBothPriorities();
+        return efreet;
     }
 
     private void advanceToControllersUntap(Player controller) {
+        harness.forceStep(TurnStep.CLEANUP);
         if (gd.activePlayerId.equals(controller.getId())) {
-            harness.forceStep(TurnStep.CLEANUP);
             harness.passBothPriorities();
             harness.forceStep(TurnStep.CLEANUP);
             harness.passBothPriorities();
         } else {
-            harness.forceStep(TurnStep.CLEANUP);
             harness.passBothPriorities();
         }
     }

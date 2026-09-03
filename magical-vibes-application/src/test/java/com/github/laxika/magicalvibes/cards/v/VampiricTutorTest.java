@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.Impulse;
+import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
+import com.github.laxika.magicalvibes.cards.j.JujuBubble;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VampiricTutor.class, Impulse.class, JujuBubble.class, JamuraanLion.class})
 class VampiricTutorTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,13 @@ class VampiricTutorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .hasSize(3);
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).hasSize(3);
+        assertThat(search.params().cards().stream().map(Card::getId).toList())
+                .containsExactlyElementsOf(gd.playerDecks.get(player1.getId()).stream().map(Card::getId).toList());
+        assertThat(search.params().reveals()).isFalse();
+        assertThat(search.params().canFailToFind()).isFalse();
     }
 
     @Test
@@ -42,13 +49,52 @@ class VampiricTutorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
-        String chosenName = offered.get(1).getName();
+        UUID chosenId = offered.get(1).getId();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        assertThat(deck.getFirst().getName()).isEqualTo(chosenName);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(deck.getFirst().getId()).isEqualTo(chosenId);
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Life loss waits until the mandatory search completes")
+    void lifeLossWaitsUntilSearchCompletes() {
+        harness.setLife(player1, 20);
+        setupLibrary();
+        cast();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.handleCardChosen(player1, 0);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Choosing a card does not reveal it")
+    void choosingCardDoesNotRevealIt() {
+        setupLibrary();
+        cast();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(entry -> entry.contains("reveals"));
+    }
+
+    @Test
+    @DisplayName("An empty library still causes the life loss")
+    void emptyLibraryStillLosesLife() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of());
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -58,20 +104,15 @@ class VampiricTutorTest extends BaseCardTest {
         cast();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1)))
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new VampiricTutor()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new VampiricTutor(), "{B}");
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new DiabolicTutor(), new GrizzlyBears(), new Island()));
+        harness.setLibrary(player1, List.of(new Impulse(), new JujuBubble(), new JamuraanLion()));
     }
 }
