@@ -58,7 +58,7 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
                 eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull(), isNull(),
-                eq(false), isNull());
+                eq(false), isNull(), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -95,7 +95,7 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of(9, 10)), eq(List.of(imposedSacrifice)), eq(List.of(multiSacrifice)),
                 eq(List.of("{1}{G}")), eq(true), eq(beholdPermanent), eq(11),
                 eq(List.of(multiBeholdPermanent)), eq(List.of(12, 13)), eq(CardSubtype.ELF),
-                eq(CardSubtype.GOBLIN), eq(true), eq(true));
+                eq(CardSubtype.GOBLIN), eq(true), eq(true), isNull());
         verifyNoMoreInteractions(gameService);
     }
 
@@ -112,7 +112,7 @@ class PlayCardRequestDispatchServiceTest {
                 eq(List.of()), eq(List.of()), eq(false), isNull(), isNull(), isNull(),
                 isNull(), isNull(), eq(false), isNull(), isNull(), isNull(), isNull(), eq(List.of()),
                 eq(false), isNull(), isNull(), eq(List.of()), eq(List.of()), isNull(), isNull(),
-                eq(false), isNull());
+                eq(false), isNull(), isNull());
         verifyNoMoreInteractions(gameService);
     }
 

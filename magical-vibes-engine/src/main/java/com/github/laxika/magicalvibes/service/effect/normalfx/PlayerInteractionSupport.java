@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 /**
  * Shared draw/discard/reveal/choice helpers used by every PlayerInteraction effect handler
@@ -86,26 +87,33 @@ public class PlayerInteractionSupport {
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                null, null, null);
+                null, null, null, ignored -> true);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId, UUID sourceCardId,
+                                          Predicate<Card> additionalFilter) {
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
+                null, null, null, additionalFilter);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
                                           int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
                                           CardEffect thenEffect, CardPredicate thenCondition) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                thenEffect, thenCondition, null);
+                thenEffect, thenCondition, null, ignored -> true);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
                                           UUID sourceEquipmentCardId, UUID sourceCardId, UUID blockingAttackerId) {
         applyPutCardToBattlefield(gameData, playerId, effect, xValue, sourceEquipmentCardId, sourceCardId,
-                null, null, blockingAttackerId);
+                null, null, blockingAttackerId, ignored -> true);
     }
 
     private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
                                            int xValue, UUID sourceEquipmentCardId, UUID sourceCardId,
                                            CardEffect thenEffect, CardPredicate thenCondition,
-                                           UUID blockingAttackerId) {
+                                           UUID blockingAttackerId, Predicate<Card> additionalFilter) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -114,6 +122,9 @@ public class PlayerInteractionSupport {
                 Card handCard = hand.get(i);
                 if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), sourceCardId,
                         gameData, playerId)) {
+                    continue;
+                }
+                if (!additionalFilter.test(handCard)) {
                     continue;
                 }
                 // Mind into Matter: "mana value X or less".
@@ -214,6 +225,11 @@ public class PlayerInteractionSupport {
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
     }
     public void applyDrawCards(GameData gameData, UUID playerId, int amount) {
+
+        if (amount > 0 && drawService.hasQuantumRiddlerDrawReplacement(gameData, playerId)) {
+            drawService.resolveDrawCards(gameData, playerId, amount);
+            return;
+        }
 
         for (int i = 0; i < amount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
@@ -724,7 +740,7 @@ public class PlayerInteractionSupport {
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
                 null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
                 imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
-                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect);
+                exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0);
         interactionHandlerRegistry.begin(gameData, interaction);
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",

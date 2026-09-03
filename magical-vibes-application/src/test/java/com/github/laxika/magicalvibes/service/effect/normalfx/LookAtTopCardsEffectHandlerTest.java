@@ -602,6 +602,32 @@ class LookAtTopCardsEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Shuffle-rest battlefield flow remains any-number when only one card is looked at")
+        void shuffleRestFlowAllowsChoosingZeroOrOne() {
+            stubCardViewFactory();
+            Card land = createCard("Forest");
+            Card spell = createCard("Lightning Bolt");
+            gd.playerDecks.get(player1Id).add(land);
+            gd.playerDecks.get(player1Id).add(spell);
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == land);
+
+            LookAtTopCardsEffect effect =
+                    LookAtTopCardsEffect.mayPutAnyNumberMatchingOntoBattlefieldTappedShuffleRest(
+                            new Fixed(1), new CardTypePredicate(CardType.LAND));
+            handler.resolve(gd, entryFor("Famished Worldsire", effect), effect);
+
+            PendingInteraction.LibraryRevealChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.maxCount()).isEqualTo(1);
+            assertThat(choice.minCount()).isZero();
+            assertThat(choice.selectedToBattlefieldTapped()).isTrue();
+            assertThat(choice.reorderRemainingToBottom()).isFalse();
+            assertThat(choice.randomRemainingToBottom()).isFalse();
+        }
+
+        @Test
         @DisplayName("Mandatory battlefield pick sends the other revealed cards to the graveyard")
         void mandatoryBattlefieldPickRestToGraveyard() {
             stubCardViewFactory();

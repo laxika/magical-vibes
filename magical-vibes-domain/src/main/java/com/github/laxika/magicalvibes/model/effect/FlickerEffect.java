@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -52,12 +53,35 @@ public record FlickerEffect(
         Set<Keyword> grantedKeywordsOnReturn,
         boolean chooseAnyNumber,
         boolean returnAtControllerNextStep,
-        boolean addAdditionalEndStepIfFirst) implements AttachedPermanentSelfTargetingEffect {
+        boolean addAdditionalEndStepIfFirst,
+        CounterType counterTypeOnReturn,
+        int counterAmountOnReturn,
+        Set<CardSubtype> bonusSubtypes) implements AttachedPermanentSelfTargetingEffect {
 
     public FlickerEffect {
         grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
                 ? Set.of()
                 : Set.copyOf(grantedKeywordsOnReturn);
+        bonusSubtypes = bonusSubtypes == null ? Set.of() : Set.copyOf(bonusSubtypes);
+    }
+
+    public FlickerEffect(
+            FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+            TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+            CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+            boolean returnUnderController, boolean grantHaste,
+            boolean returnAtOwnerNextEndStep, boolean plusOnePlusOneCountersOnlyOnCreatures,
+            int loyaltyCountersOnPlaneswalkersOnReturn,
+            boolean addCounterIfReturnedUnderControllerOtherwiseTap,
+            Set<Keyword> grantedKeywordsOnReturn, boolean chooseAnyNumber,
+            boolean returnAtControllerNextStep, boolean addAdditionalEndStepIfFirst) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkersOnReturn,
+                addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn,
+                chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst,
+                null, 0, Set.of());
     }
 
     public FlickerEffect(
@@ -148,6 +172,13 @@ public record FlickerEffect(
     public static FlickerEffect exileTargetReturnAtEndStepWithCounters(int counters) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, counters, false, false);
+    }
+
+    public static FlickerEffect exileTargetReturnAtEndStepWithCounter(CounterType counterType) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false,
+                counterType, 1, Set.of());
     }
 
     /** Exile target permanent, returning it with +1/+1 counters only if it is a creature. */
@@ -255,6 +286,13 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetWithBonus(CardSubtype bonusSubtype, CardEffect bonusEffect) {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, bonusSubtype, bonusEffect, 0, false, false);
+    }
+
+    public static FlickerEffect flickerTargetWithBonus(Set<CardSubtype> bonusSubtypes, CardEffect bonusEffect) {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, bonusEffect, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false,
+                null, 0, bonusSubtypes);
     }
 
     /**

@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -56,6 +59,11 @@ class BoneHarvestTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(firstChosen.getId(), secondChosen.getId()));
         harness.passBothPriorities();
 
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactly(firstChosen, secondChosen);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(secondChosen.getId(), firstChosen.getId(), existingTopCard.getId());
@@ -74,7 +82,10 @@ class BoneHarvestTest extends BaseCardTest {
                 new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()));
         harness.passBothPriorities();
 
-        advanceToUpkeep(player2);
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.activePlayerId = player2.getId();
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

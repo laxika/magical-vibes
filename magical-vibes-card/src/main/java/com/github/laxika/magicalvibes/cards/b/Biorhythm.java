@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetLifeTotalRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "231")
+@CardRegistration(set = "ONS", collectorNumber = "247")
 public class Biorhythm extends Card {
 
     public Biorhythm() {

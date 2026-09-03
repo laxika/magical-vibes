@@ -96,7 +96,7 @@ public class SylvanLibraryChoiceInteractionHandler
         int remaining = interaction.resolveCount() - topped.size();
         for (int i = 0; i < remaining; i++) {
             if (gameData.getLife(playerId) >= LIFE_PER_CARD) {
-                lifeSupport.applyLifeLoss(gameData, playerId, LIFE_PER_CARD, "Sylvan Library");
+                lifeSupport.applyLifePayment(gameData, playerId, LIFE_PER_CARD, "Sylvan Library");
             } else {
                 Card forced = takeNextEligible(hand, interaction.drawnThisTurnCardIds());
                 if (forced != null) {

@@ -1,14 +1,19 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AncientTomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,5 +89,49 @@ class DeepWaterTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @CardUsed({AncientTomb.class})
+    @DisplayName("Deep Water preserves the amount from an activated multi-mana land")
+    void preservesAmountFromActivatedMultiManaLand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new AncientTomb());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @CardUsed({Unsummon.class, GrizzlyBears.class})
+    @DisplayName("Deep Water makes converted land mana available to click-to-cast playability")
+    void convertedLandManaAppearsInPotentialPlayability() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.ensurePriority(player1);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPotentialPlayableCardIndices(gd, player1.getId(), List.of()))
+                .containsExactly(0);
     }
 }

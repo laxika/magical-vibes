@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -21,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
@@ -50,6 +54,8 @@ public class CombatTriggerService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final GraveyardTargetingService graveyardTargetingService;
 
     /**
      * Checks attached permanents (auras/equipment) for triggers in the given slot
@@ -119,10 +125,10 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                         } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
-                            // "blocks or becomes blocked by a [filter] creature, ... that creature"
-                            // (e.g. Venom). Auto-target the combat opponent; the effect's handler
-                            // re-checks the filter at resolution.
-                            if (combatOpponent != null) {
+                            if (combatOpponent != null
+                                    && (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
+                                    || predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, combatOpponent, destroyEffect.filter()))) {
                                 effectsForStack.add(effect);
                                 autoTargetOpponent = true;
                             }
@@ -172,15 +178,33 @@ public class CombatTriggerService {
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
+                        } else if (slot == EffectSlot.ON_ATTACK && effectsForStack.stream()
+                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+                            UUID attackedTargetId = creature.getAttackTarget();
+                            UUID defendingPlayerId = attackedTargetId == null ? null
+                                    : gameData.playerIds.contains(attackedTargetId)
+                                            ? attackedTargetId
+                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                            graveyardTargetingService.handleAttackGraveyardTargeting(
+                                    gameData, auraOwnerId, perm.getCard(), effectsForStack, perm.getId(),
+                                    defendingPlayerId);
+                            return;
                         } else {
                             // Check if any effect needs a permanent target — queue for target selection
                             boolean needsTarget = effectsForStack.stream()
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
-                                gameData.queueInteraction(
-                                        new PermanentChoiceContext.AttackTriggerTarget(
-                                                perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                auraOwnerId, null));
+                                if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
+                                    gameData.queueInteraction(
+                                            new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                                    perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                    List.of(), 0, 0));
+                                } else {
+                                    gameData.queueInteraction(
+                                            new PermanentChoiceContext.AttackTriggerTarget(
+                                                    perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                    auraOwnerId, null));
+                                }
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                         gameData.id, perm.getCard().getName(), creature.getCard().getName());
@@ -219,6 +243,21 @@ public class CombatTriggerService {
                 }
             }
         });
+    }
+
+    private boolean needsSlotBySlotTargetSelection(Card card, List<CardEffect> effects) {
+        Set<Integer> boundGroups = effects.stream()
+                .map(card::getEffectTargetIndex)
+                .filter(index -> index >= 0)
+                .collect(java.util.stream.Collectors.toSet());
+        if (boundGroups.isEmpty()) {
+            return card.getSpellTargets().size() > 1
+                    || etbTokenTargetService.needsSlotBySlotTargetSelection(card);
+        }
+        return boundGroups.size() > 1 || card.getSpellTargets().stream()
+                .filter(group -> boundGroups.contains(group.getIndex()))
+                .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
+                        || group.getDynamicMinTargets() != null);
     }
 
     private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {
@@ -274,9 +313,12 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                             } else if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
-                                // Auto-target this blocker; the handler re-checks the filter (Venom).
-                                transformedEffects.add(effect);
-                                autoTargetBlocker = true;
+                                if (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
+                                        || predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, destroyEffect.filter())) {
+                                    transformedEffects.add(effect);
+                                    autoTargetBlocker = true;
+                                }
                             } else {
                                 transformedEffects.add(effect);
                             }

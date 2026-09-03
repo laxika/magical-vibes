@@ -209,6 +209,40 @@ class UntapStepServiceTest {
         }
 
         @Test
+        @DisplayName("Attached Aura can lock its host based on a counter on the Aura")
+        void attachedAuraChecksItsOwnCounter() {
+            Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            creature.tap();
+            Card auraCard = createCardWithName("Cocoon");
+            auraCard.addEffect(EffectSlot.STATIC,
+                    DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(creature.getId());
+            aura.setCounterCount(CounterType.PUPA, 1);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(creature.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Attached Aura can lock its host based on a counter on the host")
+        void attachedAuraChecksEnchantedPermanentCounter() {
+            Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            creature.tap();
+            creature.setCounterCount(CounterType.SLEEP, 1);
+            Card auraCard = createCardWithName("Venarian Gold");
+            auraCard.addEffect(EffectSlot.STATIC,
+                    DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(creature.getId());
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(creature.isTapped()).isTrue();
+        }
+
+        @Test
         @DisplayName("Permanent with enchanted-scope DoesntUntapEffect stays tapped")
         void doesntUntapWithAttachedAuraEffect() {
             Permanent perm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));

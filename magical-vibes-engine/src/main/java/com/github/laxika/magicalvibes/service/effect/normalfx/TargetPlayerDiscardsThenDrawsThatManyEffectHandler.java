@@ -44,7 +44,7 @@ public class TargetPlayerDiscardsThenDrawsThatManyEffectHandler implements Norma
             return;
         }
 
-        gameData.discardCausedByOpponent = true;
+        gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
         playerInteractionSupport.resolveDiscardCards(gameData, playerId, e.amount(),
                 DiscardFollowUp.rummage(drawCount));
     }

@@ -19,14 +19,29 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * of the Righteous. On a creature's own {@code ON_BLOCK} trigger (Wall of Frost) the same auto-target
  * is applied by {@code CombatBlockService}. Other scopes ignore the referenced target.
  *
- * @param scope  which permanent(s) to keep tapped through their next untap step
- * @param filter optional predicate narrowing the scanned scopes (null = no restriction)
+ * @param scope      which permanent(s) to keep tapped through their next untap step
+ * @param filter     optional predicate narrowing the scanned scopes (null = no restriction)
+ * @param untapSteps number of upcoming untap steps to skip
  */
-public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter)
+public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps)
         implements CardEffect, CombatOpponentReferencingEffect {
 
     public SkipNextUntapEffect(TapUntapScope scope) {
-        this(scope, null);
+        this(scope, null, 1);
+    }
+
+    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter) {
+        this(scope, filter, 1);
+    }
+
+    public SkipNextUntapEffect(TapUntapScope scope, int untapSteps) {
+        this(scope, null, untapSteps);
+    }
+
+    public SkipNextUntapEffect {
+        if (untapSteps < 1) {
+            throw new IllegalArgumentException("untapSteps must be positive");
+        }
     }
 
     @Override

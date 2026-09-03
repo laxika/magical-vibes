@@ -8,5 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Used by Recross the Paths (as the pre-clash body of a {@link ClashEffect}).
  */
-public record RevealUntilLandToBattlefieldRestToBottomEffect() implements CardEffect {
+public record RevealUntilLandToBattlefieldRestToBottomEffect(boolean entersTapped) implements CardEffect {
+
+    public RevealUntilLandToBattlefieldRestToBottomEffect() {
+        this(false);
+    }
 }

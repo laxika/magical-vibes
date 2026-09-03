@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M15", collectorNumber = "148")
 @CardRegistration(set = "USG", collectorNumber = "199")
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 public class HeatRay extends Card {
 
     public HeatRay() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()));
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()));
     }
 }

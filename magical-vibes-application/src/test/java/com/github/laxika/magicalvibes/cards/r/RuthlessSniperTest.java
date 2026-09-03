@@ -32,11 +32,11 @@ class RuthlessSniperTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null); // cycle Censor -> discard trigger
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true); // pay {1}, then choose target
-
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
@@ -62,6 +62,9 @@ class RuthlessSniperTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         while (!gd.stack.isEmpty()) {
@@ -88,8 +91,9 @@ class RuthlessSniperTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, hawkId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -158,6 +159,13 @@ public class AiManaManager {
         }
         return findPaymentPlanWithRequirement(gameData, playerId, cost, currentPool,
                 false, creaturesOnly, excludedPermanentIds, requirement) != null;
+    }
+
+    boolean canPayBasicLandCost(GameData gameData, UUID playerId, String manaCostStr,
+                                int costModifier) {
+        ManaCost cost = new ManaCost(manaCostStr);
+        ManaPool virtualPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
+        return cost.canPayBasicLandOnly(virtualPool, 0, costModifier);
     }
 
     boolean canPayCostWithConvoke(GameData gameData, UUID playerId, String manaCostStr,
@@ -343,6 +351,58 @@ public class AiManaManager {
                 return;
             }
         }
+    }
+
+    void tapBasicLandsForCostExcluding(GameData gameData, UUID aiPlayerId, String manaCostStr,
+                                       int costModifier, ManaTapAction action,
+                                       Set<UUID> excludedPermanentIds) {
+        ManaCost cost = new ManaCost(manaCostStr);
+        ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
+        Set<UUID> excludedIds = excludedPermanentIds == null
+                ? Set.of()
+                : Set.copyOf(excludedPermanentIds);
+
+        if (cost.canPayBasicLandOnly(currentPool, 0, costModifier)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        Class<?> initialInteractionKind = interactionKind(gameData);
+        Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Permanent permanent : battlefield) {
+            if (excludedIds.contains(permanent.getId())
+                    || !gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC)) {
+                visited.add(permanent);
+            }
+        }
+
+        while (true) {
+            int index = pickBestTapIndex(gameData, aiPlayerId, battlefield, cost, currentPool,
+                    false, false, visited);
+            if (index < 0) {
+                return;
+            }
+            visited.add(battlefield.get(index));
+            if (!tapCandidate(gameData, aiPlayerId, battlefield, index, cost, currentPool, action)) {
+                continue;
+            }
+            currentPool = gameData.playerManaPools.get(aiPlayerId);
+            if (cost.canPayBasicLandOnly(currentPool, 0, costModifier)) {
+                return;
+            }
+            if (interactionKind(gameData) != initialInteractionKind) {
+                return;
+            }
+        }
+    }
+
+    public void tapBasicLandsForCost(GameData gameData, UUID playerId, String manaCostStr,
+                                     int costModifier, ManaTapAction action) {
+        tapBasicLandsForCostExcluding(gameData, playerId, manaCostStr, costModifier, action, Set.of());
     }
 
     private void executePaymentPlan(GameData gameData, UUID playerId, List<Permanent> battlefield,
@@ -1151,17 +1211,22 @@ public class AiManaManager {
      * make, and only that pool carries the over-count that keeps one tap worth one mana.
      */
     public void addCardManaToPool(Card card, ManaPool pool) {
+        boolean basicLandSource = card.hasType(CardType.LAND)
+                && card.getSupertypes().contains(CardSupertype.BASIC);
         if (hasOnTapManaEffects(card)) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof ManaProducingEffect mp) {
                     if (mp.estimatedManaColor() != null) {
-                        pool.add(mp.estimatedManaColor(),
-                                potentialManaService.estimateManaAmount(mp.estimatedManaAmount(), null, null));
+                        int amount = potentialManaService.estimateManaAmount(mp.estimatedManaAmount(), null, null);
+                        pool.add(mp.estimatedManaColor(), amount);
+                        if (basicLandSource) {
+                            pool.addBasicLandManaTag(mp.estimatedManaColor(), amount);
+                        }
                     } else if (mp.estimatedCountsAllColors()) {
                         // Every color, not colorless: the point of comparing land plays is which
                         // colored costs each one unlocks, and colorless unlocks none of them.
                         PotentialManaService.addAnyColorManaToVirtualPool(
-                                pool, Math.max(1, mp.estimatedWildcardMana()), false);
+                                pool, Math.max(1, mp.estimatedWildcardMana()), false, basicLandSource);
                     }
                 }
             }

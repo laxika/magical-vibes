@@ -56,7 +56,8 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (!equipSupport.canAttachEquipment(gameData, equipment, target)) {
+        if (!equipSupport.canAttachEquipment(gameData, equipment, target,
+                ((EquipEffect) effect).permitsNonCreatureTarget())) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s equip ability has no effect (the target can't be equipped)."));
             log.info("Game {} - Equip has no effect, target cannot be equipped", gameData.id);

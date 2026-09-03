@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,10 +33,16 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        resolve(gameData, entry.getControllerId(), entry.getTargetId(), entry.getCard(), effect);
+        resolve(gameData, entry.getControllerId(), entry.getTargetId(), entry.getCard(),
+                entry.getSourcePermanentId(), effect);
     }
 
     public void resolve(GameData gameData, UUID controllerId, UUID targetCardId, Card sourceCard, CardEffect effect) {
+        resolve(gameData, controllerId, targetCardId, sourceCard, null, effect);
+    }
+
+    private void resolve(GameData gameData, UUID controllerId, UUID targetCardId, Card sourceCard,
+                         UUID sourcePermanentId, CardEffect effect) {
         StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, targetCardId);
         if (targetSpell == null) {
             return;
@@ -47,7 +54,16 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
             return;
         }
 
-        boolean creatureTargetsOnly = ((ChangeTargetOfTargetSpellWithSingleTargetEffect) effect).creatureTargetsOnly();
+        ChangeTargetOfTargetSpellWithSingleTargetEffect redirectEffect =
+                (ChangeTargetOfTargetSpellWithSingleTargetEffect) effect;
+        if (redirectEffect.requiresSourceTarget()
+                && !Objects.equals(sourcePermanentId, targetSpell.getTargetId())) {
+            gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(),
+                    " doesn't target this creature)."));
+            return;
+        }
+
+        boolean creatureTargetsOnly = redirectEffect.creatureTargetsOnly();
         if (creatureTargetsOnly && !isCreatureId(gameData, targetSpell.getTargetId())) {
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " doesn't target a creature)."));
             return;
@@ -56,7 +72,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
         List<UUID> validNewTargets = targetRedirectionSupport.collectValidNewTargets(gameData, targetSpell);
         if (creatureTargetsOnly) {
             validNewTargets = validNewTargets.stream().filter(id -> isCreatureId(gameData, id)).toList();
-        } else if (((ChangeTargetOfTargetSpellWithSingleTargetEffect) effect).playerTargetsOnly()) {
+        } else if (redirectEffect.playerTargetsOnly()) {
             validNewTargets = validNewTargets.stream().filter(gameData.orderedPlayerIds::contains).toList();
         }
         if (validNewTargets.isEmpty()) {

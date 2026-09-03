@@ -548,11 +548,13 @@ public final class EffectResolution {
     }
 
     /**
-     * True when any spell effect reads {@link ManaSpentToCast} — the cast path must snapshot total
-     * mana spent into the stack entry's {@code xValue} (Molten Note damage; Memory Deluge look count).
+     * True when any spell or battlefield-entry effect reads {@link ManaSpentToCast} — the cast path
+     * must snapshot total mana spent into the stack entry's {@code xValue}.
      */
     public static boolean hasManaSpentToCastAmount(Card card) {
-        return hasManaSpentToCastAmount(card.getEffects(EffectSlot.SPELL));
+        return java.util.stream.Stream.of(EffectSlot.SPELL, EffectSlot.ON_ENTER_BATTLEFIELD)
+                .flatMap(slot -> card.getEffects(slot).stream())
+                .anyMatch(EffectResolution::effectUsesManaSpentToCast);
     }
 
     public static boolean hasManaSpentToCastAmount(List<CardEffect> effects) {
@@ -560,12 +562,18 @@ public final class EffectResolution {
     }
 
     private static boolean effectUsesManaSpentToCast(CardEffect e) {
+        if (e instanceof EnterWithCountersEffect enterWithCounters) {
+            return enterWithCounters.count() instanceof ManaSpentToCast;
+        }
         if (e instanceof DealDamageToTargetCreatureEffect d) {
             return d.damage() instanceof ManaSpentToCast;
         }
         if (e instanceof LookAtTopCardsEffect look) {
             return look.lookCount() instanceof ManaSpentToCast
                     || look.chooseCount() instanceof ManaSpentToCast;
+        }
+        if (e instanceof ReturnCardFromGraveyardEffect returnEffect) {
+            return returnEffect.dynamicMaxManaValue() instanceof ManaSpentToCast;
         }
         return false;
     }

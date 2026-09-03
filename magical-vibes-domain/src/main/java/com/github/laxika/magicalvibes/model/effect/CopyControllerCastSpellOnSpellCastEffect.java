@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,12 +46,27 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         boolean mayChooseNewTargets,
         boolean grantHasteToPermanentSpell,
         boolean excludeHandCast,
-        Condition triggerCondition
+        Condition triggerCondition,
+        List<CardPredicate> firstSpellFilters,
+        CardEffect beforeCopyEffect
 ) implements CardEffect {
 
     public CopyControllerCastSpellOnSpellCastEffect {
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
         additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
+        firstSpellFilters = firstSpellFilters == null ? List.of() : List.copyOf(firstSpellFilters);
+    }
+
+    public CopyControllerCastSpellOnSpellCastEffect(
+            CardPredicate spellFilter, TapMultiplePermanentsCost tapCost, String manaCost,
+            Zone requiredCastZone, StackEntryPredicate castSpellTargetCondition,
+            Set<Keyword> grantedKeywords, Condition intervening, boolean requiredCastWithAdventure,
+            Set<CardType> additionalTypes, boolean tokenCopy, boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell, boolean excludeHandCast, Condition triggerCondition) {
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition,
+                grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy,
+                mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition,
+                List.of(), null);
     }
 
     public CopyControllerCastSpellOnSpellCastEffect(
@@ -100,6 +117,14 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         return new CopyControllerCastSpellOnSpellCastEffect(
                 spellFilter, null, null, null, null, Set.of(), intervening, false,
                 Set.of(), false, true, false, false, null);
+    }
+
+    public static CopyControllerCastSpellOnSpellCastEffect firstMatchingCopy(
+            List<CardPredicate> firstSpellFilters, CardEffect beforeCopyEffect) {
+        return new CopyControllerCastSpellOnSpellCastEffect(
+                new CardAnyOfPredicate(firstSpellFilters), null, null, null, null, Set.of(), null,
+                false, Set.of(), false, true, false, false, null,
+                firstSpellFilters, beforeCopyEffect);
     }
 
     /** Free mandatory copy trigger gated by a source condition checked when the spell is cast. */
@@ -160,5 +185,10 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         return new CopyControllerCastSpellOnSpellCastEffect(
                 spellFilter, null, null, null, null, Set.of(), null, false,
                 Set.of(), false, true, true, true, null);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return beforeCopyEffect == null ? TargetSpec.NONE : beforeCopyEffect.targetSpec();
     }
 }

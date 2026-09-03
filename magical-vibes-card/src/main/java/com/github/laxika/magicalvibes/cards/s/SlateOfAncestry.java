@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "308")
+@CardRegistration(set = "ONS", collectorNumber = "310")
 public class SlateOfAncestry extends Card {
 
     public SlateOfAncestry() {

@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
@@ -810,6 +811,13 @@ public class LayerSystemService {
         h = mix(h, card.getEffects(EffectSlot.STATIC).size());
         // Chosen-as-enters protection is seeded from this slot in layer 6.
         h = mix(h, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).size());
+        for (EffectSlot slot : EffectSlot.values()) {
+            h = mix(h, card.getEffects(slot).size());
+        }
+        h = mix(h, card.getActivatedAbilities().size());
+        h = mix(h, card.getGraveyardActivatedAbilities().size());
+        h = mix(h, card.getHandActivatedAbilities().size());
+        h = mix(h, card.getStackActivatedAbilities().size());
         return h;
     }
 
@@ -1065,7 +1073,8 @@ public class LayerSystemService {
             }
         }
         int graveyardPosition = slots.size();
-        for (UUID controllerId : gameData.orderedPlayerIds) {
+        if (!gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+            for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
             if (graveyard == null) {
                 continue;
@@ -1091,6 +1100,7 @@ public class LayerSystemService {
                     instances.add(new EffectInstance(source, rewritten, effect, null,
                             classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
                 }
+            }
             }
         }
         synchronized (gameData.floatingEffects) {
@@ -1518,6 +1528,19 @@ public class LayerSystemService {
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.copyOf(set.cardTypes())));
+                }
+            }
+            case RemoveCardTypeFromAttachedPermanentEffect remove -> {
+                manage(board, instance);
+                for (PermanentSlot target : scopeTargets(gameData, instance, remove.scope(), null,
+                        slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.removeCardType(remove.cardType());
+                    List<CardType> retainedTypes = List.copyOf(state.getCardTypes());
+                    state.overrideCardTypes(retainedTypes);
+                    record(board, instance, target, new L4Contribution(
+                            List.of(), false, false, null, null, true,
+                            retainedTypes));
                 }
             }
             case PlaneswalkersWithLoyaltyBecomeCreaturesEffect ignored -> {
@@ -2136,7 +2159,8 @@ public class LayerSystemService {
                                     Permanent sourcePermanent, UUID sourceControllerId,
                                     UUID sourcePermanentId) {
         if (filter == null) return true;
-        FilterContext context = sourcePermanent == null && sourceControllerId == null ? null
+        FilterContext context = sourcePermanent == null && sourceControllerId == null
+                && sourcePermanentId == null ? null
                 : (gameData == null ? FilterContext.empty() : FilterContext.of(gameData))
                 .withSourceControllerId(sourceControllerId)
                 .withSourcePermanentSnapshot(sourcePermanent)

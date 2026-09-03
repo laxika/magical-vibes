@@ -135,11 +135,20 @@ public record AmountContext(
                 sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount);
     }
 
+    /** Re-points target-relative amounts at a resolved player or permanent. */
+    public AmountContext withTargetPermanentId(UUID otherTargetPermanentId) {
+        return new AmountContext(controllerId, sourcePermanent, otherTargetPermanentId, xValue,
+                eventValue, staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard,
+                stackEntry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger,
+                sacrificedPower, sacrificedToughness, targetCardIds, madness, convokeCreatureCount);
+    }
+
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
                 entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
-                entry.getRepeatedAdditionalCosts(), entry.getCard(), entry, entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getRepeatedAdditionalCosts(), entry.getCard(), entry, entry.getChosenPermanentPowerAtLastKnown(),
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 entry.getSacrificedPower(),
                 entry.getSacrificedToughness(),

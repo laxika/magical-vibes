@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -50,7 +51,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Layer 3 (CR 613.2c / 612): text-changing effects rewrite the WORDS of an object's abilities,
+ * Layer 3 (CR 613.1c / 612): text-changing effects rewrite the WORDS of an object's abilities,
  * and everything downstream (layers 4-7, protection, mana abilities) sees the rewritten text.
  *
  * <p>The engine models an ability's words as the color ({@link CardColor}) and basic-land-type
@@ -88,6 +89,10 @@ public final class TextChangeTransformer {
             "Mountain", CardSubtype.MOUNTAIN,
             "Forest", CardSubtype.FOREST);
 
+    private static final Map<String, CardSubtype> CREATURE_TYPE_WORDS = GameQueryService.TEXT_CHANGE_CREATURE_TYPES.stream()
+            .collect(java.util.stream.Collectors.toUnmodifiableMap(
+                    word -> CardSubtype.valueOf(word).getDisplayName(), CardSubtype::valueOf));
+
     /** Reverse of {@link Keyword#LANDWALK_MAP}: the walk keyword whose text contains a given
      *  land-type word. */
     private static final Map<CardSubtype, Keyword> LANDWALK_BY_LAND_TYPE = Map.of(
@@ -103,7 +108,8 @@ public final class TextChangeTransformer {
     /** One replacement resolved to the domain values whose word it substitutes; exactly one of
      *  the color pair / land-type pair is non-null (a text change never mixes the two classes). */
     private record Substitution(CardColor fromColor, CardColor toColor,
-                                CardSubtype fromLandType, CardSubtype toLandType) {
+                                CardSubtype fromLandType, CardSubtype toLandType,
+                                CardSubtype fromCreatureType, CardSubtype toCreatureType) {
     }
 
     /**
@@ -174,12 +180,17 @@ public final class TextChangeTransformer {
         CardColor fromColor = COLOR_WORDS.get(replacement.fromWord());
         CardColor toColor = COLOR_WORDS.get(replacement.toWord());
         if (fromColor != null && toColor != null) {
-            return new Substitution(fromColor, toColor, null, null);
+            return new Substitution(fromColor, toColor, null, null, null, null);
         }
         CardSubtype fromLandType = BASIC_LAND_WORDS.get(replacement.fromWord());
         CardSubtype toLandType = BASIC_LAND_WORDS.get(replacement.toWord());
         if (fromLandType != null && toLandType != null) {
-            return new Substitution(null, null, fromLandType, toLandType);
+            return new Substitution(null, null, fromLandType, toLandType, null, null);
+        }
+        CardSubtype fromCreatureType = CREATURE_TYPE_WORDS.get(replacement.fromWord());
+        CardSubtype toCreatureType = CREATURE_TYPE_WORDS.get(replacement.toWord());
+        if (fromCreatureType != null && toCreatureType != null) {
+            return new Substitution(null, null, null, null, fromCreatureType, toCreatureType);
         }
         return null;
     }
@@ -230,8 +241,7 @@ public final class TextChangeTransformer {
                             ? new NonbasicLandsBecomeTypeEffect(substitution.toLandType())
                             : becomes;
             case GrantSubtypeEffect grant -> {
-                CardSubtype subtype = substitution.fromLandType() != null && grant.subtype() == substitution.fromLandType()
-                        ? substitution.toLandType() : grant.subtype();
+                CardSubtype subtype = replaceSubtype(grant.subtype(), substitution);
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield subtype == grant.subtype() && filter == grant.filter() ? grant
                         : new GrantSubtypeEffect(subtype, grant.scope(), grant.overriding(), filter);
@@ -356,16 +366,17 @@ public final class TextChangeTransformer {
         return switch (predicate) {
             case null -> null;
             case PermanentHasSubtypePredicate has ->
-                    substitution.fromLandType() != null && has.subtype() == substitution.fromLandType()
-                            ? new PermanentHasSubtypePredicate(substitution.toLandType())
-                            : has;
+                    replaceSubtype(has.subtype(), substitution) == has.subtype()
+                            ? has : new PermanentHasSubtypePredicate(replaceSubtype(has.subtype(), substitution));
             case PermanentHasAnySubtypePredicate has -> {
-                if (substitution.fromLandType() == null || !has.subtypes().contains(substitution.fromLandType())) {
+                CardSubtype fromSubtype = fromSubtype(substitution);
+                CardSubtype toSubtype = toSubtype(substitution);
+                if (fromSubtype == null || !has.subtypes().contains(fromSubtype)) {
                     yield has;
                 }
                 Set<CardSubtype> subtypes = EnumSet.copyOf(has.subtypes());
-                subtypes.remove(substitution.fromLandType());
-                subtypes.add(substitution.toLandType());
+                subtypes.remove(fromSubtype);
+                subtypes.add(toSubtype);
                 yield new PermanentHasAnySubtypePredicate(subtypes);
             }
             case PermanentColorInPredicate colorIn -> {
@@ -430,5 +441,17 @@ public final class TextChangeTransformer {
         result.remove(fromWalk);
         result.add(toWalk);
         return result;
+    }
+
+    private static CardSubtype replaceSubtype(CardSubtype subtype, Substitution substitution) {
+        return subtype == fromSubtype(substitution) ? toSubtype(substitution) : subtype;
+    }
+
+    private static CardSubtype fromSubtype(Substitution substitution) {
+        return substitution.fromLandType() != null ? substitution.fromLandType() : substitution.fromCreatureType();
+    }
+
+    private static CardSubtype toSubtype(Substitution substitution) {
+        return substitution.toLandType() != null ? substitution.toLandType() : substitution.toCreatureType();
     }
 }

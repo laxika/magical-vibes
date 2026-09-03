@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,7 +63,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                     entry.getSourcePermanentId(),
                     entry.getControllerId(),
                     new GrantActivatedAbilityEffect(
-                            e.ability().withGrantSource(entry.getSourcePermanentId()),
+                            grantedAbility(e.ability(), entry).withGrantSource(entry.getSourcePermanentId()),
                             GrantScope.TARGET,
                             e.filter(),
                             e.duration()),
@@ -93,9 +95,14 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         } else if (e.scope() == GrantScope.TARGET) {
             // "Target creature gains '[ability]' until end of turn" (e.g. Banishing Knack).
             // Bound to a target group; falls back to the single-target id.
-            List<UUID> ids = entry.targetsForEffect(effect);
-            if (ids.isEmpty() && entry.getTargetId() != null) {
-                ids = List.of(entry.getTargetId());
+            List<UUID> ids = new ArrayList<>();
+            if (entry.getTargetId() != null) {
+                ids.add(entry.getTargetId());
+            }
+            for (UUID id : entry.targetsForEffect(effect)) {
+                if (!ids.contains(id)) {
+                    ids.add(id);
+                }
             }
             for (UUID id : ids) {
                 Permanent target = gameQueryService.findPermanentById(gameData, id);
@@ -155,6 +162,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
 
         String durationText = switch (e.duration()) {
             case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
+            case UNTIL_SOURCE_CARD_CAST_FROM_EXILE -> "until the source card is cast from exile";
             case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS ->
                     "for as long as the source remains on the battlefield";
             case PERMANENT, CONTINUOUS -> "indefinitely";
@@ -174,17 +182,20 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         EffectDuration duration = grant.duration();
         if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
                 || duration == EffectDuration.WHILE_SOURCE_REMAINS
-                || duration == EffectDuration.PERMANENT) {
+                || duration == EffectDuration.PERMANENT
+                || duration == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     entry.getCard().getName(),
                     entry.getSourcePermanentId(),
                     entry.getControllerId(),
                     new GrantActivatedAbilityEffect(
-                            grant.ability().withGrantSource(entry.getSourcePermanentId()),
+                            grantedAbility(grant.ability(), entry).withGrantSource(entry.getSourcePermanentId()),
                             GrantScope.TARGET,
                             grant.filter(),
-                            duration
+                            duration,
+                            grant.expirationCardId() != null
+                                    ? grant.expirationCardId() : entry.getCard().getId()
                     ),
                     permanent.getId(),
                     null,
@@ -195,9 +206,13 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             return;
         }
         if (duration == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
-            permanent.getUntilNextTurnActivatedAbilities().add(grant.ability());
+            permanent.getUntilNextTurnActivatedAbilities().add(grantedAbility(grant.ability(), entry));
         } else {
-            permanent.getTemporaryActivatedAbilities().add(grant.ability());
+            permanent.getTemporaryActivatedAbilities().add(grantedAbility(grant.ability(), entry));
         }
+    }
+
+    private static ActivatedAbility grantedAbility(ActivatedAbility ability, StackEntry entry) {
+        return ability.withGrantingPlayer(entry.getControllerId());
     }
 }

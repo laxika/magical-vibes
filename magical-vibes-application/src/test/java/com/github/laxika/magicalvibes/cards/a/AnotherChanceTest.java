@@ -23,6 +23,8 @@ class AnotherChanceTest extends BaseCardTest {
         castAnotherChance();
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId()))
@@ -40,6 +42,8 @@ class AnotherChanceTest extends BaseCardTest {
         castAnotherChance();
 
         harness.handleMayAbilityChosen(player1, false);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId()))

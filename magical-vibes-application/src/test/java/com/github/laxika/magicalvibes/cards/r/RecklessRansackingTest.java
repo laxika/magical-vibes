@@ -62,7 +62,7 @@ class RecklessRansackingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessageContaining("Target must be a creature");
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {

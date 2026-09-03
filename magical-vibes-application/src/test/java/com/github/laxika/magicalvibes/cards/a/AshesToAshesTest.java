@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AshesToAshes.class, GrizzlyBears.class, HillGiant.class, Ornithopter.class})
 class AshesToAshesTest extends BaseCardTest {
 
     @Test
@@ -41,6 +43,9 @@ class AshesToAshesTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears")
                         || c.getName().equals("Hill Giant"));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
+                .anyMatch(c -> c.getName().equals("Hill Giant"));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);
     }
 
@@ -70,6 +75,28 @@ class AshesToAshesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not deal damage when both targets are removed before resolution")
+    void doesNotDealDamageWhenBothTargetsAreRemoved() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new AshesToAshes()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, List.of(bearsId, giantId));
+
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
         harness.addToBattlefield(player2, new Ornithopter());
@@ -84,5 +111,20 @@ class AshesToAshesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(artifactId, bearsId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonartifact");
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature for both targets")
+    void cannotTargetSameCreatureTwice() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AshesToAshes()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearsId, bearsId)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("All targets must be different");
     }
 }

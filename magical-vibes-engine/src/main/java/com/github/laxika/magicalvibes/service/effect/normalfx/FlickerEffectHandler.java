@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -174,7 +175,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
                     e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                     e.returnAtOwnerNextEndStep(), false, false, false, null, null, false,
-                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn()));
+                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
+                    e.counterTypeOnReturn(), e.counterAmountOnReturn()));
         }
     }
 
@@ -275,7 +277,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
                     e.returnAtControllerNextStep(), e.grantHaste(), false, false,
                     e.returnAtControllerNextStep() ? controllerId : null, null, false,
-                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn()));
+                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
+                    e.counterTypeOnReturn(), e.counterAmountOnReturn()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
@@ -407,7 +410,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         Card card = target.getOriginalCard();
         boolean hadBonusSubtype = e.bonusSubtype() != null
-                && card.getSubtypes().contains(e.bonusSubtype());
+                ? card.getSubtypes().contains(e.bonusSubtype())
+                : !e.bonusSubtypes().isEmpty() && card.getSubtypes().stream().anyMatch(e.bonusSubtypes()::contains);
 
         permanentRemovalService.removePermanentToExile(gameData, target);
         return new FlickeredPermanent(card, ownerId, returnControllerId, hadBonusSubtype);
@@ -469,7 +473,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             for (int i = 0; i < drawAmount; i++) {
                 drawService.resolveDrawCard(gameData, entry.getControllerId());
             }
-            gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + e.bonusSubtype().getDisplayName() + ").").build());
+            String matchingSubtype = e.bonusSubtype() != null
+                    ? e.bonusSubtype().getDisplayName()
+                    : card.getSubtypes().stream().filter(e.bonusSubtypes()::contains)
+                            .findFirst().map(CardSubtype::getDisplayName).orElse("matching subtype");
+            gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + matchingSubtype + ").").build());
         }
     }
 }

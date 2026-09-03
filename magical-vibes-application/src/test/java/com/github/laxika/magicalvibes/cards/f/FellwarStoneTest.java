@@ -2,14 +2,17 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AncientZiggurat;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FellwarStone.class, AncientZiggurat.class, Forest.class, Island.class})
 class FellwarStoneTest extends BaseCardTest {
 
     @Test
@@ -33,6 +36,34 @@ class FellwarStoneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(ManaReflection.class)
+    @DisplayName("Mana Reflection doubles mana when one opponent land color is available")
+    void manaReflectionDoublesAutomaticallyChosenColor() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player1, new ManaReflection());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(ManaReflection.class)
+    @DisplayName("Mana Reflection doubles mana after choosing among opponent land colors")
+    void manaReflectionDoublesChosenColor() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player1, new ManaReflection());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
     }
 
     @Test

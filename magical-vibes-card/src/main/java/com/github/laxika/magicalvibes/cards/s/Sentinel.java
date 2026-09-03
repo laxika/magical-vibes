@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "107")
+@CardRegistration(set = "LEG", collectorNumber = "294")
 public class Sentinel extends Card {
 
     public Sentinel() {

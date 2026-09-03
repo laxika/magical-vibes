@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BalduvianHorde.class, StormCrow.class})
 class BalduvianHordeTest extends BaseCardTest {
 
     // ===== ETB prompt =====
@@ -41,7 +42,7 @@ class BalduvianHordeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Balduvian Horde");
 
         // The lone card was discarded at random
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Storm Crow");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -56,7 +57,7 @@ class BalduvianHordeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Balduvian Horde");
         harness.assertInGraveyard(player1, "Balduvian Horde");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Storm Crow");
     }
 
     // ===== Empty hand — auto-sacrifice =====
@@ -64,10 +65,7 @@ class BalduvianHordeTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices with no card to discard")
     void autoSacrificesWithEmptyHand() {
-        harness.setHand(player1, List.of(new BalduvianHorde()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BalduvianHorde(), "{2}{R}{R}");
         harness.setHand(player1, List.of());
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → auto-sacrifice
@@ -82,15 +80,12 @@ class BalduvianHordeTest extends BaseCardTest {
     // ===== Helpers =====
 
     /**
-     * Casts Balduvian Horde with a single card (Grizzly Bears) in hand so the random
+     * Casts Balduvian Horde with a single card (Storm Crow) in hand so the random
      * discard is deterministic, resolving through to the may ability prompt.
      */
     private void castBalduvianHordeWithCardInHand() {
-        harness.setHand(player1, List.of(new BalduvianHorde()));
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new BalduvianHorde(), "{2}{R}{R}");
+        harness.setHand(player1, List.of(new StormCrow()));
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 

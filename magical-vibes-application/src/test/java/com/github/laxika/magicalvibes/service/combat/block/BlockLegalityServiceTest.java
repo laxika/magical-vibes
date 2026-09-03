@@ -10,12 +10,15 @@ import com.github.laxika.magicalvibes.cards.m.MasakoTheHumorless;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.t.TrainingDrone;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,6 +104,16 @@ class BlockLegalityServiceTest extends BaseCardTest {
         Permanent glider = addCreatureReady(player2, new AesthirGlider());
 
         assertThat(bls.canBlock(gd, glider)).isFalse();
+    }
+
+    @Test
+    @CardUsed(AesthirGlider.class)
+    @DisplayName("A face-down creature does not have its printed can't-block restriction")
+    void faceDownCreatureCanBlockDespitePrintedRestriction() {
+        Permanent glider = addCreatureReady(player2, new AesthirGlider());
+        glider.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(bls.canBlock(gd, glider)).isTrue();
     }
 
     @Test

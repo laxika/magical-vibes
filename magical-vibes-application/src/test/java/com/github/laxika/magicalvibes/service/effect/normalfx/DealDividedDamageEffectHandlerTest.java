@@ -71,8 +71,10 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             // Lethal marked damage — the SBA check after resolution performs the destruction.
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(elves.getMarkedDamage()).isEqualTo(1);
-            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
-            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, elves, 1, player1Id);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                    gd, bears, 2, player1Id, arcCard, null);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                    gd, elves, 1, player1Id, arcCard, null);
         }
 
         @Test
@@ -95,7 +97,8 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
-            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
+            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                    gd, bears, 2, player1Id, arcCard, null);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
             verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(

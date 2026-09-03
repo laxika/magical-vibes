@@ -29,6 +29,8 @@ public class Permanent {
     /** The graveyard card currently supplying this permanent's dynamic full-text copy, if any. */
     @Setter private Card fullTextCopySourceCard;
     private boolean tapped;
+    /** Whether this permanent was untapped before its controller's most recent untap step. */
+    @Setter private boolean untappedAtTurnStart;
     private int untapSequence;
     private int controlChangeSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
@@ -105,6 +107,8 @@ public class Permanent {
      *  consumed first, so a rider shield is only spent once it is all that is left. Reset at turn
      *  cleanup alongside {@link #regenerationShield}. */
     @Setter private int opponentDrawRegenerationShield;
+    /** The opponent chosen for each Soldevi Sentry regeneration shield, in grant order. */
+    private final List<UUID> opponentDrawRegenerationShieldRecipients = new ArrayList<>();
     /** How many of this permanent's {@link #regenerationShield}s carry Matopi Golem's rider — when
      *  such a shield is actually used, put a -1/-1 counter on this permanent. Plain shields are
      *  consumed first. Reset at turn cleanup alongside {@link #regenerationShield}. */
@@ -499,6 +503,8 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** Controllers whose next turn ends an active ability-loss effect on this permanent. */
+    private final Set<UUID> losesAllAbilitiesUntilNextTurnControllers = new HashSet<>();
     /** Concrete printed static effect types suppressed on this permanent until end of turn. */
     private final Set<Class<? extends CardEffect>> suppressedStaticEffectsUntilEndOfTurn = new HashSet<>();
     /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
@@ -519,6 +525,10 @@ public class Permanent {
     @Setter private boolean escaped;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Whether this permanent was cast for its Warp cost. */
+    @Setter private boolean castWithWarp;
+    /** Whether this permanent was cast for its madness cost. */
+    @Setter private boolean madness;
     /** Whether this permanent was cast by paying an alternate cost. */
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
@@ -643,6 +653,7 @@ public class Permanent {
         this.originalCard = card;
         this.bestow = false;
         this.tapped = false;
+        this.untappedAtTurnStart = true;
         this.attackedThisTurn = false;
         this.attackedThisCombat = false;
         this.summoningSick = true;
@@ -665,6 +676,7 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.tapped = source.tapped;
+        this.untappedAtTurnStart = source.untappedAtTurnStart;
         this.untapSequence = source.untapSequence;
         this.controlChangeSequence = source.controlChangeSequence;
         this.attacking = source.attacking;
@@ -696,6 +708,8 @@ public class Permanent {
         this.damageDestructionShield = source.damageDestructionShield;
         this.regenerationShield = source.regenerationShield;
         this.opponentDrawRegenerationShield = source.opponentDrawRegenerationShield;
+        this.opponentDrawRegenerationShieldRecipients.addAll(
+                source.opponentDrawRegenerationShieldRecipients);
         this.minusOneCounterRegenerationShield = source.minusOneCounterRegenerationShield;
         this.plusOnePlusOneCounterRegenerationShield = source.plusOnePlusOneCounterRegenerationShield;
         this.gainControlRegenerationShields.addAll(source.gainControlRegenerationShields);
@@ -834,6 +848,8 @@ public class Permanent {
         this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.losesAllAbilitiesUntilNextTurnControllers.addAll(
+                source.losesAllAbilitiesUntilNextTurnControllers);
         this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
         this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
@@ -842,6 +858,8 @@ public class Permanent {
         this.evoked = source.evoked;
         this.escaped = source.escaped;
         this.prowl = source.prowl;
+        this.castWithWarp = source.castWithWarp;
+        this.madness = source.madness;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
@@ -1125,6 +1143,11 @@ public class Permanent {
         return counters.getOrDefault(counterType, 0);
     }
 
+    /** Returns the total number of counters on this permanent, regardless of counter type. */
+    public int getTotalCounterCount() {
+        return counters.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
     public int getPlusOnePlusOneCounters() {
         return getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
     }
@@ -1343,7 +1366,8 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        if (losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently) return false;
+        if (losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
+                || losesAllAbilitiesPermanently) return false;
         // Changeling grants all creature types; losing all creature types nullifies that grant.
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
@@ -1446,7 +1470,16 @@ public class Permanent {
     }
 
     public boolean isLosesAllAbilitiesUntilEndOfTurn() {
-        return losesAllAbilitiesUntilEndOfTurn || losesAllAbilitiesPermanently;
+        return losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
+                || losesAllAbilitiesPermanently;
+    }
+
+    public void addLosesAllAbilitiesUntilNextTurnController(UUID controllerId) {
+        losesAllAbilitiesUntilNextTurnControllers.add(controllerId);
+    }
+
+    public void clearLosesAllAbilitiesUntilNextTurnController(UUID controllerId) {
+        losesAllAbilitiesUntilNextTurnControllers.remove(controllerId);
     }
 
     public void recordTappedPermanentForAbility(UUID permanentId) {

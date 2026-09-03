@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetRevealsCardsControllerChoosesDiscardEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "115")
+@CardRegistration(set = "ONS", collectorNumber = "127")
 public class Blackmail extends Card {
 
     public Blackmail() {

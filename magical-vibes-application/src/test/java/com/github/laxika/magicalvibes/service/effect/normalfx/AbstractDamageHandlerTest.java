@@ -77,6 +77,9 @@ abstract class AbstractDamageHandlerTest {
                 eq(gd), any(Permanent.class), any(Card.class), any())).thenReturn(false);
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gd), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(gameQueryService.applyDamageReplacementEffects(
+                        eq(gd), any(StackEntry.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
                         eq(gd), anyInt(), any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(1));
@@ -87,6 +90,12 @@ abstract class AbstractDamageHandlerTest {
         // Opal-Eye redirect is likewise a pass-through when no shield is set up.
         lenient().when(damagePreventionService.applySourceNextDamageRedirectToPermanent(
                         eq(gd), nullable(UUID.class), nullable(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
+                        eq(gd), any(), nullable(UUID.class), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
+                        eq(gd), any(), nullable(UUID.class), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         // Saving Grace redirect (CR 614) is a pass-through in these unit tests — no redirect shields are set up,
         // so it must return the damage unchanged. Called unconditionally by dealDamageToPlayer and (for
@@ -133,6 +142,12 @@ abstract class AbstractDamageHandlerTest {
                 .thenAnswer(inv -> inv.getArgument(2));
         lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                         eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gd), any(), any(), anyInt()))
+                .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
+                        eq(gd), any(Permanent.class), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         setUpHandler();
     }

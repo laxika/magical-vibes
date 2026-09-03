@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,8 +20,13 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingConundrumDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
@@ -28,6 +34,9 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -210,6 +219,25 @@ class DrawServiceTest {
     }
 
     @Test
+    void targetedPlayerDrawTriggerQueuesTargetChoice() {
+        Card card = createCard("Queza, Augur of Agonies", CardType.CREATURE);
+        SequenceEffect effect = SequenceEffect.of(
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new GainLifeEffect(1));
+        card.target(new PlayerPredicateTargetFilter(
+                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                        "Target must be an opponent"))
+                .addEffect(EffectSlot.ON_CONTROLLER_DRAWS, effect);
+        Permanent source = new Permanent(card);
+        gd.playerBattlefields.get(player1Id).add(source);
+
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
+                .isNotNull();
+    }
+
+    @Test
     void conditionalDoubleDrawReplacementOnlyAppliesWhenConditionIsMet() {
         Card sourceCard = createCard("Vnwxt, Verbose Host", CardType.CREATURE);
         sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
@@ -225,6 +253,26 @@ class DrawServiceTest {
         sut.resolveDrawCard(gd, player1Id);
 
         assertThat(gd.playerHands.get(player1Id)).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+    }
+
+    @Test
+    void quantumRiddlerAddsOneCardToTheWholeDrawInstruction() {
+        Card sourceCard = createCard("Quantum Riddler", CardType.CREATURE);
+        sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new CardsInHandAtMost(1), new QuantumRiddlerDrawReplacementEffect()));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+        Card firstCard = createCard("First card", CardType.CREATURE);
+        Card secondCard = createCard("Second card", CardType.CREATURE);
+        Card thirdCard = createCard("Third card", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(firstCard, secondCard, thirdCard)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+        when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(true);
+
+        sut.resolveDrawCards(gd, player1Id, 2);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(firstCard, secondCard, thirdCard);
         assertThat(gd.playerDecks.get(player1Id)).isEmpty();
     }
 

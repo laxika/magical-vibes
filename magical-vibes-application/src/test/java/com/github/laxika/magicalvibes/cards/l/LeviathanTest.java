@@ -1,19 +1,33 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.Bloodbriar;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Leviathan.class, Island.class, GrizzlyBears.class, Bloodbriar.class})
 class LeviathanTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Enters the battlefield tapped")
+    void entersTapped() {
+        Permanent leviathan = harness.enterBattlefieldAndReturn(player1, new Leviathan());
+
+        assertThat(leviathan.isTapped()).isTrue();
+    }
 
     // ===== Upkeep: sacrifice two Islands to untap =====
 
@@ -85,14 +99,75 @@ class LeviathanTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(lifeBefore);
     }
 
+    @Test
+    @DisplayName("Cannot declare two Leviathans when only two Islands can be sacrificed")
+    void cannotDeclareTwoLeviathansWithOnlyTwoIslands() {
+        addCreatureReady(player1, new Leviathan());
+        addCreatureReady(player1, new Leviathan());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can declare two Leviathans when four Islands can be sacrificed")
+    void canDeclareTwoLeviathansWithFourIslands() {
+        addCreatureReady(player1, new Leviathan());
+        addCreatureReady(player1, new Leviathan());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(islandCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Trample deals excess combat damage through a blocker")
+    void trampleDealsExcessCombatDamageThroughBlocker() {
+        harness.setLife(player2, 20);
+        Permanent leviathan = addCreatureReady(player1, new Leviathan());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 8));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(leviathan);
+    }
+
+    @Test
+    @DisplayName("Islands sacrificed to attack trigger sacrifice abilities")
+    void sacrificedIslandsTriggerSacrificeAbilities() {
+        Permanent bloodbriar = addCreatureReady(player1, new Bloodbriar());
+        addCreatureReady(player1, new Leviathan());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     // ===== Helpers =====
 
     private void resolveUpkeepMay(Player player, boolean accept) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
+        advanceToUpkeep(player);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player, accept);
     }
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -39,6 +40,25 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
         gameData.rerunCurrentEffectAfterInteraction = false;
         CardSubtype chosenSubtype = gameData.chosenSpellSubtype;
         gameData.chosenSpellSubtype = null;
+
+        var chosenEffect = (TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect) effect;
+        if (chosenEffect.scope() == GrantScope.ALL_CREATURES) {
+            int[] affectedCount = {0};
+            gameData.forEachBattlefield((playerId, battlefield) -> {
+                for (Permanent permanent : battlefield) {
+                    if (gameQueryService.isCreature(gameData, permanent)) {
+                        permanent.setTransientCreatureTypeOverride(chosenSubtype);
+                        affectedCount[0]++;
+                    }
+                }
+            });
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(entry.getCard())
+                    .text(" makes " + affectedCount[0] + " creature(s) into "
+                            + chosenSubtype.getDisplayName() + "s until end of turn.")
+                    .build());
+            return;
+        }
 
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {

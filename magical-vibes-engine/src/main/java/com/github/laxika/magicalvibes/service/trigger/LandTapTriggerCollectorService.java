@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
@@ -139,6 +140,8 @@ public class LandTapTriggerCollectorService {
         }
         if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
                 && !sourceDamagePrevented
+                && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
+                gameData, tappingPlayerId, match.permanent())
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, sourceColor)) {
             damage = damagePreventionService.applyChannelHarmPrevention(
@@ -428,12 +431,35 @@ public class LandTapTriggerCollectorService {
         if (tappedLand == null) return false;
         if (!gameQueryService.hasEffectiveSupertype(match.gameData(), tappedLand, CardSupertype.SNOW)) return false;
 
+        if (match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    lt.tappingPlayerId(),
+                    match.permanent().getCard().getName() + "'s mana ability",
+                    new ArrayList<>(List.of(new AddManaOfTypeProducedByTappedPermanentEffect())),
+                    null,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().stack.add(entry);
+            return true;
+        }
+
         ManaColor producedColor = null;
         for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
             if (tapEffect instanceof AwardManaEffect awardMana) {
                 producedColor = awardMana.color();
                 break;
             }
+        }
+        if (producedColor == null) {
+            producedColor = tappedLand.getCard().getActivatedAbilities().stream()
+                    .flatMap(ability -> ability.getEffects().stream())
+                    .filter(AwardManaEffect.class::isInstance)
+                    .map(AwardManaEffect.class::cast)
+                    .map(AwardManaEffect::color)
+                    .findFirst()
+                    .orElse(null);
         }
         if (producedColor == null) return false;
 

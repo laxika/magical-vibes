@@ -215,6 +215,8 @@ public class CreatureControlService {
         }
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());
 
+        queueSelfControlChangeTriggers(gameData, permanent, derived);
+
         // "For as long as you control [source]" effects keyed to THIS permanent end when it
         // changes controllers away from their creator; cascade to the permanents they held.
         expireSourceControllerDependentEffects(gameData, permanent);
@@ -240,6 +242,28 @@ public class CreatureControlService {
             queued = true;
         }
         return queued;
+    }
+
+    private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
+        List<CardEffect> effects = new ArrayList<>(
+                permanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_BECOMES_CONTROLLED));
+
+        for (CardEffect effect : effects) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s ability",
+                    List.of(effect),
+                    null,
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        }
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

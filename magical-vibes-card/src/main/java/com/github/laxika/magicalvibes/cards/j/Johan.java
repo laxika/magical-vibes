@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.JohanCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "77")
+@CardRegistration(set = "LEG", collectorNumber = "236")
 public class Johan extends Card {
 
     public Johan() {

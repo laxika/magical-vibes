@@ -22,7 +22,7 @@ public class CityOfShadows extends Card {
                 true,
                 null,
                 List.of(
-                        new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature"),
+                        new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature", false),
                         new PutCountersOnSelfEffect(CounterType.STORAGE)),
                 "{T}, Exile a creature you control: Put a storage counter on this land."
         ));

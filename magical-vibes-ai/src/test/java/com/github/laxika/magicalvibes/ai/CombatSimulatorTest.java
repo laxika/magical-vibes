@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GaeasProtector;
+import com.github.laxika.magicalvibes.cards.g.Graxiplon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.h.Hellrider;
@@ -362,6 +363,29 @@ class CombatSimulatorTest {
 
         // Should not assign any blockers (phantom warrior can't be blocked)
         assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI recognizes Graxiplon's shared-type blocking threshold")
+    void graxiplonBlockingThreshold() {
+        Permanent graxiplon = new Permanent(new Graxiplon());
+        graxiplon.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(graxiplon);
+
+        List<Permanent> defenderBattlefield = gd.playerBattlefields.get(player1.getId());
+        CombatSimulator.CreatureInfo beforeThreshold = simulator.buildCreatureInfo(
+                gd, graxiplon, 0, player2.getId(), player1.getId(), defenderBattlefield);
+        assertThat(beforeThreshold.cantBeBlocked()).isTrue();
+
+        for (int i = 0; i < 3; i++) {
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            defenderBattlefield.add(bears);
+        }
+
+        CombatSimulator.CreatureInfo atThreshold = simulator.buildCreatureInfo(
+                gd, graxiplon, 0, player2.getId(), player1.getId(), defenderBattlefield);
+        assertThat(atThreshold.cantBeBlocked()).isFalse();
     }
 
     // ===== Temporarily stolen creatures =====

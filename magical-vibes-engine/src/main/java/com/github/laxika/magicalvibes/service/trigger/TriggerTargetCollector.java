@@ -186,6 +186,13 @@ public class TriggerTargetCollector {
                 .map(e -> unwrap(e, options))
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
 
+        if (targetFilter instanceof PermanentPredicateTargetFilter
+                || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
+            canTargetPlayers = false;
+        } else if (targetFilter instanceof PlayerPredicateTargetFilter) {
+            canTargetPermanents = false;
+        }
+
         // An effect narrows the player half on its own only when it says so through
         // CardEffect.targetPlayerRelation() (Scalding Tongs' "target opponent or planeswalker").
         // The declared target cannot express it: playerOrPlaneswalker() is shared with "target
@@ -213,6 +220,8 @@ public class TriggerTargetCollector {
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
                     ? new FilterContext(gameData, sourceCard.getId(), controllerId, null, sourcePermanentSnapshot)
+                    .withSourcePermanentId(sourcePermanentSnapshot == null
+                            ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
                     : null;
 

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LimDulsVaultSupport;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class LimDulsVaultRepeatChoiceInteractionHandler
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
     private final LimDulsVaultSupport limDulsVaultSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<PendingInteraction.LimDulsVaultRepeatChoice> handledType() {
@@ -48,14 +50,15 @@ public class LimDulsVaultRepeatChoiceInteractionHandler
 
         UUID controllerId = interaction.playerId();
         boolean accepted = ((InteractionAnswer.MayAbilityChosen) answer).accepted();
-        if (accepted && gameData.getLife(controllerId) < 1) {
+        if (accepted && (gameData.getLife(controllerId) < 1
+                || !gameQueryService.canPlayerLifeChange(gameData, controllerId))) {
             throw new IllegalStateException("Cannot pay 1 life");
         }
 
         gameData.interaction.clearAwaitingInput();
 
         if (accepted) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, 1, "Lim-Dûl's Vault");
+            lifeSupport.applyLifePayment(gameData, controllerId, 1, "Lim-Dûl's Vault");
             limDulsVaultSupport.beginOrder(gameData, controllerId, interaction.lookedAt(), true);
             return;
         }

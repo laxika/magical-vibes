@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "245")
+@CardRegistration(set = "ONS", collectorNumber = "258")
 public class ElvishScrapper extends Card {
 
     public ElvishScrapper() {

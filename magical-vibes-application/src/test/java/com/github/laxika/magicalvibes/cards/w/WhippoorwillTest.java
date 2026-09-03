@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DeathcurseOgre;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OraclesAttendants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -23,14 +23,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Whippoorwill.class, DrudgeSkeletons.class, Shock.class, OraclesAttendants.class,
+        DeathcurseOgre.class,
         GrizzlyBears.class, FountainOfYouth.class})
 class WhippoorwillTest extends BaseCardTest {
 
     @Test
     @DisplayName("The ability makes damage lethal, prevents regeneration, then exiles the creature")
-    void marksTargetForDamageRegenerationAndDeathReplacement() {
-        addReady(player1, new Whippoorwill());
-        Permanent target = addReady(player2, new DrudgeSkeletons());
+    void marksTargetForDamageAndRegenerationRestrictions() {
+        addCreatureReady(player1, new Whippoorwill());
+        Permanent target = addCreatureReady(player2, new DrudgeSkeletons());
         target.setDamagePreventionShield(5);
         target.setRegenerationShield(1);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -40,11 +41,10 @@ class WhippoorwillTest extends BaseCardTest {
 
         assertThat(target.isDamageCantBePreventedOrRedirectedThisTurn()).isTrue();
         assertThat(target.isCantRegenerateThisTurn()).isTrue();
-        assertThat(target.isExileInsteadOfDieThisTurn()).isTrue();
-
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -53,11 +53,34 @@ class WhippoorwillTest extends BaseCardTest {
     }
 
     @Test
+    void deathTriggerSeesMarkedCreatureInGraveyard() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new Whippoorwill());
+        Permanent target = addCreatureReady(player2, new DeathcurseOgre());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        target.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("The marked creature still receives combat damage that would be redirected")
     void damageCannotBeRedirectedAwayFromMarkedCreature() {
-        Permanent attendants = addReady(player1, new OraclesAttendants());
+        Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
         Permanent target = addReadyStats(player1, 3, 3);
-        addReady(player1, new Whippoorwill());
+        addCreatureReady(player1, new Whippoorwill());
         Permanent attacker = addReadyStats(player2, 2, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -83,8 +106,8 @@ class WhippoorwillTest extends BaseCardTest {
     @Test
     @DisplayName("All three marks clear during end-of-turn cleanup")
     void marksClearAtEndOfTurn() {
-        addReady(player1, new Whippoorwill());
-        Permanent target = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new Whippoorwill());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -102,7 +125,7 @@ class WhippoorwillTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        addReady(player1, new Whippoorwill());
+        addCreatureReady(player1, new Whippoorwill());
         harness.addToBattlefield(player1, new FountainOfYouth());
         UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -112,17 +135,10 @@ class WhippoorwillTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
-
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(power);
         card.setToughness(toughness);
-        return addReady(player, card);
+        return addCreatureReady(player, card);
     }
 }

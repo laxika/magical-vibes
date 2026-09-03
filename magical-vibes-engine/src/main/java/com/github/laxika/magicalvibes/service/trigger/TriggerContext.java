@@ -47,6 +47,8 @@ public sealed interface TriggerContext {
         }
     }
 
+    record GiftGiven(UUID giverId) implements TriggerContext {}
+
     /** Context for "whenever a spell or ability you control counters a spell" triggers. */
     record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
 
@@ -81,6 +83,9 @@ public sealed interface TriggerContext {
     /** Context for a discard event containing one or more cards. */
     record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
 
+    /** Context for cycling triggers. */
+    record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
@@ -97,6 +102,8 @@ public sealed interface TriggerContext {
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
     /** Context for controller collect-evidence triggers. */
     record CollectEvidence(UUID collectingPlayerId) implements TriggerContext {}
+    /** Context for controller forage triggers. */
+    record Forage(UUID foragingPlayerId) implements TriggerContext {}
     /** Context for controller-discover triggers. */
     record Discover(UUID discoveringPlayerId, int discoverValue) implements TriggerContext {}
 
@@ -152,7 +159,12 @@ public sealed interface TriggerContext {
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */
-    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
+    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
+                            Card sourceCard, UUID sourcePermanentId) implements TriggerContext {
+        public DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
+            this(damagedCreature, damageDealt, damageSourceControllerId, null, null);
+        }
+    }
 
     record OpponentPermanentDealtExcessDamage(Permanent damagedPermanent,
                                               UUID damagedPermanentControllerId,
@@ -257,7 +269,7 @@ public sealed interface TriggerContext {
     record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
                            int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
 
-    /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
+    /** Context for triggers watching a permanent being turned face up. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
 
     /** Context for a permanent controlled by a player transforming. */
@@ -388,12 +400,14 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness, boolean wasCreature) implements TriggerContext {
+                                   int dyingCreatureToughness, boolean wasCreature,
+                                   List<UUID> dyingPermanentCardIds) implements TriggerContext {
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
             this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
-                    dyingCreaturePower, dyingCreatureToughness, true);
+                    dyingCreaturePower, dyingCreatureToughness, true,
+                    dyingCreatureCardId == null ? List.of() : List.of(dyingCreatureCardId));
         }
 
         @Override
@@ -591,14 +605,21 @@ public sealed interface TriggerContext {
      * this event (already summed across every simultaneous target).
      */
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
-                             int totalDamage, Map<UUID, Integer> damageToPlayers) implements TriggerContext {
+                             int totalDamage, Map<UUID, Integer> damageToPlayers,
+                             UUID singleCreatureSpellTargetId,
+                             Map<UUID, Integer> damageToPermanents) implements TriggerContext {
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
-            this(sourceCard, sourceControllerId, null, totalDamage, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of());
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
                                  Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers);
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of());
+        }
+
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                                 int totalDamage, Map<UUID, Integer> damageToPlayers) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of());
         }
     }
 

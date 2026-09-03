@@ -20,8 +20,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -45,6 +48,32 @@ public class TurnFaceUpCopyService {
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
+
+    public void turnFaceUpWithoutCost(GameData gameData, Permanent permanent) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return;
+        }
+
+        permanent.turnFaceUp();
+        List<TurnFaceUpReplacementEffect> replacements = permanent.getCard()
+                .getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
+                .filter(TurnFaceUpReplacementEffect.class::isInstance)
+                .map(TurnFaceUpReplacementEffect.class::cast)
+                .toList();
+        for (TurnFaceUpReplacementEffect replacement : replacements) {
+            int counterCount = amountEvaluationService.evaluate(gameData, replacement.counterAmount(),
+                    AmountContext.forEnteringPermanent(controllerId, permanent, 0));
+            permanentCounterSupport.applyPlusOnePlusOneCounters(
+                    gameData, null, permanent, counterCount);
+        }
+        if (prepareChoice(gameData, permanent, controllerId)) {
+            return;
+        }
+        finishTurnFaceUp(gameData, controllerId, permanent.getId(), false);
+    }
 
     public boolean prepareChoice(GameData gameData, Permanent source, UUID controllerId) {
         TurnFaceUpCopyEffect effect = findCopyEffect(source.getCard());
@@ -97,6 +126,11 @@ public class TurnFaceUpCopyService {
     }
 
     public void finishTurnFaceUp(GameData gameData, UUID controllerId, UUID sourcePermanentId) {
+        finishTurnFaceUp(gameData, controllerId, sourcePermanentId, true);
+    }
+
+    private void finishTurnFaceUp(GameData gameData, UUID controllerId, UUID sourcePermanentId,
+                                  boolean resolveAutoPass) {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             return;
@@ -104,6 +138,8 @@ public class TurnFaceUpCopyService {
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is turned face up."));
         triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(gameData, controllerId, source);
+        triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
+        triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
 
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
                 .filter(effect -> !(effect instanceof ReplacementEffect))
@@ -142,7 +178,9 @@ public class TurnFaceUpCopyService {
                         effects, source.getId(), List.of()));
             }
         }
-        turnProgressionService.resolveAutoPass(gameData);
+        if (resolveAutoPass) {
+            turnProgressionService.resolveAutoPass(gameData);
+        }
     }
 
     private void addSourceCopyException(Permanent source, TurnFaceUpCopyEffect effect) {

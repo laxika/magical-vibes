@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,6 +58,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                     nextToTarget(gameData, entry, e);
             case NEXT_TO_TARGET_AND_SHARING_CREATURES -> nextToTargetAndSharingCreatures(gameData, entry, e);
             case NEXT_TO_EACH_CREATURE_AND_PLAYER -> nextToEachCreatureAndPlayer(gameData, entry, e);
+            case NEXT_TO_CONTROLLED_CREATURES -> nextToControlledCreatures(gameData, entry, e);
             case ALL_COMBAT -> {
                 gameData.preventAllCombatDamage = true;
                 gameLogService.append(gameData, GameLog.text("All combat damage will be prevented this turn."));
@@ -125,6 +131,21 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 gameLogService.append(gameData, GameLog.text(
                         "All damage that would be dealt to " + playerName + " and creatures " + playerName + " controls this turn is prevented."));
             }
+            case ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES -> {
+                UUID controllerId = entry.getControllerId();
+                if (controllerId != null) {
+                    gameData.playersWithDamageFromMatchingSourcesPrevented
+                            .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(e.sourcePredicate());
+                    gameData.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented
+                            .computeIfAbsent(controllerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                            .add(e.sourcePredicate());
+                }
+                String playerName = gameData.playerIdToName.get(controllerId);
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage that would be dealt to " + playerName + " and creatures " + playerName
+                                + " controls this turn by matching sources is prevented."));
+            }
             case ALL_TO_CONTROLLER -> {
                 UUID controllerId = entry.getControllerId();
                 gameData.playersWithAllPlayerDamagePrevented.add(controllerId);
@@ -155,6 +176,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                         "All damage that would be dealt to " + gameData.playerIdToName.get(controllerId)
                                 + " this turn by matching creatures is prevented."));
             }
+            case NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES -> nextToControllerFromMatchingSources(gameData, entry, e);
             case ALL_TO_PLAYERS_FROM_MATCHING_SOURCES -> {
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     gameData.playersWithDamageFromMatchingSourcesPrevented
@@ -194,6 +216,48 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             }
             case ALL_COMBAT_EXCEPT_TARGET -> allCombatExceptTarget(gameData, entry);
         }
+    }
+
+    private void nextToControllerFromMatchingSources(GameData gameData, StackEntry entry, PreventDamageEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null) {
+            return;
+        }
+
+        Permanent source = entry.getSourcePermanentSnapshot();
+        if (source == null && entry.getSourcePermanentId() != null) {
+            source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        }
+        PermanentPredicate sourcePredicate = resolveChosenSubtypePredicate(effect.sourcePredicate(),
+                source == null ? null : source.getChosenSubtype());
+        if (sourcePredicate == null) {
+            return;
+        }
+
+        gameData.playerNextDamageFromMatchingSourcesPrevented
+                .computeIfAbsent(controllerId, ignored -> new java.util.concurrent.CopyOnWriteArrayList<>())
+                .add(sourcePredicate);
+        gameLogService.append(gameData, GameLog.text(
+                "The next damage that would be dealt to " + gameData.playerIdToName.get(controllerId)
+                        + " by a matching source is prevented."));
+    }
+
+    private PermanentPredicate resolveChosenSubtypePredicate(PermanentPredicate predicate, CardSubtype chosenSubtype) {
+        if (predicate instanceof PermanentHasSourceChosenSubtypePredicate) {
+            return chosenSubtype == null ? null : new PermanentHasSubtypePredicate(chosenSubtype);
+        }
+        if (predicate instanceof PermanentAllOfPredicate all) {
+            List<PermanentPredicate> resolved = new java.util.ArrayList<>();
+            for (PermanentPredicate child : all.predicates()) {
+                PermanentPredicate resolvedChild = resolveChosenSubtypePredicate(child, chosenSubtype);
+                if (resolvedChild == null) {
+                    return null;
+                }
+                resolved.add(resolvedChild);
+            }
+            return new PermanentAllOfPredicate(resolved);
+        }
+        return predicate;
     }
 
     private void allFromColorsToControlledCreatures(GameData gameData, StackEntry entry, PreventDamageEffect effect) {
@@ -322,6 +386,28 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(
                 "The next " + amount + " damage that would be dealt to each creature and each player this turn is prevented."));
         log.info("Game {} - Prevention shield {} added to every creature and player", gameData.id, amount);
+    }
+
+    private void nextToControlledCreatures(GameData gameData, StackEntry entry, PreventDamageEffect e) {
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null) return;
+
+        int amount = evaluate(gameData, entry, e);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    permanent.setDamagePreventionShield(permanent.getDamagePreventionShield() + amount);
+                }
+            }
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.text(
+                "The next " + amount + " damage that would be dealt to each creature "
+                        + controllerName + " controls this turn is prevented."));
+        log.info("Game {} - Prevention shield {} added to creatures controlled by {}", gameData.id, amount,
+                controllerName);
     }
 
     private void nextToTarget(GameData gameData, StackEntry entry, PreventDamageEffect e) {

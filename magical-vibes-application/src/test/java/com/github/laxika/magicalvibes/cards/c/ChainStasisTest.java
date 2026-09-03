@@ -25,7 +25,10 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -38,7 +41,10 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -52,6 +58,7 @@ class ChainStasisTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -67,6 +74,7 @@ class ChainStasisTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).isEmpty();
@@ -83,6 +91,7 @@ class ChainStasisTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.stack).hasSize(1);
@@ -99,6 +108,7 @@ class ChainStasisTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.stack).isEmpty();
@@ -137,10 +147,13 @@ class ChainStasisTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, firstTarget.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, secondTarget.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(firstTarget.isTapped()).isTrue();
         assertThat(secondTarget.isTapped()).isTrue();

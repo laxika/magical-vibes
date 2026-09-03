@@ -309,7 +309,6 @@ public class DestructionSupport {
         Card sacrificedCard = creature.getCard();
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
-        gameData.recordSacrificedPermanent(playerId, sacrificedCard);
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.playerSacrifices(playerName, sacrificedCard));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
@@ -884,6 +883,10 @@ public class DestructionSupport {
         }
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self == null) {
+            return;
+        }
+        UUID currentControllerId = gameQueryService.findPermanentController(gameData, self.getId());
+        if (!entry.getControllerId().equals(currentControllerId)) {
             return;
         }
         if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {

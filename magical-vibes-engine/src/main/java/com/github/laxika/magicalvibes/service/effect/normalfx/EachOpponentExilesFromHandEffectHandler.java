@@ -68,7 +68,13 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
 
         UUID first = choosers.getFirst();
         List<UUID> remaining = choosers.size() > 1 ? List.copyOf(choosers.subList(1, choosers.size())) : List.of();
-        playerInputService.beginExileFromHandChoice(gameData, first, entry.getSourcePermanentId(),
-                null, e.amount(), remaining, e.amount());
+        if (e.grantPlayPermissionToChooser()) {
+            playerInputService.beginExileFromHandChoice(gameData, first, null, null, e.amount(),
+                    remaining, e.amount(), false, false, null, true, controllerId,
+                    e.exilePlayOpponentTax(), e.landsEnterTapped());
+        } else {
+            playerInputService.beginExileFromHandChoice(gameData, first, entry.getSourcePermanentId(),
+                    null, e.amount(), remaining, e.amount());
+        }
     }
 }

@@ -6,28 +6,25 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 /**
- * Resolves {@link DestroyCombatOpponentAtEndOfCombatEffect}: if the referenced combat opponent
- * (carried as the stack entry's target) is a creature matching the effect's filter, schedule it
- * for destruction at end of combat via {@link DelayedPermanentAction}. Basilisk-style
- * "destroy that creature at end of combat" triggers (e.g. Deathgazer).
+ * Resolves {@link DestroyCombatOpponentAtEndOfCombatEffect} by scheduling the combat opponent
+ * captured when the ability triggered for destruction at end of combat.
  */
 @Component
 @RequiredArgsConstructor
 public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
 
     @Override
@@ -47,12 +44,17 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
-        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, target, destroyEffect.filter())) {
-            return;
+        if (destroyEffect.putCounterOnSourceIfDestroyed()) {
+            gameData.queueDelayedAction(new DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource(
+                    targetId,
+                    entry.getTriggeringPermanentId(),
+                    entry.getControllerId(),
+                    entry.getCard(),
+                    destroyEffect.cannotBeRegenerated()));
+        } else {
+            gameData.queueDelayedAction(new DelayedPermanentAction(targetId,
+                    DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroyEffect.cannotBeRegenerated()));
         }
-
-        gameData.queueDelayedAction(new DelayedPermanentAction(targetId,
-                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroyEffect.cannotBeRegenerated()));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }
 }

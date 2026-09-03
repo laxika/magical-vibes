@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +14,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(AshnodsCylix.class)
 class AshnodsCylixTest extends BaseCardTest {
+
+    @Test
+    void activationPaysThreeManaAndTapsCylix() {
+        Permanent cylix = harness.addToBattlefieldAndReturn(player1, new AshnodsCylix());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(cylix.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Target player keeps one of the top three on top and the rest are exiled")
@@ -27,10 +38,10 @@ class AshnodsCylixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card c0 = new Island();
-        Card c1 = new Forest();
-        Card c2 = new GrizzlyBears();
-        Card c3 = new Mountain();
+        Card c0 = new AshnodsCylix();
+        Card c1 = new AshnodsCylix();
+        Card c2 = new AshnodsCylix();
+        Card c3 = new AshnodsCylix();
         List<Card> deck = gd.playerDecks.get(player2.getId());
         deck.clear();
         deck.addAll(List.of(c0, c1, c2, c3));
@@ -41,7 +52,7 @@ class AshnodsCylixTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // The target player chooses, not the ability's controller.
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player2, 1);
 
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter).hasSize(2);
@@ -60,8 +71,8 @@ class AshnodsCylixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card top = new Island();
-        Card bottom = new Forest();
+        Card top = new AshnodsCylix();
+        Card bottom = new AshnodsCylix();
         List<Card> deck = gd.playerDecks.get(player2.getId());
         deck.clear();
         deck.addAll(List.of(top, bottom));
@@ -69,7 +80,7 @@ class AshnodsCylixTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerDecks.get(player2.getId()))
                 .extracting(Card::getId)
@@ -87,9 +98,9 @@ class AshnodsCylixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card c0 = new Island();
-        Card c1 = new Forest();
-        Card c2 = new GrizzlyBears();
+        Card c0 = new AshnodsCylix();
+        Card c1 = new AshnodsCylix();
+        Card c2 = new AshnodsCylix();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         deck.clear();
         deck.addAll(List.of(c0, c1, c2));
@@ -97,7 +108,7 @@ class AshnodsCylixTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(2));
+        harness.handleCardChosen(player1, 2);
 
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)

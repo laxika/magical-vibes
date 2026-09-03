@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
+import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -88,6 +89,7 @@ public class GameTestHarness {
     private static TriggerCollectionService staticTriggerCollectionService;
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
+    private static CombatService staticCombatService;
     private static com.github.laxika.magicalvibes.service.combat.block.CombatBlockService staticCombatBlockService;
     private static StateBasedActionService staticStateBasedActionService;
     private static LifeSupport staticLifeSupport;
@@ -125,6 +127,7 @@ public class GameTestHarness {
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
         staticCombatAttackService = context.getBean(CombatAttackService.class);
+        staticCombatService = context.getBean(CombatService.class);
         staticCombatBlockService = context.getBean(com.github.laxika.magicalvibes.service.combat.block.CombatBlockService.class);
         staticStateBasedActionService = context.getBean(StateBasedActionService.class);
         staticLifeSupport = context.getBean(LifeSupport.class);
@@ -178,6 +181,7 @@ public class GameTestHarness {
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
+    private final CombatService combatService;
     private final com.github.laxika.magicalvibes.service.combat.block.CombatBlockService combatBlockService;
     private final StateBasedActionService stateBasedActionService;
     private final LifeSupport lifeSupport;
@@ -215,6 +219,7 @@ public class GameTestHarness {
         triggerCollectionService = staticTriggerCollectionService;
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
+        combatService = staticCombatService;
         combatBlockService = staticCombatBlockService;
         stateBasedActionService = staticStateBasedActionService;
         lifeSupport = staticLifeSupport;
@@ -334,6 +339,11 @@ public class GameTestHarness {
      */
     public void runStateBasedActions() {
         mutationCoordinator.mutate(gameData, () -> stateBasedActionService.performStateBasedActions(gameData));
+    }
+
+    /** Deals the current combat's damage without advancing priority or resolving resulting triggers. */
+    public void resolveCombatDamage() {
+        mutationCoordinator.mutate(gameData, () -> combatService.resolveCombatDamage(gameData));
     }
 
     /**
@@ -631,9 +641,22 @@ public class GameTestHarness {
                 targetIds != null ? targetIds : List.of());
     }
 
+    public void castAdventure(Player player, int cardIndex, int xValue,
+                               Map<UUID, Integer> damageAssignments) {
+        ensurePriority(player);
+        gameService.playAdventureCard(gameData, player, cardIndex, xValue, null, List.of(),
+                damageAssignments);
+    }
+
     public void castAdventure(Player player, int cardIndex, UUID targetId) {
         ensurePriority(player);
         gameService.playAdventureCard(gameData, player, cardIndex, 0, targetId, List.of());
+    }
+
+    public void castAdventureFromGraveyard(Player player, int graveyardCardIndex) {
+        ensurePriority(player);
+        gameService.playAdventureCardFromGraveyard(gameData, player, graveyardCardIndex, 0, null,
+                List.of(), null);
     }
 
     public void foretell(Player player, int cardIndex) {
@@ -1047,12 +1070,50 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null);
     }
 
+    public void castCreatureWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castArtifactWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castInstantWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
+    public void castInstantWithGift(Player player, int cardIndex, UUID targetId, List<UUID> targetIds,
+                                    boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, targetIds, giftPromised);
+    }
+
+    public void castSorceryWithGift(Player player, int cardIndex, List<UUID> targetIds,
+                                    boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, null, null, targetIds, giftPromised);
+    }
+
+    public void castSorceryWithGift(Player player, int cardIndex, UUID targetId, boolean giftPromised) {
+        ensurePriority(player);
+        gameService.playCardWithGift(
+                gameData, player, cardIndex, 0, targetId, null, List.of(), giftPromised);
+    }
+
     public void castInstantWithLifeOrManaAdditionalCost(Player player, int cardIndex, UUID targetId,
                                                         boolean payLife) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
                 null, null, null, null, null, false, null, null, null, null, List.of(), false,
-                null, null, List.of(), List.of(), null, null, false, payLife);
+                null, null, List.of(), List.of(), null, null, false, payLife, null);
     }
 
     public void castInstantWithBehold(Player player, int cardIndex, UUID targetId,
@@ -1061,6 +1122,14 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
                 null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
                 null, null, beholdPermanentIds, beholdHandCardIndices, null);
+    }
+
+    public void castInstantWithChosenAdditionalCostObject(Player player, int cardIndex, UUID targetId,
+                                                          UUID chosenObjectId) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, List.of(), List.of(), List.of(), false,
+                null, null, List.of(), List.of(), null, null, chosenObjectId);
     }
 
     public void castInstantWithRepeatedCosts(Player player, int cardIndex, UUID targetId,
@@ -1312,6 +1381,11 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, targetId);
     }
 
+    public void castFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null, counterCostPermanentIds);
+    }
+
     public void castAndResolveFromLibraryTop(Player player) {
         castFromLibraryTop(player);
         passBothPriorities();
@@ -1319,6 +1393,11 @@ public class GameTestHarness {
 
     public void castAndResolveFromLibraryTop(Player player, UUID targetId) {
         castFromLibraryTop(player, targetId);
+        passBothPriorities();
+    }
+
+    public void castAndResolveFromLibraryTop(Player player, List<UUID> counterCostPermanentIds) {
+        castFromLibraryTop(player, counterCostPermanentIds);
         passBothPriorities();
     }
 

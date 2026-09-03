@@ -27,6 +27,19 @@ class CoalGolemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The generic activation cost can be paid with colored mana")
+    void paysGenericCostWithColoredMana() {
+        harness.addToBattlefield(player1, new CoalGolem());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Coal Golem cannot be activated without three mana")
     void requiresThreeManaToActivate() {
         harness.addToBattlefield(player1, new CoalGolem());

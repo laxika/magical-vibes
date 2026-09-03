@@ -45,36 +45,43 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect())));
             return;
         }
-        if (beginPermanentOrPlayerTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget())) {
+        if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget(),
+                queueEffect.useEventValueAsX())) {
             return;
         }
-        StackEntry reflexiveAbility = new StackEntry(
+        int xValue = queueEffect.useEventValueAsX() ? entry.getEventValue() : 0;
+        StackEntry reflexiveEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
                 entry.getControllerId(),
                 entry.getCard().getName() + "'s reflexive ability",
                 new ArrayList<>(List.of(queueEffect.effect())),
-                0,
+                xValue,
                 entry.getSourcePermanentId());
-        reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        gameData.stack.add(reflexiveAbility);
+        if (queueEffect.useEventValueAsX()) {
+            reflexiveEntry.setEventValue(entry.getEventValue());
+        }
+        reflexiveEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        gameData.stack.add(reflexiveEntry);
     }
 
-    private boolean beginPermanentOrPlayerTargetChoice(GameData gameData, StackEntry entry, CardEffect effect,
-                                                       boolean optionalTarget) {
+    private boolean beginTargetChoice(GameData gameData, StackEntry entry, CardEffect effect,
+                                      boolean optionalTarget, boolean useEventValueAsX) {
         TargetSpec targetSpec = effect.targetSpec();
         if (!targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                && !targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
+                && !targetSpec.admits(TargetPredicate.Kind.PLAYER)
+                && !targetSpec.admits(TargetPredicate.Kind.SPELL)) {
             return false;
         }
 
         TargetPredicate predicate = targetSpec.targetPredicate();
+        int xValue = useEventValueAsX ? entry.getEventValue() : entry.getXValue();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                 .withSourcePermanentId(entry.getSourcePermanentId())
-                .withXValue(entry.getXValue());
+                .withXValue(xValue);
 
         List<UUID> validPermanentIds = new ArrayList<>();
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
@@ -83,6 +90,17 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     if (targetPredicateEvaluationService.matchesPermanent(predicate, permanent, filterContext)) {
                         validPermanentIds.add(permanent.getId());
                     }
+                }
+            }
+        }
+
+        if (targetSpec.admits(TargetPredicate.Kind.SPELL)) {
+            for (StackEntry stackEntry : gameData.stack) {
+                if (isSpellStackEntry(stackEntry)
+                        && targetPredicateEvaluationService.matchesSpell(
+                        predicate, stackEntry, entry.getControllerId(), entry.getSourcePermanentSnapshot(),
+                        filterContext)) {
+                    validPermanentIds.add(stackEntry.getCard().getId());
                 }
             }
         }
@@ -108,12 +126,20 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 entry.getCard(), entry.getControllerId(), List.of(effect), entry.getSourcePermanentId(),
-                entry.getSourcePermanentSnapshot(), entry.getEventValue(), entry.getXValue(),
+                entry.getSourcePermanentSnapshot(), entry.getEventValue(), xValue,
                 optionalTarget));
         playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), validPermanentIds,
                 validPlayerIds, entry.getCard().getName() + "'s reflexive ability - Choose a target.");
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 "'s reflexive ability - choose a target."));
         return true;
+    }
+
+    private boolean isSpellStackEntry(StackEntry entry) {
+        return switch (entry.getEntryType()) {
+            case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
+                    ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
+            case TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
+        };
     }
 }

@@ -33,7 +33,9 @@ import java.util.Set;
  *                        {@link PreventionScope#NEXT_TO_TARGET} shield
  * @param sourcePredicate damage sources matching this predicate for
  *                        {@link PreventionScope#ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
- *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES}
+ *                        {@link PreventionScope#NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#ALL_TO_PLAYERS_FROM_MATCHING_SOURCES} or
+ *                        {@link PreventionScope#ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES}
  */
 public record PreventDamageEffect(
         PreventionScope scope,
@@ -74,7 +76,8 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE
                 || scope == PreventionScope.NEXT_TO_TARGET_AND_SHARING_CREATURES
                 || scope == PreventionScope.NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER
-                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER;
+                || scope == PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER
+                || scope == PreventionScope.NEXT_TO_CONTROLLED_CREATURES;
         if (needsAmount && amount == null) {
             throw new IllegalArgumentException("NEXT_* prevention scopes require an amount: " + scope);
         }
@@ -108,8 +111,10 @@ public record PreventDamageEffect(
             throw new IllegalArgumentException(
                     "gainLife is exactly the NEXT_TO_TARGET or ALL_BY_CREATURES parameter: " + scope);
         }
-        boolean acceptsSourcePredicate = scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
-                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES;
+        boolean acceptsSourcePredicate = scope == PreventionScope.NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_PLAYERS_FROM_MATCHING_SOURCES
+                || scope == PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES;
         if ((sourcePredicate != null) != acceptsSourcePredicate) {
             throw new IllegalArgumentException(
                     "sourcePredicate is exactly a matching-source prevention parameter: " + scope);
@@ -191,6 +196,16 @@ public record PreventDamageEffect(
     public static PreventDamageEffect nextToEachCreatureAndPlayer(int amount) {
         return new PreventDamageEffect(
                 PreventionScope.NEXT_TO_EACH_CREATURE_AND_PLAYER, new Fixed(amount), false, null, null, null);
+    }
+
+    /**
+     * "Prevent the next {@code amount} damage that would be dealt to each creature you control
+     * this turn." Non-targeting; only creatures controlled by the ability's controller as it
+     * resolves are shielded.
+     */
+    public static PreventDamageEffect nextToControlledCreatures(int amount) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_CONTROLLED_CREATURES, new Fixed(amount), false, null, null, null);
     }
 
     /** "Prevent all combat damage that would be dealt this turn." */
@@ -306,6 +321,14 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
+    public static PreventDamageEffect allToControllerAndCreaturesFromMatchingSources(
+            PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
+    }
+
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control) — the player only. */
     public static PreventDamageEffect allToController() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_CONTROLLER, null, false, null, null, null);
@@ -326,6 +349,13 @@ public record PreventDamageEffect(
     public static PreventDamageEffect allToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
         return new PreventDamageEffect(
                 PreventionScope.ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+                null, false, null, null, null, false, sourcePredicate);
+    }
+
+    /** "Prevent the next damage that would be dealt to you by a source matching {@code sourcePredicate}." */
+    public static PreventDamageEffect nextToControllerFromMatchingSources(PermanentPredicate sourcePredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES,
                 null, false, null, null, null, false, sourcePredicate);
     }
 

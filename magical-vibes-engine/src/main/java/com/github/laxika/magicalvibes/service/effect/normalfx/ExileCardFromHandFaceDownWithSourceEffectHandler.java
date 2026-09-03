@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandFaceDownWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class ExileCardFromHandFaceDownWithSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -44,7 +47,12 @@ public class ExileCardFromHandFaceDownWithSourceEffectHandler implements NormalE
         }
 
         if (e.toGraveyardOnControlLoss()) {
-            gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId, controllerId);
+            Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (source != null) {
+                UUID currentControllerId = gameData.findControllerOf(source);
+                gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId,
+                        new ExiledCardsControlLossWatch(currentControllerId, entry.getCard()));
+            }
         }
 
         List<Card> hand = gameData.playerHands.get(controllerId);

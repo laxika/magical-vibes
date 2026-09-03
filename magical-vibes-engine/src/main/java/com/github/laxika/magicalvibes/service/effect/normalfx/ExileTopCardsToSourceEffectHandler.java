@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -85,7 +86,8 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             }
         }
 
-        Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
+        Card sourceCard = sourcePermanent != null
+                ? sourcePermanent.getCard() : entry.getTargetingCard();
         List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard
                 .getEffects(EffectSlot.STATIC).stream()
                 .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
@@ -98,7 +100,9 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
 
         if (e.toGraveyardOnControlLoss() && sourcePermanent != null) {
-            gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId, controllerId);
+            UUID currentControllerId = gameData.findControllerOf(sourcePermanent);
+            gameData.exiledCardsToGraveyardOnControlLossWatch.put(sourcePermanentId,
+                    new ExiledCardsControlLossWatch(currentControllerId, sourceCard));
         }
 
         for (UUID playerId : exilingPlayers(gameData, entry, e.scope(), controllerId)) {

@@ -153,11 +153,11 @@ modifiers do not affect foretell.
   `IncreaseOwnCastCostEffect(int amount)`; returns `+amount` for the spell being cast. Wrap it in
   `ConditionalEffect` for a cast-time condition such as `NotControllerTurn`.
 - `cast/costmod/ReduceCastCostForMatchingSpellsEffectHandler.java` — battlefield handler for
-  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean])`; scopes by
+  `ReduceCastCostForMatchingSpellsEffect(CardPredicate, DynamicAmount, CostModificationScope[, Set<Zone>, boolean, boolean])`; scopes by
   `SELF`/`OPPONENT`/`ALL` (`ALL` = symmetric, every player's matching spells — Arcane Melee), optionally
-  restricts by source zone or hand plotting, matches the spell against the predicate, and evaluates the
-  amount with the **source permanent** in the `AmountContext` so `CountersOnSource` works ("costs {1} less
-  for each +1/+1 counter on this creature" — Herald of War).
+  restricts by source zone, hand plotting, or face-down casting, matches the spell against the predicate,
+  and evaluates the amount with the **source permanent** in the `AmountContext` so `CountersOnSource`
+  works ("costs {1} less for each +1/+1 counter on this creature" — Herald of War).
 - `cast/costmod/ReduceBuybackCostEffectHandler.java` — battlefield handler for
   `ReduceBuybackCostEffect(int)`; contributes only through `modifyBuybackCost`, so the effect is
   isolated from ordinary spell-cost calculations.
@@ -196,9 +196,8 @@ modifiers do not affect foretell.
 - `cast/costmod/ConditionalBattlefieldCostModificationHandler.java` — battlefield handler for
   `ConditionalEffect`; evaluates the condition against the source permanent and delegates to the
   wrapped battlefield cost handler.
-- `cast/CostModificationContext.java` — `record(GameData gameData, UUID castingPlayerId, Card spell,
-  boolean flashbackCost, boolean fromGraveyard, int xValue)`; the zone flag lets graveyard-only
-  reductions distinguish graveyard casts from ordinary casts.
+- `cast/CostModificationContext.java` — carries the game, caster, spell, cast-mode flags, and source
+  zone so modifiers can distinguish hand plots, graveyard casts, and face-down creature spells.
 - `cast/CostModificationSource.java` — `record(Permanent sourcePermanent, UUID controllerId)`
   with `SPELL_ITSELF` constant and `controlledBy(UUID)`.
 - `cast/CostModificationSupport.java` — `@Component`, shared queries (`sharesCardType`,

@@ -9,4 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public interface ControllerOpponentDamageBonusEffect extends CardEffect {
 
     DynamicAmount amount();
+
+    default boolean appliesToCombatDamage() {
+        return true;
+    }
 }

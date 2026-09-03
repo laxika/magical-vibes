@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "10")
+@CardRegistration(set = "ONS", collectorNumber = "25")
 public class DiscipleOfGrace extends Card {
 
     public DiscipleOfGrace() {

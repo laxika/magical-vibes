@@ -1,5 +1,7 @@
 # ACTIVATED_ABILITY_GUIDE
 
+`.withExilesSourceFromHand()` exiles the source card instead of discarding it. Mana abilities resolve immediately; non-mana abilities are put on the stack after the source is exiled, as with Glamorous Outlaw.
+
 Quick reference for building `ActivatedAbility` instances. Covers all constructor overloads, all parameters, and when to use each variant.
 
 `ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT` scans the damaging source controller's battlefield and fires only from the noncombat player-damage path. Chandra's Pyreling uses it with `SequenceEffect.of(BoostSelfEffect(1, 0), GrantKeywordEffect(DOUBLE_STRIKE, SELF))`.
@@ -42,6 +44,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
 | `BEFORE_ATTACKERS_DECLARED` | Activate only before attackers are declared (any player's turn). Also requires `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-attackers step. Norritt |
 | `BEFORE_BLOCKERS_DECLARED` | Activate only before blockers are declared (any player's turn). Steps before `DECLARE_BLOCKERS`, plus `combatPhasesThisTurn <= 1` so a turn with multiple combats only allows activation before the first declare-blockers step. Acidic Dagger |
+| `BEFORE_COMBAT_DAMAGE` | Activate only before the combat damage step (any player's turn). Uses `TurnStep.isBeforeCombatDamage()`. Angus Mackenzie |
 | `ONLY_BEFORE_END_OF_COMBAT` | Activate only during a step that precedes the end of combat step, on any player's turn (`gameData.currentStep.isBeforeEndOfCombat()`). Dwarven Sea Clan |
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_DURING_END_OF_COMBAT` | Activate only during the end of combat step (`currentStep == END_OF_COMBAT`). Desert |
@@ -338,6 +341,22 @@ Cards: `LeechriddenSwamp`
 
 ---
 
+### Time-counter payment from a permanent or suspended card
+
+Use `RemoveTimeCounterFromPermanentOrSuspendedCardCost` for an activated ability that lets its
+controller remove a time counter from either a permanent they control or a suspended card they
+own. If more than one eligible object exists, the engine presents a mixed permanent/card choice.
+
+```java
+new ActivatedAbility(false, "{1}{R}",
+    List.of(new RemoveTimeCounterFromPermanentOrSuspendedCardCost(),
+            new BoostSelfEffect(2, 0)),
+    "{1}{R}, Remove a time counter from a permanent you control or suspended card you own: "
+            + "This creature gets +2/+0 until end of turn.")
+```
+
+Used by `RiftElemental` (`FUT`).
+
 ### 8a-counters. Ability gated on counters on the source (`.withRequiredSourceCounters`)
 
 ```java
@@ -538,6 +557,10 @@ Cards: `LoxodonWarhammer` ({3}), `LeoninScimitar` ({1}), `BarkOfDoran` ({1}), `W
 For an ability granted by an Equipment that uses "Unattach [this Equipment]" as a cost, use
 `new UnattachSourceEquipmentCost()` before the ability's resolving effects. The activation flow
 detaches the granting Equipment and leaves it on the battlefield.
+
+For an ability granted by an Equipment that uses "Exile [this Equipment]" as a cost, use
+`new ExileSourceEquipmentCost()` before the ability's resolving effects. The activation flow
+exiles the granting Equipment.
 
 For "this Equipment can be attached only to …" use the three-argument overload
 `new EquipActivatedAbility(manaCost, restrictionPredicate, failureMessage)`, which ANDs the
@@ -772,6 +795,12 @@ addHandActivatedAbility(new ActivatedAbility(false, "{1}{W}",
 Typecycling and landcycling (`Islandcycling`, `Basic landcycling`) search rather than draw, so
 they are built explicitly too; `isCyclingAbility()` still recognises them by the name segment.
 
+Static effects that grant a typecycling ability to cards in hand use the
+`HandAbilityGrantingEffect` capability and `GrantHandActivatedAbilityToCardsEffect`. The effective
+ability list is the card's printed hand abilities followed by matching grants from permanents on
+the battlefield; the same list is used by activation and card-view projection. Homing Sliver uses
+this for Slivercycling {3} in each player's hand.
+
 Cards: `DesertCerodon` (plain), the Sojourners and Resounding cycles (with an extra effect)
 
 #### Ninjutsu
@@ -859,7 +888,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeAllPermanentsYouControlCost` | `()` | "Sacrifice all permanents you control: ..." — SPELL-slot additional cast cost (Kaervek's Spite). Legal with zero permanents |
 | `SacrificeXPermanentsCost` | `(PermanentPredicate filter[, boolean requireAtLeastOne])` | "Sacrifice X [matching]: ..." — sacrifices X permanents matching the filter, where X is the ability's xValue chosen at activation (the sacrifice-analog of `TapMultiplePermanentsCost` with an `XValue` count). Set `requireAtLeastOne=true` for "sacrifice one or more" wording. Springjack Pasture uses the default; Radiant Lotus requires at least one artifact |
 | `DiscardCardTypeCost` | `(CardPredicate, String label)` or `(CardPredicate, String label, boolean manaValueEqualsX)` or `(CardPredicate, String label, int count)` or `(predicate, label, manaValueEqualsX, count, sameName, trackManaValue)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any. `manaValueEqualsX=true` → "Discard a card with mana value X" (restricts valid discards to MV == chosen X; pair with an `{X}` cost). Knollspine Invocation. `count` (default 1) for "Discard N cards" (Haunted Dead = 2); activation prompts sequentially until all are paid. `(predicate, label, int count, boolean sameName)` with `sameName=true` for "Discard two nonland cards with the same name" (Sphinx of the Chimes): the first prompt only offers cards whose name appears at least `count` times in hand, and every later prompt is pinned to that name. `trackManaValue=true` snapshots the discarded card's mana value into the entry's `xValue` (Mercurial Chemister + `DealDamageToTargetCreatureEffect(new XValue())`) . `imprintOnSource=true` (7th component) imprints the discarded card on the source card so the ability's own effects can inspect it at resolution via `ImprintedCardMatches` — Necromancer's Stockpile's "If the discarded card was a Zombie card" |
-| `ExileCardFromHandCost` | `()`, `(CardPredicate, String label)`, `(CardPredicate, String label, int count)`, or `(CardPredicate, String label, int count, boolean imprintOnSource)` | "Exile a card from your hand: ..." — null predicate = any card. Shares the `HandCardCost` activation path with `DiscardCardTypeCost` (up-front legality check, interactive hand pick), but exiles the chosen card, firing no discard triggers. `imprintOnSource=true` remembers the exiled card on the source for resolution-time comparisons (Holistic Wisdom). Cadaverous Bloom |
+| `ExileCardFromHandCost` | `()`, `(CardPredicate, String label)`, `(CardPredicate, String label, int count)`, or `(CardPredicate, String label, int count, boolean imprintOnSource)` | "Exile a card from your hand: ..." — null predicate = any card. Shares the `HandCardCost` activation path with `DiscardCardTypeCost` (up-front legality check, interactive hand pick), but exiles the chosen card, firing no discard triggers. `imprintOnSource=true` remembers the exiled card on the source for resolution-time comparisons (Holistic Wisdom), or for activation-time binding by an effect such as `PutTimeCountersOnImprintedCardEffect` (Jhoira of the Ghitu). Cadaverous Bloom |
 | `ExileTopCardOfLibraryCost` | `(int count)` or `(int count, boolean imprintOnSource)` | "Exile the top card of your library: ..." — exiles the top N library cards as activation cost. Blocks activation if the library is too small. Royal Herbalist (`count=1`). `imprintOnSource=true` imprints the last card exiled this way on the source permanent so the ability's effect can inspect it at resolution via the `ImprintedCardMatches` condition (Storm Elemental) |
 | `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Works as an activation cost (Slate of Ancestry) **and** as a SPELL-slot additional cast cost (Kaervek's Spite; spell already left the hand before payment) |
 | `DiscardRandomCardCost` | `()` | "Discard a card at random: ..." — discards one uniformly-random card from the controller's hand as a cost (no player choice). Requires a non-empty hand to activate, or another card in hand when used in a SPELL slot. Fires the discarded card's discard triggers. Coral Helm; Acceptable Losses |
@@ -1001,6 +1030,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER` | Like ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER but fires from the controller's graveyard. Holds an `AllyCombatDamageTriggerEffect`; the stack entry's source is the graveyard card itself (no source permanent). Wrap the inner effect in `MayEffect(ReturnSourceCardFromGraveyardToOwnerHandEffect(), ...)` for "if this card is in your graveyard, you may return this card to your hand". Scanned in `CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers`. Used by Auntie's Snitch (Goblin-or-Rogue dealer predicate). Set `oneOrMoreDealers=true` for "whenever one or more creatures you control deal combat damage to a player" so the trigger fires once per damage event rather than once per dealer — Pyrewild Shaman (`MayPayManaEffect("{3}", ReturnSourceCardFromGraveyardToOwnerHandEffect(), …)`) |
 | `GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | Like ON_ALLY_CREATURE_ENTERS_BATTLEFIELD but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect(CardSubtypePredicate(...), inner)` to gate on the entering creature's subtype. A `MayEffect` inner is queued as a may-ability; anything else (e.g. `MayPayManaEffect`) goes on the stack. Excluded from Naban ETB doubling (a graveyard card is not a permanent). Scanned in `TriggerCollectionService.checkAllyCreatureEntersTriggers`. Used by Unconventional Tactics ("whenever a Zombie you control enters, you may pay {W}: return this from your graveyard to your hand") |
 | `GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` | Like ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect(CardTypePredicate(ARTIFACT), inner)` to gate on the entering artifact. A `MayEffect` inner is queued as a may-ability; anything else goes on the stack. Scanned in `TriggerCollectionService.checkAllyArtifactEntersTriggers`. Used by Ovalchase Daredevil ("whenever an artifact you control enters, you may return this card from your graveyard to your hand") |
+| `GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD` | Like ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD but fires from the controller's graveyard. A `MayEffect` inner is queued as a may-ability; anything else goes on the stack. Scanned in `TriggerCollectionService.checkAllyEnchantmentEntersTriggers`. Used by Redtooth Vanguard ("whenever an enchantment you control enters, you may pay {2} to return this card from your graveyard to your hand") |
 | `ON_ALLY_CREATURE_ATTACKS` | Fires once per attacking creature the controller controls (unlike ON_ALLY_CREATURES_ATTACK which fires once per combat). Scans all controller's permanents for each attacker. Supports `TriggeringCardConditionalEffect` (filter by the attacking creature's card) and `TriggeringPermanentConditionalEffect` (filter by the attacking permanent, e.g. "with a +1/+1 counter on it"). Mandatory effects go on the stack sourced by the ability's owner (attacked target captured for `DealDamageToAttackedTargetEffect`). A `MayEffect` is queued as a CR 603.5 resolution-time may whose source **permanent** is the *attacking* creature ("that creature") while the source **card** is the ability's owner — so the owner's card-level `target(...)` filter governs legal targets (give it a `PermanentPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate())` for player-or-planeswalker damage). Used by Sanctum Seeker (Vampire drain), Hellrider (attacked-target damage), Rage Forger (counter-bearing attacker may ping a player/planeswalker) |
 | `ON_ALLY_CREATURES_ATTACK_PLAYER` | Fires once for each distinct player directly attacked by one or more creatures the controller controls. Attacking a planeswalker does not count, and multiple qualifying attackers aimed at one player still produce one trigger. The attacked player is captured as the trigger's non-targeting `attackedTargetId`. Checked in `CombatAttackService.declareAttackers`. Used by Bitter Work |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | Fires once per **unblocked** attacking creature the controller controls, during the declare-blockers step (both when the defender declares blocks and when no blockers exist). Supports `TriggeringCardConditionalEffect` to filter by the unblocked creature. The unblocked creature is set as the trigger's non-targeting `sourcePermanentId`, so self-scoped effects like `BoostSelfEffect` apply to "it" (the unblocked creature), not the source. Checked in `CombatBlockService`. Used by Stinkdrinker Bandit (Rogues get +2/+1) |
@@ -1059,6 +1089,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A nontoken permanent of any type is put into your graveyard from the battlefield. Fires only for the graveyard owner, including permanents you do not control, and excludes tokens. Used by Jinxed Ring with `DealDamageToPlayersEffect(1, CONTROLLER)`. |
 | `ON_ANY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A nontoken permanent of any type is put into any player's graveyard from the battlefield. Fires for every graveyard owner and bakes that owner as the trigger's target. Used by Liability with `LoseLifeEffect(1, TARGET_PLAYER)`. |
 | `ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | A permanent of any type, including a token, is put into your graveyard from the battlefield. Fires only for the graveyard owner. Used by Scrapheap with `TriggeringCardConditionalEffect(CardAnyOfPredicate(ARTIFACT, ENCHANTMENT), GainLifeEffect(1))`. |
+| `ON_CONTROLLER_TAPS_OPPONENT_PERMANENT` | The controller is instructed to tap an opponent's permanent. Unlike `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`, it does not trigger when an opponent is instructed to tap their own permanent. Wrap in `TriggeringPermanentConditionalEffect` to filter the tapped permanent. Used by Solitary Sanctuary |
 | `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |
 | `ON_ANY_PLAYER_CASTS_SPELL` | Any player casts a spell |
 | `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |
@@ -1138,6 +1169,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` | Another creature (any player's) leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck) — broader than "dies". Global watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`; fires on every permanent with the slot except the leaving creature itself. Non-targeting: a "you may have target player mill two cards" is a `MayEffect(MillEffect(2, TARGET_PLAYER), …)` whose "may" and player target are resolved on the stack (Extractor Demon) |
 | `ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD` | Another artifact **you control** leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck). Controller-scoped watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers`; fires only on the leaving artifact's controller's battlefield, except the leaving artifact itself. Pair with `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` (same effect on both slots) for "whenever another artifact you control enters or leaves the battlefield". Non-targeting: player target + "you may pay {1}" resolve on the stack via `MayPayManaEffect(SequenceEffect.of(LoseLifeEffect(TARGET_PLAYER), GainLifeEffect))` (Sludge Strider) |
 | `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` | Another creature **you control** leaves the battlefield by any means. Controller-scoped sibling of `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD`. Fired via `TriggerCollectionService.checkAllyCreatureLeavesBattlefieldTriggers`. Used by Luminous Phantom (`GainLifeEffect(1)`) |
+| `ON_ALLY_CREATURE_EXILED_FROM_BATTLEFIELD` | Another creature **you control** is put into exile from the battlefield. Narrower than `ON_ALLY_CREATURE_LEAVES_BATTLEFIELD`; fired after the card enters exile via `TriggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers`. Used by Syr Vondam, Sunstar Exemplar |
 | `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | This card is put into a graveyard from anywhere (battlefield/hand/library/stack). Fired for every zone→graveyard transition in `GraveyardService.addCardToGraveyard` (card enters graveyard first, then trigger). Used by Purity with `ShuffleSelfFromGraveyardIntoLibraryEffect` |
 | `ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | This card is put into a graveyard specifically **from the battlefield** ("dies" for a permanent). Fired in `GraveyardService.addCardToGraveyard` only when the source zone is `BATTLEFIELD` (card enters graveyard first, then trigger). Used by Spreading Algae with `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardIsSelfPredicate()).returnAll(true).build()` ("return it to its owner's hand") |
 | `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Your Aura or Equipment dies |
@@ -1145,3 +1177,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_TRANSFORM_TO_FRONT_FACE` | This permanent transforms back to front face |
 | `ON_PLAYER_LOSES_GAME` | A player loses the game (fired in `GameOutcomeService`; 2-player engine ends before it resolves) |
 | `GRAVEYARD_ON_ALLY_CREATURE_DIES` | Like ON_ALLY_CREATURE_DIES but fires from the controller's graveyard. Wrap in `TriggeringCardConditionalEffect` to filter the dying creature. A `MayEffect` inner is queued as a may-ability; anything else (e.g. `MayPayManaEffect`) goes on the stack. A source card that dies in the same event does not trigger. Scanned in `TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers`. Used by Furious Forebear |
+Cryptic Gateway uses `TapMultiplePermanentsCost(2, PermanentIsCreaturePredicate, false, true)` so the exact two tapped creatures are retained for `PutCreatureFromHandSharingChosenCostPermanentsEffect`.
+| `GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD` | Fires from the controller's graveyard when a creature enters that graveyard from the battlefield. Use `TriggeringCardConditionalEffect` for a nontoken or other dying-card filter; the source is skipped when it dies in the same event. |
+| `GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | Fires from a card's graveyard when a creature enters any opponent's graveyard from the battlefield. The source is skipped when it dies in the same event; used by Bridge from Below. |
+`SacrificeAnyNumberOfPermanentsCost(filter, trackSacrificedPower, excludeSource)` is the activated-ability form for "sacrifice this permanent and any number of matching permanents." It permits zero choices, snapshots effective power before paying when requested, and carries the selected card IDs through the stack entry for later effects. Use `excludeSource=true` when the source is also paid with `SacrificeSelfCost`.

@@ -5,8 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param newTargetKind controls whether the new target may be any legal target, only a creature,
  *                      or only a player
+ * @param requiresSourceTarget whether the spell's original target must be the source permanent
  */
-public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind) implements CardEffect {
+public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind,
+                                                               boolean requiresSourceTarget) implements CardEffect {
 
     public enum NewTargetKind {
         ANY,
@@ -15,15 +17,23 @@ public record ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newT
     }
 
     public ChangeTargetOfTargetSpellWithSingleTargetEffect() {
-        this(NewTargetKind.ANY);
+        this(NewTargetKind.ANY, false);
+    }
+
+    public ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind newTargetKind) {
+        this(newTargetKind, false);
     }
 
     public ChangeTargetOfTargetSpellWithSingleTargetEffect(boolean creatureTargetsOnly) {
-        this(creatureTargetsOnly ? NewTargetKind.CREATURE : NewTargetKind.ANY);
+        this(creatureTargetsOnly ? NewTargetKind.CREATURE : NewTargetKind.ANY, false);
     }
 
     public static ChangeTargetOfTargetSpellWithSingleTargetEffect playersOnly() {
-        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER);
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.PLAYER, false);
+    }
+
+    public static ChangeTargetOfTargetSpellWithSingleTargetEffect sourceCreatureTargetsOnly() {
+        return new ChangeTargetOfTargetSpellWithSingleTargetEffect(NewTargetKind.CREATURE, true);
     }
 
     public boolean creatureTargetsOnly() {

@@ -119,6 +119,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
 
             String durationText = switch (e.duration()) {
                 case CONTINUOUS, PERMANENT -> "indefinitely";
+                case UNTIL_YOUR_NEXT_TURN -> "until your next turn";
                 case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_REMAINS,
                         WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, WHILE_ATTACHED ->
                         "for as long as its source remains on the battlefield";
@@ -135,6 +136,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             target.setLosesAllAbilitiesPermanently(true);
         } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
             target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        } else if (e.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+            target.addLosesAllAbilitiesUntilNextTurnController(entry.getControllerId());
         }
 
         // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk

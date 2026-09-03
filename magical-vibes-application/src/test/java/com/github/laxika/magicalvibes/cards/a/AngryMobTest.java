@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,6 +36,28 @@ class AngryMobTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(2);
+    }
+
+    @Test
+    void updatesWhenOpponentSwampEnters() {
+        Permanent mob = addCreatureReady(player1, new AngryMob());
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(2);
+        harness.addToBattlefield(player2, new Swamp());
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(3);
+    }
+
+    @Test
+    void countersApplyAfterDynamicBaseStats() {
+        Permanent mob = addCreatureReady(player1, new AngryMob());
+        mob.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, mob)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mob)).isEqualTo(4);
     }
 
     @Test

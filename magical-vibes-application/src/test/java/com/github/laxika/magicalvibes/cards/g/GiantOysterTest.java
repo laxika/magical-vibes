@@ -118,6 +118,7 @@ class GiantOysterTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(PlayerInputService.class).processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(oyster.isTapped()).isFalse();
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);

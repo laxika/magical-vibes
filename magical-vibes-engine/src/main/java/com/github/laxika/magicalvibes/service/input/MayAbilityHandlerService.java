@@ -65,7 +65,10 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -100,6 +103,9 @@ public class MayAbilityHandlerService {
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -393,7 +399,8 @@ public class MayAbilityHandlerService {
             // Effects that copy an entering permanent need the target permanent ID from the trigger
             boolean needsEnteringTarget = ability.effects().stream()
                     .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect
-                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget());
+                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget()
+                            || e.usesEnteringPermanentReference());
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
             }
@@ -652,12 +659,8 @@ public class MayAbilityHandlerService {
                     boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= ability.lifeCost();
                     if (canPayLife) {
-                        int lifeLoss = ability.lifeCost()
-                                * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
-                        gameData.playerLifeTotals.put(player.getId(), gameData.getLife(player.getId()) - lifeLoss);
-                        triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), lifeLoss);
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " pays " + lifeLoss + " life for ", ability.sourceCard(), "'s ability."));
+                        lifeSupport.applyLifePayment(gameData, player.getId(), ability.lifeCost(),
+                                ability.sourceCard().getName());
                         paidWithLife = true;
                     }
                 }
@@ -680,15 +683,8 @@ public class MayAbilityHandlerService {
                 if (!paidWithLife) {
                     cost.pay(pool);
                     if (ability.additionalLifeCost() > 0) {
-                        int lifeLoss = ability.additionalLifeCost()
-                                * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
-                        gameData.playerLifeTotals.put(player.getId(),
-                                gameData.getLife(player.getId()) - lifeLoss);
-                        triggerCollectionService.checkLifePaymentTriggers(
-                                gameData, player.getId(), lifeLoss);
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " pays " + lifeLoss + " life for ",
-                                ability.sourceCard(), "'s ability."));
+                        lifeSupport.applyLifePayment(gameData, player.getId(), ability.additionalLifeCost(),
+                                ability.sourceCard().getName());
                     }
                 }
             }

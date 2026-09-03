@@ -48,6 +48,7 @@ public class ExileFreeCastQueueSupport {
     private final InputCompletionService inputCompletionService;
     private final GraveyardService graveyardService;
     private final CopySupport copySupport;
+    private final SpellweaverVoluteSupport spellweaverVoluteSupport;
     private final AdditionalSpellCostService additionalSpellCostService;
     private final SpellCastingService spellCastingService;
 
@@ -59,6 +60,7 @@ public class ExileFreeCastQueueSupport {
                                             @Lazy InputCompletionService inputCompletionService,
                                             GraveyardService graveyardService,
                                             CopySupport copySupport,
+                                            @Lazy SpellweaverVoluteSupport spellweaverVoluteSupport,
                                             AdditionalSpellCostService additionalSpellCostService,
                                             @Lazy SpellCastingService spellCastingService) {
         this.gameLogService = gameLogService;
@@ -68,6 +70,7 @@ public class ExileFreeCastQueueSupport {
         this.inputCompletionService = inputCompletionService;
         this.graveyardService = graveyardService;
         this.copySupport = copySupport;
+        this.spellweaverVoluteSupport = spellweaverVoluteSupport;
         this.additionalSpellCostService = additionalSpellCostService;
         this.spellCastingService = spellCastingService;
     }
@@ -381,6 +384,9 @@ public class ExileFreeCastQueueSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", physicalCard,
                 " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, playerId, false);
+        if (asCopy && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, physicalCard.getId())) {
+            return;
+        }
         castNextFromQueue(gameData, playerId);
     }
 
@@ -421,6 +427,7 @@ public class ExileFreeCastQueueSupport {
      * active frame completes the resolution itself, so skip the epilogue while one is running.
      */
     private void finishFreeCastProcess(GameData gameData) {
+        spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         if (gameData.effectResolutionDepth > 0 && gameData.pendingEffectResolutionEntry != null) {
             return;

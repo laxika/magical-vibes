@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CHR", collectorNumber = "23")
+@CardRegistration(set = "LEG", collectorNumber = "69")
 public class PuppetMaster extends Card {
 
     public PuppetMaster() {

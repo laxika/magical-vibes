@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,28 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Inheritance.class, GrizzlyBears.class, Shock.class})
 class InheritanceTest extends BaseCardTest {
+
+    @Test
+    void cannotDrawWithoutEnoughMana() {
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Inheritance()));
+        Permanent bears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     @Test
     @DisplayName("Paying {3} when a creature dies draws a card")
@@ -25,8 +47,7 @@ class InheritanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -48,8 +69,7 @@ class InheritanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -71,8 +91,7 @@ class InheritanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, opponentBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, opponentBears.getId());
         harness.passBothPriorities();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();

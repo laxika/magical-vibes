@@ -6,7 +6,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
 
-/** Progress state for a targeted-opponent discard sequence with a conditional controller draw. */
+/** Progress state for an opponent discard sequence with a controller draw. */
 public class TargetOpponentsDiscardThenDrawState {
 
     public boolean active;

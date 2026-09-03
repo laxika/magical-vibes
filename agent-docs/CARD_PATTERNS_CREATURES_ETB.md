@@ -10,7 +10,7 @@ For an ETB that pays X and then offers a free cast of an instant or sorcery with
 from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
 `h/HaloForager.java`.
 
-Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep. The registrar creates a one-shot echo trigger for the source permanent's current controller.
+Echo ETB pattern: `k/KeldonChampion.java` combines `DealDamageToTargetPlayerOrPlaneswalkerEffect(3)` with `RegisterEchoAtNextUpkeepEffect("{2}{R}{R}")`; `v/VolcanoHellion.java` uses the `(DynamicAmount)` overload for a cost evaluated at upkeep; `d/DeepcavernImp.java` uses the `(HandCardCost)` overload for echo—discard a card; `s/ShahOfNaarIsle.java` passes a `List<CardEffect>` as the second argument for effects that resolve when echo is paid. The registrar creates a one-shot echo trigger for the source permanent's current controller.
 
 ## Vanilla creatures (empty body, all from Scryfall)
 
@@ -125,6 +125,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB copy (Clone) + Embalm | `v/VizierOfManyFaces.java` | CopyPermanentOnEnterEffect(filter, typeLabel, CardColor.WHITE, CardSubtype.ZOMBIE, true) + Embalm CreateTokenCopyOfSourceEffect(false,1,WHITE,ZOMBIE,true). The embalm token is itself a Clone: it re-clones a chosen creature, and the white/no-mana-cost/added-Zombie transformation is re-applied to the final copy **only when the entering permanent is a token** (a hard-cast copy stays plain). A copying token also stays a token (ceases to exist on death). |
 | ETB token copy bonded to the source (enchantment) | `d/DanceOfMany.java` | target(nontoken creature) + ON_ENTER_BATTLEFIELD CreateTokenCopyAndLinkToSourceEffect + ON_SELF_LEAVES_BATTLEFIELD RemoveLinkedPermanentEffect(EXILE) + UPKEEP_TRIGGERED ForcedCostOrElseEffect(PayManaCost("{U}{U}"), List.of(SacrificeSelfEffect()), true) — creates a token copy and forges a two-way `chosenPermanentId` bond; the token carries a RemoveLinkedPermanentEffect(SACRIFICE) leaves-trigger. Enchantment leaves → exile token; token leaves → sacrifice enchantment |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
+| ETB choose color + controller protection | `s/SehtsTiger.java` | ON_ENTER_BATTLEFIELD `GrantProtectionChoiceToControllerUntilEndOfTurnEffect` — the controller chooses a color on resolution and gains protection from it until end of turn |
 | ETB choose color + chosen-color mana ability | `q/QuirionElves.java` | ON_ENTER_BATTLEFIELD ChooseColorOnEnterEffect + two `{T}` ActivatedAbilities: AwardManaEffect(GREEN) and AwardChosenColorManaEffect |
 | ETB choose name | `p/PithingNeedle.java` | ChooseCardNameOnEnterEffect + static lock |
 | ETB choose nonland name | `p/PhyrexianRevoker.java` | ChooseCardNameOnEnterEffect(List.of(LAND)) + static lock — artifact creature variant |
@@ -135,6 +136,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Upkeep control-to-lowest-life | `l/LoxodonPeacekeeper.java` | UPKEEP_TRIGGERED PlayerWithLowestLifeGainsControlOfSourceCreatureEffect - the player with the lowest life gains control; the controller chooses among tied lowest-life players |
 | Upkeep control-to-most-life | `g/GhazbNOgre.java` | UPKEEP_TRIGGERED PlayerWithMostLifeGainsControlOfSourceCreatureEffect — player with strictly the most life gains control; no-op on a tie |
 | Upkeep control-to-most-creatures | `w/WildMammoth.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerControlsMoreCreaturesThanEachOtherPlayer, PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect) — unique player with the most creatures gains control; no-op on a tie |
+| Upkeep control-to-most-Wizards | `t/ThoughtboundPrimoc.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerControlsMoreCreaturesThanEachOtherPlayer(wizards), PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect(wizards)) — unique player with the most Wizard creatures gains control; no-op on a tie |
 | Upkeep control-to-most-cards-in-hand | `s/SokenzanRenegade.java` | UPKEEP_TRIGGERED ConditionalEffect(APlayerHasMoreCardsInHandThanEachOtherPlayer, PlayerWithMostCardsInHandGainsControlOfSourceCreatureEffect) — unique player with the most cards in hand gains control; no-op on a tie |
 | ETB discard hand + opponent edict per card | `m/Malfegor.java` | DiscardOwnHandThenEachOpponentSacrificesCreaturePerCardEffect() — discard your hand, each opponent sacrifices a creature of their choice for each card discarded this way (sacrifice count = cards discarded) |
 | ETB each player sacrifices a creature or planeswalker, otherwise discards | `p/Plaguecrafter.java` | EachPlayerSacrificesPermanentOrDiscardsEffect(creature OR planeswalker) — APNAP sacrifice choices and simultaneous sacrifice, followed by APNAP discard choices and simultaneous discards |
@@ -147,6 +149,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB drawback (bounce another creature) | `f/FaerieImpostor.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CREATURE, true) — sacrifice unless return *another* creature you control; excludeSource keeps the source off the choice list, so a lone Impostor auto-sacrifices |
 | ETB drawback (sacrifice creatures with total power N) | `p/PhyrexianDreadnought.java` | SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffect(12) — sacrifice it unless you sacrifice any number of creatures with total power 12 or greater |
 | As-enters sacrifice sets P/T (total of sacrificed creatures) | `d/Dracoplasm.java` | SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect() — sacrifice any number of your other creatures as it enters; their total power/toughness becomes its base P/T (durable layer-7b override, no STATIC effect needed) |
+| As-enters sacrifice sets P/T to sacrificed count | `w/WoodElemental.java` | SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect(PermanentAllOfPredicate(HasSubtype(FOREST), Not(IsTapped))) — sacrifice any number of untapped Forests as it enters; both base characteristics become that count |
 | ETB champion | `c/ChangelingHero.java` | ChampionCreatureEffect() — sacrifice unless exile another creature you control; exiled creature returns when this leaves |
 | ETB -1/-1 counters + counter removal ability | `b/BurdenedStoneback.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + GrantKeywordEffect |
 | ETB -1/-1 counters + mass -1/-1 ability | `c/CarnifexDemon.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + PutCounterOnEachMatchingPermanentEffect(MINUS_ONE_MINUS_ONE, 1, AllOf(IsCreature, Not(IsSourceCard)), ALL_PLAYERS) for "each other creature" |
@@ -188,3 +191,4 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Kicker sorcery (tap subtype kicker + life drain) | `b/BloodTribute.java` | STATIC `KickerEffect.tap(PermanentHasSubtypePredicate(VAMPIRE), "an untapped Vampire")` + target-opponent SPELL `LoseLifeEffect(HalvedRoundedUp(TargetPlayerLifeTotal), TARGET_PLAYER, true)` |
 
 
+| ETB any player may sacrifice two creatures, then sacrifice this creature | `p/ProwlingPangolin.java` | AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect(2) — offers eligible players the choice in APNAP order, uses the multi-permanent sacrifice flow, and continues to later players after an acceptance |

@@ -585,6 +585,7 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         @Test
         @DisplayName("A per-creature aura tax is added on top of the board-wide one")
+        @CardUsed({Brainwash.class, GrizzlyBears.class, HillGiant.class, WindbornMuse.class})
         void perCreatureAuraTaxAddsToTheBoardWideTax() {
             // Brainwash: the enchanted creature can't attack unless its controller pays {3}.
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());

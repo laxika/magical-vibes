@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -9,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -20,16 +24,19 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.CounterThresholdDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
+import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -67,6 +74,10 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerReturnsPermanentToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -77,6 +88,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -93,11 +105,18 @@ public class DrawService {
     // @Lazy to break the constructor cycle DrawService → InteractionHandlerRegistry →
     // (graveyard/card choice handlers) → DrawService.
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PlayerInteractionSupport playerInteractionSupport;
     // @Lazy: handler → InputCompletionService → … can reach back into draw/resolution paths.
     private final BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler;
     private final LifeSupport lifeSupport;
     private final GraveyardService graveyardService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandEffectHandler;
+    private final DamageSupport damageSupport;
+    private final PermanentControlSupport permanentControlSupport;
+
+    private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
+            "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
 
@@ -107,28 +126,62 @@ public class DrawService {
                        GameOutcomeService gameOutcomeService,
                        TriggeredAbilityQueueService triggeredAbilityQueueService,
                        @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
+                       @Lazy PlayerInteractionSupport playerInteractionSupport,
                        @Lazy BreathstealersCryptDrawReplacementHandler breathstealersCryptDrawReplacementHandler,
                        @Lazy LifeSupport lifeSupport,
                        @Lazy GraveyardService graveyardService,
                        ConditionEvaluationService conditionEvaluationService,
-                       GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
-                       DredgeSupport dredgeSupport) {
+                       @Lazy EachPlayerReturnsPermanentToHandEffectHandler eachPlayerReturnsPermanentToHandEffectHandler,
+                       @Lazy DamageSupport damageSupport,
+                       @Lazy PermanentControlSupport permanentControlSupport,
+                        GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
+                        DredgeSupport dredgeSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.gameOutcomeService = gameOutcomeService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.playerInteractionSupport = playerInteractionSupport;
         this.breathstealersCryptDrawReplacementHandler = breathstealersCryptDrawReplacementHandler;
         this.lifeSupport = lifeSupport;
         this.graveyardService = graveyardService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.eachPlayerReturnsPermanentToHandEffectHandler = eachPlayerReturnsPermanentToHandEffectHandler;
+        this.damageSupport = damageSupport;
+        this.permanentControlSupport = permanentControlSupport;
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
+        resolveDrawCards(gameData, playerId, 1);
+    }
+
+    public void resolveDrawCards(GameData gameData, UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+
+        int drawAmount = amount;
+        Permanent quantumRiddler = findQuantumRiddlerDrawReplacementSource(gameData, playerId);
+        if (quantumRiddler != null) {
+            drawAmount++;
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " draws one additional card with " + quantumRiddler.getCard().getName() + "."));
+            log.info("Game {} - {} draws one additional card with {}",
+                    gameData.id, playerName, quantumRiddler.getCard().getName());
+        }
+
+        for (int i = 0; i < drawAmount; i++) {
+            resolveDrawCardInternal(gameData, playerId);
+        }
+    }
+
+    private void resolveDrawCardInternal(GameData gameData, UUID playerId) {
         if (preventDrawIfNeeded(gameData, playerId)) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
         }
 
@@ -136,6 +189,18 @@ public class DrawService {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " skips that draw."));
             log.info("Game {} - {} skips a draw (draw replacement in effect)", gameData.id, playerName);
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            return;
+        }
+
+        Integer pendingExileTopCard = gameData.pendingNextDrawExileTopCard.get(playerId);
+        if (pendingExileTopCard != null && pendingExileTopCard > 0) {
+            if (pendingExileTopCard == 1) {
+                gameData.pendingNextDrawExileTopCard.remove(playerId);
+            } else {
+                gameData.pendingNextDrawExileTopCard.put(playerId, pendingExileTopCard - 1);
+            }
+            resolveNextDrawExileTopCardMayPlayThisTurn(gameData, playerId);
             return;
         }
 
@@ -143,6 +208,10 @@ public class DrawService {
         // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
         // see a stable answer even if their source enters play later in the turn.
         boolean firstDrawStepDraw = markFirstDrawStepDraw(gameData, playerId);
+
+        if (!firstDrawStepDraw && resolveChainsOfMephistophelesDrawReplacement(gameData, playerId)) {
+            return;
+        }
 
         List<Integer> dredgeIndices = dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
         if (!dredgeIndices.isEmpty()) {
@@ -187,6 +256,57 @@ public class DrawService {
                 gameData.pendingNextDrawFromExiledPile.remove(playerId);
             }
             resolveNextDrawFromExiledPile(gameData, playerId, pileSourceId);
+            return;
+        }
+
+        // Words of Worship — one queued activation replaces one draw with gaining 5 life.
+        Integer pendingGainLife = gameData.pendingNextDrawGainLife.remove(playerId);
+        if (pendingGainLife != null) {
+            if (pendingGainLife > 1) {
+                gameData.pendingNextDrawGainLife.put(playerId, pendingGainLife - 1);
+            }
+            lifeSupport.applyGainLife(gameData, playerId, 5, "Words of Worship");
+            return;
+        }
+
+        // Words of Wilding - one queued activation replaces one draw with creating a Bear token.
+        List<String> pendingCreateBears = gameData.pendingNextDrawCreateBears.get(playerId);
+        if (pendingCreateBears != null && !pendingCreateBears.isEmpty()) {
+            String sourceSetCode = pendingCreateBears.removeFirst();
+            if (pendingCreateBears.isEmpty()) {
+                gameData.pendingNextDrawCreateBears.remove(playerId);
+            }
+            permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR,
+                    1, sourceSetCode);
+            return;
+        }
+
+        List<PendingNextDrawDamageReplacement> pendingDamage = gameData.pendingNextDrawDamage.get(playerId);
+        if (pendingDamage != null && !pendingDamage.isEmpty()) {
+            PendingNextDrawDamageReplacement replacement = pendingDamage.removeFirst();
+            if (pendingDamage.isEmpty()) {
+                gameData.pendingNextDrawDamage.remove(playerId);
+            }
+            resolveNextDrawDamage(gameData, playerId, replacement);
+            return;
+        }
+
+        Integer pendingReturnPermanents = gameData.pendingNextDrawReturnPermanents.remove(playerId);
+        if (pendingReturnPermanents != null) {
+            if (pendingReturnPermanents > 1) {
+                gameData.pendingNextDrawReturnPermanents.put(playerId, pendingReturnPermanents - 1);
+            }
+            eachPlayerReturnsPermanentToHandEffectHandler.beginReplacement(gameData, "Words of Wind");
+            return;
+        }
+
+        Integer pendingDiscardOpponents = gameData.pendingNextDrawDiscardOpponents.remove(playerId);
+        if (pendingDiscardOpponents != null) {
+            if (pendingDiscardOpponents > 1) {
+                gameData.pendingNextDrawDiscardOpponents.put(playerId, pendingDiscardOpponents - 1);
+            }
+            playerInteractionSupport.startNextEachPlayerDiscard(gameData,
+                    DiscardFollowUp.eachPlayer(opponentsInApnapOrder(gameData, playerId), playerId, 1));
             return;
         }
 
@@ -381,7 +501,37 @@ public class DrawService {
         performDrawCard(gameData, playerId);
     }
 
+    private List<UUID> opponentsInApnapOrder(GameData gameData, UUID controllerId) {
+        List<UUID> opponents = new ArrayList<>();
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId != null && !activePlayerId.equals(controllerId)
+                && gameData.playerIds.contains(activePlayerId)) {
+            opponents.add(activePlayerId);
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(controllerId) && !playerId.equals(activePlayerId)
+                    && gameData.playerIds.contains(playerId)) {
+                opponents.add(playerId);
+            }
+        }
+        return opponents;
+    }
+
+    private void resolveNextDrawDamage(GameData gameData, UUID playerId,
+                                       PendingNextDrawDamageReplacement replacement) {
+        StackEntry damageEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                replacement.sourceCard(),
+                playerId,
+                replacement.sourceCard().getName() + "'s draw replacement",
+                List.of(),
+                replacement.targetId(),
+                replacement.sourcePermanentId());
+        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, replacement.targetId(), 2, false);
+    }
+
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
+        gameData.chainsDrawReplacementsApplied.remove(playerId);
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
@@ -439,6 +589,44 @@ public class DrawService {
             }
         }
         return false;
+    }
+
+    private boolean resolveChainsOfMephistophelesDrawReplacement(GameData gameData, UUID playerId) {
+        int activeChains = countChainsOfMephistopheles(gameData);
+        int alreadyApplied = gameData.chainsDrawReplacementsApplied.getOrDefault(playerId, 0);
+        if (activeChains == 0 || alreadyApplied >= activeChains) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            return false;
+        }
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.isEmpty()) {
+            gameData.chainsDrawReplacementsApplied.remove(playerId);
+            graveyardService.resolveMillPlayer(gameData, playerId, 1);
+            return true;
+        }
+
+        gameData.chainsDrawReplacementsApplied.put(playerId, alreadyApplied + 1);
+        gameData.discardCausedByOpponent = false;
+        playerInteractionSupport.resolveDiscardCards(
+                gameData, playerId, 1, DiscardFollowUp.rummage(1));
+        return true;
+    }
+
+    private int countChainsOfMephistopheles(GameData gameData) {
+        int count = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                count += permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(ChainsOfMephistophelesDrawReplacement.class::isInstance)
+                        .count();
+            }
+        }
+        return count;
     }
 
     private boolean isDrawSkipped(GameData gameData, UUID playerId) {
@@ -575,6 +763,43 @@ public class DrawService {
     private boolean isHandEmpty(GameData gameData, UUID playerId) {
         List<Card> hand = gameData.playerHands.get(playerId);
         return hand == null || hand.isEmpty();
+    }
+
+    public boolean hasQuantumRiddlerDrawReplacement(GameData gameData, UUID playerId) {
+        return findQuantumRiddlerDrawReplacementSource(gameData, playerId) != null;
+    }
+
+    private Permanent findQuantumRiddlerDrawReplacementSource(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean active = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> isActiveQuantumRiddlerDrawReplacement(
+                            gameData, permanent, playerId, effect));
+            if (active) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private boolean isActiveQuantumRiddlerDrawReplacement(GameData gameData, Permanent permanent,
+                                                          UUID controllerId, CardEffect effect) {
+        if (effect.getClass() == QuantumRiddlerDrawReplacementEffect.class) {
+            return true;
+        }
+        if (effect.getClass() != ConditionalEffect.class) {
+            return false;
+        }
+
+        ConditionalEffect conditional = (ConditionalEffect) effect;
+        return conditional.wrapped().getClass()
+                == QuantumRiddlerDrawReplacementEffect.class
+                && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forPermanent(permanent, controllerId));
     }
 
     private Card findEmptyHandDrawExtraSourceCard(GameData gameData, UUID playerId) {
@@ -1044,6 +1269,30 @@ public class DrawService {
                 false));
     }
 
+    /** Urabrask, Heretic Praetor's replaced draw: exile the top card and let its owner play it this turn. */
+    private void resolveNextDrawExileTopCardMayPlayThisTurn(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (deck == null || deck.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + "'s library is empty; the replaced draw exiles nothing."));
+            return;
+        }
+
+        Card exiled = deck.removeFirst();
+        exileService.exileCard(gameData, playerId, exiled);
+        gameData.exilePlayPermissions.put(exiled.getId(), playerId);
+        gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(playerName + " exiles ").card(exiled)
+                .text(" from the top of their library instead of drawing (may play it this turn).")
+                .build());
+        log.info("Game {} - {} exiles {} instead of drawing (Urabrask)",
+                gameData.id, playerName, exiled.getName());
+    }
+
     void performDrawCard(GameData gameData, UUID playerId) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
@@ -1299,9 +1548,10 @@ public class DrawService {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
-                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
+                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                     // Targeted draw trigger: the controller must choose a target before the ability
-                    // goes on the stack.
+                    // goes on the stack. This includes player-only targets such as "target opponent".
                     gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                             perm.getCard(),
                             drawingPlayerId,

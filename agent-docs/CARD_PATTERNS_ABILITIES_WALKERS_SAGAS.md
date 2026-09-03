@@ -11,7 +11,9 @@ All paths relative to `cards/`.
 
 ## Activated abilities
 
-| Sacrifice white creature + per-attacking-red-creature payment | `h/Heroism.java` | SacrificePermanentCost(creature + WHITE, "Sacrifice a white creature") + PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect(attacking creature + RED, "{2}{R}") — each matching attacker controller independently pays or that creature deals no combat damage this turn |
+| Tap plus mana to force a chosen creature type to attack | `w/WalkingDesecration.java` | `(true, "{B}", CreaturesOfChosenTypeMustAttackThisTurnEffect)` - chooses the type on resolution and applies the transient must-attack requirement to matching creatures on every battlefield |
+
+| Sacrifice white creature + per-attacking-red-creature payment | `h/Heroism.java` | SacrificePermanentCost(creature + WHITE, "Sacrifice a white creature") + PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect(attacking creature + RED, "{2}{R}") - each matching attacker controller independently pays or that creature deals no combat damage this turn |
 
 | Planeswalker with source-tracked exile, filtered X return, and opponent hand/graveyard exile | `a/AshiokNightmareWeaver.java` | `ExileTopCardsToSourceEffect(... TARGET_OPPONENT, true)` + `ReturnCardExiledWithSourceToBattlefieldEffect(CardTypePredicate(CREATURE), true, NIGHTMARE)` + `ExileAllOpponentsHandsEffect` + `ExileGraveyardCardsEffect(ALL_OPPONENTS)` |
 
@@ -58,6 +60,7 @@ All paths relative to `cards/`.
 | Create token | `d/DragonRoost.java` | CreateTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillEffect(2, TARGET_PLAYER), true)` |
 | Reveal until basic land (to hand, rest GY) | `h/HermitDruid.java` | `(true, "{G}", RevealUntilBasicLandToHandRestToGraveyardEffect)` — nonbasics do not stop |
+| Reveal until chosen creature type to battlefield | `r/RiptideShapeshifter.java` | `SacrificeSelfCost` + `RevealUntilChosenCreatureTypeToBattlefieldEffect` — chooses the type on resolution, puts the first matching creature (including Changeling) onto the battlefield, then shuffles the other reveals |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
 | Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE), false)` |
@@ -79,6 +82,7 @@ All paths relative to `cards/`.
 | X-cost mass destroy (combat damage gated) | `s/SteelHellkite.java` | BoostSelfEffect pump + DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect with maxActivationsPerTurn=1 — X-cost, once per turn, only affects damaged player's permanents |
 | Loyalty (no target) | `a/AjaniOutlandChaperone.java` | `(+1, effects, false, description)` |
 | Loyalty (with target filter) | `a/AjaniOutlandChaperone.java` | `(-2, effects, true, description, filter)` |
+| Planeswalker with optional resolution-time creature sacrifice tutor, any-number milled-creature hand selection, and Rhino Warrior token | `v/VivienOnTheHunt.java` | +2 `MayEffect(SacrificePermanentThenEffect(PermanentIsCreaturePredicate(), SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanentEffect(), "a creature", false, false), "Sacrifice a creature?")`; +1 `MillControllerAndPutAnyNumberOfMilledCreaturesIntoHandEffect(5)`; −1 `CreateTokenEffect("Rhino", 4, 4, GREEN, [RHINO, WARRIOR])` |
 
 ## Planeswalkers
 

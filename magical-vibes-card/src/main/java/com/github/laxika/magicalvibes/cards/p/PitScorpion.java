@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 
 @CardRegistration(set = "5ED", collectorNumber = "187")
 @CardRegistration(set = "4ED", collectorNumber = "153")
+@CardRegistration(set = "LEG", collectorNumber = "114")
 public class PitScorpion extends Card {
 
     public PitScorpion() {

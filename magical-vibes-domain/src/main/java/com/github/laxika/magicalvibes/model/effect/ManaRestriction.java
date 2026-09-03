@@ -70,6 +70,31 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast spells with exactly three colors. */
+    record ExactlyThreeColorSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addExactlyThreeColorSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with exactly three colors only";
+        }
+    }
+
+    record CreatureSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addCreatureSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "creature spells only";
+        }
+    }
+
     /** Mana spendable only to cast spells from a graveyard. */
     record GraveyardSpells() implements ManaRestriction {
         @Override
@@ -80,6 +105,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "graveyard spells only";
+        }
+    }
+
+    /** Mana spendable only to cast spells from outside the controller's hand. */
+    record NonHandSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNonHandSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells cast from outside hand only";
         }
     }
 
@@ -145,6 +183,23 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast artifact spells. */
+    record ArtifactSpellsOnly() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addArtifactSpellOnlyColorless(amount);
+            } else {
+                pool.addArtifactSpellOnlyMana(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "artifact spells only";
+        }
+    }
+
     /** Mana spendable only to cast artifact spells or activate any activated ability (Guidelight Optimizer). */
     record ArtifactSpellsOrAbilities() implements ManaRestriction {
         @Override
@@ -159,13 +214,17 @@ public sealed interface ManaRestriction {
     }
 
     /**
-     * Colorless mana spendable only to activate abilities of artifacts (Soldevi Machinist). Narrower than
-     * {@link ArtifactSpells}: cannot pay artifact spell costs.
+     * Mana spendable only to activate abilities of artifacts (Soldevi Machinist, Steelswarm Operator).
+     * Narrower than {@link ArtifactSpells}: cannot pay artifact spell costs.
      */
     record ArtifactAbilities() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
-            pool.addArtifactAbilityOnlyColorless(amount);
+            if (color == ManaColor.COLORLESS) {
+                pool.addArtifactAbilityOnlyColorless(amount);
+            } else {
+                pool.addArtifactAbilityOnlyMana(color, amount);
+            }
         }
 
         @Override
@@ -358,6 +417,19 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "costs that contain {X} only";
+        }
+    }
+
+    /** Mana spendable only to cast spells with mana value 5 or greater or with {X} in their costs. */
+    record ManaValueAtLeastFiveOrXCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addManaValueAtLeastFiveOrXOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells with mana value 5 or greater or {X} in their costs only";
         }
     }
 

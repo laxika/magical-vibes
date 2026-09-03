@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "68")
+@CardRegistration(set = "ONS", collectorNumber = "170")
 public class Smother extends Card {
 
     public Smother() {

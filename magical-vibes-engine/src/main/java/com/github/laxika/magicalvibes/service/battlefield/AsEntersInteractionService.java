@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEn
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
@@ -227,6 +229,28 @@ public class AsEntersInteractionService {
             // No other creatures — bodyguard enters with no chosen creature
         }
 
+        boolean needsNonlandPermanentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseNonlandPermanentOnEnterEffect.class::isInstance);
+        if (needsNonlandPermanentChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validIds = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(permanent -> permanent != justEntered)
+                    .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!validIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseNonlandPermanentAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                                convokeCreatureIds));
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, new ArrayList<>(validIds),
+                        List.of(controllerId), "Choose a nonland permanent, or choose yourself to decline.");
+                return;
+            }
+        }
+
         boolean needsPrimalClayFormChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
         if (needsPrimalClayFormChoice) {
@@ -380,6 +404,34 @@ public class AsEntersInteractionService {
             // No other creatures — nothing is sacrificed; the creature enters as a 0/0.
         }
 
+        SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect sacrificeForPowerToughness =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(e -> e instanceof SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect)
+                        .map(SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (sacrificeForPowerToughness != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(card.getId())
+                    .withSourceControllerId(controllerId);
+            List<UUID> sacrificeable = bf.stream()
+                    .filter(p -> p != justEntered)
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                            p, sacrificeForPowerToughness.filter(), filterContext))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!sacrificeable.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(sacrificeable), sacrificeable.size(),
+                        new MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness(
+                                justEntered.getId(), sacrificeForPowerToughness.filter(), controllerId, card,
+                                targetId, wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — sacrifice any number of permanents.");
+                return;
+            }
+        }
+
         // "As this creature enters, sacrifice any number of permanents. It enters with that many
         // +1/+1 counters on it" (CR 614.1c, Shimatsu the Bloodcloaked). Resolved before ETB triggers;
         // the entering permanent itself isn't offered.
@@ -517,7 +569,8 @@ public class AsEntersInteractionService {
         permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, permanent, controllerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
-            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, permanent, count, controllerId);
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
         }
     }

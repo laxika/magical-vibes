@@ -12,6 +12,8 @@ public enum EffectDuration {
     UNTIL_CREATURE_SPELL_CAST,
     /** One-shot effect that wears off when its controller casts a matching spell. */
     UNTIL_MATCHING_SPELL_CAST,
+    /** One-shot effect that wears off when the identified source card is cast from exile. */
+    UNTIL_SOURCE_CARD_CAST_FROM_EXILE,
     /** One-shot effect that wears off when the combat phase ends (e.g. Jade Statue's animation).
      *  Cleared by {@link com.github.laxika.magicalvibes.model.Permanent#clearCombatState()}. */
     UNTIL_END_OF_COMBAT,
@@ -27,6 +29,8 @@ public enum EffectDuration {
      *  (e.g. Cycle of Life's "until your next upkeep"). Survives end-of-turn cleanup; cleared in
      *  {@code StepTriggerService.handleUpkeepTriggers} when that controller is the active player. */
     UNTIL_CONTROLLERS_NEXT_UPKEEP,
+    /** One-shot effect that lasts through the end of the effect controller's next upkeep. */
+    UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP,
     /** One-shot effect with no wear-off (e.g. "becomes a creature permanently" — Tezzeret, Waker). */
     PERMANENT,
     /** One-shot effect that lasts for as long as the source permanent remains on the battlefield

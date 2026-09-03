@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ public class AttackSacrificeCostService {
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     /**
      * For each declared attacker carrying a {@link CantAttackUnlessSacrificeEffect}, sacrifices the
@@ -76,7 +78,15 @@ public class AttackSacrificeCostService {
             return;
         }
         List<Permanent> attackers = attackerIndices.stream().map(battlefield::get).toList();
-        collectGlobalCosts(gameData, playerId, attackers).forEach((filter, required) -> {
+        Map<PermanentPredicate, Integer> costs = collectGlobalCosts(gameData, playerId, attackers);
+        for (Permanent attacker : attackers) {
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CantAttackUnlessSacrificeEffect sacrifice) {
+                    costs.merge(sacrifice.filter(), sacrifice.count(), Integer::sum);
+                }
+            }
+        }
+        costs.forEach((filter, required) -> {
             if (countMatching(gameData, playerId, filter) < required) {
                 throw new IllegalStateException(
                         "Not enough permanents to sacrifice to attack (" + required + " required)");
@@ -149,6 +159,8 @@ public class AttackSacrificeCostService {
                 break;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                    gameData, playerId, toSacrifice.getCard());
             gameLogService.append(gameData,
                     GameLog.textCardText(playerName + " sacrifices ", toSacrifice.getCard(), "."));
             log.info("Game {} - {} sacrifices {} to attack", gameData.id, playerName,

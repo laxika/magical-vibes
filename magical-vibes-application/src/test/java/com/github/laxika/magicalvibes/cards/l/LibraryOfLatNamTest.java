@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,14 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LibraryOfLatNam.class, GrizzlyBears.class})
 class LibraryOfLatNamTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Resolving prompts the opponent to choose a mode")
-    void resolvingPromptsOpponentChoice() {
+    @DisplayName("Casting prompts the opponent to choose a mode")
+    void castingPromptsOpponentChoice() {
         setupAndCast();
-
-        harness.passBothPriorities(); // resolve sorcery
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -39,12 +36,11 @@ class LibraryOfLatNamTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
-        // A delayed draw is queued for the controller (player1), not resolved immediately
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
         assertThat(scheduled).hasSize(1);
         assertThat(scheduled.getFirst().controllerId()).isEqualTo(player1.getId());
@@ -53,10 +49,13 @@ class LibraryOfLatNamTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        // Simulate the next turn's upkeep — the controller draws three cards
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
@@ -69,35 +68,34 @@ class LibraryOfLatNamTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities(); // resolve the search
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player1.getId());
 
-        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards().getFirst().getName();
+        Card chosenCard = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().getFirst();
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(chosenCard.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
-
-    // ===== Helpers =====
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new LibraryOfLatNam()));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
     }
 
     private void setupLibrary() {
@@ -105,7 +103,6 @@ class LibraryOfLatNamTest extends BaseCardTest {
         for (int i = 0; i < 5; i++) {
             deck.add(new GrizzlyBears());
         }
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
-        harness.getGameData().playerDecks.get(player1.getId()).addAll(deck);
+        harness.setLibrary(player1, deck);
     }
 }

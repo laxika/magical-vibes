@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.model;
 
 import java.util.UUID;
 
-/**
- * The token-creation event currently waiting for a Mirrormind Crown choice.
- */
+/** The token-creation event currently waiting for a replacement choice. */
 public record PendingTokenCreationReplacement(
-        UUID crownPermanentId,
+        UUID replacementPermanentId,
         int amount,
         int power,
-        int toughness
+        int toughness,
+        boolean copyEnchantedPermanent
 ) {
 }

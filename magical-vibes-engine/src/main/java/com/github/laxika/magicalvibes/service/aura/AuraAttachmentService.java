@@ -93,12 +93,14 @@ public class AuraAttachmentService {
             while (it.hasNext()) {
                 Permanent p = it.next();
                 boolean isAura = p.getCard().getSubtypes().contains(CardSubtype.AURA);
+                boolean isFortification = p.getCard().getSubtypes().contains(CardSubtype.FORTIFICATION);
                 if (isAura && !p.isAttached() && isAwaitingDayNightAttachment(gameData, p.getId())) {
                     continue;
                 }
                 boolean attachmentIsMissing = p.isAttached()
                         && !gameData.playerIds.contains(p.getAttachedTo())
-                        && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null;
+                        && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null
+                        && gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) == null;
                 if ((isAura && !p.isAttached()) || attachmentIsMissing) {
                     if (p.isBestow()) {
                         p.setCard(p.getOriginalCard());
@@ -108,17 +110,18 @@ public class AuraAttachmentService {
                         anyUnattached = true;
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment ended)."));
                         log.info("Game {} - {} becomes a creature after bestow attachment ended", gameData.id, p.getCard().getName());
-                    } else if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-                        // Equipment stays on the battlefield unattached when the equipped creature leaves
+                    } else if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT) || isFortification) {
+                        // Equipment and Fortification stay on the battlefield unattached when their host leaves
                         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                         p.setAttachedTo(null);
                         gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                         anyUnattached = true;
                         
-                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (equipped creature left the battlefield)."));
-                        log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
+                        gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (attached permanent left the battlefield)."));
+                        log.info("Game {} - {} unattached (attached permanent left)", gameData.id, p.getCard().getName());
                     } else {
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
+                        snapshotDepartingSource(gameData, p);
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
@@ -140,6 +143,14 @@ public class AuraAttachmentService {
         }
         creatureControlService.reconcileControl(gameData);
         return new AttachmentSweepResult(removals, anyUnattached);
+    }
+
+    private void snapshotDepartingSource(GameData gameData, Permanent permanent) {
+        for (var entry : gameData.stack) {
+            if (permanent.getId().equals(entry.getSourcePermanentId())) {
+                entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            }
+        }
     }
 
     private boolean isAwaitingDayNightAttachment(GameData gameData, UUID permanentId) {
@@ -187,22 +198,23 @@ public class AuraAttachmentService {
                 if (!p.isAttached()) continue;
                 boolean isAura = GameQueryService.permanentHasSubtype(p, CardSubtype.AURA);
                 boolean isEquipment = GameQueryService.permanentHasSubtype(p, CardSubtype.EQUIPMENT);
-                if (!isAura && !isEquipment) {
+                boolean isFortification = GameQueryService.permanentHasSubtype(p, CardSubtype.FORTIFICATION);
+                if (!isAura && !isEquipment && !isFortification) {
                     // CR 704.5p — neither Aura, Equipment, nor Fortification may stay attached
                     unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                     p.setAttachedTo(null);
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     anyUnattached = true;
                     gameLogService.append(gameData, GameLog.builder().card(p.getCard())
-                            .text(" becomes unattached (it is no longer an Aura or Equipment).").build());
-                    log.info("Game {} - {} unattached (no longer Aura/Equipment)", gameData.id, p.getCard().getName());
+                            .text(" becomes unattached (it is no longer an Aura, Equipment, or Fortification).").build());
+                    log.info("Game {} - {} unattached (no longer Aura/Equipment/Fortification)", gameData.id, p.getCard().getName());
                     continue;
                 }
 
-                String reason = illegalAttachmentReason(gameData, p, playerId, isAura);
+                String reason = illegalAttachmentReason(gameData, p, playerId, isAura, isFortification);
                 if (reason == null) continue;
 
-                if (isEquipment) {
+                if (isEquipment || isFortification) {
                     // CR 704.5n — illegally attached equipment becomes unattached but stays
                     unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, p, p.getAttachedTo());
                     p.setAttachedTo(null);
@@ -222,6 +234,7 @@ public class AuraAttachmentService {
                 } else {
                     // CR 704.5m — an illegally attached aura is put into its owner's graveyard
                     boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
+                    snapshotDepartingSource(gameData, p);
                     it.remove();
                     gameData.expireFloatingEffectsForDepartedSource(p.getId());
                     boolean wentToGraveyard = graveyardService.addCardToGraveyard(
@@ -300,7 +313,8 @@ public class AuraAttachmentService {
      * one, to satisfy its {@code attachRestriction} ("can be attached only to a legendary
      * creature").
      */
-    private String illegalAttachmentReason(GameData gameData, Permanent attachment, UUID controllerId, boolean isAura) {
+    private String illegalAttachmentReason(GameData gameData, Permanent attachment, UUID controllerId,
+                                           boolean isAura, boolean isFortification) {
         UUID attachedTo = attachment.getAttachedTo();
         if (gameData.playerIds.contains(attachedTo)) {
             TargetFilter filter = attachment.getCard().getDeclaredTargetFilter();
@@ -324,6 +338,15 @@ public class AuraAttachmentService {
                     }
                 }
             }
+            if (isFortification) {
+                return "it can only fortify a land";
+            }
+            return null;
+        }
+        if (gameQueryService.findCardInGraveyardById(gameData, attachedTo) != null) {
+            if (isFortification) {
+                return "it can only fortify a land";
+            }
             return null;
         }
         Permanent host = gameQueryService.findPermanentById(gameData, attachedTo);
@@ -334,7 +357,15 @@ public class AuraAttachmentService {
 
         if (!grantsSelfExemptProtection(attachment)
                 && gameQueryService.hasProtectionFromSource(gameData, host, attachment)) {
-            return (isAura ? "enchanted" : "equipped") + " permanent has protection from it";
+            String relation = isAura ? "enchanted" : isFortification ? "fortified" : "equipped";
+            return relation + " permanent has protection from it";
+        }
+
+        if (isFortification) {
+            if (!gameQueryService.isLand(gameData, host)) {
+                return "fortified permanent is no longer a land";
+            }
+            return null;
         }
 
         if (!isAura) {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(TheFallen.class)
 class TheFallenTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,27 @@ class TheFallenTest extends BaseCardTest {
     }
 
     @Test
+    void triggeredAbilityKeepsItsRecipientsWhenSourceLeavesBeforeResolution() {
+        Permanent fallen = addCreatureReady(player1, new TheFallen());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.inMutationScope(new Runnable() {
+            @Override
+            public void run() {
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, fallen);
+            }
+        });
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
     @DisplayName("Does not damage an opponent or planeswalker it has not damaged")
     void doesNotDamageUnmarkedRecipients() {
         addCreatureReady(player1, new TheFallen());
@@ -61,10 +84,7 @@ class TheFallenTest extends BaseCardTest {
 
     private void advanceToNextUpkeep(Player activePlayer) {
         gd.turnNumber = 2;
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities();
     }
 

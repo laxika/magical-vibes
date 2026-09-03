@@ -21,7 +21,8 @@ public class CrystalChimes extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new ReturnCardsFromControllerGraveyardToHandEffect(
-                                new CardTypePredicate(CardType.ENCHANTMENT), new Fixed(Integer.MAX_VALUE))),
+                                new CardTypePredicate(CardType.ENCHANTMENT),
+                                new Fixed(Integer.MAX_VALUE), false)),
                 "{3}, {T}, Sacrifice this artifact: Return all enchantment cards from your graveyard to your hand."
         ));
     }
