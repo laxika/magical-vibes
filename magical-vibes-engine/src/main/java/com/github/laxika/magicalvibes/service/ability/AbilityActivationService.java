@@ -5070,11 +5070,21 @@ public class AbilityActivationService {
     private Permanent resolveActivationSource(GameData gameData, UUID activatorId, int permanentIndex, Integer abilityIndex) {
         int idx = abilityIndex != null ? abilityIndex : 0;
         List<Permanent> own = gameData.playerBattlefields.get(activatorId);
+        Permanent ownCandidate = null;
         if (own != null && permanentIndex >= 0 && permanentIndex < own.size()) {
-            Permanent candidate = own.get(permanentIndex);
-            List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, candidate);
+            ownCandidate = own.get(permanentIndex);
+            List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, ownCandidate);
             if (idx >= 0 && idx < abilities.size()) {
-                return candidate;
+                return ownCandidate;
+            }
+            // A printed ability can be absent from this list because the permanent has lost its
+            // abilities, and legacy tap-for-mana abilities live in ON_TAP rather than this list.
+            // Keep that permanent as the intended source so activation fails locally rather than
+            // selecting an opponent's unrelated "any player may activate" permanent at the same
+            // battlefield index.
+            if ((idx >= 0 && idx < ownCandidate.getCard().getActivatedAbilities().size())
+                    || (idx == 0 && !ownCandidate.getCard().getEffects(EffectSlot.ON_TAP).isEmpty())) {
+                return ownCandidate;
             }
         }
         for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
@@ -5091,7 +5101,7 @@ public class AbilityActivationService {
                 return candidate;
             }
         }
-        return null;
+        return ownCandidate;
     }
 
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {

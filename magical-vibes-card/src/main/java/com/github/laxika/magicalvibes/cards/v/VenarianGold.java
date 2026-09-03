@@ -22,7 +22,8 @@ public class VenarianGold extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnReferencedPermanentEffect(CounterType.SLEEP, new XValue()));
 
-        addEffect(EffectSlot.STATIC, DoesntUntapWithCounterEffect.enchanted(CounterType.SLEEP));
+        addEffect(EffectSlot.STATIC,
+                DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));
         addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
                 new RemoveCounterFromReferencedPermanentEffect(CounterType.SLEEP));
     }
