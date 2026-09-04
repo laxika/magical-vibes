@@ -98,6 +98,7 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Kederekt Leviathan");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

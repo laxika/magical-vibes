@@ -38,19 +38,16 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
 
-        // Intervening-if re-check at resolution time (rule 603.4):
-        // If the source is still on the battlefield but now tapped, the ability does nothing.
-        // If the source left the battlefield, use last known information — it was untapped
-        // when the trigger was created, so the ability still resolves.
+        // Recheck the untapped condition against the live source or its last known state.
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (e.requireSourceUntapped() && source != null && source.isTapped()) {
             log.info("Game {} - {}'s draw trigger does nothing (source is tapped)",
                     gameData.id, entry.getCard().getName());
             return;
         }
 
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 

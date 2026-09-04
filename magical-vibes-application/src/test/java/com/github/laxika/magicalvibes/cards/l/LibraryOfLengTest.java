@@ -33,6 +33,7 @@ class LibraryOfLengTest extends BaseCardTest {
 
         // Catalog drew two Islands; hand is GrizzlyBears + 2 Islands. Discard the GrizzlyBears.
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
 
         // The discarded Grizzly Bears is put on top of the library, not into the graveyard.
         harness.assertNotInGraveyard(player1, "Grizzly Bears");

@@ -24,6 +24,7 @@ class MoltenFirebirdTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanentOrNull(player1, "Molten Firebird")).isNotNull();
         harness.assertNotInGraveyard(player1, "Molten Firebird");

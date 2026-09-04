@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -398,7 +399,26 @@ public class CardChoiceHandlerService {
 
         UUID playerId = player.getId();
         List<Card> hand = gameData.playerHands.get(playerId);
-        Card card = hand.remove(cardIndex);
+        Card card = hand.get(cardIndex);
+
+        Boolean discardToLibraryDecision = gameData.pendingDiscardToLibraryDecision;
+        if (discardToLibraryDecision == null && !card.isToken()) {
+            Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
+            if (replacementSource != null) {
+                gameData.pendingDiscardToLibraryChoice = discardChoice;
+                gameData.pendingDiscardToLibraryCardIndex = cardIndex;
+                gameData.interaction.clearAwaitingInput();
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        replacementSource,
+                        playerId,
+                        List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                        "Put " + card.getName() + " on top of your library instead of into your graveyard?"));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+        }
+        gameData.pendingDiscardToLibraryDecision = null;
+        hand.remove(cardIndex);
 
         boolean replacedByBattlefield = false;
         if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
@@ -410,7 +430,8 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
             replacedByBattlefield = true;
         } else {
-            graveyardService.discardCard(gameData, playerId, card);
+            graveyardService.discardCard(gameData, playerId, card,
+                    discardToLibraryDecision == null || discardToLibraryDecision);
             gameLogService.append(gameData, GameLog.playerDiscards(player.getUsername(), card));
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
         }
@@ -469,6 +490,19 @@ public class CardChoiceHandlerService {
         } else {
             finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
         }
+    }
+
+    public void resumeDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted) {
+        PendingInteraction.DiscardChoice discardChoice = gameData.pendingDiscardToLibraryChoice;
+        int cardIndex = gameData.pendingDiscardToLibraryCardIndex;
+        if (discardChoice == null || cardIndex < 0 || !discardChoice.playerId().equals(player.getId())) {
+            throw new IllegalStateException("No discard replacement choice is pending");
+        }
+        gameData.pendingDiscardToLibraryChoice = null;
+        gameData.pendingDiscardToLibraryCardIndex = -1;
+        gameData.pendingDiscardToLibraryDecision = accepted;
+        interactionHandlerRegistry.begin(gameData, discardChoice);
+        handleDiscardCardChosen(gameData, player, cardIndex);
     }
 
     private void handlePlaguecrafterDiscardCardChosen(GameData gameData, Player player, int cardIndex,

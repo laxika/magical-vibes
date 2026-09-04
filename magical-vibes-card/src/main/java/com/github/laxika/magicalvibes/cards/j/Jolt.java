@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -24,7 +25,9 @@ public class Jolt extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact, creature, or land"
-        )).addEffect(EffectSlot.SPELL, new TapOrUntapTargetPermanentEffect())
+        )).addEffect(EffectSlot.SPELL, new MayEffect(
+                        new TapOrUntapTargetPermanentEffect(),
+                        "tap or untap the target permanent?"))
                 .addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

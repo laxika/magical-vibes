@@ -129,8 +129,9 @@ class EssenceVortexTest extends BaseCardTest {
         castVortexOn(target);
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test

@@ -60,13 +60,16 @@ class RushingRiverTest extends BaseCardTest {
 
     @Test
     void cannotKickWithoutSacrificingLand() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent invalidSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new RushingRiver()));
         addBaseMana();
 
-        assertThatThrownBy(() -> harness.castKickedInstantWithSacrifice(
-                player1, 0, target.getId(), invalidSacrifice.getId()))
+        assertThatThrownBy(() -> harness.getGameService().playCard(
+                gd, player1, 0, 0, null, null,
+                List.of(firstTarget.getId(), secondTarget.getId()), List.of(), false,
+                invalidSacrifice.getId(), null, null, null, null, true))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("a land");
     }

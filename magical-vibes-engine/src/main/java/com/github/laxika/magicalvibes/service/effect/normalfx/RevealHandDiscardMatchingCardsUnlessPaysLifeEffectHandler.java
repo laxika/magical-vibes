@@ -70,7 +70,7 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
             return;
         }
         gameData.revealHandDiscardUnlessPaysRemaining.addAll(matching.subList(1, matching.size()));
-        offerCard(gameData, e, entry.getCard(), targetPlayerId, matching.getFirst());
+        offerCard(gameData, e, entry.getCard(), entry.getControllerId(), targetPlayerId, matching.getFirst());
     }
 
     /**
@@ -80,33 +80,34 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
     public void afterCardDecision(GameData gameData, PendingMayAbility ability,
             RevealHandDiscardMatchingCardsUnlessPaysLifeEffect effect, UUID playerId, boolean paid) {
         if (!paid) {
-            discardCard(gameData, playerId, ability.targetCardId(), ability.sourceCard());
+            discardCard(gameData, playerId, ability.targetCardId(), ability.sourceCard(),
+                    ability.sourceControllerId());
         }
         if (gameData.revealHandDiscardUnlessPaysRemaining.isEmpty()) {
             return;
         }
         UUID next = gameData.revealHandDiscardUnlessPaysRemaining.removeFirst();
-        offerCard(gameData, effect, ability.sourceCard(), playerId, next);
+        offerCard(gameData, effect, ability.sourceCard(), ability.sourceControllerId(), playerId, next);
     }
 
     private void offerCard(GameData gameData, RevealHandDiscardMatchingCardsUnlessPaysLifeEffect effect,
-            Card sourceCard, UUID playerId, UUID cardId) {
+            Card sourceCard, UUID sourceControllerId, UUID playerId, UUID cardId) {
         Card card = findInHand(gameData, playerId, cardId);
         if (card == null) {
             // Left the hand between decisions — nothing to discard; move on.
             afterCardDecision(gameData, new PendingMayAbility(sourceCard, playerId, List.of(effect),
-                    "", cardId), effect, playerId, true);
+                    "", cardId, sourceControllerId), effect, playerId, true);
             return;
         }
 
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         if (!canPay) {
-            discardCard(gameData, playerId, cardId, sourceCard);
+            discardCard(gameData, playerId, cardId, sourceCard, sourceControllerId);
             if (gameData.revealHandDiscardUnlessPaysRemaining.isEmpty()) {
                 return;
             }
-            offerCard(gameData, effect, sourceCard, playerId,
+            offerCard(gameData, effect, sourceCard, sourceControllerId, playerId,
                     gameData.revealHandDiscardUnlessPaysRemaining.removeFirst());
             return;
         }
@@ -114,16 +115,20 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
         String prompt = "Pay " + effect.lifeCost() + " life? If you don't, discard " + card.getName()
                 + ". (" + sourceCard.getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                sourceCard, playerId, List.of(effect), prompt, cardId));
+                sourceCard, playerId, List.of(effect), prompt, cardId, sourceControllerId));
     }
 
-    private void discardCard(GameData gameData, UUID playerId, UUID cardId, Card sourceCard) {
+    private void discardCard(GameData gameData, UUID playerId, UUID cardId, Card sourceCard,
+            UUID sourceControllerId) {
         Card card = findInHand(gameData, playerId, cardId);
         if (card == null) {
             return;
         }
+        gameData.discardCausedByOpponent = !playerId.equals(sourceControllerId);
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
         gameData.playerHands.get(playerId).remove(card);
-        gameData.discardCausedByOpponent = true;
         graveyardService.discardCard(gameData, playerId, card);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));

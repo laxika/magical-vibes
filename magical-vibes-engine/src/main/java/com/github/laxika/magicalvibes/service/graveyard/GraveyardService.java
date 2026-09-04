@@ -243,7 +243,13 @@ public class GraveyardService {
      * see the replacement (they still go through the normal path).
      */
     public boolean discardCard(GameData gameData, UUID ownerId, Card card) {
-        if (!card.isToken() && ownerHasDiscardToLibraryReplacement(gameData, ownerId)) {
+        return discardCard(gameData, ownerId, card, true);
+    }
+
+    public boolean discardCard(GameData gameData, UUID ownerId, Card card,
+                               boolean applyDiscardToLibraryReplacement) {
+        if (applyDiscardToLibraryReplacement && !card.isToken()
+                && findDiscardToLibraryReplacementSource(gameData, ownerId) != null) {
             gameData.playerDecks.get(ownerId).add(0, card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of into the graveyard."));
             log.info("Game {} - {} discard replacement: put on top of library instead of graveyard", gameData.id, card.getName());
@@ -276,20 +282,20 @@ public class GraveyardService {
         return addCardToGraveyard(gameData, ownerId, card);
     }
 
-    private boolean ownerHasDiscardToLibraryReplacement(GameData gameData, UUID ownerId) {
+    public Card findDiscardToLibraryReplacementSource(GameData gameData, UUID ownerId) {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf == null) {
-            return false;
+            return null;
         }
         for (Permanent p : bf) {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof DiscardToTopOfLibraryInsteadEffect replacement
                         && (!replacement.opponentCausedOnly() || gameData.discardCausedByOpponent)) {
-                    return true;
+                    return p.getCard();
                 }
             }
         }
-        return false;
+        return null;
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
@@ -388,8 +394,7 @@ public class GraveyardService {
         if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)) {
             UUID extraTurnControllerId = battlefieldControllerId != null ? battlefieldControllerId : ownerId;
             exileService.exileCard(gameData, ownerId, card);
-            gameData.extraTurns.addFirst(extraTurnControllerId);
-            gameData.extraTurnSkipsUntap.addFirst(false);
+            gameData.queueExtraTurnFirst(extraTurnControllerId, false);
             gameLogService.append(gameData, GameLog.cardThen(card,
                     " is exiled instead of being put into a graveyard; its controller takes an extra turn."));
             log.info("Game {} - {} replacement effect: exiled and granted an extra turn to {}",

@@ -118,7 +118,8 @@ class HowlingMineTest extends BaseCardTest {
 
         advanceToDraw(player1);
         // Trigger is on the stack — destroy Howling Mine before resolution
-        gd.playerBattlefields.get(player1.getId()).remove(howlingMine);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, howlingMine));
         harness.passBothPriorities(); // resolve trigger — should still draw (last known state was untapped)
 
         // Normal draw + Howling Mine draw = 2 total
@@ -136,7 +137,8 @@ class HowlingMineTest extends BaseCardTest {
 
         advanceToDraw(player1);
         howlingMine.tap();
-        gd.playerBattlefields.get(player1.getId()).remove(howlingMine);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, howlingMine));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);

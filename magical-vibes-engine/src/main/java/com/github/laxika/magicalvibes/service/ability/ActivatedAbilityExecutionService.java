@@ -926,6 +926,11 @@ public class ActivatedAbilityExecutionService {
             fixedLandColor = controllerLandFixedColor != null
                     ? controllerLandFixedColor
                     : gameQueryService.fixedLandManaColor(gameData, permanent);
+            if (controllerLandFixedColor == null
+                    && fixedLandColor == gameData.allLandsFixedManaColorThisTurn
+                    && producesOnlyColorlessMana(snapshotEffects)) {
+                fixedLandColor = null;
+            }
             if (fixedLandColor != null) {
                 int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
                         * manaMultiplier;
@@ -1717,6 +1722,15 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return total;
+    }
+
+    private boolean producesOnlyColorlessMana(List<CardEffect> effects) {
+        List<ManaProducingEffect> manaEffects = effects.stream()
+                .filter(ManaProducingEffect.class::isInstance)
+                .map(ManaProducingEffect.class::cast)
+                .toList();
+        return !manaEffects.isEmpty() && manaEffects.stream()
+                .allMatch(effect -> effect.estimatedManaColor() == ManaColor.COLORLESS);
     }
 
     /** The mana noted on {@code permanent} by {@code NoteManaSpentForActivationEffect}, per color. */

@@ -87,8 +87,9 @@ class ResistanceFighterTest extends BaseCardTest {
         activateFighter(attacker);
         resolveUnblockedCombat();
 
-        harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
         harness.assertLife(player1, 20);

@@ -35,11 +35,12 @@ class FloodedWoodlandsTest extends BaseCardTest {
     void attackingGreenCreatureSacrificesOneLand() {
         harness.addToBattlefield(player2, new FloodedWoodlands());
         addCreatureReady(player1, new BalduvianBears());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         declareAttackers(player1, List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstForest.getId()));
 
         assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Forest");
@@ -176,6 +177,7 @@ class FloodedWoodlandsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
 
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

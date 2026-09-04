@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -57,6 +58,7 @@ import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,6 +105,7 @@ public class GraveyardChoiceHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
     private final DredgeSupport dredgeSupport;
+    private final ObjectProvider<DrawService> drawServiceProvider;
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -523,6 +526,16 @@ public class GraveyardChoiceHandlerService {
                     );
                     gameData.stack.add(entry);
                     triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
+                }
+            }
+        }
+
+        if (destination == GraveyardChoiceDestination.HAND) {
+            Integer pendingDraws = gameData.pendingForbiddenCryptDraws.remove(playerId);
+            if (pendingDraws != null && pendingDraws > 0) {
+                drawServiceProvider.getObject().resolveDrawCards(gameData, playerId, pendingDraws);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
                 }
             }
         }

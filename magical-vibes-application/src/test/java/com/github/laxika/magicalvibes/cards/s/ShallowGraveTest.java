@@ -63,6 +63,7 @@ class ShallowGraveTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

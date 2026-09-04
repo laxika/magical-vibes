@@ -171,6 +171,17 @@ public final class TextChangeTransformer {
         return result;
     }
 
+    public static Set<Keyword> transformKeywords(Set<Keyword> keywords, List<TextReplacement> replacements) {
+        Set<Keyword> result = keywords;
+        for (TextReplacement replacement : replacements) {
+            Substitution substitution = resolve(replacement);
+            if (substitution != null) {
+                result = replaceLandwalk(result, substitution);
+            }
+        }
+        return result;
+    }
+
     /** The basic land type a text-change word denotes, or {@code null} for color words. */
     public static CardSubtype basicLandTypeForWord(String word) {
         return BASIC_LAND_WORDS.get(word);

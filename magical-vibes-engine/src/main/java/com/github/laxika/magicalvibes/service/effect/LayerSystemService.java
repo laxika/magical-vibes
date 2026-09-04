@@ -2249,6 +2249,15 @@ public class LayerSystemService {
         // the object's text changes applied (CR 613.2c): Mind Bend rewriting "black" to "blue"
         // on Paladin en-Vec changes what its printed protection protects from.
         if (!permanent.isFaceDown()) {
+            Set<Keyword> printedKeywords = permanent.getCard().getKeywords();
+            Set<Keyword> rewrittenKeywords = TextChangeTransformer.transformKeywords(
+                    printedKeywords, permanent.getTextReplacements());
+            for (Keyword keyword : printedKeywords) {
+                if (!rewrittenKeywords.contains(keyword)) {
+                    state.removeKeyword(keyword);
+                }
+            }
+            state.addKeywords(rewrittenKeywords);
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)

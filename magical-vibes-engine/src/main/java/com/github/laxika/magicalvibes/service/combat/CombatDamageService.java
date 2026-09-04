@@ -2438,7 +2438,7 @@ public class CombatDamageService {
                                           List<CardEffect> combatDamageReceivedEffects) {}
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
-        List<DealtDamageTriggerData> triggers = new ArrayList<>();
+        Map<UUID, DealtDamageTriggerData> triggersByDamagedPermanent = new LinkedHashMap<>();
         Set<String> seen = new HashSet<>();
         for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
             Permanent source = entry.getKey();
@@ -2464,11 +2464,22 @@ public class CombatDamageService {
                 UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
-                triggers.add(new DealtDamageTriggerData(target.getCard(), target.getId(), controllerId, damageAmount,
-                        source.getCard(), source.getId(), sourceControllerId, effects, combatDamageReceivedEffects));
+                DealtDamageTriggerData previous = triggersByDamagedPermanent.get(targetId);
+                if (previous == null) {
+                    triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
+                            target.getCard(), target.getId(), controllerId, damageAmount,
+                            source.getCard(), source.getId(), sourceControllerId,
+                            effects, combatDamageReceivedEffects));
+                } else {
+                    triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
+                            previous.card(), previous.permanentId(), previous.controllerId(),
+                            previous.damageDealt() + damageAmount,
+                            previous.sourceCard(), previous.sourcePermanentId(), previous.sourceControllerId(),
+                            previous.dealtDamageEffects(), previous.combatDamageReceivedEffects()));
+                }
             }
         }
-        return triggers;
+        return new ArrayList<>(triggersByDamagedPermanent.values());
     }
 
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {

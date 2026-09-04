@@ -17,29 +17,29 @@ class JhessianBalmgiverTest extends BaseCardTest {
     // ===== Ability 0: {T}: Prevent the next 1 damage to any target =====
 
     @Test
-    @DisplayName("Prevention ability taps the Balmgiver and sets the global damage shield")
+    @DisplayName("Prevention ability taps the Balmgiver and shields the target player")
     void preventionAbilitySetsShield() {
         Permanent balmgiver = addReadyBalmgiver(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
         assertThat(balmgiver.isTapped()).isTrue();
 
         harness.passBothPriorities();
 
-        assertThat(gd.globalDamagePreventionShield).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields).containsEntry(player2.getId(), 1);
     }
 
     @Test
-    @DisplayName("Global shield from the prevention ability stops 1 combat damage to a player")
+    @DisplayName("The prevention ability stops 1 combat damage to the target player")
     void preventionAbilityStopsCombatDamage() {
         addReadyBalmgiver(player2);
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player2, 0, 0, null, null);
+        harness.activateAbility(player2, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
         Permanent attacker = new Permanent(new GrizzlyBears());
@@ -53,7 +53,7 @@ class JhessianBalmgiverTest extends BaseCardTest {
 
         // 2 combat damage - 1 prevented = 1 effective → 20 - 1 = 19
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.globalDamagePreventionShield).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
     }
 
     // ===== Ability 1: {T}: Target creature can't be blocked this turn =====

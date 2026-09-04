@@ -180,6 +180,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.emblems.clear();
         gameData.extraTurns.clear();
         gameData.extraTurnSkipsUntap.clear();
+        gameData.extraTurnSequences.clear();
+        gameData.currentExtraTurnSequence = null;
         gameData.pendingLibraryBottomReorders.clear();
         gameData.openingHandRevealTriggers.clear();
         gameData.openingHandManaTriggers.clear();

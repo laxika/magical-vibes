@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -176,6 +177,14 @@ public class DrawService {
 
         for (int i = 0; i < drawAmount; i++) {
             resolveDrawCardInternal(gameData, playerId);
+            if (gameData.interaction.isAwaitingInput()
+                    && findReturnFromGraveyardInsteadOfDrawSourceCard(gameData, playerId) != null) {
+                int remaining = drawAmount - i - 1;
+                if (remaining > 0) {
+                    gameData.pendingForbiddenCryptDraws.merge(playerId, remaining, Integer::sum);
+                }
+                break;
+            }
         }
     }
 
@@ -228,13 +237,13 @@ public class DrawService {
             return;
         }
 
-        Card maySkipDrawSource = findMaySkipDrawSourceCard(gameData, playerId);
+        MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null) {
             gameData.pendingMayAbilities.add(new PendingMayAbility(
-                    maySkipDrawSource,
+                    maySkipDrawSource.card(),
                     playerId,
-                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.OBSTINATE_FAMILIAR)),
-                    "Skip this draw with " + maySkipDrawSource.getName() + "?"
+                    List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
+                    "Skip this draw with " + maySkipDrawSource.card().getName() + "?"
             ));
             return;
         }
@@ -687,20 +696,30 @@ public class DrawService {
                 gameData.id, playerName);
     }
 
-    private Card findMaySkipDrawSourceCard(GameData gameData, UUID playerId) {
+    private MaySkipDrawSource findMaySkipDrawSource(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) {
             return null;
         }
 
         for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(effect -> effect instanceof MaySkipDrawReplacementEffect);
-            if (hasEffect) {
-                return permanent.getCard();
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MaySkipDrawReplacementEffect replacement) {
+                    return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                }
+            }
+            if (gameData.currentStep == TurnStep.DRAW) {
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
+                    if (effect instanceof IslandSanctuaryEffect replacement) {
+                        return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
+                    }
+                }
             }
         }
         return null;
+    }
+
+    private record MaySkipDrawSource(Card card, DrawReplacementKind kind) {
     }
 
     private Permanent findUbaMaskSource(GameData gameData) {

@@ -613,7 +613,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 controllerId, topCards, cardIds,
                 false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
-                        + " into your hand and " + restPhrase));
+                        + " into your hand and " + restPhrase,
+                false, e.optional() ? 0 : Math.min(chooseCount, topCards.size()), false));
     }
 
     /**
@@ -638,7 +639,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     controllerId, topCards, cardIds,
                     false, true, !randomRemaining, randomRemaining, false, 0, null, chooseCount,
                     "Put " + handWord + " " + CardPredicateUtils.describeFilter(e.choosePredicate())
-                            + " into your hand and " + restPhrase));
+                            + " into your hand and " + restPhrase,
+                    false, e.optional() ? 0 : Math.min(chooseCount, eligibleCards.size()), false));
             return;
         }
 

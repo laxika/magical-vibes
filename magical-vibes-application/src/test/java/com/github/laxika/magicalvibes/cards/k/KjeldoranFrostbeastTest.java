@@ -56,6 +56,7 @@ class KjeldoranFrostbeastTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getOriginalCard());
     }
 

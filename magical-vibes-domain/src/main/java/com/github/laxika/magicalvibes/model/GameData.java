@@ -81,6 +81,8 @@ public class GameData {
     public int turnNumber;
     /** Whether the turn currently in progress was taken from the extra-turn queue. */
     public boolean currentTurnIsExtraTurn;
+    public Long currentExtraTurnSequence;
+    public long nextExtraTurnSequence = 1;
     /**
      * Number of turns each player has taken so far this game, including the turn currently in progress
      * and any extra turns. Used by cards that speak of "your first, second, or third turns of the game".
@@ -516,6 +518,12 @@ public class GameData {
      * pay-or-discard prompt after the one currently being decided. Cleared when the queue drains.
      */
     public final List<UUID> revealHandDiscardUnlessPaysRemaining = new ArrayList<>();
+
+    public final Map<UUID, Integer> pendingForbiddenCryptDraws = new ConcurrentHashMap<>();
+
+    public PendingInteraction.DiscardChoice pendingDiscardToLibraryChoice;
+    public int pendingDiscardToLibraryCardIndex = -1;
+    public Boolean pendingDiscardToLibraryDecision;
     /**
      * DestroyCreaturesThatDamagedSourceUnlessControllerPaysLife: ids of the damaging creatures still
      * to be offered the pay-or-destroy prompt after the one currently being decided. Cleared when the
@@ -748,6 +756,15 @@ public class GameData {
      * in engine code pushes/polls this deque at the same end.
      */
     public final Deque<Boolean> extraTurnSkipsUntap = new ArrayDeque<>();
+    public final Deque<Long> extraTurnSequences = new ArrayDeque<>();
+
+    public long queueExtraTurnFirst(UUID playerId, boolean skipsUntap) {
+        long sequence = nextExtraTurnSequence++;
+        extraTurns.addFirst(playerId);
+        extraTurnSkipsUntap.addFirst(skipsUntap);
+        extraTurnSequences.addFirst(sequence);
+        return sequence;
+    }
     /** Additional upkeep steps still to be taken during the active player's current turn. */
     public int additionalUpkeepsRemaining;
     /** Whether the current upkeep step was inserted after the turn's first upkeep. */
@@ -4130,6 +4147,8 @@ public class GameData {
         copy.turnNumber = this.turnNumber;
         copy.cardPutIntoExileThisTurn = this.cardPutIntoExileThisTurn;
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
+        copy.currentExtraTurnSequence = this.currentExtraTurnSequence;
+        copy.nextExtraTurnSequence = this.nextExtraTurnSequence;
         copy.additionalUpkeepsRemaining = this.additionalUpkeepsRemaining;
         copy.currentUpkeepIsAdditional = this.currentUpkeepIsAdditional;
         copy.permanentWithOilCounterPutIntoGraveyardThisTurn = this.permanentWithOilCounterPutIntoGraveyardThisTurn;
@@ -4765,6 +4784,10 @@ public class GameData {
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
+        copy.pendingForbiddenCryptDraws.putAll(this.pendingForbiddenCryptDraws);
+        copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice;
+        copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;
+        copy.pendingDiscardToLibraryDecision = this.pendingDiscardToLibraryDecision;
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
         copy.bounceUnlessPaysRemaining.addAll(this.bounceUnlessPaysRemaining);
 
@@ -4960,6 +4983,7 @@ public class GameData {
         copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
+        copy.extraTurnSequences.addAll(this.extraTurnSequences);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 

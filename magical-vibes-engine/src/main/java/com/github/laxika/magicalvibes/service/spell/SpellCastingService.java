@@ -2659,6 +2659,10 @@ public class SpellCastingService {
         }
         effectiveXValue = additionalSpellCostService.resolveXValue(
                 additionalCosts, costSelection, effectiveXValue);
+        if (additionalCosts.returnAnyNumberCost() != null && castTimeDividedDamage != null) {
+            validateDividedDamageAssignments(gameData, card, playerId, effectiveXValue, targetId,
+                    damageAssignments == null ? Map.of() : damageAssignments, castTimeDividedDamage);
+        }
         if (castingPermissionService.isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)
                 || castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card, effectiveXValue)) {

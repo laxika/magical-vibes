@@ -40,9 +40,10 @@ class FarrelsZealotTest extends BaseCardTest {
 
         advanceToUnblockedMay();
 
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -57,8 +58,9 @@ class FarrelsZealotTest extends BaseCardTest {
 
         advanceToUnblockedMay();
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -71,6 +73,8 @@ class FarrelsZealotTest extends BaseCardTest {
         Permanent victim = addDefenderCreature();
 
         advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(victim.getMarkedDamage()).isZero();
@@ -103,9 +107,9 @@ class FarrelsZealotTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToUnblockedMay();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Farrelite Priest");
         harness.assertLife(player2, 20);
@@ -118,6 +122,10 @@ class FarrelsZealotTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1,
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                        .validIds().iterator().next());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player2, 18);

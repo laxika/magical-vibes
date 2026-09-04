@@ -3339,10 +3339,10 @@ public class TriggerCollectionService {
                     source.getCard(),
                     controllerId,
                     source.getCard().getName() + "'s triggered ability",
-                    new ArrayList<>(triggeringSpellEffects),
-                    spellEntry.getCard().getId(),
-                    Zone.STACK
+                    new ArrayList<>(triggeringSpellEffects)
             );
+            entry.setTriggeringCardId(spellEntry.getCard().getId());
+            entry.setTriggeringPermanentControllerId(spellEntry.getControllerId());
             gameData.stack.add(entry);
 
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,21 +51,18 @@ public class AttackSacrificeCostService {
         }
 
         // Collect the costs from the attacker snapshot before any battlefield mutation, then pay them.
-        List<CantAttackUnlessSacrificeEffect> costs = new ArrayList<>();
+        Map<PermanentPredicate, Integer> costs = new LinkedHashMap<>();
         for (Permanent attacker : attackers) {
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sac) {
-                    costs.add(sac);
+                    costs.merge(sac.filter(), sac.count(), Integer::sum);
                 }
             }
         }
 
-        for (CantAttackUnlessSacrificeEffect cost : costs) {
-            sacrificeMatching(gameData, playerId, cost.count(), cost.filter());
-        }
-
         collectGlobalCosts(gameData, playerId, attackers)
-                .forEach((filter, count) -> sacrificeMatching(gameData, playerId, count, filter));
+                .forEach((filter, count) -> costs.merge(filter, count, Integer::sum));
+        costs.forEach((filter, count) -> sacrificeMatching(gameData, playerId, count, filter));
     }
 
     /**

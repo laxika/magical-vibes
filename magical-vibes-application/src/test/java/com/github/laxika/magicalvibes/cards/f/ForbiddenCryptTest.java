@@ -141,6 +141,7 @@ class ForbiddenCryptTest extends BaseCardTest {
 
         for (int i = 0; i < 4; i++) {
             assertThat(gd.interaction.activeInteraction())
+                    .as("replacement choice %s", i + 1)
                     .isInstanceOf(PendingInteraction.GraveyardChoice.class);
             harness.handleGraveyardCardChosen(player1, 0);
         }

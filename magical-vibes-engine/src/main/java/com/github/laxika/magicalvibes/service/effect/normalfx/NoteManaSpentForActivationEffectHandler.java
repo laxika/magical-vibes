@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteManaSpentForActivationEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.EnumMap;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +39,12 @@ public class NoteManaSpentForActivationEffectHandler implements NormalEffectHand
         }
 
         UUID sourceCardId = source.getCard().getId();
-        Map<ManaColor, Integer> spent = gameData.abilityActivationManaSpent.get(sourceCardId);
-        gameData.notedMana.put(sourceCardId, spent != null ? new EnumMap<>(spent) : new EnumMap<>(ManaColor.class));
+        var spent = entry.getActivationManaSpent();
+        EnumMap<ManaColor, Integer> noted = new EnumMap<>(ManaColor.class);
+        if (spent != null) {
+            noted.putAll(spent);
+        }
+        gameData.notedMana.put(sourceCardId, noted);
         log.info("Game {} - {} notes mana spent {}", gameData.id, source.getCard().getName(), spent);
     }
 }

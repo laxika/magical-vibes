@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,6 +22,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LapisLazuliTalisman());
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
         bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castFromHand(player1, new ZuranSpellcaster(), "{2}{U}");
         PendingInteraction.PermanentChoice targetChoice =
@@ -31,6 +33,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isFalse();
     }
@@ -41,6 +44,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LapisLazuliTalisman());
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
         bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castFromHand(player1, new ZuranSpellcaster(), "{2}{U}");
         PendingInteraction.PermanentChoice targetChoice =
@@ -61,6 +65,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LapisLazuliTalisman());
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
         bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -79,6 +84,7 @@ class LapisLazuliTalismanTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isFalse();
     }

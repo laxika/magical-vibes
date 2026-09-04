@@ -1424,8 +1424,9 @@ public class PredicateEvaluationService {
                 yield sourcePermanent != null && sourcePermanent.getChosenPermanentId() != null
                         && sourcePermanent.getChosenPermanentId().equals(permanent.getId());
             }
-            case PermanentIsSourceCardPredicate ignored ->
-                    sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
+            case PermanentIsSourceCardPredicate ignored -> filterContext.sourcePermanentId() != null
+                    ? permanent.getId().equals(filterContext.sourcePermanentId())
+                    : sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
             case PermanentIsSpecificPermanentPredicate specific ->
                     specific.permanentId() != null && specific.permanentId().equals(permanent.getId());
             case PermanentControlledBySourceControllerPredicate ignored -> {

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttac
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
@@ -469,14 +470,22 @@ public class TurnProgressionService {
         gameData.mindControlUntilEndOfCombat = false;
 
         UUID nextActive;
+        Long extraTurnSequence = null;
         boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            extraTurnSequence = gameData.extraTurnSequences.isEmpty()
+                    ? null : gameData.extraTurnSequences.pollFirst();
             if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
                     .stream().anyMatch(ExtraTurnSkipReplacementEffect.class::isInstance))) {
+                Long skippedExtraTurnSequence = extraTurnSequence;
+                if (skippedExtraTurnSequence != null) {
+                    gameData.drainDelayedActions(LoseGameAtEndStep.class,
+                            action -> skippedExtraTurnSequence.equals(action.extraTurnSequence()));
+                }
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
@@ -508,6 +517,7 @@ public class TurnProgressionService {
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+        gameData.currentExtraTurnSequence = extraTurnSequence;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
         // untap step this player would actually get (CR 614.10a).
@@ -570,8 +580,7 @@ public class TurnProgressionService {
             log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
             // Emrakul: schedule the extra turn only once control actually activates (after that turn).
             if (grantExtraTurnAfter) {
-                gameData.extraTurns.addFirst(nextActive);
-                gameData.extraTurnSkipsUntap.addFirst(false);
+                gameData.queueExtraTurnFirst(nextActive, false);
                 String extraLog = nextActiveName + " takes an extra turn after this one.";
                 gameLogService.append(gameData, GameLog.text(extraLog));
                 log.info("Game {} - {} granted an extra turn after the controlled turn",

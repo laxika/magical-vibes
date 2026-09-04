@@ -329,6 +329,18 @@ public class DamagePreventionService {
             }
             return 0;
         }
+        if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PreventDamageAndAddMinusCountersEffect.class::isInstance)) {
+            if (!gameQueryService.cantHaveCounters(gameData, permanent)
+                    && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
+                int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, damage);
+                if (counters > 0) {
+                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                            permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+                }
+            }
+            return 0;
+        }
         boolean damageUnpreventable = permanent.isDamageCantBePreventedOrRedirectedThisTurn()
                 || !gameQueryService.isDamagePreventable(gameData)
                 || (damageSource != null
@@ -456,16 +468,6 @@ public class DamagePreventionService {
             // Shield of the Realm: "If a source would deal damage to equipped creature, prevent N of that damage."
             damage = applyAttachedPerSourceDamageReduction(gameData, permanent, damage);
             if (damage <= 0) return 0;
-            if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
-                if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
-                    int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, damage);
-                    if (counters > 0) {
-                        permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    }
-                }
-                return 0;
-            }
             // Vigor: "If damage would be dealt to another creature you control, prevent that damage.
             // Put a +1/+1 counter on that creature for each 1 damage prevented this way." The effect
             // lives on a different permanent (Vigor) controlled by this creature's controller.

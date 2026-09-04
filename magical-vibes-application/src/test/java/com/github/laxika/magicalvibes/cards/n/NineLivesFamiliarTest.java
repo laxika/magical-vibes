@@ -38,6 +38,7 @@ class NineLivesFamiliarTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Nine-Lives Familiar");
         assertThat(returned.getCounterCount(CounterType.REVIVAL)).isEqualTo(2);

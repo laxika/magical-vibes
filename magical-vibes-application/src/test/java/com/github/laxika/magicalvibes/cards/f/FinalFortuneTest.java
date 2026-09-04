@@ -155,7 +155,6 @@ class FinalFortuneTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
-        advanceTurn();
         advanceToEndStep();
 
         assertThat(gd.stack).hasSize(1);

@@ -35,11 +35,12 @@ class ReclamationTest extends BaseCardTest {
     void attackingBlackCreatureSacrificesOneLand() {
         harness.addToBattlefield(player2, new Reclamation());
         addCreatureReady(player1, new MoorFiend());
-        harness.addToBattlefield(player1, new Forest());
+        var firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         declareAttackers(player1, List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstForest.getId()));
 
         assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(lifeBefore);
@@ -163,6 +164,7 @@ class ReclamationTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
 
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

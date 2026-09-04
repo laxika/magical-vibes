@@ -2443,6 +2443,9 @@ public class CombatBlockService {
         if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
             return false;
         }
+        if (gameQueryService.getBlockManaTax(gameData, blocker, attacker) > 0) {
+            return false;
+        }
 
         int minimumBlockers = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {

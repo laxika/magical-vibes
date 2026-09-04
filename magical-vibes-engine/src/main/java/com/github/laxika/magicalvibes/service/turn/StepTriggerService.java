@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounter
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.RemoveCountersFromPermanentAtNextCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ExilePermanentAtControllerEndStep;
@@ -3792,10 +3793,12 @@ public class StepTriggerService {
                 if (gameQueryService.findPermanentById(gameData, pending.permanentId()) == null) {
                     continue;
                 }
+                UUID currentControllerId = gameQueryService.findPermanentController(
+                        gameData, pending.permanentId());
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
-                        pending.controllerId(),
+                        currentControllerId,
                         pending.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         null,
@@ -3977,8 +3980,7 @@ public class StepTriggerService {
         // destructions (e.g. Stone Giant).
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
-        permanentRemovalService.processDelayedPermanentActions(gameData,
-                DelayedPermanentActionKind.EXILE_AT_END_STEP);
+        queueDelayedPermanentExiles(gameData, DelayedPermanentActionKind.EXILE_AT_END_STEP);
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP);
         permanentRemovalService.processDelayedPermanentActions(gameData,
@@ -4062,8 +4064,10 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(LoseGameAtEndStep.class)) {
             List<LoseGameAtEndStep> toLose = gameData.drainDelayedActions(
                     LoseGameAtEndStep.class,
-                    a -> gameData.turnNumber > a.registeredTurnNumber()
-                            && a.playerId().equals(gameData.activePlayerId));
+                    action -> action.extraTurnSequence() != null
+                            ? action.extraTurnSequence().equals(gameData.currentExtraTurnSequence)
+                            : gameData.turnNumber > action.registeredTurnNumber()
+                            && action.playerId().equals(gameData.activePlayerId));
             for (LoseGameAtEndStep action : toLose) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -5901,5 +5905,32 @@ public class StepTriggerService {
                 "'s beginning of combat trigger — choose " + targetDescription + "."));
         log.info("Game {} - {} beginning-of-combat trigger awaiting target selection",
                 gameData.id, trigger.sourceCard().getName());
+    }
+
+    private void queueDelayedPermanentExiles(GameData gameData, DelayedPermanentActionKind kind) {
+        List<DelayedPermanentAction> actions = gameData.drainDelayedActions(
+                DelayedPermanentAction.class,
+                action -> action.kind() == kind
+                        && (action.controllerId() == null
+                        || action.controllerId().equals(gameData.activePlayerId)));
+        for (DelayedPermanentAction action : actions) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (permanent == null) {
+                continue;
+            }
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    permanent.getCard(),
+                    controllerId,
+                    permanent.getCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
+                    permanent.getId(),
+                    permanent.getId());
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(permanent.getCard(), "'s delayed exile ability triggers."));
+        }
     }
 }

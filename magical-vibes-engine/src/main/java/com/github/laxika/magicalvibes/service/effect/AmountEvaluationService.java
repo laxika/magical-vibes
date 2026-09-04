@@ -1578,21 +1578,9 @@ public class AmountEvaluationService {
     private int countCreaturesBlockingSource(GameData gameData, AmountContext ctx) {
         Permanent source = ctx.sourcePermanent();
         if (source == null) return 0;
-
-        List<Permanent> sourceBattlefield = null;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.contains(source)) {
-                sourceBattlefield = battlefield;
-                break;
-            }
-        }
-        if (sourceBattlefield == null) return 0;
-
-        int sourceIndex = sourceBattlefield.indexOf(source);
         final int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.isBlocking() && permanent.getBlockingTargets().contains(sourceIndex)) {
+            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(source.getId())) {
                 count[0]++;
             }
         });

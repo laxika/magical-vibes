@@ -68,6 +68,9 @@ class PhytotitanTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance into the upkeep, firing its delayed triggers
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 
     private void killPhytotitan(Player player) {

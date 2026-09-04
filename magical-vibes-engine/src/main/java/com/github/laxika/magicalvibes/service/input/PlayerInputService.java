@@ -1543,7 +1543,7 @@ public class PlayerInputService {
         ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
         List<String> landTypes = List.of(
                 "PLAINSWALK", "ISLANDWALK", "SWAMPWALK", "MOUNTAINWALK", "FORESTWALK",
-                "DESERT", "GATE", "LOCUS");
+                "DESERT", "CAVE", "GATE", "LOCUS");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, landTypes, "Choose a land type for landwalk."));
     }
