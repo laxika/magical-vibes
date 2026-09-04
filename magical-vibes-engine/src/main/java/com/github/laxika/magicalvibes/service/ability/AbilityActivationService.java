@@ -5359,6 +5359,12 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activate only if this creature has another activated ability");
         }
 
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof PutCounterOnSourceCost
+                || effect instanceof PutTypedCounterOnSourceCost)
+                && gameQueryService.cantHaveCounters(gameData, permanent)) {
+            throw new IllegalStateException("Counters can't be put on this permanent");
+        }
+
         // Untap requirement ({Q}): the permanent must be tapped, and creatures obey the same
         // summoning-sickness restriction as {T} (CR 302.6).
         if (ability.isRequiresUntap()) {

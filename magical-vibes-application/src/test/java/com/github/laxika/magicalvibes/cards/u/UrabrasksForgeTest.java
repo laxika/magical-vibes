@@ -54,6 +54,7 @@ class UrabrasksForgeTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(countPermanents(player1, "Phyrexian Horror")).isZero();
 
         advanceToCombat(player1);

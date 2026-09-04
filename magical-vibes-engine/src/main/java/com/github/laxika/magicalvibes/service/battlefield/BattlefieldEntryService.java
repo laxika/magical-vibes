@@ -137,7 +137,8 @@ public class BattlefieldEntryService {
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
                        int convokeCreatureCount) {
-        boolean needsDualNameChoice = permanent.getChosenName() == null
+        boolean needsDualNameChoice = permanent.getCard() != null
+                && permanent.getChosenName() == null
                 && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(YouAndOpponentChooseCardNamesOnEnterEffect.class::isInstance);
         if (needsDualNameChoice) {

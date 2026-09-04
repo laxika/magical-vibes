@@ -34,11 +34,12 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
         // When an earlier effect paused resolution for user input (e.g. Beacon of Unrest's
         // graveyard choice), handleSpellDisposition already shuffled the card in — this
         // handler then runs again on resumption, so it must not add a second copy.
-        List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
-        if (deck.contains(entry.getCard())) return;
+        Card physicalCard = entry.getPhysicalCard();
+        List<Card> deck = gameData.playerDecks.get(entry.getOwnerId());
+        if (deck.contains(physicalCard)) return;
 
-        deck.add(entry.getCard());
-        LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
+        deck.add(physicalCard);
+        LibraryShuffleHelper.shuffleLibrary(gameData, entry.getOwnerId());
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
     }

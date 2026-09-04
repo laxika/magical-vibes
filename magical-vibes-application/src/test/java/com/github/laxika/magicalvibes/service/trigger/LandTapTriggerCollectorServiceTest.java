@@ -607,6 +607,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player1Id);
 
             int greenBefore = gd.playerManaPools.get(player1Id).get(ManaColor.GREEN);
 
@@ -698,6 +699,7 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(gameQueryService.findPermanentController(gd, forest.getId())).thenReturn(player2Id);
             when(predicateEvaluationService.matchesPermanentPredicate(gd, forest, filter)).thenReturn(true);
 
             boolean result = registry.dispatch(

@@ -152,8 +152,7 @@ class ChooseCardsFromTargetHandEffectHandlerTest extends AbstractPlayerInteracti
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                    logEntry.plainText().contains("looks at") && logEntry.plainText().contains("Player2")));
+            verify(cardRevealService).lookAtHand(gd, player1Id, player2Id);
             verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
                     i instanceof PendingInteraction.RevealedHandChoice rhc
                             && rhc.choosingPlayerId().equals(player1Id)

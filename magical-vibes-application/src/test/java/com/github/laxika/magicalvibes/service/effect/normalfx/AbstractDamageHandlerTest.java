@@ -135,6 +135,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
                         eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
+        lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
+                        eq(gd), any(), any(), anyInt(), anyBoolean(), nullable(Card.class)))
+                .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(

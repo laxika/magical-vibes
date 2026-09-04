@@ -556,15 +556,19 @@ public class LandTapTriggerCollectorService {
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
-        if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+        if (!gameQueryService.effectiveBasicLandTypes(match.gameData(), tappedLand)
+                .contains(trigger.subtype())) return false;
 
         boolean snow = gameQueryService.hasEffectiveSupertype(match.gameData(), tappedLand, CardSupertype.SNOW);
         int amount = snow ? trigger.snowAmount() : trigger.amount();
-        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        UUID landControllerId = gameQueryService.findPermanentController(
+                match.gameData(), tappedLand.getId());
+        if (landControllerId == null) return false;
+        ManaPool pool = match.gameData().playerManaPools.get(landControllerId);
         trigger.restriction().applyTo(pool, trigger.color(), amount);
 
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                " triggers — " + match.gameData().playerIdToName.get(landControllerId)
                         + " adds " + amount + " additional " + trigger.color().name().toLowerCase()
                         + " mana (" + trigger.restriction().description() + ")."));
         return true;

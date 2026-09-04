@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,9 +52,9 @@ class SunBlessedGuardianTest extends BaseCardTest {
         assertThat(token.isAttackedThisTurn()).isTrue();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
-        assertThat(gd.getDelayedActions(DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost.class))
-                .contains(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
-                        token.getId(), player1.getId(), Integer.MAX_VALUE));
+        assertThat(gd.getDelayedActions(SacrificeSelfAtNextEndStepTrigger.class))
+                .anyMatch(action -> action.permanentId().equals(token.getId())
+                        && action.controllerId().equals(player1.getId()));
     }
 
     @Test
@@ -74,6 +74,7 @@ class SunBlessedGuardianTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }

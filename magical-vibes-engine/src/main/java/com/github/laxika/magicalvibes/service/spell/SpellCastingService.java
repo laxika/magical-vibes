@@ -9465,7 +9465,8 @@ public class SpellCastingService {
                 .boxed()
                 .collect(java.util.stream.Collectors.toSet());
         return card.getSpellTargets().stream()
-                .filter(target -> targetGroupIndices.contains(target.getIndex()))
+                .filter(target -> !card.bindsEffectToTargetGroup(target.getIndex())
+                        || targetGroupIndices.contains(target.getIndex()))
                 .mapToInt(target -> {
                     int min = giftPromised
                             ? target.getGiftPromisedMinTargets()
