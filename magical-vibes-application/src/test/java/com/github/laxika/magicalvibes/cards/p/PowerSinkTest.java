@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BadRiver;
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.d.DwarvenMiner;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.ManaPrism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PowerSink.class, DwarvenMiner.class, BadRiver.class, CrystalVein.class, ManaPrism.class})
+@CardUsed({PowerSink.class, DwarvenMiner.class, BadRiver.class, BirdsOfParadise.class, CrystalVein.class,
+        Forest.class, ManaPrism.class})
 class PowerSinkTest extends BaseCardTest {
 
     private DwarvenMiner prepareCounterTarget() {
@@ -80,6 +83,27 @@ class PowerSinkTest extends BaseCardTest {
         assertThat(manaLand.isTapped()).isTrue();
         assertThat(manaArtifact.isTapped()).isFalse();
         assertThat(opponentManaLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not tap non-land permanents with mana abilities")
+    void doesNotTapNonLandManaSources() {
+        DwarvenMiner miner = prepareCounterTarget();
+        Permanent manaCreature = harness.addToBattlefieldAndReturn(player1, new BirdsOfParadise());
+        Permanent manaLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.setHand(player2, List.of(new PowerSink()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, miner.getId());
+        harness.passBothPriorities();
+
+        assertThat(manaCreature.isTapped()).isFalse();
+        assertThat(manaLand.isTapped()).isTrue();
     }
 
     @Test

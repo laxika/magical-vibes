@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
 class RootwaterShamanTest extends BaseCardTest {
 
     @Test
@@ -35,7 +37,7 @@ class RootwaterShamanTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Wanderlust");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Wanderlust.class);
     }
 
     @Test
@@ -58,6 +60,7 @@ class RootwaterShamanTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({CursedLand.class, Forest.class})
     @DisplayName("Aura with enchant land does not gain flash")
     void enchantLandAuraDoesNotGetFlash() {
         harness.addToBattlefield(player1, new RootwaterShaman());

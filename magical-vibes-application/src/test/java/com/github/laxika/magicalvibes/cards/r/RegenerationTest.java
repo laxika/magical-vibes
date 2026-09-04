@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Regeneration.class, GiantMantis.class, Mountain.class})
+@CardUsed({Regeneration.class, GiantMantis.class, GrizzlyBears.class, Mountain.class})
 class RegenerationTest extends BaseCardTest {
 
     @Test
@@ -116,7 +117,30 @@ class RegenerationTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("gains a regeneration shield"));
     }
 
-    // ===== Targeting restriction =====
+    @Test
+    @DisplayName("Regeneration shield saves enchanted creature from lethal combat damage")
+    void regenerationSavesEnchantedCreatureFromLethalCombatDamage() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regenAura = harness.addToBattlefieldAndReturn(player1, new Regeneration());
+        regenAura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        bears.setBlocking(true);
+        bears.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.isBlocking()).isFalse();
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(bears.getRegenerationShield()).isZero();
+    }
 
     @Test
     @DisplayName("Cannot enchant a land")

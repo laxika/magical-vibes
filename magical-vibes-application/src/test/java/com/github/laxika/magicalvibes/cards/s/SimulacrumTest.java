@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.ForceOfNature;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,20 +17,22 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Simulacrum.class, GiantSpider.class, GrizzlyBears.class, LightningBolt.class,
+        ForceOfNature.class})
 class SimulacrumTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gains life equal to damage dealt to you this turn and deals that much to your creature")
     void gainsLifeAndDamagesOwnCreature() {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        shockSelf();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        lightningBoltSelf();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
 
         castSimulacrum(spider.getId());
 
-        // 2 damage dealt to player1 this turn -> gain 2 life (18 -> 20) and deal 2 to the 2/4 spider.
+        // 3 damage dealt to player1 this turn -> gain 3 life (17 -> 20) and deal 3 to the 2/4 spider.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(spider.getMarkedDamage()).isEqualTo(2);
+        assertThat(spider.getMarkedDamage()).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Giant Spider");
     }
 
@@ -56,8 +61,22 @@ class SimulacrumTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
-    private void shockSelf() {
-        harness.setHand(player1, List.of(new Shock()));
+    @Test
+    void countsAllDamageDealtThisTurn() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new ForceOfNature());
+        lightningBoltSelf();
+        lightningBoltSelf();
+
+        castSimulacrum(elemental.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(elemental.getMarkedDamage()).isEqualTo(6);
+
+        harness.assertOnBattlefield(player1, "Force of Nature");
+    }
+
+    private void lightningBoltSelf() {
+        harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();

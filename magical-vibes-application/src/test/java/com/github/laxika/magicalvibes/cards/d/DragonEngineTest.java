@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(DragonEngine.class)
 class DragonEngineTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,19 @@ class DragonEngineTest extends BaseCardTest {
 
         assertThat(engine.getPowerModifier()).isEqualTo(2);
         assertThat(engine.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Can activate the ability while tapped because it has no tap cost")
+    void canActivateWhileTapped() {
+        Permanent engine = addEngine(player1);
+        engine.tap();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(engine.getPowerModifier()).isEqualTo(1);
     }
 
     @Test
@@ -72,10 +87,6 @@ class DragonEngineTest extends BaseCardTest {
     }
 
     private Permanent addEngine(Player player) {
-        DragonEngine card = new DragonEngine();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DragonEngine());
     }
 }

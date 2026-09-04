@@ -1,30 +1,30 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.Backlash;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ElHajjJ.class, GrizzlyBears.class})
 class ElHajjJTest extends BaseCardTest {
 
     private Permanent addAttacker(ElHajjJ card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player1, card);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
     private void resolveCombatAndTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // through combat damage
-        harness.passBothPriorities(); // resolve the triggered ability
+        resolveCombat();
+        resolveAllTriggers();
     }
 
     @Test
@@ -62,11 +62,9 @@ class ElHajjJTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Grizzly Bears (2/2) blocks the 1/1 — El-Hajjâj deals 1 to it and dies to the 2 back.
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombatAndTrigger();
 
@@ -83,14 +81,32 @@ class ElHajjJTest extends BaseCardTest {
         addAttacker(hajjaj);
         harness.setLife(player1, 20);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         resolveCombatAndTrigger();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20); // no life gained
+    }
+
+    @Test
+    @CardUsed(Backlash.class)
+    void noncombatDamageGainsLife() {
+        Permanent hajjaj = addCreatureReady(player2, new ElHajjJ());
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new Backlash()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, hajjaj.getId());
+        harness.passBothPriorities();
+
+        assertThat(hajjaj.isTapped()).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

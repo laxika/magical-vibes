@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,31 +17,41 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Thoughtlace.class, GrizzlyBears.class, Forest.class, DarkRitual.class})
 class ThoughtlaceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target permanent becomes blue, replacing its previous colors (CR 105.3)")
     void permanentBecomesBlue() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Thoughtlace()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
+    }
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+    @Test
+    @DisplayName("A noncreature permanent can be targeted")
+    void noncreaturePermanentBecomesBlue() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Thoughtlace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
     }
 
     @Test
     @DisplayName("The color change has no duration — it does not wear off at end of turn")
     void colorPersistsPastEndOfTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Thoughtlace()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
 
         // End-of-turn cleanup expires until-end-of-turn floating effects; Thoughtlace's is permanent.
@@ -48,7 +62,7 @@ class ThoughtlaceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Targeting a creature spell makes the permanent it becomes blue (CR 613.7)")
+    @DisplayName("Targeting a creature spell makes the permanent it becomes blue (CR 400.7a)")
     void spellTargetCarriesColorToPermanent() {
         harness.setHand(player1, List.of(new Thoughtlace(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -61,9 +75,28 @@ class ThoughtlaceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsSpellId);
         harness.passBothPriorities(); // resolve Thoughtlace on the spell
+        assertThat(gqs.getEffectiveCardColors(gd, gd.stack.getFirst().getCard()))
+                .containsExactly(CardColor.BLUE);
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectiveColors(gd, bears)).containsExactly(CardColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("A nonpermanent spell on the stack becomes blue")
+    void nonpermanentSpellBecomesBlue() {
+        harness.setHand(player1, List.of(new Thoughtlace(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 1);
+        Card targetSpell = gd.stack.getFirst().getCard();
+        harness.castInstant(player1, 0, targetSpell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLUE);
+
+        harness.passBothPriorities();
     }
 }

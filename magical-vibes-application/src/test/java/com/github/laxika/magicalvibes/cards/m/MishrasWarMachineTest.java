@@ -1,27 +1,22 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.g.GrayOgre;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MishrasWarMachine.class, GrizzlyBears.class, GrayOgre.class})
 class MishrasWarMachineTest extends BaseCardTest {
-
-    private Permanent machine(Player owner) {
-        UUID id = harness.getPermanentId(owner, "Mishra's War Machine");
-        return gd.playerBattlefields.get(owner.getId()).stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst().orElseThrow();
-    }
 
     @Test
     @DisplayName("Declining the discard deals 3 damage to its controller and taps it")
@@ -36,7 +31,7 @@ class MishrasWarMachineTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(machine(player1).isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
         // Card was not discarded
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -56,7 +51,7 @@ class MishrasWarMachineTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(machine(player1).isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -73,8 +68,41 @@ class MishrasWarMachineTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger → penalty (no card to discard)
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(machine(player1).isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Does not tap when all penalty damage is prevented")
+    void preventedPenaltyDamageDoesNotTapSource() {
+        harness.addToBattlefield(player1, new MishrasWarMachine());
+        harness.setHand(player1, new ArrayList<>());
+        gd.globalDamagePreventionShield = 3;
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.globalDamagePreventionShield).isZero();
+    }
+
+    @Test
+    @DisplayName("Can band with one non-banding attacker")
+    void canBandWithOneNonBandingAttacker() {
+        Permanent machine = addCreatureReady(player1, new MishrasWarMachine());
+        Permanent nonBander = addCreatureReady(player1, new GrayOgre());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService()
+                .declareAttackers(gd, player1, List.of(0, 1), null, List.of(List.of(0, 1))));
+
+        assertThat(machine.getBandId()).isNotNull();
+        assertThat(machine.getBandId()).isEqualTo(nonBander.getBandId());
     }
 
     @Test
@@ -87,7 +115,7 @@ class MishrasWarMachineTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(machine(player1).isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Mishra's War Machine").isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }

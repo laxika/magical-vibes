@@ -4,15 +4,21 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.b.BottleOfSuleiman;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TitaniasSong.class, AngelsFeather.class, BottleOfSuleiman.class, GrizzlyBears.class,
+        MarchOfTheMachines.class, Ornithopter.class})
 class TitaniasSongTest extends BaseCardTest {
 
     // ===== Animating noncreature artifacts =====
@@ -41,6 +47,17 @@ class TitaniasSongTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @DisplayName("Does not remove abilities from an artifact creature")
+    void doesNotRemoveAbilitiesFromArtifactCreatures() {
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new TitaniasSong());
+
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+
+        assertThat(gqs.isCreature(gd, ornithopter)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.FLYING)).isTrue();
     }
 
     // ===== Loses all abilities =====
@@ -76,8 +93,8 @@ class TitaniasSongTest extends BaseCardTest {
     // ===== Effect ends when Titania's Song leaves =====
 
     @Test
-    @DisplayName("Artifacts revert to non-creatures when Titania's Song leaves")
-    void artifactsRevertWhenSongLeaves() {
+    @DisplayName("Animation continues until end of turn after Titania's Song leaves")
+    void animationContinuesUntilEndOfTurnAfterSongLeaves() {
         harness.addToBattlefield(player1, new AngelsFeather());
         harness.addToBattlefield(player1, new TitaniasSong());
 
@@ -87,6 +104,13 @@ class TitaniasSongTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Titania's Song"));
+
+        assertThat(gqs.isCreature(gd, feather)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, feather)).isFalse();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(0);

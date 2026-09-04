@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +18,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, GrizzlyBears.class})
 class PhantasmalTerrainTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Phantasmal Terrain attaches it and awaits basic land type choice")
     void resolvingTriggersBasicLandTypeChoice() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new PhantasmalTerrain()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -40,8 +40,7 @@ class PhantasmalTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a basic land type sets chosenSubtype on the permanent")
     void choosingTypeSetsOnPermanent() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new PhantasmalTerrain()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -56,14 +55,12 @@ class PhantasmalTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted Mountain produces black mana when Swamp is chosen")
     void enchantedMountainProducesBlackWhenSwampChosen() {
-        harness.addToBattlefield(player1, new Mountain());
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new PhantasmalTerrain());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
         aura.setAttachedTo(mountain.getId());
         aura.setChosenSubtype(CardSubtype.SWAMP);
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
@@ -72,32 +69,24 @@ class PhantasmalTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted land's subtypes are overridden to chosen type only")
     void enchantedLandSubtypesOverriddenToChosenType() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new PhantasmalTerrain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
         aura.setAttachedTo(forest.getId());
         aura.setChosenSubtype(CardSubtype.PLAINS);
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
-
-        assertThat(bonus.subtypeOverriding()).isTrue();
-        assertThat(bonus.landSubtypeOverriding()).isTrue();
-        assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.PLAINS);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.PLAINS);
     }
 
     @Test
     @DisplayName("Normal mana production resumes when Phantasmal Terrain leaves battlefield")
     void normalManaResumesWhenAuraLeaves() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new PhantasmalTerrain());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
         aura.setAttachedTo(forest.getId());
         aura.setChosenSubtype(CardSubtype.ISLAND);
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
@@ -115,5 +104,35 @@ class PhantasmalTerrainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's land")
+    void canEnchantOpponentsLand() {
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, opponentForest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Rejects a creature subtype for the basic land type choice")
+    void rejectsNonBasicLandTypeChoice() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "BEAR"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

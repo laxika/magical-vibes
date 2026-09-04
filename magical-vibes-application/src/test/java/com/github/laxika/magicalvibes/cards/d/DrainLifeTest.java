@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrainLife.class, GrizzlyBears.class, Plains.class})
+@CardUsed({DrainLife.class, CircleOfProtectionBlack.class, GrizzlyBears.class, Plains.class})
 class DrainLifeTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class DrainLifeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 23);
@@ -44,8 +44,7 @@ class DrainLifeTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 2, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -139,6 +138,28 @@ class DrainLifeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Activated damage prevention produces no life gain")
+    void activatedPreventionProducesNoLifeGain() {
+        Permanent circle = harness.addToBattlefieldAndReturn(player2, new CircleOfProtectionBlack());
+        DrainLife drainLife = new DrainLife();
+        harness.setHand(player1, List.of(drainLife));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        int circleIndex = gd.playerBattlefields.get(player2.getId()).indexOf(circle);
+        harness.activateAbility(player2, circleIndex, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, drainLife.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);

@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MindTwist.class, GiantGrowth.class, GrizzlyBears.class, LightningBolt.class, SerraAngel.class})
 class MindTwistTest extends BaseCardTest {
 
     @Test
@@ -40,8 +45,7 @@ class MindTwistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindTwist()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
@@ -54,8 +58,7 @@ class MindTwistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindTwist()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -68,8 +71,7 @@ class MindTwistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindTwist()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, 5, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -82,8 +84,7 @@ class MindTwistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindTwist()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -95,9 +96,22 @@ class MindTwistTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(new MindTwist(), new GrizzlyBears(), new SerraAngel(), new LightningBolt())));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 2, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed(TamiyoCollectorOfTales.class)
+    void selfTargetedDiscardIsNotOpponentCaused() {
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player1, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new MindTwist(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 }

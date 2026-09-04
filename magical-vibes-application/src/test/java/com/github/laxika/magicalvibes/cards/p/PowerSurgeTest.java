@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({PowerSurge.class, Swamp.class})
 class PowerSurgeTest extends BaseCardTest {
 
     @Test
@@ -59,5 +61,18 @@ class PowerSurgeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotCountLandTappedAtBeginningOfTurn() {
+        harness.addToBattlefield(player1, new PowerSurge());
+        harness.addToBattlefield(player1, new Swamp()); // index 1
+        harness.addToBattlefield(player1, new Swamp());
+        harness.tapPermanent(player1, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
     }
 }

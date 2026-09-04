@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.Badlands;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ManaFlare.class, Forest.class, Badlands.class})
 class ManaFlareTest extends BaseCardTest {
 
     @Test
@@ -41,5 +44,15 @@ class ManaFlareTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void addsExtraManaForActivatedDualLandAbility() {
+        harness.addToBattlefield(player1, new ManaFlare());
+        harness.addToBattlefield(player1, new Badlands());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
     }
 }

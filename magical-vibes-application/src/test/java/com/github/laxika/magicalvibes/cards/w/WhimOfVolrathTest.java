@@ -84,8 +84,8 @@ class WhimOfVolrathTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A chosen color renamed by Whim of Volrath reverts at end of turn")
-    void chosenColorRevertsAtEndOfTurn() {
+    @DisplayName("A color-word change does not change a color chosen as the permanent entered")
+    void textChangeDoesNotChangeChosenColor() {
         harness.addToBattlefield(player2, new VoiceOfAll());
         Permanent voiceOfAll = findPermanent(player2, "Voice of All");
         voiceOfAll.setChosenColor(CardColor.BLACK);
@@ -99,7 +99,7 @@ class WhimOfVolrathTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "RED");
-        assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.RED);
+        assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.BLACK);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

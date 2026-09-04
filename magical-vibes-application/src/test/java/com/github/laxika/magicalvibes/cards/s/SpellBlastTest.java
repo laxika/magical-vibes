@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.d.Disintegrate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpellBlast.class, GrizzlyBears.class, LlanowarElves.class, Disintegrate.class})
 class SpellBlastTest extends BaseCardTest {
 
     // ===== Targeting =====
@@ -37,7 +40,6 @@ class SpellBlastTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
         StackEntry blastEntry = gd.stack.getLast();
-        assertThat(blastEntry.getCard().getName()).isEqualTo("Spell Blast");
         assertThat(blastEntry.getTargetId()).isEqualTo(bears.getId());
     }
 
@@ -56,6 +58,25 @@ class SpellBlastTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, bears.getId())) // X = 1
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Uses a target spell's chosen X when checking its mana value")
+    void canTargetXSpellUsingItsChosenXInManaValue() {
+        Disintegrate disintegrate = new Disintegrate();
+        harness.setHand(player1, List.of(disintegrate));
+        harness.addMana(player1, ManaColor.RED, 2); // X=1 + {R}
+
+        harness.setHand(player2, List.of(new SpellBlast()));
+        harness.addMana(player2, ManaColor.BLUE, 3); // X=2 + {U}
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 2, disintegrate.getId()); // X = 2
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Disintegrate");
+        harness.assertInGraveyard(player2, "Spell Blast");
     }
 
     // ===== Resolving =====

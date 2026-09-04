@@ -35,9 +35,8 @@ class BadlandsTest extends BaseCardTest {
     }
 
     private Permanent addBadlandsReady() {
-        Permanent badlands = new Permanent(new Badlands());
+        Permanent badlands = harness.addToBattlefieldAndReturn(player1, new Badlands());
         badlands.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(badlands);
         return badlands;
     }
 }

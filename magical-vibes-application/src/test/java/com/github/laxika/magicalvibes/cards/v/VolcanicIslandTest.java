@@ -15,29 +15,24 @@ class VolcanicIslandTest extends BaseCardTest {
     @Test
     @DisplayName("Volcanic Island produces blue mana")
     void producesBlueMana() {
-        Permanent volcanicIsland = addVolcanicIslandReady();
+        Permanent volcanicIsland = harness.addToBattlefieldAndReturn(player1, new VolcanicIsland());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(volcanicIsland.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Volcanic Island produces red mana")
     void producesRedMana() {
-        Permanent volcanicIsland = addVolcanicIslandReady();
+        Permanent volcanicIsland = harness.addToBattlefieldAndReturn(player1, new VolcanicIsland());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(volcanicIsland.isTapped()).isTrue();
-    }
-
-    private Permanent addVolcanicIslandReady() {
-        Permanent volcanicIsland = new Permanent(new VolcanicIsland());
-        volcanicIsland.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(volcanicIsland);
-        return volcanicIsland;
     }
 }

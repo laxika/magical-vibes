@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -26,6 +27,21 @@ class SerendibEfreetTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void upkeepTriggerResolvesAfterEfreetLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        Permanent efreet = addCreatureReady(player1, new SerendibEfreet());
+
+        advanceToUpkeep(player1);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, efreet));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(efreet);
     }
 
     @Test

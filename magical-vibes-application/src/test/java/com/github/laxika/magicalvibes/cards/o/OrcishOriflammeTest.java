@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OrcishOriflamme.class, GrizzlyBears.class})
 class OrcishOriflammeTest extends BaseCardTest {
 
     @Test
@@ -57,10 +59,8 @@ class OrcishOriflammeTest extends BaseCardTest {
     }
 
     private Permanent addAttackingBears(Player controller) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(true);
-        gd.playerBattlefields.get(controller.getId()).add(creature);
         return creature;
     }
 

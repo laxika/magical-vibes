@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CursedLand.class, Forest.class, GrizzlyBears.class})
 class CursedLandTest extends BaseCardTest {
 
     // ===== Targeting =====
@@ -77,6 +79,7 @@ class CursedLandTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.noncombatDamageDealtToPlayersThisTurn.get(player2.getId())).isEqualTo(1);
     }
 
     @Test
@@ -119,8 +122,6 @@ class CursedLandTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 }

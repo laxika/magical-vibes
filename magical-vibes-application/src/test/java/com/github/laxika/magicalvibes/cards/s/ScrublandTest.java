@@ -35,9 +35,8 @@ class ScrublandTest extends BaseCardTest {
     }
 
     private Permanent addScrublandReady() {
-        Permanent scrubland = new Permanent(new Scrubland());
+        Permanent scrubland = harness.addToBattlefieldAndReturn(player1, new Scrubland());
         scrubland.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(scrubland);
         return scrubland;
     }
 }

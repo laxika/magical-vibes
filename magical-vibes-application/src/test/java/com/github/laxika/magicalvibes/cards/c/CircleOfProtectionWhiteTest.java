@@ -1,29 +1,23 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcatianMoneychanger;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CircleOfProtectionWhite.class, GrizzlyBears.class, IcatianMoneychanger.class, WhiteKnight.class})
 class CircleOfProtectionWhiteTest extends BaseCardTest {
 
     @Test
@@ -106,13 +100,16 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(white.getId())
+                .doesNotContain(blue.getId());
         harness.handlePermanentChosen(player1, white.getId());
 
-        // The blue creature isn't the chosen (white) source, so its damage is not prevented.
+        // The non-white creature isn't a legal source choice, so its damage is not prevented.
         blue.setAttacking(true);
         resolveCombat(player2);
 
-        harness.assertLife(player1, 19);
+        harness.assertLife(player1, 18);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(white.getId()));
     }
@@ -120,26 +117,50 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     @Test
     @DisplayName("A white spell on the stack is a legal source choice")
     void whiteSpellOnStackIsLegalSourceChoice() {
+        harness.setLife(player1, 20);
         addReadyCircle(player1);
-        Card whiteDamageSpell = new Card();
-        whiteDamageSpell.setName("White damage spell");
-        whiteDamageSpell.setType(CardType.INSTANT);
-        whiteDamageSpell.setManaCost("{W}");
-        whiteDamageSpell.setColor(CardColor.WHITE);
-        whiteDamageSpell.setColors(List.of(CardColor.WHITE));
-        whiteDamageSpell.target(new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
-                .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
-        harness.setHand(player2, List.of(whiteDamageSpell));
-        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        IcatianMoneychanger whiteSpell = new IcatianMoneychanger();
+        harness.castFromHand(player2, whiteSpell, "{W}");
+        UUID spellId = whiteSpell.getId();
+        harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(whiteDamageSpell.getId());
+                .contains(spellId);
+        harness.handlePermanentChosen(player1, spellId);
+
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(spellId));
+    }
+
+    @Test
+    void preventsDamageFromPermanentWhiteSpellAfterItResolves() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        IcatianMoneychanger moneychangerSpell = new IcatianMoneychanger();
+        harness.castFromHand(player1, moneychangerSpell, "{W}");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(moneychangerSpell.getId());
+        harness.handlePermanentChosen(player1, moneychangerSpell.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 
     @Test
@@ -164,23 +185,14 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     }
 
     private Permanent addReadyCircle(Player player) {
-        Permanent perm = new Permanent(new CircleOfProtectionWhite());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new CircleOfProtectionWhite());
     }
 
     private Permanent addReadyWhiteCreature(Player player) {
-        Permanent perm = new Permanent(new GlorySeeker());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new WhiteKnight());
     }
 
     private Permanent addReadyNonWhiteCreature(Player player) {
-        Permanent perm = new Permanent(new FugitiveWizard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }

@@ -1516,15 +1516,6 @@ public class ChoiceHandlerService {
         if (target != null) {
             target.getTextReplacements().add(new TextReplacement(fromText, toText, ctx.untilEndOfTurn()));
 
-            // If the permanent has a chosenColor matching the from-color, update it
-            if (ctx.isColor()) {
-                CardColor fromColor = CardColor.valueOf(ctx.fromWord());
-                CardColor toColor = CardColor.valueOf(chosenWord);
-                if (fromColor.equals(target.getChosenColor())) {
-                    target.setChosenColor(toColor);
-                }
-            }
-
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " , target.getCard(), "."));
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
         } else {

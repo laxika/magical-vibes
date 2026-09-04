@@ -1,18 +1,53 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.c.Crusade;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({PowerLeak.class, Crusade.class, GrizzlyBears.class, Island.class})
 class PowerLeakTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Power Leak can enchant an enchantment")
+    void canEnchantEnchantment() {
+        Permanent enchantment = addEnchantment(player2);
+        harness.setHand(player1, List.of(new PowerLeak()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, enchantment.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PowerLeak
+                        && enchantment.getId().equals(permanent.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Power Leak cannot enchant a creature")
+    void cannotEnchantCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PowerLeak()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an enchantment");
+    }
 
     // ===== No mana: full damage, no prompt =====
 
@@ -101,6 +136,46 @@ class PowerLeakTest extends BaseCardTest {
         assertThat(ctx.maxValue()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Controller can tap an untapped Island while choosing the payment")
+    void canTapUntappedLandForPayment() {
+        Permanent enchantment = addEnchantment(player2);
+        attachPowerLeak(enchantment);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        int islandIndex = gd.playerBattlefields.get(player2.getId()).indexOf(island);
+        gs.tapPermanent(gd, player2, islandIndex, null);
+
+        assertThat(island.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+
+        harness.handleXValueChosen(player2, 1);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Artifact-only mana cannot pay Power Leak's generic payment")
+    void restrictedManaCannotPay() {
+        Permanent enchantment = addEnchantment(player2);
+        attachPowerLeak(enchantment);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        gd.playerManaPools.get(player2.getId()).addArtifactOnlyColorless(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getArtifactOnlyColorless()).isEqualTo(1);
+    }
+
     // ===== Only fires on the enchanted controller's upkeep =====
 
     @Test
@@ -121,17 +196,11 @@ class PowerLeakTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void attachPowerLeak(Permanent enchantment) {
-        Permanent powerLeak = new Permanent(new PowerLeak());
+        Permanent powerLeak = harness.addToBattlefieldAndReturn(player1, new PowerLeak());
         powerLeak.setAttachedTo(enchantment.getId());
-        gd.playerBattlefields.get(player1.getId()).add(powerLeak);
     }
 
     private Permanent addEnchantment(Player player) {
-        Card card = new Card();
-        card.setName("Test Enchantment");
-        card.setType(CardType.ENCHANTMENT);
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Crusade());
     }
 }

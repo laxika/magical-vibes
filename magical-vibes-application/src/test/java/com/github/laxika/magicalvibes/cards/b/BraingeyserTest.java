@@ -31,6 +31,19 @@ class BraingeyserTest extends BaseCardTest {
     }
 
     @Test
+    void targetPlayerCanBeCaster() {
+        harness.setHand(player1, List.of(new Braingeyser()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size() - 1;
+        harness.castSorcery(player1, 0, 2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
     @DisplayName("X=0 draws no cards")
     void xZeroDrawsNoCards() {
         harness.setHand(player1, List.of(new Braingeyser()));

@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.cards.g.GemstoneArray;
+import com.github.laxika.magicalvibes.cards.k.KrarkClanIronworks;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +19,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StasisCocoon.class, AnimateArtifact.class, GemstoneArray.class,
+        KrarkClanIronworks.class, DrossCrocodile.class})
 class StasisCocoonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Stasis Cocoon can enchant an artifact")
     void canEnchantArtifact() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GemstoneArray());
         harness.setHand(player1, List.of(new StasisCocoon()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -39,7 +42,7 @@ class StasisCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Stasis Cocoon cannot enchant a nonartifact permanent")
     void cannotEnchantNonArtifact() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
         harness.setHand(player1, List.of(new StasisCocoon()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -51,7 +54,7 @@ class StasisCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted artifact cannot activate abilities")
     void enchantedArtifactCannotActivateAbilities() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
         addAura(player2, artifact);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -63,7 +66,7 @@ class StasisCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted artifact creature cannot attack")
     void enchantedArtifactCreatureCannotAttack() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new KrarkClanIronworks());
         artifact.setSummoningSick(false);
         addAura(player1, artifact, new AnimateArtifact());
         addAura(player2, artifact);
@@ -81,12 +84,12 @@ class StasisCocoonTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted artifact creature cannot block")
     void enchantedArtifactCreatureCannotBlock() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new KrarkClanIronworks());
         artifact.setSummoningSick(false);
         addAura(player2, artifact, new AnimateArtifact());
         addAura(player1, artifact);
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 

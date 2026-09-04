@@ -31,6 +31,20 @@ class DemonicHordesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can destroy a land it controls")
+    void destroysTargetLandItControls() {
+        Permanent hordes = addCreatureReady(player1, new DemonicHordes());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(hordes.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(land.getId()));
+    }
+
+    @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetNonlandPermanent() {
         addCreatureReady(player1, new DemonicHordes());
@@ -54,6 +68,21 @@ class DemonicHordesTest extends BaseCardTest {
         assertThat(hordes.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(land.getId()));
+    }
+
+    @Test
+    @DisplayName("If unpaid without a land, only taps the creature")
+    void unpaidUpkeepWithoutLandOnlyTapsCreature() {
+        Permanent hordes = addCreatureReady(player1, new DemonicHordes());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(hordes.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(hordes.getId()));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

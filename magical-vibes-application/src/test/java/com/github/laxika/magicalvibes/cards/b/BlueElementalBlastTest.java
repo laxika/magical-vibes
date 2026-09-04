@@ -2,19 +2,20 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlueElementalBlast.class, Fireball.class, GrizzlyBears.class, HillGiant.class})
 class BlueElementalBlastTest extends BaseCardTest {
 
     @Nested
@@ -24,21 +25,21 @@ class BlueElementalBlastTest extends BaseCardTest {
         @Test
         @DisplayName("Counters a red spell")
         void countersRedSpell() {
-            Shock shock = new Shock();
-            harness.setHand(player2, List.of(shock));
+            Fireball fireball = new Fireball();
+            harness.setHand(player2, List.of(fireball));
             harness.addMana(player2, ManaColor.RED, 1);
             harness.setHand(player1, List.of(new BlueElementalBlast()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
             harness.forceActivePlayer(player2);
-            harness.castInstant(player2, 0, player1.getId());
+            harness.castSorcery(player2, 0, 0, List.of(player1.getId()));
             harness.passPriority(player2);
 
-            harness.castInstant(player1, 0, 0, shock.getId());
+            harness.castInstant(player1, 0, 0, fireball.getId());
             harness.passBothPriorities();
 
             assertThat(gd.stack).isEmpty();
-            harness.assertInGraveyard(player2, "Shock");
+            harness.assertInGraveyard(player2, "Fireball");
         }
 
         @Test
@@ -66,12 +67,11 @@ class BlueElementalBlastTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys a red permanent")
         void destroysRedPermanent() {
-            harness.addToBattlefield(player2, new HillGiant());
+            var hillGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
             harness.setHand(player1, List.of(new BlueElementalBlast()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
-            UUID targetId = harness.getPermanentId(player2, "Hill Giant");
-            harness.castInstant(player1, 0, 1, targetId);
+            harness.castInstant(player1, 0, 1, hillGiant.getId());
             harness.passBothPriorities();
 
             harness.assertNotOnBattlefield(player2, "Hill Giant");
@@ -81,12 +81,11 @@ class BlueElementalBlastTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot destroy a non-red permanent")
         void cannotDestroyNonRedPermanent() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             harness.setHand(player1, List.of(new BlueElementalBlast()));
             harness.addMana(player1, ManaColor.BLUE, 1);
 
-            UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, targetId))
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, bears.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }

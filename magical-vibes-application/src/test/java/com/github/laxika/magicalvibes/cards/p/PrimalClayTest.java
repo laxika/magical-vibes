@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +17,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimalClay.class, MorningtidesLight.class})
 class PrimalClayTest extends BaseCardTest {
 
     private Permanent castAndReturn(String chosenForm) {
-        harness.setHand(player1, List.of(new PrimalClay()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new PrimalClay(), new String(new char[]{'{', '4', '}'}));
         harness.passBothPriorities();
         if (chosenForm != null) {
             harness.handleListChoice(player1, chosenForm);
@@ -63,7 +63,15 @@ class PrimalClayTest extends BaseCardTest {
     }
 
     @Test
+    void chosenWallSubtypePersistsAcrossTurns() {
+        Permanent clay = castAndReturn(com.github.laxika.magicalvibes.model.PrimalClayForm.ONE_SIX_WALL.name());
+
+        clay.resetModifiers();
+
+        assertThat(GameQueryService.permanentHasSubtype(clay, CardSubtype.WALL)).isTrue();
+    }
     @DisplayName("Choosing the 1/6 Wall shape sets a 1/6 Wall with defender")
+    @Test
     void oneSixWallShape() {
         Permanent clay = castAndReturn("ONE_SIX_WALL");
 
@@ -112,5 +120,13 @@ class PrimalClayTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, returnedClay)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, returnedClay, Keyword.DEFENDER)).isTrue();
         assertThat(GameQueryService.permanentHasSubtype(returnedClay, CardSubtype.WALL)).isTrue();
+    }
+
+    @Test
+    void wallShapeCannotAttack() {
+        Permanent clay = castAndReturn(com.github.laxika.magicalvibes.model.PrimalClayForm.ONE_SIX_WALL.name());
+        clay.setSummoningSick(false);
+
+        assertThat(als.canAttack(gd, clay, player1.getId())).isFalse();
     }
 }

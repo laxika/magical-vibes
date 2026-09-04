@@ -2,13 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinKing.class, GoblinBalloonBrigade.class, GrizzlyBears.class, Mountain.class})
 class GoblinKingTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -24,28 +24,21 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Goblin King puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new GoblinKing()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinKing(), "{1}{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Goblin King");
     }
 
     @Test
     @DisplayName("Resolving puts Goblin King onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new GoblinKing()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinKing(), "{1}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Goblin King");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     // ===== Static effect: buffs other Goblins =====
@@ -53,22 +46,18 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Other Goblin creatures get +1/+1 and mountainwalk")
     void buffsOtherGoblins() {
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
         harness.addToBattlefield(player1, new GoblinKing());
 
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
-
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
     @Test
     @DisplayName("Goblin King does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new GoblinKing());
-
-        Permanent king = findPermanent(player1, "Goblin King");
+        Permanent king = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
 
         assertThat(gqs.getEffectivePower(gd, king)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, king)).isEqualTo(2);
@@ -78,10 +67,8 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Goblin creatures")
     void doesNotBuffNonGoblins() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GoblinKing());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -92,12 +79,10 @@ class GoblinKingTest extends BaseCardTest {
     @DisplayName("Buffs opponent's Goblin creatures too")
     void buffsOpponentGoblins() {
         harness.addToBattlefield(player1, new GoblinKing());
-        harness.addToBattlefield(player2, new GoblinEliteInfantry());
+        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinBalloonBrigade());
 
-        Permanent opponentGoblin = findPermanent(player2, "Goblin Elite Infantry");
-
-        assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentGoblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
@@ -106,13 +91,10 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Two Goblin Kings buff each other")
     void twoKingsBuffEachOther() {
-        harness.addToBattlefield(player1, new GoblinKing());
-        harness.addToBattlefield(player1, new GoblinKing());
+        Permanent firstKing = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
+        Permanent secondKing = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
 
-        List<Permanent> kings = findPermanents(player1, "Goblin King");
-
-        assertThat(kings).hasSize(2);
-        for (Permanent king : kings) {
+        for (Permanent king : List.of(firstKing, secondKing)) {
             assertThat(gqs.getEffectivePower(gd, king)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, king)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, king, Keyword.MOUNTAINWALK)).isTrue();
@@ -124,13 +106,10 @@ class GoblinKingTest extends BaseCardTest {
     void twoKingsStackBonuses() {
         harness.addToBattlefield(player1, new GoblinKing());
         harness.addToBattlefield(player1, new GoblinKing());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
 
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
-
-        // 2/2 base + 2/2 from two kings = 4/4
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
     }
 
     // ===== Bonus gone when source leaves =====
@@ -138,37 +117,30 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Goblin King leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new GoblinKing());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
-
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
-
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Goblin King"));
+        Permanent king = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(king);
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isFalse();
     }
 
     @Test
     @DisplayName("Bonus applies when Goblin King resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-        harness.setHand(player1, List.of(new GoblinKing()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
+        harness.castFromHand(player1, new GoblinKing(), "{1}{R}{R}");
 
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
 
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
-
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
@@ -176,17 +148,15 @@ class GoblinKingTest extends BaseCardTest {
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new GoblinKing());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinBalloonBrigade());
 
         goblin.setPowerModifier(goblin.getPowerModifier() + 5);
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(8); // 2 base + 5 spell + 1 static
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(7);
 
         goblin.resetModifiers();
 
-        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3); // 2 base + 1 static
-        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 
@@ -198,19 +168,11 @@ class GoblinKingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinKing());
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent goblinAttacker = new Permanent(new GoblinEliteInfantry());
-        goblinAttacker.setSummoningSick(false);
+        Permanent goblinAttacker = addCreatureReady(player1, new GoblinBalloonBrigade());
         goblinAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(goblinAttacker);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(goblinAttacker);
@@ -225,19 +187,11 @@ class GoblinKingTest extends BaseCardTest {
     void mountainwalkAllowsBlockingWithoutMountain() {
         harness.addToBattlefield(player1, new GoblinKing());
 
-        Permanent goblinAttacker = new Permanent(new GoblinEliteInfantry());
-        goblinAttacker.setSummoningSick(false);
+        Permanent goblinAttacker = addCreatureReady(player1, new GoblinBalloonBrigade());
         goblinAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(goblinAttacker);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(goblinAttacker);
@@ -250,21 +204,13 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Goblin King itself does not have mountainwalk (it only grants it)")
     void goblinKingDoesNotHaveMountainwalkItself() {
-        harness.addToBattlefield(player1, new GoblinKing());
+        Permanent king = addCreatureReady(player1, new GoblinKing());
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent king = findPermanent(player1, "Goblin King");
-        king.setSummoningSick(false);
         king.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(king);
@@ -278,19 +224,16 @@ class GoblinKingTest extends BaseCardTest {
     @Test
     @DisplayName("Mountainwalk is lost when Goblin King leaves the battlefield")
     void mountainwalkLostWhenKingLeaves() {
-        harness.addToBattlefield(player1, new GoblinKing());
+        Permanent king = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
         harness.addToBattlefield(player2, new Mountain());
 
-        Permanent goblinAttacker = new Permanent(new GoblinEliteInfantry());
-        goblinAttacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(goblinAttacker);
+        Permanent goblinAttacker = addCreatureReady(player1, new GoblinBalloonBrigade());
 
         // Verify mountainwalk is present
         assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isTrue();
 
         // Remove Goblin King
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Goblin King"));
+        gd.playerBattlefields.get(player1.getId()).remove(king);
 
         // Mountainwalk should be gone, allowing blocking
         assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isFalse();

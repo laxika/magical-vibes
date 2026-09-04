@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DisruptingScepter.class, GrizzlyBears.class, Forest.class})
 class DisruptingScepterTest extends BaseCardTest {
 
     @Test
@@ -89,10 +91,21 @@ class DisruptingScepterTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    void controllerCanBeTargeted() {
+        addReadyScepter(player1);
+        harness.setHand(player1, new ArrayList<>(List.of(new Forest())));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addReadyScepter(Player player) {
-        Permanent perm = new Permanent(new DisruptingScepter());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent scepter = harness.addToBattlefieldAndReturn(player, new DisruptingScepter());
+        scepter.setSummoningSick(false);
+        return scepter;
     }
 }

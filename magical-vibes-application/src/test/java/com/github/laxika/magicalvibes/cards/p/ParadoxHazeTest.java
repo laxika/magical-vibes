@@ -62,7 +62,7 @@ class ParadoxHazeTest extends BaseCardTest {
     @Test
     @DisplayName("Paradox Haze does not trigger when the upkeep is skipped")
     void doesNotTriggerWhenUpkeepIsSkipped() {
-        harness.addToBattlefieldAndReturn(player1, new EonHub()).tap();
+        harness.addToBattlefield(player1, new EonHub());
         Permanent clock = placeClock(player2);
         placeHazeOnPlayer(player1, player2);
 

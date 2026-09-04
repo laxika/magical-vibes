@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PsychicVenom.class, Mountain.class, GrizzlyBears.class})
 class PsychicVenomTest extends BaseCardTest {
-
-    // ===== Casting and targeting =====
 
     @Test
     @DisplayName("Can cast Psychic Venom targeting a land")
@@ -52,19 +52,17 @@ class PsychicVenomTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
-    // ===== Tap trigger: 2 damage to the land's controller =====
-
     @Test
     @DisplayName("Tapping the enchanted land queues the damage trigger (deferred as a mana-ability trigger)")
     void tappingLandQueuesTrigger() {
-        addLandWithAura(player1);
+        Permanent aura = addLandWithAura(player1);
 
         // Tapping a land for mana defers its triggers (CR 603.3) until a player next gets priority.
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.pendingManaAbilityTriggers).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(entry.getCard().getName()).isEqualTo("Psychic Venom");
+            assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
         });
     }
 
@@ -75,7 +73,8 @@ class PsychicVenomTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -96,7 +95,8 @@ class PsychicVenomTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -109,20 +109,16 @@ class PsychicVenomTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
 
-        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Psychic Venom"));
-        assertThat(gd.pendingManaAbilityTriggers)
-                .noneMatch(entry -> entry.getCard().getName().equals("Psychic Venom"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
-
-    // ===== Helpers =====
 
     /**
      * Places a land on {@code owner}'s battlefield (index 0) with a Psychic Venom attached (index 1).
      */
-    private void addLandWithAura(Player owner) {
+    private Permanent addLandWithAura(Player owner) {
         harness.addToBattlefield(owner, new Mountain());
         Permanent land = gd.playerBattlefields.get(owner.getId()).getFirst();
 
@@ -130,14 +126,6 @@ class PsychicVenomTest extends BaseCardTest {
         Permanent aura = new Permanent(auraCard);
         aura.setAttachedTo(land.getId());
         gd.playerBattlefields.get(owner.getId()).add(aura);
-    }
-
-    /**
-     * Drives priority until the stack and any deferred mana-ability triggers are fully resolved.
-     */
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
+        return aura;
     }
 }

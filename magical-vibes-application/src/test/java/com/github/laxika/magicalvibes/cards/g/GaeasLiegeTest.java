@@ -3,21 +3,20 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GaeasLiege.class, Forest.class, Plains.class, GrizzlyBears.class})
 class GaeasLiegeTest extends BaseCardTest {
-
-    // ===== Characteristic-defining P/T =====
 
     @Test
     @DisplayName("While not attacking, P/T equals the number of Forests you control")
@@ -47,8 +46,6 @@ class GaeasLiegeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, liege)).isEqualTo(3);
     }
 
-    // ===== {T}: Target land becomes a Forest =====
-
     @Test
     @DisplayName("Resolving the ability makes the target land become a Forest (rule 305.7 replacement)")
     void abilityTurnsLandIntoForest() {
@@ -57,6 +54,20 @@ class GaeasLiegeTest extends BaseCardTest {
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, plains);
         assertThat(bonus.landSubtypeOverriding()).isTrue();
         assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.FOREST);
+        assertThat(gqs.getOverriddenLandManaColor(gd, plains)).isEqualTo(ManaColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("The ability can target an opponent's land")
+    void abilityCanTargetOpponentsLand() {
+        addCreatureReady(player1, new GaeasLiege());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, plains.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test
@@ -64,12 +75,11 @@ class GaeasLiegeTest extends BaseCardTest {
     void forestedLandCountsTowardPower() {
         Permanent liege = addCreatureReady(player1, new GaeasLiege());
         harness.addToBattlefield(player1, new Forest()); // keeps Gaea's Liege alive (1/1)
-        harness.addToBattlefield(player1, new Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.forceActivePlayer(player1);
         assertThat(gqs.getEffectivePower(gd, liege)).isEqualTo(1);
 
-        UUID plainsId = harness.getPermanentId(player1, "Plains");
-        harness.activateAbility(player1, 0, null, plainsId);
+        harness.activateAbility(player1, 0, null, plains.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, liege)).isEqualTo(2);
@@ -87,6 +97,7 @@ class GaeasLiegeTest extends BaseCardTest {
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, plains);
         assertThat(bonus.landSubtypeOverriding()).isFalse();
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.FOREST);
+        assertThat(gqs.effectiveBasicLandTypes(gd, plains)).containsExactly(CardSubtype.PLAINS);
     }
 
     @Test
@@ -94,16 +105,13 @@ class GaeasLiegeTest extends BaseCardTest {
     void cannotTargetNonLand() {
         addCreatureReady(player1, new GaeasLiege());
         harness.addToBattlefield(player1, new Forest()); // keeps Gaea's Liege alive + a legal land target
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
-
-    // ===== Helpers =====
 
     /**
      * Adds a ready Gaea's Liege for {@code player} kept alive by one Forest (so it is 1/1, not a
@@ -112,13 +120,12 @@ class GaeasLiegeTest extends BaseCardTest {
     private Permanent forestTargetPlains(Player player) {
         addCreatureReady(player, new GaeasLiege());
         harness.addToBattlefield(player, new Forest());
-        harness.addToBattlefield(player, new Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player, new Plains());
         harness.forceActivePlayer(player);
-        UUID plainsId = harness.getPermanentId(player, "Plains");
 
-        harness.activateAbility(player, 0, null, plainsId);
+        harness.activateAbility(player, 0, null, plains.getId());
         harness.passBothPriorities();
 
-        return gqs.findPermanentById(gd, plainsId);
+        return plains;
     }
 }

@@ -1574,22 +1574,9 @@ public class Permanent {
         expireTemporaryTextReplacements();
     }
 
-    /**
-     * Drops the "until end of turn" word substitutions (CR 612) and undoes any chosen-color swap they
-     * made, so a permanent whose chosen color was renamed by Whim of Volrath goes back to the color it
-     * was chosen as.
-     */
+    /** Drops the "until end of turn" word substitutions (CR 612). */
     private void expireTemporaryTextReplacements() {
-        this.textReplacements.removeIf(replacement -> {
-            if (!replacement.untilEndOfTurn()) {
-                return false;
-            }
-            CardColor renamedTo = textChangeWordAsColor(replacement.toWord());
-            if (renamedTo != null && renamedTo == this.chosenColor) {
-                setChosenColor(textChangeWordAsColor(replacement.fromWord()));
-            }
-            return true;
-        });
+        this.textReplacements.removeIf(TextReplacement::untilEndOfTurn);
     }
 
     /**
@@ -1602,14 +1589,6 @@ public class Permanent {
         this.chosenColors.clear();
         if (chosenColor != null) {
             this.chosenColors.add(chosenColor);
-        }
-    }
-
-    private static CardColor textChangeWordAsColor(String word) {
-        try {
-            return CardColor.valueOf(word.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
-            return null;
         }
     }
 

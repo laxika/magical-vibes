@@ -6,25 +6,21 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StoneGiant.class, GrizzlyBears.class, LlanowarElves.class})
 class StoneGiantTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Grants flying to target creature you control with toughness less than its power")
     void grantsFlyingToTargetCreature() {
-        Permanent stoneGiant = new Permanent(new StoneGiant());
-        stoneGiant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(stoneGiant);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
@@ -41,12 +37,8 @@ class StoneGiantTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        Permanent stoneGiant = new Permanent(new StoneGiant());
-        stoneGiant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(stoneGiant);
-
-        Permanent elves = new Permanent(new LlanowarElves());
-        gd.playerBattlefields.get(player1.getId()).add(elves);
+        Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
         harness.activateAbility(player1, 0, null, elves.getId());
         harness.passBothPriorities();
@@ -65,14 +57,9 @@ class StoneGiantTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target creature with toughness equal to or greater than Stone Giant's power")
     void cannotTargetHighToughnessCreature() {
-        Permanent stoneGiant = new Permanent(new StoneGiant());
-        stoneGiant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(stoneGiant);
+        Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
 
-        // Stone Giant is 3/4; another Stone Giant has toughness 4, which is not less than 3
-        Permanent anotherGiant = new Permanent(new StoneGiant());
-        anotherGiant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(anotherGiant);
+        Permanent anotherGiant = addCreatureReady(player1, new StoneGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, anotherGiant.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -81,12 +68,9 @@ class StoneGiantTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target opponent's creatures")
     void cannotTargetOpponentCreatures() {
-        Permanent stoneGiant = new Permanent(new StoneGiant());
-        stoneGiant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(stoneGiant);
+        Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
 
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -95,15 +79,30 @@ class StoneGiantTest extends BaseCardTest {
     @Test
     @DisplayName("Stone Giant taps when ability is activated")
     void tapsWhenAbilityActivated() {
-        Permanent stoneGiant = new Permanent(new StoneGiant());
-        stoneGiant.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(stoneGiant);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         assertThat(stoneGiant.isTapped()).isFalse();
         harness.activateAbility(player1, 0, null, bears.getId());
         assertThat(stoneGiant.isTapped()).isTrue();
+    }
+
+    @Test
+    void usesLastKnownPowerIfSourceLeavesBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, stoneGiant));
+        harness.passBothPriorities();
+
+        Permanent targetAfter = gqs.findPermanentById(gd, bears.getId());
+        assertThat(targetAfter).isNotNull();
+        assertThat(targetAfter.getGrantedKeywords()).contains(Keyword.FLYING);
     }
 }

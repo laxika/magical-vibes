@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,10 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Firebreathing.class, FeralShadow.class, Mountain.class})
+@CardUsed({Firebreathing.class, FeralShadow.class, GrizzlyBears.class, Mountain.class})
 class FirebreathingTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
+    private Permanent attachTo(Permanent host) {
+        Permanent aura = new Permanent(new Firebreathing());
+        aura.setAttachedTo(host.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+        return aura;
+    }
 
     @Test
     @DisplayName("Resolving Firebreathing attaches it to target creature")
@@ -36,8 +42,6 @@ class FirebreathingTest extends BaseCardTest {
                         && p.isAttached()
                         && p.getAttachedTo().equals(creature.getId()));
     }
-
-    // ===== Granted ability =====
 
     @Test
     @DisplayName("Enchanted creature can activate {R}: +1/+0")
@@ -119,7 +123,48 @@ class FirebreathingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Targeting restriction =====
+    @Test
+    @DisplayName("The enchanted creature's controller can activate the granted ability")
+    void enchantedCreatureControllerCanActivateGrantedAbility() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        attachTo(bearsPerm);
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
+        assertThat(bearsPerm.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The granted ability disappears when Firebreathing leaves the battlefield")
+    void grantedAbilityDisappearsWhenAuraLeavesBattlefield() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = attachTo(bearsPerm);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Firebreathing can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Firebreathing()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.isAttached()
+                        && p.getAttachedTo().equals(bearsPerm.getId()));
+    }
 
     @Test
     @DisplayName("Cannot enchant a land")

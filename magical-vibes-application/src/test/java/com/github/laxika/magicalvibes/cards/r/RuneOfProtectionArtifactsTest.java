@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RuneOfProtectionArtifacts.class, ObsianusGolem.class, GrizzlyBears.class})
 class RuneOfProtectionArtifactsTest extends BaseCardTest {
 
     @Test
@@ -121,23 +123,14 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
     }
 
     private Permanent addReadyRune(Player player) {
-        Permanent perm = new Permanent(new RuneOfProtectionArtifacts());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RuneOfProtectionArtifacts());
     }
 
     private Permanent addReadyArtifactCreature(Player player) {
-        Permanent perm = new Permanent(new ObsianusGolem());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ObsianusGolem());
     }
 
     private Permanent addReadyNonArtifactCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }
