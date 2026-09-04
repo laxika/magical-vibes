@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,15 +17,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({VenomousBreath.class, BalduvianBears.class, Forest.class})
 class VenomousBreathTest extends BaseCardTest {
 
     @Test
     @DisplayName("Every creature blocking the target is destroyed at end of combat, not on resolution")
     void destroysAllBlockersAtEndOfCombat() {
-        Permanent attacker = addReady(player1, new GiantSpider());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        addReady(player2, new GrizzlyBears());
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new BalduvianBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
@@ -38,15 +38,15 @@ class VenomousBreathTest extends BaseCardTest {
         advanceThroughEndOfCombat();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("A creature the target blocks is destroyed too")
     void destroysTheAttackerTheTargetBlocks() {
-        Permanent attacker = addReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        Permanent blocker = addReady(player2, new GiantSpider());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -54,16 +54,16 @@ class VenomousBreathTest extends BaseCardTest {
         castVenomousBreath(player2, blocker);
         advanceThroughEndOfCombat();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 
     @Test
     @DisplayName("Nothing is destroyed when the target was never in a block this turn")
     void unblockedTargetDestroysNothing() {
-        Permanent attacker = addReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        addReady(player2, new GiantSpider());
+        addCreatureReady(player2, new BalduvianBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
@@ -71,14 +71,34 @@ class VenomousBreathTest extends BaseCardTest {
         castVenomousBreath(player1, attacker);
         advanceThroughEndOfCombat();
 
-        harness.assertOnBattlefield(player2, "Giant Spider");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("A blocker declared after resolution is not destroyed")
+    void doesNotDestroyBlockerDeclaredAfterResolution() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        castVenomousBreath(player1, attacker);
+
+        declareAttackers(List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        advanceThroughEndOfCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
     }
 
     @Test
     @DisplayName("A land can't be targeted")
     void cannotTargetNonCreature() {
-        Permanent land = addReady(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -103,10 +123,4 @@ class VenomousBreathTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

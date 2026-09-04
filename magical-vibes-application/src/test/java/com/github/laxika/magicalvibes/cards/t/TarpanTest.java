@@ -1,34 +1,26 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.j.Jokulhaups;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Tarpan.class, Jokulhaups.class, BalduvianBears.class})
 class TarpanTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Tarpan dies from Wrath of God, controller gains 1 life")
-    void diesFromWrathGainsLife() {
+    @DisplayName("Tarpan dies from Jokulhaups, controller gains 1 life")
+    void diesFromJokulhaupsGainsLife() {
         harness.addToBattlefield(player1, new Tarpan());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        GameData gd = harness.getGameData();
-        int lifeBefore = gd.getLife(player1.getId());
-
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();
+        int lifeBefore = gd.getLife(player1.getId());
 
         // Tarpan is dead
         harness.assertInGraveyard(player1, "Tarpan");
@@ -42,29 +34,19 @@ class TarpanTest extends BaseCardTest {
     @Test
     @DisplayName("Tarpan dies in combat, controller gains 1 life")
     void diesInCombatGainsLife() {
-        Tarpan tarpan = new Tarpan();
-        Permanent tarpanPerm = new Permanent(tarpan);
-        tarpanPerm.setSummoningSick(false);
+        Permanent tarpanPerm = addCreatureReady(player1, new Tarpan());
         tarpanPerm.setBlocking(true);
         tarpanPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tarpanPerm);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        bears.setPower(3);
-        bears.setToughness(3);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        BalduvianBears attackerCard = new BalduvianBears();
+        attackerCard.setPower(3);
+        attackerCard.setToughness(3);
+        Permanent attacker = addCreatureReady(player2, attackerCard);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertInGraveyard(player1, "Tarpan");
 
@@ -77,31 +59,41 @@ class TarpanTest extends BaseCardTest {
     @Test
     @DisplayName("Tarpan survives combat, no life gained")
     void survivesNoLifeGain() {
-        Tarpan tarpan = new Tarpan();
-        Permanent tarpanPerm = new Permanent(tarpan);
-        tarpanPerm.setSummoningSick(false);
+        Permanent tarpanPerm = addCreatureReady(player1, new Tarpan());
         tarpanPerm.setBlocking(true);
         tarpanPerm.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tarpanPerm);
 
-        GrizzlyBears weakAttacker = new GrizzlyBears();
-        weakAttacker.setPower(0);
-        weakAttacker.setToughness(2);
-        Permanent attacker = new Permanent(weakAttacker);
-        attacker.setSummoningSick(false);
+        BalduvianBears attackerCard = new BalduvianBears();
+        attackerCard.setPower(0);
+        attackerCard.setToughness(2);
+        Permanent attacker = addCreatureReady(player2, attackerCard);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Tarpan");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Tarpan's controller gains life when an opponent destroys it")
+    void controllerGainsLifeWhenOpponentDestroysTarpan() {
+        harness.addToBattlefield(player2, new Tarpan());
+
+        int player1LifeBefore = gd.getLife(player1.getId());
+        int player2LifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Tarpan");
+
+        // Resolve the death trigger from the stack
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore + 1);
     }
 }

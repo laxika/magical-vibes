@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FreyaliseSupplicant.class, SerraAngel.class, HillGiant.class, GrizzlyBears.class,
+        ChandraNalaar.class, EliteVanguard.class})
 class FreyaliseSupplicantTest extends BaseCardTest {
 
     @Test
@@ -29,7 +32,7 @@ class FreyaliseSupplicantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Serra Angel");
     }
 
@@ -43,7 +46,7 @@ class FreyaliseSupplicantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -57,7 +60,7 @@ class FreyaliseSupplicantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -101,9 +104,26 @@ class FreyaliseSupplicantTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, vanguard);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         harness.assertInGraveyard(player1, "Elite Vanguard");
         harness.assertOnBattlefield(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while Freyalise Supplicant is tapped")
+    void cannotActivateWhileTapped() {
+        Permanent supplicant = addCreatureReady(player1, new FreyaliseSupplicant());
+        Permanent angel = addCreatureReady(player1, new SerraAngel());
+        addCreatureReady(player1, new EliteVanguard());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, angel.getId());
+        harness.passBothPriorities();
+
+        assertThat(supplicant.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

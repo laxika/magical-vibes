@@ -3,9 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.a.ArcticFoxes;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.s.SoldeviGolem;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,19 +23,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Shatter.class, JayemdaeTome.class, GrizzlyBears.class, DancingScimitar.class})
+@CardUsed({Shatter.class, IcyManipulator.class, ArcticFoxes.class, SoldeviGolem.class, JayemdaeTome.class, GrizzlyBears.class, DancingScimitar.class})
 class ShatterTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Shatter puts it on the stack with target")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player2, "Icy Manipulator");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -44,39 +46,53 @@ class ShatterTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Shatter destroys target artifact")
     void destroysArtifact() {
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player2, "Icy Manipulator");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Jayemdae Tome");
-        harness.assertInGraveyard(player2, "Jayemdae Tome");
+        harness.assertNotOnBattlefield(player2, "Icy Manipulator");
+        harness.assertInGraveyard(player2, "Icy Manipulator");
     }
 
     @Test
     @DisplayName("Can destroy own artifact with Shatter")
     void canDestroyOwnArtifact() {
-        harness.addToBattlefield(player1, new JayemdaeTome());
+        harness.addToBattlefield(player1, new IcyManipulator());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player1, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player1, "Icy Manipulator");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player1, "Jayemdae Tome");
-        harness.assertInGraveyard(player1, "Jayemdae Tome");
+        harness.assertNotOnBattlefield(player1, "Icy Manipulator");
+        harness.assertInGraveyard(player1, "Icy Manipulator");
+    }
+
+    @Test
+    @DisplayName("Can target an artifact creature with Shatter")
+    void canTargetArtifactCreature() {
+        harness.addToBattlefield(player2, new SoldeviGolem());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Soldevi Golem");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Soldevi Golem");
+        harness.assertInGraveyard(player2, "Soldevi Golem");
     }
 
     @Test
     @DisplayName("Shatter goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.addToBattlefield(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Jayemdae Tome");
+        UUID targetId = harness.getPermanentId(player2, "Icy Manipulator");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -87,45 +103,30 @@ class ShatterTest extends BaseCardTest {
     @Test
     @DisplayName("Shatter fizzles when target is removed before resolution")
     void fizzlesWhenTargetRemoved() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new JayemdaeTome());
+        harness.addToBattlefield(player2, new IcyManipulator());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = target.getId();
+        UUID targetId = harness.getPermanentId(player2, "Icy Manipulator");
         harness.castInstant(player1, 0, targetId);
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .removePermanentToGraveyard(gd, target));
+        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Shatter");
     }
 
     @Test
     @DisplayName("Cannot target a creature with Shatter")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ArcticFoxes());
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Arctic Foxes");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    @DisplayName("Can target an artifact creature with Shatter")
-    void canTargetArtifactCreature() {
-        harness.addToBattlefield(player2, new DancingScimitar());
-        harness.setHand(player1, List.of(new Shatter()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        UUID targetId = harness.getPermanentId(player2, "Dancing Scimitar");
-        harness.castAndResolveInstant(player1, 0, targetId);
-
-        harness.assertNotOnBattlefield(player2, "Dancing Scimitar");
-        harness.assertInGraveyard(player2, "Dancing Scimitar");
     }
 }

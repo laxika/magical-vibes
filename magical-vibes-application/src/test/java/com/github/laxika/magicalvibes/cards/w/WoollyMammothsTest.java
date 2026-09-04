@@ -1,31 +1,25 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoollyMammoths.class, Plains.class, SnowCoveredPlains.class})
 class WoollyMammothsTest extends BaseCardTest {
 
     private Permanent mammoths() {
-        Permanent mammoths = new Permanent(new WoollyMammoths());
-        mammoths.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mammoths);
-        return mammoths;
+        return addCreatureReady(player1, new WoollyMammoths());
     }
 
     private void addSnowLand(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent snowLand = new Permanent(new Plains());
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player.getId()).add(snowLand);
+        harness.addToBattlefield(player, new SnowCoveredPlains());
     }
 
     @Test
@@ -46,10 +40,23 @@ class WoollyMammothsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Losing your snow land removes trample")
+    void losingSnowLandRemovesTrample() {
+        Permanent mammoths = mammoths();
+        Permanent snowLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(snowLand);
+
+        assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Non-snow land does not grant trample")
     void nonSnowLandDoesNotGrantTrample() {
         Permanent mammoths = mammoths();
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Plains()));
+        harness.addToBattlefield(player1, new Plains());
 
         assertThat(gqs.hasKeyword(gd, mammoths, Keyword.TRAMPLE)).isFalse();
     }

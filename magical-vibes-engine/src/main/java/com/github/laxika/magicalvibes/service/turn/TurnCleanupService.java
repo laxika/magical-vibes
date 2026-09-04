@@ -84,9 +84,9 @@ public class TurnCleanupService {
         removeCountersScheduledForCleanup(gameData);
         clearSpellTypeRestrictionsEndingThisTurn(gameData);
         resetEndOfTurnModifiers(gameData);
-        tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
         gameData.controlLossUnattachTriggers.clear();
+        gameData.controlLossTapTriggers.clear();
     }
 
     /**
@@ -165,23 +165,6 @@ public class TurnCleanupService {
         if (restrictions.isEmpty()) {
             gameData.playersCantCastSpellTypesUntilEndOfControllerNextTurn.remove(activePlayerId);
         }
-    }
-
-    /**
-     * Taps permanents carrying a "tap it when you lose control" rider (Magus of the Unseen) as
-     * their until-end-of-turn control effect expires this cleanup and they revert to their owner.
-     */
-    private void tapPermanentsReturningToOwner(GameData gameData) {
-        if (gameData.permanentsToTapWhenControlLost.isEmpty()) {
-            return;
-        }
-        for (UUID permanentId : gameData.permanentsToTapWhenControlLost) {
-            Permanent permanent = findPermanent(gameData, permanentId);
-            if (permanent != null) {
-                permanent.tap();
-            }
-        }
-        gameData.permanentsToTapWhenControlLost.clear();
     }
 
     /**

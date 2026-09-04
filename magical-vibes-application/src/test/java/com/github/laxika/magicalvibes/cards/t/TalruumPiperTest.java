@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.c.CloudElemental;
+import com.github.laxika.magicalvibes.cards.d.DarajaGriffin;
+import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,18 +15,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TalruumPiper.class, CloudElemental.class, DarajaGriffin.class, PantherWarriors.class})
 class TalruumPiperTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying creatures must block Talruum Piper; ground creatures are not forced")
     void flyingMustBlockGroundNotForced() {
-        Permanent piper = attackingCreature(new TalruumPiper());
-        gd.playerBattlefields.get(player1.getId()).add(piper);
+        Permanent piper = addCreatureReady(player1, new TalruumPiper());
+        piper.setAttacking(true);
 
-        Permanent flyer = readyCreature(new SerraAngel());
-        Permanent ground = readyCreature(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(flyer);
-        gd.playerBattlefields.get(player2.getId()).add(ground);
+        Permanent flyer = addCreatureReady(player2, new DarajaGriffin());
+        Permanent ground = addCreatureReady(player2, new PantherWarriors());
 
         prepareDeclareBlockers();
 
@@ -48,27 +49,27 @@ class TalruumPiperTest extends BaseCardTest {
     @Test
     @DisplayName("No blockers required when defender has only ground creatures")
     void onlyGroundCreaturesEmptyBlocksOk() {
-        Permanent piper = attackingCreature(new TalruumPiper());
-        gd.playerBattlefields.get(player1.getId()).add(piper);
+        Permanent piper = addCreatureReady(player1, new TalruumPiper());
+        piper.setAttacking(true);
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        Permanent firstGround = addCreatureReady(player2, new PantherWarriors());
+        Permanent secondGround = addCreatureReady(player2, new PantherWarriors());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isFalse();
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isFalse();
+        assertThat(firstGround.isBlocking()).isFalse();
+        assertThat(secondGround.isBlocking()).isFalse();
     }
 
     @Test
     @DisplayName("All able flying creatures must block Talruum Piper")
     void twoFlyersMustBothBlock() {
-        Permanent piper = attackingCreature(new TalruumPiper());
-        gd.playerBattlefields.get(player1.getId()).add(piper);
+        Permanent piper = addCreatureReady(player1, new TalruumPiper());
+        piper.setAttacking(true);
 
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new SerraAngel()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new SerraAngel()));
+        Permanent firstFlyer = addCreatureReady(player2, new DarajaGriffin());
+        Permanent secondFlyer = addCreatureReady(player2, new DarajaGriffin());
 
         prepareDeclareBlockers();
 
@@ -83,20 +84,36 @@ class TalruumPiperTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)
         ));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).isBlocking()).isTrue();
+        assertThat(firstFlyer.isBlocking()).isTrue();
+        assertThat(secondFlyer.isBlocking()).isTrue();
     }
 
-    private Permanent attackingCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
+    @Test
+    @DisplayName("Tapped flying creatures are not required to block Talruum Piper")
+    void tappedFlyingCreatureIsNotForcedToBlock() {
+        Permanent piper = addCreatureReady(player1, new TalruumPiper());
+        piper.setAttacking(true);
+
+        Permanent tappedFlyer = addCreatureReady(player2, new DarajaGriffin());
+        tappedFlyer.tap();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(tappedFlyer.isBlocking()).isFalse();
     }
 
-    private Permanent readyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("A flying creature unable to block Talruum Piper is not required to block")
+    void flyingCreatureUnableToBlockPiperIsNotForcedToBlock() {
+        Permanent piper = addCreatureReady(player1, new TalruumPiper());
+        piper.setAttacking(true);
+
+        Permanent restrictedFlyer = addCreatureReady(player2, new CloudElemental());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(restrictedFlyer.isBlocking()).isFalse();
     }
 }

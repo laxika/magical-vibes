@@ -1,22 +1,22 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.DiabolicVision;
+import com.github.laxika.magicalvibes.cards.m.MoorFiend;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FreyalisesCharm.class, MoorFiend.class, DiabolicVision.class, BalduvianBears.class})
 class FreyalisesCharmTest extends BaseCardTest {
 
     private void setUpOpponentTurn() {
@@ -31,7 +31,7 @@ class FreyalisesCharmTest extends BaseCardTest {
     void opponentBlackSpellPayAndDraw() {
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player2, new ArrayList<>(List.of(new Facevaulter())));
+        harness.setHand(player2, List.of(new MoorFiend()));
         harness.addMana(player2, ManaColor.BLACK, 5);
 
         int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
@@ -55,13 +55,13 @@ class FreyalisesCharmTest extends BaseCardTest {
     void opponentMulticoloredBlackSpellTriggers() {
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player2, List.of(multicoloredSpell()));
+        harness.setHand(player2, List.of(new DiabolicVision()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
 
         int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
 
-        harness.castCreature(player2, 0);
+        harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -73,7 +73,7 @@ class FreyalisesCharmTest extends BaseCardTest {
     void opponentBlackSpellDecline() {
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player2, new ArrayList<>(List.of(new Facevaulter())));
+        harness.setHand(player2, List.of(new MoorFiend()));
         harness.addMana(player2, ManaColor.BLACK, 5);
 
         int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
@@ -87,10 +87,27 @@ class FreyalisesCharmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent black spell: accepting without enough mana draws nothing")
+    void opponentBlackSpellCannotPay() {
+        setUpOpponentTurn();
+        harness.setHand(player2, List.of(new MoorFiend()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+
+        int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
     @DisplayName("Non-black opponent spell does not trigger")
     void nonBlackDoesNotTrigger() {
         setUpOpponentTurn();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new BalduvianBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         harness.castCreature(player2, 0);
@@ -103,7 +120,7 @@ class FreyalisesCharmTest extends BaseCardTest {
     @DisplayName("Controller's own black spell does not trigger")
     void ownBlackDoesNotTrigger() {
         harness.addToBattlefield(player1, new FreyalisesCharm());
-        harness.setHand(player1, List.of(new Facevaulter()));
+        harness.setHand(player1, List.of(new MoorFiend()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castCreature(player1, 0);
@@ -123,17 +140,5 @@ class FreyalisesCharmTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Freyalise's Charm");
         harness.assertNotOnBattlefield(player1, "Freyalise's Charm");
-    }
-
-    private Card multicoloredSpell() {
-        Card card = new Card();
-        card.setName("Test Black-Green Spell");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{B}{G}");
-        card.setColor(CardColor.BLACK);
-        card.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
-        card.setPower(2);
-        card.setToughness(2);
-        return card;
     }
 }

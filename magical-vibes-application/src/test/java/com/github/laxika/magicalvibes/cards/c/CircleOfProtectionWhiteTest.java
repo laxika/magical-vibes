@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcatianMoneychanger;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import java.util.UUID;
+import com.github.laxika.magicalvibes.cards.f.FieryJustice;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,31 +17,35 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionWhite.class, GrizzlyBears.class, IcatianMoneychanger.class, WhiteKnight.class})
+@CardUsed({CircleOfProtectionWhite.class, KjeldoranWarrior.class, ZuranSpellcaster.class, FieryJustice.class, GrizzlyBears.class, IcatianMoneychanger.class, WhiteKnight.class})
 class CircleOfProtectionWhiteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability prompts for a white source choice")
     void resolvingAbilityPromptsForWhiteSource() {
         addReadyCircle(player1);
-        addReadyWhiteCreature(player2);
+        Permanent source = addCreatureReady(player2, new KjeldoranWarrior());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(source.getId());
     }
 
     @Test
     @DisplayName("Choosing a white source records a one-shot prevention shield")
     void choosingWhiteSourceRecordsShield() {
         addReadyCircle(player1);
-        Permanent soldier = addReadyWhiteCreature(player2);
+        Permanent soldier = addCreatureReady(player2, new KjeldoranWarrior());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -53,7 +61,7 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     void preventsNextCombatDamageAndConsumesShield() {
         harness.setLife(player1, 20);
         addReadyCircle(player1);
-        Permanent soldier = addReadyWhiteCreature(player2);
+        Permanent soldier = addCreatureReady(player2, new KjeldoranWarrior());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -72,8 +80,8 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     void differentSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         addReadyCircle(player1);
-        Permanent chosen = addReadyWhiteCreature(player2);
-        Permanent other = addReadyWhiteCreature(player2);
+        Permanent chosen = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent other = addCreatureReady(player2, new KjeldoranWarrior());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -83,8 +91,8 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
         other.setAttacking(true);
         resolveCombat(player2);
 
-        // The unchosen 2/2 deals its damage; the shield is untouched
-        harness.assertLife(player1, 18);
+        // The unchosen 1/1 deals its damage; the shield is untouched
+        harness.assertLife(player1, 19);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(chosen.getId()));
     }
@@ -94,22 +102,23 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     void nonWhiteSourceStillDealsDamage() {
         harness.setLife(player1, 20);
         addReadyCircle(player1);
-        Permanent white = addReadyWhiteCreature(player2);
-        Permanent blue = addReadyNonWhiteCreature(player2);
+        Permanent white = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent blue = addCreatureReady(player2, new ZuranSpellcaster());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(white.getId())
-                .doesNotContain(blue.getId());
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(white.getId()).doesNotContain(blue.getId());
         harness.handlePermanentChosen(player1, white.getId());
 
-        // The non-white creature isn't a legal source choice, so its damage is not prevented.
+        // The blue creature isn't the chosen (white) source, so its damage is not prevented.
         blue.setAttacking(true);
         resolveCombat(player2);
 
-        harness.assertLife(player1, 18);
+        harness.assertLife(player1, 19);
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(s -> s.sourceId().equals(white.getId()));
     }
@@ -117,26 +126,54 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
     @Test
     @DisplayName("A white spell on the stack is a legal source choice")
     void whiteSpellOnStackIsLegalSourceChoice() {
-        harness.setLife(player1, 20);
         addReadyCircle(player1);
+        FieryJustice fieryJustice = new FieryJustice();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(fieryJustice));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        IcatianMoneychanger whiteSpell = new IcatianMoneychanger();
-        harness.castFromHand(player2, whiteSpell, "{W}");
-        UUID spellId = whiteSpell.getId();
+        harness.castSorcery(player2, 0, player1.getId(), Map.of(player1.getId(), 5));
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(spellId);
-        harness.handlePermanentChosen(player1, spellId);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(fieryJustice.getId());
+        harness.handlePermanentChosen(player1, fieryJustice.getId());
+        harness.passBothPriorities();
 
-        assertThat(gd.playerSourceNextDamageShields)
-                .anyMatch(s -> s.playerId().equals(player1.getId()) && s.sourceId().equals(spellId));
+        harness.assertLife(player1, 25);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shield is cleared at end of turn")
+    void shieldClearedAtEndOfTurn() {
+        addReadyCircle(player1);
+        Permanent soldier = addCreatureReady(player2, new KjeldoranWarrior());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, soldier.getId());
+
+        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    private Permanent addReadyCircle(Player player) {
+        return addCreatureReady(player, new CircleOfProtectionWhite());
     }
 
     @Test
@@ -161,31 +198,6 @@ class CircleOfProtectionWhiteTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Shield is cleared at end of turn")
-    void shieldClearedAtEndOfTurn() {
-        addReadyCircle(player1);
-        Permanent soldier = addReadyWhiteCreature(player2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, soldier.getId());
-
-        assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
-    }
-
-    private Permanent addReadyCircle(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new CircleOfProtectionWhite());
     }
 
     private Permanent addReadyWhiteCreature(Player player) {

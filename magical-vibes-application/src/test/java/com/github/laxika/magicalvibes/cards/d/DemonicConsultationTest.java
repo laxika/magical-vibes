@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DemonicConsultation.class, Counterspell.class, DarkRitual.class})
 class DemonicConsultationTest extends BaseCardTest {
 
     private void cast() {
@@ -43,28 +44,30 @@ class DemonicConsultationTest extends BaseCardTest {
         List<Card> deck = new ArrayList<>();
         List<Card> topSix = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
-            Card c = named("Chaff " + i, "{B}");
+            Card c = new DarkRitual();
             topSix.add(c);
             deck.add(c);
         }
-        Card miss = named("Miss", "{1}{B}");
-        Card hit = named("Hit Card", "{2}{B}");
-        Card leftover = named("Leftover", "{3}{B}");
+        Card miss = new DarkRitual();
+        Card hit = new Counterspell();
+        Card secondHit = new Counterspell();
+        Card leftover = new DarkRitual();
         deck.add(miss);
         deck.add(hit);
+        deck.add(secondHit);
         deck.add(leftover);
-        gd.playerDecks.put(p1, deck);
+        harness.setLibrary(player1, deck);
 
         cast();
-        harness.handleListChoice(player1, "Hit Card");
+        harness.handleListChoice(player1, "Counterspell");
 
         assertThat(gd.playerHands.get(p1)).anyMatch(c -> c.getId().equals(hit.getId()));
         assertThat(gd.getPlayerExiledCards(p1))
                 .extracting(Card::getId)
                 .containsAll(topSix.stream().map(Card::getId).toList())
                 .contains(miss.getId())
-                .doesNotContain(hit.getId(), leftover.getId());
-        assertThat(gd.playerDecks.get(p1)).containsExactly(leftover);
+                .doesNotContain(hit.getId(), secondHit.getId(), leftover.getId());
+        assertThat(gd.playerDecks.get(p1)).containsExactly(secondHit, leftover);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -75,19 +78,19 @@ class DemonicConsultationTest extends BaseCardTest {
         UUID p1 = player1.getId();
         List<Card> deck = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
-            deck.add(named("Top " + i, "{B}"));
+            deck.add(new DarkRitual());
         }
-        Card onlyCopy = named("Only Copy", "{B}");
+        Card onlyCopy = new Counterspell();
         // Put the only copy among the top six so the dig cannot find it.
         deck.set(2, onlyCopy);
-        Card restA = named("Rest A", "{1}");
-        Card restB = named("Rest B", "{2}");
+        Card restA = new DarkRitual();
+        Card restB = new DarkRitual();
         deck.add(restA);
         deck.add(restB);
-        gd.playerDecks.put(p1, deck);
+        harness.setLibrary(player1, deck);
 
         cast();
-        harness.handleListChoice(player1, "Only Copy");
+        harness.handleListChoice(player1, "Counterspell");
 
         assertThat(gd.playerHands.get(p1)).noneMatch(c -> c.getId().equals(onlyCopy.getId()));
         assertThat(gd.playerDecks.get(p1)).isEmpty();
@@ -102,14 +105,14 @@ class DemonicConsultationTest extends BaseCardTest {
         UUID p1 = player1.getId();
         List<Card> deck = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
-            deck.add(named("Skip " + i, "{B}"));
+            deck.add(new DarkRitual());
         }
-        Card hit = named("Immediate Hit", "{B}");
+        Card hit = new Counterspell();
         deck.add(hit);
-        gd.playerDecks.put(p1, deck);
+        harness.setLibrary(player1, deck);
 
         cast();
-        harness.handleListChoice(player1, "Immediate Hit");
+        harness.handleListChoice(player1, "Counterspell");
 
         assertThat(gd.playerHands.get(p1)).anyMatch(c -> c.getId().equals(hit.getId()));
         assertThat(gd.playerDecks.get(p1)).isEmpty();
@@ -117,12 +120,18 @@ class DemonicConsultationTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(hit.getId()));
     }
 
-    private static Card named(String name, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(CardColor.BLACK);
-        return card;
+    @Test
+    @DisplayName("With an empty library, exiles no cards and completes")
+    void handlesEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+        harness.handleListChoice(player1, "Demonic Consultation");
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Demonic Consultation");
     }
 }

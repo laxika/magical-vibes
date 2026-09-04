@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,20 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PhyrexianMarauder.class, Warthog.class})
 class PhyrexianMarauderTest extends BaseCardTest {
 
-    private Permanent findMarauder() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Marauder"))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private void beginDeclareAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+    private Permanent addReadyMarauder(Player controller, int counters) {
+        Permanent marauder = addCreatureReady(controller, new PhyrexianMarauder());
+        marauder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
+        return marauder;
     }
 
     @Test
@@ -37,11 +32,10 @@ class PhyrexianMarauderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PhyrexianMarauder()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.castArtifact(player1, 0, 3);
         harness.passBothPriorities();
 
-        Permanent marauder = findMarauder();
-        assertThat(marauder).isNotNull();
+        Permanent marauder = findPermanent(player1, "Phyrexian Marauder");
         assertThat(marauder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
@@ -59,20 +53,12 @@ class PhyrexianMarauderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be declared as a blocker")
     void cannotBlock() {
-        Permanent marauder = new Permanent(new PhyrexianMarauder());
-        marauder.setSummoningSick(false);
-        marauder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        gd.playerBattlefields.get(player2.getId()).add(marauder);
+        addReadyMarauder(player2, 3);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new Warthog());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -83,15 +69,10 @@ class PhyrexianMarauderTest extends BaseCardTest {
     @DisplayName("Attacks when controller pays {1} per +1/+1 counter")
     void attacksWhenPaid() {
         harness.setLife(player2, 20);
-        Permanent marauder = new Permanent(new PhyrexianMarauder());
-        marauder.setSummoningSick(false);
-        marauder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        gd.playerBattlefields.get(player1.getId()).add(marauder);
+        addReadyMarauder(player1, 3);
 
         harness.addMana(player1, ManaColor.WHITE, 3);
-        beginDeclareAttackers();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -101,16 +82,26 @@ class PhyrexianMarauderTest extends BaseCardTest {
     @DisplayName("Cannot attack when controller cannot pay the per-counter tax")
     void cannotAttackWithoutPayment() {
         harness.setLife(player2, 20);
-        Permanent marauder = new Permanent(new PhyrexianMarauder());
-        marauder.setSummoningSick(false);
-        marauder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        gd.playerBattlefields.get(player1.getId()).add(marauder);
+        addReadyMarauder(player1, 3);
 
         harness.addMana(player1, ManaColor.WHITE, 2);
-        beginDeclareAttackers();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("Losing all abilities removes the per-counter attack tax")
+    void losingAllAbilitiesRemovesAttackTax() {
+        harness.addToBattlefield(player1, new Humility());
+        addReadyMarauder(player1, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        declareAttackers(List.of(1));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 }

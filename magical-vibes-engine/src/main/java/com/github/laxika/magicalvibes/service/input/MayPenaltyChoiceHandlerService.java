@@ -196,20 +196,6 @@ public class MayPenaltyChoiceHandlerService {
             return;
         }
 
-        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
-            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (gameQueryService.isProtectedFromCounterBySourceCard(gameData, targetEntry.getControllerId(), ability.sourceCard())) {
-            log.info("Game {} - {} cannot be countered by {} spells",
-                    gameData.id, targetEntry.getCard().getName(),
-                    ability.sourceCard().getColor().name().toLowerCase());
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         if (accepted) {
             ManaCost cost = new ManaCost(manaCost);
             ManaPool pool = gameData.playerManaPools.get(player.getId());
@@ -283,6 +269,18 @@ public class MayPenaltyChoiceHandlerService {
     private void counterSpell(GameData gameData, Player player, Card sourceCard, StackEntry targetEntry,
                               String costText, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
         UUID counteredControllerId = targetEntry.getControllerId();
+        boolean counterable = !gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                && !gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), sourceCard);
+        if (!counterable) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " declines to pay " + costText + ". ", targetEntry.getCard(),
+                    " cannot be countered."));
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+            counterSupport.resolveNotPaidRider(gameData, sourceCard, counteredControllerId, onNotPaidEffects);
+            return;
+        }
+
         gameData.stack.remove(targetEntry);
 
         // CR 603.8 — clean up state-trigger tracking when countered

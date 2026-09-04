@@ -1,21 +1,24 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.f.FirestormHellkite;
+import com.github.laxika.magicalvibes.cards.i.InfantryVeteran;
+import com.github.laxika.magicalvibes.cards.s.SpittingDrake;
+import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LightningCloud.class, SpittingDrake.class, InfantryVeteran.class, Warthog.class,
+        FirestormHellkite.class})
 class LightningCloudTest extends BaseCardTest {
 
     private void setUpOpponentTurn() {
@@ -30,12 +33,9 @@ class LightningCloudTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LightningCloud());
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.setHand(player2, List.of(new HillGiant()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.setLife(player2, 20);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new SpittingDrake(), "{3}{R}");
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -53,21 +53,18 @@ class LightningCloudTest extends BaseCardTest {
     @DisplayName("Paying {R} can deal 1 damage to a creature")
     void payDealsDamageToCreature() {
         harness.addToBattlefield(player1, new LightningCloud());
-        harness.addToBattlefield(player2, new FugitiveWizard());
-        UUID wizardId = harness.getPermanentId(player2, "Fugitive Wizard");
+        harness.addToBattlefield(player2, new InfantryVeteran());
+        UUID veteranId = harness.getPermanentId(player2, "Infantry Veteran");
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.setHand(player2, List.of(new HillGiant()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
 
-        harness.castCreature(player2, 0);
-        harness.handlePermanentChosen(player1, wizardId);
+        harness.castFromHand(player2, new SpittingDrake(), "{3}{R}");
+        harness.handlePermanentChosen(player1, veteranId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Infantry Veteran");
     }
 
     @Test
@@ -76,12 +73,9 @@ class LightningCloudTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LightningCloud());
         setUpOpponentTurn();
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.setHand(player2, List.of(new HillGiant()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.setLife(player2, 20);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new SpittingDrake(), "{3}{R}");
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -93,13 +87,44 @@ class LightningCloudTest extends BaseCardTest {
     @DisplayName("Controller's own red spell triggers too")
     void ownRedSpellTriggers() {
         harness.addToBattlefield(player1, new LightningCloud());
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SpittingDrake(), "{3}{R}");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+    }
+
+    @Test
+    @DisplayName("A multicolored red spell triggers too")
+    void multicoloredRedSpellTriggers() {
+        harness.addToBattlefield(player1, new LightningCloud());
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player2, new FirestormHellkite(), "{4}{U}{R}");
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Accepting without available red mana deals no damage")
+    void cannotPayNoMana() {
+        harness.addToBattlefield(player1, new LightningCloud());
+        setUpOpponentTurn();
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player2, new SpittingDrake(), "{3}{R}");
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -107,10 +132,8 @@ class LightningCloudTest extends BaseCardTest {
     void nonRedDoesNotTrigger() {
         harness.addToBattlefield(player1, new LightningCloud());
         setUpOpponentTurn();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new Warthog(), "{1}{G}{G}");
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Lightning Cloud"));

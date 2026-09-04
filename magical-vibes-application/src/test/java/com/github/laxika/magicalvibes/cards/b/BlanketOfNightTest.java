@@ -1,81 +1,82 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService.StaticBonus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlanketOfNight.class, Quicksand.class, Archangel.class})
 class BlanketOfNightTest extends BaseCardTest {
 
     @Test
     void allLandsGainSwampSubtype() {
         harness.addToBattlefield(player1, new BlanketOfNight());
-        harness.addToBattlefield(player1, new Forest());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Quicksand());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Quicksand());
 
-        Permanent ownForest = gd.playerBattlefields.get(player1.getId()).get(1);
-        Permanent oppForest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownLand, CardSubtype.SWAMP)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, opponentLand, CardSubtype.SWAMP)).isTrue();
+    }
 
-        assertThat(gqs.computeStaticBonus(gd, ownForest).grantedSubtypes()).contains(CardSubtype.SWAMP);
-        assertThat(gqs.computeStaticBonus(gd, oppForest).grantedSubtypes()).contains(CardSubtype.SWAMP);
+    @CardUsed(Forest.class)
+    @Test
+    void landRetainsItsOtherLandTypes() {
+        harness.addToBattlefield(player1, new BlanketOfNight());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.SWAMP)).isTrue();
     }
 
     @Test
     void landCanTapForBlack() {
         harness.addToBattlefield(player1, new BlanketOfNight());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Quicksand());
+        // Quicksand has two printed activated abilities; the granted Swamp ability is index 2.
+        harness.activateAbility(player1, 1, 2, null, null);
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).get(1);
-        // Forest's printed mana is ON_TAP; the granted Swamp ability is activated ability 0.
-        harness.activateAbility(player1, 1, 0, null, null);
-
-        assertThat(forest.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
     @Test
     void opponentLandCanTapForBlack() {
         harness.addToBattlefield(player1, new BlanketOfNight());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Quicksand());
+        harness.activateAbility(player2, 0, 2, null, null);
 
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.activateAbility(player2, 0, 0, null, null);
-
-        assertThat(forest.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
     @Test
     void nonLandsAreNotAffected() {
         harness.addToBattlefield(player1, new BlanketOfNight());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new Archangel());
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).get(1);
-        StaticBonus bonus = gqs.computeStaticBonus(gd, bears);
-
-        assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.SWAMP);
+        assertThat(gqs.hasEffectiveSubtype(gd, angel, CardSubtype.SWAMP)).isFalse();
     }
 
     @Test
     void typeAndAbilityLostWhenBlanketLeaves() {
-        harness.addToBattlefield(player1, new BlanketOfNight());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent blanket = harness.addToBattlefieldAndReturn(player1, new BlanketOfNight());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Quicksand());
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(gqs.computeStaticBonus(gd, forest).grantedSubtypes()).contains(CardSubtype.SWAMP);
+        assertThat(gqs.hasEffectiveSubtype(gd, land, CardSubtype.SWAMP)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(blanket);
 
-        assertThat(gqs.computeStaticBonus(gd, forest).grantedSubtypes()).doesNotContain(CardSubtype.SWAMP);
-        // Only the printed green ON_TAP mana remains.
-        harness.tapPermanent(player1, 0);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, land, CardSubtype.SWAMP)).isFalse();
+        // Only Quicksand's printed colorless mana ability remains.
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }

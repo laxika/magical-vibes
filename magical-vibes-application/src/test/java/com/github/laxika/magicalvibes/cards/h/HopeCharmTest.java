@@ -1,24 +1,25 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.d.DarajaGriffin;
+import com.github.laxika.magicalvibes.cards.m.MortalWound;
+import com.github.laxika.magicalvibes.cards.r.RighteousAura;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HopeCharm.class, DarajaGriffin.class, MortalWound.class, RighteousAura.class})
 class HopeCharmTest extends BaseCardTest {
 
     @Nested
@@ -28,33 +29,53 @@ class HopeCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Grants first strike to the targeted creature")
         void grantsFirstStrike() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new DarajaGriffin());
             harness.setHand(player1, List.of(new HopeCharm()));
             harness.addMana(player1, ManaColor.WHITE, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 0, targetId);
+            harness.castInstant(player1, 0, 0, target.getId());
             harness.passBothPriorities();
 
-            assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.FIRST_STRIKE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         }
 
         @Test
         @DisplayName("First strike wears off at the cleanup step")
         void firstStrikeWearsOff() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new DarajaGriffin());
             harness.setHand(player1, List.of(new HopeCharm()));
             harness.addMana(player1, ManaColor.WHITE, 1);
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player1, 0, 0, targetId);
+            harness.castInstant(player1, 0, 0, target.getId());
             harness.passBothPriorities();
 
-            harness.forceStep(TurnStep.END_STEP);
-            harness.clearPriorityPassed();
+            harness.passUntil(TurnStep.CLEANUP);
+
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Can target a creature controlled by an opponent")
+        void canTargetOpponentCreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new DarajaGriffin());
+            harness.setHand(player1, List.of(new HopeCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+
+            harness.castInstant(player1, 0, 0, target.getId());
             harness.passBothPriorities();
 
-            assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.FIRST_STRIKE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Cannot target a noncreature permanent")
+        void cannotTargetNonCreaturePermanent() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new RighteousAura());
+            harness.setHand(player1, List.of(new HopeCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -72,7 +93,7 @@ class HopeCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(before + 2);
+            harness.assertLife(player2, before + 2);
         }
     }
 
@@ -83,8 +104,7 @@ class HopeCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Destroys the targeted Aura")
         void destroysAura() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            Permanent host = findPermanent(player2, "Grizzly Bears");
+            Permanent host = harness.addToBattlefieldAndReturn(player2, new DarajaGriffin());
             Permanent aura = addAuraAttachedTo(player2, host);
             harness.setHand(player1, List.of(new HopeCharm()));
             harness.addMana(player1, ManaColor.WHITE, 1);
@@ -93,25 +113,23 @@ class HopeCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
-            harness.assertInGraveyard(player2, "Pacifism");
+            harness.assertInGraveyard(player2, "Mortal Wound");
         }
 
         @Test
         @DisplayName("Cannot target a non-Aura enchantment")
         void cannotTargetNonAuraEnchantment() {
-            harness.addToBattlefield(player2, new AngelicChorus());
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new RighteousAura());
             harness.setHand(player1, List.of(new HopeCharm()));
             harness.addMana(player1, ManaColor.WHITE, 1);
 
-            UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
-
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, chorusId))
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
 
     private Permanent addAuraAttachedTo(Player player, Permanent host) {
-        Permanent aura = new Permanent(new Pacifism());
+        Permanent aura = new Permanent(new MortalWound());
         aura.setAttachedTo(host.getId());
         gd.playerBattlefields.get(player.getId()).add(aura);
         return aura;

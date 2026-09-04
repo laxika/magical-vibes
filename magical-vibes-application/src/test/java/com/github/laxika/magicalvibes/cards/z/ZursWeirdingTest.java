@@ -1,20 +1,25 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ZursWeirding.class, AirElemental.class, GrizzlyBears.class})
 class ZursWeirdingTest extends BaseCardTest {
 
     // ===== Draw replacement: any other player may pay 2 life =====
@@ -23,7 +28,7 @@ class ZursWeirdingTest extends BaseCardTest {
     @DisplayName("Opponent pays 2 life to send the drawn card to its owner's graveyard")
     void opponentPaysLifeToDenyDraw() {
         harness.addToBattlefield(player1, new ZursWeirding());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
@@ -44,7 +49,7 @@ class ZursWeirdingTest extends BaseCardTest {
     @DisplayName("Declining the payment lets the drawing player draw the revealed card")
     void decliningLetsPlayerDraw() {
         harness.addToBattlefield(player1, new ZursWeirding());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
@@ -64,7 +69,7 @@ class ZursWeirdingTest extends BaseCardTest {
     @DisplayName("Draw happens normally when the other player can't pay 2 life")
     void drawsNormallyWhenOpponentCannotPay() {
         harness.addToBattlefield(player1, new ZursWeirding());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLife(player2, 1);
 
         harness.forceActivePlayer(player1);
@@ -82,7 +87,7 @@ class ZursWeirdingTest extends BaseCardTest {
     @DisplayName("Opponent may pay 2 life to prevent an empty-library draw")
     void opponentMayPreventEmptyLibraryDraw() {
         harness.addToBattlefield(player1, new ZursWeirding());
-        gd.playerDecks.put(player1.getId(), new ArrayList<>());
+        harness.setLibrary(player1, List.of());
 
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
@@ -95,6 +100,59 @@ class ZursWeirdingTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The other player may deny an opponent's draw")
+    void otherPlayerMayDenyOpponentDraw() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        resolveDraw(player2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(FontOfAgonies.class)
+    @DisplayName("Paying to deny a draw counts as a life payment")
+    void denyingDrawTriggersLifePaymentAbilities() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        Permanent font = harness.addToBattlefieldAndReturn(player2, new FontOfAgonies());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveDraw(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player2, 18);
+
+        harness.passBothPriorities();
+
+        assertThat(font.getCounterCount(CounterType.BLOOD)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(PlatinumEmperion.class)
+    @DisplayName("A player whose life total cannot change cannot pay to deny a draw")
+    void cannotPayWhenLifeTotalCannotChange() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveDraw(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
     }
 
     // ===== Static: players play with their hands revealed =====
@@ -133,5 +191,12 @@ class ZursWeirdingTest extends BaseCardTest {
         List<String> p2Messages = harness.getConn2().getSentMessages();
         assertThat(p2Messages).anyMatch(m -> m.contains("\"opponentHand\":[]"));
         assertThat(p2Messages).noneMatch(m -> m.contains("\"opponentHand\"") && m.contains("Air Elemental"));
+    }
+
+    private void resolveDraw(Player drawingPlayer) {
+        harness.inMutationScope(() -> {
+            harness.getDrawService().resolveDrawCard(gd, drawingPlayer.getId());
+            harness.getPlayerInputService().processNextMayAbility(gd);
+        });
     }
 }

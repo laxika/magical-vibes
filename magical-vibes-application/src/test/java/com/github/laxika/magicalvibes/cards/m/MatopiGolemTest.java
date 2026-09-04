@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.d.DarkPrivilege;
+import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DarkPrivilege.class, MatopiGolem.class, PantherWarriors.class})
 class MatopiGolemTest extends BaseCardTest {
 
     private Permanent addGolemReady() {
@@ -19,19 +21,23 @@ class MatopiGolemTest extends BaseCardTest {
         return findPermanent(player1, "Matopi Golem");
     }
 
-    /** Puts a shielded Golem in front of a 3/3 attacker so combat damage forces the regeneration. */
-    private void blockHillGiant(Permanent golem) {
+    /** Puts a shielded Golem in front of a lethal attacker so combat damage forces regeneration. */
+    private void blockPantherWarriors(Permanent golem) {
         golem.setBlocking(true);
         golem.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new PantherWarriors());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        resolveCombat(player2);
+    }
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+    private void addForeignShield(Permanent golem) {
+        Permanent fodder = addCreatureReady(player1, new PantherWarriors());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DarkPrivilege());
+        aura.setAttachedTo(golem.getId());
+
+        harness.activateAbility(player1, 2, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
     }
 
@@ -55,7 +61,7 @@ class MatopiGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        blockHillGiant(findPermanent(player1, "Matopi Golem"));
+        blockPantherWarriors(findPermanent(player1, "Matopi Golem"));
 
         harness.assertOnBattlefield(player1, "Matopi Golem");
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
@@ -68,9 +74,9 @@ class MatopiGolemTest extends BaseCardTest {
     @DisplayName("A shield from another source regenerates without putting a counter")
     void foreignShieldPutsNoCounter() {
         Permanent golem = addGolemReady();
-        golem.setRegenerationShield(1);
+        addForeignShield(golem);
 
-        blockHillGiant(findPermanent(player1, "Matopi Golem"));
+        blockPantherWarriors(findPermanent(player1, "Matopi Golem"));
 
         harness.assertOnBattlefield(player1, "Matopi Golem");
         Permanent regenerated = findPermanent(player1, "Matopi Golem");
@@ -78,11 +84,27 @@ class MatopiGolemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller can choose Matopi Golem's shield when a plain shield also applies")
+    void canChooseMatopiShieldAmongMultipleShields() {
+        Permanent golem = addGolemReady();
+
+        addForeignShield(golem);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        blockPantherWarriors(golem);
+
+        Permanent regenerated = findPermanent(player1, "Matopi Golem");
+        assertThat(regenerated.getRegenerationShield()).isZero();
+        assertThat(regenerated.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Without a shield the Golem dies to lethal combat damage")
     void diesWithoutShield() {
         Permanent golem = addGolemReady();
 
-        blockHillGiant(golem);
+        blockPantherWarriors(golem);
 
         harness.assertNotOnBattlefield(player1, "Matopi Golem");
         harness.assertInGraveyard(player1, "Matopi Golem");

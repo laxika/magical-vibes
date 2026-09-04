@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.p.PaleBears;
+import com.github.laxika.magicalvibes.cards.s.Seraph;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +17,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoollySpider.class, Seraph.class, PaleBears.class})
 class WoollySpiderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Blocking a creature with flying triggers +0/+2 boost")
     void blockingFlyingCreatureTriggersBoost() {
-        Permanent spider = addReadySpider(player2);
-        addReadyAttacker(player1, new SuntailHawk());
+        Permanent spider = addCreatureReady(player2, new WoollySpider());
+        addReadyAttacker(player1, new Seraph());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -41,8 +43,8 @@ class WoollySpiderTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking a creature without flying does not trigger boost")
     void blockingNonFlyingCreatureDoesNotTrigger() {
-        Permanent spider = addReadySpider(player2);
-        addReadyAttacker(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player2, new WoollySpider());
+        addReadyAttacker(player1, new PaleBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -54,8 +56,8 @@ class WoollySpiderTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostResetsAtEndOfTurn() {
-        Permanent spider = addReadySpider(player2);
-        addReadyAttacker(player1, new SuntailHawk());
+        Permanent spider = addCreatureReady(player2, new WoollySpider());
+        addReadyAttacker(player1, new Seraph());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -70,18 +72,8 @@ class WoollySpiderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(3);
     }
 
-    private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new WoollySpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyAttacker(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+    private void addReadyAttacker(Player player, Card card) {
+        Permanent perm = addCreatureReady(player, card);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

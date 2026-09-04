@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SpittingDrake;
+import com.github.laxika.magicalvibes.cards.v.ViashivanDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KyscuDrake.class, SpittingDrake.class, ViashivanDragon.class})
 class KyscuDrakeTest extends BaseCardTest {
 
     @Test
@@ -77,15 +78,39 @@ class KyscuDrakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tutor ability sacrifices the activating Drake rather than another Kyscu Drake")
+    void tutorSacrificesActivatingDrake() {
+        Permanent source = addCreatureReady(player1, new KyscuDrake());
+        Permanent otherDrake = addCreatureReady(player1, new KyscuDrake());
+        UUID spittingId = harness.addToBattlefieldAndReturn(player1, new SpittingDrake()).getId();
+        harness.setLibrary(player1, List.of(new ViashivanDragon()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, spittingId);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId)
+                .containsExactly(otherDrake.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Kyscu Drake", "Spitting Drake");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(source.getOriginalCard().getId());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Viashivan Dragon");
+    }
+
+    @Test
     @DisplayName("Sacrificing with Spitting Drake searches out Viashivan Dragon onto the battlefield")
     void tutorPutsViashivanDragonOntoBattlefield() {
         addCreatureReady(player1, new KyscuDrake());
         UUID spittingId = harness.addToBattlefieldAndReturn(player1, new SpittingDrake()).getId();
 
-        Card dragon = new Card();
-        dragon.setName("Viashivan Dragon");
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(dragon, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ViashivanDragon()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handlePermanentChosen(player1, spittingId);
@@ -100,7 +125,7 @@ class KyscuDrakeTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).allMatch(c -> c.getName().equals("Viashivan Dragon"));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Viashivan Dragon");
     }

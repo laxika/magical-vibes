@@ -117,6 +117,7 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -163,6 +164,7 @@ public class ActivatedAbilityExecutionService {
     private final ManaAbilityEffectHandlerRegistry manaAbilityEffectHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
+    private final LandManaTypeSupport landManaTypeSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
 
@@ -1306,7 +1308,7 @@ public class ActivatedAbilityExecutionService {
                             .build());
                 }
             } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
-                Set<ManaColor> availableTypes = collectManaTypesSacrificedLandCouldProduce(permanent);
+                Set<ManaColor> availableTypes = collectManaTypesSacrificedLandCouldProduce(gameData, permanent);
                 if (availableTypes.size() == 1) {
                     ManaColor onlyType = ManaProductionSupport.effectiveColor(gameData, playerId,
                             permanent, availableTypes.iterator().next());
@@ -1697,7 +1699,7 @@ public class ActivatedAbilityExecutionService {
                     total += 1;
                 }
             } else if (effect instanceof AwardManaOfTypeSacrificedLandCouldProduceEffect) {
-                if (!collectManaTypesSacrificedLandCouldProduce(permanent).isEmpty()) {
+                if (!collectManaTypesSacrificedLandCouldProduce(gameData, permanent).isEmpty()) {
                     total += 1;
                 }
             } else if (effect instanceof AddNotedManaForLastExiledCardEffect) {
@@ -1846,55 +1848,17 @@ public class ActivatedAbilityExecutionService {
     private Set<ManaColor> collectManaTypesUntappedLandCouldProduce(GameData gameData, Permanent source) {
         UUID untappedLandId = source.getChosenPermanentId();
         Permanent land = untappedLandId == null ? null : gameQueryService.findPermanentById(gameData, untappedLandId);
-        Set<ManaColor> types = EnumSet.noneOf(ManaColor.class);
-        if (land == null || !land.getCard().hasType(CardType.LAND)) {
-            return types;
-        }
-        collectManaTypesFromEffects(land.getCard().getEffects(EffectSlot.ON_TAP), types);
-        for (ActivatedAbility ability : land.getCard().getActivatedAbilities()) {
-            collectManaTypesFromEffects(ability.getEffects(), types);
-        }
-        return types;
+        return landManaTypeSupport.manaTypesCouldProduce(gameData, land);
     }
 
     /**
      * The mana types the land sacrificed to pay this ability's cost could produce, colorless
-     * included (Squandered Resources). Reads the card recorded on the source at payment time,
-     * because the permanent itself is already gone.
+     * included (Squandered Resources). Reads the last-known permanent snapshot recorded on the
+     * source at payment time because the sacrificed permanent itself is already gone.
      */
-    private Set<ManaColor> collectManaTypesSacrificedLandCouldProduce(Permanent source) {
-        Card landCard = source.getChosenCard();
-        Set<ManaColor> types = EnumSet.noneOf(ManaColor.class);
-        if (landCard == null || !landCard.hasType(CardType.LAND)) {
-            return types;
-        }
-        collectManaTypesFromEffects(landCard.getEffects(EffectSlot.ON_TAP), types);
-        for (ActivatedAbility ability : landCard.getActivatedAbilities()) {
-            collectManaTypesFromEffects(ability.getEffects(), types);
-        }
-        return types;
-    }
-
-    private void collectManaTypesFromEffects(List<CardEffect> effects, Set<ManaColor> types) {
-        for (CardEffect effect : effects) {
-            if (effect instanceof AwardManaEffect award) {
-                if (award.color() != null) {
-                    types.add(award.color());
-                }
-            } else if (effect instanceof AwardRestrictedManaEffect award) {
-                types.add(award.color());
-            } else if (effect instanceof AwardHasteGrantingManaEffect award) {
-                types.add(award.color());
-            } else if (effect instanceof AwardUncounterableGrantingManaEffect award) {
-                types.add(award.color());
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                types.add(ManaColor.WHITE);
-                types.add(ManaColor.BLUE);
-                types.add(ManaColor.BLACK);
-                types.add(ManaColor.RED);
-                types.add(ManaColor.GREEN);
-            }
-        }
+    private Set<ManaColor> collectManaTypesSacrificedLandCouldProduce(GameData gameData, Permanent source) {
+        return landManaTypeSupport.manaTypesCouldProduce(
+                gameData, source.getChosenSacrificedPermanentSnapshot());
     }
 
     private void collectManaColorsFromEffects(List<CardEffect> effects, Set<CardColor> colors) {

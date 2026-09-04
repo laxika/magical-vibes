@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JungleBasin.class, Forest.class, Plains.class})
 class JungleBasinTest extends BaseCardTest {
 
     @Test
@@ -24,9 +26,7 @@ class JungleBasinTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent jungleBasin = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Jungle Basin"))
-                .findFirst().orElseThrow();
+        Permanent jungleBasin = findPermanent(player1, "Jungle Basin");
         assertThat(jungleBasin.isTapped()).isTrue();
     }
 
@@ -34,7 +34,7 @@ class JungleBasinTest extends BaseCardTest {
     @DisplayName("Auto-sacrifices when controller has no untapped Forest")
     void autoSacrificesWithoutUntappedForest() {
         harness.addToBattlefield(player1, new Forest());
-        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
+        findPermanent(player1, "Forest").tap();
         harness.addToBattlefield(player1, new Plains());
         playAndResolveEtb();
 
@@ -57,8 +57,7 @@ class JungleBasinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Jungle Basin");
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Forest"))).isTrue();
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -78,10 +77,37 @@ class JungleBasinTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(forestId));
 
         harness.assertOnBattlefield(player1, "Jungle Basin");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest")).count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Forest")).count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not use an untapped Forest controlled by an opponent")
+    void ignoresOpponentsUntappedForest() {
+        harness.addToBattlefield(player2, new Forest());
+        playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Jungle Basin");
+        harness.assertInGraveyard(player1, "Jungle Basin");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled Forest to its owner's hand")
+    void returnsControlledForestToOwnersHand() {
+        Forest forest = new Forest();
+        forest.setOwnerId(player2.getId());
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(forest));
+
+        playAndResolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Jungle Basin");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).contains(forest);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
     }
 
     @Test

@@ -3,15 +3,14 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(RiverDelta.class)
 class RiverDeltaTest extends BaseCardTest {
 
     @Test
@@ -44,10 +43,25 @@ class RiverDeltaTest extends BaseCardTest {
         riverDelta.tap();
         riverDelta.setCounterCount(CounterType.DEPLETION, 1);
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(riverDelta.isTapped()).isTrue();
         assertThat(riverDelta.getCounterCount(CounterType.DEPLETION)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each upkeep removes only one depletion counter")
+    void upkeepRemovesOnlyOneDepletionCounter() {
+        Permanent riverDelta = addRiverDelta();
+        riverDelta.tap();
+        riverDelta.setCounterCount(CounterType.DEPLETION, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(riverDelta.isTapped()).isTrue();
+        assertThat(riverDelta.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
     }
 
     @Test
@@ -56,23 +70,10 @@ class RiverDeltaTest extends BaseCardTest {
         Permanent riverDelta = addRiverDelta();
         riverDelta.tap();
 
-        advanceToPlayerOneUpkeep();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         assertThat(riverDelta.isTapped()).isFalse();
-    }
-
-    /**
-     * Ends player2's turn so play cascades into player1's untap step and then their upkeep, where
-     * the depletion-counter removal trigger resolves.
-     */
-    private void advanceToPlayerOneUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private Permanent addRiverDelta() {

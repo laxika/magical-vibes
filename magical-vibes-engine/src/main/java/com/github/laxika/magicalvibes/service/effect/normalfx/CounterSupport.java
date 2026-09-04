@@ -67,6 +67,11 @@ public class CounterSupport {
         return findCounterTarget(gameData, targetCardId, counterSource, false);
     }
 
+    public StackEntry findCounterTargetIgnoringCounterability(GameData gameData, UUID targetCardId,
+                                                               StackEntry counterSource) {
+        return findCounterTargetEntry(gameData, targetCardId, counterSource, false);
+    }
+
     public StackEntry findCounterTargetExcludingSource(GameData gameData, UUID targetCardId,
                                                         StackEntry counterSource) {
         return findCounterTarget(gameData, targetCardId, counterSource, true);
@@ -74,19 +79,8 @@ public class CounterSupport {
 
     private StackEntry findCounterTarget(GameData gameData, UUID targetCardId, StackEntry counterSource,
                                          boolean excludeSource) {
-        StackEntry targetEntry = null;
-        for (StackEntry se : gameData.stack) {
-            if (excludeSource && se == counterSource) {
-                continue;
-            }
-            if (se.getCard().getId().equals(targetCardId)) {
-                targetEntry = se;
-                break;
-            }
-        }
-
+        StackEntry targetEntry = findCounterTargetEntry(gameData, targetCardId, counterSource, excludeSource);
         if (targetEntry == null) {
-            log.info("Game {} - Counter target no longer on stack", gameData.id);
             return null;
         }
 
@@ -102,6 +96,25 @@ public class CounterSupport {
             return null;
         }
 
+        return targetEntry;
+    }
+
+    private StackEntry findCounterTargetEntry(GameData gameData, UUID targetCardId, StackEntry counterSource,
+                                              boolean excludeSource) {
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (excludeSource && se == counterSource) {
+                continue;
+            }
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter target no longer on stack", gameData.id);
+        }
         return targetEntry;
     }
 

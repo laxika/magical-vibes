@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
-import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
+import com.github.laxika.magicalvibes.cards.j.JaceUnravelerOfSecrets;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SoulBurn.class, BalduvianBears.class, EnergyStorm.class, InvasionOfInnistrad.class,
+        JaceUnravelerOfSecrets.class, Plains.class, SoulScarMage.class})
 class SoulBurnTest extends BaseCardTest {
 
     @Test
@@ -29,11 +32,10 @@ class SoulBurnTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 23);
     }
 
     @Test
@@ -47,28 +49,26 @@ class SoulBurnTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 4, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16); // 4 damage
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21); // +1 life (only 1B on X)
+        harness.assertLife(player2, 16); // 4 damage
+        harness.assertLife(player1, 21); // +1 life (only 1B on X)
     }
 
     @Test
     @DisplayName("Overkill on creature: life gain capped by toughness")
     void lifeGainCappedByToughness() {
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
+        harness.addToBattlefield(player2, new BalduvianBears()); // 2/2
         harness.setHand(player1, List.of(new SoulBurn()));
         harness.addMana(player1, ManaColor.BLACK, 7); // X=4
         harness.setLife(player1, 20);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 4, bearsId);
-        harness.passBothPriorities();
+        UUID bearsId = harness.getPermanentId(player2, "Balduvian Bears");
+        harness.castAndResolveSorcery(player1, 0, 4, bearsId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
         // 4 damage dealt, 4B on X, but toughness was 2 → gain 2
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -79,11 +79,10 @@ class SoulBurnTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 3);
 
-        harness.castSorcery(player1, 0, 5, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(-2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23); // +3, not +5
+        harness.assertLife(player2, -2);
+        harness.assertLife(player1, 23); // +3, not +5
     }
 
     @Test
@@ -109,11 +108,10 @@ class SoulBurnTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20); // 0B on X → 0 life
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20); // 0B on X → 0 life
     }
 
     /**
@@ -130,28 +128,40 @@ class SoulBurnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6); // X=3
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 3, battle.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, battle.getId());
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Overkill on a battle does not cap life gain by defense")
+    void lifeGainForBattleOverkillUsesAllDamageDealt() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 9); // X=6
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 6, battle.getId());
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isZero();
+        harness.assertLife(player1, 26);
     }
 
     @Test
     @DisplayName("Overkill on planeswalker: life gain capped by loyalty")
     void lifeGainCappedByPlaneswalkerLoyalty() {
-        Permanent planeswalker = new Permanent(new GarrukWildspeaker());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceUnravelerOfSecrets());
         planeswalker.setCounterCount(CounterType.LOYALTY, 2);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.setHand(player1, List.of(new SoulBurn()));
         harness.addMana(player1, ManaColor.BLACK, 7); // X=4
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 4, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, planeswalker.getId());
 
-        harness.assertNotOnBattlefield(player2, "Garruk Wildspeaker");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertNotOnBattlefield(player2, "Jace, Unraveler of Secrets");
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -163,11 +173,10 @@ class SoulBurnTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -180,5 +189,21 @@ class SoulBurnTest extends BaseCardTest {
         UUID plainsId = harness.getPermanentId(player2, "Plains");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, plainsId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Life gain counts damage replaced by -1/-1 counters")
+    void lifeGainCountsDamageDealtAsMinusOneMinusOneCounters() {
+        harness.addToBattlefield(player1, new SoulScarMage());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new SoulBurn()));
+        harness.addMana(player1, ManaColor.BLACK, 4); // X=1
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 21);
     }
 }

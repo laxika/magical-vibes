@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GlacialWall;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Aggression.class, BalduvianBears.class, GlacialWall.class, SnowCoveredPlains.class})
 class AggressionTest extends BaseCardTest {
 
     private Permanent attach(Player auraController, Permanent host) {
@@ -26,10 +29,7 @@ class AggressionTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player owner) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
-        return perm;
+        return addCreatureReady(owner, new BalduvianBears());
     }
 
     private void runEndStep(Player player) {
@@ -61,16 +61,17 @@ class AggressionTest extends BaseCardTest {
         runEndStep(player1);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
-        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
     }
 
     @Test
     @DisplayName("Enchanted creature survives if it attacked this turn")
     void sparesAttacker() {
         Permanent bears = addCreature(player1);
-        bears.setAttackedThisTurn(true);
         attach(player1, bears);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
+        resolveCombat();
 
         runEndStep(player1);
 
@@ -116,13 +117,41 @@ class AggressionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a Wall")
     void cannotEnchantWall() {
-        harness.addToBattlefield(player1, new WallOfAir());
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new GlacialWall());
         harness.setHand(player1, List.of(new Aggression()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent wall = findPermanent(player1, "Wall of Air");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, wall.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantNonCreature() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
+        harness.setHand(player1, List.of(new Aggression()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can enchant a non-Wall creature")
+    void enchantsNonWallCreature() {
+        Permanent bears = addCreature(player1);
+        harness.setHand(player1, List.of(new Aggression()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof Aggression)
+                .findFirst()
+                .orElseThrow();
+        assertThat(aura.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 }

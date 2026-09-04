@@ -1,41 +1,37 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.a.AbunaAcolyte;
-import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuidingSpirit;
+import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
+import com.github.laxika.magicalvibes.cards.q.QuirionDruid;
+import com.github.laxika.magicalvibes.cards.c.CoralAtoll;
 import com.github.laxika.magicalvibes.cards.s.SpittingDrake;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KatabaticWinds.class, SpittingDrake.class, PantherWarriors.class, GuidingSpirit.class,
+        QuirionDruid.class, CoralAtoll.class})
 class KatabaticWindsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying creature cannot attack while Katabatic Winds is on the battlefield")
     void flyingCreatureCannotAttack() {
         harness.addToBattlefield(player1, new KatabaticWinds());
-        Permanent flyer = addReadyCreature(player1, true);
-
-        beginAttack(player1);
+        Permanent flyer = addCreatureReady(player1, new SpittingDrake());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(flyer);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(idx)))
+        assertThatThrownBy(() -> declareAttackers(List.of(idx)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -44,28 +40,28 @@ class KatabaticWindsTest extends BaseCardTest {
     void nonFlyingCreatureCanAttack() {
         harness.addToBattlefield(player1, new KatabaticWinds());
         harness.setLife(player2, 20);
-        Permanent ground = addReadyCreature(player1, false);
-
-        beginAttack(player1);
+        Permanent ground = addCreatureReady(player1, new PantherWarriors());
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(ground);
-        gs.declareAttackers(gd, player1, List.of(idx));
+        declareAttackers(List.of(idx));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
     @Test
     @DisplayName("Flying creature cannot block while Katabatic Winds is on the battlefield")
     void flyingCreatureCannotBlock() {
         harness.addToBattlefield(player1, new KatabaticWinds());
-        Permanent attacker = addReadyCreature(player1, false);
+        Permanent attacker = addCreatureReady(player1, new PantherWarriors());
         attacker.setAttacking(true);
-        addReadyCreature(player2, true);
+        Permanent flyer = addCreatureReady(player2, new SpittingDrake());
 
-        beginBlock();
+        prepareDeclareBlockers();
 
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIdx))))
+        int flyerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(flyer);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(flyerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -73,13 +69,14 @@ class KatabaticWindsTest extends BaseCardTest {
     @DisplayName("Non-flying creature blocks normally while Katabatic Winds is on the battlefield")
     void nonFlyingCreatureCanBlock() {
         harness.addToBattlefield(player1, new KatabaticWinds());
-        Permanent attacker = addReadyCreature(player1, false);
+        Permanent attacker = addCreatureReady(player1, new PantherWarriors());
         attacker.setAttacking(true);
-        addReadyCreature(player2, false);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
 
-        beginBlock();
+        prepareDeclareBlockers();
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIdx)));
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }
@@ -88,12 +85,10 @@ class KatabaticWindsTest extends BaseCardTest {
     @DisplayName("Flying creature cannot activate a {T} ability")
     void flyingCreatureCannotActivateTapAbility() {
         harness.addToBattlefield(player1, new KatabaticWinds());
-        Permanent birds = new Permanent(new BirdsOfParadise());
-        birds.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(birds);
-        int birdsIdx = gd.playerBattlefields.get(player1.getId()).indexOf(birds);
+        Permanent spirit = addCreatureReady(player2, new GuidingSpirit());
+        int spiritIdx = gd.playerBattlefields.get(player2.getId()).indexOf(spirit);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, birdsIdx, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, spiritIdx, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
@@ -102,9 +97,7 @@ class KatabaticWindsTest extends BaseCardTest {
     @DisplayName("Flying creature can still activate a non-tap ability")
     void flyingCreatureCanActivateNonTapAbility() {
         harness.addToBattlefield(player1, new KatabaticWinds());
-        Permanent drake = new Permanent(new SpittingDrake());
-        drake.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(drake);
+        Permanent drake = addCreatureReady(player1, new SpittingDrake());
         int drakeIdx = gd.playerBattlefields.get(player1.getId()).indexOf(drake);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -118,66 +111,55 @@ class KatabaticWindsTest extends BaseCardTest {
     @DisplayName("Non-flying creature can still activate a {T} ability")
     void nonFlyingCreatureCanActivateTapAbility() {
         harness.addToBattlefield(player1, new KatabaticWinds());
-        Permanent acolyte = new Permanent(new AbunaAcolyte());
-        acolyte.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(acolyte);
-        int acolyteIdx = gd.playerBattlefields.get(player1.getId()).indexOf(acolyte);
-        Permanent target = new Permanent(new GrizzlyBears());
-        target.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent druid = addCreatureReady(player1, new QuirionDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CoralAtoll());
+        int druidIdx = gd.playerBattlefields.get(player1.getId()).indexOf(druid);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.activateAbility(player1, acolyteIdx, null, target.getId());
+        harness.activateAbility(player1, druidIdx, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(druid.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Restriction lifts when Katabatic Winds leaves the battlefield")
     void restrictionLiftsWhenKatabaticWindsLeaves() {
-        Permanent winds = new Permanent(new KatabaticWinds());
-        gd.playerBattlefields.get(player1.getId()).add(winds);
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new KatabaticWinds());
         harness.setLife(player2, 20);
-        Permanent flyer = addReadyCreature(player1, true);
+        Permanent flyer = addCreatureReady(player1, new SpittingDrake());
 
         gd.playerBattlefields.get(player1.getId()).remove(winds);
 
-        beginAttack(player1);
-
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(flyer);
-        gs.declareAttackers(gd, player1, List.of(idx));
+        declareAttackers(List.of(idx));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    private Permanent addReadyCreature(Player player, boolean flying) {
-        Card card = new Card();
-        card.setName(flying ? "Test Flyer" : "Test Grounder");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.GREEN);
-        card.setColors(List.of(CardColor.GREEN));
-        card.setPower(2);
-        card.setToughness(2);
-        if (flying) {
-            card.setKeywords(EnumSet.of(Keyword.FLYING));
-        }
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Katabatic Winds phases out during its controller's untap step and phases back in the next one")
+    void phasesOutAndInOnControllersUntapSteps() {
+        Permanent winds = harness.addToBattlefieldAndReturn(player1, new KatabaticWinds());
+
+        advanceTurn();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(winds);
+
+        advanceTurn();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(winds);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(winds);
+
+        advanceTurn();
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(winds);
+
+        advanceTurn();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(winds);
     }
 
-    private void beginAttack(Player attacker) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+    private void advanceTurn() {
+        harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
-
-    private void beginBlock() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        harness.passUntil(TurnStep.UNTAP);
     }
 }

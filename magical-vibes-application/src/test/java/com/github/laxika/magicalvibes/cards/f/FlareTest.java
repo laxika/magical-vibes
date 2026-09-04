@@ -3,21 +3,21 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flare.class, GrizzlyBears.class, GarrukWildspeaker.class})
+@CardUsed({Flare.class, GarrukWildspeaker.class, GrizzlyBears.class})
 class FlareTest extends BaseCardTest {
 
     @Test
@@ -26,7 +26,6 @@ class FlareTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Flare()));
         harness.addMana(player1, ManaColor.RED, 3);
-        GameData gd = harness.getGameData();
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -42,14 +41,14 @@ class FlareTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to a target creature")
     void deals1DamageToCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Flare()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, creature.getId());
+        harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
         // 1 damage does not destroy a 2/2, which survives on the battlefield.
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -70,12 +69,26 @@ class FlareTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not schedule the draw when its only target becomes illegal")
+    void doesNotScheduleDrawWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flare()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Flare()));
         harness.addMana(player1, ManaColor.RED, 3);
-        GameData gd = harness.getGameData();
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();

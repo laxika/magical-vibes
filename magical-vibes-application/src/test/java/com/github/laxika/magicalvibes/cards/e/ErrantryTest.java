@@ -6,26 +6,43 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Errantry.class, GrizzlyBears.class, FountainOfYouth.class})
 class ErrantryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature gets +3/+0")
     void enchantedCreatureGetsBoost() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attachErrantry(bears);
 
-        Permanent aura = new Permanent(new Errantry());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
 
+    @Test
+    @DisplayName("Errantry can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Errantry()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(aura -> aura.getCard() instanceof Errantry
+                        && bears.getId().equals(aura.getAttachedTo()));
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -35,20 +52,10 @@ class ErrantryTest extends BaseCardTest {
     void canAttackAlone() {
         harness.setLife(player2, 20);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        attachErrantry(bears);
 
-        Permanent aura = new Permanent(new Errantry());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         // Grizzly Bears (2/2) with Errantry (+3/+0) = 5 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
@@ -57,17 +64,9 @@ class ErrantryTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can't attack alongside another creature")
     void cannotAttackWithAnother() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        Permanent aura = new Permanent(new Errantry());
-        aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-
-        Permanent other = new Permanent(new GrizzlyBears());
-        other.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(other);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        attachErrantry(bears);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -84,20 +83,10 @@ class ErrantryTest extends BaseCardTest {
     void otherCreaturesUnaffected() {
         harness.setLife(player2, 20);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent other = new Permanent(new GrizzlyBears());
-        other.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(other);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
 
         // Two unenchanted Grizzly Bears (2/2 each) = 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -106,7 +95,6 @@ class ErrantryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Errantry")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new Errantry()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -116,5 +104,25 @@ class ErrantryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Errantry's effects end when it becomes unattached")
+    void effectsEndWhenUnattached() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = attachErrantry(bears);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        aura.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThatCode(() -> declareAttackers(List.of(0, 1))).doesNotThrowAnyException();
+    }
+
+    private Permanent attachErrantry(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Errantry());
+        aura.setAttachedTo(creature.getId());
+        return aura;
     }
 }

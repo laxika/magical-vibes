@@ -717,6 +717,9 @@ public class GameData {
     /** Reflexive Equipment-unattach triggers registered until the end of the current turn. */
     public final Map<UUID, List<ControlLossUnattachTrigger>> controlLossUnattachTriggers =
             new ConcurrentHashMap<>();
+    /** Delayed tap triggers registered until the watched permanent changes controllers. */
+    public final Map<UUID, List<ControlLossTapTrigger>> controlLossTapTriggers =
+            new ConcurrentHashMap<>();
     /** Number of end steps that have begun during the current turn. */
     public int endStepsThisTurn;
     /** Extra end steps waiting to occur during the current turn. */
@@ -2283,11 +2286,6 @@ public class GameData {
      *  end of that controller's next upkeep. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
-    /** Permanents whose temporary control effect carries a "tap it when you lose control" rider
-     *  (Magus of the Unseen). Tapped and cleared during the cleanup step, when the until-end-of-turn
-     *  control effect expires and the permanent reverts to its owner. */
-    public final Set<UUID> permanentsToTapWhenControlLost = ConcurrentHashMap.newKeySet();
-
     /**
      * Opaque slot for the engine's memoized CR 613 layered board
      * ({@code LayerSystemService.BoardCache} — the engine owns the type, this module cannot
@@ -2349,6 +2347,22 @@ public class GameData {
 
     public List<ControlLossUnattachTrigger> controlLossUnattachTriggersFor(UUID equipmentId) {
         List<ControlLossUnattachTrigger> triggers = controlLossUnattachTriggers.get(equipmentId);
+        if (triggers == null) {
+            return List.of();
+        }
+        synchronized (triggers) {
+            return List.copyOf(triggers);
+        }
+    }
+
+    public void registerControlLossTapTrigger(UUID permanentId, UUID controllerId, Card sourceCard) {
+        controlLossTapTriggers
+                .computeIfAbsent(permanentId, ignored -> Collections.synchronizedList(new ArrayList<>()))
+                .add(new ControlLossTapTrigger(controllerId, sourceCard));
+    }
+
+    public List<ControlLossTapTrigger> controlLossTapTriggersFor(UUID permanentId) {
+        List<ControlLossTapTrigger> triggers = controlLossTapTriggers.get(permanentId);
         if (triggers == null) {
             return List.of();
         }
@@ -4485,6 +4499,9 @@ public class GameData {
         this.controlLossUnattachTriggers.forEach((equipmentId, triggers) ->
                 copy.controlLossUnattachTriggers.put(equipmentId,
                         Collections.synchronizedList(new ArrayList<>(triggers))));
+        this.controlLossTapTriggers.forEach((permanentId, triggers) ->
+                copy.controlLossTapTriggers.put(permanentId,
+                        Collections.synchronizedList(new ArrayList<>(triggers))));
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.chainsDrawReplacementsApplied.putAll(this.chainsDrawReplacementsApplied);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
@@ -5214,7 +5231,6 @@ public class GameData {
         copy.targetSorceryDamageRedirectShields.addAll(this.targetSorceryDamageRedirectShields);
         copy.pendingRedirectDamage.addAll(this.pendingRedirectDamage);
         copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
-        copy.permanentsToTapWhenControlLost.addAll(this.permanentsToTapWhenControlLost);
 
         // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---
         copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.h.HopeCharm;
+import com.github.laxika.magicalvibes.cards.j.JamuraanLion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TarPitWarrior.class, HopeCharm.class, JamuraanLion.class})
 class TarPitWarriorTest extends BaseCardTest {
 
     @Test
@@ -19,15 +21,14 @@ class TarPitWarriorTest extends BaseCardTest {
     void sacrificesWhenTargetedBySpell() {
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new TarPitWarrior());
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, warrior.getId());
+        harness.setHand(player2, List.of(new HopeCharm()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, 0, warrior.getId());
 
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(warrior.getId()));
+        harness.assertNotOnBattlefield(player1, "Tar Pit Warrior");
         harness.assertInGraveyard(player1, "Tar Pit Warrior");
     }
 
@@ -36,18 +37,17 @@ class TarPitWarriorTest extends BaseCardTest {
     void sacrificesWhenTargetedByAbility() {
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new TarPitWarrior());
 
-        harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = findPermanent(player2, "Icy Manipulator");
-        icy.setSummoningSick(false);
+        Permanent lion = harness.addToBattlefieldAndReturn(player2, new JamuraanLion());
+        lion.setSummoningSick(false);
 
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(icy), null, warrior.getId());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(lion),
+                null, warrior.getId());
 
         assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(warrior.getId()));
+        harness.assertNotOnBattlefield(player1, "Tar Pit Warrior");
         harness.assertInGraveyard(player1, "Tar Pit Warrior");
     }
 
@@ -56,12 +56,11 @@ class TarPitWarriorTest extends BaseCardTest {
     void staysWhenNotTargeted() {
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new TarPitWarrior());
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
+        harness.setHand(player2, List.of(new HopeCharm()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, 1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(warrior.getId()));
+        harness.assertOnBattlefield(player1, "Tar Pit Warrior");
     }
 }

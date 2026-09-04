@@ -1047,10 +1047,20 @@ public class DamageSupport {
             // shared pipeline has applied prevention shields, redirects, damage multipliers and
             // spell lifelink (CR 702.15b). The planeswalker arm above predates that pipeline and
             // still open-codes its own; the two must not diverge again.
+            Map<UUID, Integer> damageBefore = cantRegenerate
+                    ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn)
+                    : Map.of();
             int damageDealt = dealCreatureDamage(gameData, entry, targetPermanent, rawDamage,
                     cantBeRedirected);
-            if (cantRegenerate && damageDealt > 0) {
-                targetPermanent.setCantRegenerateThisTurn(true);
+            if (cantRegenerate) {
+                gameData.damageDealtToPermanentsThisTurn.forEach((permanentId, totalDamage) -> {
+                    if (totalDamage > damageBefore.getOrDefault(permanentId, 0)) {
+                        Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+                        if (damagedPermanent != null && gameQueryService.isCreature(gameData, damagedPermanent)) {
+                            damagedPermanent.setCantRegenerateThisTurn(true);
+                        }
+                    }
+                });
             }
             return damageDealt;
         }

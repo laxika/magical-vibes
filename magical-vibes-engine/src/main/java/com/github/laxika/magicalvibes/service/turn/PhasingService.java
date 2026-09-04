@@ -277,6 +277,9 @@ public class PhasingService {
      * so only the object's own types and animation/awakening state count.
      */
     private static boolean isPhasedOutCreature(Permanent permanent) {
+        if (permanent.isFaceDown()) {
+            return permanent.getFaceDownCardTypes().contains(CardType.CREATURE);
+        }
         if (permanent.getCard().hasType(CardType.CREATURE)) {
             return true;
         }

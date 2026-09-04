@@ -150,4 +150,20 @@ class ArcticFoxesTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("A tapped snow land still enables the restriction")
+    void tappedSnowLandStillEnablesRestriction() {
+        snowLandOnDefender().tap();
+        Permanent blocker = addCreatureReady(player2, new BalduvianBarbarians());
+        Permanent fox = foxAttacking();
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(fox);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

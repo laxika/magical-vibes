@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TalruumChampion.class, YouthfulKnight.class})
 class TalruumChampionTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,26 @@ class TalruumChampionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("When the Champion becomes blocked by multiple creatures, each blocker loses first strike")
+    void becomesBlockedRemovesFirstStrikeFromEachBlocker() {
+        Permanent champion = addCreatureReady(player1, new TalruumChampion());
+        champion.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new YouthfulKnight());
+        Permanent secondBlocker = addCreatureReady(player2, new YouthfulKnight());
+        Permanent bystander = addCreatureReady(player2, new YouthfulKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, firstBlocker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, secondBlocker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bystander, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test

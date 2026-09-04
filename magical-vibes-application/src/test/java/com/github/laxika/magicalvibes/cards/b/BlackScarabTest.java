@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.d.Dystopia;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnderworldDreams;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlackScarab.class, DrudgeSkeletons.class, GrizzlyBears.class, UnderworldDreams.class})
 class BlackScarabTest extends BaseCardTest {
 
     @Test
@@ -23,13 +25,12 @@ class BlackScarabTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent aura = new Permanent(new BlackScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         Permanent blocker = addCreatureReady(player2, new DrudgeSkeletons());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -44,13 +45,12 @@ class BlackScarabTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent aura = new Permanent(new BlackScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -65,9 +65,8 @@ class BlackScarabTest extends BaseCardTest {
     void noBoostWithoutOpponentBlackPermanent() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new BlackScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -78,9 +77,8 @@ class BlackScarabTest extends BaseCardTest {
     void boostedWhenOpponentControlsBlackPermanent() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new BlackScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player2, new DrudgeSkeletons());
 
@@ -93,11 +91,10 @@ class BlackScarabTest extends BaseCardTest {
     void boostedWhenOpponentControlsBlackNonCreaturePermanent() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new BlackScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        harness.addToBattlefield(player2, new Dystopia());
+        harness.addToBattlefield(player2, new UnderworldDreams());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -108,9 +105,8 @@ class BlackScarabTest extends BaseCardTest {
     void ownBlackPermanentDoesNotBoost() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new BlackScarab());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.addToBattlefield(player1, new DrudgeSkeletons());
 
@@ -118,10 +114,42 @@ class BlackScarabTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    void boostEndsWhenOpponentBlackPermanentLeaves() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlackScarab());
+        aura.setAttachedTo(bears.getId());
+
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player2.getId()).remove(skeletons);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void canEnchantCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BlackScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotEnchantNonCreature() {
+        Permanent underworldDreams = harness.addToBattlefieldAndReturn(player1, new UnderworldDreams());
+        harness.setHand(player1, List.of(new BlackScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, underworldDreams.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -1,16 +1,21 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CaribouRange.class, Forest.class})
 class CaribouRangeTest extends BaseCardTest {
 
     @Test
@@ -33,6 +38,9 @@ class CaribouRangeTest extends BaseCardTest {
                 .satisfies(caribou -> {
                     assertThat(caribou.getCard().getPower()).isEqualTo(0);
                     assertThat(caribou.getCard().getToughness()).isEqualTo(1);
+                    assertThat(caribou.getCard().getColor()).isEqualTo(CardColor.WHITE);
+                    assertThat(caribou.getCard().getSubtypes()).containsExactly(CardSubtype.CARIBOU);
+                    assertThat(caribou.getCard().hasType(CardType.CREATURE)).isTrue();
                     assertThat(caribou.getCard().isToken()).isTrue();
                 });
     }
@@ -80,11 +88,9 @@ class CaribouRangeTest extends BaseCardTest {
     }
 
     private Range attachedRange(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player.getId()).getFirst();
-        Permanent aura = new Permanent(new CaribouRange());
+        Permanent forest = harness.addToBattlefieldAndReturn(player, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new CaribouRange());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return new Range(forest, aura);
     }
 }

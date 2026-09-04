@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,8 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionGreen.class, GrizzlyBears.class, Hurricane.class,
-        MerfolkOfThePearlTrident.class})
+@CardUsed({CircleOfProtectionGreen.class, BalduvianBears.class, ZuranSpellcaster.class, Hurricane.class, GrizzlyBears.class, MerfolkOfThePearlTrident.class})
 class CircleOfProtectionGreenTest extends BaseCardTest {
 
     @Test
@@ -34,6 +35,23 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Only green sources are offered when other colors are present")
+    void onlyGreenSourcesAreValidChoices() {
+        addReadyCircle(player1);
+        Permanent greenSource = addReadyGreenCreature(player2);
+        Permanent nonGreenSource = addReadyNonGreenCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(greenSource.getId()).doesNotContain(nonGreenSource.getId());
     }
 
     @Test
@@ -108,25 +126,26 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Prevents damage from a green spell chosen while it is on the stack")
-    void preventsDamageFromGreenSpellOnStack() {
+    @DisplayName("Prevents the next noncombat damage from a green spell on the stack")
+    void preventsNextNoncombatDamageFromGreenSpell() {
         harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
         addReadyCircle(player1);
         Hurricane hurricane = new Hurricane();
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(hurricane));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castSorcery(player2, 0, 1);
+        harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(hurricane.getId());
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(hurricane.getId());
+
         harness.handlePermanentChosen(player1, hurricane.getId());
         harness.passBothPriorities();
 
@@ -157,14 +176,42 @@ class CircleOfProtectionGreenTest extends BaseCardTest {
     }
 
     private Permanent addReadyCircle(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new CircleOfProtectionGreen());
+        return addCreatureReady(player, new CircleOfProtectionGreen());
     }
 
     private Permanent addReadyGreenCreature(Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+        return addCreatureReady(player, new BalduvianBears());
     }
 
     private Permanent addReadyNonGreenCreature(Player player) {
-        return addCreatureReady(player, new MerfolkOfThePearlTrident());
+        return addCreatureReady(player, new ZuranSpellcaster());
+    }
+
+    @Test
+    @DisplayName("Prevents damage from a green spell chosen while it is on the stack")
+    void preventsDamageFromGreenSpellOnStack() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Hurricane hurricane = new Hurricane();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(hurricane));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player2, 0, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(hurricane.getId());
+        harness.handlePermanentChosen(player1, hurricane.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 }

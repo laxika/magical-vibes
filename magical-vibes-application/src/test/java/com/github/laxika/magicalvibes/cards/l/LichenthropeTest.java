@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.Fireblast;
+import com.github.laxika.magicalvibes.cards.m.MeliraSylvokOutcast;
+import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,22 +16,22 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Lichenthrope.class, Fireblast.class, Python.class})
 class LichenthropeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Shock damage is replaced with -1/-1 counters")
-    void shockDamageReplacedWithCounters() {
+    @DisplayName("Fireblast damage is replaced with -1/-1 counters")
+    void fireblastDamageReplacedWithCounters() {
         harness.addToBattlefield(player2, new Lichenthrope());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
 
         UUID id = harness.getPermanentId(player2, "Lichenthrope");
-        harness.castInstant(player1, 0, id);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, id);
 
         harness.assertOnBattlefield(player2, "Lichenthrope");
         Permanent lichenthrope = findPermanent(player2, "Lichenthrope");
-        assertThat(lichenthrope.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(lichenthrope.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
         assertThat(lichenthrope.getMarkedDamage()).isZero();
     }
 
@@ -42,18 +43,31 @@ class LichenthropeTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new Python());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player2, "Lichenthrope");
-        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed(MeliraSylvokOutcast.class)
+    @DisplayName("Damage replacement respects an effect that forbids -1/-1 counters")
+    void damageReplacementRespectsMinusCounterRestriction() {
+        harness.addToBattlefield(player2, new MeliraSylvokOutcast());
+        Permanent lichenthrope = harness.addToBattlefieldAndReturn(player2, new Lichenthrope());
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, lichenthrope.getId());
+
+        harness.assertOnBattlefield(player2, "Lichenthrope");
+        assertThat(lichenthrope.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(lichenthrope.getMarkedDamage()).isZero();
     }
 
     @Test

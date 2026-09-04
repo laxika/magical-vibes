@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AncientTomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElder;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InfernalDarkness.class, AncientTomb.class, Forest.class, FyndhornElder.class,
+        Island.class, Mountain.class, Plains.class})
 class InfernalDarknessTest extends BaseCardTest {
 
     @Test
@@ -50,6 +54,18 @@ class InfernalDarknessTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Does not replace mana from nonland permanents")
+    void doesNotReplaceNonlandMana() {
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        addCreatureReady(player1, new FyndhornElder());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
     }
 
     @Test
@@ -118,6 +134,35 @@ class InfernalDarknessTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(darkness);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("An unpaid cumulative upkeep sacrifices Infernal Darkness")
+    void cannotPayCumulativeUpkeep() {
+        Permanent darkness = harness.addToBattlefieldAndReturn(player1, new InfernalDarkness());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(darkness);
+        harness.assertInGraveyard(player1, "Infernal Darkness");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void triggersOnlyDuringControllerUpkeep() {
+        Permanent darkness = harness.addToBattlefieldAndReturn(player1, new InfernalDarkness());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(darkness.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(darkness);
     }
 
     @Test

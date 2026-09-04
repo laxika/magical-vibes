@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MountainTitan.class, DarkRitual.class, MountainGoat.class})
 class MountainTitanTest extends BaseCardTest {
 
     @Test
@@ -21,10 +22,9 @@ class MountainTitanTest extends BaseCardTest {
     void blackSpellPutsCounter() {
         Permanent titan = activateTitan();
 
-        harness.setHand(player1, List.of(new ScatheZombies()));
+        harness.setHand(player1, List.of(new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities(); // resolve the delayed trigger
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -35,9 +35,8 @@ class MountainTitanTest extends BaseCardTest {
     void nonblackSpellPutsNoCounter() {
         Permanent titan = activateTitan();
 
-        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setHand(player1, List.of(new MountainGoat()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -51,10 +50,9 @@ class MountainTitanTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new ScatheZombies()));
+        harness.setHand(player1, List.of(new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castInstant(player1, 0);
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -64,29 +62,69 @@ class MountainTitanTest extends BaseCardTest {
     void everyBlackSpellTriggers() {
         Permanent titan = activateTitan();
 
-        harness.setHand(player1, List.of(new ScatheZombies(), new ScatheZombies()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castCreature(player1, 0);
-        resolveStack();
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
-        resolveStack();
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    private void resolveStack() {
-        int guard = 0;
-        while (!gd.stack.isEmpty() && guard++ < 10) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("An opponent's black spell does not trigger the ability")
+    void opponentBlackSpellPutsNoCounter() {
+        Permanent titan = activateTitan();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each activation creates an independent trigger")
+    void multipleActivationsEachPutCounter() {
+        Permanent titan = activateTitan();
+
+        int titanIndex = gd.playerBattlefields.get(player1.getId()).indexOf(titan);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, titanIndex, null, null);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A multicolored black-red spell triggers the ability")
+    void multicoloredBlackSpellPutsCounter() {
+        Permanent titan = activateTitan();
+
+        harness.setHand(player1, List.of(new MountainTitan()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -102,10 +140,9 @@ class MountainTitanTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new ScatheZombies()));
+        harness.setHand(player1, List.of(new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castInstant(player1, 0);
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

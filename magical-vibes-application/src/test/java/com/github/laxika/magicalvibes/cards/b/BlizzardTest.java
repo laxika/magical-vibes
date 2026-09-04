@@ -1,57 +1,30 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Blizzard.class, SnowCoveredForest.class, AdarkarWastes.class,
+        KjeldoranSkyknight.class, BalduvianBears.class})
 class BlizzardTest extends BaseCardTest {
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private void addSnowLand(Player player) {
-        Permanent snowLand = new Permanent(new Forest());
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player.getId()).add(snowLand);
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
-    }
 
     @Test
     @DisplayName("Castable while controlling a snow land")
     void castableWithSnowLand() {
-        addSnowLand(player1);
+        harness.addToBattlefield(player1, new SnowCoveredForest());
         harness.setHand(player1, List.of(new Blizzard()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -75,7 +48,7 @@ class BlizzardTest extends BaseCardTest {
     @Test
     @DisplayName("A non-snow land does not enable casting")
     void nonSnowLandDoesNotEnableCasting() {
-        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new AdarkarWastes());
         harness.setHand(player1, List.of(new Blizzard()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -87,13 +60,13 @@ class BlizzardTest extends BaseCardTest {
     @Test
     @DisplayName("Flying creatures stay tapped; non-fliers untap")
     void flyingCreaturesDontUntap() {
-        addReady(player1, new Blizzard());
-        Permanent flier = addReady(player1, new AirElemental());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Blizzard());
+        Permanent flier = addCreatureReady(player1, new KjeldoranSkyknight());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         flier.tap();
         bears.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(flier.isTapped()).isTrue();
         assertThat(bears.isTapped()).isFalse();
@@ -102,11 +75,11 @@ class BlizzardTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's fliers also don't untap")
     void opponentFliersDontUntap() {
-        addReady(player1, new Blizzard());
-        Permanent flier = addReady(player2, new AirElemental());
+        harness.addToBattlefield(player1, new Blizzard());
+        Permanent flier = addCreatureReady(player2, new KjeldoranSkyknight());
         flier.tap();
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(flier.isTapped()).isTrue();
     }
@@ -157,6 +130,21 @@ class BlizzardTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blizzard);
+        harness.assertInGraveyard(player1, "Blizzard");
+    }
+
+    @Test
+    @DisplayName("Insufficient mana sacrifices Blizzard during cumulative upkeep")
+    void insufficientManaSacrifices() {
+        Permanent blizzard = harness.addToBattlefieldAndReturn(player1, new Blizzard());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blizzard);
         harness.assertInGraveyard(player1, "Blizzard");

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(ViashinoSandstalker.class)
 class ViashinoSandstalkerTest extends BaseCardTest {
 
     @Test
@@ -19,16 +21,9 @@ class ViashinoSandstalkerTest extends BaseCardTest {
     void canAttackImmediatelyDueToHaste() {
         harness.setLife(player2, 20);
 
-        Permanent sandstalker = new Permanent(new ViashinoSandstalker());
+        Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
         sandstalker.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(sandstalker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -36,8 +31,7 @@ class ViashinoSandstalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers at end step and returns itself to owner's hand")
     void triggersAtEndStepAndReturnsToHand() {
-        Permanent sandstalker = new Permanent(new ViashinoSandstalker());
-        gd.playerBattlefields.get(player1.getId()).add(sandstalker);
+        Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -60,8 +54,7 @@ class ViashinoSandstalkerTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers on the opponent's end step too")
     void triggersOnOpponentsEndStep() {
-        Permanent sandstalker = new Permanent(new ViashinoSandstalker());
-        gd.playerBattlefields.get(player1.getId()).add(sandstalker);
+        Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -76,5 +69,24 @@ class ViashinoSandstalkerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Viashino Sandstalker");
         harness.assertInHand(player1, "Viashino Sandstalker");
+    }
+
+    @Test
+    @DisplayName("Does not return itself if it leaves the battlefield before the trigger resolves")
+    void doesNotReturnIfItLeavesBeforeTriggerResolves() {
+        Permanent sandstalker = harness.addToBattlefieldAndReturn(player1, new ViashinoSandstalker());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(sandstalker);
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Viashino Sandstalker");
     }
 }

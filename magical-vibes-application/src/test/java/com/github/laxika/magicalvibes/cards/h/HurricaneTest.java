@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hurricane.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({Hurricane.class, WindSpirit.class, BalduvianBears.class, AirElemental.class, GrizzlyBears.class})
 class HurricaneTest extends BaseCardTest {
 
     @Test
@@ -57,38 +59,50 @@ class HurricaneTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Both players lost 3 life (20 → 17)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
     @DisplayName("Hurricane kills flying creatures")
     void hurricaneKillsFlyingCreatures() {
-        // Put 4/4 flyers on both battlefields.
-        harness.addToBattlefield(player1, new AirElemental());
-        harness.addToBattlefield(player2, new AirElemental());
+        // Put a flying creature on opponent's battlefield
+        harness.addToBattlefield(player2, new WindSpirit());
 
         harness.setHand(player1, List.of(new Hurricane()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.castAndResolveSorcery(player1, 0, 4);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, 2);
 
-        // Both flying creatures should be destroyed (4 damage >= 4 toughness).
-        harness.assertNotOnBattlefield(player1, "Air Elemental");
-        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        // Flying creature should be destroyed (2 damage >= 2 toughness)
+        harness.assertNotOnBattlefield(player2, "Wind Spirit");
+    }
+
+    @Test
+    @DisplayName("Hurricane damages flying creatures controlled by either player")
+    void hurricaneDamagesFlyingCreaturesControlledByEitherPlayer() {
+        harness.addToBattlefield(player1, new WindSpirit());
+        harness.addToBattlefield(player2, new WindSpirit());
+
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        harness.assertNotOnBattlefield(player1, "Wind Spirit");
+        harness.assertNotOnBattlefield(player2, "Wind Spirit");
     }
 
     @Test
     @DisplayName("Hurricane does not kill non-flying creatures")
     void hurricaneDoesNotKillNonFlyingCreatures() {
         // Put a non-flying creature on opponent's battlefield
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
 
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveSorcery(player1, 0, 3);
 
         // Non-flying creature survives
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 
     @Test
@@ -98,11 +112,9 @@ class HurricaneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        GameData gd = harness.getGameData();
-
         // Both players stay at 20 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -127,8 +139,7 @@ class HurricaneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Caster took 3 damage (3 → 0), game should be over
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
-

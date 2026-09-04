@@ -11,25 +11,23 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({PygmyHippo.class, Forest.class, Island.class, GrizzlyBears.class})
 class PygmyHippoTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new PygmyHippo());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-        return attacker;
+        return addCreatureReady(player1, new PygmyHippo());
     }
 
-    private void attackUnblocked() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    private void attackUnblocked(Permanent attacker) {
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.BlockerDeclaration) {
+            gs.declareBlockers(gd, player2, List.of());
+        }
         harness.passBothPriorities();
     }
 
@@ -40,15 +38,17 @@ class PygmyHippoTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
         Permanent forest = gd.playerBattlefields.get(player2.getId()).get(0);
         Permanent island = gd.playerBattlefields.get(player2.getId()).get(1);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addAttacker();
 
-        attackUnblocked();
+        attackUnblocked(attacker);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(forest.isTapped()).isTrue();
         assertThat(island.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
         harness.assertLife(player2, 20);
@@ -64,9 +64,8 @@ class PygmyHippoTest extends BaseCardTest {
     @DisplayName("Unspent defending mana present at resolution is counted toward the delayed {C}")
     void unspentManaAtResolutionCounted() {
         harness.addToBattlefield(player2, new Forest());
-        addAttacker();
-
-        attackUnblocked();
+        Permanent attacker = addAttacker();
+        attackUnblocked(attacker);
         // Mana empties across steps; add it while the may is open (still declare blockers).
         harness.addMana(player2, ManaColor.RED, 3);
         harness.handleMayAbilityChosen(player1, true);
@@ -85,7 +84,7 @@ class PygmyHippoTest extends BaseCardTest {
         Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
         Permanent attacker = addAttacker();
 
-        attackUnblocked();
+        attackUnblocked(attacker);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(forest.isTapped()).isFalse();
@@ -100,16 +99,16 @@ class PygmyHippoTest extends BaseCardTest {
     @Test
     @DisplayName("Blocked attacker does not trigger")
     void blockedNoTrigger() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        addAttacker();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(
+                gd,
+                player2,
+                List.of(new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertLife(player2, 20);
