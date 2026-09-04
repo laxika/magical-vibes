@@ -1555,6 +1555,9 @@ public class PredicateEvaluationService {
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
                 if (sourcePermanent == null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
+                if (sourcePermanent == null) {
                     yield false;
                 }
                 int sourcePower = gameQueryService.getEffectivePower(gameData, sourcePermanent);
@@ -1945,7 +1948,8 @@ public class PredicateEvaluationService {
 
     /** Whether a static amount filter needs the live board to evaluate permanent ownership. */
     public boolean requiresGameDataForStaticFilter(PermanentPredicate predicate) {
-        if (predicate instanceof PermanentOwnedBySourceControllerPredicate) {
+        if (predicate instanceof PermanentOwnedBySourceControllerPredicate
+                || predicate instanceof PermanentHasSupertypePredicate) {
             return true;
         }
         if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {

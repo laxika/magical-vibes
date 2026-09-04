@@ -63,6 +63,7 @@ class NecropotenceTest extends BaseCardTest {
         // Advance to the controller's end step → the set-aside card returns to hand
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(top.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId())).noneMatch(c -> c.getId().equals(top.getId()));
@@ -86,7 +87,7 @@ class NecropotenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getId().equals(top.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(top.getId()));
@@ -95,7 +96,7 @@ class NecropotenceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(top.getId()));
     }
@@ -124,7 +125,7 @@ class NecropotenceTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(first.getId()))

@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
 
     private final DrawService drawService;
     private final GameLogService gameLogService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,10 +45,18 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
 
         int handSize = hand.size();
 
-        // Put the entire hand on the bottom of the library (order is hidden, so no reorder prompt).
-        List<Card> deck = gameData.playerDecks.get(playerId);
-        deck.addAll(hand);
+        List<Card> cardsToBottom = List.copyOf(hand);
         hand.clear();
+
+        if (cardsToBottom.size() > 1) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    playerId, cardsToBottom, true, playerId,
+                    "Choose the order of the cards to put on the bottom of your library.", handSize));
+            return;
+        }
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        deck.addAll(cardsToBottom);
 
         gameLogService.append(gameData, GameLog.text(playerName + " puts " + handSize + " card" + (handSize != 1 ? "s" : "")
                         + " from hand on the bottom of their library (" + sourceName + ")."));

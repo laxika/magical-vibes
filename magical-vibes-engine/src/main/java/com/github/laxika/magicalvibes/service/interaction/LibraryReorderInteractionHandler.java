@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Lazy;
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,12 +26,29 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class LibraryReorderInteractionHandler implements InteractionHandler<PendingInteraction.LibraryReorder> {
 
     private final GameLogService gameLogService;
     private final WarpWorldService warpWorldService;
     private final InputCompletionService inputCompletionService;
+    private final DrawService drawService;
+
+    @Autowired
+    public LibraryReorderInteractionHandler(GameLogService gameLogService,
+                                            WarpWorldService warpWorldService,
+                                            InputCompletionService inputCompletionService,
+                                            @Lazy DrawService drawService) {
+        this.gameLogService = gameLogService;
+        this.warpWorldService = warpWorldService;
+        this.inputCompletionService = inputCompletionService;
+        this.drawService = drawService;
+    }
+
+    public LibraryReorderInteractionHandler(GameLogService gameLogService,
+                                            WarpWorldService warpWorldService,
+                                            InputCompletionService inputCompletionService) {
+        this(gameLogService, warpWorldService, inputCompletionService, null);
+    }
 
     @Override
     public Class<PendingInteraction.LibraryReorder> handledType() {
@@ -91,6 +110,10 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} reordered {} {} cards", gameData.id, player.getUsername(), count,
                 reorderedToBottom ? "bottom" : "top");
+
+        for (int i = 0; i < interaction.drawAfterReorder(); i++) {
+            drawService.resolveDrawCard(gameData, reorderDeckOwnerId);
+        }
 
         if (reorderedToBottom && !gameData.pendingLibraryBottomReorders.isEmpty()) {
             warpWorldService.beginNextPendingLibraryBottomReorder(gameData);

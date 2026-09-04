@@ -428,7 +428,8 @@ public class DrawService {
                         .build());
 
             }
-            if (gameData.getLife(otherPlayerId) >= 2) {
+            if (gameData.getLife(otherPlayerId) >= 2
+                    && gameQueryService.canPlayerLifeChange(gameData, otherPlayerId)) {
                 String prompt = deck != null && !deck.isEmpty()
                         ? "Pay 2 life to put " + playerName + "'s revealed "
                                 + deck.getFirst().getName() + " into their graveyard?"

@@ -5052,6 +5052,9 @@ public class GameQueryService {
      * permanent uses its effective types; a spell source falls back to the artifact type of its card.
      */
     public boolean isDamageSourceArtifact(GameData gameData, StackEntry entry, Permanent explicitSource) {
+        if (entry != null && entry.getDamageSourceCard() != null) {
+            return entry.getDamageSourceCard().hasType(CardType.ARTIFACT);
+        }
         Permanent source = explicitSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
@@ -6577,6 +6580,12 @@ public class GameQueryService {
      */
     public int getCreatureAttackTax(GameData gameData, Permanent creature) {
         int total = getEnchantedCreatureAttackTax(gameData, creature);
+        StaticBonus bonus = computeStaticBonus(gameData, creature);
+        if (hasLostPrintedAbilities(gameData, creature)
+                || bonus.losesAllAbilities()
+                || bonus.losesAllNonManaAbilities()) {
+            return total;
+        }
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof AttackCostEffect attackCost) {
                 total += attackCost.attackCost(creature);
@@ -6624,6 +6633,12 @@ public class GameQueryService {
         int attackerPower = getEffectivePower(gameData, attacker);
         int tax = getEnchantedCreatureBlockTax(gameData, attacker)
                 + getEnchantedCreatureBlockerTax(gameData, blocker);
+        StaticBonus bonus = computeStaticBonus(gameData, blocker);
+        if (hasLostPrintedAbilities(gameData, blocker)
+                || bonus.losesAllAbilities()
+                || bonus.losesAllNonManaAbilities()) {
+            return tax;
+        }
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof BlockCostEffect blockCost) {
                 tax += blockCost.blockCost(blocker, attackerPower);

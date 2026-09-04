@@ -97,11 +97,9 @@ class PhyrexianMarauderTest extends BaseCardTest {
     void losingAllAbilitiesRemovesAttackTax() {
         harness.addToBattlefield(player1, new Humility());
         addReadyMarauder(player1, 3);
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
         declareAttackers(List.of(1));
 
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 }

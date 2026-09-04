@@ -2629,10 +2629,18 @@ public class DeathTriggerCollectorService {
     boolean handleAnyNontokenCreatureDeathExileAndTrack(TriggerMatchContext match,
             ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        MayEffect rawMay = (MayEffect) match.rawEffect();
         CardEffect bound = cd.dyingCard() == null
                 ? effect
                 : effect.boundToDyingCard(cd.dyingCard().getId());
+        if (!(match.rawEffect() instanceof MayEffect rawMay)) {
+            if (cd.dyingCard() == null
+                    || match.gameData().playerGraveyards
+                    .getOrDefault(match.controllerId(), List.of()).stream()
+                    .noneMatch(card -> card.getId().equals(cd.dyingCard().getId()))) {
+                return true;
+            }
+            return handleAnyNontokenCreatureDeathDefault(match, bound, ctx);
+        }
         MayEffect resolvedMay = new MayEffect(bound, rawMay.prompt(), rawMay.elseEffect());
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
                 resolvedMay, null, match.permanent().getId());
@@ -2691,7 +2699,9 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect))
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (any nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());

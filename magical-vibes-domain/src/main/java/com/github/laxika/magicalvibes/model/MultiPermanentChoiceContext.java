@@ -203,6 +203,10 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
 
+    /** The attacking player chooses permanents to sacrifice as an additional attack cost. */
+    record SacrificeAttackCost(int requiredCount) implements MultiPermanentChoiceContext {
+    }
+
     /** The controller exiles the chosen attacking creatures (Resounding Silence cycling trigger). */
     record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
     }
@@ -324,20 +328,30 @@ public sealed interface MultiPermanentChoiceContext {
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
                            java.util.List<UUID> accumulatedSacrificeIds,
                            boolean simultaneousFlow,
-                           boolean recordSacrificedCount)
+                           boolean recordSacrificedCount,
+                           LibrarySearchFollowUp afterSacrifices)
             implements MultiPermanentChoiceContext {
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false, null);
         }
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds,
                                boolean simultaneousFlow) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false, null);
+        }
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds,
+                               boolean simultaneousFlow,
+                               boolean recordSacrificedCount) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
+                    simultaneousFlow, recordSacrificedCount, null);
         }
     }
 

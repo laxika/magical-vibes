@@ -35,7 +35,7 @@ public class TargetPlayerNameCardRevealTopEffectHandler implements NormalEffectH
         // The targeted player is the one who names the card.
         var choiceContext = new ChoiceContext.TargetPlayerNameCardRevealTopChoice(
                 entry.getControllerId(), targetPlayerId, entry.getSourcePermanentId(),
-                revealEffect.damageOnMiss());
+                revealEffect.damageOnMiss(), entry.getCard());
 
         List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

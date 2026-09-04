@@ -59,6 +59,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(artifact.getId()));
@@ -83,6 +84,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.activateAbility(player2, 0, null, artifact.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(artifact.getId()));

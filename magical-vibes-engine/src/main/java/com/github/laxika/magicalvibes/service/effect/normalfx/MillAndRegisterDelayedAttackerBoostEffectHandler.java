@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackerBoost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillAndRegisterDelayedAttackerBoostEffect;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,24 +33,12 @@ public class MillAndRegisterDelayedAttackerBoostEffectHandler implements NormalE
         List<Card> deck = gameData.playerDecks.get(controllerId);
         int cardsToMill = Math.min(Math.max(0, e.millCount()), deck.size());
 
-        // Snapshot before mill so "put into your graveyard this way" can be counted after
-        // replacements that redirect milled cards elsewhere.
-        List<Card> preview = cardsToMill == 0
+        List<Card> milledCards = cardsToMill == 0
                 ? List.of()
-                : new ArrayList<>(deck.subList(0, cardsToMill));
-
-        if (cardsToMill > 0) {
-            graveyardService.resolveMillPlayer(gameData, controllerId, e.millCount());
-        }
-
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        Set<Card> inGraveyard = graveyard == null ? Set.of() : new HashSet<>(graveyard);
-        int creatureCount = 0;
-        for (Card card : preview) {
-            if (card.hasType(CardType.CREATURE) && inGraveyard.contains(card)) {
-                creatureCount++;
-            }
-        }
+                : graveyardService.resolveMillPlayer(gameData, controllerId, e.millCount());
+        int creatureCount = (int) milledCards.stream()
+                .filter(card -> card.hasType(CardType.CREATURE))
+                .count();
 
         int power = creatureCount * e.powerPerCreature();
         int toughness = creatureCount * e.toughnessPerCreature();

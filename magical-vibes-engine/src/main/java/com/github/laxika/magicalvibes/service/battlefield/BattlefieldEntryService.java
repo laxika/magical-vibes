@@ -4,12 +4,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -28,13 +32,23 @@ public class BattlefieldEntryService {
     private final BattlefieldPlacementService placementService;
     private final AsEntersInteractionService interactionService;
     private final EtbTriggerService triggerService;
+    private final PlayerInputService playerInputService;
+
+    @Autowired
+    public BattlefieldEntryService(BattlefieldPlacementService placementService,
+                                   AsEntersInteractionService interactionService,
+                                   EtbTriggerService triggerService,
+                                   PlayerInputService playerInputService) {
+        this.placementService = placementService;
+        this.interactionService = interactionService;
+        this.triggerService = triggerService;
+        this.playerInputService = playerInputService;
+    }
 
     public BattlefieldEntryService(BattlefieldPlacementService placementService,
                                    AsEntersInteractionService interactionService,
                                    EtbTriggerService triggerService) {
-        this.placementService = placementService;
-        this.interactionService = interactionService;
-        this.triggerService = triggerService;
+        this(placementService, interactionService, triggerService, null);
     }
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
@@ -123,6 +137,18 @@ public class BattlefieldEntryService {
                        Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts,
                        int convokeCreatureCount) {
+        boolean needsDualNameChoice = permanent.getChosenName() == null
+                && permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(YouAndOpponentChooseCardNamesOnEnterEffect.class::isInstance);
+        if (needsDualNameChoice) {
+            if (playerInputService == null) {
+                throw new IllegalStateException("Card-name choice service is unavailable");
+            }
+            playerInputService.beginDualCardNameChoice(gameData,
+                    new ChoiceContext.DualCardNameChoice(
+                            permanent.getCard(), controllerId, controllerId, null));
+            return;
+        }
         placementService.place(gameData, new BattlefieldEntryRequest(controllerId, permanent,
                 enterTappedTypes, simultaneouslyEntered, xValue, kicked, repeatedAdditionalCosts,
                 convokeCreatureCount, null, null, null));

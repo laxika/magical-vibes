@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.action;
 
+import com.github.laxika.magicalvibes.model.Card;
 import java.util.UUID;
 
 /**
@@ -8,5 +9,12 @@ import java.util.UUID;
  * this way"). Keyed-accumulator semantics (at most one entry per permanent) are preserved by
  * {@code GameData.addDelayedPlusZeroPlusOneCounters}.
  */
-public record DelayedPlusZeroPlusOneCounters(UUID permanentId, int totalCounters) implements DelayedAction {
+public record DelayedPlusZeroPlusOneCounters(UUID permanentId, int totalCounters,
+                                              UUID controllerId, Card sourceCard,
+                                              UUID shieldId, int remainingShield)
+        implements DelayedAction {
+
+    public DelayedPlusZeroPlusOneCounters(UUID permanentId, int totalCounters) {
+        this(permanentId, totalCounters, null, null, UUID.randomUUID(), 0);
+    }
 }

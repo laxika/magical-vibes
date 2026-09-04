@@ -2479,7 +2479,7 @@ public class CombatAttackService {
 
     /**
      * Validates the declared attacking bands (CR 702.22c/d) and returns them as index sets ready to
-     * stamp with band ids. Each band must: contain at least two declared attackers, include at least
+     * stamp with band ids. Each band must: contain at least one declared attacker, include at least
      * one creature with banding and at most one without, keep every member attacking the same target,
      * and not share a creature with another band. Returns an empty list when no bands are declared.
      */
@@ -2497,9 +2497,6 @@ public class CombatAttackService {
                 continue;
             }
             Set<Integer> members = new LinkedHashSet<>(band);
-            if (members.size() < 2) {
-                throw new IllegalStateException("A band must contain at least two creatures");
-            }
             int withBanding = 0;
             int withoutBanding = 0;
             UUID sharedTarget = null;

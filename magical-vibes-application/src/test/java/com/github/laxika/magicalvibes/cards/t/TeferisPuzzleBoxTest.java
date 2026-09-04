@@ -45,6 +45,7 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve the Puzzle Box trigger
+        chooseCurrentOrder(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(handMarker);
         assertThat(gd.playerDecks.get(player1.getId())).contains(handMarker);
@@ -64,6 +65,7 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
 
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve the Puzzle Box trigger
+        chooseCurrentOrder(player2);
 
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(handMarker);
         assertThat(gd.playerDecks.get(player2.getId())).contains(handMarker);
@@ -84,6 +86,7 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
 
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve the Puzzle Box trigger
+        chooseCurrentOrder(player1);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(library.get(1), library.get(2), library.get(3));
@@ -118,5 +121,13 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(remainingLibraryCard, normalDraw, secondHandCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstHandCard);
+    }
+
+    private void chooseCurrentOrder(Player player) {
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player,
+                new InteractionAnswer.CardOrder(java.util.stream.IntStream.range(0, reorder.cards().size())
+                        .boxed().toList()));
     }
 }

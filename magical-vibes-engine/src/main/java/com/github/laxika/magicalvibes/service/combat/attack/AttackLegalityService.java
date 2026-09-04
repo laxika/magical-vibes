@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
@@ -439,6 +440,10 @@ public class AttackLegalityService {
         }
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
+        if (gameData.getDelayedActions(DestroyNonAttackersAtEndStep.class).stream()
+                .anyMatch(action -> action.playerId().equals(creatureControllerId))) {
+            count[0]++;
+        }
 
         List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
         if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {

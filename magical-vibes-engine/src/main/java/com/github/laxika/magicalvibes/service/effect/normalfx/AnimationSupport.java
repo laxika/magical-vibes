@@ -579,10 +579,21 @@ public class AnimationSupport {
         // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").
         target.getPersistentGrantedCardTypes().addAll(effect.grantedCardTypes());
 
+        boolean colorReplaced = false;
         if (effect.animatedColor() != null) {
-            target.getGrantedColors().add(effect.animatedColor());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId,
+                    new GrantColorEffect(effect.animatedColor(), GrantScope.TARGET, true),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+            colorReplaced = true;
         }
-        target.getGrantedColors().addAll(effect.animatedColors());
+        for (CardColor color : effect.animatedColors()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId,
+                    new GrantColorEffect(color, GrantScope.TARGET, !colorReplaced),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+            colorReplaced = true;
+        }
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {

@@ -909,6 +909,17 @@ public class CastingPermissionService {
                 && !hasAvailableFlashAlternateCast(gameData, playerId, card);
     }
 
+    public boolean isUsingCleanupSacrificeFlashPermission(GameData gameData, UUID playerId, Card card) {
+        if (sorceryTimingAvailable(gameData, playerId) || !grantsItselfFlashTiming(card)) {
+            return false;
+        }
+        return !card.hasType(CardType.INSTANT)
+                && !card.getKeywords().contains(Keyword.FLASH)
+                && !hasFlashGrantForCard(gameData, playerId, card)
+                && !hasMetFlashCastCondition(gameData, playerId, card)
+                && !hasAvailableFlashAlternateCast(gameData, playerId, card);
+    }
+
     /**
      * True if the card itself says "you may cast this spell as though it had flash" — the Mirage
      * flash clause. Unlike a battlefield flash grant this needs no permission source; the trade-off

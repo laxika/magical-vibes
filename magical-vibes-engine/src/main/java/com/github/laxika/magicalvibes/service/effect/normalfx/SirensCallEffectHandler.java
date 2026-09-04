@@ -49,7 +49,7 @@ public class SirensCallEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        gameData.queueDelayedAction(new DestroyNonAttackersAtEndStep(activePlayerId));
+        gameData.queueDelayedAction(new DestroyNonAttackersAtEndStep(activePlayerId, entry.getCard()));
 
         String playerName = gameData.playerIdToName.get(activePlayerId);
         gameLogService.append(gameData,

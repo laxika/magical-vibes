@@ -205,8 +205,8 @@ class NecromancyTest extends BaseCardTest {
 
     @Test
     @CardUsed(EbonyCharm.class)
-    @DisplayName("If the targeted card leaves the graveyard, Necromancy becomes an unattached Aura")
-    void becomesAuraWhenTargetLeavesBeforeResolution() {
+    @DisplayName("If the targeted card leaves the graveyard, Necromancy's ability does not resolve")
+    void remainsAnEnchantmentWhenTargetLeavesBeforeResolution() {
         Python python = new Python();
         harness.setGraveyard(player1, List.of(python));
         castAndChooseReanimateTargetOnly(python);
@@ -219,8 +219,8 @@ class NecromancyTest extends BaseCardTest {
 
         assertThat(gd.exiledCards.stream().map(entry -> entry.card().getId()))
                 .contains(python.getId());
-        harness.assertNotOnBattlefield(player1, "Necromancy");
-        harness.assertInGraveyard(player1, "Necromancy");
+        harness.assertOnBattlefield(player1, "Necromancy");
+        assertThat(findPermanent(player1, "Necromancy").isAttached()).isFalse();
     }
 
     @Test

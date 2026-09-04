@@ -694,7 +694,8 @@ public class LibrarySearchSupport {
         // Universal choke point for every library search that presents cards: fire
         // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
         // library. A search of someone else's library (targetPlayerId set) is not "their library".
-        if (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId())) {
+        if ((params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
+                && params.followUp().basicLandSearchQueue() == null) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, params.playerId());
         }
 

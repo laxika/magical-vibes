@@ -318,7 +318,7 @@ public class PhasingService {
      * marked permanent is skipped by every phasing pass, direct and indirect (CR 702.26g) alike.
      */
     private static boolean canPhaseOut(Permanent permanent) {
-        return permanent.getCantPhaseOutUntilUpkeepOf() == null;
+        return permanent.canPhaseOut();
     }
 
     private UUID controllerOf(GameData gameData, Permanent permanent) {

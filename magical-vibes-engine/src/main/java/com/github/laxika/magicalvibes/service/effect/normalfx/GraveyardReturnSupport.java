@@ -1531,6 +1531,9 @@ public class GraveyardReturnSupport {
      * enters tapped when {@code enterTapped} is true (Dance of the Dead).
      */
     public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card, boolean enterTapped) {
+        if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+            return null;
+        }
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
         return putCardOntoBattlefield(gameData, controllerId, card, null, null, enterTapped, false, null);
     }

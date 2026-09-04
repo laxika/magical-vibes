@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -220,6 +221,12 @@ public class LibraryChoiceHandlerService {
                 && librarySearchSupport.isLibrarySearchCastableCard(searchCards.get(cardIndex))) {
             handleLibrarySearchCast(gameData, player, activeSearch, searchCards.get(cardIndex));
             return;
+        }
+
+        if (cardIndex >= 0
+                && followUp.basicLandSearchQueue() != null
+                && accumulatedCards.isEmpty()) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -1296,9 +1303,11 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             deck.addFirst(chosenCard);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " reveals ", chosenCard,
-                    " and puts it on top of their library. Library is shuffled."));
+            gameLogService.append(gameData, reveals
+                    ? GameLog.textCardText(player.getUsername() + " reveals ", chosenCard,
+                    " and puts it on top of their library. Library is shuffled.")
+                    : GameLog.text(player.getUsername()
+                    + " puts a card on top of their library. Library is shuffled."));
             log.info("Game {} - {} searches library and puts {} on top",
                     gameData.id, player.getUsername(), chosenCard.getName());
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;

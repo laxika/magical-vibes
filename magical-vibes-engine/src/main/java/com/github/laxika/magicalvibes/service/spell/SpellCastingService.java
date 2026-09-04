@@ -701,16 +701,27 @@ public class SpellCastingService {
     }
 
     private int resolveCastTimeXValue(GameData gameData, Card card, UUID controllerId, int announcedXValue) {
-        return card.getEffects(EffectSlot.SPELL).stream()
+        var declaredCastTimeAmount = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(CastTimeXValueEffect.class::isInstance)
                 .map(CastTimeXValueEffect.class::cast)
                 .map(CastTimeXValueEffect::castTimeXValue)
                 .filter(amount -> amount != null)
-                .findFirst()
-                .map(amount -> amountEvaluationService.evaluate(gameData, amount,
-                        com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(
-                                controllerId, announcedXValue, card)))
-                .orElse(announcedXValue);
+                .findFirst().orElse(null);
+        if (declaredCastTimeAmount != null) {
+            return amountEvaluationService.evaluate(gameData, declaredCastTimeAmount,
+                    com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(
+                            controllerId, announcedXValue, card));
+        }
+
+        DistributeCountersAmongTargetsEffect distribution =
+                findChosenCounterDistribution(card.getEffects(EffectSlot.SPELL));
+        if (card.getParsedManaCost() != null && card.getParsedManaCost().hasX()
+                && distribution != null && !(distribution.total() instanceof Fixed)) {
+            return amountEvaluationService.evaluate(gameData, distribution.total(),
+                    com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(
+                            controllerId, announcedXValue, card));
+        }
+        return announcedXValue;
     }
 
     private void validateXValueCap(GameData gameData, Card card, UUID controllerId, int xValue) {
@@ -902,14 +913,22 @@ public class SpellCastingService {
      */
     private static void validateModalTargetKind(GameData gameData, boolean wasModal, Card card,
                                                 List<CardEffect> resolvedSpellEffects, UUID targetId) {
-        if (!wasModal || targetId == null || !gameData.playerIds.contains(targetId)) {
+        if (!wasModal || targetId == null) {
             return;
         }
         Set<TargetType> allowed = EffectResolution.computeAllowedTargets(
                 resolvedSpellEffects, List.of(), false, false);
-        if (!allowed.contains(TargetType.PLAYER)
+        if (gameData.playerIds.contains(targetId)
+                && !allowed.contains(TargetType.PLAYER)
                 && !targetFilterAllowsPlayer(card.getCastTimeTargetFilter())) {
             throw new IllegalStateException("This spell cannot target players");
+        }
+        boolean targetsSpell = gameData.stack.stream()
+                .anyMatch(entry -> entry.getCard().getId().equals(targetId));
+        if (targetsSpell
+                && !allowed.contains(TargetType.SPELL_ON_STACK)
+                && !(card.getCastTimeTargetFilter() instanceof StackEntryPredicateTargetFilter)) {
+            throw new IllegalStateException("This mode cannot target a spell on the stack");
         }
     }
 
@@ -2426,12 +2445,19 @@ public class SpellCastingService {
             boolean suppliedDeclaredTarget = (targetId != null || targetIds != null && !targetIds.isEmpty())
                     && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0);
+            boolean suppliedCounterDistribution = damageAssignments != null
+                    && findChosenCounterDistribution(selectedFaceCheck.getEffects(EffectSlot.SPELL)) != null
+                    && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
+                    gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0);
             if (suppliedGiftTarget) {
                 // Gift can change the spell's target filter. The selected target is validated
                 // against the gifted filter below after the prepared effects are known.
             } else if (suppliedDeclaredTarget) {
                 // The generic playability query cannot account for the identity of a target supplied
                 // with the cast. Full target legality is validated below.
+            } else if (suppliedCounterDistribution) {
+                // An explicitly supplied distribution may legally be empty when the effect says
+                // "any number". Its assignments are validated below.
             } else if (selectingModalBackFace && actionAvailabilityService.isCardPlayableWithDeclaredTargets(
                     gameData, playerId, selectedFaceCheck, gameData.playerManaPools.get(playerId), 0)) {
                 // The generic hand query admits either face; casting validates the selected face.
@@ -2660,7 +2686,8 @@ public class SpellCastingService {
         boolean unwrappedNeedsTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAura(), card.isEnchantPlayer())
                 || modalHasBattlefieldOrPlayerTarget;
-        boolean allSpellTargetsAlsoAllowPermanents = targetingSpellEffects.stream()
+        boolean allSpellTargetsAlsoAllowPermanents = unwrappedNeedsSpellTarget
+                && targetingSpellEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
                 .allMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         // Targets multiple distinct spells on the stack. Two shapes qualify:
@@ -3265,6 +3292,11 @@ public class SpellCastingService {
                     playerId, true, effectiveXValue, kicked, giftPromised);
         }
 
+        if (targetId != null && targetIds.isEmpty()
+                && card.getEffectiveMinTargets(effectiveXValue, kicked, giftPromised) > 1) {
+            throw new IllegalStateException("Spell requires additional targets");
+        }
+
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
         if (kicked && targetId != null && card.getSpellTargets().size() > 1
                 && !multipleSpellTargets) {
@@ -3830,7 +3862,8 @@ public class SpellCastingService {
             // Mirage flash clause: the permanent this becomes is sacrificed at the next cleanup step
             // if the spell was cast any time a sorcery couldn't have been cast.
             entry.setCastWhenSorceryCouldNotBeCast(
-                    !castingPermissionService.sorceryTimingAvailable(gameData, playerId));
+                    castingPermissionService.isUsingCleanupSacrificeFlashPermission(
+                            gameData, playerId, card));
             if (beholdPayment != null) {
                 entry.setBeheldCard(beholdPayment.card());
                 entry.setBeheldCardOwnerId(beholdPayment.ownerId());
@@ -8104,6 +8137,9 @@ public class SpellCastingService {
             );
         }
         stackEntry.setSourceZone(Zone.EXILE);
+        stackEntry.setCastWhenSorceryCouldNotBeCast(
+                castingPermissionService.isUsingCleanupSacrificeFlashPermission(
+                        gameData, playerId, card));
         stackEntry.setCastForForetell(castForForetell);
         if (!exiledEntry.ownerId().equals(playerId)) {
             stackEntry.setOwnerIdOverride(exiledEntry.ownerId());

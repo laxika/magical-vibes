@@ -286,9 +286,23 @@ public enum CardSubtype {
     SAND("Sand"),
     RIGGER("Rigger");
 
+    private static final List<CardSubtype> BASIC_LAND_TYPES = List.of(
+            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);
+
+    private static final List<CardSubtype> LAND_TYPES = List.of(
+            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN);
+
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
             SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, SAMUT, YANLING);
+
+    public static List<CardSubtype> basicLandTypes() {
+        return BASIC_LAND_TYPES;
+    }
+
+    public static List<CardSubtype> landTypes() {
+        return LAND_TYPES;
+    }
 
     public static List<CardSubtype> planeswalkerTypes() {
         return PLANESWALKER_TYPES;

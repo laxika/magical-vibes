@@ -7703,10 +7703,10 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkAnyNontokenCreatureDeathTriggers(GameData gameData, Card dyingCard) {
+    public void checkAnyNontokenCreatureDeathTriggers(GameData gameData, Card dyingCard, UUID ownerId) {
         if (dyingCard.isToken()) return;
 
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, null,
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, ownerId,
                 dyingCard.getPower() != null ? dyingCard.getPower() : 0,
                 dyingCard.getToughness() != null ? dyingCard.getToughness() : 0);
 

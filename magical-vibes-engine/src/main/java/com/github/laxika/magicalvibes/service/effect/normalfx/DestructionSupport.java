@@ -555,11 +555,18 @@ public class DestructionSupport {
 
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds) {
-        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, false);
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, false, null);
     }
 
     public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
                                                   List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow) {
+        beginNextForcedSacrificeFromQueue(
+                gameData, choosers, accumulatedSacrificeIds, simultaneousFlow, null);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
+                                                  com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -569,7 +576,7 @@ public class DestructionSupport {
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
-                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow),
+                        List.copyOf(accumulatedSacrificeIds), simultaneousFlow, false, afterSacrifices),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }

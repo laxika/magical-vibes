@@ -1431,7 +1431,8 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
-                gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard()));
+                gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard(),
+                        draw.upTo(), gameData.turnNumber, gameData.activePlayerId));
             } else if (effect instanceof RegisterDelayedControllerSpellCastTriggerEffect delayed) {
                 gameData.queueDelayedAction(new DelayedControllerSpellCastTrigger(
                         playerId,

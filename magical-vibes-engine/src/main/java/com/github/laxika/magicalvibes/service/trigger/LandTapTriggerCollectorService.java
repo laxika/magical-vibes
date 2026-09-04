@@ -183,7 +183,8 @@ public class LandTapTriggerCollectorService {
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
-        if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+        if (!gameQueryService.effectiveBasicLandTypes(match.gameData(), tappedLand)
+                .contains(trigger.subtype())) return false;
 
         lifeSupport.applyGainLife(match.gameData(), match.controllerId(), trigger.lifeAmount(),
                 match.permanent().getCard().getName(), match.permanent().getCard(),
@@ -305,11 +306,14 @@ public class LandTapTriggerCollectorService {
                 .anyMatch(e -> e instanceof AwardManaEffect award && award.color() == chosenManaColor);
         if (!producesChosenColor) return false;
 
-        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        UUID landControllerId = gameQueryService.findPermanentController(
+                match.gameData(), tappedLand.getId());
+        if (landControllerId == null) return false;
+        ManaPool pool = match.gameData().playerManaPools.get(landControllerId);
         pool.add(chosenManaColor);
 
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                " triggers — " + match.gameData().playerIdToName.get(landControllerId)
                         + " adds 1 additional " + chosenColor.name().toLowerCase() + " mana."));
         return true;
     }

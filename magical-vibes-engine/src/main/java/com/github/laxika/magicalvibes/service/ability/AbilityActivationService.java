@@ -123,6 +123,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -5049,6 +5051,20 @@ public class AbilityActivationService {
         abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        if (gameQueryService.isCreature(gameData, permanent)) {
+            for (StackEntry stackEntry : gameData.stack) {
+                for (CardEffect effect : stackEntry.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GrantActivatedAbilityEffect grant
+                            && (grant.scope() == GrantScope.ALL_CREATURES
+                            || grant.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
+                            && (grant.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, grant.filter()))) {
+                        abilities.add(grant.ability());
+                    }
+                }
+            }
+        }
         return abilities;
     }
 

@@ -52,7 +52,7 @@ public class ShrinkEnchantedCreatureEffectHandler implements StaticEffectHandler
         AmountContext ctx = AmountContext.forStaticEffect(enchanted, enchantedControllerId);
         int x = Math.max(0, amountEvaluationService.evaluate(context.gameData(), shrink.amount(), ctx));
         int toughnessSoFar = enchanted.getEffectiveToughness() + accumulator.getToughness();
-        int y = Math.min(x, Math.max(0, toughnessSoFar - 1));
+        int y = Math.min(x, toughnessSoFar - 1);
         accumulator.addPower(-x);
         accumulator.addToughness(-y);
     }

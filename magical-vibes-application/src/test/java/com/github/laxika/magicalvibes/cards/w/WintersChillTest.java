@@ -53,6 +53,7 @@ class WintersChillTest extends BaseCardTest {
         castAtDeclareAttackers(1, List.of(attacker.getId()));
 
         harness.passBothPriorities();
+        stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
 
         assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
@@ -71,6 +72,7 @@ class WintersChillTest extends BaseCardTest {
         castAtDeclareAttackers(1, List.of(attacker.getId()));
 
         harness.passBothPriorities();
+        stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
 
         prepareDeclareBlockers(player2);
@@ -92,11 +94,12 @@ class WintersChillTest extends BaseCardTest {
         castAtDeclareAttackers(1, List.of(attacker.getId()));
 
         harness.passBothPriorities();
+        stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
         assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
 
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
 
         assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(attacker.getId());
@@ -130,6 +133,7 @@ class WintersChillTest extends BaseCardTest {
         castAtDeclareAttackers(2, List.of(firstAttacker.getId(), secondAttacker.getId()));
 
         harness.passBothPriorities();
+        stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
@@ -236,5 +240,10 @@ class WintersChillTest extends BaseCardTest {
 
     private void addSnowLand(Player owner) {
         harness.addToBattlefieldAndReturn(owner, new SnowCoveredIsland());
+    }
+
+    private void stopAtDeclareBlockers() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_BLOCKERS));
     }
 }

@@ -898,7 +898,7 @@ public class CombatDamageService {
         List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defendingBattlefield == null) return null;
         for (Permanent permanent : defendingBattlefield) {
-            if (permanent.isTapped()) continue;
+            if (permanent.isTapped() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean redirectsUnblockedCombatDamage = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof RedirectUnblockedCombatDamageToSelfEffect
                             || effect instanceof RedirectPlayerDamageToSelfEffect redirect

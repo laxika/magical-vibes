@@ -102,8 +102,9 @@ class TitaniasSongTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Titania's Song"));
+        Permanent song = findPermanent(player1, "Titania's Song");
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, song));
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);

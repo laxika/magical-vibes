@@ -67,14 +67,19 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         }
         int count = amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
 
-        // An X of 0 (e.g. Mind Warp for X=0) chooses no cards: nothing to reveal-and-choose.
+        // An X of 0 chooses no cards, but an instruction to look at the hand still happens.
         if (count <= 0) {
+            if (e.revealHand()) {
+                cardRevealService.revealHandToAllPlayers(gameData, entry.getTargetId());
+            } else {
+                cardRevealService.lookAtHand(gameData, entry.getControllerId(), entry.getTargetId());
+            }
             return;
         }
 
         switch (e.destination()) {
             case DISCARD -> {
-                gameData.discardCausedByOpponent = true;
+                gameData.discardCausedByOpponent = !entry.getControllerId().equals(entry.getTargetId());
                 if (e.declineEffect() != null) {
                     playerInteractionSupport.resolveHandRevealAndChooseOrElse(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), e.declineEffect(), e);

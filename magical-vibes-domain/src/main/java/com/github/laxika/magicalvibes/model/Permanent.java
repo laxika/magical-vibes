@@ -266,15 +266,12 @@ public class Permanent {
     /** Soul Echo: set when the targeted opponent chose that, until this permanent's controller's next
      *  upkeep, each 1 damage that would be dealt to that controller instead removes an echo counter
      *  from this permanent. Survives {@link #resetModifiers()} — the duration ends at the next upkeep,
-     *  where {@code SoulEchoUpkeepEffectHandler} clears it before offering the choice again. */
+     *  where upkeep trigger collection clears it before offering the choice again. */
     @Setter private boolean echoDamageRedirectionActive;
-    /** Spatial Binding: the id of the player whose next upkeep ends this permanent's "can't phase out"
-     *  restriction, or null while it may phase out normally. Phasing is a turn-based action of the untap
-     *  step (CR 502.1), which precedes the upkeep, so the permanent is still protected during that
-     *  player's own untap step; {@code StepTriggerService.handleUpkeepTriggers} clears the field when
-     *  that player becomes the active player. Survives {@link #resetModifiers()} — the duration spans
-     *  turns. */
-    @Setter private UUID cantPhaseOutUntilUpkeepOf;
+    /** Spatial Binding: each player whose next upkeep ends one active "can't phase out"
+     *  restriction on this permanent. Multiple activations have independent durations.
+     */
+    private final Set<UUID> cantPhaseOutUntilUpkeepsOf = new HashSet<>();
     /** Triggered effects temporarily granted by one-shot effects until end of turn
      *  (e.g. Verdant Rebirth granting ON_DEATH → ReturnSourceCardFromGraveyardToOwnerHandEffect).
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
@@ -760,6 +757,8 @@ public class Permanent {
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
+        this.echoDamageRedirectionActive = source.echoDamageRedirectionActive;
+        this.cantPhaseOutUntilUpkeepsOf.addAll(source.cantPhaseOutUntilUpkeepsOf);
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
         source.combatTriggeredEffects.forEach((slot, effects) ->
@@ -1447,6 +1446,18 @@ public class Permanent {
     public void clearUntilNextUpkeepTriggeredEffects(UUID expiryPlayerId) {
         untilNextUpkeepTriggeredEffects.values().forEach(effectsByPlayer -> effectsByPlayer.remove(expiryPlayerId));
         untilNextUpkeepTriggeredEffects.values().removeIf(Map::isEmpty);
+    }
+
+    public void preventPhaseOutUntilUpkeepOf(UUID playerId) {
+        cantPhaseOutUntilUpkeepsOf.add(playerId);
+    }
+
+    public void expirePhaseOutPreventionAtUpkeepOf(UUID playerId) {
+        cantPhaseOutUntilUpkeepsOf.remove(playerId);
+    }
+
+    public boolean canPhaseOut() {
+        return cantPhaseOutUntilUpkeepsOf.isEmpty();
     }
 
     /**

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +30,8 @@ public class SacrificeCreatedPermanentsAtEndStepEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         for (UUID createdId : entry.getCreatedPermanentIds()) {
-            gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
-                    createdId, entry.getControllerId(), Integer.MAX_VALUE));
+            gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
+                    createdId, entry.getControllerId(), entry.getCard()));
         }
         log.info("Game {} - {} permanent(s) scheduled for sacrifice at end step by {}",
                 gameData.id, entry.getCreatedPermanentIds().size(), entry.getCard().getName());

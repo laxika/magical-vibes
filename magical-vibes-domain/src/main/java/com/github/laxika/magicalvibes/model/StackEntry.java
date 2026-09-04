@@ -157,8 +157,7 @@ public class StackEntry {
      */
     @Setter private List<String> repeatedAdditionalCosts = List.of();
     /**
-     * Whether this spell was cast at a time a sorcery couldn't have been cast. Only stamped on hand
-     * casts, and only read by the Mirage flash clause
+     * Whether this spell used its own conditional instant-speed permission. Read by the Mirage flash clause
      * ({@code FlashCastWithCleanupSacrificeEffect}), which flags the entering permanent for
      * sacrifice at the next cleanup step when it is set.
      */

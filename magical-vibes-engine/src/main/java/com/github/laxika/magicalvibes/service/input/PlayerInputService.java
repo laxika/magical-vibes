@@ -56,6 +56,7 @@ public class PlayerInputService {
     @Autowired(required = false)
     private CardCatalog cardCatalog;
     private volatile List<String> catalogNonbasicLandCardNames;
+    private volatile List<String> catalogNonbasicCardNames;
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         beginCardChoice(gameData, playerId, validIndices, prompt, false);
@@ -1481,12 +1482,14 @@ public class PlayerInputService {
         ChoiceContext.BasicLandTypeChoice choiceContext =
                 new ChoiceContext.BasicLandTypeChoice(permanentId, isSecondChoice, chainSecondAfter, allowedTypes);
 
-        List<String> basicLandTypes = allowedTypes.isEmpty()
-                ? List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST")
-                : allowedTypes.stream().map(Enum::name).toList();
+        List<CardSubtype> offeredTypes = allowedTypes.isEmpty()
+                ? CardSubtype.basicLandTypes()
+                : allowedTypes;
+        List<String> basicLandTypes = offeredTypes.stream().map(Enum::name).toList();
+        boolean basicOnly = CardSubtype.basicLandTypes().containsAll(offeredTypes);
         String prompt = isSecondChoice
                 ? "Choose the second basic land type."
-                : "Choose a basic land type.";
+                : basicOnly ? "Choose a basic land type." : "Choose a land type.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, basicLandTypes, prompt));
 
@@ -1568,8 +1571,9 @@ public class PlayerInputService {
         ChoiceContext.LandsOfTypeBecomeBasicTypeChoice choiceContext =
                 new ChoiceContext.LandsOfTypeBecomeBasicTypeChoice(playerId, fromType);
 
-        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
         boolean choosingFrom = fromType == null;
+        List<String> basicLandTypes = (choosingFrom ? CardSubtype.landTypes() : CardSubtype.basicLandTypes())
+                .stream().map(Enum::name).toList();
         String prompt = choosingFrom
                 ? "Choose a land type."
                 : "Choose a basic land type.";
@@ -2005,8 +2009,34 @@ public class PlayerInputService {
 
     /** Names of every card in the game that isn't a basic land card (Null Chamber). */
     private List<String> collectNonbasicCardNamesInGame(GameData gameData) {
-        return collectCardNamesInGame(gameData,
-                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC)));
+        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
+        names.addAll(catalogNonbasicCardNames());
+        return new ArrayList<>(names);
+    }
+
+    private List<String> catalogNonbasicCardNames() {
+        if (cardCatalog == null) {
+            return List.of();
+        }
+        List<String> cached = catalogNonbasicCardNames;
+        if (cached != null) {
+            return cached;
+        }
+        Set<String> names = new TreeSet<>();
+        for (CardSet set : CardSet.values()) {
+            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
+                Card card = printing.createCard();
+                if (card.getName() != null
+                        && !(card.hasType(CardType.LAND)
+                        && card.getSupertypes().contains(CardSupertype.BASIC))) {
+                    names.add(card.getName());
+                }
+            }
+        }
+        List<String> result = List.copyOf(names);
+        catalogNonbasicCardNames = result;
+        return result;
     }
 
     /** Names of nonbasic land cards known to the game and implemented card catalog (Alpine Moon). */

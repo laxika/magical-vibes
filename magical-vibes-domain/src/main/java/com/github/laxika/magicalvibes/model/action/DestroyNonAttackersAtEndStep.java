@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.action;
 
+import com.github.laxika.magicalvibes.model.Card;
 import java.util.UUID;
 
 /**
@@ -7,5 +8,5 @@ import java.util.UUID;
  * player controls that didn't attack this turn. Creatures that player didn't control continuously
  * since the beginning of the turn (summoning sick) are ignored.
  */
-public record DestroyNonAttackersAtEndStep(UUID playerId) implements DelayedAction {
+public record DestroyNonAttackersAtEndStep(UUID playerId, Card sourceCard) implements DelayedAction {
 }

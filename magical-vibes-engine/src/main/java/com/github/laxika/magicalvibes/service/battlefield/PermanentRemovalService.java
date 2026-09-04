@@ -27,8 +27,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureReturnToHandReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
@@ -39,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -1116,6 +1120,9 @@ public class PermanentRemovalService {
     private Permanent findControlledPermanentWithDamageRedirect(GameData gameData, UUID playerId,
                                                                   UUID sourcePermanentId) {
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (!(effect instanceof RedirectPlayerDamageToSelfEffect redirect)) continue;
                 if (redirect.onlyFromUnblockedCreatures()) {
@@ -1228,6 +1235,15 @@ public class PermanentRemovalService {
         if (wasCreature) {
             gameData.creatureLeftBattlefieldCountThisTurn.merge(controllerId, 1, Integer::sum);
         }
+        target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(AnimateNoncreatureArtifactsEffect.class::isInstance)
+                .map(AnimateNoncreatureArtifactsEffect.class::cast)
+                .filter(AnimateNoncreatureArtifactsEffect::losesAllAbilities)
+                .findFirst()
+                .ifPresent(effect -> gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), target.getCard().getName(), null, controllerId,
+                        effect, null, null, new PermanentIsArtifactPredicate(),
+                        EffectDuration.UNTIL_END_OF_TURN, 0)));
         UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
         gameData.stolenCreatures.remove(target.getId());
         // A departing Aura ends the layer-1 copy it granted (Metamorphic Alteration): its
@@ -1530,7 +1546,8 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                     triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
-                    triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
+                    triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(
+                            gameData, target.getCard(), ownerId);
                     triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId, target);
                     triggerCollectionService.checkEquippedCreatureDeathTriggers(
                             gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath);

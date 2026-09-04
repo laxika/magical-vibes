@@ -39,6 +39,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -644,6 +646,15 @@ public class MayAbilityHandlerService {
             return;
         }
         if (accepted) {
+            if (requiresSourceSacrifice(ability.effects())
+                    && (ability.sourcePermanentId() == null
+                    || gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) == null)) {
+                accepted = false;
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " cannot sacrifice ", ability.sourceCard(), "."));
+            }
+        }
+        if (accepted) {
             if (ability.tapPermanentsCost() != null) {
                 // beginTapCostPayment either awaits input or continues the parked resolution.
                 mayAbilityTapCostService.beginTapCostPayment(
@@ -729,6 +740,19 @@ public class MayAbilityHandlerService {
         if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
         if (gameData.interaction.isAwaitingInput()) { return; }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private boolean requiresSourceSacrifice(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof SacrificeSelfEffect) {
+                return true;
+            }
+            if (effect instanceof SequenceEffect sequence
+                    && requiresSourceSacrifice(sequence.steps())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Continues a may ability after a tap cost has been paid. */

@@ -12,11 +12,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 /**
  * Resolves {@link DestroyCombatOpponentsOfTargetAtEndOfCombatEffect} by queueing a
  * {@link DestroyCombatOpponentsAtEndOfCombat} delayed action for the target. The creatures to
- * destroy are only determined when that action is drained at end of combat, so blocks declared
- * after this resolution still count (Venomous Breath and Glyph of Doom).
+ * destroy are captured when the spell or ability resolves.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,8 +39,11 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
         if (target == null) {
             return;
         }
+        Set<java.util.UUID> combatOpponentIds = destroyEffect.onlyCreaturesBlockedByTarget()
+                ? gameData.combatOpponentIdsBlockedByThisTurn.getOrDefault(target.getId(), Set.of())
+                : gameData.combatBlockOpponentIdsThisTurn.getOrDefault(target.getId(), Set.of());
         gameData.queueDelayedAction(new DestroyCombatOpponentsAtEndOfCombat(target.getId(),
-                destroyEffect.onlyCreaturesBlockedByTarget()));
+                destroyEffect.onlyCreaturesBlockedByTarget(), Set.copyOf(combatOpponentIds)));
         String affectedCreatures = destroyEffect.onlyCreaturesBlockedByTarget()
                 ? "'s blocked creatures will be destroyed at end of combat."
                 : "'s combat opponents will be destroyed at end of combat.";

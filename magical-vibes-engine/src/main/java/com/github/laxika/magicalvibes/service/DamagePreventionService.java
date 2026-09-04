@@ -510,9 +510,8 @@ public class DamagePreventionService {
             // accumulated into a delayed +0/+1 counter trigger drained at the next end step.
             int boonShield = permanent.getDamageToCounterPreventionShield();
             if (boonShield > 0 && damage > 0) {
-                int boonPrevented = Math.min(boonShield, damage);
+                int boonPrevented = gameData.consumeSacredBoonShields(permanent.getId(), damage);
                 permanent.setDamageToCounterPreventionShield(boonShield - boonPrevented);
-                gameData.addDelayedPlusZeroPlusOneCounters(permanent.getId(), boonPrevented);
                 damage -= boonPrevented;
                 if (damage <= 0) return 0;
             }
@@ -1100,6 +1099,12 @@ public class DamagePreventionService {
 
     public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId,
                                                   int damage, boolean combatDamage) {
+        return applyPlayerNextSourceDamageShield(
+                gameData, playerId, sourcePermanentId, damage, combatDamage, null);
+    }
+
+    public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                                  int damage, boolean combatDamage, Card sourceCard) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
         if (damage <= 0 || playerId == null || sourcePermanentId == null
                 || gameData.playerSourceNextDamageShields.isEmpty()) {
@@ -1112,7 +1117,7 @@ public class DamagePreventionService {
             if (shield.playerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
                 it.remove();
                 int prevented = shield.preventHalfDamage() ? remaining / 2 : remaining;
-                applyNextSourceShieldRiders(gameData, shield, prevented);
+                applyNextSourceShieldRiders(gameData, shield, prevented, sourceCard);
                 remaining -= prevented;
                 if (remaining == 0) {
                     return 0;
@@ -1148,7 +1153,7 @@ public class DamagePreventionService {
                     && shield.playerId().equals(creatureControllerId)
                     && shield.sourceId().equals(sourcePermanentId)) {
                 it.remove();
-                applyNextSourceShieldRiders(gameData, shield, damage);
+                applyNextSourceShieldRiders(gameData, shield, damage, null);
                 return 0;
             }
         }
@@ -1156,8 +1161,9 @@ public class DamagePreventionService {
     }
 
     /** Applies whatever "… prevented this way" rider the consumed shield carries. */
-    private void applyNextSourceShieldRiders(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
-        gainLifeForNextSourceShield(gameData, shield, damage);
+    private void applyNextSourceShieldRiders(GameData gameData, PlayerSourceNextDamageShield shield,
+                                              int damage, Card sourceCard) {
+        gainLifeForNextSourceShield(gameData, shield, damage, sourceCard);
         exileFromLibraryForNextSourceShield(gameData, shield, damage);
         if (shield.drawCards()) {
             for (int i = 0; i < damage; i++) {
@@ -1198,11 +1204,20 @@ public class DamagePreventionService {
      * only gains when the chosen source is black, which is read from the source permanent's
      * effective colours at prevention time.
      */
-    private void gainLifeForNextSourceShield(GameData gameData, PlayerSourceNextDamageShield shield, int damage) {
+    private void gainLifeForNextSourceShield(GameData gameData, PlayerSourceNextDamageShield shield,
+                                              int damage, Card sourceCard) {
         if (!shield.gainLife()) return;
         if (shield.gainLifeOnlyFromBlackSource()) {
             Permanent source = gameQueryService.findPermanentById(gameData, shield.sourceId());
-            if (source == null || !gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.BLACK)) {
+            boolean black = source != null
+                    ? gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.BLACK)
+                    : sourceCard != null
+                            ? gameQueryService.getEffectiveCardColors(gameData, sourceCard).contains(CardColor.BLACK)
+                            : gameData.stack.stream()
+                            .filter(entry -> entry.getCard().getId().equals(shield.sourceId()))
+                            .anyMatch(entry -> gameQueryService.getEffectiveCardColors(
+                                    gameData, entry.getCard()).contains(CardColor.BLACK));
+            if (!black) {
                 return;
             }
         }
@@ -1860,7 +1875,8 @@ public class DamagePreventionService {
     public UUID findStaticUnblockedCreatureDamageRedirectTarget(GameData gameData, UUID protectedPlayerId) {
         if (protectedPlayerId == null) return null;
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(protectedPlayerId, List.of())) {
-            if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)) continue;
+            if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)
+                    || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean redirects = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
                             && redirect.onlyFromUnblockedCreatures());

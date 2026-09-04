@@ -393,7 +393,8 @@ public class UntapStepService {
      */
     public boolean playersSkipUntapStepApplies(GameData gameData) {
         return gameData.anyPermanentMatches(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                !gameQueryService.hasLostAllAbilities(gameData, p)
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
     }
 

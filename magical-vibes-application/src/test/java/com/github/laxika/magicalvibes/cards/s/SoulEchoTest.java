@@ -166,7 +166,7 @@ class SoulEchoTest extends BaseCardTest {
         harness.setLife(player1, 20);
         incinerateController();
 
-        harness.assertLife(player1, 19);
+        harness.assertLife(player1, 20);
         assertThat(firstEcho.getCounterCount(CounterType.ECHO)
                 + secondEcho.getCounterCount(CounterType.ECHO)).isEqualTo(1);
     }

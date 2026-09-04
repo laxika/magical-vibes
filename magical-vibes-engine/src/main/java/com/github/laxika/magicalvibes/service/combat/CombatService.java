@@ -386,17 +386,14 @@ public class CombatService {
 
     /**
      * Destroys creatures scheduled for directional or bidirectional combat-opponent destruction.
-     * The opponent set is read here rather than at spell resolution, so blocks declared after the
-     * spell resolved are included. Respects indestructible and regeneration via
+     * The opponent set was captured when the delayed effect was created. Respects indestructible and regeneration via
      * {@link PermanentRemovalService#tryDestroyPermanent}.
      */
     public void processEndOfCombatCombatOpponentDestructions(GameData gameData) {
         List<DestroyCombatOpponentsAtEndOfCombat> scheduled =
                 gameData.drainDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
         for (DestroyCombatOpponentsAtEndOfCombat action : scheduled) {
-            Set<UUID> opponentIds = action.onlyCreaturesBlockedByTarget()
-                    ? gameData.combatOpponentIdsBlockedByThisTurn.get(action.creatureId())
-                    : gameData.combatBlockOpponentIdsThisTurn.get(action.creatureId());
+            Set<UUID> opponentIds = action.combatOpponentIds();
             if (opponentIds == null) {
                 continue;
             }

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -95,6 +96,7 @@ public class BasicLandSearchQueueSupport {
                 .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
                 .toList();
         if (basicLands.isEmpty()) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library but finds no basic land cards. Library is shuffled."));

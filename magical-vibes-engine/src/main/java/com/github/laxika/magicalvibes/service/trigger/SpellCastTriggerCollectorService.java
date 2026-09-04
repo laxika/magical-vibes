@@ -1962,6 +1962,7 @@ public class SpellCastTriggerCollectorService {
                 sc.castingPlayerId(),
                 match.permanent().getId()
         );
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }

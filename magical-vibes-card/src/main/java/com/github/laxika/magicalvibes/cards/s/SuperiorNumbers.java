@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 /**
  * Superior Numbers deals damage to target creature equal to the number of creatures you control in
@@ -24,10 +28,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class SuperiorNumbers extends Card {
 
     public SuperiorNumbers() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new Max(
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(), "Target must be a creature"))
+                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new Max(
                 new Fixed(0),
                 new Sum(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                         new Scaled(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS), -1)))));
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));
     }
 }

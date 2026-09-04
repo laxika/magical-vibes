@@ -42,9 +42,15 @@ public class UrborgPanther extends Card {
                 List.of(
                         new SacrificePermanentsSequenceCost(
                                 List.of(
-                                        new PermanentNamedPredicate("Feral Shadow"),
-                                        new PermanentNamedPredicate("Breathstealer"),
-                                        new PermanentIsSourceCardPredicate()
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentNamedPredicate("Feral Shadow"),
+                                                new PermanentIsCreaturePredicate())),
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentNamedPredicate("Breathstealer"),
+                                                new PermanentIsCreaturePredicate())),
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsSourceCardPredicate(),
+                                                new PermanentIsCreaturePredicate()))
                                 ),
                                 List.of("a creature named Feral Shadow", "a creature named Breathstealer", "this creature")
                         ),

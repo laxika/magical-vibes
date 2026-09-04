@@ -46,6 +46,7 @@ class TidalWaveTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Wall");
     }
@@ -58,12 +59,11 @@ class TidalWaveTest extends BaseCardTest {
         Permanent wall = findPermanent(player1, "Wall");
 
         harness.setHand(player2, List.of(new Boomerang()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.assertOnBattlefield(player1, "Wall");
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, wall.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

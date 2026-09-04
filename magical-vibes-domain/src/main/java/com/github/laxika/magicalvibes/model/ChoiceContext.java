@@ -1053,7 +1053,12 @@ public sealed interface ChoiceContext {
      * damage). Used by Vexing Arcanix.
      */
     record TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId,
-                                               int damageOnMiss) implements ChoiceContext {}
+                                               int damageOnMiss, Card sourceCard) implements ChoiceContext {
+        public TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId,
+                                                   UUID sourcePermanentId, int damageOnMiss) {
+            this(controllerId, targetPlayerId, sourcePermanentId, damageOnMiss, null);
+        }
+    }
 
     /**
      * Diviner's Lockbox: the controller names a card, then reveals the top card of their library.

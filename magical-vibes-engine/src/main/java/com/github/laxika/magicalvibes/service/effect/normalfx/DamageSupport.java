@@ -356,6 +356,12 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
                     gameData, targetControllerId, sourcePermId, rawDamage);
         }
+        if (!targetDamageUnpreventable && sourcePermId == null && entry.getCard() != null) {
+            rawDamage = damagePreventionService.applyTargetSourcePreventionShield(
+                    gameData, target.getId(), entry.getEffectiveDamageSourceCard().getId(), rawDamage);
+            rawDamage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
+                    gameData, targetControllerId, entry.getEffectiveDamageSourceCard().getId(), rawDamage);
+        }
         if (!targetDamageUnpreventable) {
             rawDamage = damagePreventionService.applyChannelHarmPreventionToPermanent(
                     gameData, target, sourceControllerId, rawDamage);
@@ -1355,7 +1361,8 @@ public class DamageSupport {
                 // source's controller. Does not reduce the damage dealt here; schedules a reflection.
                 damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, damageSourceId, rawDamage);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
-                rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, damageSourceId, rawDamage);
+                rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(
+                        gameData, playerId, damageSourceId, rawDamage, false, source);
                 damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
                 rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, damageSourceId, rawDamage, playerId);
@@ -2169,9 +2176,10 @@ public class DamageSupport {
     /**
      * Soul Echo: while the targeted opponent has chosen it, "for each 1 damage that would be dealt to
      * you until your next upkeep, you remove an echo counter from this enchantment instead". Returns
-     * how much of {@code damage} was replaced this way — one echo counter per 1 damage, capped by the
-     * counters actually available across the player's armed Soul Echoes; any excess damage is dealt
-     * normally. This is a replacement, not prevention, so it is not gated on
+     * how much of {@code damage} was replaced this way — one echo counter per 1 damage, up to the
+     * counters actually available on one armed Soul Echo. Running out of counters does not leave a
+     * remainder to be dealt, because the replacement applies to the entire damage event. This is a
+     * replacement, not prevention, so it is not gated on
      * {@code isDamagePreventable}. Shared by the noncombat ({@link #dealDamageToPlayer}) and combat
      * ({@code CombatDamageService.applyPlayerDamage}) paths.
      */
@@ -2181,24 +2189,20 @@ public class DamageSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
 
-        int replaced = 0;
         for (Permanent permanent : battlefield) {
-            if (replaced >= damage) break;
             if (!permanent.isEchoDamageRedirectionActive()) continue;
 
             int available = permanent.getCounterCount(CounterType.ECHO);
-            if (available <= 0) continue;
-
-            int removed = Math.min(available, damage - replaced);
+            int removed = Math.min(available, damage);
             permanent.setCounterCount(CounterType.ECHO, available - removed);
-            replaced += removed;
 
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(playerId) + " removes " + removed + " echo counter"
                             + (removed == 1 ? "" : "s") + " from ", permanent.getCard(),
-                    " instead of taking " + removed + " damage."));
+                    " instead of taking " + damage + " damage."));
+            return damage;
         }
-        return replaced;
+        return 0;
     }
 
     /**

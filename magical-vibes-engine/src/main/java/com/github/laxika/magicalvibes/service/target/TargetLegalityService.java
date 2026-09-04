@@ -176,6 +176,10 @@ public class TargetLegalityService {
                     : "Target must be a spell on the stack");
         }
 
+        if (targetFilter != null && !(targetFilter instanceof StackEntryPredicateTargetFilter)) {
+            return Optional.of("Target filter does not allow a spell on the stack");
+        }
+
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter
                 && !matchesStackEntryPredicate(gameData, targetSpell, filter.predicateFor(Boolean.TRUE.equals(kicked)),
                 controllerId, source, xValue)) {
@@ -3662,6 +3666,10 @@ public class TargetLegalityService {
                                           boolean allowSharedTargetsWithinGroup,
                                           List<Integer> targetGroupSizes) {
         if (targetIds == null || targetIds.size() < min || targetIds.size() > max) {
+            if (min == max) {
+                throw new IllegalStateException("Must choose " + min + " targets. Must target between "
+                        + min + " and " + max + " targets");
+            }
             throw new IllegalStateException("Must target between " + min + " and " + max + " targets");
         }
         if (allowSharedTargets && spellTargets == null) {
@@ -3929,7 +3937,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {
             // When X is unknown (target enumeration before X is chosen), match permissively —
             // any spell is potentially a legal target since X can be any non-negative integer.
-            return xValue == null || stackEntry.getCard().getManaValue() == xValue;
+            int manaValue = stackEntry.getCard().getManaValue()
+                    + stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount();
+            return xValue == null || manaValue == xValue;
         }
         if (predicate instanceof StackEntryManaValueEqualsSourceCountersPredicate equalsCounters) {
             if (source == null) {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeAuraReanimateFromGravey
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final AuraAttachmentService auraAttachmentService;
+    private final DestructionSupport destructionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,6 +60,8 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
             return;
         }
 
+        becomeAura(source);
+
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (graveyardCard == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
@@ -65,8 +70,6 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
                     gameData.id, entry.getCard().getName());
             return;
         }
-
-        becomeAura(source);
 
         Permanent creature = graveyardReturnSupport.reanimateTargetedCard(
                 gameData, entry.getControllerId(), graveyardCard);
@@ -80,8 +83,15 @@ public class BecomeAuraReanimateFromGraveyardEffectHandler implements NormalEffe
             return;
         }
 
+        if (!auraAttachmentService.canEnchant(
+                gameData, source.getCard(), entry.getControllerId(), creature)) {
+            destructionSupport.sacrificeAndLog(gameData, creature, entry.getControllerId());
+            return;
+        }
+
         gameData.expireFloatingEffectsForUnattachedSource(source.getId());
         source.setAttachedTo(creature.getId());
+        source.setChosenPermanentId(creature.getId());
         source.setTimestamp(gameData.nextTimestamp());
 
         gameLogService.append(gameData, GameLog.builder()

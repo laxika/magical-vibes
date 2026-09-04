@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -607,10 +606,7 @@ public class MayCopyHandlerService {
 
         Card copiedCard = sourcePermanent.getCard();
         EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
-        for (EffectRegistration registration : sourcePermanent.getOriginalCard()
-                .getEffectRegistrations(retainedEffectSlot)) {
-            copiedCard.addEffect(retainedEffectSlot, registration.effect(), registration.triggerMode());
-        }
+        copiedCard.addEffect(retainedEffectSlot, copyEffect);
 
         String targetName = targetPerm.getCard().getName();
         

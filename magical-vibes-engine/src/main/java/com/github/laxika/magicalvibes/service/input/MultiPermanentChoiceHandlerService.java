@@ -81,6 +81,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FightOrFlightSupport fightOrFlightSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport standOrFallSupport;
@@ -255,6 +256,11 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two lands must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost attackCost
+                && permanentIds.size() != attackCost.requiredCount()) {
+            throw new IllegalStateException("Exactly " + attackCost.requiredCount()
+                    + " permanents must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands worms
                 && permanentIds.stream().anyMatch(id -> {
@@ -553,6 +559,8 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost) {
+            handleSacrificeAttackCost(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
             handleExileAttackingCreatures(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary ctx) {
@@ -1138,6 +1146,24 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleSacrificeAttackCost(GameData gameData, UUID playerId, List<UUID> permanentIds) {
+        String playerName = gameData.playerIdToName.get(playerId);
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null
+                    || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                throw new IllegalStateException("A selected permanent is no longer controlled by the attacker");
+            }
+            if (permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, playerId, permanent.getCard());
+                gameLogService.append(gameData, GameLog.playerSacrifices(playerName, permanent.getCard()));
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handleExileAttackingCreatures(GameData gameData, UUID playerId, List<UUID> permanentIds) {
         if (permanentIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
@@ -1447,7 +1473,7 @@ public class MultiPermanentChoiceHandlerService {
             if (!context.remainingChoosers().isEmpty()) {
                 // More players still need to choose — prompt the next one
                 destructionSupport.beginNextForcedSacrificeFromQueue(gameData,
-                        context.remainingChoosers(), allIds);
+                        context.remainingChoosers(), allIds, true, context.afterSacrifices());
                 return;
             }
 
@@ -1466,6 +1492,11 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (context.afterSacrifices() != null
+                && basicLandSearchQueueSupport.advance(gameData, context.afterSacrifices())) {
+            return;
+        }
 
         // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

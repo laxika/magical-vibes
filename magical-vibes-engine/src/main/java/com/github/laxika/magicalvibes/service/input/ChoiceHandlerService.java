@@ -898,6 +898,9 @@ public class ChoiceHandlerService {
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
         ManaColor chosenColor = ManaColor.valueOf(colorName);
+        if (ctx.fixedColorOptions() != null && !ctx.fixedColorOptions().contains(chosenColor)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
         ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
 
         if (ctx.differentColors() && !ctx.fixedColorOptions().contains(manaColor)) {
@@ -3991,6 +3994,13 @@ public class ChoiceHandlerService {
     private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.BasicLandTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
+        List<CardSubtype> allowedTypes = ctx.allowedTypes().isEmpty()
+                ? CardSubtype.basicLandTypes()
+                : ctx.allowedTypes();
+        if (!allowedTypes.contains(subtype)) {
+            throw new IllegalArgumentException("Chosen land type is not allowed: " + subtypeName);
+        }
+
         gameData.interaction.clearAwaitingInput();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
@@ -5017,13 +5027,14 @@ public class ChoiceHandlerService {
         if (ctx.damageOnMiss() <= 0) return;
 
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        if (source == null) return;
+        Card sourceCard = source != null ? source.getCard() : ctx.sourceCard();
+        if (sourceCard == null) return;
 
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.ACTIVATED_ABILITY,
-                source.getCard(),
+                sourceCard,
                 ctx.controllerId(),
-                source.getCard().getName() + "'s ability",
+                sourceCard.getName() + "'s ability",
                 List.of(),
                 targetPlayerId,
                 ctx.sourcePermanentId());

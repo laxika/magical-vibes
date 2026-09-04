@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -36,6 +38,7 @@ public class AttackSacrificeCostService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PlayerInputService playerInputService;
 
     /**
      * For each declared attacker carrying a {@link CantAttackUnlessSacrificeEffect}, sacrifices the
@@ -142,6 +145,19 @@ public class AttackSacrificeCostService {
     }
 
     private void sacrificeMatching(GameData gameData, UUID playerId, int count, PermanentPredicate filter) {
+        List<Permanent> candidates = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, filter))
+                .toList();
+        if (candidates.size() > count) {
+            playerInputService.beginMultiPermanentChoice(gameData, playerId,
+                    candidates.stream().map(Permanent::getId).toList(), count,
+                    new MultiPermanentChoiceContext.SacrificeAttackCost(count),
+                    "Choose " + count + " permanent" + (count == 1 ? "" : "s")
+                            + " to sacrifice as an attack cost.");
+            return;
+        }
+
         String playerName = gameData.playerIdToName.get(playerId);
         int sacrificed = 0;
         while (sacrificed < count) {

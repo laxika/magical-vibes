@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 
@@ -21,7 +22,8 @@ public class VigilantMartyr extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new RegenerateEffect(true)),
-                "Sacrifice this creature: Regenerate target creature."
+                "Sacrifice this creature: Regenerate target creature.",
+                TargetFilters.creature()
         ));
 
         // {W}{W}, {T}, Sacrifice this creature: Counter target spell that targets an enchantment.

@@ -2908,6 +2908,35 @@ public class GameData {
         delayedActions.add(new DelayedPlusZeroPlusOneCounters(permanentId, total));
     }
 
+    public void registerSacredBoonShield(UUID permanentId, UUID controllerId, Card sourceCard,
+                                         int amount) {
+        delayedActions.add(new DelayedPlusZeroPlusOneCounters(
+                permanentId, 0, controllerId, sourceCard, UUID.randomUUID(), amount));
+    }
+
+    public int consumeSacredBoonShields(UUID permanentId, int damage) {
+        int remainingDamage = damage;
+        List<DelayedPlusZeroPlusOneCounters> replacements = new ArrayList<>();
+        var it = delayedActions.iterator();
+        while (it.hasNext() && remainingDamage > 0) {
+            DelayedAction action = it.next();
+            if (!(action instanceof DelayedPlusZeroPlusOneCounters shield)
+                    || !shield.permanentId().equals(permanentId)
+                    || shield.remainingShield() <= 0) {
+                continue;
+            }
+            int prevented = Math.min(shield.remainingShield(), remainingDamage);
+            remainingDamage -= prevented;
+            it.remove();
+            replacements.add(new DelayedPlusZeroPlusOneCounters(
+                    shield.permanentId(), shield.totalCounters() + prevented,
+                    shield.controllerId(), shield.sourceCard(), shield.shieldId(),
+                    shield.remainingShield() - prevented));
+        }
+        delayedActions.addAll(replacements);
+        return damage - remainingDamage;
+    }
+
     /**
      * Returns the pending +1/+1 counter total scheduled for {@code permanentId} (0 if none).
      */

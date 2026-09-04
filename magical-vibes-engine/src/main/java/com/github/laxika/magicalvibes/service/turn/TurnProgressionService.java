@@ -110,6 +110,8 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             gameData.expireEndOfCombatFloatingEffects();
+            gameData.creaturesWithCombatDamagePrevented.clear();
+            gameData.creaturesPreventedFromDealingCombatDamage.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
@@ -155,7 +157,9 @@ public class TurnProgressionService {
             }
         }
 
-        if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN && gameData.additionalCombatMainPhasePairs > 0) {
+        if ((gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                && gameData.additionalCombatMainPhasePairs > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
             additionalCombatPhase = true;
