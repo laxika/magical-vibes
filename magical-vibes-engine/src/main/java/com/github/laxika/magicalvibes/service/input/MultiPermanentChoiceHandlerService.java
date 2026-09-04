@@ -1711,7 +1711,7 @@ public class MultiPermanentChoiceHandlerService {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
-                total += Math.max(0, gameQueryService.getEffectivePower(gameData, perm));
+                total += gameQueryService.getEffectivePower(gameData, perm);
             }
         }
         return total;
@@ -1754,12 +1754,7 @@ public class MultiPermanentChoiceHandlerService {
                 destructionSupport.sacrificeAndLog(gameData, source, playerId);
             }
         } else {
-            for (UUID permId : permanentIds) {
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    destructionSupport.sacrificeAndLog(gameData, perm, playerId);
-                }
-            }
+            destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 

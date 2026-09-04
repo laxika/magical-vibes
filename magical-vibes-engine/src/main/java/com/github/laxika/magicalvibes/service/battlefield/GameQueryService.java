@@ -1300,7 +1300,22 @@ public class GameQueryService {
         }
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         for (CardSubtype type : types) {
-            colors.addAll(mappings.getOrDefault(type, Set.of()));
+            Set<ManaColor> replacements = mappings.get(type);
+            if (replacements != null) {
+                colors.addAll(replacements);
+            } else {
+                ManaColor intrinsicColor = switch (type) {
+                    case PLAINS -> ManaColor.WHITE;
+                    case ISLAND -> ManaColor.BLUE;
+                    case SWAMP -> ManaColor.BLACK;
+                    case MOUNTAIN -> ManaColor.RED;
+                    case FOREST -> ManaColor.GREEN;
+                    default -> null;
+                };
+                if (intrinsicColor != null) {
+                    colors.add(intrinsicColor);
+                }
+            }
         }
         return colors;
     }

@@ -518,7 +518,9 @@ public class BlockLegalityService {
             BlockabilityRestrictionEffect restriction = attackerRestriction.effect();
             if (restriction.unblockableIfDefenderControls() != null
                     && !(restriction.unblockableIfDefenderControlsIsLandwalk() && landwalkIgnored)
-                    && defenderControls(context, attackerRestriction.source(), restriction.unblockableIfDefenderControls())) {
+                    && defenderControls(context, attackerRestriction.source(),
+                    restriction.unblockableIfDefenderControls(),
+                    restriction.unblockableIfDefenderControlsIsLandwalk())) {
                 unblockable = true;
                 if (restriction.unblockableIfDefenderControlsIsLandwalk()) {
                     landwalkUnblockable = true;
@@ -719,11 +721,13 @@ public class BlockLegalityService {
         return count;
     }
 
-    private boolean defenderControls(BlockLegalityContext context, Permanent source, PermanentPredicate predicate) {
+    private boolean defenderControls(BlockLegalityContext context, Permanent source,
+                                     PermanentPredicate predicate, boolean landsOnly) {
         FilterContext filterContext = FilterContext.of(context.gameData)
                 .withSourceCardId(source.getCard().getId())
                 .withSourcePermanentSnapshot(source);
         return context.defenderBattlefield.stream()
+                .filter(permanent -> !landsOnly || gameQueryService.isLand(context.gameData, permanent))
                 .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext));
     }
 

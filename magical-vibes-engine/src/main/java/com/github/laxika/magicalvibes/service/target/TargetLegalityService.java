@@ -814,6 +814,10 @@ public class TargetLegalityService {
             // checked against the filter's player predicate, the permanent side falls through below.
             if (positionFilter instanceof AnyTargetPredicateTargetFilter anyFilter
                     && gameData.playerIds.contains(targetId)) {
+                String peaceTalks = peaceTalksUntargetableReason(gameData);
+                if (peaceTalks != null) {
+                    throw new IllegalStateException(peaceTalks);
+                }
                 validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
                 validatePlayerPredicate(gameData, playerId, targetId, anyFilter.playerPredicate(), anyFilter.errorMessage());
                 continue;
@@ -1158,7 +1162,10 @@ public class TargetLegalityService {
         if (targetZone == Zone.STACK
                 || spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
                 && isSpellOnStack(gameData, targetId)) {
-            return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
+            TargetFilter stackTargetFilter = effectiveTargetFilter instanceof StackEntryPredicateTargetFilter
+                    ? effectiveTargetFilter
+                    : null;
+            return checkSpellTargetOnStack(gameData, targetId, stackTargetFilter,
                     controllerId, null, xValue, kicked);
         }
 
@@ -1815,6 +1822,10 @@ public class TargetLegalityService {
                         : card.doesPositionAllowPlayerTargets(positionOffset + i);
                 if (!playerTargetAllowed) {
                     throw new IllegalStateException("This spell cannot target players");
+                }
+                String peaceTalks = peaceTalksUntargetableReason(gameData);
+                if (peaceTalks != null) {
+                    throw new IllegalStateException(peaceTalks);
                 }
                 TargetFilter playerSlotFilter = getPositionFilter(perPositionFilters, i);
                 if (playerSlotFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
@@ -2961,8 +2972,10 @@ public class TargetLegalityService {
                             entry.getTriggeringPermanentPowerAtTrigger())).isEmpty();
         }
         if (entry.getTargetZone() == Zone.STACK) {
-            TargetFilter effectiveTargetFilter = targetFilterForCast(
-                    primaryTargetFilter(entry), entry.isKicked(), entry.isGiftPromised());
+            TargetFilter primaryFilter = primaryTargetFilter(entry);
+            TargetFilter effectiveTargetFilter = primaryFilter instanceof StackEntryPredicateTargetFilter
+                    ? targetFilterForCast(primaryFilter, entry.isKicked(), entry.isGiftPromised())
+                    : null;
             return checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter, entry.getControllerId(),
                     entry.getSourcePermanentSnapshot(), entry.getXValue(), false).isEmpty();
         }

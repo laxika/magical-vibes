@@ -109,7 +109,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
 
     /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
+        return pool.getTotal();
     }
 
     private void dealRemainingDamage(GameData gameData, StackEntry entry, UUID playerId, int remaining) {

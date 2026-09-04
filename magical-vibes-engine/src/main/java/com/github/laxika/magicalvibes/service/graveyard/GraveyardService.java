@@ -893,11 +893,11 @@ public class GraveyardService {
 
     /**
      * Matopi Golem: a regeneration shield granted by its ability puts a -1/-1 counter on the
-     * permanent once it is actually spent. Plain shields are consumed first — a rider shield is
-     * only spent when the remaining shields are all rider shields.
+     * permanent once it is actually spent. When both kinds are available, the Matopi shield is
+     * selected so its rider is not silently discarded behind an indistinguishable plain shield.
      */
     private void spendMinusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
-        if (perm.getMinusOneCounterRegenerationShield() <= perm.getRegenerationShield()) {
+        if (perm.getMinusOneCounterRegenerationShield() <= 0) {
             return;
         }
         perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() - 1);

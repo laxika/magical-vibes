@@ -2545,6 +2545,8 @@ public class SpellCastingService {
         if (card == null) {
             throw new IllegalStateException("Card does not have an Adventure face");
         }
+        gameData.spellColorOverrides.remove(card.getId());
+        gameData.spellColorOverridesUntilEndOfTurn.remove(card.getId());
         boolean hasGiftChoice = card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(GiftEffect.class::isInstance);
         if (giftPromised && !hasGiftChoice) {
@@ -3104,8 +3106,11 @@ public class SpellCastingService {
                 targetLegalityService.validateMultiSpellTargetsOnStack(
                         gameData, card, targetIds, playerId, kicked, giftPromised);
             } else {
+                TargetFilter stackTargetFilter = card.getTargetFilter() instanceof StackEntryPredicateTargetFilter
+                        ? card.getTargetFilter()
+                        : null;
                 targetLegalityService.validateSpellTargetOnStack(
-                        gameData, targetId, card.getTargetFilter(), playerId, effectiveXValue, kicked,
+                        gameData, targetId, stackTargetFilter, playerId, effectiveXValue, kicked,
                         giftPromised);
             }
         }
@@ -3292,8 +3297,9 @@ public class SpellCastingService {
                     playerId, true, effectiveXValue, kicked, giftPromised);
         }
 
-        if (targetId != null && targetIds.isEmpty()
-                && card.getEffectiveMinTargets(effectiveXValue, kicked, giftPromised) > 1) {
+        if (unwrappedNeedsTarget && !card.isAura() && targetId != null && targetIds.isEmpty()
+                && effectiveMinTargetsForEffects(
+                card, targetingSpellEffects, effectiveXValue, kicked, giftPromised) > 1) {
             throw new IllegalStateException("Spell requires additional targets");
         }
 
@@ -4764,8 +4770,14 @@ public class SpellCastingService {
                                 if (target == null) {
                                     throw new IllegalStateException("Invalid target");
                                 }
-                                if (!dividedEffect.canTargetPlayers()
-                                        && !gameQueryService.isCreature(gameData, target)) {
+                                if (dividedEffect.canTargetPlayers()) {
+                                    if (!gameQueryService.isCreature(gameData, target)
+                                            && !gameQueryService.isPlaneswalker(gameData, target)
+                                            && !gameQueryService.isBattle(gameData, target)) {
+                                        throw new IllegalStateException(
+                                                "All targets must be creatures, planeswalkers, battles, or players");
+                                    }
+                                } else if (!gameQueryService.isCreature(gameData, target)) {
                                     throw new IllegalStateException("All targets must be creatures");
                                 }
                                 if (dividedEffect.targetRestriction() != null
@@ -9445,6 +9457,24 @@ public class SpellCastingService {
         return assignments;
     }
 
+    private int effectiveMinTargetsForEffects(Card card, List<CardEffect> effects, int xValue,
+                                              boolean kicked, boolean giftPromised) {
+        Set<Integer> targetGroupIndices = effects.stream()
+                .mapToInt(card::getEffectTargetIndex)
+                .filter(index -> index >= 0)
+                .boxed()
+                .collect(java.util.stream.Collectors.toSet());
+        return card.getSpellTargets().stream()
+                .filter(target -> targetGroupIndices.contains(target.getIndex()))
+                .mapToInt(target -> {
+                    int min = giftPromised
+                            ? target.getGiftPromisedMinTargets()
+                            : kicked ? target.getKickedMinTargets() : target.getMinTargets();
+                    return target.isXScaled() ? Math.min(xValue, min) : min;
+                })
+                .sum();
+    }
+
     private DealDividedDamageEffect findChosenDividedDamageEffect(List<CardEffect> effects) {
         for (CardEffect e : effects) {
             if (e instanceof DealDividedDamageEffect d
@@ -9532,7 +9562,14 @@ public class SpellCastingService {
                     if (target == null) {
                         throw new IllegalStateException("Invalid target");
                     }
-                    if (!dividedEffect.canTargetPlayers() && !gameQueryService.isCreature(gameData, target)) {
+                    if (dividedEffect.canTargetPlayers()) {
+                        if (!gameQueryService.isCreature(gameData, target)
+                                && !gameQueryService.isPlaneswalker(gameData, target)
+                                && !gameQueryService.isBattle(gameData, target)) {
+                            throw new IllegalStateException(
+                                    "All targets must be creatures, planeswalkers, battles, or players");
+                        }
+                    } else if (!gameQueryService.isCreature(gameData, target)) {
                         throw new IllegalStateException("All targets must be creatures");
                     }
                     if (dividedEffect.targetRestriction() != null

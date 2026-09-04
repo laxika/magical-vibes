@@ -34,7 +34,7 @@ public class RunedArch extends Card {
                         )),
                         "Targets must be creatures with power 2 or less"
                 ),
-                null, null, null, List.of(), 0, 100)
+                null, null, null, List.of(), 100, 100)
                 .withXScaledTargets());
     }
 }

@@ -837,7 +837,7 @@ public class DamageTriggerCollectorService {
         Permanent aura = match.permanent();
 
         // Mortal Wound: bake the Aura's permanent id so resolution re-derives the enchanted creature.
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 aura.getCard(),
                 match.controllerId(),
@@ -845,7 +845,9 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 aura.getId()
-        ));
+        );
+        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
+        gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE destroy trigger fires",
                 gameData.id, aura.getCard().getName());

@@ -64,6 +64,7 @@ class LightningBlowTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         int player1HandBefore = gd.playerHands.get(player1.getId()).size();
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore);

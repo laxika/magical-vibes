@@ -2712,7 +2712,9 @@ public class TriggerCollectionService {
         // "When you sacrifice this" — the sacrificed card's own sacrifice-only death triggers
         collectSelfSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard, castingSpell);
 
-        playerInputService.processNextMayAbility(gameData);
+        if (gameData.simultaneousDyingPermanents.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
     }
 
     /** Fires sacrifice triggers from cards in the sacrificing player's graveyard. */
@@ -2830,9 +2832,16 @@ public class TriggerCollectionService {
 
         for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) continue;
+            List<Permanent> watchers = battlefield == null
+                    ? new ArrayList<>() : new ArrayList<>(battlefield);
+            gameData.simultaneousDyingPermanents.forEach((permanentId, permanent) -> {
+                if (controllerId.equals(gameData.simultaneousDyingPermanentControllers.get(permanentId))
+                        && watchers.stream().noneMatch(watcher -> watcher.getId().equals(permanentId))) {
+                    watchers.add(permanent);
+                }
+            });
 
-            for (Permanent perm : new ArrayList<>(battlefield)) {
+            for (Permanent perm : watchers) {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_SACRIFICED);
                 if (effects == null || effects.isEmpty()) continue;
 

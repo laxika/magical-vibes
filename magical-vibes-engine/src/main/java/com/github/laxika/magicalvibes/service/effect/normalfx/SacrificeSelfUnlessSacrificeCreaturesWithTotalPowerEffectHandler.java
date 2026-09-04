@@ -40,6 +40,11 @@ public class SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffectHandler im
         var e = (SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffect) effect;
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null || !controllerId.equals(
+                gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
+            return;
+        }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         List<UUID> eligibleIds = new ArrayList<>();
@@ -50,7 +55,7 @@ public class SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffectHandler im
                     continue;
                 }
                 eligibleIds.add(perm.getId());
-                availablePower += Math.max(0, gameQueryService.getEffectivePower(gameData, perm));
+                availablePower += gameQueryService.getEffectivePower(gameData, perm);
             }
         }
 

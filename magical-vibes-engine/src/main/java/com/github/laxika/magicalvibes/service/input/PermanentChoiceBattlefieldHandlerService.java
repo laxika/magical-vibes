@@ -1736,14 +1736,14 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleReflectDamageToSourceControllerChoice(GameData gameData, UUID permanentId,
                                                             PermanentChoiceContext.ReflectDamageToSourceControllerChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         gameData.reflectDamageToSourceControllerShields.add(permanentId);
 
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenSource.getName();
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
                 + "that damage is dealt to " + sourceName + "'s controller instead."));
         log.info("Game {} - {} chose {} as Reflect Damage source", gameData.id,

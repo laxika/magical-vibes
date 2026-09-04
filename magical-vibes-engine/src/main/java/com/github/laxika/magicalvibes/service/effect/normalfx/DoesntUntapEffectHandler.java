@@ -65,6 +65,12 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             case WHILE_SOURCE_TAPPED -> {
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+                if (source == null || sourceSnapshot == null
+                        || source.getUntapSequence() != sourceSnapshot.getUntapSequence()) {
+                    return;
+                }
                 for (UUID targetId : targetIds) {
                     Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                     if (target == null) {

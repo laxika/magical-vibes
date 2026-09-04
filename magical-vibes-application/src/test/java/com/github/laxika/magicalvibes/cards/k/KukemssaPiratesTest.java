@@ -29,10 +29,13 @@ class KukemssaPiratesTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player2, new ManaPrism());
     }
 
-    private void advanceToMayChoice() {
+    private void advanceToMayChoice(Permanent target) {
         prepareDeclareBlockers();
         // Defender declares no blocks, so Kukemssa Pirates is unblocked and its trigger fires.
         gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 
@@ -43,12 +46,11 @@ class KukemssaPiratesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        advanceToMayChoice();
+        advanceToMayChoice(artifact);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
@@ -64,10 +66,9 @@ class KukemssaPiratesTest extends BaseCardTest {
         Permanent artifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
+        advanceToMayChoice(artifact);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        resolveAllTriggers();
 
         gd.playerBattlefields.get(player1.getId()).remove(attacker);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -86,7 +87,7 @@ class KukemssaPiratesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        advanceToMayChoice();
+        advanceToMayChoice(artifact);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -98,18 +99,16 @@ class KukemssaPiratesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting but choosing no artifact leaves control unchanged and deals combat damage")
-    void acceptChooseNothing() {
+    @DisplayName("A target that leaves before resolution is not replaced")
+    void targetLeavesBeforeResolution() {
         Permanent artifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
         int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        advanceToMayChoice();
+        advanceToMayChoice(artifact);
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
 
         resolveCombat();
@@ -124,10 +123,9 @@ class KukemssaPiratesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IronTuskElephant());
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
+        advanceToMayChoice(artifact);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
@@ -153,15 +151,16 @@ class KukemssaPiratesTest extends BaseCardTest {
         Permanent originalArtifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
 
-        advanceToMayChoice();
-
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, originalArtifact.getId());
         gd.playerBattlefields.get(player2.getId()).remove(originalArtifact);
         Permanent replacementArtifact = addDefenderArtifact();
-
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(replacementArtifact.getId()));
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(replacementArtifact);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(replacementArtifact);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());

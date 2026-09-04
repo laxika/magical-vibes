@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
 
@@ -224,7 +225,6 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -270,7 +270,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @Service
 public class StepTriggerService {
 
-    private static final PermanentIsLandPredicate LAND_PREDICATE = new PermanentIsLandPredicate();
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
@@ -779,10 +778,16 @@ public class StepTriggerService {
         }
 
         UUID activePlayerId = gameData.activePlayerId;
-        // Snapshot untapped lands the active player controls now (post-untap, pre-priority) — the
-        // "number of untapped lands they controlled at the beginning of this turn" for Power Surge.
-        // Locked here so tapping lands in response to the upkeep trigger cannot reduce the value.
-        gameData.untappedLandsAtTurnStart.put(activePlayerId, countUntappedLands(gameData, activePlayerId));
+        gameData.untappedLandsAtTurnStart.computeIfAbsent(activePlayerId, ignored -> {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+            if (battlefield == null) {
+                return 0;
+            }
+            return (int) battlefield.stream()
+                    .filter(permanent -> !permanent.isTapped())
+                    .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                    .count();
+        });
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) return;
@@ -1871,20 +1876,6 @@ public class StepTriggerService {
         gameData.phasedOutPermanents.forEach((controllerId, permanents) -> permanents.forEach(permanent -> {
             permanent.expirePhaseOutPreventionAtUpkeepOf(gameData.activePlayerId);
         }));
-    }
-
-    /** Counts the untapped lands the given player currently controls (layer-aware land check). */
-    private int countUntappedLands(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return 0;
-        int count = 0;
-        for (Permanent perm : battlefield) {
-            if (!perm.isTapped()
-                    && predicateEvaluationService.matchesPermanentPredicate(gameData, perm, LAND_PREDICATE)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /**
@@ -3587,12 +3578,7 @@ public class StepTriggerService {
      *
      * @param gameData the current game state to modify
      */
-    /**
-     * Resolves the queued {@link DelayedGraveyardToBattlefieldSelfReturn} actions matching
-     * {@code filter}: each card still in its owner's graveyard returns to the battlefield under that
-     * owner's control, tapped and/or with counters as the action requests. Shared by the end-step
-     * timing (Sand Golem, Ivory Gargoyle) and the owner's-next-upkeep timing (Phytotitan).
-     */
+    /** Queues the delayed self-return abilities matching {@code filter}. */
     private void resolveDelayedSelfReturns(GameData gameData,
                                            Predicate<DelayedGraveyardToBattlefieldSelfReturn> filter) {
         if (!gameData.hasDelayedAction(DelayedGraveyardToBattlefieldSelfReturn.class, filter)) {
@@ -3615,28 +3601,20 @@ public class StepTriggerService {
                         gameData.id, pending.cardId());
                 continue;
             }
-            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
-                gameLogService.append(gameData,
-                        GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));
-                continue;
-            }
-
-            permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
-            Permanent permanent = new Permanent(cardToReturn);
-            permanent.setEnteredFromGraveyardOwnerId(pending.ownerId());
-            if (pending.counterType() != null && pending.counterAmount() > 0) {
-                permanent.setCounterCount(pending.counterType(), pending.counterAmount());
-            }
-            if (pending.tapped()) {
-                permanent.tap();
-            }
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, pending.ownerId(), permanent);
-
-            gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
-                    " returns to the battlefield (delayed trigger)."));
-            log.info("Game {} - {} returns to the battlefield from the graveyard (delayed trigger)",
-                    gameData.id, cardToReturn.getName());
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.ownerId(), cardToReturn, null, false);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    cardToReturn,
+                    pending.ownerId(),
+                    cardToReturn.getName() + "'s delayed return ability",
+                    new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
+                            pending.tapped(), false, pending.counterType(), pending.counterAmount()))));
+            entry.setTriggeringCardId(cardToReturn.getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    gameData.graveyardEntryVersion(cardToReturn.getId()));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(cardToReturn, "'s delayed return ability triggers."));
         }
     }
 
@@ -4604,7 +4582,7 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName());
                             continue;
                         }
-                        gameData.stack.add(new StackEntry(
+                        StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -4612,7 +4590,9 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(effect)),
                                 activePlayerId,
                                 perm.getId()
-                        ));
+                        );
+                        trigger.setNonTargeting(true);
+                        gameData.stack.add(trigger);
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step didn't-cast-spell trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -4625,7 +4605,7 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName(), lifeDamage.lifeThreshold());
                             continue;
                         }
-                        gameData.stack.add(new StackEntry(
+                        StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -4633,7 +4613,9 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(effect)),
                                 activePlayerId,
                                 perm.getId()
-                        ));
+                        );
+                        trigger.setNonTargeting(true);
+                        gameData.stack.add(trigger);
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step low-life trigger pushed onto stack", gameData.id, perm.getCard().getName());

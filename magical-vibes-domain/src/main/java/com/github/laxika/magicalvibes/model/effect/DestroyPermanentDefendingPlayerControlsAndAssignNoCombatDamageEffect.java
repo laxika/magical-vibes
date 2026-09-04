@@ -23,4 +23,9 @@ public record DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffe
     public RemovalKind removalKind() {
         return RemovalKind.DESTROY;
     }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetPredicates.permanent(), filter);
+    }
 }

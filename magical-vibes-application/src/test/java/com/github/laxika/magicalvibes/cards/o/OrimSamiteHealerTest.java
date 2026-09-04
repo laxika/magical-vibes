@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OrimSamiteHealer.class, GrizzlyBears.class})
 class OrimSamiteHealerTest extends BaseCardTest {
 
     @Test
@@ -20,12 +22,12 @@ class OrimSamiteHealerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player1.getId());
         assertThat(orim.isTapped()).isTrue();
 
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isEqualTo(3);
     }
 
     @Test
@@ -36,7 +38,7 @@ class OrimSamiteHealerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
 
         Permanent attacker = new Permanent(new GrizzlyBears());
@@ -50,17 +52,20 @@ class OrimSamiteHealerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.globalDamagePreventionShield).isEqualTo(1);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Shield saves a creature from lethal combat damage")
     void preventsCombatDamageToCreature() {
         addReadyOrim(player1);
+        Permanent blocker = new Permanent(new GrizzlyBears());
+        blocker.setSummoningSick(false);
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
         Permanent attacker = new Permanent(new GrizzlyBears());
@@ -68,19 +73,16 @@ class OrimSamiteHealerTest extends BaseCardTest {
         attacker.setAttacking(true);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
+        blocker.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(1);
+        assertThat(blocker.getDamagePreventionShield()).isEqualTo(1);
     }
 
     @Test
@@ -90,14 +92,14 @@ class OrimSamiteHealerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(0);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
     }
 
     private Permanent addReadyOrim(Player player) {

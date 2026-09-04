@@ -345,6 +345,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1077,8 +1078,14 @@ public class ConditionEvaluationService {
                         : gameData.stack.stream()
                                 .filter(se -> se.getCard().getId().equals(ctx.targetId()))
                                 .findFirst().orElse(null);
-                yield targetSpell != null
-                        && predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
+                if (targetSpell == null) {
+                    yield false;
+                }
+                if (c.filter() instanceof StackEntryColorInPredicate colorIn) {
+                    yield gameQueryService.getEffectiveCardColors(gameData, targetSpell.getCard()).stream()
+                            .anyMatch(colorIn.colors()::contains);
+                }
+                yield predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
             }
             case TargetSpellNoManaSpentToCast ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameQueryService
@@ -2208,8 +2215,8 @@ public class ConditionEvaluationService {
     }
 
     private boolean defendingPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
-        if (ctx.controllerId() == null) return false;
-        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, ctx.controllerId());
+        if (gameData.activePlayerId == null) return false;
+        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
         if (defendingPlayerId == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(defendingPlayerId);
         if (battlefield == null) return false;

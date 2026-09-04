@@ -50,7 +50,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PreventDamageEffect) effect;
         switch (e.scope()) {
-            case NEXT_TO_ANY -> nextToAny(gameData, entry, e);
+            case NEXT_TO_ANY -> nextToTarget(gameData, entry, e);
             case NEXT_TO_CONTROLLER -> nextToController(gameData, entry, e);
             case NEXT_TO_SELF -> nextToSelf(gameData, entry, e);
             case NEXT_TO_ENCHANTED -> nextToEnchanted(gameData, entry, e);
@@ -304,15 +304,6 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                         + " sources will be prevented this turn."));
     }
 
-    private void nextToAny(GameData gameData, StackEntry entry, PreventDamageEffect e) {
-        int amount = evaluate(gameData, entry, e);
-        gameData.globalDamagePreventionShield += amount;
-
-        String logEntry = "The next " + amount + " damage that would be dealt to any permanent or player is prevented.";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - Global prevention shield increased by {}", gameData.id, amount);
-    }
-
     private void nextToController(GameData gameData, StackEntry entry, PreventDamageEffect e) {
         UUID controllerId = entry.getControllerId();
         if (controllerId == null) return;
@@ -527,7 +518,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void allByTargetCreatures(GameData gameData, StackEntry entry, PreventDamageEffect e) {
-        List<UUID> targetIds = entry.getTargetIds();
+        List<UUID> targetIds = entry.targetsForEffect(e);
         if ((targetIds == null || targetIds.isEmpty()) && entry.getTargetId() != null) {
             // Single-target activated ability path (e.g. Resistance Fighter) stores the target
             // in the scalar targetId rather than the flat targetIds list.

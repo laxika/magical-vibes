@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.RegisterPoisonAtNextUpkeepUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MIR", collectorNumber = "238")
 public class SabertoothCobra extends Card {
@@ -15,7 +16,8 @@ public class SabertoothCobra extends Card {
         // player gets another poison counter at the beginning of their next upkeep unless they pay
         // {2} before that step. Both halves take the damaged player as their (non-targeting) target;
         // the second half schedules a delayed pay-or-poison obligation at that player's next upkeep.
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new RegisterPoisonAtNextUpkeepUnlessPaysEffect(1, "{2}"));
+        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, SequenceEffect.of(
+                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER),
+                new RegisterPoisonAtNextUpkeepUnlessPaysEffect(1, "{2}")));
     }
 }

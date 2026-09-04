@@ -79,7 +79,7 @@ class RighteousnessTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("must be a creature");
+                .hasMessageContaining("blocking creature");
     }
 
     @Test

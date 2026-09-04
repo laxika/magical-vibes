@@ -338,7 +338,6 @@ public class DamagePreventionService {
                 return 0;
             }
         }
-        if (permanent.isDamageCantBePreventedOrRedirectedThisTurn()) return damage;
         // Kiora, the Crashing Wave: prevent all damage dealt to the targeted permanent until its
         // controller's next turn begins.
         if (gameQueryService.isDamagePreventable(gameData, isCombatDamage)
@@ -397,10 +396,13 @@ public class DamagePreventionService {
                                 gameData, controllerId, tokenTemplate.withAmount(preventedDamage), permanent.getCard().getSetCode());
                     }
                 }
-                return damage - preventedDamage;
+                damage -= preventedDamage;
+                if (damage <= 0) return 0;
+            } else {
+                return damage;
             }
-            return damage;
         }
+        if (damageUnpreventable) return damage;
         if (gameQueryService.isDamagePreventable(gameData, isCombatDamage)) {
             if (applySelfDamagePrevention) {
                 damage = applySelfDamagePreventionShield(gameData, permanent, damage);
@@ -1114,7 +1116,8 @@ public class DamagePreventionService {
         int remaining = damage;
         while (it.hasNext()) {
             var shield = it.next();
-            if (shield.playerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
+            if (shield.playerId().equals(playerId)
+                    && shieldMatchesSource(gameData, shield, sourcePermanentId, sourceCard)) {
                 it.remove();
                 int prevented = shield.preventHalfDamage() ? remaining / 2 : remaining;
                 applyNextSourceShieldRiders(gameData, shield, prevented, sourceCard);
@@ -1125,6 +1128,19 @@ public class DamagePreventionService {
             }
         }
         return remaining;
+    }
+
+    private boolean shieldMatchesSource(GameData gameData, PlayerSourceNextDamageShield shield,
+                                        UUID sourceId, Card sourceCard) {
+        if (shield.sourceId().equals(sourceId)) {
+            return true;
+        }
+        Card effectiveSourceCard = sourceCard;
+        if (effectiveSourceCard == null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourceId);
+            effectiveSourceCard = sourcePermanent == null ? null : sourcePermanent.getCard();
+        }
+        return effectiveSourceCard != null && shield.sourceId().equals(effectiveSourceCard.getId());
     }
 
     /**
@@ -1151,7 +1167,7 @@ public class DamagePreventionService {
             var shield = it.next();
             if (shield.coversControlledCreatures()
                     && shield.playerId().equals(creatureControllerId)
-                    && shield.sourceId().equals(sourcePermanentId)) {
+                    && shieldMatchesSource(gameData, shield, sourcePermanentId, null)) {
                 it.remove();
                 applyNextSourceShieldRiders(gameData, shield, damage, null);
                 return 0;

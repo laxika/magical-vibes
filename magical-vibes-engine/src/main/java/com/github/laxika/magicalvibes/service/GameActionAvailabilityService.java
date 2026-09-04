@@ -440,7 +440,9 @@ public class GameActionAvailabilityService {
                 && declaredTargetEffects.stream()
                 .allMatch(effect -> effect instanceof TargetedGraveyardCardsEffect
                         || effect instanceof ReturnCardFromGraveyardEffect returnEffect
-                        && returnEffect.upTo());
+                        && returnEffect.upTo()
+                        || effect instanceof DealDividedDamageEffect dividedDamage
+                        && dividedDamage.maxTargets() == 0);
         boolean allTargetsOptional = allEffectTargetsOptional || !card.getSpellTargets().isEmpty()
                 && (card.getMinTargets() == 0
                 || maxXValue != null && card.getEffectiveMinTargets(maxXValue) == 0

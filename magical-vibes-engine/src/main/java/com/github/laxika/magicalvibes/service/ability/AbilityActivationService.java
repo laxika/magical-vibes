@@ -5118,7 +5118,9 @@ public class AbilityActivationService {
             }
             Permanent candidate = battlefield.get(permanentIndex);
             List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, candidate);
-            if (idx >= 0 && idx < abilities.size() && abilities.get(idx).isActivatableByAnyPlayer()) {
+            if (idx >= 0 && idx < abilities.size()
+                    && (abilities.get(idx).isActivatableByAnyPlayer()
+                    || abilities.get(idx).isActivatableOnlyByOwner())) {
                 return candidate;
             }
         }
@@ -5287,6 +5289,17 @@ public class AbilityActivationService {
                 throw new IllegalStateException(
                         "Only the enchanted permanent's controller may activate this ability");
             }
+        }
+
+        UUID ownerId = permanent.getCard().getOwnerId();
+        if (ownerId == null) {
+            ownerId = gameData.stolenCreatures.get(permanent.getId());
+        }
+        if (ownerId == null) {
+            ownerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        }
+        if (ability.isActivatableOnlyByOwner() && !playerId.equals(ownerId)) {
+            throw new IllegalStateException("Only this permanent's owner may activate this ability");
         }
 
         // Soul Ransom: only opponents of the source permanent's controller may activate this ability.

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -152,10 +153,16 @@ public class MiscTriggerCollectorService {
     private boolean handleSelfBecomesUntapped(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;
         Card card = match.permanent().getCard();
-        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
-        if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
+        List<CardEffect> cardEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
+        if (cardEffects.isEmpty() || cardEffects.getFirst() != effect) {
             return true;
         }
+        List<CardEffect> triggeredEffects = cardEffects.stream()
+                .map(triggeredEffect -> triggeredEffect instanceof DestroyLinkedPermanentEffect destroy
+                        ? new DestroyLinkedPermanentEffect(
+                                destroy.cannotBeRegenerated(), match.permanent().getChosenPermanentId())
+                        : triggeredEffect)
+                .toList();
 
         boolean needsTarget = triggeredEffects.stream()
                 .anyMatch(triggeredEffect ->

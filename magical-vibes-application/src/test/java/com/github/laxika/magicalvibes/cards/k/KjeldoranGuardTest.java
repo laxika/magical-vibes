@@ -30,6 +30,8 @@ class KjeldoranGuardTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
+        gd.playerAutoStopSteps.put(player1.getId(), EnumSet.of(TurnStep.BEGINNING_OF_COMBAT));
+        gd.playerAutoStopSteps.put(player2.getId(), EnumSet.of(TurnStep.BEGINNING_OF_COMBAT));
     }
 
     private Permanent snowLandOnDefender() {

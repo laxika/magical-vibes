@@ -89,7 +89,7 @@ class MindbenderSporesTest extends BaseCardTest {
 
         attacker.tap();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(attacker.getCounterCount(CounterType.FUNGUS)).isEqualTo(6);
         assertThat(attacker.isTapped()).isTrue();

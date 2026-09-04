@@ -54,12 +54,11 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
             return;
         }
 
-        boolean enterTapped = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect).enterTapped();
-        boolean returnUnderController = ((ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect)
-                .returnUnderController();
+        var returnEffect = (ReturnTriggeringCardFromGraveyardToBattlefieldEffect) effect;
         permanentRemovalService.removeCardFromGraveyardById(gameData, triggeringCardId);
-        UUID battlefieldControllerId = returnUnderController ? entry.getControllerId() : ownerId;
+        UUID battlefieldControllerId = returnEffect.returnUnderController() ? entry.getControllerId() : ownerId;
         graveyardReturnSupport.putCardOntoBattlefield(
-                gameData, battlefieldControllerId, card, null, null, enterTapped);
+                gameData, battlefieldControllerId, card, null, null, returnEffect.enterTapped(), false,
+                returnEffect.counterType(), false, false, returnEffect.counterAmount());
     }
 }

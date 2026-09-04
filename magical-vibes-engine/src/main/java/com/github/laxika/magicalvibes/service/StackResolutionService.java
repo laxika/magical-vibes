@@ -64,7 +64,6 @@ import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetP
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
@@ -434,6 +433,8 @@ public class StackResolutionService {
     private void disposeFizzledPermanentSpell(GameData gameData, StackEntry entry, Card card) {
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
+        gameData.spellColorOverrides.remove(physicalCard.getId());
+        gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
         gameData.spellEntryCounters.remove(card.getId());
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
@@ -1317,18 +1318,6 @@ public class StackResolutionService {
                 gameData.exiledCardScreamCounters.put(physicalCard.getId(), exileSpellEffect.screamCounterCount());
             }
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
-        } else if (entry.getEffectsToResolve().stream()
-                .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
-            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            // Ensure the card is shuffled into library even when an earlier effect
-            // required user input and broke the effect resolution loop before
-            // the ShuffleIntoLibraryEffect handler could run.
-            List<Card> deck = gameData.playerDecks.get(ownerId);
-            if (!deck.contains(physicalCard)) {
-                deck.add(physicalCard);
-                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
-            }
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());

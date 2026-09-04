@@ -32,12 +32,15 @@ class FloralSpuzzemTest extends BaseCardTest {
         return artifact;
     }
 
-    private void advanceToUnblockedMay() {
+    private void advanceToUnblockedMay(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
         gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 
@@ -47,12 +50,11 @@ class FloralSpuzzemTest extends BaseCardTest {
         Permanent artifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(artifact);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -64,7 +66,7 @@ class FloralSpuzzemTest extends BaseCardTest {
         Permanent artifact = addDefenderArtifact();
         Permanent attacker = addAttacker();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(artifact);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
@@ -78,8 +80,8 @@ class FloralSpuzzemTest extends BaseCardTest {
         Permanent ownArtifact = new Permanent(new Millstone());
         gd.playerBattlefields.get(player1.getId()).add(ownArtifact);
 
-        advanceToUnblockedMay();
-        harness.handleMayAbilityChosen(player1, true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

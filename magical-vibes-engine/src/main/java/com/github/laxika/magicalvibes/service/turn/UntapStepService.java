@@ -66,6 +66,15 @@ public class UntapStepService {
     private final TriggerCollectionService triggerCollectionService;
     private final DayNightService dayNightService;
 
+    public void snapshotUntappedLandsAtTurnStart(GameData gameData, UUID activePlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        int count = battlefield == null ? 0 : (int) battlefield.stream()
+                .filter(permanent -> !permanent.isTapped())
+                .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                .count();
+        gameData.untappedLandsAtTurnStart.put(activePlayerId, count);
+    }
+
     /**
      * Performs the untap step for the active player.
      *
@@ -132,6 +141,7 @@ public class UntapStepService {
 
     private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                  boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
+        snapshotUntappedLandsAtTurnStart(gameData, activePlayerId);
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
         gameData.untapStepPlayerId = activePlayerId;
         gameData.untapStepUntappedPermanentCount = 0;

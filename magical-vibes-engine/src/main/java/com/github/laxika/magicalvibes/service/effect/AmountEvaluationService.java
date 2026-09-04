@@ -415,7 +415,8 @@ public class AmountEvaluationService {
                     Math.floorDiv(evaluate(gameData, h.amount(), ctx) + 1, 2);
             case HalfControllerLifeRoundedUp ignored ->
                     ctx.controllerId() == null ? 0
-                            : (gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0) + 1) / 2;
+                            : Math.max(0,
+                            (gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0) + 1) / 2);
             case IfSourceAttacking a ->
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isAttacking()
                             ? evaluate(gameData, a.whileAttacking(), ctx)
@@ -954,7 +955,7 @@ public class AmountEvaluationService {
                         && permanent.getId().equals(ctx.sourcePermanent().getId())) {
                     continue;
                 }
-                boolean matchesFilter = ownershipNeedsBoard
+                boolean matchesFilter = staticEvaluation
                         ? predicateEvaluationService.matchesStaticFilter(permanent, count.filter(), filterContext)
                         : predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext);
                 if (matchesFilter) {

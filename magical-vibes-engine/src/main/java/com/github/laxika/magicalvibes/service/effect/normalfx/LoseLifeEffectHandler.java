@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -17,7 +15,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,19 +23,15 @@ import org.springframework.stereotype.Component;
  * controller. The {@link DynamicAmount} amount is evaluated once against the stack entry (source-
  * relative amounts use the live source permanent when present, else the last-known snapshot).
  *
- * <p>Controller / each-player / each-opponent life loss goes through {@link LifeSupport#applyLifeLoss}
- * (which fires "loses life" triggers). Target-player life loss is applied inline without firing those
- * triggers — behaviour preserved verbatim from the former {@code TargetPlayerLosesLifeEffectHandler}.
- * Life loss is never routed through damage plumbing (CR 118.2).
+ * <p>Every recipient goes through {@link LifeSupport#applyLifeLoss}, which records the amount lost
+ * and fires "loses life" triggers. Life loss is never routed through damage plumbing.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -66,14 +59,21 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (defendingPlayerId != null) {
             amountContext = amountContext.withTargetPermanentId(defendingPlayerId);
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                amountContext);
+        UUID ownerId = e.recipient() == LoseLifeRecipient.OWNER ? entry.getCard().getOwnerId() : null;
+        if (e.recipient() == LoseLifeRecipient.OWNER && ownerId == null) {
+            ownerId = entry.getControllerId();
+        }
+        if (ownerId != null) {
+            amountContext = amountContext.withControllerId(ownerId);
+        }
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
 
         UUID controllerId = entry.getControllerId();
         String sourceName = entry.getCard().getName();
 
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
+            case OWNER -> lifeSupport.applyLifeLoss(gameData, ownerId, amount, sourceName);
             case TARGET_PLAYER, TRIGGERING_PLAYER, ACTIVE_PLAYER -> loseTargetPlayerLife(gameData, entry, e, amount, sourceName);
             case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
@@ -119,21 +119,11 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
-        } else {
-            amount *= gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
-            int targetCurrentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - amount);
-
-            if (controllerGainsLifeLost(gameData, entry, effect) && amount > 0) {
-                lifeSupport.applyGainLife(gameData, entry.getControllerId(), amount);
-            }
-
-            String lossLog = targetName + " loses " + amount + " life (" + sourceName + ").";
-            gameLogService.append(gameData, GameLog.text(lossLog));
-            log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, amount, sourceName);
+        int lifeBefore = gameData.getLife(targetPlayerId);
+        lifeSupport.applyLifeLoss(gameData, targetPlayerId, amount, sourceName);
+        int lifeLost = Math.max(0, lifeBefore - gameData.getLife(targetPlayerId));
+        if (controllerGainsLifeLost(gameData, entry, effect) && lifeLost > 0) {
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), lifeLost);
         }
     }
 

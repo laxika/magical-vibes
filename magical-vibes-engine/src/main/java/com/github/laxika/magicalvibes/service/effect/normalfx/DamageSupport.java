@@ -647,7 +647,6 @@ public class DamageSupport {
     public void dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
-        // Skip applyCreaturePreventionShield — damage is unpreventable
         int damage = Math.max(0, rawDamage);
         if (!target.isDamageCantBePreventedOrRedirectedThisTurn() && damage > 0) {
             UUID redirectedPlayerId = damagePreventionService.getTargetSorceryDamageRedirectController(gameData, entry);
@@ -688,7 +687,14 @@ public class DamageSupport {
         }
         if (damage <= 0) return;
 
-        damagePreventionService.consumeShieldCounter(gameData, target);
+        boolean previous = gameData.damageCantBePreventedThisTurn;
+        gameData.damageCantBePreventedThisTurn = true;
+        try {
+            damage = damagePreventionService.applyCreaturePreventionShield(
+                    gameData, target, damage, false, sourcePermanent);
+        } finally {
+            gameData.damageCantBePreventedThisTurn = previous;
+        }
 
         recordRedSourceNoncombatDamage(gameData, entry.getEffectiveDamageSourceCard(), sourcePermanent,
                 sourceControllerId, damage);

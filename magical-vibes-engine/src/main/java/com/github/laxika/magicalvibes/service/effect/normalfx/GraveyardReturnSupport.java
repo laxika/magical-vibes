@@ -1363,6 +1363,16 @@ public class GraveyardReturnSupport {
                                          boolean enterTapped, boolean enterAttacking,
                                          CounterType enterWithCounter, boolean grantIndestructible,
                                          boolean losesAllAbilities) {
+        return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, enterWithCounter, grantIndestructible,
+                losesAllAbilities, enterWithCounter == null ? 0 : 1);
+    }
+
+    public Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter, boolean grantIndestructible,
+                                         boolean losesAllAbilities, int enterWithCounterAmount) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         // The card stays in the graveyard it was being returned from (the caller already removed it).
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
@@ -1379,8 +1389,8 @@ public class GraveyardReturnSupport {
         initializePlaneswalkerLoyalty(permanent, card);
         applyPermanentGrants(permanent, grantColor, grantSubtype, grantIndestructible);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
-        if (enterWithCounter != null) {
-            permanent.setCounterCount(enterWithCounter, 1);
+        if (enterWithCounter != null && enterWithCounterAmount > 0) {
+            permanent.setCounterCount(enterWithCounter, enterWithCounterAmount);
         }
         if (enterTapped) {
             permanent.tap();

@@ -29,26 +29,24 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                if (entry.getSourcePermanentId() == null) {
-                    return;
-                }
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
 
-                Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (self == null) {
-                    return;
-                }
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
 
-                if (!entry.getControllerId().equals(
-                        gameQueryService.findPermanentController(gameData, self.getId()))) {
-                    return;
-                }
+        if (!entry.getControllerId().equals(
+                gameQueryService.findPermanentController(gameData, self.getId()))) {
+            return;
+        }
 
-                if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
-                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-                    gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                }
-    
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
+            gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
     }
 }

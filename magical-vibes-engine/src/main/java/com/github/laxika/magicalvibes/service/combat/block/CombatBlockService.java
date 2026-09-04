@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
@@ -1346,24 +1347,21 @@ public class CombatBlockService {
                         attacker.getCard().getName());
                 pushed++;
             } else if (!effects.isEmpty()) {
-                // Permanent-targeting "you may" (Dwarven Vigilantes / Gaze of Pain shape): the may's
-                // creature target is chosen at resolution after accepting. Push via queueMayAbility
-                // with null targetId so the defender baked into other unblocked-attack triggers does
-                // not look like an already-chosen creature target. Non-targeting mays (Stromgald Spy)
-                // and mandatory effects keep the defending player as targetId.
+                // Targets of a triggered ability are chosen before its controller makes any choice
+                // the ability asks for during resolution.
                 List<CardEffect> targetingMayEffects = effects.stream()
-                        .filter(e -> e instanceof MayEffect
+                        .filter(e -> (e instanceof MayEffect || e instanceof MayPayManaEffect)
                                 && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                         .toList();
                 List<CardEffect> otherEffects = effects.stream()
                         .filter(e -> !targetingMayEffects.contains(e))
                         .toList();
                 for (CardEffect effect : targetingMayEffects) {
-                    gameData.queueMayAbility(attacker.getCard(), activeId, (MayEffect) effect,
-                            null, attacker.getId());
+                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                            attacker.getCard(), activeId, List.of(effect), attacker.getId(), activeId, defenderId));
                     gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s unblocked-attack ability triggers."));
-                    log.info("Game {} - {} unblocked-attack targeting-may trigger pushed onto stack",
+                    log.info("Game {} - {} unblocked-attack targeting-may trigger queued for target selection",
                             gameData.id, attacker.getCard().getName());
                     pushed++;
                 }

@@ -1095,7 +1095,7 @@ public class PermanentRemovalService {
             return 0;
         }
 
-        target.addMarkedDamage(null, effectiveDamage);
+        target.addMarkedDamage(sourcePermanentId, effectiveDamage);
         recordDamageToPermanent(gameData, target.getId(), effectiveDamage, isCombatDamage);
 
         if (effectiveDamage >= gameQueryService.getEffectiveToughness(gameData, target)) {

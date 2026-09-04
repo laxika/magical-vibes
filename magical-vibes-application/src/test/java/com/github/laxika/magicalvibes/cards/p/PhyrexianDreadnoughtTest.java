@@ -211,6 +211,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
                 harness.getPermanentId(player1, "Viashino Warrior")));
 
         for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             harness.handleMayAbilityChosen(player1, false);
         }

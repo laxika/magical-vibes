@@ -1843,7 +1843,7 @@ public class GameData {
     }
 
     /** Snapshot of how many untapped lands each player controlled at the beginning of their most recent
-     *  turn (recorded as their upkeep begins, after the untap step). Locked so responses that tap lands
+     *  turn (recorded before that turn's untap action). Locked so responses that tap lands
      *  don't change it. Read via {@code UntappedLandsAtTurnStart} for Power Surge. */
     public final Map<UUID, Integer> untappedLandsAtTurnStart = new ConcurrentHashMap<>();
     /** Snapshot of each active player's hand size when their current turn began. */

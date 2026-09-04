@@ -403,7 +403,7 @@ public record PreventDamageEffect(
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case NEXT_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
+            case NEXT_TO_ANY, NEXT_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
             case ALL_COMBAT_EXCEPT_TARGET -> TargetSpec.benign(TargetPredicates.creature());
             case NEXT_TO_TARGET_CREATURE, NEXT_TO_TARGET_AND_SHARING_CREATURES -> TargetSpec.benign(victimPredicate == null
                     ? TargetPredicates.creature()

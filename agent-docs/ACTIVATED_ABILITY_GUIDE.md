@@ -493,6 +493,10 @@ new ActivatedAbility(false, null,
 
 Cards: `OonasProwler`, `Mercenaries`, `ArmageddonClock`, `InfiniteHourglass`, `AetherStorm`, `FeralHydra`
 
+Use `.withActivatableOnlyByOwner()` when the source card's owner is the only player allowed to
+activate the ability. This also makes the ability reachable from another player's battlefield after
+a control change. `PersonalIncarnation` uses it for its damage-redirection ability.
+
 Chain `.withActivatableOnlyByEnchantedPermanentController()` on top of the any-player flag for an
 Aura ability only the enchanted permanent's controller may activate ("That creature's controller may
 sacrifice a permanent…", Volrath's Curse). The any-player flag makes the Aura reachable from a

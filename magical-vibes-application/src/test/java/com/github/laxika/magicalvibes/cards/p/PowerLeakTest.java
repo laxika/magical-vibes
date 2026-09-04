@@ -173,7 +173,6 @@ class PowerLeakTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
-        assertThat(gd.playerManaPools.get(player2.getId()).getArtifactOnlyColorless()).isEqualTo(1);
     }
 
     // ===== Only fires on the enchanted controller's upkeep =====

@@ -57,6 +57,8 @@ public class ActivatedAbility {
     private Integer maxCardsInHandToActivate;
     /** When true, any player (not just the source's controller) may activate this ability, e.g. Oona's Prowler. Set via {@link #withActivatableByAnyPlayer()}. */
     private boolean activatableByAnyPlayer;
+    /** When true, only the source card's owner may activate this ability. */
+    private boolean activatableOnlyByOwner;
     /** When true, only the controller of the permanent this Aura is attached to may activate this ability, e.g. Volrath's Curse. Set via {@link #withActivatableOnlyByEnchantedPermanentController()}. */
     private boolean activatableOnlyByEnchantedPermanentController;
     /** When true, only opponents of the source permanent's controller may activate this ability, e.g. Soul Ransom. Set via {@link #withActivatableOnlyByOpponents()}. */
@@ -284,6 +286,7 @@ public class ActivatedAbility {
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.maxCardsInHandToActivate = this.maxCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
+        copy.activatableOnlyByOwner = this.activatableOnlyByOwner;
         copy.activatableOnlyByEnchantedPermanentController = this.activatableOnlyByEnchantedPermanentController;
         copy.manaCostOfEnchantedPermanent = this.manaCostOfEnchantedPermanent;
         copy.activatableOnlyByOpponents = this.activatableOnlyByOpponents;
@@ -559,6 +562,13 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withActivatableByAnyPlayer() {
         this.activatableByAnyPlayer = true;
+        return this;
+    }
+
+    /** Makes the ability reachable only by the source card's owner, including after control changes. */
+    public ActivatedAbility withActivatableOnlyByOwner() {
+        this.activatableByAnyPlayer = true;
+        this.activatableOnlyByOwner = true;
         return this;
     }
 

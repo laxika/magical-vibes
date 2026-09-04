@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -24,7 +25,8 @@ public class LeshracsSigil extends Card {
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.GREEN),
                         List.of(new MayPayManaEffect("{B}{B}",
-                                new ChooseCardsFromTargetHandEffect(1, List.of(), HandChoiceDestination.DISCARD),
+                                ChooseCardsFromTargetHandEffect.lookAtTargetHand(
+                                        new Fixed(1), HandChoiceDestination.DISCARD),
                                 "Pay {B}{B} to look at that player's hand and discard a card?"))));
 
         // {B}{B}: Return this enchantment to its owner's hand.

@@ -131,9 +131,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         if (effect.libraryPosition() > 0 && effect.revealHand()) {
             cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
         } else {
-            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-            String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
         }
 
         int position = effect.libraryPosition();
