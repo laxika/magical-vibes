@@ -59,6 +59,7 @@ class ChandraAcolyteOfFlameTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Elemental")).isEmpty();
     }

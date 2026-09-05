@@ -486,6 +486,7 @@ public class GameData {
     public final Map<UUID, Integer> controllerNoncombatDamageBonusThisTurn = new ConcurrentHashMap<>();
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
+    public UUID combatDamageRedirectPlayer;
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     /** Target IDs to colors whose damage is prevented to that target until end of turn. */
     public final Map<UUID, Set<CardColor>> colorDamagePreventionUntilEndOfTurn = new ConcurrentHashMap<>();
@@ -4175,6 +4176,7 @@ public class GameData {
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
                 copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
+        copy.combatDamageRedirectPlayer = this.combatDamageRedirectPlayer;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;

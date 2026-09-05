@@ -14,9 +14,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -599,14 +601,20 @@ public class MayCopyHandlerService {
                 .map(BecomeCopyOfTargetCreatureEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
+        EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
+        CardEffect retainedAbility = sourcePermanent.getCard().getEffects(retainedEffectSlot).stream()
+                .filter(candidate -> candidate.equals(copyEffect)
+                        || candidate instanceof SpellCastTriggerEffect trigger
+                        && trigger.resolvedEffects().contains(copyEffect))
+                .findFirst()
+                .orElse(copyEffect);
         // Apply the copy
         String originalName = sourcePermanent.getCard().getName();
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm.getCard(), null, null, Set.of(),
                 List.of(), copyEffect.copyColor());
 
         Card copiedCard = sourcePermanent.getCard();
-        EffectSlot retainedEffectSlot = copyEffect.retainedEffectSlot();
-        copiedCard.addEffect(retainedEffectSlot, copyEffect);
+        copiedCard.addEffect(retainedEffectSlot, retainedAbility);
 
         String targetName = targetPerm.getCard().getName();
         

@@ -252,6 +252,7 @@ public class TurnCleanupService {
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
+        gameData.combatDamageRedirectPlayer = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.colorDamagePreventionUntilEndOfTurn.clear();
         gameData.playerSourceDamagePreventionIds.clear();

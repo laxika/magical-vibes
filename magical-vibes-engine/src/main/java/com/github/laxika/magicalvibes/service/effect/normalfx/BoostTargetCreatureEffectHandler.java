@@ -104,6 +104,9 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         } else {
             target.setPowerModifier(target.getPowerModifier() + powerBoost);
             target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+            gameData.stack.stream()
+                    .filter(stackEntry -> target.getId().equals(stackEntry.getSourcePermanentId()))
+                    .forEach(stackEntry -> stackEntry.setSourcePermanentSnapshot(new Permanent(target)));
         }
 
         gameLogService.append(gameData, GameLog.builder()

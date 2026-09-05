@@ -346,6 +346,11 @@ public class LayerSystemService {
             return managedL56Effects.contains(effect);
         }
 
+        public boolean hasL4Contribution(CardEffect effect, UUID targetId) {
+            Map<UUID, L4Contribution> perTarget = l4Contributions.get(effect);
+            return perTarget != null && perTarget.containsKey(targetId);
+        }
+
         /** Replays the layer-4 pass's decision of the given effect for the given permanent
          *  (no-op when the effect did not apply to it). */
         public void replayL4Contribution(CardEffect effect, UUID targetId, StaticBonusAccumulator accumulator) {
@@ -613,7 +618,7 @@ public class LayerSystemService {
      *
      * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
      * every query and only the finished board is cached): emblems, the conditions of the
-     * conditional wrappers the pass did not collect, turn/step state, amount evaluation beyond
+     * conditional wrappers the pass did not collect, step state, amount evaluation beyond
      * the fields above. The wrappers the pass DOES collect are exactly those
      * whose conditions read only what is hashed here — that is what
      * {@link ConditionBoardStability} decides, so widening it means widening this method too.
@@ -625,6 +630,7 @@ public class LayerSystemService {
     private static long computeBoardFingerprint(GameData gameData) {
         long h = 0x9E3779B97F4A7C15L;
         h = mix(h, gameData.timestampCounter);
+        h = mix(h, gameData.activePlayerId == null ? 0 : gameData.activePlayerId.hashCode());
         for (UUID playerId : gameData.orderedPlayerIds) {
             h = mix(h, playerId.hashCode());
             h = mix(h, gameData.playerLifeTotals.getOrDefault(playerId, 0));
@@ -1694,10 +1700,16 @@ public class LayerSystemService {
                 // enchanted permanent reads as a creature for other layer-4+ effects (lords).
                 for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
+                    if (becomes.powerToughnessEqualsManaValue()
+                            && state.hasCardType(CardType.CREATURE)) {
+                        continue;
+                    }
                     state.addCardType(CardType.CREATURE);
                     for (CardSubtype subtype : becomes.subtypes()) {
                         state.addSubtype(subtype);
                     }
+                    record(board, instance, target, new L4Contribution(
+                            becomes.subtypes(), false, false, CardType.CREATURE, null, false));
                 }
             }
             case NonbasicLandsBecomeTypeEffect becomes -> {

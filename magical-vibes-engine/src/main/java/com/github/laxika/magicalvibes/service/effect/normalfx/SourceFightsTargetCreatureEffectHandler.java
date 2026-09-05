@@ -29,6 +29,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        SourceFightsTargetCreatureEffect fight = (SourceFightsTargetCreatureEffect) effect;
 
         UUID targetId = entry.getTargetId();
         if (targetId == null) {
@@ -42,15 +43,17 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId != null
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
-        if (source == null
-                || !gameQueryService.isCreature(gameData, source)
+        Permanent sourceForPower = source != null ? source : entry.getSourcePermanentSnapshot();
+        if ((fight.requiresSourceOnBattlefield() && source == null)
+                || sourceForPower == null
+                || (source != null && !gameQueryService.isCreature(gameData, source))
                 || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
 
         String cardName = entry.getCard().getName();
 
-        int sourcePower = gameQueryService.getPowerBasedDamage(gameData, source);
+        int sourcePower = gameQueryService.getPowerBasedDamage(gameData, sourceForPower);
 
         // Source deals damage equal to its power to target
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard(), entry.getControllerId()))) {
@@ -59,6 +62,11 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             gameLogService.append(gameData, GameLog.textCardText(cardName + " deals " + sourceDamage + " damage to ", target.getCard(), "."));
         } else {
             gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", target.getCard(), " is prevented."));
+        }
+
+        if (source == null) {
+            gameOutcomeService.checkWinCondition(gameData);
+            return;
         }
 
         int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);

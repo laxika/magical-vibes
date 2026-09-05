@@ -150,6 +150,11 @@ class ClockworkBeastTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice != null) {
+            harness.handleListChoice(player1, choice.options().getLast());
+        }
     }
 
     private void leaveEndOfCombat() {

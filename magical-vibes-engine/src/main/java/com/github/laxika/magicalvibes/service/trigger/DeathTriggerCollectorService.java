@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
@@ -110,6 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraf
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
@@ -144,7 +144,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -383,21 +382,20 @@ public class DeathTriggerCollectorService {
         boolean hadCounter = dyingPermanent.getCounterCount(effect.counterType()) >= 1;
         CardEffect baked = hadCounter
                 ? new ExileSourceCardFromGraveyardEffect()
-                : ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                        .filter(new CardIsSelfPredicate())
-                        .returnAll(true)
-                        .enterWithCounter(effect.counterType())
-                        .enterWithCounterCount(1)
-                        .build();
+                : new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
+                        false, true, effect.counterType(), 1);
 
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(baked))
-        ));
+        );
+        entry.setTriggeringCardId(sd.dyingCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -2834,12 +2832,22 @@ public class DeathTriggerCollectorService {
     }
 
     @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class,
+            slot = EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentCreatureDeathGainLifeEqualToToughness(TriggerMatchContext match,
             GainLifeEqualToDyingCreatureToughnessEffect effect, TriggerContext ctx) {
         // Grim Feast: "you gain life equal to its toughness." The dying creature's last-known
         // effective toughness is snapshotted into the context; bake it into a concrete GainLifeEffect.
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        int toughness = Math.max(0, cd.dyingCreatureToughness());
+        int toughness;
+        if (ctx instanceof TriggerContext.CreatureDeath cd) {
+            toughness = Math.max(0, cd.dyingCreatureToughness());
+        } else {
+            TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
+            if (apg.dyingPermanent() == null || !apg.dyingPermanent().getCard().hasType(CardType.CREATURE)) {
+                return false;
+            }
+            toughness = Math.max(0, apg.dyingToughness());
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

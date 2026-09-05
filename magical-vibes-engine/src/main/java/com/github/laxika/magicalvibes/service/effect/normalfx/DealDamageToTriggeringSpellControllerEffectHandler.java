@@ -28,7 +28,7 @@ public class DealDamageToTriggeringSpellControllerEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var damageEffect = (DealDamageToTriggeringSpellControllerEffect) effect;
-        var triggeringCardId = entry.getTargetId();
+        var triggeringCardId = entry.getTriggeringCardId();
         if (triggeringCardId == null) return;
 
         for (StackEntry stackEntry : gameData.stack) {

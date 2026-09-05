@@ -686,15 +686,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                              boolean exileFromLibrary,
                                              Card damageSourceControllerCard,
                                              boolean preventHalfDamage,
-                                             boolean drawCards) implements PermanentChoiceContext {
+                                             boolean drawCards,
+                                             Set<CardColor> requiredDamageColors) implements PermanentChoiceContext {
         public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                                  boolean exileFromLibrary) {
-            this(controllerId, gainLife, exileFromLibrary, null, false, false);
+            this(controllerId, gainLife, exileFromLibrary, null, false, false, null);
         }
 
         public PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife,
                                                  boolean exileFromLibrary, Card damageSourceControllerCard) {
-            this(controllerId, gainLife, exileFromLibrary, damageSourceControllerCard, false, false);
+            this(controllerId, gainLife, exileFromLibrary, damageSourceControllerCard, false, false, null);
         }
     }
 

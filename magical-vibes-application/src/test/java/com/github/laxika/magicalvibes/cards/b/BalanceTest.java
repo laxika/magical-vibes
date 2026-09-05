@@ -271,7 +271,8 @@ class BalanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Balance()));
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
         harness.addToBattlefield(player2, new Forest());
 
         harness.castSorcery(player1, 0, 0);
@@ -288,7 +289,8 @@ class BalanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Balance()));
         harness.setHand(player2, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();

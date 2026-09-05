@@ -357,10 +357,14 @@ public class DamageSupport {
                     gameData, targetControllerId, sourcePermId, rawDamage);
         }
         if (!targetDamageUnpreventable && sourcePermId == null && entry.getCard() != null) {
+            UUID sourceCardId = entry.getEffectiveDamageSourceCard().getId();
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(
-                    gameData, target.getId(), entry.getEffectiveDamageSourceCard().getId(), rawDamage);
+                    gameData, target.getId(), sourceCardId, rawDamage);
+            rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
+                    gameData, sourceCardId, rawDamage, target.getId(), entry);
+            processEyeForAnEyeReflections(gameData);
             rawDamage = damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
-                    gameData, targetControllerId, entry.getEffectiveDamageSourceCard().getId(), rawDamage);
+                    gameData, targetControllerId, sourceCardId, rawDamage);
         }
         if (!targetDamageUnpreventable) {
             rawDamage = damagePreventionService.applyChannelHarmPreventionToPermanent(
@@ -379,6 +383,7 @@ public class DamageSupport {
         Set<CardColor> sourceColors = damageSource != null
                 ? gameQueryService.getEffectiveColors(gameData, damageSource)
                 : sourceCardColors(entry.getEffectiveDamageSourceCard());
+        sourceColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
         if (!targetDamageUnpreventable
                 && damagePreventionService.isColorDamagePreventedForTarget(gameData, target.getId(), sourceColors)) {
             gameLogService.append(gameData, GameLog.textCardText("Damage to ", target.getCard(), " is prevented."));
@@ -1010,6 +1015,13 @@ public class DamageSupport {
                 Set<CardColor> sourceColors = sourcePermanent == null
                         ? sourceCardColors(source)
                         : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+                UUID damageSourceId = damageSourceKey(entry, sourcePermanent);
+                loyaltyDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
+                        gameData, damageSourceId, loyaltyDamage, targetPermanent.getId(), entry);
+                processEyeForAnEyeReflections(gameData);
+                if (loyaltyDamage <= 0) {
+                    return 0;
+                }
                 if (damagePreventionService.isColorDamagePreventedForTarget(gameData, targetPermanent.getId(), sourceColors)) {
                     gameLogService.append(gameData, GameLog.textCardText("Damage to ", targetPermanent.getCard(), " is prevented."));
                     return 0;
@@ -1289,7 +1301,8 @@ public class DamageSupport {
                         "'s " + prevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             }
         }
-        if (damagePreventionService.isColorDamagePreventedForTarget(gameData, playerId, sourceColors)) {
+        if (damagePreventionService.isColorDamagePreventedForTarget(
+                gameData, playerId, damageSourceColors)) {
             gameLogService.append(gameData, GameLog.cardThen(source,
                     "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
@@ -1298,7 +1311,7 @@ public class DamageSupport {
                 gameData, playerId, damageSourceId);
         if (sourceDamagePrevented) {
             damagePreventionService.applySourceDamagePreventionForPlayer(
-                    gameData, playerId, damageSourceId, rawDamage, sourceColors);
+                    gameData, playerId, damageSourceId, rawDamage, damageSourceColors);
         }
         if (sourceDamagePrevented
                 || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, damageSourceId)
@@ -1371,7 +1384,8 @@ public class DamageSupport {
                         gameData, playerId, damageSourceId, rawDamage, false, source);
                 damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Sanctum Guardian / Honorable Passage shields
-                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, damageSourceId, rawDamage, playerId);
+                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
+                        gameData, damageSourceId, rawDamage, playerId, entry);
                 processEyeForAnEyeReflections(gameData);
             }
             // Apply one-shot chosen-source prevention to permanents and spells.

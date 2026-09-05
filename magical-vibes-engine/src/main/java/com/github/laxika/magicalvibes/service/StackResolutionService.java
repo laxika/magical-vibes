@@ -1241,6 +1241,8 @@ public class StackResolutionService {
         // where entry.getOwnerId() carries the true owner so the card returns to their zones.
         UUID ownerId = entry.getOwnerId();
         Card physicalCard = entry.getPhysicalCard();
+        gameData.spellColorOverrides.remove(physicalCard.getId());
+        gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
         boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
         ExileSpellEffect exileSpellEffect = entry.getEffectsToResolve().stream()
                 .filter(ExileSpellEffect.class::isInstance)

@@ -1625,7 +1625,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(
                 controllerId, permanentId, gainLife, false, false, ctx.exileFromLibrary(),
                 ctx.damageSourceControllerCard(), ctx.preventHalfDamage(), ctx.drawCards(),
-                findDamageSourceController(gameData, permanentId)));
+                findDamageSourceController(gameData, permanentId), ctx.requiredDamageColors()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenSource.getName();

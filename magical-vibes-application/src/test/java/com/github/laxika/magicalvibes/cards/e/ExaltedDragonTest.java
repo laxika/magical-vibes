@@ -31,6 +31,7 @@ class ExaltedDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         declareAttackers(player1, List.of(0));
+        harness.handleMultiplePermanentsChosen(player1, List.of(landsOnBattlefield().getFirst().getId()));
 
         assertThat(landsOnBattlefield()).hasSize(1);
     }

@@ -393,7 +393,10 @@ public class CombatService {
         List<DestroyCombatOpponentsAtEndOfCombat> scheduled =
                 gameData.drainDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
         for (DestroyCombatOpponentsAtEndOfCombat action : scheduled) {
-            Set<UUID> opponentIds = action.combatOpponentIds();
+            Set<UUID> opponentIds = action.onlyCreaturesBlockedByTarget()
+                    ? gameData.combatOpponentIdsBlockedByThisTurn.getOrDefault(
+                            action.creatureId(), action.combatOpponentIds())
+                    : action.combatOpponentIds();
             if (opponentIds == null) {
                 continue;
             }

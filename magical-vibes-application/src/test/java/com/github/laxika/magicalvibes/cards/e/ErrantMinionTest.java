@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -90,8 +91,6 @@ class ErrantMinionTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.BLUE, 5);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        int manaBefore = gd.playerManaPools.get(player2.getId()).getTotal();
-
         harness.passBothPriorities(); // resolve trigger -> prompt
 
         PendingInteraction.XValueChoice ctx =
@@ -103,7 +102,8 @@ class ErrantMinionTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 3);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(manaBefore - 3);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("pays {3} to prevent 3 damage from Errant Minion"));
     }
 
     @Test

@@ -225,7 +225,14 @@ public class PlayerInteractionSupport {
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
     }
     public void applyDrawCards(GameData gameData, UUID playerId, int amount) {
-        drawService.resolveDrawCards(gameData, playerId, amount);
+        if (amount > 0 && drawService.hasQuantumRiddlerDrawReplacement(gameData, playerId)) {
+            drawService.resolveDrawCards(gameData, playerId, amount);
+            return;
+        }
+
+        for (int i = 0; i < amount; i++) {
+            drawService.resolveDrawCard(gameData, playerId);
+        }
     }
     /**
      * Sindbad: the player draws a card and reveals it; if the revealed card isn't a land card, it is

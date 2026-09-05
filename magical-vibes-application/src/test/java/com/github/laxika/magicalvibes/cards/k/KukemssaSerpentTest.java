@@ -52,7 +52,6 @@ class KukemssaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("A land changed into an Island satisfies the no-Islands condition")
     void landChangedIntoIslandSatisfiesNoIslandsCondition() {
-        addCreatureReady(player1, new KukemssaSerpent());
         harness.addToBattlefield(player1, new Forest());
 
         addCreatureReady(player2, new KukemssaSerpent());
@@ -66,6 +65,8 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, forestId);
         harness.handlePermanentChosen(player2, sacrificedIslandId);
         harness.passBothPriorities();
+
+        addCreatureReady(player1, new KukemssaSerpent());
 
         harness.assertOnBattlefield(player1, "Kukemssa Serpent");
         assertThat(gd.stack).isEmpty();

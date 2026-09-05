@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import java.util.UUID;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Sealed hierarchy of trigger event contexts.
@@ -110,7 +112,16 @@ public sealed interface TriggerContext {
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
      */
-    record LandTap(UUID tappingPlayerId, UUID tappedLandId) implements TriggerContext {}
+    record LandTap(UUID tappingPlayerId, UUID tappedLandId, Set<ManaColor> producedColors)
+            implements TriggerContext {
+        public LandTap(UUID tappingPlayerId, UUID tappedLandId) {
+            this(tappingPlayerId, tappedLandId, Set.of());
+        }
+
+        public LandTap {
+            producedColors = Set.copyOf(producedColors);
+        }
+    }
 
     /**
      * Context for controller-scoped creature-mana triggers
@@ -498,7 +509,14 @@ public sealed interface TriggerContext {
      * @param graveyardOwnerId   the owner of the graveyard the card was put into
      */
     record AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
-                                 UUID graveyardOwnerId) implements TriggerContext {}
+                                 UUID graveyardOwnerId, Permanent dyingPermanent,
+                                 int dyingPower, int dyingToughness) implements TriggerContext {
+        public AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId, UUID graveyardOwnerId) {
+            this(dyingCard, dyingControllerId, graveyardOwnerId, null,
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0,
+                    dyingCard != null && dyingCard.getToughness() != null ? dyingCard.getToughness() : 0);
+        }
+    }
 
     /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).

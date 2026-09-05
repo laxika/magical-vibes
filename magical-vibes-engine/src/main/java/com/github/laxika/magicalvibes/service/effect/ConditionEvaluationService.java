@@ -2494,7 +2494,8 @@ public class ConditionEvaluationService {
             Permanent enchanted = gameQueryService.findPermanentById(gameData, ctx.targetId());
             return enchanted != null && !enchanted.isAttackedThisTurn();
         }
-        Permanent aura = sourcePermanent(gameData, ctx);
+        Permanent aura = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (aura == null || !aura.isAttached()) return false;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted == null) return false;
@@ -2502,7 +2503,8 @@ public class ConditionEvaluationService {
     }
 
     private boolean enchantedCreaturePowerAtLeast(GameData gameData, ConditionContext ctx, int threshold) {
-        Permanent aura = sourcePermanent(gameData, ctx);
+        Permanent aura = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (aura == null || !aura.isAttached()) return false;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted == null) return false;
@@ -2510,7 +2512,8 @@ public class ConditionEvaluationService {
     }
 
     private boolean enchantedPermanentMatches(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
-        Permanent aura = sourcePermanent(gameData, ctx);
+        Permanent aura = ctx.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (aura == null || !aura.isAttached()) return false;
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted == null) return false;

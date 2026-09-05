@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class LifeBidAuctionSupport {
 
-    public static final int MAX_BID = 999;
+    public static final int MAX_BID = Integer.MAX_VALUE;
 
     public void begin(GameData gameData, List<UUID> order, int openingBid) {
         IllicitAuctionState state = gameData.illicitAuction;

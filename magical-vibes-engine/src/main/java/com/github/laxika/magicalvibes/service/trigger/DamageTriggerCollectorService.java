@@ -691,6 +691,7 @@ public class DamageTriggerCollectorService {
                 List.of()
         );
         entry.setDamageSourceCard(enchantedCreature.getCard());
+        entry.setTriggeringPermanentId(enchantedCreature.getId());
         gameData.stack.add(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));

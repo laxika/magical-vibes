@@ -569,7 +569,9 @@ public class GameQueryService {
      */
     public boolean hasEffectiveSupertype(GameData gameData, Permanent permanent, CardSupertype supertype) {
         if (permanent.getPersistentGrantedSupertypes().contains(supertype)) {
-            return true;
+            long changeTimestamp = permanent.getPersistentSupertypeChangeTimestamps()
+                    .getOrDefault(supertype, Long.MAX_VALUE);
+            return latestMatchingSupertypeRemovalTimestamp(gameData, permanent, supertype) <= changeTimestamp;
         }
         if (permanent.getPersistentRemovedSupertypes().contains(supertype)) {
             return false;
@@ -626,14 +628,22 @@ public class GameQueryService {
 
     private boolean losesSupertypeFromGlobalStaticEffect(
             GameData gameData, Permanent permanent, CardSupertype supertype) {
-        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(effect -> effect instanceof PermanentsMatchingLoseSupertypeEffect lose
+        return latestMatchingSupertypeRemovalTimestamp(gameData, permanent, supertype) >= 0;
+    }
+
+    private long latestMatchingSupertypeRemovalTimestamp(
+            GameData gameData, Permanent permanent, CardSupertype supertype) {
+        long[] latest = {-1};
+        gameData.forEachPermanent((controllerId, source) -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(effect -> effect instanceof PermanentsMatchingLoseSupertypeEffect lose
                         && lose.supertype() == supertype
                         && (isStaticEvaluationActive()
                         ? predicateEvaluationService.matchesStaticFilter(
                                 permanent, lose.filter(), FilterContext.of(gameData))
                         : predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, permanent, lose.filter()))));
+                                gameData, permanent, lose.filter())))
+                .forEach(effect -> latest[0] = Math.max(latest[0], source.getTimestamp())));
+        return latest[0];
     }
 
     private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
@@ -3950,6 +3960,11 @@ public class GameQueryService {
                     board.replayL4Contribution(effect, target.getId(), accumulator);
                     continue;
                 }
+                if (effect instanceof EnchantedPermanentBecomesCreatureEffect becomes
+                        && becomes.powerToughnessEqualsManaValue()
+                        && !board.hasL4Contribution(effect, target.getId())) {
+                    continue;
+                }
                 if (sourceAbilitiesGone) {
                     continue;
                 }
@@ -4978,9 +4993,13 @@ public class GameQueryService {
         UUID protectionSourcePlayerId = sourceControllerId != null
                 ? sourceControllerId
                 : sourceCard.getOwnerId();
+        Set<CardColor> sourceColors = getDamageSourceColors(
+                gameData, getEffectiveCardColors(gameData, sourceCard));
         return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
                 || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
-                || hasProtectionFrom(gameData, target, getDamageSourceColor(gameData, sourceCard.getColor()))
+                || sourceColors.stream().anyMatch(color -> hasProtectionFrom(gameData, target, color))
+                || (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
+                || hasProtectionFromMonocolored(gameData, target, sourceColors)
                 || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
@@ -8183,9 +8202,10 @@ public class GameQueryService {
     /** Damage-purposes colour set: {@link #getDamageSourceColor} applied to every colour. */
     public Set<CardColor> getDamageSourceColors(GameData gameData, Set<CardColor> sourceColors) {
         if (sourceColors == null || sourceColors.isEmpty()) return Set.of();
-        Set<CardColor> result = new HashSet<>(sourceColors);
-        result.removeIf(color -> isDamageSourceColorNullified(gameData, color));
-        return result;
+        if (sourceColors.stream().anyMatch(color -> isDamageSourceColorNullified(gameData, color))) {
+            return Set.of();
+        }
+        return new HashSet<>(sourceColors);
     }
 
     private boolean isDamageSourceColorNullified(GameData gameData, CardColor sourceColor) {

@@ -2539,6 +2539,7 @@ public class SpellCastingService {
                 : modalRuntimeCopyForHandCast(hand, cardIndex);
         if (!spliceHandCardIndices.isEmpty()) {
             preparedCard = preparedCard.createRuntimeCopy();
+            preparedCard.setAllowSharedTargets(true);
             hand.set(cardIndex, preparedCard);
         }
         final Card card = adventure ? preparedCard.getBackFaceCard() : preparedCard;
@@ -4741,8 +4742,12 @@ public class SpellCastingService {
                                 }
                             } else {
                                 Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                                if (target == null || !gameQueryService.isCreature(gameData, target)) {
-                                    throw new IllegalStateException("All targets must be creatures");
+                                if (target == null
+                                        || !gameQueryService.isCreature(gameData, target)
+                                        && !gameQueryService.isPlaneswalker(gameData, target)
+                                        && !gameQueryService.isBattle(gameData, target)) {
+                                    throw new IllegalStateException(
+                                            "All targets must be creatures, planeswalkers, battles, or players");
                                 }
                                 if (card.getTargetFilter() != null
                                         && !(card.getTargetFilter() instanceof PlayerPredicateTargetFilter)) {
@@ -9535,8 +9540,12 @@ public class SpellCastingService {
                         continue;
                     }
                     Permanent target = gameQueryService.findPermanentById(gameData, assignedTargetId);
-                    if (target == null || !gameQueryService.isCreature(gameData, target)) {
-                        throw new IllegalStateException("All targets must be creatures");
+                    if (target == null
+                            || !gameQueryService.isCreature(gameData, target)
+                            && !gameQueryService.isPlaneswalker(gameData, target)
+                            && !gameQueryService.isBattle(gameData, target)) {
+                        throw new IllegalStateException(
+                                "All targets must be creatures, planeswalkers, battles, or players");
                     }
                     if (card.getTargetFilter() != null
                             && !(card.getTargetFilter() instanceof PlayerPredicateTargetFilter)) {

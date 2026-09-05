@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -2507,12 +2508,17 @@ public class TriggerCollectionService {
     }
 
     public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId) {
+        checkLandTapTriggers(gameData, tappingPlayerId, tappedLandId, Set.of());
+    }
+
+    public void checkLandTapTriggers(GameData gameData, UUID tappingPlayerId, UUID tappedLandId,
+                                     Set<ManaColor> producedColors) {
         // Desolation et al.: track who tapped a land for mana this turn even if no land-tap
         // trigger permanent is currently on the battlefield (2004-10-04 ruling).
         gameData.playersWhoTappedLandForManaThisTurn.add(tappingPlayerId);
 
         boolean[] anyTriggered = {false};
-        var ctx = new TriggerContext.LandTap(tappingPlayerId, tappedLandId);
+        var ctx = new TriggerContext.LandTap(tappingPlayerId, tappedLandId, producedColors);
 
         // Snapshot each battlefield so trigger collection remains stable if a collector mutates it.
         gameData.forEachBattlefield((playerId, battlefield) -> {
@@ -2681,16 +2687,33 @@ public class TriggerCollectionService {
         gameData.recordSacrificedPermanent(sacrificingPlayerId, sacrificedCard);
         checkGraveyardAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
         List<Permanent> battlefield = gameData.playerBattlefields.get(sacrificingPlayerId);
-        if (battlefield != null) {
+        if (battlefield != null || !gameData.simultaneousDyingPermanents.isEmpty()) {
             var ctx = new TriggerContext.AllySacrificed(sacrificingPlayerId, sacrificedCard);
+            List<Permanent> watchers = battlefield == null
+                    ? new ArrayList<>() : new ArrayList<>(battlefield);
+            gameData.simultaneousDyingPermanents.forEach((permanentId, permanent) -> {
+                if (sacrificingPlayerId.equals(
+                        gameData.simultaneousDyingPermanentControllers.get(permanentId))
+                        && watchers.stream().noneMatch(watcher -> watcher.getId().equals(permanentId))) {
+                    watchers.add(permanent);
+                }
+            });
+            Permanent sacrificedPermanent = gameData.simultaneousDyingPermanents.values().stream()
+                    .filter(permanent -> permanent.getCard().getId().equals(sacrificedCard.getId()))
+                    .findFirst().orElse(null);
 
-            for (Permanent perm : battlefield) {
+            for (Permanent perm : watchers) {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED);
                 if (effects == null || effects.isEmpty()) continue;
 
                 for (CardEffect effect : effects) {
                     boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
                     CardEffect resolved = unwrapOncePerTurnTrigger(gameData, perm, effect);
+                    if (resolved == null) continue;
+                    if (!(resolved instanceof TriggeringPermanentConditionalEffect)) {
+                        resolved = unwrapCreatureDeathConditional(resolved, sacrificedCard,
+                                sacrificedPermanent, gameData, sacrificingPlayerId, perm);
+                    }
                     if (resolved == null) continue;
                     var match = new TriggerMatchContext(gameData, perm, sacrificingPlayerId, effect);
                     if (dispatch(match, EffectSlot.ON_ALLY_PERMANENT_SACRIFICED, resolved, ctx)
@@ -7399,8 +7422,16 @@ public class TriggerCollectionService {
 
     public void checkAnyPermanentPutIntoGraveyardTriggers(GameData gameData, Permanent dyingPermanent,
                                                           UUID dyingControllerId, UUID graveyardOwnerId) {
+        checkAnyPermanentPutIntoGraveyardTriggers(gameData, dyingPermanent, dyingControllerId,
+                graveyardOwnerId, dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+    }
+
+    public void checkAnyPermanentPutIntoGraveyardTriggers(GameData gameData, Permanent dyingPermanent,
+                                                          UUID dyingControllerId, UUID graveyardOwnerId,
+                                                          int dyingPower, int dyingToughness) {
         Card dyingCard = dyingPermanent.getOriginalCard();
-        var ctx = new TriggerContext.AnyPermanentGraveyard(dyingCard, dyingControllerId, graveyardOwnerId);
+        var ctx = new TriggerContext.AnyPermanentGraveyard(
+                dyingCard, dyingControllerId, graveyardOwnerId, dyingPermanent, dyingPower, dyingToughness);
 
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchAnyPermanentDeathTriggersForWatcher(
@@ -7746,9 +7777,16 @@ public class TriggerCollectionService {
     }
 
     public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
+        checkOpponentCreatureDeathTriggers(gameData, dyingCreatureControllerId, dyingPermanent,
+                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness());
+    }
+
+    public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId,
+                                                   Permanent dyingPermanent, int dyingPower,
+                                                   int dyingToughness) {
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
-                dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(), dyingPermanent.getId());
+                dyingPower, dyingToughness, dyingPermanent.getId());
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(dyingCreatureControllerId)) return;

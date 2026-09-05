@@ -1795,11 +1795,19 @@ public class MayPenaltyChoiceHandlerService {
             ManaCost cost = new ManaCost(costString, payCost.forCumulativeUpkeep());
             ManaPool pool = gameData.playerManaPools.get(decidingPlayerId);
             int lifeAmount = payCost.lifeAmount();
-            boolean canPayLife = lifeAmount <= 0
+            ManaPool simulatedPool = new ManaPool(pool);
+            int phyrexianLifeAmount = cost.hasPhyrexianMana()
+                    ? cost.payPhyrexianManaAuto(simulatedPool, 0)
+                    : 0;
+            int totalLifeAmount = lifeAmount + phyrexianLifeAmount;
+            boolean canPayLife = totalLifeAmount <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
-                            && gameData.getLife(decidingPlayerId) >= lifeAmount);
-            if (cost.canPay(pool) && canPayLife) {
+                            && gameData.getLife(decidingPlayerId) >= totalLifeAmount);
+            if (cost.canPay(simulatedPool) && canPayLife) {
                 var manaBefore = pool.getAllManaTotals();
+                if (cost.hasPhyrexianMana()) {
+                    cost.payPhyrexianManaAuto(pool, 0);
+                }
                 cost.pay(pool);
                 var manaSpent = ManaPool.coloredManaSpent(manaBefore, pool.getAllManaTotals(), null);
                 int blackOrRedSpent = manaSpent.getOrDefault(ManaColor.BLACK, 0)
@@ -1822,6 +1830,10 @@ public class MayPenaltyChoiceHandlerService {
                             player.getUsername() + " pays " + costString + ". (", ability.sourceCard(), ")"));
                     log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(),
                             costString, ability.sourceCard().getName());
+                }
+                if (phyrexianLifeAmount > 0) {
+                    lifeSupport.applyLifePayment(gameData, decidingPlayerId, phyrexianLifeAmount,
+                            "Phyrexian mana");
                 }
                 clearAnyPlayerPayState(gameData);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

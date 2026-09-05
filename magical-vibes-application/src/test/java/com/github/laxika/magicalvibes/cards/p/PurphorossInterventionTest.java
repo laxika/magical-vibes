@@ -48,6 +48,7 @@ class PurphorossInterventionTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Elemental");
     }

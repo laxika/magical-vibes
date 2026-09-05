@@ -42,7 +42,7 @@ public class SacrificeCombatOpponentAtEndOfCombatEffectHandler implements Normal
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+        if (target == null) {
             return;
         }
 

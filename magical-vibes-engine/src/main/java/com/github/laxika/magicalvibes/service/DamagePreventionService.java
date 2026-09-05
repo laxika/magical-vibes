@@ -1134,6 +1134,18 @@ public class DamagePreventionService {
 
     private boolean shieldMatchesSource(GameData gameData, PlayerSourceNextDamageShield shield,
                                         UUID sourceId, Card sourceCard) {
+        if (shield.requiredDamageColors() != null) {
+            Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourceId);
+            Set<CardColor> sourceColors = sourcePermanent != null
+                    ? gameQueryService.getEffectiveColors(gameData, sourcePermanent)
+                    : sourceCard != null
+                            ? gameQueryService.getEffectiveCardColors(gameData, sourceCard)
+                            : Set.of();
+            Set<CardColor> damageColors = gameQueryService.getDamageSourceColors(gameData, sourceColors);
+            if (damageColors.stream().noneMatch(shield.requiredDamageColors()::contains)) {
+                return false;
+            }
+        }
         if (shield.sourceId().equals(sourceId)) {
             return true;
         }
@@ -1255,11 +1267,25 @@ public class DamagePreventionService {
      */
     public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
                                                             UUID recipientId) {
-        return applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermanentId, damage, recipientId, false);
+        return applyChosenSourceNextDamageToAnyTargetShield(
+                gameData, sourcePermanentId, damage, recipientId, false, null);
+    }
+
+    public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
+                                                            UUID recipientId, StackEntry sourceEntry) {
+        return applyChosenSourceNextDamageToAnyTargetShield(
+                gameData, sourcePermanentId, damage, recipientId, false, sourceEntry);
     }
 
     public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
                                                             UUID recipientId, boolean combatDamage) {
+        return applyChosenSourceNextDamageToAnyTargetShield(
+                gameData, sourcePermanentId, damage, recipientId, combatDamage, null);
+    }
+
+    private int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage,
+                                                             UUID recipientId, boolean combatDamage,
+                                                             StackEntry sourceEntry) {
         if (damage <= 0 || sourcePermanentId == null || gameData.sourceNextDamageToAnyTargetShields.isEmpty()) {
             return damage;
         }
@@ -1296,8 +1322,25 @@ public class DamagePreventionService {
             if (shield.damageRedSourceController()) {
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
-                if (source != null && sourceControllerId != null
-                        && gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.RED)
+                boolean redSource = source != null
+                        && gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.RED);
+                if (source == null) {
+                    StackEntry matchingEntry = sourceEntry != null
+                            && sourceEntry.getEffectiveDamageSourceCard() != null
+                            && sourcePermanentId.equals(sourceEntry.getEffectiveDamageSourceCard().getId())
+                            ? sourceEntry
+                            : gameData.stack.stream()
+                            .filter(stackEntry -> stackEntry.getCard() != null
+                                    && sourcePermanentId.equals(stackEntry.getCard().getId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (matchingEntry != null) {
+                        sourceControllerId = matchingEntry.getControllerId();
+                        redSource = gameQueryService.getEffectiveCardColors(
+                                gameData, matchingEntry.getEffectiveDamageSourceCard()).contains(CardColor.RED);
+                    }
+                }
+                if (sourceControllerId != null && redSource
                         && shield.passageCard() != null && shield.passageControllerId() != null) {
                     gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                             sourceControllerId, damage, shield.passageCard(), shield.passageControllerId()));
@@ -1997,8 +2040,7 @@ public class DamagePreventionService {
                 || targetId == null || sourceColors == null) return false;
         Set<CardColor> preventedColors = gameData.colorDamagePreventionUntilEndOfTurn.get(targetId);
         if (preventedColors == null || preventedColors.isEmpty()) return false;
-        return sourceColors.stream()
-                .map(color -> gameQueryService.getDamageSourceColor(gameData, color))
+        return gameQueryService.getDamageSourceColors(gameData, sourceColors).stream()
                 .anyMatch(preventedColors::contains);
     }
 

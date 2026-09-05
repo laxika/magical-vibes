@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public sealed interface ChoiceContext {
 
+    record CappedCounterAmountChoice(UUID sourcePermanentId) implements ChoiceContext {}
+
     record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                          UUID sourcePermanentId, String chapterName, CounterType counterType,
                                          List<UUID> targetIds, Map<UUID, Integer> assignments, int total,

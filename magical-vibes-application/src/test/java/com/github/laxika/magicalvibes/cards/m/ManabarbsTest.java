@@ -57,7 +57,7 @@ class ManabarbsTest extends BaseCardTest {
 
         // Mountain is at index 1 (Manabarbs at index 0)
         harness.tapPermanent(player1, 1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 19);
     }
@@ -72,7 +72,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 19);
     }
@@ -92,7 +92,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
         harness.tapPermanent(player1, 2);
         harness.tapPermanent(player1, 3);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 17);
     }
@@ -108,7 +108,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Two Manabarbs each deal 1 damage = 2 total
         harness.assertLife(player2, 18);
@@ -126,7 +126,7 @@ class ManabarbsTest extends BaseCardTest {
 
         // Player1 taps Mountain (index 1, after their Manabarbs)
         harness.tapPermanent(player1, 1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Both Manabarbs trigger, dealing 2 total damage to player1
         harness.assertLife(player1, 18);
@@ -144,7 +144,7 @@ class ManabarbsTest extends BaseCardTest {
 
         // Tap first Mountain (index 1) — takes 1 damage
         harness.tapPermanent(player1, 1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertLife(player1, 19);
 
         // Remove Manabarbs from battlefield
@@ -168,7 +168,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // 1 damage doubled to 2 by Furnace of Rath
         harness.assertLife(player2, 18);
@@ -184,7 +184,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.setLife(player2, 1);
 
         harness.tapPermanent(player2, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 0);
     }
@@ -199,7 +199,7 @@ class ManabarbsTest extends BaseCardTest {
         harness.tapPermanent(player2, 0);
 
         harness.assertLife(player2, 20);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertLife(player2, 19);
     }
 

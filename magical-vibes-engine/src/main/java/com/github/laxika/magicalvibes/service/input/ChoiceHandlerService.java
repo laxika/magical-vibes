@@ -175,6 +175,16 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid mode: " + colorName);
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.CappedCounterAmountChoice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid counter amount: " + colorName);
+            }
+            gameData.chosenXValue = Integer.parseInt(colorName);
+            gameData.interaction.clearAwaitingInput();
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.DevotionManaColorChoice ctx) {
             handleDevotionManaColorChosen(gameData, player, colorName, ctx);
             return;
@@ -898,6 +908,9 @@ public class ChoiceHandlerService {
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
         ManaColor chosenColor = ManaColor.valueOf(colorName);
+        if (chosenColor == ManaColor.COLORLESS && ctx.fixedColorOptions() == null) {
+            throw new IllegalArgumentException("Colorless is not a color");
+        }
         if (ctx.fixedColorOptions() != null && !ctx.fixedColorOptions().contains(chosenColor)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }

@@ -32,6 +32,7 @@ public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalE
                 for (Permanent p : bf) {
                     if (p.getCard() == entry.getCard()) {
                         gameData.combatDamageRedirectTarget = p.getId();
+                        gameData.combatDamageRedirectPlayer = entry.getControllerId();
 
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), "'s ability resolves — unblocked combat damage will be redirected to it this turn."));
                         log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());

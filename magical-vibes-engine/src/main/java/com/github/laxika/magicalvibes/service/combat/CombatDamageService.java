@@ -892,7 +892,9 @@ public class CombatDamageService {
         if (gameData.combatDamageRedirectTarget != null) {
             Permanent activatedTarget = gameQueryService.findPermanentById(
                     gameData, gameData.combatDamageRedirectTarget);
-            if (activatedTarget != null) return activatedTarget;
+            if (activatedTarget != null && defenderId.equals(gameData.combatDamageRedirectPlayer)) {
+                return activatedTarget;
+            }
         }
 
         List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
@@ -2360,13 +2362,10 @@ public class CombatDamageService {
                         gameData, source, sourceControllerId, damagedCreatureControllerId,
                         amountEntry.getKey(), damagedCreatureSnapshot, amountEntry.getValue(), true);
 
-                // Mangara's Equity: "…or a white creature you control". The damaged creature may have
-                // died to the damage; only surviving permanents can be filtered, which is enough —
-                // a dead creature is no longer one "you control" when the trigger would be put on the stack.
-                Permanent damagedCreature = gameQueryService.findPermanentById(gameData, amountEntry.getKey());
-                if (damagedCreature != null) {
+                if (damagedCreatureSnapshot != null) {
                     triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
-                            gameData, damagedCreatureControllerId, damagedCreature, source, amountEntry.getValue());
+                            gameData, damagedCreatureControllerId, damagedCreatureSnapshot, source,
+                            amountEntry.getValue());
                 }
             }
         }
@@ -2439,6 +2438,7 @@ public class CombatDamageService {
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
         Map<UUID, DealtDamageTriggerData> triggersByDamagedPermanent = new LinkedHashMap<>();
+        List<DealtDamageTriggerData> sourceSpecificTriggers = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
             Permanent source = entry.getKey();
@@ -2460,10 +2460,21 @@ public class CombatDamageService {
                         new ArrayList<>(target.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
                 combatDamageReceivedEffects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
                 combatDamageReceivedEffects.addAll(target.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_SELF));
-                if (effects.isEmpty() && combatDamageReceivedEffects.isEmpty()) continue;
                 UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
+                List<CardEffect> sourceSpecificEffects = effects.stream()
+                        .filter(effect -> effect instanceof DamageSourceAwareEffect
+                                || effect instanceof DamageSourceControllerAwareEffect)
+                        .toList();
+                effects.removeAll(sourceSpecificEffects);
+                if (!sourceSpecificEffects.isEmpty()) {
+                    sourceSpecificTriggers.add(new DealtDamageTriggerData(
+                            target.getCard(), target.getId(), controllerId, damageAmount,
+                            source.getCard(), source.getId(), sourceControllerId,
+                            sourceSpecificEffects, List.of()));
+                }
+                if (effects.isEmpty() && combatDamageReceivedEffects.isEmpty()) continue;
                 DealtDamageTriggerData previous = triggersByDamagedPermanent.get(targetId);
                 if (previous == null) {
                     triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
@@ -2479,7 +2490,8 @@ public class CombatDamageService {
                 }
             }
         }
-        return new ArrayList<>(triggersByDamagedPermanent.values());
+        sourceSpecificTriggers.addAll(triggersByDamagedPermanent.values());
+        return sourceSpecificTriggers;
     }
 
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
@@ -3161,6 +3173,8 @@ public class CombatDamageService {
                         reflection.eyeCard().hasType(CardType.ARTIFACT) ? effective : 0);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, targetId, null, effective);
+                triggerCollectionService.checkControllerDealtDamageTriggers(
+                        gameData, targetId, reflection.eyeControllerId(), effective);
             }
         }
     }

@@ -69,6 +69,7 @@ class BalduvianDeadTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Graveborn");
     }
@@ -114,6 +115,7 @@ class BalduvianDeadTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
     }

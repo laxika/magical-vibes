@@ -195,7 +195,7 @@ public abstract class BaseCardTest {
 
     /** Passes priority until the stack is empty, resolving every waiting trigger. */
     protected void resolveAllTriggers() {
-        while (!gd.stack.isEmpty()) {
+        while (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()) {
             harness.passBothPriorities();
         }
     }

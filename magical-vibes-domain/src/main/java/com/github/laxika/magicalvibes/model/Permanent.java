@@ -391,6 +391,7 @@ public class Permanent {
      *  {@link #persistentGrantedSupertypes} — the later activation wins. NOT cleared by
      *  {@link #resetModifiers()}. */
     private final Set<CardSupertype> persistentRemovedSupertypes = EnumSet.noneOf(CardSupertype.class);
+    private final Map<CardSupertype, Long> persistentSupertypeChangeTimestamps = new EnumMap<>(CardSupertype.class);
     /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
     @Setter private String persistentName;
     /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
@@ -812,6 +813,7 @@ public class Permanent {
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
         this.persistentRemovedSupertypes.addAll(source.persistentRemovedSupertypes);
+        this.persistentSupertypeChangeTimestamps.putAll(source.persistentSupertypeChangeTimestamps);
         this.persistentName = source.persistentName;
         this.textReplacements.addAll(source.textReplacements);
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);

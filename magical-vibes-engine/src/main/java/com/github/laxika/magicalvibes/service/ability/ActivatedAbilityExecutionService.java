@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -636,6 +637,7 @@ public class ActivatedAbilityExecutionService {
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         List<CardEffect> snapshotEffects = snapshotEffects(gameData, abilityEffects, permanent, ability);
+        snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
         // and its cost and effect don't move cards to or from a library.
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
@@ -696,7 +698,15 @@ public class ActivatedAbilityExecutionService {
             // watchers must see it exactly as they see a printed ON_TAP land.
             if (ability.isRequiresTap() && permanent.getCard().hasType(CardType.LAND)) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
-                triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
+                Set<ManaColor> producedColors = snapshotEffects.stream()
+                        .filter(AwardManaEffect.class::isInstance)
+                        .map(AwardManaEffect.class::cast)
+                        .map(AwardManaEffect::color)
+                        .map(color -> ManaProductionSupport.effectiveColor(
+                                gameData, playerId, permanent, color))
+                        .collect(java.util.stream.Collectors.toSet());
+                triggerCollectionService.checkLandTapTriggers(
+                        gameData, playerId, permanent.getId(), producedColors);
                 if (gameData.stack.size() > stackBeforeLandTapTriggers) {
                     List<StackEntry> deferredLandTapTriggers = new ArrayList<>(
                             gameData.stack.subList(stackBeforeLandTapTriggers, gameData.stack.size()));
@@ -861,6 +871,30 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return snapshotEffects;
+    }
+
+    /**
+     * Freezes conditions that ask how many times this particular ability had been activated when
+     * the activation was announced. Each activation keeps its own result even when several copies
+     * wait on the stack before any of them resolve.
+     */
+    private List<CardEffect> snapshotActivationCountConditions(GameData gameData, Permanent permanent,
+                                                                List<CardEffect> effects) {
+        Map<Integer, Integer> activationCounts = gameData.activatedAbilityUsesThisTurn
+                .getOrDefault(permanent.getId(), Map.of());
+        List<CardEffect> result = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            if (effect instanceof ConditionalEffect conditional
+                    && conditional.condition() instanceof ActivationCount activationCount) {
+                if (activationCounts.getOrDefault(activationCount.abilityIndex(), 0)
+                        >= activationCount.threshold()) {
+                    result.add(conditional.wrapped());
+                }
+            } else {
+                result.add(effect);
+            }
+        }
+        return result;
     }
 
     private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue) {

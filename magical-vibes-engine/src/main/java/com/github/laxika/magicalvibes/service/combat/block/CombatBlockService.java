@@ -441,11 +441,13 @@ public class CombatBlockService {
         // that band becomes blocked by that same blocker (even one it couldn't otherwise block, e.g.
         // a flyer). Applied after validation, so these consequential blocks don't count against
         // max-blocks or menace.
-        applyBandSharedBlocking(gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
+        List<BlockerAssignment> declaredBlockerAssignments = blockerAssignments;
+        blockerAssignments = applyBandSharedBlocking(
+                gameData, attackerBattlefield, defenderBattlefield, blockerAssignments);
 
-        if (!blockerAssignments.isEmpty()) {
-            String logEntry = player.getUsername() + " declares " + blockerAssignments.size() +
-                    " blocker" + (blockerAssignments.size() > 1 ? "s" : "") + ".";
+        if (!declaredBlockerAssignments.isEmpty()) {
+            String logEntry = player.getUsername() + " declares " + declaredBlockerAssignments.size() +
+                    " blocker" + (declaredBlockerAssignments.size() > 1 ? "s" : "") + ".";
             gameLogService.append(gameData, GameLog.text(logEntry));
         }
 
@@ -1504,14 +1506,15 @@ public class CombatBlockService {
      * up "blocking" a flying band-mate) and are applied only after all declared blocks have been
      * validated, so they never count toward max-blocks or menace requirements.
      */
-    private void applyBandSharedBlocking(GameData gameData,
-                                         List<Permanent> attackerBattlefield,
-                                         List<Permanent> defenderBattlefield,
-                                         List<BlockerAssignment> blockerAssignments) {
+    private List<BlockerAssignment> applyBandSharedBlocking(GameData gameData,
+                                                            List<Permanent> attackerBattlefield,
+                                                            List<Permanent> defenderBattlefield,
+                                                            List<BlockerAssignment> blockerAssignments) {
         Map<UUID, List<Integer>> bandMembers = groupAttackingBands(attackerBattlefield);
         if (bandMembers.isEmpty()) {
-            return;
+            return blockerAssignments;
         }
+        List<BlockerAssignment> effectiveAssignments = new ArrayList<>(blockerAssignments);
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             UUID bandId = attacker.getBandId();
@@ -1531,9 +1534,12 @@ public class CombatBlockService {
                     member.setBlockedOrWasBlockedSinceLastUpkeep(true);
                     member.setAttackedOrBlockedSinceLastUpkeep(true);
                     recordCombatBlockOpponentSubtypes(gameData, blocker, member);
+                    effectiveAssignments.add(new BlockerAssignment(
+                            assignment.blockerIndex(), memberIdx));
                 }
             }
         }
+        return effectiveAssignments;
     }
 
     /**

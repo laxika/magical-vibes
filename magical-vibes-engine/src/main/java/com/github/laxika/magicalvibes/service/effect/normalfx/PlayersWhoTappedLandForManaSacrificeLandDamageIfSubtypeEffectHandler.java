@@ -56,7 +56,7 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
         List<UUID> autoSacrificeIds = new ArrayList<>();
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : apnapPlayers(gameData)) {
             if (!gameData.playersWhoTappedLandForManaThisTurn.contains(playerId)) {
                 continue;
             }
@@ -140,8 +140,8 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
                     && predicateEvaluationService.matchesPermanentPredicate(gameData, perm, subtypePred)) {
                 playersToDamage.add(controllerId);
             }
-            destructionSupport.sacrificeAndLog(gameData, perm, controllerId);
         }
+        destructionSupport.performSimultaneousSacrifice(gameData, sacrificeIds);
 
         if (!playersToDamage.isEmpty() && !damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -153,5 +153,16 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
             }
             gameOutcomeService.checkWinCondition(gameData);
         }
+    }
+
+    private List<UUID> apnapPlayers(GameData gameData) {
+        List<UUID> players = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = players.indexOf(gameData.activePlayerId);
+        if (activeIndex <= 0) {
+            return players;
+        }
+        List<UUID> ordered = new ArrayList<>(players.subList(activeIndex, players.size()));
+        ordered.addAll(players.subList(0, activeIndex));
+        return ordered;
     }
 }

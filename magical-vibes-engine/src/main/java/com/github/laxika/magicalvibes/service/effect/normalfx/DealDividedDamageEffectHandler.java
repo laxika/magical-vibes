@@ -85,12 +85,19 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                         return;
                     }
                 }
-                int damagePerTarget = entry.getXValue() / targets.size();
-                Map<UUID, Integer> assignments = new LinkedHashMap<>();
+                List<UUID> legalTargets = new ArrayList<>();
                 for (int i = 0; i < targets.size(); i++) {
                     if (!usesFlatTargets || entry.isTargetLegal(i)) {
-                        assignments.put(targets.get(i), damagePerTarget);
+                        legalTargets.add(targets.get(i));
                     }
+                }
+                if (legalTargets.isEmpty()) {
+                    return;
+                }
+                int damagePerTarget = entry.getXValue() / legalTargets.size();
+                Map<UUID, Integer> assignments = new LinkedHashMap<>();
+                for (UUID target : legalTargets) {
+                    assignments.put(target, damagePerTarget);
                 }
                 dealToAssignments(gameData, entry, e, assignments);
             }
@@ -205,7 +212,8 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                             gameData.playerIdToName.get(targetId) + " can't cast noncreature spells this turn."));
                 }
             } else if (gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
+                    && gameQueryService.hasProtectionFromDamageSource(
+                    gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
                 damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);

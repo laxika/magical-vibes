@@ -34,6 +34,14 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
         UUID controllerId = entry.getTargetId();
         if (controllerId == null) return;
 
+        if (entry.getTriggeringPermanentId() != null) {
+            UUID currentControllerId = gameQueryService.findPermanentController(
+                    gameData, entry.getTriggeringPermanentId());
+            if (currentControllerId != null) {
+                controllerId = currentControllerId;
+            }
+        }
+
         Card sourceCard = e.auraIsSource() ? entry.getCard() : entry.getDamageSourceCard();
         if (sourceCard == null) {
             Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

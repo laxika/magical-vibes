@@ -371,8 +371,8 @@ public class PermanentRemovalService {
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean wasLand = gameQueryService.isLand(gameData, target);
-        int dyingPowerAtDeath = wasCreature ? target.getEffectivePower() : 0;
-        int dyingToughnessAtDeath = wasCreature ? target.getEffectiveToughness() : 0;
+        int dyingPowerAtDeath = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : 0;
+        int dyingToughnessAtDeath = wasCreature ? gameQueryService.getEffectiveToughness(gameData, target) : 0;
         List<CardEffect> grantedDeathEffects = wasCreature
                 ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
                 : List.of();
@@ -1526,7 +1526,7 @@ public class PermanentRemovalService {
             }
             // Any permanent at all is put into a graveyard (Yomiji, Who Bars the Way).
             triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
-                    gameData, target, controllerId, ownerId);
+                    gameData, target, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {
@@ -1548,7 +1548,8 @@ public class PermanentRemovalService {
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(
                             gameData, target.getCard(), ownerId);
-                    triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId, target);
+                    triggerCollectionService.checkOpponentCreatureDeathTriggers(
+                            gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
                     triggerCollectionService.checkEquippedCreatureDeathTriggers(
                             gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath);
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);

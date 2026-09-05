@@ -67,6 +67,8 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -1205,6 +1207,17 @@ public class BattlefieldPlacementService {
                 new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, sourceCard,
                         null, null, null, 0, 0, List.of(), false, convokeCreatureCount));
+        if (enterWith.count() instanceof CardsInGraveyard graveyardCount
+                && !graveyardCount.excludeSourceCard()
+                && permanent.getEnteredFromGraveyardOwnerId() != null
+                && (graveyardCount.scope() == CountScope.ANY_PLAYER
+                || graveyardCount.scope() == CountScope.CONTROLLER
+                && permanent.getEnteredFromGraveyardOwnerId().equals(controllerId))
+                && predicateEvaluationService.matchesCardPredicate(
+                sourceCard, graveyardCount.filter(), null, gameData,
+                permanent.getEnteredFromGraveyardOwnerId())) {
+            count++;
+        }
         applyEntryCounters(gameData, controllerId, permanent, enterWith.type(), count);
     }
 

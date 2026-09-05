@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -36,14 +37,15 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                            Card damageSourceControllerCard,
                                            boolean preventHalfDamage,
                                            boolean drawCards,
-                                           UUID sourceControllerId) {
+                                           UUID sourceControllerId,
+                                           Set<CardColor> requiredDamageColors) {
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
                                         boolean coversControlledCreatures,
                                         boolean gainLifeOnlyFromBlackSource,
                                         boolean exileFromLibrary) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, null, false, false, null);
+                exileFromLibrary, null, false, false, null, null);
     }
 
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife,
@@ -52,12 +54,12 @@ public record PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean
                                         boolean exileFromLibrary,
                                         Card damageSourceControllerCard) {
         this(playerId, sourceId, gainLife, coversControlledCreatures, gainLifeOnlyFromBlackSource,
-                exileFromLibrary, damageSourceControllerCard, false, false, null);
+                exileFromLibrary, damageSourceControllerCard, false, false, null, null);
     }
 
     /** Convenience constructor for a player-only shield (Circle of Protection, Reverse Damage). */
     public PlayerSourceNextDamageShield(UUID playerId, UUID sourceId, boolean gainLife) {
-        this(playerId, sourceId, gainLife, false, false, false, null, false, false, null);
+        this(playerId, sourceId, gainLife, false, false, false, null, false, false, null, null);
     }
 
     /** Convenience constructor for a plain prevention shield with no life gain. */

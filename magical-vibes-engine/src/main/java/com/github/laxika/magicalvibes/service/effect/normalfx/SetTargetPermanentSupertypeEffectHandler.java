@@ -40,6 +40,7 @@ public class SetTargetPermanentSupertypeEffectHandler implements NormalEffectHan
             target.getPersistentGrantedSupertypes().remove(e.supertype());
             target.getPersistentRemovedSupertypes().add(e.supertype());
         }
+        target.getPersistentSupertypeChangeTimestamps().put(e.supertype(), gameData.nextTimestamp());
 
         String supertypeName = e.supertype().getDisplayName().toLowerCase();
         String text = e.gained() ? " becomes " + supertypeName + "." : " is no longer " + supertypeName + ".";

@@ -18,7 +18,7 @@ public class GrimFeast extends Card {
         // "Whenever a creature is put into an opponent's graveyard from the battlefield, you gain
         // life equal to its toughness." The toughness used is the creature's last-known effective
         // toughness on the battlefield, snapshotted when the trigger is collected.
-        addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
+        addEffect(EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
                 new GainLifeEqualToDyingCreatureToughnessEffect());
     }
 }
