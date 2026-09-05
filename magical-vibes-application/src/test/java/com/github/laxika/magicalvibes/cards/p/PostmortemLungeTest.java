@@ -88,6 +88,7 @@ class PostmortemLungeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         // Creature should no longer be on the battlefield
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // Creature should be in exile

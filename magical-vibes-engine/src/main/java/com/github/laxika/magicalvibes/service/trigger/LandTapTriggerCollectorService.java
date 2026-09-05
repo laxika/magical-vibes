@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
@@ -42,10 +44,8 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponent
 import com.github.laxika.magicalvibes.model.effect.TapLandsThatCouldProduceSameManaAsTappedLandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
@@ -73,14 +73,11 @@ public class LandTapTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final DamagePreventionService damagePreventionService;
-    private final PermanentRemovalService permanentRemovalService;
     private final LifeSupport lifeSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
-    private final TriggerCollectionService triggerCollectionService;
 
     @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleControllerTapsLandRemoveCounter(TriggerMatchContext match,
@@ -120,58 +117,21 @@ public class LandTapTriggerCollectorService {
             }
         }
         var sourceCard = match.permanent().getCard();
-        String cardName = sourceCard.getName();
-        int damage = gameQueryService.applyDamageMultiplier(gameData, trigger.damage());
-        damage += gameQueryService.getControllerDamageToOpponentBonus(
-                gameData, match.controllerId(), tappingPlayerId);
-
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(tappingPlayerId) + "."));
-        log.info("Game {} - {} triggers on land tap, dealing {} damage to {}",
-                gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
-
-        CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
-        boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
-                gameData, tappingPlayerId, match.permanent().getId());
-        if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())) {
-            damagePreventionService.applySourceDamagePreventionForPlayer(
-                    gameData, tappingPlayerId, match.permanent().getId(), damage,
-                    gameQueryService.getEffectiveColors(gameData, match.permanent()));
-        }
-        if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
-                && !sourceDamagePrevented
-                && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
-                gameData, tappingPlayerId, match.permanent())
-                && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
-                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, sourceColor)) {
-            damage = damagePreventionService.applyChannelHarmPrevention(
-                    gameData, tappingPlayerId,
-                    gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
-            if (damage <= 0) return true;
-            int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    gameData, tappingPlayerId, effectiveDamage, cardName);
-            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                    gameData, tappingPlayerId, effectiveDamage);
-            if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, tappingPlayerId)) {
-                lifeSupport.applyPoisonCounters(gameData, tappingPlayerId, effectiveDamage,
-                        cardName, match.controllerId());
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, tappingPlayerId)) {
-                gameLogService.append(gameData, GameLog.text(
-                        gameData.playerIdToName.get(tappingPlayerId) + "'s life total can't change."));
-            } else {
-                int lifeLoss = effectiveDamage
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, tappingPlayerId);
-                gameData.playerLifeTotals.put(tappingPlayerId,
-                        gameQueryService.lifeAfterDamage(gameData, tappingPlayerId, lifeLoss));
-            }
-            if (effectiveDamage > 0) {
-                gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage,
-                        gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(
-                        gameData, tappingPlayerId, match.permanent().getId(), effectiveDamage);
-            }
-        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new DealDamageToPlayersEffect(
+                        trigger.damage(), DamageRecipient.TARGET_PLAYER))),
+                tappingPlayerId,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on land tap by {}", gameData.id,
+                sourceCard.getName(), gameData.playerIdToName.get(tappingPlayerId));
 
         return true;
     }

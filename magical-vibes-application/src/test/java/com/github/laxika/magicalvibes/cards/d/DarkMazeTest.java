@@ -63,6 +63,7 @@ class DarkMazeTest extends BaseCardTest {
         // Advance to the end step — Dark Maze should be exiled.
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Dark Maze");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Dark Maze"));
@@ -78,6 +79,7 @@ class DarkMazeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
     }

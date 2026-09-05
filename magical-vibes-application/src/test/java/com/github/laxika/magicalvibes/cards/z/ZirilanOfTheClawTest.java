@@ -78,6 +78,7 @@ class ZirilanOfTheClawTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Catacomb Dragon");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .contains(dragon);
@@ -101,6 +102,7 @@ class ZirilanOfTheClawTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Catacomb Dragon");
         harness.passUntil(player2, TurnStep.END_STEP);
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Catacomb Dragon");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .contains(dragon);

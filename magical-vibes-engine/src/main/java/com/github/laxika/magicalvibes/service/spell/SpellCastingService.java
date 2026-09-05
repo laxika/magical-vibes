@@ -4639,7 +4639,7 @@ public class SpellCastingService {
                 Map<UUID, Integer> counterAssignments =
                         damageAssignments == null ? Map.of() : damageAssignments;
                 int assignedTotal = counterAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                if (!counterAssignments.isEmpty() && assignedTotal != expectedTotal) {
+                if (assignedTotal != expectedTotal) {
                     throw new IllegalStateException("Counter assignments must sum to " + expectedTotal);
                 }
                 FilterContext assignmentContext = FilterContext.of(gameData)
@@ -4752,6 +4752,11 @@ public class SpellCastingService {
                                 if (card.getTargetFilter() != null
                                         && !(card.getTargetFilter() instanceof PlayerPredicateTargetFilter)) {
                                     predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                                }
+                                if (dividedEffect.targetRestriction() != null
+                                        && !predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, target, dividedEffect.targetRestriction())) {
+                                    throw new IllegalStateException("Illegal target for divided damage");
                                 }
                             }
                             if (assignment.getValue() <= 0) {
@@ -9438,8 +9443,11 @@ public class SpellCastingService {
         int expectedTotal = amountEvaluationService.evaluate(
                 gameData, effect.total(), com.github.laxika.magicalvibes.service.effect.AmountContext
                         .forCasting(playerId, xValue));
-        if (assignments.isEmpty() && card.getEffectiveMinTargets(xValue) == 0) {
-            return assignments;
+        if (assignments.isEmpty()) {
+            if (expectedTotal == 0) {
+                return assignments;
+            }
+            throw new IllegalStateException("At least one counter assignment is required");
         }
         int assignedTotal = assignments.values().stream().mapToInt(Integer::intValue).sum();
         if (assignedTotal != expectedTotal) {
@@ -9533,6 +9541,11 @@ public class SpellCastingService {
                     if (target == null || !gameQueryService.isCreature(gameData, target)) {
                         throw new IllegalStateException("All targets must be creatures");
                     }
+                    if (dividedEffect.targetRestriction() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, target, dividedEffect.targetRestriction())) {
+                        throw new IllegalStateException("Illegal target for divided damage");
+                    }
                 }
             } else {
                 for (UUID assignedTargetId : assignments.keySet()) {
@@ -9550,6 +9563,11 @@ public class SpellCastingService {
                     if (card.getTargetFilter() != null
                             && !(card.getTargetFilter() instanceof PlayerPredicateTargetFilter)) {
                         predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                    }
+                    if (dividedEffect.targetRestriction() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, target, dividedEffect.targetRestriction())) {
+                        throw new IllegalStateException("Illegal target for divided damage");
                     }
                 }
             }

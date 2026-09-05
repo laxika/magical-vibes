@@ -124,6 +124,7 @@ class ExtractorDemonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Extractor Demon");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Extractor Demon"));

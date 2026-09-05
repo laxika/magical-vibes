@@ -901,6 +901,9 @@ public class AbilityActivationService {
         if (!gameData.mayPayLifeForColorlessManaUntilEndOfTurn.contains(playerId)) {
             throw new IllegalStateException("You may not pay life for mana");
         }
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            throw new IllegalStateException("You can't pay life while your life total can't change");
+        }
 
         int life = gameData.getLife(playerId);
         if (life < 1) {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 @CardUsed({BlindFury.class, AvatarOfMight.class, GiantSpider.class, GrizzlyBears.class})
 class BlindFuryTest extends BaseCardTest {
 
@@ -107,7 +109,7 @@ class BlindFuryTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         resolveOpponentCombat(attacker, blocker);
 
@@ -124,9 +126,12 @@ class BlindFuryTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         resolveOpponentCombat(attacker, blocker);
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(
+                blocker.getId(), 2,
+                player1.getId(), 6));
 
         harness.assertLife(player1, 14);
         harness.assertInGraveyard(player1, "Grizzly Bears");

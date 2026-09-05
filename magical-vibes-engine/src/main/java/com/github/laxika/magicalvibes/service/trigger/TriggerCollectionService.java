@@ -2563,11 +2563,13 @@ public class TriggerCollectionService {
             if (!types.contains(entry.getKey())) {
                 continue;
             }
-            pool.add(entry.getValue());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(gameData.playerIdToName.get(tappingPlayerId) + " adds 1 additional "
-                            + entry.getValue().getCode() + " mana.")
-                    .build());
+            for (ManaColor color : entry.getValue()) {
+                pool.add(color);
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(gameData.playerIdToName.get(tappingPlayerId) + " adds 1 additional "
+                                + color.getCode() + " mana.")
+                        .build());
+            }
         }
     }
 
@@ -10362,7 +10364,7 @@ public class TriggerCollectionService {
         return switch (slot) {
             case ON_ATTACK, ON_ALLY_CREATURES_ATTACK, ON_ALLY_CREATURES_ATTACK_PLAYER,
                     ON_ALLY_CREATURE_ATTACKS,
-                    ON_CREATURE_ATTACKS_YOU, ON_CREATURES_ATTACK_YOU,
+                    ON_CREATURE_ATTACKS_YOU, ON_CREATURE_ATTACKS_YOU_DIRECTLY, ON_CREATURES_ATTACK_YOU,
                     ON_ANY_CREATURE_ATTACKS, ON_ANY_PLAYER_ATTACKS -> true;
             default -> false;
         };

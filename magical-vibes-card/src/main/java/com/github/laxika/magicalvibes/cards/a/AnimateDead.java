@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -28,6 +29,7 @@ public class AnimateDead extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReanimateEnchantedCreatureCardEffect(false));
         // "Enchanted creature gets -1/-0."
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ENCHANTED_CREATURE));
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."

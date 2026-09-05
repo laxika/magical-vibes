@@ -28,6 +28,7 @@ class HellsparkElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Hellspark Elemental");
         harness.assertInGraveyard(player1, "Hellspark Elemental");
     }
@@ -62,6 +63,7 @@ class HellsparkElementalTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Hellspark Elemental");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

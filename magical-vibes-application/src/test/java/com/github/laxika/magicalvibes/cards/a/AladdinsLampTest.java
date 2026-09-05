@@ -156,7 +156,7 @@ class AladdinsLampTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(handNames()).hasSize(1);
-        assertThat(deck()).hasSize(3);
+        assertThat(deck()).hasSize(4);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

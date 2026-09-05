@@ -1771,7 +1771,7 @@ public class PermanentChoiceTriggerHandlerService {
                      etbTtt.sourcePermanentId()
              );
         }
-        if (etbTtt.targetFilter() != null) {
+        if (etbTtt.targetFilter() != null && !spellTarget) {
             entry.setTargetFilter(etbTtt.targetFilter());
         }
         entry.setTriggeringPermanentId(etbTtt.triggeringPermanentId());

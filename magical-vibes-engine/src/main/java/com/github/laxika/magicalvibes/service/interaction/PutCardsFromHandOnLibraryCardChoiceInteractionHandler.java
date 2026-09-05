@@ -52,38 +52,18 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         }
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
 
-        // Keep only valid, unique picks, capped at the allowed count.
-        List<UUID> validated = new ArrayList<>();
+        if (chosenIds == null
+                || chosenIds.size() < interaction.minCount()
+                || chosenIds.size() > interaction.maxCount()) {
+            throw new IllegalStateException("Invalid number of cards selected");
+        }
+        List<UUID> validated = new ArrayList<>(chosenIds.size());
         for (UUID id : chosenIds) {
-            if (interaction.validCardIds().contains(id) && !validated.contains(id)) {
-                validated.add(id);
+            if (!interaction.validCardIds().contains(id)) {
+                throw new IllegalStateException("Invalid card selected");
             }
-            if (validated.size() >= interaction.maxCount()) {
-                break;
-            }
-        }
-
-        // The shuffle-in variant is mandatory, so an empty or short answer falls back to the
-        // first legal cards instead of skipping the requirement (Lat-Nam's Legacy).
-        if (interaction.shuffleIn()) {
-            for (UUID id : interaction.validCardIds()) {
-                if (validated.size() >= interaction.maxCount()) {
-                    break;
-                }
-                if (!validated.contains(id)) {
-                    validated.add(id);
-                }
-            }
-        }
-
-        if (validated.size() < interaction.minCount()) {
-            for (UUID id : interaction.validCardIds()) {
-                if (validated.size() >= interaction.minCount()) {
-                    break;
-                }
-                if (!validated.contains(id)) {
-                    validated.add(id);
-                }
+            if (!validated.add(id)) {
+                throw new IllegalStateException("Duplicate card IDs in selection");
             }
         }
 

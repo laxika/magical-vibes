@@ -53,41 +53,43 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
      * drawn card while a Crypt is on the battlefield; creature draws prompt pay-or-discard.
      */
     public void afterDraw(GameData gameData, UUID drawingPlayerId, Card drawn) {
-        CryptSource crypt = findCryptSource(gameData);
-        if (crypt == null) {
+        List<CryptSource> crypts = findCryptSources(gameData);
+        if (crypts.isEmpty()) {
             return;
         }
 
-        String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-        gameLogService.append(gameData, GameLog.builder()
-                .text(drawerName + " reveals ")
-                .card(drawn)
-                .text(" with ")
-                .card(crypt.sourceCard())
-                .text(".")
-                .build());
+        for (CryptSource crypt : crypts) {
+            String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(drawerName + " reveals ")
+                    .card(drawn)
+                    .text(" with ")
+                    .card(crypt.sourceCard())
+                    .text(".")
+                    .build());
 
-        if (!drawn.hasType(CardType.CREATURE)) {
-            return;
+            if (!drawn.hasType(CardType.CREATURE)) {
+                continue;
+            }
+
+            boolean canPay = gameQueryService.canPlayerLifeChange(gameData, drawingPlayerId)
+                    && gameData.getLife(drawingPlayerId) >= crypt.effect().lifeCost();
+            if (!canPay) {
+                discardDrawnCard(gameData, drawingPlayerId, drawn.getId(), crypt.sourceCard(), crypt.controllerId());
+                continue;
+            }
+
+            String prompt = "Pay " + crypt.effect().lifeCost() + " life? If you don't, discard "
+                    + drawn.getName() + ". (" + crypt.sourceCard().getName() + ")";
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    crypt.sourceCard(),
+                    drawingPlayerId,
+                    List.of(crypt.effect()),
+                    prompt,
+                    drawn.getId(),
+                    null,
+                    crypt.permanentId()));
         }
-
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, drawingPlayerId)
-                && gameData.getLife(drawingPlayerId) >= crypt.effect().lifeCost();
-        if (!canPay) {
-            discardDrawnCard(gameData, drawingPlayerId, drawn.getId(), crypt.sourceCard(), crypt.controllerId());
-            return;
-        }
-
-        String prompt = "Pay " + crypt.effect().lifeCost() + " life? If you don't, discard "
-                + drawn.getName() + ". (" + crypt.sourceCard().getName() + ")";
-        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                crypt.sourceCard(),
-                drawingPlayerId,
-                List.of(crypt.effect()),
-                prompt,
-                drawn.getId(),
-                null,
-                crypt.permanentId()));
     }
 
     @Override
@@ -141,7 +143,8 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
         }
     }
 
-    private CryptSource findCryptSource(GameData gameData) {
+    private List<CryptSource> findCryptSources(GameData gameData) {
+        List<CryptSource> sources = new java.util.ArrayList<>();
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) {
@@ -150,12 +153,12 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
             for (Permanent permanent : battlefield) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof BreathstealersCryptDrawReplacementEffect crypt) {
-                        return new CryptSource(permanent.getCard(), permanent.getId(), pid, crypt);
+                        sources.add(new CryptSource(permanent.getCard(), permanent.getId(), pid, crypt));
                     }
                 }
             }
         }
-        return null;
+        return sources;
     }
 
     private record CryptSource(Card sourceCard, UUID permanentId, UUID controllerId,

@@ -22,10 +22,10 @@ class BarrentonMedicTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().globalDamagePreventionShield).isEqualTo(1);
+        assertThat(harness.getGameData().playerDamagePreventionShields.get(player1.getId())).isEqualTo(1);
     }
 
     // ===== Untap ability =====

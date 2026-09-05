@@ -27,10 +27,9 @@ class DwarvenVigilantesTest extends BaseCardTest {
         return addCreatureReady(player2, new DwarvenVigilantes());
     }
 
-    private void advanceToUnblockedMay() {
+    private void advanceToUnblockedTargetChoice() {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
     }
 
     @Test
@@ -40,14 +39,15 @@ class DwarvenVigilantesTest extends BaseCardTest {
         Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
-        advanceToUnblockedMay();
+        advanceToUnblockedTargetChoice();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -57,12 +57,12 @@ class DwarvenVigilantesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addCreatureReady(player1, new DwarvenVigilantes());
 
-        advanceToUnblockedMay();
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToUnblockedTargetChoice();
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
     }
 
     @Test
@@ -71,10 +71,11 @@ class DwarvenVigilantesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
-        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToUnblockedTargetChoice();
         harness.handlePermanentChosen(player1, victim.getId());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
     }
@@ -87,13 +88,13 @@ class DwarvenVigilantesTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+        harness.handlePermanentChosen(player1, victim.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, attacker));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
     }
@@ -104,7 +105,9 @@ class DwarvenVigilantesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedTargetChoice();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(victim.getMarkedDamage()).isZero();
@@ -134,15 +137,16 @@ class DwarvenVigilantesTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
-        harness.handleMayAbilityChosen(player1, true);
+        advanceToUnblockedTargetChoice();
         harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
     }

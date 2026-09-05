@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
@@ -93,6 +94,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.epic.EpicService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -3804,12 +3806,10 @@ public class StepTriggerService {
                 if (gameQueryService.findPermanentById(gameData, pending.permanentId()) == null) {
                     continue;
                 }
-                UUID currentControllerId = gameQueryService.findPermanentController(
-                        gameData, pending.permanentId());
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
-                        currentControllerId,
+                        pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         null,
@@ -3868,20 +3868,22 @@ public class StepTriggerService {
             List<ExileToOwnerGraveyardAtNextEndStep> pending =
                     gameData.drainDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class);
             for (ExileToOwnerGraveyardAtNextEndStep action : pending) {
-                gameData.exilePlayPermissions.remove(action.cardId());
-                gameData.exilePlayCostModifiers.remove(action.cardId());
-                gameData.exilePlayPermissionsExpireEndOfTurn.remove(action.cardId());
                 var exiled = gameData.findExiledCard(action.cardId());
                 if (exiled == null) {
                     continue;
                 }
-                gameData.removeFromExile(action.cardId());
-                graveyardService.addCardToGraveyard(gameData, action.ownerId(), exiled.card());
-                String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
-                gameLogService.append(gameData, GameLog.text(
-                        "The card exiled with " + sourceName + " is put into its owner's graveyard."));
-                log.info("Game {} - unplayed card exiled with {} put into owner's graveyard at end step",
-                        gameData.id, sourceName);
+                Card sourceCard = action.sourceCard() != null ? action.sourceCard() : exiled.card();
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.ownerId(),
+                        sourceCard.getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
+                        action.cardId(), Zone.EXILE, null);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                        "'s delayed ability triggers."));
+                log.info("Game {} - {} delayed exile-to-graveyard ability pushed onto stack",
+                        gameData.id, sourceCard.getName());
             }
         }
 

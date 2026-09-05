@@ -55,6 +55,7 @@ public sealed interface DynamicAmount permits
         CountersOnStackEntryCard,
         CreatureCardsExiledWithSource,
         CreatureDeathsThisTurn,
+        CreaturesPutIntoOwnGraveyardThisTurn,
         CreaturesExiledThisTurn,
         CreaturesAttackedThisTurn,
         NontokenCreatureDeathsThisTurn,

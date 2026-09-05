@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +23,7 @@ public class UrborgJustice extends Card {
 
     public UrborgJustice() {
         addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
-                new CreatureDeathsThisTurn(CountScope.CONTROLLER),
+                new CreaturesPutIntoOwnGraveyardThisTurn(),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                 SacrificeRecipient.TARGET_PLAYER));
     }

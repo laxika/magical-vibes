@@ -64,6 +64,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -1373,6 +1374,17 @@ public class GraveyardReturnSupport {
                                          boolean enterTapped, boolean enterAttacking,
                                          CounterType enterWithCounter, boolean grantIndestructible,
                                          boolean losesAllAbilities, int enterWithCounterAmount) {
+        return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, enterWithCounter, grantIndestructible,
+                losesAllAbilities, enterWithCounterAmount, permanent -> { });
+    }
+
+    private Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter, boolean grantIndestructible,
+                                         boolean losesAllAbilities, int enterWithCounterAmount,
+                                         Consumer<Permanent> beforeEntry) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         // The card stays in the graveyard it was being returned from (the caller already removed it).
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
@@ -1396,6 +1408,7 @@ public class GraveyardReturnSupport {
             permanent.tap();
         }
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
+        beforeEntry.accept(permanent);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (enterAttacking) {
             permanent.setAttacking(true);
@@ -1541,11 +1554,29 @@ public class GraveyardReturnSupport {
      * enters tapped when {@code enterTapped} is true (Dance of the Dead).
      */
     public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card, boolean enterTapped) {
+        return reanimateTargetedCard(gameData, controllerId, card, enterTapped, permanent -> { });
+    }
+
+    /**
+     * Reanimates a targeted card after allowing linked objects to adopt the new permanent ID before
+     * battlefield-entry processing begins. Reanimation Auras use this to remain continuously
+     * attached while their enchanted card changes zones.
+     */
+    public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card,
+                                             boolean enterTapped, Consumer<Permanent> beforeEntry) {
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             return null;
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-        return putCardOntoBattlefield(gameData, controllerId, card, null, null, enterTapped, false, null);
+        return putCardOntoBattlefield(gameData, controllerId, card, null, null, enterTapped, false,
+                null, false, false, 0, permanent -> {
+                    permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+                    if (graveyardOwnerId != null && !controllerId.equals(graveyardOwnerId)) {
+                        trackStolenCreature(gameData, permanent.getId(), controllerId, graveyardOwnerId);
+                    }
+                    beforeEntry.accept(permanent);
+                });
     }
 
     /**
@@ -1748,8 +1779,7 @@ public class GraveyardReturnSupport {
     }
 
     public void handleCreatureEtbAndLegendRule(GameData gameData, UUID controllerId, Permanent permanent, Card card) {
-        if (gameQueryService.isCreature(gameData, permanent)
-                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         }
         if (!gameData.interaction.isAwaitingInput()) {

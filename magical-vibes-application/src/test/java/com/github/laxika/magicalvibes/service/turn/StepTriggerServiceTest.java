@@ -2079,7 +2079,7 @@ class StepTriggerServiceTest {
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
                     DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.EXILE_AT_END_STEP);
+                    DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
                     DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,

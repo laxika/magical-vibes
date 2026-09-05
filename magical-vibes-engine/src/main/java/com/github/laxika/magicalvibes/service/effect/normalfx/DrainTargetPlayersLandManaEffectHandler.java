@@ -20,9 +20,8 @@ import java.util.UUID;
  * player controls is tapped for the mana it produces (added to that player's pool), then the
  * target player's entire pool is emptied and the spell's controller adds an equal amount of mana.
  *
- * <p>Lands whose mana ability requires a color choice (any-color producers) contribute colorless,
- * and dual/multi-ability lands use their first tap-for-mana ability; the common case of fixed
- * single-color lands is exact.</p>
+ * <p>The affected player makes any required color choices. Dual/multi-ability lands use their
+ * first available tap-for-mana ability, including abilities with payable mana costs.</p>
  */
 @Slf4j
 @Component
@@ -49,16 +48,35 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
             return;
         }
 
-        landManaDrainSupport.activateManaAbilityOfEachLand(gameData, targetPlayerId);
+        landManaDrainSupport.activateManaAbilityOfEachLand(
+                gameData, targetPlayerId, entry.getControllerId());
 
         // The target player loses all unspent mana; the controller adds the mana lost this way.
-        Map<String, Integer> lostByCode = targetPool.toMap();
-        int totalTransferred = 0;
-        for (ManaColor color : ManaColor.values()) {
-            int amount = lostByCode.getOrDefault(color.getCode(), 0);
-            if (amount > 0) {
-                controllerPool.add(color, amount);
-                totalTransferred += amount;
+        if (targetPlayerId.equals(entry.getControllerId())) {
+            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                    .text(" drains " + targetPool.getTotalAllMana() + " mana.").build());
+            return;
+        }
+
+        int totalTransferred = targetPool.getTotalAllMana();
+        if (controllerPool.getTotalAllMana() == 0) {
+            gameData.playerManaPools.put(entry.getControllerId(), new ManaPool(targetPool));
+        } else {
+            Map<String, Integer> lostByCode = targetPool.toMap();
+            for (ManaColor color : ManaColor.values()) {
+                int regular = targetPool.get(color);
+                if (regular > 0) {
+                    controllerPool.add(color, regular);
+                }
+                int abilityOnly = targetPool.getAbilityOnlyMana(color);
+                if (abilityOnly > 0) {
+                    controllerPool.addAbilityOnlyMana(color, abilityOnly);
+                }
+                int unclassifiedRestricted = lostByCode.getOrDefault(color.getCode(), 0)
+                        - regular - abilityOnly;
+                if (unclassifiedRestricted > 0) {
+                    controllerPool.add(color, unclassifiedRestricted);
+                }
             }
         }
         targetPool.clear();

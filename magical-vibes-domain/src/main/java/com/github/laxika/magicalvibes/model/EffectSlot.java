@@ -978,6 +978,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entry so the resolved effect can act on it. Checked in
      *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
     ON_CREATURE_ATTACKS_YOU,
+    /** Triggers once per attacking creature when it attacks this permanent's controller directly.
+     *  Attacking a planeswalker they control does not trigger it. The attacking creature's permanent
+     *  ID is stored as the non-targeting targetId. Checked in {@code CombatAttackService.declareAttackers}. */
+    ON_CREATURE_ATTACKS_YOU_DIRECTLY,
     /** Triggers once per combat when one or more creatures attack the controller of this permanent.
      *  Unlike {@link #ON_CREATURE_ATTACKS_YOU} this fires a single time no matter how many creatures
      *  attack, and only counts creatures attacking the player directly (attacking a planeswalker they

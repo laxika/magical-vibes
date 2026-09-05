@@ -135,9 +135,9 @@ public class CounterSupport {
             if (target.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
             } else if (target.isCastWithFlashback() || target.isCastWithDisturb() || target.isExileInsteadOfGraveyard()) {
-                exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
+                exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getPhysicalCard());
+                graveyardService.addCardToGraveyard(gameData, target.getOwnerId(), target.getPhysicalCard());
             }
         }
 
@@ -229,7 +229,7 @@ public class CounterSupport {
             return null;
         }
 
-        gameData.playerDecks.get(target.getControllerId()).add(0, target.getPhysicalCard());
+        gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
         notifyCounteredSpell(gameData, source.getControllerId(), target);
         return target.getPhysicalCard();
     }
@@ -260,7 +260,7 @@ public class CounterSupport {
             if (sharesCardType(spell, Set.of(CardType.ARTIFACT, CardType.CREATURE))) {
                 gained = physicalCard;
             } else {
-                graveyardService.addCardToGraveyard(gameData, target.getControllerId(), physicalCard);
+                graveyardService.addCardToGraveyard(gameData, target.getOwnerId(), physicalCard);
             }
         }
 
@@ -272,7 +272,7 @@ public class CounterSupport {
     }
 
     public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
-        return counterSpellAndExile(gameData, source, target, target.getControllerId());
+        return counterSpellAndExile(gameData, source, target, target.getOwnerId());
     }
 
     public boolean counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target,
@@ -316,7 +316,7 @@ public class CounterSupport {
         }
 
         Card spell = target.getPhysicalCard();
-        exileService.exileCard(gameData, target.getControllerId(), spell);
+        exileService.exileCard(gameData, target.getOwnerId(), spell);
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 spell,
                 counterControllerId,

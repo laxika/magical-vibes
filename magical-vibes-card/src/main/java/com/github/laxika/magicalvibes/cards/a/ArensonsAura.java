@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +39,7 @@ public class ArensonsAura extends Card {
                 List.of(new CounterSpellEffect()),
                 "{3}{U}{U}: Counter target enchantment spell.",
                 new StackEntryPredicateTargetFilter(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.ENCHANTMENT_SPELL)),
+                        new StackEntryCardTypeInPredicate(Set.of(CardType.ENCHANTMENT)),
                         "Target must be an enchantment spell.")
         ));
     }

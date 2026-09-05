@@ -17,7 +17,7 @@ public class Avalanche extends Card {
 
     public Avalanche() {
         // Destroy X target snow lands.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW)

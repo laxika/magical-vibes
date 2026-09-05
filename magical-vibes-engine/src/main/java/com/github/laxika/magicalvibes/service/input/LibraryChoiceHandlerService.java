@@ -1041,16 +1041,11 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE) {
-            if (filterPredicate != null) {
-                exileService.exileCard(gameData, deckOwnerId, chosenCard);
-            } else {
-                exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
-            }
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
 
             // Multi-card exile (Jester's Cap): re-prompt for the next card until the count is
             // spent or the library runs out. Only the final pick shuffles the library.
-            String exileLog = player.getUsername()
-                    + (filterPredicate != null ? " exiles a card." : " exiles a card face down.");
+            String exileLog = player.getUsername() + " exiles a card.";
 
             if (remainingCount > 1) {
                 int newRemaining = remainingCount - 1;
@@ -1332,11 +1327,7 @@ public class LibraryChoiceHandlerService {
                 gameData.addCardToHand(handOwnerId, chosenCard);
             }
         } else if (destination == LibrarySearchDestination.EXILE) {
-            if (filterPredicate != null) {
-                exileService.exileCard(gameData, deckOwnerId, chosenCard);
-            } else {
-                exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, null);
-            }
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
             exileService.exileCard(gameData, playerId, chosenCard);
             UUID sourcePermanentId = followUp.imprintSourcePermanentId();

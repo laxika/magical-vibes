@@ -176,5 +176,6 @@ class ClockworkSwarmTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "2");
     }
 }

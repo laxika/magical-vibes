@@ -48,6 +48,7 @@ class WakeToSlaughterTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

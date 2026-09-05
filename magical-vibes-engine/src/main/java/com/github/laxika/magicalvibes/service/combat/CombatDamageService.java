@@ -2437,8 +2437,7 @@ public class CombatDamageService {
                                           List<CardEffect> combatDamageReceivedEffects) {}
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
-        Map<UUID, DealtDamageTriggerData> triggersByDamagedPermanent = new LinkedHashMap<>();
-        List<DealtDamageTriggerData> sourceSpecificTriggers = new ArrayList<>();
+        List<DealtDamageTriggerData> triggers = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
             Permanent source = entry.getKey();
@@ -2463,35 +2462,14 @@ public class CombatDamageService {
                 UUID controllerId = gameData.findControllerOf(target);
                 if (controllerId == null) continue;
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
-                List<CardEffect> sourceSpecificEffects = effects.stream()
-                        .filter(effect -> effect instanceof DamageSourceAwareEffect
-                                || effect instanceof DamageSourceControllerAwareEffect)
-                        .toList();
-                effects.removeAll(sourceSpecificEffects);
-                if (!sourceSpecificEffects.isEmpty()) {
-                    sourceSpecificTriggers.add(new DealtDamageTriggerData(
-                            target.getCard(), target.getId(), controllerId, damageAmount,
-                            source.getCard(), source.getId(), sourceControllerId,
-                            sourceSpecificEffects, List.of()));
-                }
                 if (effects.isEmpty() && combatDamageReceivedEffects.isEmpty()) continue;
-                DealtDamageTriggerData previous = triggersByDamagedPermanent.get(targetId);
-                if (previous == null) {
-                    triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
-                            target.getCard(), target.getId(), controllerId, damageAmount,
-                            source.getCard(), source.getId(), sourceControllerId,
-                            effects, combatDamageReceivedEffects));
-                } else {
-                    triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
-                            previous.card(), previous.permanentId(), previous.controllerId(),
-                            previous.damageDealt() + damageAmount,
-                            previous.sourceCard(), previous.sourcePermanentId(), previous.sourceControllerId(),
-                            previous.dealtDamageEffects(), previous.combatDamageReceivedEffects()));
-                }
+                triggers.add(new DealtDamageTriggerData(
+                        target.getCard(), target.getId(), controllerId, damageAmount,
+                        source.getCard(), source.getId(), sourceControllerId,
+                        effects, combatDamageReceivedEffects));
             }
         }
-        sourceSpecificTriggers.addAll(triggersByDamagedPermanent.values());
-        return sourceSpecificTriggers;
+        return triggers;
     }
 
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {

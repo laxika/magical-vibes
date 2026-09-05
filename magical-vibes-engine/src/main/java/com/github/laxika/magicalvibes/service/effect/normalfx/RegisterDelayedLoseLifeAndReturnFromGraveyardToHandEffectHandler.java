@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedLoseLifeAndReturnFromGraveyard;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,8 @@ import java.util.UUID;
 public class RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffectHandler
         implements NormalEffectHandlerBean {
 
+    private final GameQueryService gameQueryService;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect.class;
@@ -26,6 +29,10 @@ public class RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect) effect;
         UUID controllerId = entry.getControllerId();
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, entry.getCard().getId());
+        if (!controllerId.equals(graveyardOwnerId)) {
+            return;
+        }
         gameData.queueDelayedAction(new DelayedLoseLifeAndReturnFromGraveyard(
                 controllerId, entry.getCard(), e.lifeLoss()));
 

@@ -225,14 +225,7 @@ public class PlayerInteractionSupport {
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
     }
     public void applyDrawCards(GameData gameData, UUID playerId, int amount) {
-        if (amount > 0 && drawService.hasQuantumRiddlerDrawReplacement(gameData, playerId)) {
-            drawService.resolveDrawCards(gameData, playerId, amount);
-            return;
-        }
-
-        for (int i = 0; i < amount; i++) {
-            drawService.resolveDrawCard(gameData, playerId);
-        }
+        drawService.resolveDrawCards(gameData, playerId, amount);
     }
     /**
      * Sindbad: the player draws a card and reveals it; if the revealed card isn't a land card, it is
@@ -725,7 +718,7 @@ public class PlayerInteractionSupport {
                     .orElse("card");
             choicePrompt = (choiceOptional ? "You may choose a " : "Choose a ") + typeNames.toLowerCase()
                     + " card to " + actionVerb + ".";
-        } else if (shuffleIntoLibraryMode) {
+        } else if (shuffleIntoLibraryMode || !excludedTypes.contains(CardType.LAND)) {
             choicePrompt = (choiceOptional ? "You may choose a card to " : "Choose a card to ")
                     + actionVerb + ".";
         } else {

@@ -2604,6 +2604,11 @@ public class TargetLegalityService {
                                 false))) {
                     TargetFilter effectiveTargetFilter = targetFilterForCast(
                             targetFilter, entry.isKicked(), entry.isGiftPromised());
+                    if (effectiveTargetFilter instanceof PermanentPredicateTargetFilter
+                            || effectiveTargetFilter instanceof ControlledPermanentPredicateTargetFilter
+                            || effectiveTargetFilter instanceof OwnedPermanentPredicateTargetFilter) {
+                        effectiveTargetFilter = null;
+                    }
                     legal = checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
                             entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getXValue(), false)
                             .isEmpty();
@@ -3915,6 +3920,14 @@ public class TargetLegalityService {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).size() >= 2;
         }
         if (predicate instanceof StackEntryCardTypeInPredicate cardTypeInPredicate) {
+            if (stackEntry.getSourcePermanentId() != null) {
+                Permanent abilitySource = gameQueryService.findPermanentById(
+                        gameData, stackEntry.getSourcePermanentId());
+                if (abilitySource != null) {
+                    return gameQueryService.getEffectiveCardTypes(gameData, abilitySource).stream()
+                            .anyMatch(cardTypeInPredicate.cardTypes()::contains);
+                }
+            }
             return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);
         }
         if (predicate instanceof StackEntrySubtypeInPredicate subtypeInPredicate) {

@@ -412,7 +412,9 @@ public class PredicateEvaluationService {
             case CardIsSelfPredicate ignored ->
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
-                    card.getColors().contains(p.color());
+                    gameData != null
+                            ? gameQueryService.getEffectiveCardColors(gameData, card).contains(p.color())
+                            : card.getColors().contains(p.color());
             case CardDoesNotShareColorWithSourceControlledCreaturePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;

@@ -466,7 +466,9 @@ public class CombatService {
                 gameData.drainDelayedActions(PutCounterOnPermanentAtEndOfCombat.class);
         for (PutCounterOnPermanentAtEndOfCombat action : toCounter) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (perm == null || action.amount() <= 0) {
+            if (perm == null || action.amount() <= 0
+                    || action.requiredSourcePermanentId() != null
+                    && gameQueryService.findPermanentById(gameData, action.requiredSourcePermanentId()) == null) {
                 continue;
             }
             // One trigger does both, so the token is created even when the counter can't be placed.
@@ -477,15 +479,14 @@ public class CombatService {
                             action.tokenForController(), perm.getCard().getSetCode());
                 }
             }
-            if (gameQueryService.cantHaveCounters(gameData, perm)) {
-                continue;
-            }
-            perm.setCounterCount(action.counterType(),
-                    perm.getCounterCount(action.counterType()) + action.amount());
-            if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (controllerId != null) {
-                    gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+            if (!gameQueryService.cantHaveCounters(gameData, perm)) {
+                perm.setCounterCount(action.counterType(),
+                        perm.getCounterCount(action.counterType()) + action.amount());
+                if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                    UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                    if (controllerId != null) {
+                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
+                    }
                 }
             }
             if (action.alsoTap()) {

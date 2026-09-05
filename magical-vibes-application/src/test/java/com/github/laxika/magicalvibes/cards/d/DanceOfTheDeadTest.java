@@ -152,6 +152,7 @@ class DanceOfTheDeadTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, targetId);
         assertThat(gd.stack.getFirst().getTargetZone()).isEqualTo(Zone.GRAVEYARD);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Balduvian Bears");
         assertThat(bears).isNotNull();
@@ -168,6 +169,7 @@ class DanceOfTheDeadTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Balduvian Bears");
         assertThat(bears).isNotNull();

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -23,7 +24,8 @@ public class ArcumsSleigh extends Card {
         // Activate only during combat and only if defending player controls a snow land.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}",
-                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(
+                        Keyword.VIGILANCE, GrantScope.TARGET, new PermanentIsCreaturePredicate())),
                 "{2}, {T}: Target creature gains vigilance until end of turn. "
                         + "Activate only during combat and only if defending player controls a snow land.",
                 ActivationTimingRestriction.ONLY_DURING_COMBAT

@@ -39,7 +39,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
     @DisplayName("Gains a +1/+1 counter at end step for each of your creatures that died this turn")
     void gainsCountersForOwnDeaths() {
         Permanent asmira = addAsmira();
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 2, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 2, Integer::sum);
 
         advanceToEndStepAndResolve(player1);
 
@@ -50,8 +50,8 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
     @DisplayName("Ignores creatures that died under an opponent's control")
     void ignoresOpponentDeaths() {
         Permanent asmira = addAsmira();
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
-        gd.creatureDeathCountThisTurn.merge(player2.getId(), 3, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player2.getId(), 3, Integer::sum);
 
         advanceToEndStepAndResolve(player1);
 
@@ -62,7 +62,7 @@ class AsmiraHolyAvengerTest extends BaseCardTest {
     @DisplayName("Triggers at each end step, including an opponent's turn")
     void triggersOnOpponentEndStep() {
         Permanent asmira = addAsmira();
-        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+        gd.creaturesPutIntoOwnGraveyardThisTurnCount.merge(player1.getId(), 1, Integer::sum);
 
         advanceToEndStepAndResolve(player2);
 

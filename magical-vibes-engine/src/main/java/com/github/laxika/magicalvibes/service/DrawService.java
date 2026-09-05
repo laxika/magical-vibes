@@ -175,6 +175,12 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
+        if (drawAmount > 1 && findReturnFromGraveyardInsteadOfDrawSourceCard(gameData, playerId) != null) {
+            gameData.pendingForbiddenCryptDraws.merge(playerId, drawAmount - 1, Integer::sum);
+            resolveDrawCardInternal(gameData, playerId);
+            return;
+        }
+
         for (int i = 0; i < drawAmount; i++) {
             resolveDrawCardInternal(gameData, playerId);
             if (gameData.interaction.isAwaitingInput()
@@ -250,8 +256,12 @@ public class DrawService {
 
         // Aladdin's Lamp — one-shot, turn-scoped delayed replacement of this player's next draw:
         // instead look at the top X cards, put all but one on the bottom in a random order, then draw.
-        Integer lookAtTopX = gameData.pendingNextDrawLookAtTop.remove(playerId);
-        if (lookAtTopX != null) {
+        List<Integer> pendingLookAtTop = gameData.pendingNextDrawLookAtTop.get(playerId);
+        if (pendingLookAtTop != null && !pendingLookAtTop.isEmpty()) {
+            int lookAtTopX = pendingLookAtTop.removeFirst();
+            if (pendingLookAtTop.isEmpty()) {
+                gameData.pendingNextDrawLookAtTop.remove(playerId);
+            }
             resolveNextDrawLookAtTop(gameData, playerId, lookAtTopX);
             return;
         }
@@ -1260,8 +1270,8 @@ public class DrawService {
 
         int lookCount = Math.min(x, deck.size());
         if (lookCount <= 1) {
-            // Looking at a single card (or X == 1) — nothing to put on the bottom; just draw it.
-            performDrawCard(gameData, playerId);
+            // The instruction still creates a new draw event, so remaining replacements can apply.
+            resolveDrawCardInternal(gameData, playerId);
             return;
         }
 

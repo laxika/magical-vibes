@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DisintegrateTest extends BaseCardTest {
 
     @Test
-    void creatureCannotRegenerateAfterZeroDamage() {
+    void zeroDamageDoesNotStopCreatureFromRegeneratingLater() {
         var target = addCreatureReady(player2, new GrizzlyBears());
         target.setRegenerationShield(1);
         harness.setHand(player1, List.of(new Disintegrate()));
@@ -30,10 +30,10 @@ class DisintegrateTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, target.getCard().getName());
+        harness.assertOnBattlefield(player2, target.getCard().getName());
         harness.assertNotInGraveyard(player2, target.getCard().getName());
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals(target.getCard().getName()));
+                .noneMatch(c -> c.getName().equals(target.getCard().getName()));
     }
 
     @Test

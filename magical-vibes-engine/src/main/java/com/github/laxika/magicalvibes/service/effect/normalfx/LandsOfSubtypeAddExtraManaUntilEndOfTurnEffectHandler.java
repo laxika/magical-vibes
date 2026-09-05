@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,7 +28,8 @@ public class LandsOfSubtypeAddExtraManaUntilEndOfTurnEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect) effect;
-        gameData.extraManaOnLandSubtypeTapThisTurn.put(e.subtype(), e.color());
+        gameData.extraManaOnLandSubtypeTapThisTurn.computeIfAbsent(e.subtype(), ignored ->
+                Collections.synchronizedList(new ArrayList<>())).add(e.color());
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": until end of turn, tapping a " + e.subtype().name().toLowerCase()

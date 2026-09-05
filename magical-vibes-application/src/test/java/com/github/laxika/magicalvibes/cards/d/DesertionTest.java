@@ -102,6 +102,7 @@ class DesertionTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, wellspring.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ichor Wellspring");
         harness.assertInHand(player2, "Impulse");

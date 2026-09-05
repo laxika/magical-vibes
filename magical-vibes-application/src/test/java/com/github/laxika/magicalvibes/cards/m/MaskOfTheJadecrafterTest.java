@@ -59,6 +59,7 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Mask of the Jadecrafter");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Mask of the Jadecrafter"));

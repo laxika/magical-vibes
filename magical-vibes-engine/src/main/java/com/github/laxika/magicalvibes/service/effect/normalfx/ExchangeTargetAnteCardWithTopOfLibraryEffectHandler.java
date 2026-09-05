@@ -41,14 +41,26 @@ public class ExchangeTargetAnteCardWithTopOfLibraryEffectHandler implements Norm
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (the target is no longer a card you own in the ante)."));
             return;
         }
-        if (library == null || library.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the library is empty)."));
+        if (library == null) {
             return;
         }
 
         Card anteCard = anteEntry.card();
-        Card libraryTop = library.removeFirst();
         gameData.removeFromExile(anteCard.getId());
+        if (library.isEmpty()) {
+            library.addFirst(anteCard);
+            gameLogService.append(gameData, GameLog.builder()
+                    .card(anteCard)
+                    .text(" is moved from the ante to the empty library of ")
+                    .text(gameData.playerIdToName.get(controllerId))
+                    .text(" by ")
+                    .card(entry.getCard())
+                    .text(".")
+                    .build());
+            return;
+        }
+
+        Card libraryTop = library.removeFirst();
         library.addFirst(anteCard);
         gameData.addToAnte(controllerId, libraryTop);
 

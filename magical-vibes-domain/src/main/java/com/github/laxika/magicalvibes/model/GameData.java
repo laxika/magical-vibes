@@ -349,6 +349,7 @@ public class GameData {
     public UUID cardEnteringGraveyardByCycling;
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
     public final Map<UUID, Integer> creatureDeathCountThisTurn = new ConcurrentHashMap<>();
+    public final Map<UUID, Integer> creaturesPutIntoOwnGraveyardThisTurnCount = new ConcurrentHashMap<>();
     /** Counts nontoken creature deaths from the battlefield this turn, per controller. */
     public final Map<UUID, Integer> nontokenCreatureDeathCountThisTurn = new ConcurrentHashMap<>();
     /** Counts creatures exiled from the battlefield by controller this turn. */
@@ -667,11 +668,9 @@ public class GameData {
      *  Notion Thief-style replacements that exempt "the first card they draw in each of their draw
      *  steps". Cleared at end-of-turn cleanup. */
     public final Set<UUID> drawStepFirstDrawTaken = ConcurrentHashMap.newKeySet();
-    /** Aladdin's Lamp — a one-shot, turn-scoped delayed replacement of a player's next draw this
-     *  turn: "instead look at the top X cards of your library, put all but one on the bottom in a
-     *  random order, then draw a card." Keyed by drawing player id, value = X. Consumed on the next
-     *  draw in {@code DrawService.resolveDrawCard} and cleared at end-of-turn cleanup. */
-    public final Map<UUID, Integer> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
+    /** Aladdin's Lamp — one queued, turn-scoped delayed replacement per activation. Each entry is
+     *  the activation's X value and is consumed by {@code DrawService.resolveDrawCard}. */
+    public final Map<UUID, List<Integer>> pendingNextDrawLookAtTop = new ConcurrentHashMap<>();
     /** Words of Worship — one queued replacement per activation of "the next time you would draw a
      *  card this turn, you gain 5 life instead". Consumed by {@code DrawService.resolveDrawCard} and
      *  cleared at end-of-turn cleanup. */
@@ -1119,10 +1118,10 @@ public class GameData {
     public final Map<UUID, Set<CardPredicate>> cardTypeFlashGrantsUntilNextTurn =
             new ConcurrentHashMap<>();
 
-    /** Land subtype -&gt; extra mana color added whenever a player taps a land of that subtype for mana
+    /** Land subtype -&gt; extra mana colors added whenever a player taps a land of that subtype for mana
      *  this turn (Chaos Moon's odd branch: "whenever a player taps a Mountain for mana, that player
-     *  adds an additional {R}"). Cleared at end of turn. */
-    public final Map<CardSubtype, ManaColor> extraManaOnLandSubtypeTapThisTurn = new ConcurrentHashMap<>();
+     *  adds an additional {R}"). Each resolved effect contributes separately. Cleared at end of turn. */
+    public final Map<CardSubtype, List<ManaColor>> extraManaOnLandSubtypeTapThisTurn = new ConcurrentHashMap<>();
 
     /** Land subtype -&gt; the mana color lands of that subtype produce instead of any other type this
      *  turn (Chaos Moon's even branch: "that Mountain produces colorless mana instead of any other
@@ -4555,7 +4554,9 @@ public class GameData {
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.chainsDrawReplacementsApplied.putAll(this.chainsDrawReplacementsApplied);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
-        copy.pendingNextDrawLookAtTop.putAll(this.pendingNextDrawLookAtTop);
+        this.pendingNextDrawLookAtTop.forEach((playerId, xValues) ->
+                copy.pendingNextDrawLookAtTop.put(playerId,
+                        Collections.synchronizedList(new ArrayList<>(xValues))));
         copy.pendingNextDrawGainLife.putAll(this.pendingNextDrawGainLife);
         this.pendingNextDrawCreateBears.forEach((playerId, sourceSetCodes) ->
                 copy.pendingNextDrawCreateBears.put(playerId,
@@ -4747,6 +4748,7 @@ public class GameData {
         copy.creatureLeftBattlefieldCountThisTurn.putAll(this.creatureLeftBattlefieldCountThisTurn);
         copy.nonlandPermanentLeftBattlefieldThisTurn = this.nonlandPermanentLeftBattlefieldThisTurn;
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
+        copy.creaturesPutIntoOwnGraveyardThisTurnCount.putAll(this.creaturesPutIntoOwnGraveyardThisTurnCount);
         copy.nontokenCreatureDeathCountThisTurn.putAll(this.nontokenCreatureDeathCountThisTurn);
         copy.creatureExileCountThisTurn.putAll(this.creatureExileCountThisTurn);
         this.creatureSubtypeDeathCountThisTurn.forEach((k, v) ->
@@ -5056,7 +5058,8 @@ public class GameData {
                 copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
         copy.cardsRevealedInHandUntilOwnerNextTurn.putAll(this.cardsRevealedInHandUntilOwnerNextTurn);
         copy.cardsCantBePlayedInHandUntilOwnerNextTurn.putAll(this.cardsCantBePlayedInHandUntilOwnerNextTurn);
-        copy.extraManaOnLandSubtypeTapThisTurn.putAll(this.extraManaOnLandSubtypeTapThisTurn);
+        this.extraManaOnLandSubtypeTapThisTurn.forEach((subtype, colors) ->
+                copy.extraManaOnLandSubtypeTapThisTurn.put(subtype, new ArrayList<>(colors)));
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;

@@ -27,6 +27,7 @@ class MaddeningImpTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.inMutationScope(
                 () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+        harness.passBothPriorities();
     }
 
     @Test

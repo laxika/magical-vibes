@@ -107,6 +107,7 @@ class AnimateDeadTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent aura = findPermanent(player1, "Animate Dead");
         assertThat(aura).isNotNull();
@@ -166,7 +167,6 @@ class AnimateDeadTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
-        resolveAllTriggers();
 
         Permanent aura = findPermanent(player1, "Animate Dead");
         assertThat(aura).isNotNull();
@@ -175,10 +175,10 @@ class AnimateDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        resolveAllTriggers();
     }
 
     @Test
@@ -192,6 +192,7 @@ class AnimateDeadTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent aura = findPermanent(player1, "Animate Dead");
         assertThat(aura).isNotNull();
@@ -218,6 +219,7 @@ class AnimateDeadTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, targetId);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");

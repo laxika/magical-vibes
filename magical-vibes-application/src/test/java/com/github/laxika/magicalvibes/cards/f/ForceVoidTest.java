@@ -88,6 +88,7 @@ class ForceVoidTest extends BaseCardTest {
 
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         gd.activePlayerId = player1.getId();
+        gd.turnNumber++;
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
         harness.passBothPriorities();
 

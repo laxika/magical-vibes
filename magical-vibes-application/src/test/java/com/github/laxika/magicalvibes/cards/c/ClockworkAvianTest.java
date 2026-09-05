@@ -104,6 +104,7 @@ class ClockworkAvianTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "2");
     }
 
     private void leaveEndOfCombat() {

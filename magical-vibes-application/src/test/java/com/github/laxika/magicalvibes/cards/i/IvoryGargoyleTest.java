@@ -27,6 +27,7 @@ class IvoryGargoyleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities(); // advance to the end step, processing the delayed return
+        harness.passBothPriorities(); // resolve the delayed return
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
         harness.assertNotInGraveyard(player1, "Ivory Gargoyle");
@@ -100,6 +101,7 @@ class IvoryGargoyleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ivory Gargoyle");
     }
@@ -140,6 +142,7 @@ class IvoryGargoyleTest extends BaseCardTest {
         assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");

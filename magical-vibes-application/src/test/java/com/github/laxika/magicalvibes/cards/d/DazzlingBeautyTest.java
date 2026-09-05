@@ -83,6 +83,7 @@ class DazzlingBeautyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         harness.assertInHand(player2, "Femeref Scouts");
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

@@ -1529,6 +1529,7 @@ public class PermanentRemovalService {
                     gameData, target, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
+                gameData.creaturesPutIntoOwnGraveyardThisTurnCount.merge(ownerId, 1, Integer::sum);
                 if (!target.getCard().isToken()) {
                     gameData.nontokenCreatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 }

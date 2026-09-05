@@ -67,8 +67,9 @@ class GrixisSlavedriverTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to end step → Slavedriver exiled, leaves-battlefield trigger onto stack
-        harness.passBothPriorities(); // trigger resolves → token created
+        harness.passBothPriorities(); // advance to end step → delayed exile trigger onto stack
+        harness.passBothPriorities(); // exile trigger resolves → leaves-battlefield trigger onto stack
+        harness.passBothPriorities(); // leaves-battlefield trigger resolves → token created
 
         harness.assertNotOnBattlefield(player1, "Grixis Slavedriver");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

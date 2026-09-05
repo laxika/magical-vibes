@@ -625,10 +625,8 @@ public class StackResolutionService {
     }
 
     /**
-     * Resolves a reanimation Aura (e.g. Animate Dead): reanimate the enchanted creature card from a
-     * graveyard under the Aura's controller and attach the Aura to it. If the enchanted card is no
-     * longer a creature card in a graveyard, or is blocked from entering (e.g. Grafdigger's Cage),
-     * the Aura is put into its owner's graveyard with nothing to enchant.
+     * Resolves a reanimation Aura spell by putting it onto the battlefield attached to its creature
+     * card in a graveyard. Its enter-the-battlefield ability performs the reanimation later.
      */
     private void resolveReanimationAura(GameData gameData, StackEntry entry, Card card, UUID controllerId) {
         Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
@@ -642,35 +640,21 @@ public class StackResolutionService {
             return;
         }
 
-        // Dance of the Dead: "put … onto the battlefield tapped"; Animate Dead leaves this false.
-        boolean enterTapped = card.getEffects(EffectSlot.SPELL).stream()
-                .filter(ReturnCardFromGraveyardEffect.class::isInstance)
-                .map(ReturnCardFromGraveyardEffect.class::cast)
-                .anyMatch(ReturnCardFromGraveyardEffect::enterTapped);
-        Permanent creature = graveyardReturnSupport.reanimateTargetedCard(
-                gameData, controllerId, graveyardCard, enterTapped);
-        if (creature == null) {
-            // Blocked from entering (e.g. Grafdigger's Cage): the Aura has nothing to enchant.
-            graveyardService.addCardToGraveyard(gameData, entry.getOwnerId(), card);
-            log.info("Game {} - {} put into graveyard, reanimated creature could not enter", gameData.id, card.getName());
-            return;
-        }
-
-        Permanent auraPerm = new Permanent(card);
-        auraPerm.setAttachedTo(creature.getId());
-        auraPerm.setCastWithWarp(entry.isCastWithWarp());
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPerm);
+        Permanent auraPerm = createEnteringPermanent(entry, card, card);
+        auraPerm.setAttachedTo(graveyardCard.getId());
+        putResolvedPermanentOntoBattlefield(gameData, controllerId, auraPerm, entry);
         queueWarpExileIfPresent(gameData, entry, auraPerm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()
                 .card(card)
                 .text(" enters the battlefield attached to ")
-                .card(creature.getCard())
+                .card(graveyardCard)
                 .text(" under " + playerName + "'s control.")
                 .build());
-        log.info("Game {} - {} reanimates {} for {}", gameData.id, card.getName(), creature.getCard().getName(), playerName);
-
+        log.info("Game {} - {} enters attached to {} in a graveyard for {}",
+                gameData.id, card.getName(), graveyardCard.getName(), playerName);
+        processResolvedPermanentEtb(gameData, controllerId, card, null, entry);
     }
 
     private void resolveSpellweaverVoluteAura(GameData gameData, StackEntry entry,

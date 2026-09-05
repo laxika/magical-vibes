@@ -2,19 +2,24 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +29,8 @@ import java.util.UUID;
 
 /**
  * Shared "activate a mana ability of each land" path used by Drain Power and Pygmy Hippo.
- * Fixed single-color lands are exact; multi-ability lands use their first tap-for-mana ability;
- * any-color producers contribute colorless.
+ * Fixed single-color lands are exact; multi-ability lands use their first available tap-for-mana
+ * ability, and any required color choice is made by the land's controller.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,12 +39,17 @@ public class LandManaDrainSupport {
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final TapUntapSupport tapUntapSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Activates a mana ability of each untapped land {@code playerId} controls, adding the produced
      * mana to that player's pool and tapping each land that produced.
      */
     public void activateManaAbilityOfEachLand(GameData gameData, UUID playerId) {
+        activateManaAbilityOfEachLand(gameData, playerId, playerId);
+    }
+
+    public void activateManaAbilityOfEachLand(GameData gameData, UUID playerId, UUID manaRecipientId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var battlefield = gameData.playerBattlefields.get(playerId);
         if (pool == null || battlefield == null) {
@@ -53,7 +63,7 @@ public class LandManaDrainSupport {
                 continue;
             }
             int multiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, perm);
-            if (produceLandMana(gameData, playerId, pool, perm, multiplier)) {
+            if (produceLandMana(gameData, playerId, manaRecipientId, pool, perm, multiplier)) {
                 tapUntapSupport.tapPermanent(gameData, perm);
             }
         }
@@ -64,6 +74,11 @@ public class LandManaDrainSupport {
      * was found (so the land should be tapped).
      */
     boolean produceLandMana(GameData gameData, UUID playerId, ManaPool pool, Permanent perm, int multiplier) {
+        return produceLandMana(gameData, playerId, playerId, pool, perm, multiplier);
+    }
+
+    boolean produceLandMana(GameData gameData, UUID playerId, UUID manaRecipientId,
+                            ManaPool pool, Permanent perm, int multiplier) {
         ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, perm);
         if (fixedLandColor != null) {
             int amount = 0;
@@ -119,14 +134,22 @@ public class LandManaDrainSupport {
                             AmountContext.forManaAbility(perm, playerId)) * multiplier;
                     pool.add(award.color(), amount);
                 } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
-                    pool.add(ManaColor.COLORLESS, evaluate(gameData, playerId, perm, anyColor) * multiplier);
+                    queueAnyColorChoice(gameData, playerId, manaRecipientId,
+                            evaluate(gameData, playerId, perm, anyColor) * multiplier);
                 }
             }
             return true;
         }
         for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
-            if (!PotentialManaService.isFreeTapManaAbility(ability)) {
+            if (!ability.isRequiresTap() || !AbilityActivationService.isManaAbility(ability)) {
                 continue;
+            }
+            if (ability.getManaCost() != null) {
+                ManaCost cost = new ManaCost(ability.getManaCost());
+                if (!cost.canPay(pool)) {
+                    continue;
+                }
+                cost.pay(pool);
             }
             for (CardEffect e : ability.getEffects()) {
                 if (e instanceof AwardManaEffect award) {
@@ -134,7 +157,8 @@ public class LandManaDrainSupport {
                             AmountContext.forManaAbility(perm, playerId)) * multiplier;
                     pool.add(award.color(), amount);
                 } else if (e instanceof AwardAnyColorManaEffect anyColor && unrestricted(anyColor)) {
-                    pool.add(ManaColor.COLORLESS, evaluate(gameData, playerId, perm, anyColor) * multiplier);
+                    queueAnyColorChoice(gameData, playerId, manaRecipientId,
+                            evaluate(gameData, playerId, perm, anyColor) * multiplier);
                 }
             }
             return true;
@@ -142,9 +166,23 @@ public class LandManaDrainSupport {
         return false;
     }
 
+    private void queueAnyColorChoice(GameData gameData, UUID playerId, UUID recipientPlayerId, int amount) {
+        ChoiceContext.ChosenPlayerManaColorChoice context = new ChoiceContext.ChosenPlayerManaColorChoice(
+                playerId, playerId, recipientPlayerId, false, amount);
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
+                playerId, null, null, context,
+                ManaColor.COLORS.stream().map(Enum::name).toList(),
+                "Choose a color of mana to add.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
+    }
+
     /**
-     * Spend-restricted any-color mana is skipped: this path pays plain colorless into the ordinary
-     * pool, which would launder away the restriction the printed ability puts on it (CR 106.6).
+     * Spend-restricted any-color mana is skipped because the chosen-mana interaction currently
+     * records ordinary mana and would otherwise lose the printed spending restriction.
      */
     private static boolean unrestricted(AwardAnyColorManaEffect effect) {
         return effect.restriction() == ManaSpendRestriction.NONE;

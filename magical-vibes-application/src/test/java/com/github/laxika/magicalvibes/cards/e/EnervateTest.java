@@ -83,6 +83,7 @@ class EnervateTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

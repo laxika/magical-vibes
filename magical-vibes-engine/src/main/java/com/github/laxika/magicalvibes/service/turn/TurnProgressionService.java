@@ -111,6 +111,8 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             gameData.expireEndOfCombatFloatingEffects();
+            gameData.creaturesWithCombatDamagePrevented.clear();
+            gameData.creaturesPreventedFromDealingCombatDamage.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
@@ -659,6 +661,7 @@ public class TurnProgressionService {
         gameData.creatureLeftBattlefieldCountThisTurn.clear();
         gameData.nonlandPermanentLeftBattlefieldThisTurn = false;
         gameData.creatureDeathCountThisTurn.clear();
+        gameData.creaturesPutIntoOwnGraveyardThisTurnCount.clear();
         gameData.nontokenCreatureDeathCountThisTurn.clear();
         gameData.creatureSubtypeDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();

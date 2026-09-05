@@ -118,6 +118,7 @@ class ElkinLairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getId().equals(only.getId()));
@@ -158,13 +159,13 @@ class ElkinLairTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        harness.addMana(player1, ManaColor.RED, 6);
         harness.addToBattlefield(player2, new JamuraanLion());
         var lion = findPermanent(player2, "Jamuraan Lion");
 
         harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(fireblast);
+        harness.addMana(player1, ManaColor.RED, 6);
         harness.castFromExile(player1, fireblast.getId(), lion.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

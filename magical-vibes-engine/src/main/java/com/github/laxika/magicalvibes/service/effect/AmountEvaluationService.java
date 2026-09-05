@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesPutIntoOwnGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.NontokenCreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureSubtypeDeathsThisTurn;
@@ -445,6 +446,8 @@ public class AmountEvaluationService {
                     countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
+            case CreaturesPutIntoOwnGraveyardThisTurn ignored ->
+                    gameData.creaturesPutIntoOwnGraveyardThisTurnCount.getOrDefault(ctx.controllerId(), 0);
             case CreatureCardsExiledWithSource ignored ->
                     countCreatureCardsExiledWithSource(gameData, ctx);
             case CreaturesAttackedThisTurn c ->

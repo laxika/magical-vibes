@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMat
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantTransformEffect;
@@ -453,7 +454,9 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         for (Permanent perm : bf) {
-            if (perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
+            if (!perm.isFaceDown()
+                    && !perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    && perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
                 return true;
             }
         }
@@ -651,7 +654,9 @@ public class GameQueryService {
 
     private boolean anyBattlefieldHasStaticEffect(GameData gameData, Class<? extends CardEffect> effectType) {
         return gameData.anyPermanentMatches(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
+                !p.isFaceDown()
+                        && !p.isLosesAllAbilitiesUntilEndOfTurn()
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance));
     }
 
     // --- Permanent / Card lookups ---
@@ -2375,6 +2380,30 @@ public class GameQueryService {
             if (anyBattlefieldHasStaticEffect(gameData, AllCardsAreColorlessEffect.class)) {
                 return Set.of();
             }
+            UUID affectedPlayerId = gameData.stack.stream()
+                    .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(card.getId()))
+                    .map(StackEntry::getControllerId)
+                    .findFirst()
+                    .orElseGet(() -> findNonBattlefieldCardOwner(gameData, card));
+            if (affectedPlayerId != null && !card.hasType(CardType.LAND)) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
+                if (battlefield != null) {
+                    for (Permanent permanent : battlefield) {
+                        if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                            continue;
+                        }
+                        ControlledNonlandPermanentsAreColorEffect colorEffect = permanent.getCard()
+                                .getEffects(EffectSlot.STATIC).stream()
+                                .filter(ControlledNonlandPermanentsAreColorEffect.class::isInstance)
+                                .map(ControlledNonlandPermanentsAreColorEffect.class::cast)
+                                .findFirst()
+                                .orElse(null);
+                        if (colorEffect != null) {
+                            return Set.of(colorEffect.color());
+                        }
+                    }
+                }
+            }
         }
         List<CardColor> intrinsic = card.getColors();
         if (intrinsic != null && !intrinsic.isEmpty()) {
@@ -2382,6 +2411,25 @@ public class GameQueryService {
         }
         CardColor single = card.getColor();
         return single != null ? Set.of(single) : Set.of();
+    }
+
+    private UUID findNonBattlefieldCardOwner(GameData gameData, Card card) {
+        if (card.getOwnerId() != null) {
+            return card.getOwnerId();
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (containsCard(gameData.playerHands.get(playerId), card)
+                    || containsCard(gameData.playerDecks.get(playerId), card)
+                    || containsCard(gameData.playerGraveyards.get(playerId), card)
+                    || containsCard(gameData.getPlayerExiledCards(playerId), card)) {
+                return playerId;
+            }
+        }
+        return null;
+    }
+
+    private boolean containsCard(List<Card> cards, Card sought) {
+        return cards != null && cards.stream().anyMatch(card -> card.getId().equals(sought.getId()));
     }
 
     /** Returns the effective single color used by legacy color-specific APIs, or null if colorless. */
@@ -5866,6 +5914,9 @@ public class GameQueryService {
         int[] total = {0};
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent p : battlefield) {
+                if (hasLostAllAbilities(gameData, p)) {
+                    continue;
+                }
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ReduceSpellDamageEffect reduce) {
                         total[0] += reduce.amount();

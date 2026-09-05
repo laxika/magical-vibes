@@ -41,7 +41,7 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+        if (target == null) {
             return;
         }
         if (destroyEffect.putCounterOnSourceIfDestroyed()) {

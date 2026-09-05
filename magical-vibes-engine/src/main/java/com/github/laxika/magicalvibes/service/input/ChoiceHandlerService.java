@@ -908,6 +908,9 @@ public class ChoiceHandlerService {
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName, ChoiceContext.ManaColorChoice ctx) {
         ManaColor chosenColor = ManaColor.valueOf(colorName);
+        if (chosenColor == ManaColor.COLORLESS && ctx.fixedColorOptions() == null) {
+            throw new IllegalArgumentException("Colorless is not a color");
+        }
         if (ctx.fixedColorOptions() != null && !ctx.fixedColorOptions().contains(chosenColor)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }

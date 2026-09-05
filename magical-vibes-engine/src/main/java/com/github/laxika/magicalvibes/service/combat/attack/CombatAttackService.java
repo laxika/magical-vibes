@@ -1628,7 +1628,13 @@ public class CombatAttackService {
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
-                for (CardEffect attackedEffect : perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU)) {
+                List<CardEffect> candidateEffects = new ArrayList<>(
+                        perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU));
+                if (gameData.playerIds.contains(attackedTargetId)) {
+                    candidateEffects.addAll(
+                            perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY));
+                }
+                for (CardEffect attackedEffect : candidateEffects) {
                     // Some triggers only fire for attackers matching a condition (e.g. Raking Canopy:
                     // "a creature with flying"). The condition is checked here at declaration time.
                     if (attackedEffect instanceof DealDamageToTriggeringAttackerEffect damageEffect
@@ -1662,7 +1668,7 @@ public class CombatAttackService {
                     gameData.stack.add(attackedTrigger);
                     gameLogService.append(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} ON_CREATURE_ATTACKS_YOU trigger for {} attacking",
+                    log.info("Game {} - {} attacked-player trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -2303,7 +2309,8 @@ public class CombatAttackService {
             Permanent creature = battlefield.get(idx);
             boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
-            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
+            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
+                    && !canOnlyAttackAlone(gameData, creature)) {
                 throw new IllegalStateException(creature.getCard().getName()
                         + " must also attack when another creature you control attacks");
             }
