@@ -30,6 +30,7 @@ class HematiteTalismanTest extends BaseCardTest {
         assertThat(targetChoice).isNotNull();
         assertThat(targetChoice.validIds()).contains(bears.getId());
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -49,6 +50,7 @@ class HematiteTalismanTest extends BaseCardTest {
         assertThat(targetChoice).isNotNull();
         assertThat(targetChoice.validIds()).contains(bears.getId());
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(bears.isTapped()).isTrue();
@@ -76,6 +78,7 @@ class HematiteTalismanTest extends BaseCardTest {
         assertThat(targetChoice.validIds()).contains(bears.getId());
 
         harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

@@ -633,6 +633,9 @@ public class GameQueryService {
 
     private long latestMatchingSupertypeRemovalTimestamp(
             GameData gameData, Permanent permanent, CardSupertype supertype) {
+        if (gameData == null) {
+            return -1;
+        }
         long[] latest = {-1};
         gameData.forEachPermanent((controllerId, source) -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(effect -> effect instanceof PermanentsMatchingLoseSupertypeEffect lose

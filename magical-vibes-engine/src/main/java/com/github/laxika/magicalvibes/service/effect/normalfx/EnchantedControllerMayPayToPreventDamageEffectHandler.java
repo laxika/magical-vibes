@@ -22,8 +22,8 @@ import java.util.UUID;
 /**
  * Resolves {@link EnchantedControllerMayPayToPreventDamageEffect} (Power Leak): the enchanted
  * permanent's controller (the stack entry's {@code targetId}) may pay any amount of mana, then the
- * source deals {@code amount} damage to them with that much prevented. The payment prompt allows
- * any amount the player can pay; the remaining
+ * source deals {@code amount} damage to them with that much prevented. The payment prompt is capped
+ * at {@code amount} (prevention beyond the damage dealt is pointless); the remaining
  * {@code amount - paid} damage goes through the normal damage system.
  */
 @Slf4j
@@ -84,7 +84,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
         // First call: prompt the enchanted controller for how much mana to pay (0..amount).
         // The cap includes untapped mana sources so an empty pool with untapped lands still
         // opens the prompt (CR 605.3a — mana abilities during the payment).
-        if (maxPayable(gameData, playerId) <= 0) {
+        if (maxPayable(gameData, playerId, e.amount()) <= 0) {
             dealRemainingDamage(gameData, entry, playerId, e.amount());
             gameOutcomeService.checkWinCondition(gameData);
             return;
@@ -93,18 +93,18 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     }
 
     private void beginPayPrompt(GameData gameData, UUID playerId, int amount, String cardName) {
-        int maxX = maxPayable(gameData, playerId);
+        int maxX = maxPayable(gameData, playerId, amount);
         String prompt = "Pay any amount of mana to prevent that much of " + cardName + "'s "
                 + amount + " damage to you?";
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(playerId, maxX, prompt, cardName, true));
     }
 
-    private int maxPayable(GameData gameData, UUID playerId) {
+    private int maxPayable(GameData gameData, UUID playerId, int amount) {
         int untappedSources = potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal()
                 - gameData.playerManaPools.get(playerId).getTotal();
         int available = payableFromPool(gameData.playerManaPools.get(playerId)) + untappedSources;
-        return available;
+        return Math.min(amount, available);
     }
 
     /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */

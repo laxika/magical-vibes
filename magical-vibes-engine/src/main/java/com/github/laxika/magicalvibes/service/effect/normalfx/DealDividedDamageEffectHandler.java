@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,19 +84,12 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                         return;
                     }
                 }
-                List<UUID> legalTargets = new ArrayList<>();
+                int damagePerTarget = entry.getXValue() / targets.size();
+                Map<UUID, Integer> assignments = new LinkedHashMap<>();
                 for (int i = 0; i < targets.size(); i++) {
                     if (!usesFlatTargets || entry.isTargetLegal(i)) {
-                        legalTargets.add(targets.get(i));
+                        assignments.put(targets.get(i), damagePerTarget);
                     }
-                }
-                if (legalTargets.isEmpty()) {
-                    return;
-                }
-                int damagePerTarget = entry.getXValue() / legalTargets.size();
-                Map<UUID, Integer> assignments = new LinkedHashMap<>();
-                for (UUID target : legalTargets) {
-                    assignments.put(target, damagePerTarget);
                 }
                 dealToAssignments(gameData, entry, e, assignments);
             }
