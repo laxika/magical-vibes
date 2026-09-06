@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "KLD", collectorNumber = "93")
 @CardRegistration(set = "S99", collectorNumber = "83")
 @CardRegistration(set = "M21", collectorNumber = "115")
+@CardRegistration(set = "DTK", collectorNumber = "110")
 public class MindRot extends Card {
 
     public MindRot() {

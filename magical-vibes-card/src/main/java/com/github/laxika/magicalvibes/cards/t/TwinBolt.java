@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "TDM", collectorNumber = "128")
+@CardRegistration(set = "DTK", collectorNumber = "164")
 public class TwinBolt extends Card {
 
     public TwinBolt() {

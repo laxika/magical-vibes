@@ -166,6 +166,9 @@ public sealed interface TriggerContext {
     record CreatureDealsDamageToCreature(Permanent damageSource, UUID damagedCreatureId,
                                           int damageDealt, boolean combatDamage) implements TriggerContext {}
 
+    /** Context for a creature fighting another creature. */
+    record CreatureFights(Permanent fightingCreature) implements TriggerContext {}
+
     /** Context for a source dealing noncombat damage to a creature. */
     record SourceDealsNoncombatDamageToCreature(Permanent damagedCreature, int damageDealt,
                                                  UUID sourceControllerId) implements TriggerContext {}

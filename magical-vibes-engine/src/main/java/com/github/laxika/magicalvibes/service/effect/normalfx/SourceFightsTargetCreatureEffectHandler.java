@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEff
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,6 +44,12 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId != null
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
+
+        UUID sourceControllerId = source != null
+                ? gameQueryService.findPermanentController(gameData, source.getId()) : null;
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        boolean sourceIsCreature = source != null && gameQueryService.isCreature(gameData, source);
+        boolean targetIsCreature = gameQueryService.isCreature(gameData, target);
 
         String cardName = entry.getCard().getName();
 
@@ -74,6 +82,11 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             } else {
                 gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text("'s damage to " + cardName + " is prevented.").build());
             }
+        }
+
+        if (sourceIsCreature && targetIsCreature) {
+            triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, source, sourceControllerId);
+            triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, target, targetControllerId);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

@@ -30,6 +30,7 @@ public class RegisterDelayedControllerSpellCastTriggerEffectHandler implements N
                 entry.getSourcePermanentId(),
                 entry.getCard(),
                 e.spellFilter(),
+                e.stackEntryFilter(),
                 e.resolvedEffects(),
                 e.oneShot(),
                 e.sourceMustRemainOnBattlefield(),

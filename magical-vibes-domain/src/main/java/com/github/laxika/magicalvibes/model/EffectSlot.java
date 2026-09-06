@@ -638,6 +638,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  with this slot, not on the damaged creature. Scans all battlefields; the reflected damage is
      *  dealt by the damage-source creature to the damaged creature's controller (e.g. Greatbow Doyen). */
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+    /** Triggers whenever a creature controlled by this permanent's controller fights. */
+    ON_ALLY_CREATURE_FIGHTS,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
@@ -653,6 +655,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controller's graveyard. Checked per-card inside
      *  {@code TriggerCollectionService.checkGraveyardAllyPermanentSacrificedTriggers}. */
     GRAVEYARD_ON_CONTROLLER_PERMANENT_SACRIFICED,
+    /** Triggers whenever a permanent the controller controls is turned face up, while this card
+     *  is in the controller's graveyard. */
+    GRAVEYARD_ON_ALLY_PERMANENT_TURNS_FACE_UP,
     /** Triggers once for each creature card that leaves an opponent's graveyard, while this card is
      *  in its owner's graveyard. Fired per leaving card from
      *  {@code GraveyardService.notifyCardLeftGraveyard} (and the bulk clear path), which scans the
@@ -775,6 +780,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever one or more +1/+1 counters are put on another non-Hydra creature the
      *  controller controls. Fired once per counter-placement event. */
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on another creature the controller
+     *  controls. Fired once per counter-placement event. */
+    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE,
     /** Triggers whenever one or more +1/+1 counters are put on another permanent the controller
      *  controls for the first time that turn. */
     ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN,

@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,9 +16,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,21 +46,8 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
             return;
         }
 
-        Card sourceCard = enchanted.getCard();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(
-                gameData, entry.getControllerId(), sourceCard.hasType(CardType.CREATURE));
-        for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                    sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
-            Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
-            entry.getCreatedPermanentIds().add(tokenPermanent.getId());
-
-            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
-            log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
-                    entry.getCard().getName());
-
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
-        }
+        tokenCopySupport.createTokenCopies(
+                gameData, entry, List.of(enchanted.getCard()), enchanted,
+                entry.getControllerId(), ((CreateTokenCopyOfEnchantedPermanentEffect) effect).copyEffect());
     }
 }

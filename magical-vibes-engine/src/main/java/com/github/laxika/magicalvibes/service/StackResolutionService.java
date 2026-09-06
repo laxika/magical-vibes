@@ -315,6 +315,8 @@ public class StackResolutionService {
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
+        perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
+        perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
@@ -1215,6 +1217,7 @@ public class StackResolutionService {
             paradigmService.onParadigmSpellResolved(gameData, entry);
         } else if (entry.getSourceZone() == Zone.HAND
                 && (entry.getCard().getKeywords().contains(Keyword.REBOUND)
+                || entry.getGrantedKeywordsOnEntry().contains(Keyword.REBOUND)
                 || gameQueryService.hasSpellCastingAbilityGrant(
                 gameData, entry.getControllerId(), entry.getCard(), Keyword.REBOUND))) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());

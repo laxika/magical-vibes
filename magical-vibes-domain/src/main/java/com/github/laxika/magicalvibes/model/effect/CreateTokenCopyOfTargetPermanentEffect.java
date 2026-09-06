@@ -185,6 +185,13 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 false, false, null, Set.of(), false, Map.of(), List.of(), true, false, new Fixed(1), false);
     }
 
+    public static CreateTokenCopyOfTargetPermanentEffect exiledAtEndOfCombat() {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, false, false, false,
+                false, false, null, Set.of(), false, Map.of(), List.of(), false,
+                false, new Fixed(1), true);
+    }
+
     public static CreateTokenCopyOfTargetPermanentEffect tappedAndAttackingExiledAtEndOfCombat() {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, true,

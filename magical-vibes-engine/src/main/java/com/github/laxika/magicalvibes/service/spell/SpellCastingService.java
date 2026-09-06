@@ -467,8 +467,10 @@ public class SpellCastingService {
                                           RevealCardFromHandCost cost, Integer handCardIndex,
                                           int spellCardIndex, int resolvedXValue) {
         if (cost == null) return resolvedXValue;
+        if (cost.optional() && handCardIndex == null) return resolvedXValue;
         int effectiveIndex = additionalSpellCostService.validateRevealCardCost(
                 gameData, player, card, cost, handCardIndex, spellCardIndex);
+        if (effectiveIndex < 0) return resolvedXValue;
         Card toReveal = gameData.playerHands.get(player.getId()).get(effectiveIndex);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " reveals ")
@@ -2634,6 +2636,8 @@ public class SpellCastingService {
                                 ? pool.promoteMulticoloredSpellOnlyMana() : null;
                 int faceDownCostReduction = card.getMorphCost() != null
                         ? castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, card) : 0;
+                int alternateCostModifier = castingCostService.getAlternateHandCastCostModifier(
+                        gameData, playerId, card);
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana = card.getMorphCost() != null
                         ? pool.promoteFaceDownSpellsOrTurnFaceUpMana() : null;
                 boolean canPay;
@@ -2642,7 +2646,7 @@ public class SpellCastingService {
                             ? cost.canPayAfterReduction(pool, sacrificedManaCost)
                             : cost.canPay(pool, alternateCostXArgument(cost, effectiveXValue,
                                     computeEmergeManaReduction(gameData, altCast, alternateCostSacrificePermanentIds))
-                                    + faceDownCostReduction);
+                                    + faceDownCostReduction + alternateCostModifier);
                 } finally {
                     if (noncreatureMana != null) {
                         pool.restorePromotedNoncreatureSpellOnlyMana(noncreatureMana);
@@ -3520,6 +3524,8 @@ public class SpellCastingService {
                     usingCollectEvidenceAlternativeCost
                             || isCollectEvidenceCostPaid(additionalCosts, paymentCostSelection));
             entry.setBeholdCostPaid(isBeholdCostPaid(additionalCosts, paymentCostSelection));
+            entry.setRevealCardFromHandCostPaid(
+                    isRevealCardFromHandCostPaid(additionalCosts, paymentCostSelection));
             entry.setWaterbendCostPaid(waterbendCostPaid);
             if (!repeatedAdditionalCosts.isEmpty()) {
                 entry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -4593,6 +4599,8 @@ public class SpellCastingService {
                                 || isCollectEvidenceCostPaid(additionalCosts, paymentCostSelection));
                 gameData.stack.getLast().setBeholdCostPaid(
                         isBeholdCostPaid(additionalCosts, paymentCostSelection));
+                gameData.stack.getLast().setRevealCardFromHandCostPaid(
+                        isRevealCardFromHandCostPaid(additionalCosts, paymentCostSelection));
                 gameData.stack.getLast().setWaterbendCostPaid(waterbendCostPaid);
             }
             if (!repeatedAdditionalCosts.isEmpty() && !gameData.stack.isEmpty()) {
@@ -4752,6 +4760,17 @@ public class SpellCastingService {
         }
         return (selection.beholdPermanentIds() != null && !selection.beholdPermanentIds().isEmpty())
                 || (selection.beholdHandCardIndices() != null && !selection.beholdHandCardIndices().isEmpty());
+    }
+
+    private boolean isRevealCardFromHandCostPaid(AdditionalSpellCostService.ExtractedCosts costs,
+                                                 AdditionalSpellCostService.CostSelection selection) {
+        return costs.revealCardCost() != null && selection.discardHandCardIndex() != null;
+    }
+
+    private boolean controlsDragonAsCast(GameData gameData, UUID playerId) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
+                        .contains(CardSubtype.DRAGON));
     }
 
     private boolean isWaterbendCostPaid(AdditionalSpellCostService.ExtractedCosts costs,
@@ -7604,6 +7623,7 @@ public class SpellCastingService {
                 .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
                         .contains(CardSubtype.MOUNT));
         stackEntry.setControlledMountAsCast(controlledMount);
+        stackEntry.setControlledDragonAsCast(controlsDragonAsCast(gameData, playerId));
         stampCastDuringMainPhase(gameData, stackEntry, playerId);
         gameData.stack.add(stackEntry);
 
@@ -7669,6 +7689,13 @@ public class SpellCastingService {
                 && !castingPermissionService.consumeFreeCastFromExiledWithSource(
                         gameData, playerId, exileCardId)) {
             throw new IllegalStateException("Exile cast permission is no longer available");
+        }
+        if (!sourceFreeCast && !copy) {
+            ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
+            if (exiledEntry != null) {
+                castingPermissionService.markOncePerTurnExileCastPermissionUsed(
+                        gameData, playerId, exiledEntry.card());
+            }
         }
         gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
                 action -> action.cardId().equals(exileCardId));
@@ -10245,6 +10272,8 @@ public class SpellCastingService {
         AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
                 .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
         UUID playerId = player.getId();
+        int alternateCostModifier = castingCostService.getAlternateHandCastCostModifier(
+                gameData, playerId, card);
 
         // Snapshot emerge reduction before sacrifice (creature must still be on the battlefield
         // when its mana value is read — CR 702.123).
@@ -10444,7 +10473,8 @@ public class SpellCastingService {
             } else {
                 int faceDownCostReduction = card.getMorphCost() != null
                         ? castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, card) : 0;
-                cost.pay(pool, alternateCostXArgument(cost, xValue, emergeReduction) + faceDownCostReduction);
+                cost.pay(pool, alternateCostXArgument(cost, xValue, emergeReduction)
+                        + faceDownCostReduction + alternateCostModifier);
             }
         } finally {
             if (restrictedMana != null) {
@@ -10694,6 +10724,7 @@ public class SpellCastingService {
                     .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
                             .contains(CardSubtype.MOUNT));
             castEntry.setControlledMountAsCast(controlledMount);
+            castEntry.setControlledDragonAsCast(controlsDragonAsCast(gameData, playerId));
             triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
         }
         triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, playerId, castFromHand);

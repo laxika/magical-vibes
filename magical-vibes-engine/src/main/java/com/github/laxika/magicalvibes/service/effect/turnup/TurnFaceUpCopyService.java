@@ -103,6 +103,7 @@ public class TurnFaceUpCopyService {
         }
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is turned face up."));
+        triggerCollectionService.checkGraveyardAllyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
         triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(gameData, controllerId, source);
 
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()

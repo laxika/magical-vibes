@@ -93,6 +93,7 @@ public enum CardSet {
     SET_HOU("HOU"),
     SET_KTK("KTK"),
     SET_FRF("FRF"),
+    SET_DTK("DTK"),
     SET_KLD("KLD"),
     SET_KHM("KHM"),
     SET_AER("AER"),

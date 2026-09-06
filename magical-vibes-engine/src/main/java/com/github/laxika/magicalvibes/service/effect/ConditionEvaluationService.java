@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlledMountAsCast;
 import com.github.laxika.magicalvibes.model.condition.NoManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
@@ -189,6 +190,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.PutCounterCostPaid;
+import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
 import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
@@ -465,6 +467,8 @@ public class ConditionEvaluationService {
                     ctx.buyback();
             case BeholdCostPaid ignored ->
                     ctx.beholdCostPaid();
+            case RevealCardFromHandCostPaid ignored ->
+                    ctx.revealCardFromHandCostPaid();
             case WaterbendCostPaid ignored ->
                     ctx.waterbendCostPaid();
             case AllBendingTypesCompletedThisTurn ignored ->
@@ -535,6 +539,7 @@ public class ConditionEvaluationService {
             case CommittedCrimeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
+            case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
             case GiantWizardOrSpellDealtDamageToTargetThisTurn ignored ->
                     ctx.controllerId() != null
                             && ctx.targetId() != null
@@ -554,9 +559,9 @@ public class ConditionEvaluationService {
             case AnyPlayerControlsPermanent c ->
                     anyPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case AnyPlayerControlsPermanentCount c ->
-                    countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter()) >= c.minCount();
+                    countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter(), c.excludeSource()) >= c.minCount();
             case AnyPlayerControlsPermanentCountAtMost c ->
-                    countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter()) <= c.maxCount();
+                    countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter(), false) <= c.maxCount();
             case ControlsPermanentCount c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->
@@ -1944,21 +1949,25 @@ public class ConditionEvaluationService {
         return false;
     }
 
-    private long countMatchingPermanentsOnBattlefield(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+    private long countMatchingPermanentsOnBattlefield(GameData gameData, ConditionContext ctx,
+                                                      PermanentPredicate filter, boolean excludeSource) {
         Long layeredResult = gameQueryService.withQueryScope(gameData,
-                () -> countMatchingPermanentsOnBattlefieldUnscoped(gameData, ctx, filter));
+                () -> countMatchingPermanentsOnBattlefieldUnscoped(gameData, ctx, filter, excludeSource));
         return layeredResult != null
                 ? layeredResult
-                : countMatchingPermanentsOnBattlefieldUnscoped(gameData, ctx, filter);
+                : countMatchingPermanentsOnBattlefieldUnscoped(gameData, ctx, filter, excludeSource);
     }
 
     private long countMatchingPermanentsOnBattlefieldUnscoped(GameData gameData, ConditionContext ctx,
-                                                              PermanentPredicate filter) {
+                                                              PermanentPredicate filter, boolean excludeSource) {
         long count = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
-            count += battlefield.stream().filter(p -> matchesPermanent(gameData, p, filter, ctx)).count();
+            count += battlefield.stream()
+                    .filter(p -> (!excludeSource || !isSource(p, ctx))
+                            && matchesPermanent(gameData, p, filter, ctx))
+                    .count();
         }
         return count;
     }

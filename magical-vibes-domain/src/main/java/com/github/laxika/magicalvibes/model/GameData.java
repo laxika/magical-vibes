@@ -1772,6 +1772,10 @@ public class GameData {
      *  alternative cast cost this turn (As Foretold). Cleared at start of new turn. */
     public final Set<UUID> freeCastPermanentUsedThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks which source permanents' once-per-turn permissions to cast cards from exile have been
+     *  used this turn. Cleared at start of new turn. */
+    public final Set<UUID> oncePerTurnExileCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
+
     /** Tracks which permanents' once-each-turn library-cast permissions have been used this turn. */
     public final Set<UUID> oncePerTurnLibraryCastPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -4273,6 +4277,7 @@ public class GameData {
             copy.qualifyingDamageControllersByPermanentThisTurn.put(k, controllers);
         });
         copy.freeCastPermanentUsedThisTurn.addAll(this.freeCastPermanentUsedThisTurn);
+        copy.oncePerTurnExileCastPermissionsUsedThisTurn.addAll(this.oncePerTurnExileCastPermissionsUsedThisTurn);
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->

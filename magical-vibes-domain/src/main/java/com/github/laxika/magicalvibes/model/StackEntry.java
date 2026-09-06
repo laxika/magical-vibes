@@ -140,6 +140,8 @@ public class StackEntry {
     @Setter private boolean collectEvidenceCostPaid;
     /** Whether this spell's optional behold additional cost was paid. */
     @Setter private boolean beholdCostPaid;
+    /** Whether this spell's optional reveal-a-card-from-hand additional cost was paid. */
+    @Setter private boolean revealCardFromHandCostPaid;
     /** Whether this spell's optional waterbend additional cost was paid. */
     @Setter private boolean waterbendCostPaid;
     /**
@@ -179,6 +181,8 @@ public class StackEntry {
     @Setter private boolean overloaded;
     /** Whether the spell's controller controlled a Mount when the spell was finished being cast. */
     @Setter private boolean controlledMountAsCast;
+    /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
+    @Setter private boolean controlledDragonAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
     @Setter private Card beheldCard;
     @Setter private UUID beheldCardOwnerId;
@@ -619,6 +623,7 @@ public class StackEntry {
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
+        this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts.isEmpty()
                 ? List.of() : new ArrayList<>(source.repeatedAdditionalCosts);
@@ -634,6 +639,7 @@ public class StackEntry {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
         this.controlledMountAsCast = source.controlledMountAsCast;
+        this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.beheldCard = source.beheldCard;
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;

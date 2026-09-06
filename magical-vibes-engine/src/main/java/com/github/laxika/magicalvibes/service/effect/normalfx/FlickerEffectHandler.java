@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -424,6 +425,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
         returned.setEnteredFromExile(true);
+        if (e.returnFaceDown()) {
+            returned.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        }
         boolean applyReturnCounters = e.plusOnePlusOneCountersOnReturn() > 0
                 && (e.bonusSubtype() == null || hadBonusSubtype);
         if (applyReturnCounters
@@ -434,6 +438,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                 returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, returnCounters);
             }
         }
+        if (e.returnTapped()) {
+            returned.tap();
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, returned);
         if (e.returnUnderController() && !returnControllerId.equals(ownerId)) {
             graveyardReturnSupport.trackStolenCreature(gameData, returned.getId(), returnControllerId, ownerId);
@@ -442,7 +449,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.builder().card(card).text(" is exiled by ").card(entry.getCard()).text(" and returns to the battlefield under " + gameData.playerIdToName.get(returnControllerId) + "'s control.").build());
         log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
 
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
+        if (e.returnFaceDown()) {
+            battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, returnControllerId, card);
+        } else {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
+        }
 
         if (e.addCounterIfReturnedUnderControllerOtherwiseTap()) {
             if (returnControllerId.equals(entry.getControllerId())) {

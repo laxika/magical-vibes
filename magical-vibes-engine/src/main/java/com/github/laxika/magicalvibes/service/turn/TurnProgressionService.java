@@ -675,6 +675,7 @@ public class TurnProgressionService {
         gameData.damageDealtToPermanentsThisTurn.clear();
         gameData.qualifyingDamageControllersByPermanentThisTurn.clear();
         gameData.freeCastPermanentUsedThisTurn.clear();
+        gameData.oncePerTurnExileCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();

@@ -42,6 +42,7 @@ public sealed interface DelayedAction permits
         LoseGameAtEndStep,
         DelayedPlusOneCounters,
         DelayedPlusZeroPlusOneCounters,
+        PutCounterOnPermanentAtNextEndStep,
         RemoveCounterFromPermanentAtNextEndStep,
         DelayedUntapPermanents,
         DelayedCreateToken,

@@ -400,6 +400,10 @@ public class PermanentChoiceTriggerHandlerService {
                 cardId,
                 Zone.STACK
         );
+        entry.setSacrificedPermanentSnapshot(ett.sacrificedPermanentSnapshot());
+        entry.setSacrificedPower(ett.sacrificedPower());
+        entry.setSacrificedColorCount(ett.sacrificedColorCount());
+        entry.setSacrificedToughness(ett.sacrificedToughness());
         pushTriggeredEntry(gameData, entry);
 
         gameLogService.append(gameData,
@@ -414,6 +418,77 @@ public class PermanentChoiceTriggerHandlerService {
         // The exploit source's ETB resolution is still parked (the sacrifice choice paused it);
         // the shared epilogue resumes it — and presents any queued may abilities — before
         // auto-passing, so the parked entry is never left dangling.
+        gameData.priorityPassedBy.clear();
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExploitPermanentTrigger(GameData gameData, UUID permanentId,
+                                               PermanentChoiceContext.ExploitPermanentTriggerTarget ept) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target != null) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ept.sourceCard(),
+                    ept.controllerId(),
+                    ept.sourceCard().getName() + "'s exploit ability",
+                    new ArrayList<>(ept.effects()),
+                    null,
+                    ept.sourcePermanentId());
+            entry.setTargetId(permanentId);
+            entry.setSacrificedPermanentSnapshot(ept.sacrificedPermanentSnapshot());
+            entry.setSacrificedPower(ept.sacrificedPower());
+            entry.setSacrificedColorCount(ept.sacrificedColorCount());
+            entry.setSacrificedToughness(ept.sacrificedToughness());
+            pushTriggeredEntry(gameData, entry);
+
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            gameLogService.append(gameData,
+                    GameLog.builder().card(ept.sourceCard()).text("'s exploit ability targets " + targetName + ".").build());
+            log.info("Game {} - {} exploit trigger targets {}", gameData.id,
+                    ept.sourceCard().getName(), targetName);
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(ept.sourceCard(), "'s exploit ability target no longer exists."));
+            log.info("Game {} - {} exploit trigger target no longer exists", gameData.id,
+                    ept.sourceCard().getName());
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class)) {
+            triggerCollectionService.processNextExploitPermanentTriggerTarget(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleExploitPlayerTrigger(GameData gameData, UUID playerId,
+                                            PermanentChoiceContext.ExploitPlayerTriggerTarget ept) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ept.sourceCard(),
+                ept.controllerId(),
+                ept.sourceCard().getName() + "'s exploit ability",
+                new ArrayList<>(ept.effects()),
+                playerId,
+                ept.sourcePermanentId());
+        entry.setSacrificedPermanentSnapshot(ept.sacrificedPermanentSnapshot());
+        entry.setSacrificedPower(ept.sacrificedPower());
+        entry.setSacrificedColorCount(ept.sacrificedColorCount());
+        entry.setSacrificedToughness(ept.sacrificedToughness());
+        pushTriggeredEntry(gameData, entry);
+
+        gameLogService.append(gameData,
+                GameLog.builder().card(ept.sourceCard()).text("'s exploit ability targets "
+                        + gameData.playerIdToName.get(playerId) + ".").build());
+        log.info("Game {} - {} exploit trigger targets player {}", gameData.id,
+                ept.sourceCard().getName(), gameData.playerIdToName.get(playerId));
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPlayerTriggerTarget.class)) {
+            triggerCollectionService.processNextExploitPlayerTriggerTarget(gameData);
+            return;
+        }
+
         gameData.priorityPassedBy.clear();
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -1757,6 +1832,8 @@ public class PermanentChoiceTriggerHandlerService {
                 entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 entry.setSpectacle(sourcePermanent.isSpectacle());
                 entry.setCollectEvidenceCostPaid(sourcePermanent.isCollectEvidenceCostPaid());
+                entry.setRevealCardFromHandCostPaid(sourcePermanent.isRevealCardFromHandCostPaid());
+                entry.setControlledDragonAsCast(sourcePermanent.isControlledDragonAsCast());
             }
         }
         pushTriggeredEntry(gameData, entry);

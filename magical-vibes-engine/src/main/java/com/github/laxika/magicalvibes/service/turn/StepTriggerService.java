@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
@@ -108,6 +109,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCards
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
@@ -4005,6 +4007,25 @@ public class StepTriggerService {
             }
         }
 
+        if (gameData.hasDelayedAction(PutCounterOnPermanentAtNextEndStep.class)) {
+            List<PutCounterOnPermanentAtNextEndStep> pendingCounters =
+                    gameData.drainDelayedActions(PutCounterOnPermanentAtNextEndStep.class);
+            for (PutCounterOnPermanentAtNextEndStep action : pendingCounters) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(action.effect())),
+                        action.permanentId(),
+                        (UUID) null);
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers to put counters."));
+            }
+        }
+
         if (gameData.hasDelayedAction(RemoveCounterFromPermanentAtNextEndStep.class)) {
             List<RemoveCounterFromPermanentAtNextEndStep> pendingRemovals =
                     gameData.drainDelayedActions(RemoveCounterFromPermanentAtNextEndStep.class);
@@ -5517,6 +5538,7 @@ public class StepTriggerService {
             // condition, so the wrapped ability does not exist unless the controller is at speed 4.
             if (effect instanceof ConditionalEffect conditional
                     && (conditional.condition() instanceof AllOf
+                        || conditional.condition() instanceof ControlledCreaturesTotalPowerAtLeast
                         || conditional.condition() instanceof ControlsPermanentCount
                         || conditional.condition() instanceof ControlsEachCreatureWithGreatestPower
                         || conditional.condition() instanceof ControllerCastTwoOrMoreSpellsThisTurn

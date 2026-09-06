@@ -56,7 +56,8 @@ public record FlickerEffect(
         boolean addAdditionalEndStepIfFirst,
         CounterType counterTypeOnReturn,
         int counterAmountOnReturn,
-        Set<CardSubtype> bonusSubtypes) implements AttachedPermanentSelfTargetingEffect {
+        Set<CardSubtype> bonusSubtypes,
+        boolean returnFaceDown) implements AttachedPermanentSelfTargetingEffect {
 
     public FlickerEffect {
         grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
@@ -81,7 +82,7 @@ public record FlickerEffect(
                 loyaltyCountersOnPlaneswalkersOnReturn,
                 addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn,
                 chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst,
-                null, 0, Set.of());
+                null, 0, Set.of(), false);
     }
 
     public FlickerEffect(
@@ -178,7 +179,7 @@ public record FlickerEffect(
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.AT_STEP,
                 TurnStep.END_STEP, false, null, null, 0, false, false,
                 false, false, 0, false, Set.of(), false, false, false,
-                counterType, 1, Set.of());
+                counterType, 1, Set.of(), false);
     }
 
     /** Exile target permanent, returning it with +1/+1 counters only if it is a creature. */
@@ -220,6 +221,14 @@ public record FlickerEffect(
     public static FlickerEffect flickerSelfUnderYourControl() {
         return new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, true, false);
+    }
+
+    /** Exile this permanent, then return it face down under its owner's control. */
+    public static FlickerEffect flickerSelfFaceDown() {
+        return new FlickerEffect(FlickerScope.SELF, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false,
+                false, false, 0, false, Set.of(), false, false, false,
+                null, 0, Set.of(), true);
     }
 
     /** Exile every permanent matching {@code filter} the target player controls, return each at {@code returnStep} (Sudden Disappearance). */
@@ -292,7 +301,7 @@ public record FlickerEffect(
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, bonusEffect, 0, false, false,
                 false, false, 0, false, Set.of(), false, false, false,
-                null, 0, bonusSubtypes);
+                null, 0, bonusSubtypes, false);
     }
 
     /**

@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -1470,6 +1471,38 @@ class StepTriggerServiceTest {
             sut.handleBeginningOfCombatTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Total-power intervening-if skips beginning-of-combat trigger when unmet")
+        void controlledCreaturesTotalPowerInterveningIfSkipsWhenUnmet() {
+            Card card = createCardWithName("Surrak, the Hunt Caller");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+            when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(7);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Total-power intervening-if allows beginning-of-combat trigger at threshold")
+        void controlledCreaturesTotalPowerInterveningIfAllowsAtThreshold() {
+            Card card = createCardWithName("Surrak, the Hunt Caller");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+            when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(8);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
         }
 
         @Test

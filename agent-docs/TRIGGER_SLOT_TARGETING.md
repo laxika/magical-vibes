@@ -198,7 +198,7 @@ combat damage step is processed.
 | `GRAVEYARD_ON_COMBAT_DAMAGE_TO_YOU_OR_YOUR_PLANESWALKER` | `CombatDamageService.checkGraveyardCombatDamageToYouOrPlaneswalkerTriggers` — fires from the graveyard of every player dealt combat damage this step, directly or on a planeswalker they control. The only targeting graveyard slot: it queues an `AttackTriggerTarget` whose `sourceCard` is the graveyard card (no source permanent), and `CombatDamageService` drains it before the damage step ends so "attacking creature" target filters still see the attackers. Vengeful Pharaoh. | Attack |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
 | `ON_CREWS_VEHICLE` | `TriggerCollectionService.checkCrewsVehicleTriggers` from `CrewCostHandler`; the Vehicle is stored as the triggered entry's `triggeringPermanentId` so effects can resolve against "that Vehicle" | Non-targeting |
-| `ON_EXPLOIT` | `TriggerCollectionService.checkExploitTriggers` | Exploit |
+| `ON_EXPLOIT` | `TriggerCollectionService.checkExploitTriggers` | Exploit; player-targeting effects use `ExploitPlayerTriggerTarget`, permanent-targeting effects use `ExploitPermanentTriggerTarget`, and stack-targeting effects use `ExploitTriggerTarget` |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
 | `ON_DAMAGED_CREATURE_DIES` (targeting effects) | `GraveyardService.enqueueDamagedCreatureDiesTriggers` → `SelfTriggeredAbilityTarget`; the target is chosen as the trigger is put on the stack. Non-targeting effects are pushed directly. | Damaged-creature death (reuses `Options.END_STEP`) |
@@ -329,6 +329,8 @@ Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wr
 `SourceCounterThreshold` conditional in this slot can fire when the source crosses the threshold),
 `ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE` (Wildwood Scourge; fires once when
 one or more +1/+1 counters are put on another non-Hydra creature the controller controls),
+`ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE` (Enduring Scalelord; fires once when
+one or more +1/+1 counters are put on another creature the controller controls),
 `ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER` (All Will Be One; fires once for each counter-placement
 event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
 `ON_ALLY_COUNTER_PUT_ON_CREATURE` (Hollowmurk Siege; fires for counters of any type put on a creature
@@ -602,6 +604,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "Whenever enchanted creature deals damage to a creature, ..." | `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` | Enchanted creature deals damage to another creature (combat or non-combat); the damaged creature is captured as a non-targeting `targetId` | Venomous Fangs |
 | "Whenever enchanted creature attacks and isn't blocked, ..." | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Enchanted attacker ends up unblocked (declare-blockers step). Non-targeting effects use `sourcePermanentId`=enchanted attacker and `targetId`=defending player. Permanent-targeting `MayEffect`s defer target selection and use the enchanted creature's controller for the may choice | Cloak of Confusion, Farrel's Mantle |
 | "Whenever a creature is dealt damage, ..." (any creature) | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
+| "Whenever a creature you control fights, ..." | `ON_ALLY_CREATURE_FIGHTS` | A creature controlled by the watcher’s controller fights; the fighting creature is captured for the triggered effect | Foe-Razer Regent |
 
 **`ON_ANY_CREATURE_DEALT_DAMAGE`, `ON_OPPONENT_CREATURE_DEALT_DAMAGE`,
 `ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE` and `ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_CREATURE` fire only when the damaged permanent is a creature.** All

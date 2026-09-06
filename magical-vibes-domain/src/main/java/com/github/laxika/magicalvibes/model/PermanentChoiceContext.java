@@ -1259,7 +1259,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record ExploitTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, StackEntryPredicate stackFilter,
-                                boolean includeAbilities) implements PermanentChoiceContext {}
+                                boolean includeAbilities, Permanent sacrificedPermanentSnapshot,
+                                int sacrificedPower, int sacrificedColorCount,
+                                int sacrificedToughness) implements PermanentChoiceContext {}
+
+    /** "When this creature exploits a creature" trigger that needs a battlefield permanent target. */
+    record ExploitPermanentTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                         UUID sourcePermanentId,
+                                         Permanent sacrificedPermanentSnapshot,
+                                         int sacrificedPower, int sacrificedColorCount,
+                                         int sacrificedToughness) implements PermanentChoiceContext {}
+
+    /** "When this creature exploits a creature" trigger that needs a player target. */
+    record ExploitPlayerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      UUID sourcePermanentId, TargetFilter targetFilter,
+                                      Permanent sacrificedPermanentSnapshot,
+                                      int sacrificedPower, int sacrificedColorCount,
+                                      int sacrificedToughness) implements PermanentChoiceContext {}
 
     /**
      * ETB trigger on a token copy that needs to choose a target at trigger time (CR 603.3).

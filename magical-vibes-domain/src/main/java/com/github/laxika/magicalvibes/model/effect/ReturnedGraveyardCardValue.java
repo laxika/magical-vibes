@@ -16,5 +16,11 @@ public enum ReturnedGraveyardCardValue {
      * The returned card's printed power ("equal to the power of the card returned this way" —
      * Morgue Burst); a card with no power (never a legal target for such a card) records 0.
      */
-    POWER
+    POWER,
+
+    /**
+     * The returned card's printed toughness ("where X is the toughness of the card returned this
+     * way" — Foul Renewal).
+     */
+    TOUGHNESS
 }

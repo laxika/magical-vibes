@@ -446,6 +446,15 @@ public sealed interface ChoiceContext {
             return new ManaColorChoice(playerId, fromCreature, amount, null, false, false, false, colors, false);
         }
 
+        /** "Add N mana in any combination of colors", spendable only to cast creature spells. */
+        public static ManaColorChoice creatureSpellOnlyColorCombination(UUID playerId, boolean fromCreature,
+                                                                         int amount, List<ManaColor> colors) {
+            return new ManaColorChoice(
+                    playerId, fromCreature, amount, null, false, false, false, false, colors,
+                    true, false, false, false, false, null, null, false, null, false,
+                    false, false, false, null, false, false);
+        }
+
         public static ManaColorChoice riotColorCombination(UUID playerId, boolean fromCreature,
                                                             int amount, List<ManaColor> colors) {
             return fixedColorCombination(playerId, fromCreature, amount, colors).withRiot();

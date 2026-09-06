@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.MinimumSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtypeSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceBuybackCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceDashCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
@@ -172,6 +174,24 @@ class CastingCostServiceTest {
     @Nested
     @DisplayName("getCastCostModifier — handler-dispatched cost modifiers")
     class GetCastCostModifierTests {
+
+        @Test
+        @DisplayName("Applies dash cost reduction only to the controller's dash casts")
+        void appliesDashCostReductionOnlyToControllerDashCasts() {
+            Card reducer = new Card();
+            reducer.addEffect(EffectSlot.STATIC, new ReduceDashCostEffect(2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card dashSpell = new Card();
+            dashSpell.setKeywords(Set.of(Keyword.DASH));
+            Card ordinarySpell = new Card();
+            ordinarySpell.setKeywords(Set.of());
+
+            assertThat(svc.getAlternateHandCastCostModifier(gd, player1Id, dashSpell)).isEqualTo(-2);
+            assertThat(svc.getCastCostModifier(gd, player1Id, dashSpell)).isZero();
+            assertThat(svc.getAlternateHandCastCostModifier(gd, player1Id, ordinarySpell)).isZero();
+            assertThat(svc.getAlternateHandCastCostModifier(gd, player2Id, dashSpell)).isZero();
+        }
 
         @Test
         @DisplayName("Applies opponent cost increase for matching card type")
