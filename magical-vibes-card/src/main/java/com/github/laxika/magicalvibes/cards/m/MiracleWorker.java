@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -19,8 +21,10 @@ public class MiracleWorker extends Card {
                 List.of(new DestroyTargetPermanentEffect()),
                 "{T}: Destroy target Aura attached to a creature.",
                 new PermanentPredicateTargetFilter(
-                        new PermanentIsAuraAttachedToCreaturePredicate(),
-                        "Target must be an Aura attached to a creature"
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsAuraAttachedToCreaturePredicate(),
+                                new PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate())),
+                        "Target must be an Aura attached to a creature you control"
                 )
         ));
     }

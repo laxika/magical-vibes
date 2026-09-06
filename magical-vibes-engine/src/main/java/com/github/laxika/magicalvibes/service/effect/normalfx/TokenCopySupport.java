@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -112,6 +113,10 @@ public class TokenCopySupport {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
             }
+            if (effect.exileAtEndOfCombat()) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+            }
             if (effect.sacrificeAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
@@ -169,7 +174,17 @@ public class TokenCopySupport {
         tokenCard.setColors(effect.colorOverride() != null
                 ? List.of(effect.colorOverride())
                 : sourceCard.getColors());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
+        EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        if (sourceCard.getSupertypes() != null) {
+            supertypes.addAll(sourceCard.getSupertypes());
+        }
+        if (effect.removeLegendary()) {
+            supertypes.remove(CardSupertype.LEGENDARY);
+        }
+        if (effect.additionalSupertypes() != null) {
+            supertypes.addAll(effect.additionalSupertypes());
+        }
+        tokenCard.setSupertypes(supertypes);
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
         tokenCard.setCardText(sourceCard.getCardText());

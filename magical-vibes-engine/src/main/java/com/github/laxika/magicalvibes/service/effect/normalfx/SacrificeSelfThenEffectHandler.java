@@ -54,6 +54,10 @@ public class SacrificeSelfThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (!entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, self.getId()))) {
+            return;
+        }
+
         if (!permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
             return;
         }

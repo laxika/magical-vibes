@@ -8,4 +8,9 @@ public record SacrificeDistinctNamePermanentsCost(int count, PermanentPredicate 
     public PermanentPredicate consumedPermanentFilter() {
         return filter;
     }
+
+    @Override
+    public boolean sacrificesChosenPermanent() {
+        return true;
+    }
 }

@@ -60,7 +60,7 @@ public class ReturnDiscardedCardFromGraveyardToHandEffectHandler implements Norm
         }
 
         permanentRemovalService.removeCardFromGraveyardById(gameData, discardedCardId);
-        gameData.playerHands.get(ownerId).add(discardedCard);
+        gameData.addCardToHand(ownerId, discardedCard);
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         gameLogService.append(gameData, GameLog.builder()

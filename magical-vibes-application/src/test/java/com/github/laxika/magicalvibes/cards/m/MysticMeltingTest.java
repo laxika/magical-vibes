@@ -52,6 +52,7 @@ class MysticMeltingTest extends BaseCardTest {
         gd.activePlayerId = player2.getId();
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);

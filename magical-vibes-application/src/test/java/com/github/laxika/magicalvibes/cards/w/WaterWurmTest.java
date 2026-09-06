@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MazeOfIth;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WaterWurm.class, Island.class})
+@CardUsed({WaterWurm.class, Island.class, MazeOfIth.class})
 class WaterWurmTest extends BaseCardTest {
 
     @Test
@@ -34,6 +35,15 @@ class WaterWurmTest extends BaseCardTest {
     void ownIslandDoesNotGrantBoost() {
         harness.addToBattlefield(player1, new WaterWurm());
         harness.addToBattlefield(player1, new Island());
+
+        assertStats(1, 1);
+    }
+
+    @Test
+    @DisplayName("An opponent's non-Island land does not grant the boost")
+    void opponentNonIslandLandDoesNotGrantBoost() {
+        harness.addToBattlefield(player1, new WaterWurm());
+        harness.addToBattlefield(player2, new MazeOfIth());
 
         assertStats(1, 1);
     }

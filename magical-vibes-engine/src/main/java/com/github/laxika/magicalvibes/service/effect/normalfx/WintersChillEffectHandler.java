@@ -130,8 +130,8 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
                 scheduleDestroy(gameData, target);
                 return;
             }
-            gameData.creaturesWithCombatDamagePrevented.add(targetId);
-            gameData.creaturesPreventedFromDealingCombatDamage.add(targetId);
+            gameData.creaturesWithCombatDamagePreventedThisCombat.add(targetId);
+            gameData.creaturesPreventedFromDealingCombatDamageThisCombat.add(targetId);
             gameLogService.append(gameData, GameLog.textCardText(
                     "Pays {1} for ", target.getCard(),
                     " — all combat damage to and by it this combat is prevented (" + sourceName + ")."));

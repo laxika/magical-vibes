@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KoskunFalls.class, AnabaBodyguard.class})
 class KoskunFallsTest extends BaseCardTest {
 
     @Test
@@ -37,7 +37,7 @@ class KoskunFallsTest extends BaseCardTest {
     @DisplayName("Upkeep with only a tapped creature sacrifices Koskun Falls")
     void upkeepWithOnlyTappedCreatureSacrificesFalls() {
         harness.addToBattlefield(player1, new KoskunFalls());
-        Permanent bear = addCreature(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new AnabaBodyguard());
         bear.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
@@ -55,7 +55,7 @@ class KoskunFallsTest extends BaseCardTest {
     @DisplayName("Tapping an untapped creature at upkeep keeps Koskun Falls")
     void tappingCreatureKeepsFalls() {
         harness.addToBattlefield(player1, new KoskunFalls());
-        addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new AnabaBodyguard());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -64,14 +64,14 @@ class KoskunFallsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Koskun Falls");
-        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Anaba Bodyguard").isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Declining to tap sacrifices Koskun Falls and leaves the creature untapped")
     void decliningSacrificesFalls() {
         harness.addToBattlefield(player1, new KoskunFalls());
-        addCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new AnabaBodyguard());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -80,14 +80,14 @@ class KoskunFallsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Koskun Falls");
         harness.assertInGraveyard(player1, "Koskun Falls");
-        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Anaba Bodyguard").isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("Opponent must pay {2} per attacking creature")
     void opponentPaysTwoPerAttacker() {
         harness.addToBattlefield(player1, new KoskunFalls());
-        addCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new AnabaBodyguard());
 
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
@@ -99,22 +99,30 @@ class KoskunFallsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent pays {2} for each attacking creature")
+    void opponentPaysTwoForEachAttacker() {
+        harness.addToBattlefield(player1, new KoskunFalls());
+        addCreatureReady(player2, new AnabaBodyguard());
+        addCreatureReady(player2, new AnabaBodyguard());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        declareAttackers(player2, List.of(0, 1));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
     @DisplayName("Opponent cannot attack with only {1} available")
     void opponentCannotAttackWithoutFullPayment() {
         harness.addToBattlefield(player1, new KoskunFalls());
-        addCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new AnabaBodyguard());
 
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay attack tax");
-    }
-
-    private Permanent addCreature(Player player, Card card) {
-        Permanent p = new Permanent(card);
-        p.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(p);
-        return p;
     }
 }

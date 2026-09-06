@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.cost;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -15,8 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
+import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrWarpedCardCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseXValueCost;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellAdditionalCountersCostEffect;
@@ -36,7 +39,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -49,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealCardFromHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
@@ -58,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -108,7 +115,10 @@ public class AdditionalSpellCostService {
             SacrificeAllCreaturesYouControlCost.class,
             SacrificeAllPermanentsYouControlCost.class,
             SacrificeCreatureCost.class,
+            SacrificeCreatureOrDiscardCardOrPayLifeCost.class,
+            CasualtyCost.class,
             SacrificeCreatureOrPayManaCost.class,
+            ForageOrPayManaCost.class,
             SacrificePermanentOrPayManaCost.class,
             SacrificePermanentOrDiscardCardCost.class,
             SacrificePermanentCost.class,
@@ -127,6 +137,7 @@ public class AdditionalSpellCostService {
             PutCountersOnControlledCreatureOrPayManaCost.class,
             PayXLifeCost.class,
             PayLifeCost.class,
+            PayLifeOrPayManaCost.class,
             PayLifeOrSacrificePermanentCost.class,
             ExileCardFromGraveyardCost.class,
             ExileXCardsFromGraveyardCost.class,
@@ -144,12 +155,14 @@ public class AdditionalSpellCostService {
             RepeatableAdditionalManaCost.class,
             ChooseXValueCost.class,
             ChooseCreatureTypeCost.class,
+            ChooseCreatureOrWarpedCardCost.class,
             BeholdAndExileCost.class,
             BeholdCost.class,
             DelveCost.class,
             RevealCardFromHandCost.class,
             TieredManaCost.class,
-            SpreeAdditionalManaCost.class);
+            SpreeAdditionalManaCost.class,
+            WaterbendCost.class);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -163,6 +176,8 @@ public class AdditionalSpellCostService {
             boolean sacrificeAllCreatures,
             boolean sacrificeAllPermanents,
             boolean sacrificeCreature,
+            SacrificeCreatureOrDiscardCardOrPayLifeCost sacrificeCreatureOrDiscardCardOrPayLifeCost,
+            CasualtyCost casualtyCost,
             SacrificePermanentOrPayManaCost sacrificePermanentOrPayManaCost,
             SacrificePermanentOrDiscardCardCost sacrificePermanentOrDiscardCardCost,
             SacrificePermanentCost sacrificePermanentCost,
@@ -182,6 +197,7 @@ public class AdditionalSpellCostService {
             PutCountersOnControlledCreatureOrPayManaCost putCountersOrPayManaCost,
             boolean payXLife,
             PayLifeCost payLifeCost,
+            PayLifeOrPayManaCost payLifeOrPayManaCost,
             ExileCardFromGraveyardCost exileGraveyardCost,
             ExileXCardsFromGraveyardCost exileXCardsCost,
             CollectEvidenceCost collectEvidenceCost,
@@ -198,39 +214,48 @@ public class AdditionalSpellCostService {
             ChooseXValueCost chooseXValueCost,
             BeholdAndExileCost beholdCost,
             BeholdCost beholdSelectionCost,
+            ChooseCreatureOrWarpedCardCost chosenCreatureOrWarpedCardCost,
             DelveCost delveCost,
             RevealCardFromHandCost revealCardCost,
             ChooseCreatureTypeCost chooseCreatureTypeCost,
             TieredManaCost tieredManaCost,
             PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost,
-            SpreeAdditionalManaCost spreeAdditionalManaCost
+            SpreeAdditionalManaCost spreeAdditionalManaCost,
+            WaterbendCost waterbendCost,
+            ForageOrPayManaCost forageOrPayManaCost
     ) {
         /** True when the spell has any additional cast cost at all. */
         public boolean any() {
+            return hasNonEscalateCost() || hasEscalate();
+        }
+
+        /** True when the spell has an additional cost that is not charged per extra mode. */
+        public boolean hasNonEscalateCost() {
             return sacrificeAllCreatures || sacrificeAllPermanents || sacrificeCreature
+                    || sacrificeCreatureOrDiscardCardOrPayLifeCost != null || casualtyCost != null
                     || sacrificePermanentCost != null || exileCreatureCost != null
                     || sacrificeMultiplePermanentsCost != null
                     || sacrificePermanentOrPayManaCost != null
                     || sacrificePermanentOrDiscardCardCost != null
-                    || escalateSacrificeCost != null
-                    || escalateTapCost != null
                     || sacrificeAnyNumberCost != null
                     || tapAnyNumberCost != null || tapMultipleCost != null || returnAnyNumberCost != null
                     || returnPermanentToHand != null
                     || returnCreatureToHand || blightCost != null || putCounterCost != null || putCountersOrPayManaCost != null
-                    || payXLife || payLifeCost != null || payLifeOrSacrificePermanentCost != null
+                    || payXLife || payLifeCost != null || payLifeOrPayManaCost != null
+                    || payLifeOrSacrificePermanentCost != null
                     || discardCardOrSacrificePermanentCost != null
                     || exileGraveyardCost != null || exileXCardsCost != null
                     || collectEvidenceCost != null || exileNCardsCost != null
                     || discardCost != null || discardRandomCost != null || discardCardOrPayManaCost != null
                     || discardCardOrPayLifeCost != null
                     || discardHand || discardXCardsCost != null
-                    || escalateDiscardCost != null || escalateManaCost != null
                     || repeatableManaCost != null || chooseXValueCost != null
                     || beholdCost != null || beholdSelectionCost != null || delveCost != null
+                    || chosenCreatureOrWarpedCardCost != null
                     || revealCardCost != null || chooseCreatureTypeCost != null
                     || tieredManaCost != null
-                    || spreeAdditionalManaCost != null;
+                    || spreeAdditionalManaCost != null || waterbendCost != null
+                    || forageOrPayManaCost != null;
         }
 
         /** True when the spell has any per-extra-mode cost. */
@@ -266,8 +291,48 @@ public class AdditionalSpellCostService {
             Integer beholdHandCardIndex,
             List<UUID> beholdPermanentIds,
             List<Integer> beholdHandCardIndices,
-            CardSubtype beholdChosenSubtype
+            CardSubtype beholdChosenSubtype,
+            UUID chosenObjectId,
+            Boolean payLifeForAdditionalCost
     ) {
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
+                             List<UUID> sacrificePermanentIds, UUID beholdPermanentId,
+                             Integer beholdHandCardIndex, List<UUID> beholdPermanentIds,
+                             List<Integer> beholdHandCardIndices, CardSubtype beholdChosenSubtype) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
+                    sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
+                    beholdHandCardIndices, beholdChosenSubtype, null, null);
+        }
+
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
+                             List<UUID> sacrificePermanentIds, UUID beholdPermanentId,
+                             Integer beholdHandCardIndex, List<UUID> beholdPermanentIds,
+                             List<Integer> beholdHandCardIndices, CardSubtype beholdChosenSubtype,
+                             UUID chosenObjectId) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
+                    sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
+                    beholdHandCardIndices, beholdChosenSubtype, chosenObjectId, null);
+        }
+
+        public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
+                             List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
+                             List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
+                             List<UUID> sacrificePermanentIds, UUID beholdPermanentId,
+                             Integer beholdHandCardIndex, List<UUID> beholdPermanentIds,
+                             List<Integer> beholdHandCardIndices, CardSubtype beholdChosenSubtype,
+                             Boolean payLifeForAdditionalCost) {
+            this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
+                    discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
+                    sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
+                    beholdHandCardIndices, beholdChosenSubtype, null, payLifeForAdditionalCost);
+        }
+
         public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
                              List<Integer> exileGraveyardCardIndices, Integer discardHandCardIndex,
                              List<Integer> discardHandCardIndices, int escalateModeCount, int spellCardIndex,
@@ -277,7 +342,7 @@ public class AdditionalSpellCostService {
             this(sacrificePermanentId, exileGraveyardCardIndex, exileGraveyardCardIndices,
                     discardHandCardIndex, discardHandCardIndices, escalateModeCount, spellCardIndex,
                     sacrificePermanentIds, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds,
-                    beholdHandCardIndices, null);
+                    beholdHandCardIndices, null, null, null);
         }
 
         public CostSelection(UUID sacrificePermanentId, Integer exileGraveyardCardIndex,
@@ -331,6 +396,9 @@ public class AdditionalSpellCostService {
         boolean sacAllCreatures = effects.removeIf(SacrificeAllCreaturesYouControlCost.class::isInstance);
         boolean sacAllPermanents = effects.removeIf(SacrificeAllPermanentsYouControlCost.class::isInstance);
         boolean sacCreature = effects.removeIf(SacrificeCreatureCost.class::isInstance);
+        SacrificeCreatureOrDiscardCardOrPayLifeCost sacCreatureOrDiscardOrPayLife =
+                removeFirst(effects, SacrificeCreatureOrDiscardCardOrPayLifeCost.class);
+        CasualtyCost casualtyCost = removeFirst(effects, CasualtyCost.class);
         SacrificeCreatureOrPayManaCost legacySacOrPay =
                 removeFirst(effects, SacrificeCreatureOrPayManaCost.class);
         SacrificePermanentOrPayManaCost sacOrPay = removeFirst(effects, SacrificePermanentOrPayManaCost.class);
@@ -361,6 +429,7 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, PutCountersOnControlledCreatureOrPayManaCost.class);
         boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
         PayLifeCost payLifeCost = removeFirst(effects, PayLifeCost.class);
+        PayLifeOrPayManaCost payLifeOrPayManaCost = removeFirst(effects, PayLifeOrPayManaCost.class);
         PayLifeOrSacrificePermanentCost payLifeOrSacrificePermanentCost =
                 removeFirst(effects, PayLifeOrSacrificePermanentCost.class);
         ExileCardFromGraveyardCost exileGraveyardCost = removeFirst(effects, ExileCardFromGraveyardCost.class);
@@ -388,24 +457,30 @@ public class AdditionalSpellCostService {
         ChooseXValueCost chooseXValueCost = removeFirst(effects, ChooseXValueCost.class);
         BeholdAndExileCost beholdCost = removeFirst(effects, BeholdAndExileCost.class);
         BeholdCost beholdSelectionCost = removeFirst(effects, BeholdCost.class);
+        ChooseCreatureOrWarpedCardCost chosenCreatureOrWarpedCardCost =
+                removeFirst(effects, ChooseCreatureOrWarpedCardCost.class);
         DelveCost delveCost = removeFirst(effects, DelveCost.class);
         RevealCardFromHandCost revealCardCost = removeFirst(effects, RevealCardFromHandCost.class);
         ChooseCreatureTypeCost chooseCreatureTypeCost = removeFirst(effects, ChooseCreatureTypeCost.class);
         TieredManaCost tieredManaCost = removeFirst(effects, TieredManaCost.class);
         SpreeAdditionalManaCost spreeAdditionalManaCost = removeFirst(effects, SpreeAdditionalManaCost.class);
-        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature, sacOrPay,
+        WaterbendCost waterbendCost = removeFirst(effects, WaterbendCost.class);
+        ForageOrPayManaCost forageOrPayManaCost = removeFirst(effects, ForageOrPayManaCost.class);
+        return new ExtractedCosts(sacAllCreatures, sacAllPermanents, sacCreature,
+                sacCreatureOrDiscardOrPayLife, casualtyCost, sacOrPay,
                 sacOrDiscard, permCost, discardOrSacrifice, exileCreatureCost, multiPermCost,
                 escalateSacrificeCost, escalateTapCost,
                 sacAnyNumberCost, tapAnyNumberCost, tapMultipleCost, returnAnyNumberCost,
                 returnPermanentToHand, returnCreature,
                 blightCost, putCounterCost, putCountersOrPayManaCost,
-                payXLife, payLifeCost, exileGraveyardCost, exileXCardsCost,
+                payXLife, payLifeCost, payLifeOrPayManaCost, exileGraveyardCost, exileXCardsCost,
                 collectEvidenceCost, exileNCardsCost, discardCost, discardRandomCost,
                 discardOrPay, discardOrPayLife,
                 discardHand, discardXCards, escalateDiscardCost, escalateManaCost, repeatableManaCost,
-                chooseXValueCost, beholdCost, beholdSelectionCost, delveCost, revealCardCost,
-                chooseCreatureTypeCost, tieredManaCost,
-                payLifeOrSacrificePermanentCost, spreeAdditionalManaCost);
+                chooseXValueCost, beholdCost, beholdSelectionCost, chosenCreatureOrWarpedCardCost,
+                delveCost, revealCardCost, chooseCreatureTypeCost, tieredManaCost,
+                payLifeOrSacrificePermanentCost, spreeAdditionalManaCost, waterbendCost,
+                forageOrPayManaCost);
     }
 
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
@@ -499,6 +574,16 @@ public class AdditionalSpellCostService {
                     if (!lifeAndSacAllowed) return false;
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
+                case SacrificeCreatureOrDiscardCardOrPayLifeCost cost -> {
+                    boolean hasCreature = lifeAndSacAllowed
+                            && battlefield.stream().anyMatch(p -> gameQueryService.isCreature(gameData, p));
+                    boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
+                            new DiscardCardTypeCost(null, null)).isEmpty();
+                    boolean canPayLife = lifeAndSacAllowed && gameData.getLife(playerId) >= cost.lifeAmount();
+                    if (!hasCreature && !hasDiscard && !canPayLife) return false;
+                }
+                // Casualty is optional, so it never makes a spell uncastable by itself.
+                case CasualtyCost ignored -> { }
                 case SacrificePermanentOrPayManaCost cost -> {
                     boolean hasPermanent = battlefield.stream().anyMatch(p ->
                             predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter())
@@ -513,6 +598,11 @@ public class AdditionalSpellCostService {
                     if (!hasCreature && !canAffordSacrificeOrPayManaOption(gameData, playerId, card,
                             new SacrificePermanentOrPayManaCost(
                                     cost.manaCost(), new PermanentIsCreaturePredicate(), "a creature"))) {
+                        return false;
+                    }
+                }
+                case ForageOrPayManaCost cost -> {
+                    if (!canPayForageOrPayManaCost(gameData, playerId, card, cost)) {
                         return false;
                     }
                 }
@@ -594,6 +684,19 @@ public class AdditionalSpellCostService {
                             .count();
                     if (matching < required) return false;
                 }
+                case WaterbendCost cost -> {
+                    if (cost.optional()) {
+                        continue;
+                    }
+                    int amount = cost.effectiveAmount(0);
+                    long matching = battlefield.stream()
+                            .filter(p -> !p.isTapped())
+                            .filter(p -> gameQueryService.isArtifact(gameData, p)
+                                    || gameQueryService.isCreature(gameData, p))
+                            .count();
+                    int availableMana = gameData.playerManaPools.getOrDefault(playerId, new ManaPool()).getTotalAllMana();
+                    if (availableMana + Math.min(amount, (int) matching) < amount) return false;
+                }
                 case ExileNCardsFromGraveyardCost cost -> {
                     long matchingCount = graveyard.stream()
                             .filter(c -> (cost.requiredType() == null || c.hasType(cost.requiredType()))
@@ -644,6 +747,12 @@ public class AdditionalSpellCostService {
                             .anyMatch(p -> !gameQueryService.isCreature(gameData, p) || lifeAndSacAllowed);
                     if (!canPayLife && !canSacrifice) return false;
                 }
+                case PayLifeOrPayManaCost cost -> {
+                    int life = gameData.getLife(playerId);
+                    boolean canPayLife = lifeAndSacAllowed && life >= cost.lifeAmount();
+                    boolean canPayMana = canAffordManaOption(gameData, playerId, card, cost.manaCost());
+                    if (!canPayLife && !canPayMana) return false;
+                }
                 // Escalate is payable with a single mode (zero extra payments), so it never blocks
                 // playability by itself — concrete mode+payment selections are validated at cast.
                 case EscalateDiscardCost ignored -> { }
@@ -690,6 +799,16 @@ public class AdditionalSpellCostService {
                         if (matchingPermanents + matchingHandCards < cost.count()) return false;
                     }
                 }
+                case ChooseCreatureOrWarpedCardCost ignored -> {
+                    boolean hasCreature = battlefield.stream()
+                            .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
+                    boolean hasWarpedCreatureCard = gameData.exiledCards.stream()
+                            .filter(entry -> playerId.equals(entry.ownerId()) && !entry.faceDown())
+                            .map(ExiledCardEntry::card)
+                            .anyMatch(exiledCard -> exiledCard.hasType(CardType.CREATURE)
+                                    && exiledCard.hasKeyword(Keyword.WARP));
+                    if (!hasCreature && !hasWarpedCreatureCard) return false;
+                }
                 default -> { }
             }
         }
@@ -716,6 +835,9 @@ public class AdditionalSpellCostService {
             return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
         }
         if (costs.discardCardOrPayLifeCost() != null) {
+            return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
+        }
+        if (costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null) {
             return discardCostIndices(gameData, playerId, card, new DiscardCardTypeCost(null, null));
         }
         if (costs.discardCardOrSacrificePermanentCost() != null) {
@@ -775,16 +897,30 @@ public class AdditionalSpellCostService {
      */
     public void validateAll(GameData gameData, Player player, Card card,
                             ExtractedCosts costs, CostSelection selection, Integer announcedXValue) {
-        validateAll(gameData, player, card, costs, selection, announcedXValue, null);
+        validateAll(gameData, player, card, costs, selection, announcedXValue, true);
     }
 
-    /**
-     * Validates additional costs using the target-based evidence threshold locked in when the
-     * spell's targets were chosen.
-     */
+    /** Validates additional costs while recording whether an optional waterbend cost was chosen. */
+    public void validateAll(GameData gameData, Player player, Card card,
+                            ExtractedCosts costs, CostSelection selection, Integer announcedXValue,
+                            boolean waterbendPaid) {
+        validateAll(gameData, player, card, costs, selection, announcedXValue, waterbendPaid, null);
+    }
+
     public void validateAll(GameData gameData, Player player, Card card,
                             ExtractedCosts costs, CostSelection selection, Integer announcedXValue,
                             Integer resolvedCollectEvidenceMinimumManaValue) {
+        validateAll(gameData, player, card, costs, selection, announcedXValue, true,
+                resolvedCollectEvidenceMinimumManaValue);
+    }
+
+    /**
+     * Validates additional costs using both the optional waterbend choice and any target-based
+     * evidence threshold locked in when the spell's targets were chosen.
+     */
+    public void validateAll(GameData gameData, Player player, Card card,
+                            ExtractedCosts costs, CostSelection selection, Integer announcedXValue,
+                            boolean waterbendPaid, Integer resolvedCollectEvidenceMinimumManaValue) {
         if (costs.payLifeCost() != null) {
             validatePayLifeCost(gameData, player, card, costs.payLifeCost());
         }
@@ -804,6 +940,20 @@ public class AdditionalSpellCostService {
                     throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
                             + " life for " + card.getName());
                 }
+            }
+        }
+        if (costs.payLifeOrPayManaCost() != null) {
+            PayLifeOrPayManaCost cost = costs.payLifeOrPayManaCost();
+            if (Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
+                validateCanPayLifeForCost(gameData, card);
+                int life = gameData.getLife(player.getId());
+                if (life < cost.lifeAmount()) {
+                    throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
+                            + " life for " + card.getName());
+                }
+            } else if (!canAffordManaOption(gameData, player.getId(), card, cost.manaCost())) {
+                throw new IllegalStateException("Must pay " + cost.lifeAmount() + " life or "
+                        + cost.manaCost() + " to cast " + card.getName());
             }
         }
         if (costs.discardCardOrSacrificePermanentCost() != null) {
@@ -830,6 +980,12 @@ public class AdditionalSpellCostService {
             validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
                     "a creature", p -> gameQueryService.isCreature(gameData, p));
         }
+        if (costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null) {
+            validateSacrificeCreatureOrDiscardCardOrPayLifeCost(gameData, player, card,
+                    costs.sacrificeCreatureOrDiscardCardOrPayLifeCost(), selection);
+        }
+        validateCasualtyCost(gameData, player, card, costs.casualtyCost(), selection.sacrificePermanentId(),
+                announcedXValue);
         if (costs.sacrificePermanentOrPayManaCost() != null) {
             if (selection.sacrificePermanentId() != null) {
                 Permanent selected = gameQueryService.findPermanentById(gameData, selection.sacrificePermanentId());
@@ -847,6 +1003,10 @@ public class AdditionalSpellCostService {
                         + costs.sacrificePermanentOrPayManaCost().manaCost()
                         + " to cast " + card.getName());
             }
+        }
+        if (costs.forageOrPayManaCost() != null) {
+            validateForageOrPayManaCost(
+                    gameData, player, card, costs.forageOrPayManaCost(), selection, -1);
         }
         if (costs.sacrificePermanentOrDiscardCardCost() != null) {
             SacrificePermanentOrDiscardCardCost cost = costs.sacrificePermanentOrDiscardCardCost();
@@ -926,6 +1086,11 @@ public class AdditionalSpellCostService {
         }
         if (costs.tapMultipleCost() != null) {
             validateTapMultiplePermanentsCost(gameData, player, card, costs.tapMultipleCost(),
+                    selection.sacrificePermanentIds(), announcedXValue == null ? 0 : announcedXValue);
+        }
+        if (costs.waterbendCost() != null
+                && (!costs.waterbendCost().optional() || waterbendPaid)) {
+            validateWaterbendCost(gameData, player, card, costs.waterbendCost(),
                     selection.sacrificePermanentIds(), announcedXValue == null ? 0 : announcedXValue);
         }
         if (costs.returnAnyNumberCost() != null) {
@@ -1015,9 +1180,44 @@ public class AdditionalSpellCostService {
         if (costs.beholdSelectionCost() != null && costs.beholdSelectionCost().chosenCreatureType()) {
             validateBeholdCost(gameData, player, card, costs.beholdSelectionCost(), selection);
         }
+        if (costs.chosenCreatureOrWarpedCardCost() != null) {
+            validateChosenCreatureOrWarpedCard(gameData, player, card, selection.chosenObjectId());
+        }
         if (costs.chooseCreatureTypeCost() != null) {
             validateChooseCreatureTypeCost(gameData, card, selection.beholdChosenSubtype());
         }
+    }
+
+    public record ChosenCreatureOrWarpedCard(UUID permanentId, Card card, int power) {
+    }
+
+    public ChosenCreatureOrWarpedCard validateChosenCreatureOrWarpedCard(
+            GameData gameData, Player player, Card card, UUID chosenObjectId) {
+        if (chosenObjectId == null) {
+            throw new IllegalStateException("Choose a creature you control or a warped creature card in exile to cast "
+                    + card.getName());
+        }
+
+        Permanent permanent = gameQueryService.findPermanentById(gameData, chosenObjectId);
+        if (permanent != null) {
+            if (!player.getId().equals(gameQueryService.findPermanentController(gameData, permanent.getId()))
+                    || !gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Must choose a creature you control to cast " + card.getName());
+            }
+            return new ChosenCreatureOrWarpedCard(permanent.getId(), null,
+                    Math.max(0, gameQueryService.getEffectivePower(gameData, permanent)));
+        }
+
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(chosenObjectId);
+        if (exiledEntry == null || !player.getId().equals(exiledEntry.ownerId())
+                || exiledEntry.faceDown()
+                || !exiledEntry.card().hasType(CardType.CREATURE)
+                || !exiledEntry.card().hasKeyword(Keyword.WARP)) {
+            throw new IllegalStateException("Must choose a warped creature card you own in exile to cast "
+                    + card.getName());
+        }
+        Integer power = exiledEntry.card().getPower();
+        return new ChosenCreatureOrWarpedCard(null, exiledEntry.card(), power == null ? 0 : Math.max(0, power));
     }
 
     /** Validates the creature subtype chosen as an additional cast cost. */
@@ -1218,6 +1418,61 @@ public class AdditionalSpellCostService {
         }
     }
 
+    /** Validates the selected branch of a sacrifice, discard, or life-payment cost. */
+    public void validateSacrificeCreatureOrDiscardCardOrPayLifeCost(
+            GameData gameData, Player player, Card card,
+            SacrificeCreatureOrDiscardCardOrPayLifeCost cost,
+            AdditionalSpellCostService.CostSelection selection) {
+        if (selection.sacrificePermanentId() != null && selection.discardHandCardIndex() != null) {
+            throw new IllegalStateException("Must choose only one additional cost payment for "
+                    + card.getName());
+        }
+        if (selection.sacrificePermanentId() != null) {
+            validateCanSacrificeCreatureForCost(gameData, card);
+            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
+                    "a creature", p -> gameQueryService.isCreature(gameData, p));
+            return;
+        }
+        if (selection.discardHandCardIndex() != null) {
+            validateDiscardCost(gameData, player, card, new DiscardCardTypeCost(null, null),
+                    selection.discardHandCardIndex(), selection.spellCardIndex());
+            return;
+        }
+        validateCanPayLifeForCost(gameData, card);
+        int life = gameData.getLife(player.getId());
+        if (life < cost.lifeAmount()) {
+            throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
+                    + " for " + card.getName());
+        }
+    }
+
+    /** Validates the optional casualty sacrifice when the caster chose to pay it. */
+    public void validateCasualtyCost(GameData gameData, Player player, Card card,
+                                     CasualtyCost cost, UUID sacrificePermanentId) {
+        validateCasualtyCost(gameData, player, card, cost, sacrificePermanentId, null);
+    }
+
+    /** Validates an optional casualty sacrifice, including a power-equals-X casualty cost. */
+    public void validateCasualtyCost(GameData gameData, Player player, Card card,
+                                     CasualtyCost cost, UUID sacrificePermanentId,
+                                     Integer announcedXValue) {
+        if (cost == null || sacrificePermanentId == null) {
+            return;
+        }
+        validateCanSacrificeCreatureForCost(gameData, card);
+        int chosenXValue = announcedXValue != null ? announcedXValue : 0;
+        String description = cost.powerMustEqualChosenX()
+                ? "a creature with power exactly " + chosenXValue
+                : "a creature with power " + cost.minimumPower() + " or greater";
+        validateSingleSacrificeCost(gameData, player, card, sacrificePermanentId,
+                description,
+                p -> cost.powerMustEqualChosenX()
+                        ? gameQueryService.isCreature(gameData, p)
+                                && gameQueryService.getEffectivePower(gameData, p) == chosenXValue
+                        : predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, p, cost.consumedPermanentFilter()));
+    }
+
     /**
      * Validates the "pay X life" additional cast cost (Fire Covenant) against the announced X.
      * A player may pay life only while their life total is at least the amount paid (CR 119.4).
@@ -1331,6 +1586,50 @@ public class AdditionalSpellCostService {
     public boolean canAffordSacrificeOrPayManaOption(GameData gameData, UUID playerId, Card card,
                                                      SacrificePermanentOrPayManaCost cost) {
         return canAffordManaOption(gameData, playerId, card, cost.manaCost());
+    }
+
+    public boolean canPayForageOrPayManaCost(GameData gameData, UUID playerId, Card card,
+                                              ForageOrPayManaCost cost) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        boolean hasFood = battlefield.stream().anyMatch(permanent ->
+                predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, cost.consumedPermanentFilter()));
+        long graveyardCards = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                .filter(graveyardCard -> !graveyardCard.getId().equals(card.getId()))
+                .count();
+        return hasFood || graveyardCards >= cost.consumedGraveyardCardCount()
+                || canAffordForageOrPayManaOption(gameData, playerId, card, cost);
+    }
+
+    public boolean canAffordForageOrPayManaOption(GameData gameData, UUID playerId, Card card,
+                                                   ForageOrPayManaCost cost) {
+        return cost.manaCost() != null
+                && canAffordManaOption(gameData, playerId, card, cost.manaCost());
+    }
+
+    public void validateForageOrPayManaCost(GameData gameData, Player player, Card card,
+                                             ForageOrPayManaCost cost, CostSelection selection,
+                                             int excludedGraveyardIndex) {
+        List<Integer> graveyardIndices = selection.exileGraveyardCardIndices();
+        boolean hasGraveyardSelection = graveyardIndices != null && !graveyardIndices.isEmpty();
+        if (selection.sacrificePermanentId() != null && hasGraveyardSelection) {
+            throw new IllegalStateException("Choose only one way to forage to cast " + card.getName());
+        }
+        if (selection.sacrificePermanentId() != null) {
+            validateSingleSacrificeCost(gameData, player, card, selection.sacrificePermanentId(),
+                    "a Food", permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, cost.consumedPermanentFilter()));
+        } else if (hasGraveyardSelection) {
+            validateExileNCardsFromGraveyardCost(gameData, player, card,
+                    new ExileNCardsFromGraveyardCost(cost.consumedGraveyardCardCount(), null),
+                    graveyardIndices, excludedGraveyardIndex);
+        } else if (!canAffordForageOrPayManaOption(gameData, player.getId(), card, cost)) {
+            if (cost.manaCost() == null) {
+                throw new IllegalStateException("Must forage to cast " + card.getName());
+            }
+            throw new IllegalStateException("Must forage or pay " + cost.manaCost()
+                    + " to cast " + card.getName());
+        }
     }
 
     /**
@@ -1666,6 +1965,48 @@ public class AdditionalSpellCostService {
             }
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, cost.filter())) {
                 throw new IllegalStateException("Permanent does not match the tap cost of " + card.getName());
+            }
+            chosen.add(permanent);
+        }
+        return chosen;
+    }
+
+    /** Validates the selected artifacts and creatures paying a spell's Waterbend cost. */
+    public List<Permanent> validateWaterbendCost(GameData gameData, Player player, Card card,
+                                                  WaterbendCost cost, List<UUID> waterbendPermanentIds) {
+        return validateWaterbendCost(gameData, player, card, cost, waterbendPermanentIds, 0);
+    }
+
+    /** Validates a Waterbend cost using the spell's announced X value when it scales with X. */
+    public List<Permanent> validateWaterbendCost(GameData gameData, Player player, Card card,
+                                                  WaterbendCost cost, List<UUID> waterbendPermanentIds,
+                                                  int announcedXValue) {
+        List<UUID> ids = waterbendPermanentIds != null ? waterbendPermanentIds : List.of();
+        int amount = cost.effectiveAmount(announcedXValue);
+        if (ids.size() > amount) {
+            throw new IllegalStateException("Cannot tap more than " + amount
+                    + " permanents for the waterbend cost of " + card.getName());
+        }
+        if (ids.stream().distinct().count() != ids.size()) {
+            throw new IllegalStateException("Duplicate permanents chosen for the waterbend cost of " + card.getName());
+        }
+        List<Permanent> chosen = new ArrayList<>();
+        for (UUID id : ids) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            if (permanent == null) {
+                throw new IllegalStateException("Permanent to tap for waterbend not found on battlefield");
+            }
+            if (!player.getId().equals(gameQueryService.findPermanentController(gameData, id))) {
+                throw new IllegalStateException("Can only tap permanents you control for the waterbend cost of "
+                        + card.getName());
+            }
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Cannot tap an already tapped permanent for the waterbend cost of "
+                        + card.getName());
+            }
+            if (!gameQueryService.isArtifact(gameData, permanent)
+                    && !gameQueryService.isCreature(gameData, permanent)) {
+                throw new IllegalStateException("Waterbend can tap only artifacts or creatures");
             }
             chosen.add(permanent);
         }

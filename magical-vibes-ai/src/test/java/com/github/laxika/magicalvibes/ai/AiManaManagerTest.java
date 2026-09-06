@@ -38,10 +38,13 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -233,6 +236,63 @@ class AiManaManagerTest {
 
     private Permanent addUntappedCreature(String name, ManaColor manaColor) {
         Card card = createManaCreature(name, manaColor);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
+        return perm;
+    }
+
+    private Permanent addUntappedCreature(String name) {
+        Card card = createCreature(name, 1, 1, CardColor.GREEN);
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+        return perm;
+    }
+
+    private Permanent addUntappedCreatureWithGrantedAnyColorManaAbility(String name) {
+        Permanent permanent = addUntappedCreature(name);
+        ActivatedAbility grantedAbility = new ActivatedAbility(
+                true, null, List.of(new AwardAnyColorManaEffect()),
+                "{T}: Add one mana of any color.");
+        lenient().when(gameQueryService.canActivateManaAbility(gd, permanent)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, permanent)).thenReturn(List.of());
+        lenient().when(abilityActivationService.getEffectiveActivatedAbilities(gd, permanent))
+                .thenReturn(List.of(grantedAbility));
+        return permanent;
+    }
+
+    private Permanent addUntappedTapAnotherCreatureManaSource(String name) {
+        Card card = createCreature(name, 1, 2, CardColor.GREEN);
+        card.addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(
+                        new TapCreatureCost(new PermanentIsCreaturePredicate(), true, false),
+                        new AwardAnyColorManaEffect()),
+                "{T}, Tap an untapped creature you control: Add one mana of any color."));
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player1Id).add(perm);
+        lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+        lenient().when(gameQueryService.getOverriddenLandManaColors(gd, perm)).thenReturn(List.of());
+        return perm;
+    }
+
+    private Permanent addUntappedTapMultipleManaSource(String name) {
+        Card card = createCreature(name, 1, 2, CardColor.GREEN);
+        card.addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(
+                        new TapMultiplePermanentsCost(1, new PermanentIsCreaturePredicate(), true),
+                        new AwardAnyColorManaEffect()),
+                "{T}, Tap an untapped creature you control: Add one mana of any color."));
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1Id).add(perm);
@@ -1072,6 +1132,14 @@ class AiManaManagerTest {
 
             assertThat(manager.buildSafeVirtualManaPool(gd, player1Id).getTotal()).isZero();
         }
+
+        @Test
+        @DisplayName("excludes a creature whose granted mana ability would prompt for a color")
+        void excludesCreatureWithGrantedManaChoiceAbility() {
+            addUntappedCreatureWithGrantedAnyColorManaAbility("Bat");
+
+            assertThat(manager.buildSafeVirtualManaPool(gd, player1Id).getTotal()).isZero();
+        }
     }
 
     // ── isFreeTapManaAbility ────────────────────────────────────────
@@ -1138,6 +1206,52 @@ class AiManaManagerTest {
     @Nested
     @DisplayName("tapLandsForCost")
     class TapLandsForCost {
+
+        @Test
+        @DisplayName("does not count a mana creature both as a source and as another source's tap cost")
+        void doesNotDoubleCountCreatureNeededForManaAbilityTapCost() {
+            addUntappedTapAnotherCreatureManaSource("Jaspera Sentinel");
+            addUntappedCreature("Druid of the Cowl", ManaColor.GREEN);
+            addUntappedLand("Forest 1", ManaColor.GREEN);
+            addUntappedLand("Forest 2", ManaColor.GREEN);
+            addUntappedLand("Swamp", ManaColor.BLACK);
+
+            boolean payable = manager.canPayCost(
+                    gd, player1Id, "{3}{G}{G}", 0, false, Set.of());
+
+            assertThat(payable).isFalse();
+        }
+
+        @Test
+        @DisplayName("counts tap-cost mana when a separate untapped creature can pay the cost")
+        void countsTapCostManaWithSeparateUntappedCreature() {
+            addUntappedTapAnotherCreatureManaSource("Jaspera Sentinel");
+            addUntappedCreature("Druid of the Cowl", ManaColor.GREEN);
+            addUntappedCreature("Bear");
+            addUntappedLand("Forest 1", ManaColor.GREEN);
+            addUntappedLand("Forest 2", ManaColor.GREEN);
+            addUntappedLand("Swamp", ManaColor.BLACK);
+
+            boolean payable = manager.canPayCost(
+                    gd, player1Id, "{3}{G}{G}", 0, false, Set.of());
+
+            assertThat(payable).isTrue();
+        }
+
+        @Test
+        @DisplayName("reserves creatures required by multi-permanent mana ability tap costs")
+        void reservesCreatureForMultiPermanentManaAbilityTapCost() {
+            addUntappedTapMultipleManaSource("Citanul Stalwart");
+            addUntappedCreature("Druid of the Cowl", ManaColor.GREEN);
+            addUntappedLand("Forest 1", ManaColor.GREEN);
+            addUntappedLand("Forest 2", ManaColor.GREEN);
+            addUntappedLand("Swamp", ManaColor.BLACK);
+
+            boolean payable = manager.canPayCost(
+                    gd, player1Id, "{3}{G}{G}", 0, false, Set.of());
+
+            assertThat(payable).isFalse();
+        }
 
         /**
          * Naked Singularity / Reality Twist / Infernal Darkness replace the type of mana a land
@@ -1706,6 +1820,25 @@ class AiManaManagerTest {
             manager.tapLandsForCost(gd, player1Id, "{1}", 0, action, true);
 
             assertThat(tappedIndices).containsExactly(2);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
+        }
+
+        @Test
+        @DisplayName("skips a granted choice mana ability during attack tax payment")
+        void skipsGrantedManaChoiceAbilityDuringAttackTaxPayment() {
+            addUntappedCreatureWithGrantedAnyColorManaAbility("Bat");
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1Id));
+            List<Integer> tappedIndices = new ArrayList<>();
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                tappedIndices.add(permanentIndex);
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED);
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{1}", 0, action, true);
+
+            assertThat(tappedIndices).containsExactly(1);
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
         }
 

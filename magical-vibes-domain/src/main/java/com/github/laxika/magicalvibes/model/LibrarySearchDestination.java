@@ -43,6 +43,8 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PERMANENT,
     SPHINX_AMBASSADOR,
     CAST_WITHOUT_PAYING,
+    /** Offer the chosen exiled card for a free cast, or put it into its controller's hand. */
+    CAST_WITHOUT_PAYING_OR_PUT_INTO_HAND,
     /** Cast the chosen revealed card without paying, then shuffle the rest into the library. */
     CAST_WITHOUT_PAYING_AND_SHUFFLE_LIBRARY,
     /** Discover a qualifying card: cast it for free or put it into its controller's hand. */
@@ -51,11 +53,15 @@ public enum LibrarySearchDestination {
     PUT_ONE_INTO_HAND_REST_TO_BOTTOM_RANDOM,
     /** Exile one chosen card, then offer it for casting without paying its mana cost. */
     EXILE_AND_MAY_CAST_WITHOUT_PAYING,
+    /** Exile one chosen card face down and offer an eligible card for a free cast or its owner's hand. */
+    EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND,
     /** Exile the chosen card face up and hold it for a later free cast, then continue the
     *  {@code PendingEachPlayerLibraryExile} queue (Jace, Architect of Thought's −8). */
     EXILE_FOR_FREE_CAST,
     /** Exile the chosen card face up and offer its controller a one-time free cast. */
     EXILE_FOR_MAY_CAST,
+    /** Exile the chosen card face up and offer its controller a one-time normal-cost cast. */
+    EXILE_FOR_MAY_CAST_WITH_NORMAL_COST,
     /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
     BATTLEFIELD_UNDER_SEARCHER,
     /** Put the chosen card onto the battlefield tapped under a specified player's control. */

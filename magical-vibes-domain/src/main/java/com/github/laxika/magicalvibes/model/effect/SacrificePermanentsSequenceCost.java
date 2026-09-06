@@ -27,4 +27,9 @@ public record SacrificePermanentsSequenceCost(List<PermanentPredicate> filters, 
             throw new IllegalArgumentException("filters and descriptions must be parallel");
         }
     }
+
+    @Override
+    public boolean sacrificesChosenPermanent() {
+        return true;
+    }
 }

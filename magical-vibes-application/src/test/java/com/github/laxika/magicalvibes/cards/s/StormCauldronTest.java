@@ -65,6 +65,18 @@ class StormCauldronTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returning a tapped land waits for the triggered ability to resolve")
+    void landReturnWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Symmetric — an opponent's tapped land also returns to their hand")
     void symmetricReturnsOpponentsTappedLand() {
         harness.addToBattlefield(player1, new StormCauldron());

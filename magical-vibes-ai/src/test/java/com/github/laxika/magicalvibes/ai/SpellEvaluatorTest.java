@@ -33,18 +33,23 @@ import com.github.laxika.magicalvibes.cards.s.Stun;
 import com.github.laxika.magicalvibes.cards.w.WallOfFire;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -59,6 +64,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -1526,5 +1532,44 @@ class SpellEvaluatorTest {
         // The sacrifice cost is what turns a mildly positive ping into a bad deal.
         assertThat(withSacrifice).isLessThan(effectsAlone);
         assertThat(withSacrifice).isLessThanOrEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Kethis values both the exiled cards and the remaining graveyard play permissions")
+    void kethisGraveyardAbilityValuationAccountsForCostAndPermission() {
+        CardSupertypePredicate legendary = new CardSupertypePredicate(CardSupertype.LEGENDARY);
+        ActivatedAbility ability = new ActivatedAbility(
+                false,
+                null,
+                List.of(
+                        new ExileNCardsFromGraveyardCost(2, null, legendary),
+                        new AllowPlayMatchingCardsFromGraveyardThisTurnEffect(legendary)),
+                "Kethis ability");
+        Permanent source = new Permanent(new Card());
+        gd.playerGraveyards.get(player1.getId()).addAll(List.of(
+                legendaryCard("{0}"), legendaryCard("{0}")));
+
+        double effectValue = spellEvaluator.evaluateAbilityEffects(
+                gd, ability.getEffects(), player1.getId());
+        double costValue = spellEvaluator.evaluateAbilityCosts(
+                gd, ability, source, player1.getId());
+        double withoutRemainingLegend = spellEvaluator.evaluateActivatedAbility(
+                gd, ability, source, player1.getId());
+
+        gd.playerGraveyards.get(player1.getId()).add(legendaryCard("{1}"));
+        double withRemainingLegend = spellEvaluator.evaluateActivatedAbility(
+                gd, ability, source, player1.getId());
+
+        assertThat(effectValue).isGreaterThan(0.0);
+        assertThat(costValue).isGreaterThan(0.0);
+        assertThat(withoutRemainingLegend).isLessThanOrEqualTo(0.0);
+        assertThat(withRemainingLegend).isGreaterThan(0.0);
+    }
+
+    private Card legendaryCard(String manaCost) {
+        Card card = new Card();
+        card.setManaCost(manaCost);
+        card.setSupertypes(Set.of(CardSupertype.LEGENDARY));
+        return card;
     }
 }

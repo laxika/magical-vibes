@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyGraveyardCardThenIfMatchesEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -44,12 +45,14 @@ public class ExileAnyGraveyardCardThenIfMatchesEffectHandler implements NormalEf
             gameData.rerunCurrentEffectAfterInteraction = false;
 
             if (chosenCardId == null) {
+                insertAfterCurrentEffect(entry, effect, exileThen.noCardEffect());
                 return;
             }
 
             Card chosen = findMatchingCard(gameData, entry, exileThen, chosenCardId);
             if (chosen == null || !graveyardReturnSupport.exileCardFromAnyGraveyard(
                     gameData, chosenCardId, chosen)) {
+                insertAfterCurrentEffect(entry, effect, exileThen.noCardEffect());
                 return;
             }
 
@@ -68,6 +71,7 @@ public class ExileAnyGraveyardCardThenIfMatchesEffectHandler implements NormalEf
         if (candidates.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), " finds no matching card in any graveyard to exile."));
+            insertAfterCurrentEffect(entry, effect, exileThen.noCardEffect());
             return;
         }
 
@@ -102,5 +106,22 @@ public class ExileAnyGraveyardCardThenIfMatchesEffectHandler implements NormalEf
                 .filter(card -> card.getId().equals(cardId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private void insertAfterCurrentEffect(StackEntry entry, CardEffect currentEffect,
+                                          CardEffect followUp) {
+        if (followUp == null) {
+            return;
+        }
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            CardEffect effect = effects.get(i);
+            if (effect == currentEffect
+                    || effect instanceof MayEffect may && may.wrapped().equals(currentEffect)) {
+                entry.insertEffectsToResolve(i + 1, List.of(followUp));
+                return;
+            }
+        }
+        throw new IllegalStateException("Could not locate graveyard exile effect on stack entry");
     }
 }

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersE
 import com.github.laxika.magicalvibes.model.effect.CountersCantBePlacedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AdditionalColorSourceDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
@@ -80,10 +81,13 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -107,11 +111,22 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
+
+    @Test
+    void urzaLandTypesAreNotCreatureTypes() {
+        for (CardSubtype subtype : List.of(CardSubtype.URZAS, CardSubtype.MINE,
+                CardSubtype.POWER_PLANT, CardSubtype.TOWER)) {
+            assertThat(gqs.isCreatureSubtype(subtype)).isFalse();
+            assertThat(com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport
+                    .isCreatureSubtype(subtype)).isFalse();
+        }
+    }
 
     @Mock
     private StaticEffectHandlerRegistry staticEffectRegistry;
@@ -137,6 +152,8 @@ class GameQueryServiceTest {
         ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
         ReflectionTestUtils.setField(gqs, "conditionEvaluationService", conditionEvaluationService);
+        ReflectionTestUtils.setField(gqs, "amountEvaluationService",
+                new AmountEvaluationService(evaluator, gqs));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -2215,6 +2232,18 @@ class GameQueryServiceTest {
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(1);
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
         }
+
+        @Test
+        @DisplayName("evaluates a dynamic bonus from the source permanent's counters")
+        void evaluatesDynamicBonusFromSourceCounters() {
+            Permanent fatedFirepower = addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Fated Firepower", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(
+                            new CountersOnSource(CounterType.FIRE))));
+            fatedFirepower.setCounterCount(CounterType.FIRE, 3);
+
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(3);
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+        }
     }
 
     @Nested
@@ -2307,6 +2336,28 @@ class GameQueryServiceTest {
                     new DoubleControllerDamageEffect(null, true)));
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 2 for a conditional controller damage multiplier when its condition is met")
+        void returnsTwoForConditionalControllerDamageMultiplier() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Anthem of Rakdos", 0, 0, CardColor.RED,
+                    new ConditionalEffect(new ControllerHandEmpty(), new DoubleControllerDamageEffect(null, true))));
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerHandEmpty.class), any(ConditionContext.class)))
+                    .thenReturn(true);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("does not apply a conditional controller damage multiplier when its condition is not met")
+        void doesNotApplyConditionalControllerDamageMultiplierWhenConditionIsNotMet() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Anthem of Rakdos", 0, 0, CardColor.RED,
+                    new ConditionalEffect(new ControllerHandEmpty(), new DoubleControllerDamageEffect(null, true))));
+            when(conditionEvaluationService.isMet(eq(gd), any(ControllerHandEmpty.class), any(ConditionContext.class)))
+                    .thenReturn(false);
+
+            assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(1);
         }
 
         @Test

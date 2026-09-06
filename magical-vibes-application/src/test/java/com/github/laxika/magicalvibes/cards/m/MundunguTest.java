@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.f.FallenAskari;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mundungu.class, FallenAskari.class})
 class MundunguTest extends BaseCardTest {
 
     @Test
@@ -42,18 +45,44 @@ class MundunguTest extends BaseCardTest {
         Permanent mundungu = addCreatureReady(player1, new Mundungu());
 
         harness.forceActivePlayer(player2);
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player2, List.of(elves));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player2, List.of(askari));
+        harness.addMana(player2, ManaColor.BLACK, 2);
 
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
-        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.activateAbility(player1, 0, null, askari.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Llanowar Elves");
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Fallen Askari");
+        harness.assertNotOnBattlefield(player2, "Fallen Askari");
         assertThat(gd.stack).isEmpty();
+        assertThat(mundungu.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed(PlatinumEmperion.class)
+    @DisplayName("Counters spell when opponent cannot pay 1 life")
+    void countersWhenOpponentCannotPayLife() {
+        Permanent mundungu = addCreatureReady(player1, new Mundungu());
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+
+        harness.forceActivePlayer(player2);
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player2, List.of(askari));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, askari.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Fallen Askari");
+        harness.assertNotOnBattlefield(player2, "Fallen Askari");
         assertThat(mundungu.isTapped()).isTrue();
     }
 
@@ -63,15 +92,15 @@ class MundunguTest extends BaseCardTest {
         Permanent mundungu = addCreatureReady(player1, new Mundungu());
 
         harness.forceActivePlayer(player2);
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player2, List.of(elves));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player2, List.of(askari));
+        harness.addMana(player2, ManaColor.BLACK, 3);
 
         int lifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
-        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.activateAbility(player1, 0, null, askari.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -81,11 +110,12 @@ class MundunguTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
-        harness.assertNotInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+        harness.assertNotInGraveyard(player2, "Fallen Askari");
         assertThat(mundungu.isTapped()).isTrue();
 
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Fallen Askari");
     }
 
     @Test
@@ -94,21 +124,21 @@ class MundunguTest extends BaseCardTest {
         addCreatureReady(player1, new Mundungu());
 
         harness.forceActivePlayer(player2);
-        LlanowarElves elves = new LlanowarElves();
-        harness.setHand(player2, List.of(elves));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        FallenAskari askari = new FallenAskari();
+        harness.setHand(player2, List.of(askari));
+        harness.addMana(player2, ManaColor.BLACK, 3);
 
         int lifeBefore = gd.getLife(player2.getId());
 
         harness.castCreature(player2, 0);
         harness.passPriority(player2);
-        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.activateAbility(player1, 0, null, askari.getId());
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
-        harness.assertInGraveyard(player2, "Llanowar Elves");
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Fallen Askari");
+        harness.assertNotOnBattlefield(player2, "Fallen Askari");
     }
 }

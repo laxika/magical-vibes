@@ -154,6 +154,15 @@ public class ExileSupport {
         gameData.exilePlayPermissions.put(cardId, ownerId);
     }
 
+    /** Grants an owner permission to cast a card from exile for a fixed generic alternative cost. */
+    public void grantCastWhileExiledForGenericCost(GameData gameData, UUID cardId, UUID ownerId,
+                                                   int genericCost) {
+        grantPlayWhileExiled(gameData, cardId, ownerId);
+        gameData.exilePlayWithoutPayingManaCost.add(cardId);
+        gameData.exilePlayCostModifiers.put(cardId,
+                new ExilePlayCostModifier(ownerId, null, genericCost));
+    }
+
     /**
      * Grants an owner permission to play a card from exile and records a cost increase for players
      * who are opponents of {@code sourceControllerId}.

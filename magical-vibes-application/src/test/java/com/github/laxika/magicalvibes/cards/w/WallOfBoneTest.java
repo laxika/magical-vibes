@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,23 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WallOfBone.class, EarthElemental.class, GrizzlyBears.class})
 class WallOfBoneTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wall of Bone has regeneration activated ability costing {B}")
-    void hasCorrectProperties() {
-        WallOfBone card = new WallOfBone();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Wall of Bone puts it on the stack")
@@ -63,7 +48,14 @@ class WallOfBoneTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wall of Bone");
     }
 
-    // ===== Activate regeneration ability =====
+    @Test
+    @DisplayName("Defender prevents Wall of Bone from attacking")
+    void defenderPreventsAttacking() {
+        addWallOfBoneReady(player1);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     @DisplayName("Activating regeneration ability puts it on the stack with self as target")
@@ -82,7 +74,7 @@ class WallOfBoneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Resolving regeneration ability grants a regeneration shield")
+    @DisplayName("Resolving regeneration ability grants a regeneration shield without tapping Wall of Bone")
     void resolvingAbilityGrantsRegenerationShield() {
         addWallOfBoneReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -92,8 +84,9 @@ class WallOfBoneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent wall = findPermanent(player1, "Wall of Bone");
         assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isFalse();
     }
 
     @Test
@@ -106,91 +99,94 @@ class WallOfBoneTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Regeneration saves from combat damage =====
-
     @Test
     @DisplayName("Regeneration shield saves Wall of Bone from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        // Wall of Bone (1/4) with regen shield blocks Earth Elemental (4/5) — 4 damage = lethal
+        // Wall of Bone (1/4) with a regeneration shield blocks Earth Elemental (4/5): 4 damage is lethal.
         Permanent wallPerm = addWallOfBoneReady(player1);
         wallPerm.setRegenerationShield(1);
         wallPerm.setBlocking(true);
         wallPerm.addBlockingTarget(0);
 
-        EarthElemental elemental = new EarthElemental();
-        Permanent attacker = new Permanent(elemental);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new EarthElemental());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat(player2);
 
-        harness.passBothPriorities();
-
-        // Wall of Bone should survive via regeneration
         harness.assertOnBattlefield(player1, "Wall of Bone");
         Permanent wall = findPermanent(player1, "Wall of Bone");
         assertThat(wall.isTapped()).isTrue();
-        assertThat(wall.getRegenerationShield()).isEqualTo(0);
+        assertThat(wall.getRegenerationShield()).isZero();
     }
 
     @Test
     @DisplayName("Wall of Bone survives sub-lethal combat damage without regeneration")
     void survivesSublethalDamageWithoutRegeneration() {
-        // Wall of Bone (1/4) blocks Grizzly Bears (2/2) — takes 2 damage, survives naturally
+        // Wall of Bone (1/4) blocks Grizzly Bears (2/2): 2 damage is not lethal.
         Permanent wallPerm = addWallOfBoneReady(player1);
         wallPerm.setBlocking(true);
         wallPerm.addBlockingTarget(0);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat(player2);
 
-        harness.passBothPriorities();
-
-        // Wall of Bone survives — 2 damage < 4 toughness
         harness.assertOnBattlefield(player1, "Wall of Bone");
+    }
+
+    @Test
+    @DisplayName("A regeneration shield remains after nonlethal combat damage")
+    void regenerationShieldRemainsAfterNonlethalDamage() {
+        Permanent wall = addWallOfBoneReady(player1);
+        wall.setRegenerationShield(1);
+        wall.setBlocking(true);
+        wall.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Wall of Bone");
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Wall of Bone dies without regeneration shield from lethal combat damage")
     void diesWithoutRegenerationShieldFromLethalDamage() {
-        // Wall of Bone (1/4) blocks Earth Elemental (4/5) — 4 damage >= 4 toughness, dies
+        // Wall of Bone (1/4) blocks Earth Elemental (4/5): 4 damage is lethal.
         Permanent wallPerm = addWallOfBoneReady(player1);
         wallPerm.setBlocking(true);
         wallPerm.addBlockingTarget(0);
 
-        EarthElemental elemental = new EarthElemental();
-        Permanent attacker = new Permanent(elemental);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new EarthElemental());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Wall of Bone");
         harness.assertInGraveyard(player1, "Wall of Bone");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Regeneration shields expire during cleanup")
+    void regenerationShieldExpiresAtCleanup() {
+        addWallOfBoneReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Wall of Bone").getRegenerationShield()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(findPermanent(player1, "Wall of Bone").getRegenerationShield()).isZero();
+    }
 
     private Permanent addWallOfBoneReady(Player player) {
-        WallOfBone card = new WallOfBone();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new WallOfBone());
     }
 }

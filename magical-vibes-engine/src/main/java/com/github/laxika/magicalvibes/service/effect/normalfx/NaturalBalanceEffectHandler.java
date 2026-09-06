@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NaturalBalanceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,8 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
+    private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,6 +47,10 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
         for (UUID playerId : basicLandSearchQueueSupport.apnapOrder(gameData)) {
             List<Permanent> lands = lands(gameData, playerId);
             if (lands.size() > TARGET_LANDS) {
+                if (!gameQueryService.canEffectCauseSacrifice(
+                        gameData, playerId, entry.getControllerId())) {
+                    continue;
+                }
                 List<UUID> landIds = lands.stream().map(Permanent::getId).toList();
                 sacrificers.add(new PendingForcedSacrifice(playerId, lands.size() - TARGET_LANDS, landIds));
             } else if (lands.size() < TARGET_LANDS) {
@@ -51,7 +58,13 @@ public class NaturalBalanceEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        basicLandSearchQueueSupport.advance(gameData, LibrarySearchFollowUp.basicLandSearches(searchers, sacrificers));
+        LibrarySearchFollowUp searches = LibrarySearchFollowUp.basicLandSearches(searchers, List.of());
+        if (!sacrificers.isEmpty()) {
+            destructionSupport.beginNextForcedSacrificeFromQueue(
+                    gameData, sacrificers, List.of(), true, searches);
+        } else {
+            basicLandSearchQueueSupport.advance(gameData, searches);
+        }
     }
 
     private List<Permanent> lands(GameData gameData, UUID playerId) {

@@ -29,6 +29,7 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
+    private final DamageSupport damageSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,10 +38,16 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Map<UUID, Integer> assignments = entry.getDamageAssignments();
+        PreventDividedDamageEffect prevention = (PreventDividedDamageEffect) effect;
+        Map<UUID, Integer> assignments;
+        if (prevention.etbAssignments()) {
+            assignments = gameData.pendingETBDamageAssignments;
+            gameData.pendingETBDamageAssignments = Map.of();
+        } else {
+            assignments = entry.getDamageAssignments();
+        }
         if (assignments == null || assignments.isEmpty()) return;
 
-        PreventDividedDamageEffect prevention = (PreventDividedDamageEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
@@ -52,12 +59,14 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
 
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
-            if (!entry.isAssignmentTargetLegal(targetId)) continue;
+            if (!prevention.etbAssignments() && !entry.isAssignmentTargetLegal(targetId)) continue;
 
             int amount = assignment.getValue();
+            if (amount <= 0) continue;
 
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
+                if (prevention.etbAssignments() && !damageSupport.isAnyTargetDamageRecipient(gameData, target)) continue;
                 target.setDamagePreventionShield(target.getDamagePreventionShield() + amount);
                 gameLogService.append(gameData, GameLog.textCardText("The next " + amount + " damage that would be dealt to ", target.getCard(), " is prevented."));
                 continue;

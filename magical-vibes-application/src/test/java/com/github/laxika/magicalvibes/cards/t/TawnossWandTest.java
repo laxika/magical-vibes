@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TawnossWand.class, GrizzlyBears.class, HillGiant.class})
 class TawnossWandTest extends BaseCardTest {
 
     @Test
@@ -28,6 +30,48 @@ class TawnossWandTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(wand.isTapped()).isTrue();
         assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability can target an opponent's power-2 creature")
+    void makesOpponentsCreatureUnblockable() {
+        addReadyWand(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNonCreaturePermanent() {
+        Permanent wand = addReadyWand(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(wand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature made unblockable cannot be blocked")
+    void madeUnblockableCreatureCannotBeBlocked() {
+        addReadyWand(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -71,9 +115,8 @@ class TawnossWandTest extends BaseCardTest {
     }
 
     private Permanent addReadyWand(Player player) {
-        Permanent perm = new Permanent(new TawnossWand());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TawnossWand());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

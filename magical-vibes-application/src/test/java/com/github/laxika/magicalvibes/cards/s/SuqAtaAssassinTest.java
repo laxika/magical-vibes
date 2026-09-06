@@ -1,25 +1,28 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.b.Breezekeeper;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
+import com.github.laxika.magicalvibes.cards.u.UrborgMindsucker;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SuqAtaAssassin.class, Breezekeeper.class, PhyrexianWalker.class, UrborgMindsucker.class})
 class SuqAtaAssassinTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent atk = new Permanent(new SuqAtaAssassin());
-        atk.setSummoningSick(false);
-        atk.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atk);
-        return atk;
+        Permanent attacker = addCreatureReady(player1, new SuqAtaAssassin());
+        attacker.setAttacking(true);
+        return attacker;
     }
 
     @Test
@@ -43,20 +46,42 @@ class SuqAtaAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("Blocked attacker gives no poison counter")
     void blockedNoPoison() {
-        // Ornithopter is an artifact creature, so it can block through Fear.
-        Permanent blocker = new Permanent(new Ornithopter());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        // Phyrexian Walker is an artifact creature, so it can block through Fear.
+        Permanent blocker = addCreatureReady(player2, new PhyrexianWalker());
 
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Fear prevents a nonblack, nonartifact creature from blocking")
+    void nonblackNonartifactCannotBlock() {
+        Permanent blocker = addCreatureReady(player2, new Breezekeeper());
+        addAttacker();
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("fear");
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Fear allows a black creature to block")
+    void blackCreatureCanBlock() {
+        Permanent blocker = addCreatureReady(player2, new UrborgMindsucker());
+        addAttacker();
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

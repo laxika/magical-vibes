@@ -98,9 +98,15 @@ public class MayCastHandlerService {
                 }
                 deck.removeFirst();
 
-                List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-                StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
-                        ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+                StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
+                boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
+                        || cardToCast.hasType(CardType.ARTIFACT)
+                        || cardToCast.hasType(CardType.ENCHANTMENT)
+                        || cardToCast.hasType(CardType.PLANESWALKER)
+                        || cardToCast.hasType(CardType.BATTLE);
+                List<CardEffect> spellEffects = isPermanentSpell
+                        ? List.of()
+                        : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
 
                 if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
                     // Targeted spell — need to choose target before putting on stack
@@ -155,17 +161,33 @@ public class MayCastHandlerService {
      * library, or stays on top).
      */
     public void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        Card cardToPlay = ability.sourceCard();
-        String playerName = player.getUsername();
-        List<Card> deck = gameData.playerDecks.get(player.getId());
         LookDestination notPlayedDestination = ability.effects().stream()
                 .filter(e -> e instanceof RevealTopCardMayPlayFreeEffect)
                 .map(e -> ((RevealTopCardMayPlayFreeEffect) e).notPlayedDestination())
                 .findFirst().orElse(LookDestination.EXILE);
+        handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability,
+                notPlayedDestination, true);
+    }
+
+    public void handleLookAtTopCardMayPlayLandOrCastFreeChoice(GameData gameData, Player player,
+                                                                boolean accepted,
+                                                                PendingMayAbility ability) {
+        handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability,
+                LookDestination.HAND, false);
+    }
+
+    private void handlePlayFromLibraryOrExileChoice(GameData gameData, Player player, boolean accepted,
+                                                     PendingMayAbility ability,
+                                                     LookDestination notPlayedDestination,
+                                                     boolean publiclyRevealed) {
+        Card cardToPlay = ability.sourceCard();
+        String playerName = player.getUsername();
+        List<Card> deck = gameData.playerDecks.get(player.getId());
 
         if (!accepted) {
             switch (notPlayedDestination) {
-                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName);
+                case HAND -> putTopCardIntoHand(gameData, player.getId(), deck, cardToPlay, playerName,
+                        publiclyRevealed);
                 case EXILE -> exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
                 case BOTTOM_OF_LIBRARY -> bottomTopCardOfLibrary(gameData, deck, cardToPlay, playerName);
                 default -> {
@@ -241,9 +263,8 @@ public class MayCastHandlerService {
                 if (validTargets.isEmpty()) {
                     switch (notPlayedDestination) {
                         case HAND -> {
-                            gameData.playerHands.get(player.getId()).add(cardToPlay);
-                            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
-                                    " can't be cast and is put into " + playerName + "'s hand."));
+                            gameData.addCardToHand(player.getId(), cardToPlay);
+                            logCardPutIntoHand(gameData, cardToPlay, playerName, publiclyRevealed);
                         }
                         case EXILE -> {
                             // No valid targets — exile the card instead
@@ -446,6 +467,19 @@ public class MayCastHandlerService {
         return validTargets;
     }
 
+    private static StackEntryType mapCardTypeToSpellType(Card card) {
+        return switch (card.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case BATTLE -> StackEntryType.BATTLE_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + card.getType());
+        };
+    }
+
     private void bottomTopCardOfLibrary(GameData gameData, List<Card> deck, Card card, String playerName) {
         if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
@@ -456,14 +490,24 @@ public class MayCastHandlerService {
     }
 
     private void putTopCardIntoHand(GameData gameData, UUID playerId, List<Card> deck,
-                                    Card card, String playerName) {
+                                    Card card, String playerName, boolean publiclyRevealed) {
         if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
             deck.removeFirst();
-            gameData.playerHands.get(playerId).add(card);
+            gameData.addCardToHand(playerId, card);
         }
-        gameLogService.append(gameData, GameLog.cardThen(card,
-                " is put into " + playerName + "'s hand."));
+        logCardPutIntoHand(gameData, card, playerName, publiclyRevealed);
         log.info("Game {} - {} puts {} into hand", gameData.id, playerName, card.getName());
+    }
+
+    private void logCardPutIntoHand(GameData gameData, Card card, String playerName,
+                                    boolean publiclyRevealed) {
+        if (publiclyRevealed) {
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " is put into " + playerName + "'s hand."));
+        } else {
+            gameLogService.append(gameData,
+                    GameLog.text(playerName + " puts the top card of their library into their hand."));
+        }
     }
 
     private void exileTopCardFromLibrary(GameData gameData, UUID playerId, List<Card> deck, Card card, String playerName) {
@@ -906,7 +950,9 @@ public class MayCastHandlerService {
         if (cardToPlay.hasType(CardType.LAND)) {
             gameData.removeFromExile(cardToPlay.getId());
             gameData.recordCardPlayedFromExile(player.getId());
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            Permanent permanent = new Permanent(cardToPlay);
+            permanent.setEnteredFromExile(true);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
             gameLogService.append(gameData,
                     GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));

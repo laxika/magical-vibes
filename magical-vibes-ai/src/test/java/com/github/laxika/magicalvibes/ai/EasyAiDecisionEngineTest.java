@@ -2010,6 +2010,77 @@ class EasyAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Easy AI reserves a creature to pay Hollow Warrior's block cost")
+        void reservesCreatureForBlockTapCost() {
+            Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            attacker.setAttacking(true);
+            Permanent warrior = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HollowWarrior());
+            warrior.setSummoningSick(false);
+            Permanent support = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new GrizzlyBears());
+            support.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int attackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(attacker);
+            int warriorIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(warrior);
+            int supportIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(support);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                        new BlockerAssignment(warriorIndex, attackerIndex),
+                        new BlockerAssignment(supportIndex, attackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(warrior.isBlocking()).isTrue();
+            assertThat(support.isBlocking()).isFalse();
+            assertThat(support.isTapped()).isTrue();
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
+        @DisplayName("Easy AI reassigns an existing blocker to a Lure attacker")
+        void reassignsExistingBlockerToLureAttacker() {
+            Permanent lureAttacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            lureAttacker.setSummoningSick(false);
+            lureAttacker.setAttacking(true);
+            Permanent lure = combatHarness.addToBattlefieldAndReturn(opponent, new Lure());
+            lure.setAttachedTo(lureAttacker.getId());
+            Permanent otherAttacker = combatHarness.addToBattlefieldAndReturn(opponent, new GrizzlyBears());
+            otherAttacker.setSummoningSick(false);
+            otherAttacker.setAttacking(true);
+            Permanent blocker = combatHarness.addToBattlefieldAndReturn(combatAiPlayer, new HillGiant());
+            blocker.setSummoningSick(false);
+
+            combatHarness.forceActivePlayer(opponent);
+            combatHarness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            combatHarness.clearPriorityPassed();
+            combatHarness.beginBlockerDeclarationInput();
+
+            int otherAttackerIndex = combatGd.playerBattlefields.get(opponent.getId()).indexOf(otherAttacker);
+            int blockerIndex = combatGd.playerBattlefields.get(combatAiPlayer.getId()).indexOf(blocker);
+            FuzzLogWatcher watcher = FuzzLogWatcher.install();
+            try {
+                combatAi.sendBlockerDeclaration(new DeclareBlockersRequest(
+                        List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex))));
+                assertThat(watcher.drainFailures()).isEmpty();
+            } finally {
+                watcher.uninstall();
+            }
+
+            assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
+            assertThat(combatGd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class))
+                    .isNull();
+        }
+
+        @Test
         @DisplayName("Easy AI caps Lure blocks to an aura-granted maximum")
         void capsLureBlocksToAuraGrantedMaximum() {
             Permanent attacker = combatHarness.addToBattlefieldAndReturn(opponent, new KjeldoranRoyalGuard());

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "32")
+@CardRegistration(set = "LEG", collectorNumber = "31")
 public class PresenceOfTheMaster extends Card {
 
     public PresenceOfTheMaster() {

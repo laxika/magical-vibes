@@ -38,6 +38,9 @@ public class ProtectionFromColorsOfPermanentsYouControlSelfEffectHandler impleme
         if (protection.scope() != null) {
             return;
         }
+        if (context.sourceControllerId() == null) {
+            return;
+        }
 
         List<Permanent> battlefield = context.gameData().playerBattlefields.get(context.sourceControllerId());
         if (battlefield == null) {

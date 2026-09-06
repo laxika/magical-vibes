@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TradeCaravan.class, Plains.class, LandCap.class})
 class TradeCaravanTest extends BaseCardTest {
 
     private void enterOpponentUpkeep() {
@@ -61,6 +63,43 @@ class TradeCaravanTest extends BaseCardTest {
 
         assertThat(plains.isTapped()).isFalse();
         assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing currency counters is an activation cost")
+    void removesCurrencyCountersOnActivation() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+        plains.tap();
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, plains.getId());
+
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isZero();
+        assertThat(plains.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(plains.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can untap an opponent's basic land without tapping Trade Caravan")
+    void untapsOpponentsBasicLandWithoutTappingCaravan() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+        caravan.tap();
+        plains.tap();
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, plains.getId());
+        harness.passBothPriorities();
+
+        assertThat(plains.isTapped()).isFalse();
+        assertThat(caravan.isTapped()).isTrue();
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isZero();
     }
 
     @Test

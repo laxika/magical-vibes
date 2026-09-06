@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FortifiedArea.class, WallOfWood.class, GrizzlyBears.class})
 class FortifiedAreaTest extends BaseCardTest {
 
     @Test
@@ -62,6 +64,15 @@ class FortifiedAreaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not grant banding to opponent's Wall creatures")
+    void doesNotGrantBandingToOpponentWalls() {
+        harness.addToBattlefield(player1, new FortifiedArea());
+        harness.addToBattlefield(player2, new WallOfWood());
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Wall of Wood"), Keyword.BANDING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Bonus is removed when Fortified Area leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new FortifiedArea());
@@ -75,5 +86,20 @@ class FortifiedAreaTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Banding is removed when Fortified Area leaves the battlefield")
+    void bandingRemovedWhenSourceLeaves() {
+        harness.addToBattlefield(player1, new FortifiedArea());
+        harness.addToBattlefield(player1, new WallOfWood());
+
+        Permanent wall = findPermanent(player1, "Wall of Wood");
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(p -> p.getCard().getName().equals("Fortified Area"));
+
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.BANDING)).isFalse();
     }
 }

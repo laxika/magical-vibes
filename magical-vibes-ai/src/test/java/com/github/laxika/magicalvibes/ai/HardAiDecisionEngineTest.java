@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.cards.h.HollowWarrior;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RatsFeast;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -191,6 +192,23 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Tag("scryfall")
 class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
+
+    @Test
+    @DisplayName("Hard AI skips activated abilities that require damage assignments")
+    void skipsActivatedAbilityThatRequiresDamageAssignments() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        Permanent inferno = harness.addToBattlefieldAndReturn(player1, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        HardAiDecisionEngine ai = createHardAi(player1);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(inferno.isTapped()).isFalse();
+        assertThat(gd.priorityPassedBy).containsExactly(player1.getId());
+    }
 
     @Test
     @DisplayName("Hard AI preserves an untapped spell target while paying mana")
@@ -1762,6 +1780,77 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         ai.handleEvent(AiDecisionKind.BLOCKER_DECLARATION);
 
         assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI reserves a creature to pay Hollow Warrior's block cost")
+    void reservesCreatureForBlockTapCost() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new HollowWarrior());
+        warrior.setSummoningSick(false);
+        Permanent support = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        support.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int warriorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(warrior);
+        int supportIndex = gd.playerBattlefields.get(player2.getId()).indexOf(support);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of(
+                    new BlockerAssignment(warriorIndex, attackerIndex),
+                    new BlockerAssignment(supportIndex, attackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(warrior.isBlocking()).isTrue();
+        assertThat(support.isBlocking()).isFalse();
+        assertThat(support.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Hard AI reassigns an existing blocker to a Lure attacker")
+    void reassignsExistingBlockerToLureAttacker() {
+        Permanent lureAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        lureAttacker.setSummoningSick(false);
+        lureAttacker.setAttacking(true);
+        Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
+        lure.setAttachedTo(lureAttacker.getId());
+        Permanent otherAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        otherAttacker.setSummoningSick(false);
+        otherAttacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        blocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        HardAiDecisionEngine ai = createHardAi(player2);
+
+        int otherAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        FuzzLogWatcher watcher = FuzzLogWatcher.install();
+        try {
+            ai.sendBlockerDeclaration(new DeclareBlockersRequest(
+                    List.of(new BlockerAssignment(blockerIndex, otherAttackerIndex))));
+            assertThat(watcher.drainFailures()).isEmpty();
+        } finally {
+            watcher.uninstall();
+        }
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
 

@@ -71,6 +71,17 @@ class HeartlessActTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void removesThreeOfFourCountersOfOneKind() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        cast(1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "3");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void cast(int mode, UUID targetId) {
         harness.setHand(player1, List.of(new HeartlessAct()));
         harness.addMana(player1, ManaColor.BLACK, 1);

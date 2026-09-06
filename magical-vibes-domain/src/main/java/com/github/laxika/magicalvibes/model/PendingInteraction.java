@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BeholdEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -27,6 +28,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingOpponentChoosesCardToHandRestToGraveyard,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingMurmursFromBeyondChoice,
+        PendingAnimalMagnetismChoice,
         PendingAllureOfTheUnknownChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
@@ -44,6 +46,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.PortentOfCalamityState,
         PendingInteraction.PlarggAndNassariOpponentChoice,
         PendingInteraction.PlarggAndNassariCardChoice,
         PendingInteraction.EyeOfTheStormCastChoice,
@@ -51,6 +54,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.TargetHandSpellCopyChoice,
         PendingInteraction.ExiledCardMayPlayChoice,
         PendingInteraction.LudevicCopyChoice,
+        PendingInteraction.KohExiledCreatureChoice,
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice,
         PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice,
         PendingInteraction.BrilliantUltimatumPileSeparationChoice,
@@ -83,6 +87,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MagesContestBidChoice,
         PendingInteraction.PainsRewardBidChoice,
         PendingInteraction.ExiledCardChoice,
+        PendingInteraction.RemoveTimeCounterCostChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
         PendingInteraction.BeholdChoice,
@@ -118,9 +123,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
+        PendingInteraction.ShuffleCardsFromOutsideGameChoice,
         PendingInteraction.AssimilationAegisCopyChoice,
         PendingInteraction.ExiledCreatureCopyChoice,
         PendingInteraction.FaceUpExiledCardChoice,
+        PendingInteraction.ETBExiledCardTargetChoice,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
         PendingInteraction.ForbiddenRitualRepeatChoice,
@@ -431,21 +438,27 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Scry N / surveil N: {@code cards} are held out of the library while the player splits them
-     * into a keep-on-top pile and a reject pile. When {@code toGraveyard} is false (scry) the
-     * reject pile goes to the bottom of the library; when true (surveil) it goes to the
-     * graveyard. Both variants share the SCRY_ORDER interaction shape and answer.
+     * Scry N, surveil N, or fateseal N: {@code cards} are held out of the library while the player
+     * splits them into a keep-on-top pile and a reject pile. When {@code toGraveyard} is false the
+     * reject pile goes to the bottom of the library; when true it goes to the graveyard. The
+     * {@code causesScryTriggers} flag distinguishes fateseal from scry while sharing the same
+     * interaction shape and answer.
      */
-    record Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard, UUID libraryOwnerId)
+    record Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard, UUID libraryOwnerId,
+                boolean causesScryTriggers)
             implements PendingInteraction {
 
         /** Scry variant: the reject pile goes to the bottom of the library. */
         public Scry(UUID playerId, java.util.List<Card> cards) {
-            this(playerId, cards, false, playerId);
+            this(playerId, cards, false, playerId, true);
         }
 
         public Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard) {
-            this(playerId, cards, toGraveyard, playerId);
+            this(playerId, cards, toGraveyard, playerId, !toGraveyard);
+        }
+
+        public Scry(UUID playerId, java.util.List<Card> cards, boolean toGraveyard, UUID libraryOwnerId) {
+            this(playerId, cards, toGraveyard, libraryOwnerId, !toGraveyard);
         }
 
         @Override
@@ -479,7 +492,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * (also re-sent on reconnect).
      */
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
-                          UUID deckOwnerId, String prompt) implements PendingInteraction {
+                          UUID deckOwnerId, String prompt, int drawAfterReorder) implements PendingInteraction {
+
+        public LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
+                              UUID deckOwnerId, String prompt) {
+            this(playerId, cards, toBottom, deckOwnerId, prompt, 0);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -563,6 +581,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
+    }
+
+    /** State carried while one optional exile is offered for each card type. */
+    record PortentOfCalamityState(UUID playerId, java.util.List<UUID> revealedCardIds)
+            implements PendingInteraction {
+
+        public PortentOfCalamityState {
+            revealedCardIds = java.util.List.copyOf(revealedCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
         }
     }
 
@@ -682,15 +719,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Choose one card among exiled cards and grant it a temporary play permission. */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                   boolean expiresAtEndOfTurn)
+                                   ExilePlayDuration duration)
             implements PendingInteraction {
 
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds) {
-            this(playerId, validCardIds, false);
+            this(playerId, validCardIds, ExilePlayDuration.NEXT_TURN);
+        }
+
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       boolean expiresAtEndOfTurn) {
+            this(playerId, validCardIds,
+                    expiresAtEndOfTurn ? ExilePlayDuration.END_OF_TURN : ExilePlayDuration.NEXT_TURN);
         }
 
         public ExiledCardMayPlayChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        public boolean expiresAtEndOfTurn() {
+            return duration == ExilePlayDuration.END_OF_TURN;
         }
 
         @Override
@@ -724,6 +771,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    /** Chooses which creature card exiled with Koh is used for ability copying. */
+    record KohExiledCreatureChoice(UUID playerId, UUID sourcePermanentId,
+                                   java.util.List<UUID> validCardIds)
+            implements PendingInteraction {
+
+        public KohExiledCreatureChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 
@@ -1042,7 +1109,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                               com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
                                               String label, String cardName,
                                               boolean repeatUntilNoOne, UUID startingPlayerId,
-                                              boolean cardPutThisRound)
+                                              boolean cardPutThisRound, boolean anyNumber)
             implements PendingInteraction {
 
         public EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
@@ -1051,7 +1118,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                   com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
                                                   String label, String cardName) {
             this(playerId, validCardIds, remainingPlayerIds, chosenCardIds, predicate, label, cardName,
-                    false, null, false);
+                    false, null, false, false);
+        }
+
+        public EachPlayerMayPutCardFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                  java.util.List<UUID> remainingPlayerIds,
+                                                  java.util.List<UUID> chosenCardIds,
+                                                  com.github.laxika.magicalvibes.model.filter.CardPredicate predicate,
+                                                  String label, String cardName,
+                                                  boolean repeatUntilNoOne, UUID startingPlayerId,
+                                                  boolean cardPutThisRound) {
+            this(playerId, validCardIds, remainingPlayerIds, chosenCardIds, predicate, label, cardName,
+                    repeatUntilNoOne, startingPlayerId, cardPutThisRound, false);
         }
 
         public EachPlayerMayPutCardFromHandChoice {
@@ -1067,7 +1145,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+            return new InteractionOptions.MultiCardPick(validCardIds, 0,
+                    anyNumber && !repeatUntilNoOne ? validCardIds.size() : 1);
         }
     }
 
@@ -1089,9 +1168,22 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    record EachPlayerRevealContext(java.util.List<UUID> remainingPlayerIds,
+                                   java.util.List<UUID> playerOrder,
+                                   java.util.Map<UUID, Integer> revealedCounts,
+                                   CardPredicate filter, CreateTokenEffect token) {
+
+        public EachPlayerRevealContext {
+            remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
+            playerOrder = java.util.List.copyOf(playerOrder);
+            revealedCounts = java.util.Map.copyOf(revealedCounts);
+        }
+    }
+
     record RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                 String cardName, ManaAbilityRevealContext manaAbilityContext,
-                                                ActivatedAbilityRevealContext activatedAbilityContext)
+                                                ActivatedAbilityRevealContext activatedAbilityContext,
+                                                EachPlayerRevealContext eachPlayerRevealContext)
             implements PendingInteraction {
 
         public RevealAnyNumberOfCardsFromHandChoice {
@@ -1100,12 +1192,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                    String cardName) {
-            this(playerId, validCardIds, cardName, null, null);
+            this(playerId, validCardIds, cardName, null, null, null);
         }
 
         public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                    String cardName, ManaAbilityRevealContext manaAbilityContext) {
-            this(playerId, validCardIds, cardName, manaAbilityContext, null);
+            this(playerId, validCardIds, cardName, manaAbilityContext, null, null);
+        }
+
+        public RevealAnyNumberOfCardsFromHandChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String cardName, ManaAbilityRevealContext manaAbilityContext,
+                                                   ActivatedAbilityRevealContext activatedAbilityContext) {
+            this(playerId, validCardIds, cardName, manaAbilityContext, activatedAbilityContext, null);
         }
 
         @Override
@@ -1702,6 +1800,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses a permanent or suspended card from which to remove a time counter as a cost. */
+    record RemoveTimeCounterCostChoice(
+            UUID playerId,
+            java.util.List<UUID> validCardIds,
+            PermanentChoiceContext.ActivatedAbilityCostChoice context,
+            String prompt) implements PendingInteraction {
+
+        public RemoveTimeCounterCostChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
     /**
      * A single-value "choose from a list" decision covering the COLOR_CHOICE protocol
      * family (mana color, protection color, keyword/subtype/permanent-type/basic-land-type,
@@ -1774,7 +1894,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * target's hand before every follow-up pick so a multi-pick flow keeps its restriction (Reap
      * Intellect's "up to X nonland cards"). {@code exileAllCopiesOfChosenNames} (exile mode only)
      * additionally exiles every card with a chosen card's name from the target's hand, graveyard,
-     * and library and shuffles that library.
+     * and library and shuffles that library. {@code libraryPosition} is the zero-based insertion
+     * position for library-placement choices, clamped to the bottom when the library is shorter.
      */
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                               java.util.List<Integer> validIndices, int remainingCount,
@@ -1795,8 +1916,68 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               boolean plot,
                               CardEffect declineEffect,
                               com.github.laxika.magicalvibes.model.filter.CardPredicate chosenCardCondition,
-                              CardEffect chosenCardThenEffect)
+                              CardEffect chosenCardThenEffect,
+                              int libraryPosition)
             implements PendingInteraction {
+
+        public RevealedHandChoice {
+            if (libraryPosition < 0) {
+                throw new IllegalArgumentException("libraryPosition must not be negative");
+            }
+        }
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
+                                  boolean exileAllCopiesOfChosenNames,
+                                  boolean imprintOnSource,
+                                  boolean shuffleIntoLibraryMode,
+                                  boolean discardThenDrawMode,
+                                  boolean grantPlayPermission,
+                                  boolean returnAtNextEndStep,
+                                  int exilePlayOpponentTax,
+                                  boolean plot,
+                                  CardEffect declineEffect) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
+                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
+                    grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, plot,
+                    declineEffect, null, null, 0);
+        }
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
+                                  boolean exileAllCopiesOfChosenNames,
+                                  boolean imprintOnSource,
+                                  boolean shuffleIntoLibraryMode,
+                                  boolean discardThenDrawMode,
+                                  boolean grantPlayPermission,
+                                  boolean returnAtNextEndStep,
+                                  int exilePlayOpponentTax,
+                                  int libraryPosition) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
+                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
+                    grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, false,
+                    null, null, null, libraryPosition);
+        }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                   java.util.List<Integer> validIndices, int remainingCount,
@@ -1820,7 +2001,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, false, null,
-                    null, null);
+                    null, null, 0);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -1844,7 +2025,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
                     declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
-                    grantPlayPermission, returnAtNextEndStep, 0, plot, null, null, null);
+                    grantPlayPermission, returnAtNextEndStep, 0, plot, null, null, null, 0);
         }
 
         public RevealedHandChoice withDeclineEffect(CardEffect effect) {
@@ -1854,7 +2035,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     followUpFilter, followUpPrompt, declineFallbackDiscardCount, choosableFilter,
                     exileAllCopiesOfChosenNames, imprintOnSource, shuffleIntoLibraryMode,
                     discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
-                    exilePlayOpponentTax, plot, effect, chosenCardCondition, chosenCardThenEffect);
+                    exilePlayOpponentTax, plot, effect, chosenCardCondition, chosenCardThenEffect,
+                    libraryPosition);
         }
 
         public RevealedHandChoice withChosenCardThen(
@@ -1866,7 +2048,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     followUpFilter, followUpPrompt, declineFallbackDiscardCount, choosableFilter,
                     exileAllCopiesOfChosenNames, imprintOnSource, shuffleIntoLibraryMode,
                     discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
-                    exilePlayOpponentTax, plot, declineEffect, condition, thenEffect);
+                    exilePlayOpponentTax, plot, declineEffect, condition, thenEffect, libraryPosition);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -1892,8 +2074,36 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
                     declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
+                    grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                    chosenCardCondition, chosenCardThenEffect, 0);
+        }
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional,
+                                  boolean gainLifeToChooserEqualToChosenToughness,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
+                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
+                                  boolean exileAllCopiesOfChosenNames,
+                                  boolean imprintOnSource,
+                                  boolean shuffleIntoLibraryMode,
+                                  boolean discardThenDrawMode,
+                                  boolean grantPlayPermission,
+                                  boolean returnAtNextEndStep,
+                                  int exilePlayOpponentTax,
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate chosenCardCondition,
+                                  CardEffect chosenCardThenEffect,
+                                  int libraryPosition) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
+                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
+                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, false, null,
-                    chosenCardCondition, chosenCardThenEffect);
+                    chosenCardCondition, chosenCardThenEffect, libraryPosition);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -2164,7 +2374,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
                            boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
                            Set<CounterType> enterWithCounters, boolean exileIfLeavesBattlefield,
-                           boolean mandatory, String prompt)
+                           UUID destinationControllerId, boolean mandatory, String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -2214,6 +2424,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private int enterWithCounterCount;
             private Set<CounterType> enterWithCounters = Set.of();
             private boolean exileIfLeavesBattlefield;
+            private UUID destinationControllerId;
             private boolean mandatory;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -2301,6 +2512,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder destinationControllerId(UUID destinationControllerId) {
+                this.destinationControllerId = destinationControllerId;
+                return this;
+            }
+
             public Builder mandatory(boolean mandatory) {
                 this.mandatory = mandatory;
                 return this;
@@ -2314,7 +2530,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
                         enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters,
-                        exileIfLeavesBattlefield, mandatory, prompt);
+                        exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt);
             }
         }
     }
@@ -2701,13 +2917,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * declinable (TARGETED_CARD_CHOICE).
      */
     record TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                  UUID targetId, String prompt, UUID exileSourceIfDeclinedId)
+                                  UUID targetId, String prompt, UUID exileSourceIfDeclinedId,
+                                  UUID returnSourceToHandId)
             implements PendingInteraction, HandChoice {
 
         /** Non-exiling variant (the common case): declining simply puts nothing onto the battlefield. */
         public TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
                                       UUID targetId, String prompt) {
-            this(playerId, validIndices, targetId, prompt, null);
+            this(playerId, validIndices, targetId, prompt, null, null);
+        }
+
+        public TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                      UUID targetId, String prompt, UUID exileSourceIfDeclinedId) {
+            this(playerId, validIndices, targetId, prompt, exileSourceIfDeclinedId, null);
         }
 
         @Override
@@ -2759,6 +2981,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 java.util.List<UUID> validCardIds, java.util.List<Card> cards, int maxCount,
                 HandToLibraryPlacement placement) {
             return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, 0, maxCount, placement,
+                    false, null, null, false);
+        }
+
+        public static PutCardsFromHandOnLibraryCardChoice putExactlyOnLibrary(UUID playerId,
+                java.util.List<UUID> validCardIds, java.util.List<Card> cards, int count,
+                HandToLibraryPlacement placement) {
+            return new PutCardsFromHandOnLibraryCardChoice(playerId, validCardIds, cards, count, count, placement,
                     false, null, null, false);
         }
 
@@ -2960,14 +3189,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                int remainingCount, String prompt,
                                java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
                                boolean faceDown, boolean returnOnSourceLeave,
-                               UUID untapPermanentId)
+                               UUID untapPermanentId, boolean playPermissionToChooser,
+                               UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
+                               boolean landsEnterTapped)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                    UUID sourcePermanentId, UUID playPermissionControllerId,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, java.util.List.of(), 0, false, false, null);
+                    remainingCount, prompt, java.util.List.of(), 0, false, false, null,
+                    false, null, 0, false);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -2975,7 +3207,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
-                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null);
+                    remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null,
+                    false, null, 0, false);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -2985,7 +3218,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    boolean faceDown, boolean returnOnSourceLeave) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer,
-                    faceDown, returnOnSourceLeave, null);
+                    faceDown, returnOnSourceLeave, null, false, null, 0, false);
         }
 
         @Override
@@ -3094,8 +3327,107 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                LibrarySelectionFollowUp battlefieldSelectionFollowUp,
                                boolean selectLandsAfterHand,
                                boolean selectedToBattlefieldSimultaneously,
+                               boolean selectedToManifest,
+                               boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+                               com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect battlefieldEntryReplacement,
                                boolean remainingToHand)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection,
+                                   UUID beneficiaryPlayerId, int maxCount, String prompt,
+                                   boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen,
+                                   boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked,
+                                   boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   boolean selectedToManifest,
+                                   boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+                                   com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect battlefieldEntryReplacement) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile, lifeCostPerSelection,
+                    beneficiaryPlayerId, maxCount, prompt, selectedToBattlefieldTapped, minCount,
+                    gainLifeEqualToSelectedCardManaValue, effectIfNoCardChosen, recordSelectedCount,
+                    selectedToBattlefieldCloaked, payLifePerSelection, battlefieldSelectionFollowUp,
+                    selectLandsAfterHand, selectedToBattlefieldSimultaneously, selectedToManifest,
+                    selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, false);
+        }
+
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   boolean selectedToManifest,
+                                   boolean selectedCardMayGoToHandIfBattlefieldDeclined) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, selectedToManifest,
+                    selectedCardMayGoToHandIfBattlefieldDeclined, null);
+        }
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect battlefieldEntryReplacement) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, false, false, battlefieldEntryReplacement);
+        }
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   boolean selectedToManifest) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, selectedToManifest, false);
+        }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                    java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -3115,7 +3447,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
                     effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
                     payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
-                    selectedToBattlefieldSimultaneously, false);
+                    selectedToBattlefieldSimultaneously, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3130,7 +3462,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
-                    effectIfNoCardChosen, recordSelectedCount, false, false, null, false, false);
+                    effectIfNoCardChosen, recordSelectedCount, false, false, null, false, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3147,7 +3479,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
                     effectIfNoCardChosen, recordSelectedCount, false, payLifePerSelection,
-                    null, false, false);
+                    null, false, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3167,7 +3499,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
                     effectIfNoCardChosen, recordSelectedCount, false, false,
                     battlefieldSelectionFollowUp, selectLandsAfterHand,
-                    selectedToBattlefieldSimultaneously);
+                    selectedToBattlefieldSimultaneously, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3181,7 +3513,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
-                    null, false, false, false, null, false, false);
+                    null, false, false, false, null, false, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3196,7 +3528,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
-                    effectIfNoCardChosen, false, false, false, null, false, false);
+                    effectIfNoCardChosen, false, false, false, null, false, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3233,7 +3565,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, 0, false, null, recordSelectedCount,
-                    false, false, null, false, false);
+                    false, false, null, false, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3248,7 +3580,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
                     lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
                     selectedToBattlefieldTapped, 0, false, null, recordSelectedCount,
-                    false, false, battlefieldSelectionFollowUp, false, false);
+                    false, false, battlefieldSelectionFollowUp, false, false, false);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3271,6 +3603,36 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, minCount, maxCount);
+        }
+
+        public static LibraryRevealChoice manifestOneOfTopTwo(UUID playerId,
+                                                               java.util.List<Card> allCards,
+                                                               String prompt) {
+            return new LibraryRevealChoice(
+                    playerId,
+                    allCards,
+                    allCards.stream().map(Card::getId).toList(),
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    0,
+                    null,
+                    1,
+                    prompt,
+                    false,
+                    1,
+                    false,
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    false,
+                    false,
+                    true
+            );
         }
     }
 
@@ -3360,6 +3722,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    /** Chooses up to a number of cards owned by the player from outside the game. */
+    record ShuffleCardsFromOutsideGameChoice(UUID playerId, java.util.List<Card> pool,
+                                              int maxCount) implements PendingInteraction {
+
+        public ShuffleCardsFromOutsideGameChoice {
+            pool = java.util.List.copyOf(pool);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, Math.min(maxCount, pool.size()));
         }
     }
 
@@ -3643,8 +4028,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                             String label, String cardName)
+                                             String label, String cardName,
+                                             CounterType enterWithCounter)
             implements PendingInteraction {
+        public PutCardFromHandOrGraveyardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                String label, String cardName) {
+            this(playerId, validCardIds, label, cardName, null);
+        }
+
         public PutCardFromHandOrGraveyardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
         }
@@ -3709,6 +4100,31 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
+        }
+    }
+
+    record ETBExiledCardTargetChoice(Card sourceCard, UUID controllerId,
+                                     java.util.List<CardEffect> effects,
+                                     UUID sourcePermanentId,
+                                     java.util.List<UUID> validCardIds,
+                                     java.util.List<UUID> validPermanentIds,
+                                     UUID triggeringPermanentId) implements PendingInteraction {
+        public ETBExiledCardTargetChoice {
+            effects = java.util.List.copyOf(effects);
+            validCardIds = java.util.List.copyOf(validCardIds);
+            validPermanentIds = java.util.List.copyOf(validPermanentIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return controllerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            java.util.List<UUID> validIds = new java.util.ArrayList<>(validCardIds);
+            validIds.addAll(validPermanentIds);
+            return new InteractionOptions.MultiCardPick(validIds, 1, 1);
         }
     }
 }

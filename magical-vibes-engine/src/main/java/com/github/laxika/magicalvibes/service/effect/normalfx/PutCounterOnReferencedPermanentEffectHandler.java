@@ -89,11 +89,15 @@ public class PutCounterOnReferencedPermanentEffectHandler implements NormalEffec
 
     private Permanent findAttached(GameData gameData, StackEntry entry, String sourceName) {
         Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-        UUID attachedTo = source != null && source.isAttached() ? source.getAttachedTo() : null;
-        if (attachedTo == null && entry.getAttachedPermanentSnapshot() != null) {
+        if (source != null && !source.isAttached()) {
+            log.info("Game {} - {} fizzles: source no longer attached", gameData.id, sourceName);
+            return null;
+        }
+        UUID attachedTo = source != null ? source.getAttachedTo() : null;
+        if (source == null && entry.getAttachedPermanentSnapshot() != null) {
             attachedTo = entry.getAttachedPermanentSnapshot().getId();
         }
-        if (attachedTo == null && entry.getSourcePermanentSnapshot() != null
+        if (source == null && attachedTo == null && entry.getSourcePermanentSnapshot() != null
                 && entry.getSourcePermanentSnapshot().isAttached()) {
             attachedTo = entry.getSourcePermanentSnapshot().getAttachedTo();
         }

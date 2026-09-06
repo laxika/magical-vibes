@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "8ED", collectorNumber = "243")
+@CardRegistration(set = "ONS", collectorNumber = "257")
 public class ElvishPioneer extends Card {
 
     public ElvishPioneer() {

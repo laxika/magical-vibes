@@ -14,19 +14,20 @@ import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -84,6 +85,7 @@ class CombatDamageServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private TriggerCollectionService triggerCollectionService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private LifeSupport lifeSupport;
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
@@ -120,7 +122,7 @@ class CombatDamageServiceTest {
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
         combatDamageService = new CombatDamageService(gameQueryService,
                 predicateEvaluationService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
+                conditionEvaluationService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 gameLogService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
@@ -234,6 +236,12 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                 eq(gameData), any(Permanent.class), any(Permanent.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySelfDamagePreventionShield(
+                        eq(gameData), any(Permanent.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyCreaturePreventionShieldWithoutSelfDamagePrevention(
+                        eq(gameData), any(Permanent.class), anyInt(), eq(true)))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
         // The SBA check decides deaths from the live battlefield, so the removal mock must
         // actually remove — otherwise the casualty diff and the SBA repeat passes see ghosts.
         lenient().doAnswer(inv -> {
@@ -242,7 +250,7 @@ class CombatDamageServiceTest {
             return null;
         }).when(permanentRemovalService).removePermanentToGraveyard(eq(gameData), any(Permanent.class));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.findPermanentController(eq(gameData), any(UUID.class)))
                 .thenAnswer(inv -> {
@@ -260,6 +268,12 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
                         eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPrevention(
+                        eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChannelHarmPreventionToPermanent(
+                        eq(gameData), any(Permanent.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
         // Soltari Guerrillas' "next combat damage to an opponent hits a creature instead" redirect is
         // a pass-through here — no such shield is set up. Only the player-damage path calls it.
         lenient().when(damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(
@@ -274,6 +288,12 @@ class CombatDamageServiceTest {
         // Opal-Eye redirect is likewise a pass-through here — no such shield is set up.
         lenient().when(damagePreventionService.applySourceNextDamageRedirectToPermanent(
                 eq(gameData), any(UUID.class), any(), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         // Saving Grace redirect (CR 614) is a pass-through here — no redirect shields are set up.
         // damagedPermanentId is null on the player path, so match it with any() rather than any(UUID.class).
@@ -305,13 +325,13 @@ class CombatDamageServiceTest {
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyControllerCreaturesNextSourceDamageShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
                 eq(gameData), any(UUID.class), anyInt(), any(UUID.class), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(damagePreventionService.applyCombatPlayerPreventionShield(
                 eq(gameData), any(UUID.class), anyInt()))
@@ -324,7 +344,7 @@ class CombatDamageServiceTest {
 
     /** Stubs for blocked combat: isDamagePreventable and findPermanentById for triggers. */
     private void stubBlockedCombat() {
-        when(gameQueryService.isDamagePreventable(gameData)).thenReturn(false);
+        when(gameQueryService.isDamagePreventable(gameData, true)).thenReturn(false);
         when(gameQueryService.findPermanentById(eq(gameData), any(UUID.class)))
                 .thenAnswer(inv -> {
                     UUID permId = inv.getArgument(1);
@@ -340,14 +360,14 @@ class CombatDamageServiceTest {
     /** Stubs for unblocked regular (non-infect) damage reaching the player. */
     private void stubRegularPlayerDamage() {
         when(damagePreventionService.isSourceDamagePreventedForPlayer(
-                eq(gameData), any(UUID.class), any(UUID.class))).thenReturn(false);
+                eq(gameData), any(UUID.class), any(UUID.class), eq(true))).thenReturn(false);
         when(damagePreventionService.applyColorDamagePreventionForPlayer(
-                eq(gameData), any(UUID.class), any())).thenReturn(false);
+                eq(gameData), any(UUID.class), any(), eq(true))).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
-                eq(gameData), any(UUID.class), any(), anyInt()))
+                eq(gameData), any(UUID.class), any(), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.shouldDamageBeDealtAsInfect(eq(gameData), any(UUID.class)))
                 .thenReturn(false);
@@ -374,14 +394,14 @@ class CombatDamageServiceTest {
     /** Stubs for infect damage to player (poison counters via accumulatePlayerDamage path). */
     private void stubInfectToPlayer() {
         when(damagePreventionService.isSourceDamagePreventedForPlayer(
-                eq(gameData), any(UUID.class), any(UUID.class))).thenReturn(false);
+                eq(gameData), any(UUID.class), any(UUID.class), eq(true))).thenReturn(false);
         when(damagePreventionService.applyColorDamagePreventionForPlayer(
-                eq(gameData), any(UUID.class), any())).thenReturn(false);
+                eq(gameData), any(UUID.class), any(), eq(true))).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
-                eq(gameData), any(UUID.class), any(), anyInt()))
+                eq(gameData), any(UUID.class), any(), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
-                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(gameQueryService.canPlayerGetPoisonCounters(eq(gameData), any(UUID.class)))
                 .thenReturn(true);
@@ -1219,6 +1239,26 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("Conditional combat damage discard effect snapshots the damage amount")
+        void conditionalCombatDamageDiscardEffectSnapshotsDamageAmount() {
+            ControllerHandEmpty condition = new ControllerHandEmpty();
+            addAttackerWithEffect("Jagged Poppet", 3, 3,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new ConditionalEffect(condition,
+                            new DiscardEffect(new EventValue(), DiscardRecipient.TARGET_PLAYER)));
+            when(conditionEvaluationService.isMet(eq(gameData), eq(condition), any())).thenReturn(true);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            StackEntry triggerEntry = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream()
+                            .anyMatch(e -> e instanceof ConditionalEffect))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(triggerEntry.getEventValue()).isEqualTo(3);
         }
 
         @Test

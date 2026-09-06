@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ClockworkSteed.class, ClockworkGnomes.class, AnabaBodyguard.class})
 class ClockworkSteedTest extends BaseCardTest {
 
     @Test
@@ -39,7 +41,8 @@ class ClockworkSteedTest extends BaseCardTest {
         Permanent steed = addCreatureReady(player1, new ClockworkSteed());
         steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
 
-        declareAttackers(player1, List.of(0));
+        declareAttackers(List.of(0));
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
         harness.passBothPriorities();
 
         assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
@@ -52,11 +55,28 @@ class ClockworkSteedTest extends BaseCardTest {
         Permanent steed = addCreatureReady(player1, new ClockworkSteed());
         steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
 
-        declareAttackers(player1, List.of()); // stays back
+        declareAttackers(List.of()); // stays back
         harness.passBothPriorities();
         leaveEndOfCombat();
 
         assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Blocking removes a +1/+0 counter at end of combat")
+    void blockingRemovesCounterAtEndOfCombat() {
+        addCreatureReady(player1, new AnabaBodyguard());
+        Permanent steed = addCreatureReady(player2, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
     }
 
     @Test
@@ -83,12 +103,39 @@ class ClockworkSteedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep ability can be activated with X equal to zero")
+    void upkeepAbilityAllowsZero() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+
+        activateUpkeepAbility(0);
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(steed.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Upkeep ability cannot be activated outside your upkeep")
     void cannotActivateOutsideUpkeep() {
         addCreatureReady(player1, new ClockworkSteed());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("Upkeep ability cannot be activated during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new ClockworkSteed());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -105,14 +152,9 @@ class ClockworkSteedTest extends BaseCardTest {
         steed.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(steed);
 
-        Permanent blocker = new Permanent(new Ornithopter());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new ClockworkGnomes());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -127,14 +169,9 @@ class ClockworkSteedTest extends BaseCardTest {
         steed.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(steed);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new AnabaBodyguard());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -149,6 +186,10 @@ class ClockworkSteedTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice != null) {
+            harness.handleListChoice(player1, choice.options().getLast());
+        }
     }
 
     private void leaveEndOfCombat() {

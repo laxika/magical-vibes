@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
+import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiantShark.class, GrizzlyBears.class, Island.class})
+@CardUsed({GiantShark.class, Squire.class, TropicalIsland.class})
 class GiantSharkTest extends BaseCardTest {
 
     @Test
@@ -32,9 +33,24 @@ class GiantSharkTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(BloodMoon.class)
+    @DisplayName("Giant Shark is sacrificed when Blood Moon removes the Island subtype it relies on")
+    void sacrificedWhenBloodMoonRemovesIslandSubtype() {
+        harness.addToBattlefield(player1, new TropicalIsland());
+        addReadyShark(player1);
+        harness.addToBattlefield(player1, new BloodMoon());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Giant Shark");
+        harness.assertInGraveyard(player1, "Giant Shark");
+    }
+
+    @Test
     @DisplayName("Giant Shark survives while its controller controls an Island")
     void survivesWithIsland() {
-        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new TropicalIsland());
         addReadyShark(player1);
 
         harness.passBothPriorities();
@@ -45,7 +61,7 @@ class GiantSharkTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Shark cannot attack without an Island controlled by the defending player")
     void cannotAttackWithoutDefendingIsland() {
-        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new TropicalIsland());
         Permanent shark = addReadyShark(player1);
 
         assertThatThrownBy(() -> declareAttackers(List.of(battlefieldIndex(player1, shark))))
@@ -55,8 +71,8 @@ class GiantSharkTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Shark can attack when the defending player controls an Island")
     void canAttackWithDefendingIsland() {
-        harness.addToBattlefield(player1, new Island());
-        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player1, new TropicalIsland());
+        harness.addToBattlefield(player2, new TropicalIsland());
         Permanent shark = addReadyShark(player1);
 
         declareAttackers(List.of(battlefieldIndex(player1, shark)));
@@ -67,9 +83,9 @@ class GiantSharkTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Shark gets +2/+0 and trample when it blocks a damaged creature")
     void blockingDamagedCreatureGivesBonus() {
-        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new TropicalIsland());
         Permanent shark = addReadyShark(player2);
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new Squire());
         attacker.setAttacking(true);
         gd.permanentsDealtDamageThisTurn.add(attacker.getId());
 
@@ -85,9 +101,9 @@ class GiantSharkTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Shark gets no bonus when it blocks an undamaged creature")
     void blockingUndamagedCreatureGivesNoBonus() {
-        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new TropicalIsland());
         Permanent shark = addReadyShark(player2);
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new Squire());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player1);
@@ -102,12 +118,12 @@ class GiantSharkTest extends BaseCardTest {
     @Test
     @DisplayName("Giant Shark gets its bonus when it becomes blocked by a damaged creature")
     void becomesBlockedByDamagedCreatureGivesBonus() {
-        harness.addToBattlefield(player1, new Island());
-        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player1, new TropicalIsland());
+        harness.addToBattlefield(player2, new TropicalIsland());
         Permanent shark = addReadyShark(player1);
         shark.setAttacking(true);
         shark.setAttackTarget(player2.getId());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new Squire());
         gd.permanentsDealtDamageThisTurn.add(blocker.getId());
 
         prepareDeclareBlockers(player1);
@@ -120,14 +136,7 @@ class GiantSharkTest extends BaseCardTest {
     }
 
     private Permanent addReadyShark(Player player) {
-        return addReadyCreature(player, new GiantShark());
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new GiantShark());
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {

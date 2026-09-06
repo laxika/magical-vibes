@@ -43,4 +43,9 @@ public class ReduceColoredCastCostForMatchingSpellsEffectHandler implements Cost
         }
         return reduce.reduction();
     }
+
+    @Override
+    public boolean coloredReductionCanReduceGeneric(CardEffect effect) {
+        return ((ReduceColoredCastCostForMatchingSpellsEffect) effect).canReduceGeneric();
+    }
 }

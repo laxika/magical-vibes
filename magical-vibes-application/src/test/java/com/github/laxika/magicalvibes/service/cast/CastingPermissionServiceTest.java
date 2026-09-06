@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -137,6 +139,26 @@ class CastingPermissionServiceTest {
     }
 
     @Test
+    @DisplayName("controller-turn graveyard-spell permission does not apply on another player's turn")
+    void controllerTurnGraveyardSpellPermission() {
+        Card source = new Card();
+        source.addEffect(EffectSlot.STATIC,
+                new CastSpellsFromGraveyardEffect(new CardTruePredicate(), List.of(), true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
+
+        Card spell = new Card();
+        spell.setType(CardType.INSTANT);
+        when(predicateEvaluationService.matchesCardPredicate(spell, new CardTruePredicate(), null))
+                .thenReturn(true);
+
+        gd.activePlayerId = player2Id;
+        assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isFalse();
+
+        gd.activePlayerId = player1Id;
+        assertThat(svc.canCastViaFilteredGraveyardPermission(gd, player1Id, spell)).isTrue();
+    }
+
+    @Test
     @DisplayName("conditional top-library permissions apply only when their condition is met")
     void conditionalTopLibraryPermissions() {
         Card whale = new Card();
@@ -160,6 +182,23 @@ class CastingPermissionServiceTest {
         assertThat(svc.getCastableTypesFromTopOfLibrary(gd, player1Id))
                 .containsExactly(CardType.CREATURE);
         assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, creature)).isTrue();
+    }
+
+    @Test
+    @DisplayName("conditional direct exile-play permission follows the controlled subtype")
+    void conditionalExilePlayPermission() {
+        Card exiled = new Card();
+        gd.addToExile(player2Id, exiled);
+        ControlsPermanent controlsKavu = new ControlsPermanent(
+                new PermanentHasSubtypePredicate(CardSubtype.KAVU));
+        gd.exilePlayPermissions.put(exiled.getId(), player1Id);
+        gd.exilePlayPermissionConditions.put(exiled.getId(), controlsKavu);
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(controlsKavu), any())).thenReturn(false);
+        assertThat(svc.hasExilePlayPermission(gd, player1Id, exiled.getId())).isFalse();
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(controlsKavu), any())).thenReturn(true);
+        assertThat(svc.hasExilePlayPermission(gd, player1Id, exiled.getId())).isTrue();
     }
 
     @Nested
@@ -295,6 +334,26 @@ class CastingPermissionServiceTest {
             assertThat(svc.canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gd, player1Id, spell)).isTrue();
             assertThat(svc.canCastFromTopOfLibrary(gd, player1Id, land)).isFalse();
         }
+
+        @Test
+        @DisplayName("tracks a once-each-turn top-library permission per source permanent")
+        void tracksOnceEachTurnPermissionPerSource() {
+            Card sourceCard = new Card();
+            sourceCard.addEffect(EffectSlot.STATIC,
+                    AllowCastFromTopOfLibraryEffect.onceEachTurn(Set.of(CardType.INSTANT)));
+            Permanent source = new Permanent(sourceCard);
+            gd.playerBattlefields.get(player1Id).add(source);
+
+            Card instant = new Card();
+            instant.setType(CardType.INSTANT);
+
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isTrue();
+            svc.markTopLibraryCastPermissionUsed(gd, player1Id, instant);
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isFalse();
+
+            gd.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
+            assertThat(svc.canCastFromTopOfLibraryNormally(gd, player1Id, instant)).isTrue();
+        }
     }
 
     @Test
@@ -312,6 +371,24 @@ class CastingPermissionServiceTest {
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, stashed.getId())).isTrue();
         assertThat(svc.hasAnyManaTypePermission(gd, player1Id, stashed.getId())).isTrue();
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, stashed.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("collection counters grant one controller-only any-mana exile cast each turn")
+    void collectionCountersGrantExileCastingPermission() {
+        Card evelyn = new Card();
+        evelyn.addEffect(EffectSlot.STATIC,
+                AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(evelyn));
+
+        Card collected = new Card();
+        gd.addToExileWithCollectionCounter(player2Id, collected, player1Id);
+
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasAnyManaTypePermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, collected.getId())).isFalse();
+        assertThat(svc.consumeCollectionCounterPermission(gd, player1Id, collected.getId())).isTrue();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player1Id, collected.getId())).isFalse();
     }
 
     @Nested

@@ -1321,12 +1321,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     bestReservedMana, bestInstantsHeld,
                     String.format("%.1f", sorceryWithReserve),
                     String.format("%.1f", bestCombinedValue - sorceryWithReserve), gameId);
-            // Instant-awareness already decided cast+hold beats hold-only. Let MCTS pick
-            // which spell, but if it passes (rollouts don't model held-instant value),
-            // fall back to the evaluator so the reserve decision is not undone.
-            if (tryCastSpellMCTS(gameData)) {
-                return true;
-            }
+            // The search does not model reserved mana, so use the evaluator that enforces
+            // the chosen reservation when selecting the sorcery-speed spell.
             return tryCastSpell(gameData, bestReservedMana);
         }
 
@@ -2015,6 +2011,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
                 // Skip variable loyalty cost abilities (-X, too complex)
                 if (ability.isVariableLoyaltyCost()) continue;
+
+                // Assignment-backed abilities require a per-target amount map that this path
+                // does not model. Treating them as ordinary single-target abilities produces an
+                // incomplete activation announcement even when only one target is selected.
+                if (EffectResolution.needsDamageDistribution(ability.getEffects())) continue;
 
                 // Skip multi-target abilities (rare for activated abilities)
                 if (ability.isMultiTarget()) continue;

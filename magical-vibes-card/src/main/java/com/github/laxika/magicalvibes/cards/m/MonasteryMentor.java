@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "28")
+@CardRegistration(set = "FRF", collectorNumber = "20")
 public class MonasteryMentor extends Card {
 
     public MonasteryMentor() {

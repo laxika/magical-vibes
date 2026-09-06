@@ -29,7 +29,8 @@ class ShamblingSwarmTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new HillGiant());
 
         killSwarm(swarm);
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
         harness.handleListChoice(player1, "2");
         harness.handleListChoice(player1, "1");
         harness.passBothPriorities();

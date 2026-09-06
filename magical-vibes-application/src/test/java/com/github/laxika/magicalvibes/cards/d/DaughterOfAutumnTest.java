@@ -5,15 +5,19 @@ import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DaughterOfAutumn.class, ProdigalPyromancer.class, SerraAngel.class, GrizzlyBears.class})
 class DaughterOfAutumnTest extends BaseCardTest {
 
     private void addDaughter() {
@@ -21,10 +25,7 @@ class DaughterOfAutumnTest extends BaseCardTest {
     }
 
     private void addPyromancerReady() {
-        harness.addToBattlefield(player1, new ProdigalPyromancer());
-        for (Permanent perm : gd.playerBattlefields.get(player1.getId())) {
-            perm.setSummoningSick(false);
-        }
+        addCreatureReady(player1, new ProdigalPyromancer());
     }
 
     @Test
@@ -74,6 +75,48 @@ class DaughterOfAutumnTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Serra Angel").getMarkedDamage()).isEqualTo(1);
         assertThat(findPermanent(player1, "Daughter of Autumn").getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage to the targeted white creature is dealt to Daughter of Autumn instead")
+    void redirectsCombatDamage() {
+        addDaughter();
+        Permanent target = addCreatureReady(player1, new SerraAngel());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of(0));
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        resolveCombat(player2);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Daughter of Autumn").getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage is not lost when Daughter of Autumn leaves before the redirected damage")
+    void doesNotLoseDamageWhenDaughterLeavesBeforeDamage() {
+        addDaughter();
+        Permanent target = addCreatureReady(player1, new SerraAngel());
+        addPyromancerReady();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        Permanent daughter = findPermanent(player1, "Daughter of Autumn");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, daughter));
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

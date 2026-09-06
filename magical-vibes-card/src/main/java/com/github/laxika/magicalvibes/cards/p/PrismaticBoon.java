@@ -13,7 +13,7 @@ public class PrismaticBoon extends Card {
     public PrismaticBoon() {
         // Choose a color. X target creatures gain protection from the chosen color until end of turn.
         // One color choice on resolution covers the whole X-scaled target group.
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100)

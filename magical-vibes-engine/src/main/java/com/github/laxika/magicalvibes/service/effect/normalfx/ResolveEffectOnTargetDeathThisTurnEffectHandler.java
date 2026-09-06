@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureCardFromTargetOwnerGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -35,9 +37,18 @@ public class ResolveEffectOnTargetDeathThisTurnEffectHandler implements NormalEf
             return;
         }
 
+        CardEffect delayedEffect = e.effect();
+        if (delayedEffect instanceof ReturnCreatureCardFromTargetOwnerGraveyardEffect returnEffect) {
+            UUID ownerId = target.getCard().getOwnerId();
+            if (ownerId == null) {
+                ownerId = gameQueryService.findPermanentController(gameData, target.getId());
+            }
+            delayedEffect = returnEffect.bindOwner(ownerId);
+        }
+
         gameData.permanentTriggeringEffectOnDeathThisTurn
                 .computeIfAbsent(target.getCard().getId(), k -> Collections.synchronizedList(new ArrayList<>()))
-                .add(new DelayedEffectOnDeath(e.effect(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
+                .add(new DelayedEffectOnDeath(delayedEffect, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, {} triggers",
                 gameData.id, target.getCard().getName(), entry.getCard().getName());

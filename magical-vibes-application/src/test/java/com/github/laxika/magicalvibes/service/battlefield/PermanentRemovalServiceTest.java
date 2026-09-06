@@ -332,6 +332,19 @@ class PermanentRemovalServiceTest {
     class RemovePermanentToGraveyard {
 
         @Test
+        void explicitDestinationKeepsTheBattlefieldControllerForDeathProcessing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Exchanged creature"));
+            stubGraveyardForCreature(creature, player2Id);
+
+            boolean result = prs.removePermanentToPlayerGraveyard(gd, creature, player2Id);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(creature.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
+        }
+
+        @Test
         @DisplayName("Removes permanent from battlefield and puts card in graveyard")
         void removesFromBattlefieldAndAddsToGraveyard() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
@@ -502,7 +515,7 @@ class PermanentRemovalServiceTest {
             verify(triggerCollectionService).collectDeathTrigger(
                     eq(gd), eq(bears.getCard()), eq(player1Id), eq(true), eq(bears), eq(List.of()), eq(0));
             verify(triggerCollectionService).checkAllyCreatureDeathTriggers(gd, player1Id, bears, 0);
-            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears);
+            verify(triggerCollectionService).checkOpponentCreatureDeathTriggers(gd, player1Id, bears, 0, 0);
             verify(triggerCollectionService).checkEquippedCreatureDeathTriggers(
                     gd, bears.getId(), player1Id, bears.getCard(), 0);
         }
@@ -729,6 +742,21 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
+        @DisplayName("Uses the card owner when no stolen-permanent record exists")
+        void usesCardOwnerWhenOwnershipRecordIsAbsent() {
+            Card card = createCreature("Grizzly Bears");
+            card.setOwnerId(player2Id);
+            Permanent permanent = addPermanent(player1Id, card);
+
+            prs.removePermanentToHand(gd, permanent);
+
+            assertThat(gd.playerHands.get(player2Id))
+                    .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.playerHands.get(player1Id))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        }
+
+        @Test
         @DisplayName("Exiled card returns to battlefield when source permanent is bounced")
         void exileReturnOnLeave() {
             Permanent source = addPermanent(player1Id, createCreature("Serra Angel"));
@@ -765,10 +793,12 @@ class PermanentRemovalServiceTest {
             Card tokenCard = createCreature("Saproling");
             tokenCard.setToken(true);
             Permanent token = addPermanent(player1Id, tokenCard);
+            when(gameQueryService.findPermanentController(gd, token.getId())).thenReturn(player1Id);
 
             prs.removePermanentToHand(gd, token);
 
             verify(triggerCollectionService).checkSelfLeavesTriggered(gd, token, player1Id);
+            verify(triggerCollectionService).checkControllerPermanentReturnedToHandTriggers(gd, player1Id);
             verify(triggerCollectionService).checkPermanentReturnedToHandTriggers(gd, player1Id);
         }
     }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "147")
+@CardRegistration(set = "LEG", collectorNumber = "292")
 public class RelicBarrier extends Card {
 
     public RelicBarrier() {

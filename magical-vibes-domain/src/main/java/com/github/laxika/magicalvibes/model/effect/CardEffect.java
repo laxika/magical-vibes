@@ -8,6 +8,9 @@ import java.util.UUID;
 
 public interface CardEffect {
 
+    /** Whether this pending choice must finish before the next card of a draw instruction. */
+    default boolean pausesDrawInstruction() { return false; }
+
     /**
      * The declarative targeting descriptor for this effect — the single source of truth for what an
      * effect can target. Every reader consumes targeting through this ({@code targetSpec().declaredTarget()},
@@ -24,6 +27,19 @@ public interface CardEffect {
      * so the component is honoured.</p>
      */
     default TargetSpec targetSpec() { return TargetSpec.NONE; }
+
+    /**
+     * Returns whether an upkeep trigger using this effect has its permanent target chosen by the
+     * active player rather than by the ability's controller.
+     */
+    default boolean targetChosenByActivePlayer() { return false; }
+
+    /**
+     * Returns whether this effect reads the numeric value captured from the event that triggered
+     * its stack entry. Death-trigger collectors use this to snapshot last-known information before
+     * the triggering permanent leaves the battlefield.
+     */
+    default boolean referencesEventValue() { return false; }
 
     /**
      * Returns {@code true} when an activated ability with this effect may target cards anywhere in
@@ -61,6 +77,12 @@ public interface CardEffect {
      * Effects that do not restrict a draw count always return {@code true}.
      */
     default boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) { return true; }
+
+    /**
+     * Returns {@code true} when this effect's declared target may be omitted, such as an
+     * "up to one target" choice made while a triggered ability is put on the stack.
+     */
+    default boolean hasOptionalTarget() { return false; }
 
     /**
      * Returns {@code true} if this effect resolves against the permanent its source Aura/Equipment

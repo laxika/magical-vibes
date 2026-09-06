@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * The targeted permanent's controller chooses whether the source deals damage to them or the
  * targeted permanent is destroyed.
  */
-public record DestroyTargetPermanentUnlessControllerTakesDamageEffect(int damage)
+public record DestroyTargetPermanentUnlessControllerTakesDamageEffect(DynamicAmount damage)
         implements RemovalEffect, DamageDealingEffect {
+
+    public DestroyTargetPermanentUnlessControllerTakesDamageEffect(int damage) {
+        this(new Fixed(damage));
+    }
 
     @Override
     public TargetSpec targetSpec() {
@@ -22,7 +26,7 @@ public record DestroyTargetPermanentUnlessControllerTakesDamageEffect(int damage
 
     @Override
     public DynamicAmount damageAmount() {
-        return new Fixed(damage);
+        return damage;
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterPayManaOrLoseGameAtNextUpkeepEffect;
 
 @CardRegistration(set = "AKR", collectorNumber = "73")
+@CardRegistration(set = "FUT", collectorNumber = "42")
 public class PactOfNegation extends Card {
 
     public PactOfNegation() {

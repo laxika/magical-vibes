@@ -32,6 +32,7 @@ class CabalSurgeonTest extends BaseCardTest {
 
         harness.activateAbilityWithGraveyardTargets(
                 player1, index(surgeon), 0, List.of(creature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(other.getId(), third.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");

@@ -84,6 +84,7 @@ class HeavyweightDemolisherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Heavyweight Demolisher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(cardInExile -> cardInExile.getName().equals("Heavyweight Demolisher"));

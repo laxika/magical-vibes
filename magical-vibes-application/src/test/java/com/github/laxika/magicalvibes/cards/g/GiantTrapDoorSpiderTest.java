@@ -1,24 +1,27 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.a.Aurochs;
+import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GiantTrapDoorSpider.class, Aurochs.class, WindSpirit.class})
 class GiantTrapDoorSpiderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability exiles both the attacker and the Spider")
     void exilesAttackerAndSelf() {
         Permanent spider = addReadySpider(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, player1, new Aurochs());
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -34,7 +37,7 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
     @DisplayName("Activating the ability taps the Spider")
     void activatingTapsSpider() {
         Permanent spider = addReadySpider(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, player1, new Aurochs());
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -46,7 +49,7 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
     @DisplayName("Cannot target an attacking creature with flying")
     void cannotTargetFlyer() {
         addReadySpider(player1);
-        Permanent flyer = addAttacker(player2, player1, new SuntailHawk());
+        Permanent flyer = addAttacker(player2, player1, new WindSpirit());
         payMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, flyer.getId()))
@@ -58,7 +61,7 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking you")
     void cannotTargetNonAttacker() {
         addReadySpider(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new Aurochs());
         payMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -66,10 +69,22 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a creature attacking a different player")
+    void cannotTargetCreatureAttackingDifferentPlayer() {
+        addReadySpider(player1);
+        Permanent attacker = addAttacker(player1, player2, new Aurochs());
+        payMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacking you");
+    }
+
+    @Test
     @DisplayName("Spider stays on the battlefield when the target leaves before resolution")
     void spiderSurvivesFizzle() {
         Permanent spider = addReadySpider(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, player1, new Aurochs());
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -81,10 +96,7 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
     }
 
     private Permanent addReadySpider(Player player) {
-        Permanent perm = new Permanent(new GiantTrapDoorSpider());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GiantTrapDoorSpider());
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {

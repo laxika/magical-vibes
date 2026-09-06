@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FolkOfAnHavva.class})
 class FolkOfAnHavvaTest extends BaseCardTest {
 
     @Test
@@ -42,34 +44,43 @@ class FolkOfAnHavvaTest extends BaseCardTest {
     @Test
     @DisplayName("No boost while it is not blocking")
     void noBoostWithoutBlocking() {
-        Permanent folk = addFolkReady(player2);
+        Permanent folk = addCreatureReady(player2, new FolkOfAnHavva());
 
         assertThat(folk.getPowerModifier()).isEqualTo(0);
         assertThat(folk.getEffectivePower()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Blocking multiple creatures gives only one boost")
+    void blockingMultipleCreaturesBoostsOnlyOnce() {
+        Permanent firstAttacker = addCreatureReady(player1, new FolkOfAnHavva());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new FolkOfAnHavva());
+        secondAttacker.setAttacking(true);
+
+        FolkOfAnHavva card = new FolkOfAnHavva();
+        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        Permanent folk = addCreatureReady(player2, card);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)));
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
+
+        assertThat(folk.getPowerModifier()).isEqualTo(2);
+    }
+
     private Permanent block() {
-        Permanent folk = addFolkReady(player2);
+        Permanent folk = addCreatureReady(player2, new FolkOfAnHavva());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new FolkOfAnHavva());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         return folk;
-    }
-
-    private Permanent addFolkReady(Player player) {
-        Permanent perm = new Permanent(new FolkOfAnHavva());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

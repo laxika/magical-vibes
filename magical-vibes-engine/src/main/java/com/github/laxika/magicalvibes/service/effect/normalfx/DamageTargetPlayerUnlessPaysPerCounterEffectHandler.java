@@ -40,6 +40,9 @@ public class DamageTargetPlayerUnlessPaysPerCounterEffectHandler implements Norm
 
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self == null) {
+            self = entry.getSourcePermanentSnapshot();
+        }
+        if (self == null) {
             return;
         }
 

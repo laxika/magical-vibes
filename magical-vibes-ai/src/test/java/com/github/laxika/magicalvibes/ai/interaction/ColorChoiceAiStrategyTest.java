@@ -137,6 +137,30 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("Exile free-cast modal choice stops after the required mode")
+    void answersExileFreeCastModalChoiceWithDoneAfterRequiredMode() throws Exception {
+        ChooseOneEffect effect = ChooseOneEffect.oneOrMore(List.of(
+                new ChooseOneEffect.ChooseOneOption("first mode", List.of()),
+                new ChooseOneEffect.ChooseOneOption("second mode", List.of())));
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
+                aiPlayerId,
+                null,
+                null,
+                new ChoiceContext.ExileFreeCastModeChoice(null, aiPlayerId, effect,
+                        StackEntryType.SORCERY_SPELL, List.of(0), List.of(1), 2, false),
+                List.of("second mode", ChooseOneEffect.FINISH_MODE_SELECTION),
+                "Choose modes, or Done.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        assertThat(captor.getValue()).isEqualTo(
+                new InteractionAnswer.ListChoiceMade(ChooseOneEffect.FINISH_MODE_SELECTION));
+    }
+
+    @Test
     @DisplayName("Card name choice answers with an offered name")
     void answersCardNameChoiceWithOfferedName() throws Exception {
         UUID opponentId = UUID.randomUUID();

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +16,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MesmericTrance.class, BalduvianBears.class})
 class MesmericTranceTest extends BaseCardTest {
 
     @Test
     @DisplayName("{U}, Discard a card: Draw a card")
     void discardToDraw() {
         harness.addToBattlefield(player1, new MesmericTrance());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BalduvianBears()));
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new BalduvianBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -42,6 +44,18 @@ class MesmericTranceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        harness.addToBattlefield(player1, new MesmericTrance());
+        harness.setHand(player1, List.of(new BalduvianBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -78,6 +92,30 @@ class MesmericTranceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(trance);
+    }
+
+    @Test
+    @DisplayName("Accepting an unpayable cumulative upkeep sacrifices Mesmeric Trance")
+    void acceptingUnpayableUpkeepSacrifices() {
+        Permanent trance = harness.addToBattlefieldAndReturn(player1, new MesmericTrance());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(trance);
+        harness.assertInGraveyard(player1, "Mesmeric Trance");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent trance = harness.addToBattlefieldAndReturn(player1, new MesmericTrance());
+
+        advanceToUpkeep(player2);
+
+        assertThat(trance.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(trance);
     }
 

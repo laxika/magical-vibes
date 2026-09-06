@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,8 +42,11 @@ public class DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler
             return;
         }
 
-        String prompt = "Have " + entry.getCard().getName() + " deal " + e.damage()
-                + " damage to you? If you don't, " + target.getCard().getName()
+        String damageDescription = e.damage() instanceof Fixed fixed
+                ? "deal " + fixed.value() + " damage"
+                : "deal damage equal to its power";
+        String prompt = "Have " + entry.getCard().getName() + " " + damageDescription
+                + " to you? If you don't, " + target.getCard().getName()
                 + " is destroyed. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

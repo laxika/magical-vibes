@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 /**
- * Stamps a one-shot combat requirement on the targeted creature for the rest of the turn. The
+ * Stamps a one-shot combat requirement on a creature for the rest of the turn. The
  * requirement lives as a transient flag on the {@code Permanent} and is cleared at end of turn via
  * {@code resetModifiers()}.
  *
@@ -17,11 +17,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  *
  * @param requirement which requirement to impose; see {@link CombatRequirement}
  * @param scope       whom the requirement lands on; {@link GrantScope#TARGET} targets a creature,
- *                    {@link GrantScope#SELF} applies to the source permanent, and
- *                    {@link GrantScope#ALL_OWN_CREATURES} applies to every creature the controller controls
+ *                    {@link GrantScope#SELF} applies to the source permanent,
+ *                    {@link GrantScope#ENCHANTED_CREATURE} applies to the source Aura's attached
+ *                    creature, and {@link GrantScope#ALL_OWN_CREATURES} applies to every creature
+ *                    the controller controls
  */
 public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope,
-                                                  boolean allowPermanentTarget) implements CardEffect {
+                                                  boolean allowPermanentTarget)
+        implements CardEffect {
 
     public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope) {
         this(requirement, scope, false);
@@ -60,6 +63,9 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
         if (scope == GrantScope.SELF) {
             return new TargetSpec(null, false, null, true, 1);
         }
+        if (scope == GrantScope.ENCHANTED_CREATURE) {
+            return new TargetSpec(null, false, null, true, 1);
+        }
         if (scope != GrantScope.TARGET) {
             return TargetSpec.NONE;
         }
@@ -71,5 +77,10 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
         return requirement == CombatRequirement.MUST_BLOCK
                 ? TargetSpec.benign(TargetPredicates.creature(), new PermanentIsCreaturePredicate())
                 : TargetSpec.benign(TargetPredicates.creature());
+    }
+
+    @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return scope == GrantScope.ENCHANTED_CREATURE;
     }
 }

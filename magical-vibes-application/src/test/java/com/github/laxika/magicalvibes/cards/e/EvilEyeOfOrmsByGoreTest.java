@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicWall;
+import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,43 +14,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EvilEyeOfOrmsByGore.class, GlacialWall.class, GrizzlyBears.class})
 class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
-
-    // ===== Non-Eye creatures you control can't attack =====
-
     @Test
     @DisplayName("A non-Eye creature you control cannot attack while Evil Eye is on the battlefield")
     void nonEyeCreatureCannotAttack() {
         harness.addToBattlefield(player1, new EvilEyeOfOrmsByGore());
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(bearsIndex)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(bearsIndex)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Evil Eye itself (an Eye) can still attack")
     void evilEyeCanAttack() {
-        Permanent evilEye = new Permanent(new EvilEyeOfOrmsByGore());
-        evilEye.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(evilEye);
+        addCreatureReady(player1, new EvilEyeOfOrmsByGore());
 
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         // Evil Eye is 3/6, unblocked
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -65,65 +45,33 @@ class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EvilEyeOfOrmsByGore());
         harness.setLife(player2, 20);
 
-        Card eye = new Card();
-        eye.setName("Test Eye");
-        eye.setType(CardType.CREATURE);
-        eye.setSubtypes(List.of(CardSubtype.EYE));
-        eye.setPower(2);
-        eye.setToughness(2);
-        Permanent eyePerm = new Permanent(eye);
-        eyePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(eyePerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent eyePerm = addCreatureReady(player1, new EvilEyeOfOrmsByGore());
 
         int eyeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(eyePerm);
-        gs.declareAttackers(gd, player1, List.of(eyeIndex));
+        declareAttackers(List.of(eyeIndex));
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
     @DisplayName("The opponent's non-Eye creatures are unaffected (restriction is controller-scoped)")
     void opponentNonEyeCreatureCanAttack() {
         harness.addToBattlefield(player1, new EvilEyeOfOrmsByGore());
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
-        gs.declareAttackers(gd, player2, List.of(bearsIndex));
+        declareAttackers(player2, List.of(bearsIndex));
 
         assertThat(bears.isAttacking()).isTrue();
     }
-
-    // ===== Can't be blocked except by Walls =====
-
     @Test
     @DisplayName("Evil Eye cannot be blocked by a non-Wall creature")
     void cannotBeBlockedByNonWall() {
-        Permanent evilEye = new Permanent(new EvilEyeOfOrmsByGore());
-        evilEye.setSummoningSick(false);
+        Permanent evilEye = addCreatureReady(player1, new EvilEyeOfOrmsByGore());
         evilEye.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(evilEye);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -133,19 +81,11 @@ class EvilEyeOfOrmsByGoreTest extends BaseCardTest {
     @Test
     @DisplayName("Evil Eye can be blocked by a Wall")
     void canBeBlockedByWall() {
-        Permanent evilEye = new Permanent(new EvilEyeOfOrmsByGore());
-        evilEye.setSummoningSick(false);
+        Permanent evilEye = addCreatureReady(player1, new EvilEyeOfOrmsByGore());
         evilEye.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(evilEye);
 
-        Permanent wall = new Permanent(new AngelicWall());
-        wall.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(wall);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent wall = addCreatureReady(player2, new GlacialWall());
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

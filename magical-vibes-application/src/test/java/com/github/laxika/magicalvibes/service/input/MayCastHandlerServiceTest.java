@@ -398,6 +398,21 @@ class MayCastHandlerServiceTest {
         }
 
         @Test
+        @DisplayName("Non-targeted creature uses CREATURE_SPELL type without spell effects")
+        void nonTargetedCreatureUsesCreatureType() {
+            Card card = createCreature("Grizzly Bears");
+            card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+
+            svc.handleCastFromLibraryChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Non-targeted spell clears priorityPassedBy")
         void nonTargetedSpellClearsPriorityPassedBy() {
             Card card = createSorcery("Divination");

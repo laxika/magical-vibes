@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WrackWithMadness.class, GrizzlyBears.class, Plains.class, WallOfSwords.class, WallOfVines.class})
 class WrackWithMadnessTest extends BaseCardTest {
 
-    
+
 
     @Test
     @DisplayName("Casting Wrack with Madness targeting a creature puts it on the stack")
@@ -84,8 +86,6 @@ class WrackWithMadnessTest extends BaseCardTest {
         Permanent wall = findPermanent(player2, "Wall of Vines");
         assertThat(wall.getMarkedDamage()).isZero();
     }
-
-    // ===== Illegal target — "target creature" can't be a land =====
     // Wrack with Madness carries no card-level target filter, so the effect's @ValidatesTarget
     // validator is the only thing that stops the single-targetId cast at a land.
     @Test

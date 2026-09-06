@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JayemdaeTome.class, Forest.class, GrizzlyBears.class})
 class JayemdaeTomeTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -25,7 +27,8 @@ class JayemdaeTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new JayemdaeTome()));
+        JayemdaeTome tome = new JayemdaeTome();
+        harness.setHand(player1, List.of(tome));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castArtifact(player1, 0);
@@ -33,7 +36,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Jayemdae Tome");
+        assertThat(entry.getCard()).isSameAs(tome);
     }
 
     @Test
@@ -65,16 +68,16 @@ class JayemdaeTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack")
     void activatingPutsOnStack() {
-        addReadyTome(player1);
+        Permanent tome = addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Jayemdae Tome");
+        assertThat(entry.getCard()).isSameAs(tome.getCard());
     }
 
     @Test
@@ -82,7 +85,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     void activatingTapsTome() {
         Permanent tome = addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThat(tome.isTapped()).isFalse();
 
@@ -96,7 +99,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     void manaIsConsumedWhenActivating() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 6);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -108,17 +111,18 @@ class JayemdaeTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability draws a card")
     void resolvingDrawsACard() {
+        Forest drawn = new Forest();
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(drawn));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerHands.get(player1.getId()).get(1).getName()).isEqualTo("Forest");
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
 
     @Test
@@ -128,7 +132,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -141,7 +145,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     void resolvingLogsCardDraw() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -155,7 +159,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -182,7 +186,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     void cannotActivateTwice() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 8);
-        setDeck(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -213,7 +217,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         tome.setSummoningSick(true);
         gd.playerBattlefields.get(player1.getId()).add(tome);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -227,7 +231,7 @@ class JayemdaeTomeTest extends BaseCardTest {
     void remainsOnBattlefieldAfterResolution() {
         addReadyTome(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -246,9 +250,5 @@ class JayemdaeTomeTest extends BaseCardTest {
         return perm;
     }
 
-    private void setDeck(Player player, List<? extends com.github.laxika.magicalvibes.model.Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }
 

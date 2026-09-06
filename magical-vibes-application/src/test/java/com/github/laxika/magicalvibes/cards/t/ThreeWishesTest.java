@@ -9,34 +9,30 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThreeWishes.class, Island.class, Shock.class, GrizzlyBears.class})
 class ThreeWishesTest extends BaseCardTest {
 
     private StepTriggerService stepTriggerService() {
         return GameTestEngineContext.get().getBean(StepTriggerService.class);
     }
 
-    private List<Card> setLibraryTop(Card... cards) {
-        List<Card> deck = new ArrayList<>(List.of(cards));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(deck);
-        return deck;
+    private void setLibraryTop(Card... cards) {
+        harness.setLibrary(player1, List.of(cards));
     }
 
     private void castThreeWishes() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.setHand(player1, List.of(new ThreeWishes()));
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ThreeWishes(), "{1}{U}{U}");
         harness.passBothPriorities();
     }
 
@@ -124,7 +120,7 @@ class ThreeWishesTest extends BaseCardTest {
 
         castThreeWishes();
 
-        gs.playCardFromExile(gd, player1, land.getId(), null, null);
+        harness.castFromExile(player1, land.getId());
         harness.assertOnBattlefield(player1, "Island");
 
         gd.activePlayerId = player1.getId();
@@ -135,6 +131,26 @@ class ThreeWishesTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .contains(spell.getId(), creature.getId())
                 .doesNotContain(land.getId());
+    }
+
+    @Test
+    @DisplayName("A nonland card can be cast from exile before the next upkeep")
+    void nonlandCardCanBeCastFromExile() {
+        Card land = new Island();
+        Card spell = new Shock();
+        Card creature = new GrizzlyBears();
+        setLibraryTop(land, spell, creature);
+
+        castThreeWishes();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, spell.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(spell.getId()));
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
     }
 
     @Test
@@ -150,5 +166,16 @@ class ThreeWishesTest extends BaseCardTest {
                 .containsExactly(only.getId());
         assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library produces no exile entries or cleanup actions")
+    void emptyLibraryProducesNoExileEntries() {
+        harness.setLibrary(player1, List.of());
+
+        castThreeWishes();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(ExileToOwnerGraveyardAtNextUpkeep.class)).isEmpty();
     }
 }

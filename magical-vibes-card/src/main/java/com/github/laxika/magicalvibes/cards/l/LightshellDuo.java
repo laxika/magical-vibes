@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "157")
+@CardRegistration(set = "BLB", collectorNumber = "56")
 public class LightshellDuo extends Card {
 
     public LightshellDuo() {

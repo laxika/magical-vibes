@@ -91,6 +91,8 @@ public record CardView(
         int exileCastCounterCost,
         boolean additionalChooseCreatureType,
         List<String> additionalCreatureTypeChoices,
+        int additionalCostLifePayment,
+        String additionalCostManaCost,
         boolean alternateCostCollectEvidence,
         int alternateCostCollectEvidenceAmount,
         CardView prepareSpell

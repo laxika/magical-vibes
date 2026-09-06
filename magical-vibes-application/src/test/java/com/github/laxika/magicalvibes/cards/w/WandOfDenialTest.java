@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WandOfDenial.class, Forest.class, GrizzlyBears.class})
 class WandOfDenialTest extends BaseCardTest {
 
     // ===== Nonland top card: pay 2 life to bin it =====
@@ -20,13 +21,14 @@ class WandOfDenialTest extends BaseCardTest {
     @Test
     @DisplayName("Paying 2 life puts a nonland top card into the target player's graveyard")
     void paysLifeToBinNonlandCard() {
-        addReadyWand(player1);
+        Permanent wand = harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
 
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).add(0, topCard);
+        harness.setLibrary(player2, List.of(topCard));
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(wand.isTapped()).isTrue();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -38,10 +40,10 @@ class WandOfDenialTest extends BaseCardTest {
     @Test
     @DisplayName("Declining leaves the nonland card on top and pays no life")
     void decliningLeavesCardAndPaysNoLife() {
-        addReadyWand(player1);
+        harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
 
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).add(0, topCard);
+        harness.setLibrary(player2, List.of(topCard));
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -58,10 +60,10 @@ class WandOfDenialTest extends BaseCardTest {
     @Test
     @DisplayName("A land top card is left on top with no life payment offered")
     void landTopCardIsUntouched() {
-        addReadyWand(player1);
+        harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
 
         Card topCard = new Forest();
-        gd.playerDecks.get(player2.getId()).add(0, topCard);
+        harness.setLibrary(player2, List.of(topCard));
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -79,11 +81,11 @@ class WandOfDenialTest extends BaseCardTest {
     @Test
     @DisplayName("No choice offered when the controller cannot pay 2 life")
     void noChoiceWhenCannotPayLife() {
-        addReadyWand(player1);
-        gd.playerLifeTotals.put(player1.getId(), 1);
+        harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
+        harness.setLife(player1, 1);
 
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).add(0, topCard);
+        harness.setLibrary(player2, List.of(topCard));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -93,13 +95,30 @@ class WandOfDenialTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Paying exactly 2 life puts the nonland card into the target player's graveyard")
+    void canPayExactlyTwoLife() {
+        harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
+        harness.setLife(player1, 2);
+
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard);
+        assertThat(gd.getLife(player1.getId())).isZero();
+    }
+
     // ===== Empty library =====
 
     @Test
     @DisplayName("Resolves cleanly when the target library is empty")
     void emptyLibraryResolvesCleanly() {
-        addReadyWand(player1);
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
+        harness.setLibrary(player2, List.of());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -107,15 +126,5 @@ class WandOfDenialTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addReadyWand(Player player) {
-        WandOfDenial card = new WandOfDenial();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

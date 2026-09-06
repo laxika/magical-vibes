@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.i.IvoryTower;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({DesertTwister.class, Forest.class, GrizzlyBears.class, IvoryTower.class})
 class DesertTwisterTest extends BaseCardTest {
 
     @Test
@@ -24,8 +28,7 @@ class DesertTwisterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -39,8 +42,7 @@ class DesertTwisterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Forest");
     }
@@ -48,31 +50,54 @@ class DesertTwisterTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy an artifact")
     void destroysArtifact() {
-        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new IvoryTower());
         harness.setHand(player1, List.of(new DesertTwister()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Spellbook");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Ivory Tower");
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertNotOnBattlefield(player2, "Ivory Tower");
+    }
+
+    @Test
+    @DisplayName("Can destroy a permanent controlled by its caster")
+    void destroysOwnPermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DesertTwister()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new DesertTwister()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DesertTwister()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = target.getId();
         harness.castSorcery(player1, 0, targetId);
 
-        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(harness.getGameData(), target));
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 }

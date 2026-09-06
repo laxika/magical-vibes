@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
@@ -75,13 +77,34 @@ public class CardViewFactory {
      * ability list.
      */
     public CardView create(Card card, List<CardSubtype> grantedSubtypes, List<ActivatedAbility> grantedGraveyardAbilities) {
+        return create(card, grantedSubtypes, grantedGraveyardAbilities, List.of());
+    }
+
+    /**
+     * Creates a CardView with granted subtypes and additional zone-specific activated abilities.
+     * Granted hand abilities are appended after the card's own abilities so their indices match
+     * the effective server-side hand ability list.
+     */
+    public CardView create(Card card, List<CardSubtype> grantedSubtypes,
+                           List<ActivatedAbility> grantedGraveyardAbilities,
+                           List<ActivatedAbility> grantedHandAbilities) {
         CardView base = create(card, grantedSubtypes);
-        if (grantedGraveyardAbilities.isEmpty()) return base;
-        List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
-        for (ActivatedAbility ability : grantedGraveyardAbilities) {
-            mergedGraveyard.add(createAbilityView(ability));
+        CardView result = base;
+        if (!grantedGraveyardAbilities.isEmpty()) {
+            List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
+            for (ActivatedAbility ability : grantedGraveyardAbilities) {
+                mergedGraveyard.add(createAbilityView(ability));
+            }
+            result = result.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
         }
-        return base.toBuilder().graveyardActivatedAbilities(mergedGraveyard).build();
+        if (!grantedHandAbilities.isEmpty()) {
+            List<ActivatedAbilityView> mergedHand = new ArrayList<>(result.handActivatedAbilities());
+            for (ActivatedAbility ability : grantedHandAbilities) {
+                mergedHand.add(createAbilityView(ability));
+            }
+            result = result.toBuilder().handActivatedAbilities(mergedHand).build();
+        }
+        return result;
     }
 
     public CardView create(Card card) {
@@ -130,6 +153,11 @@ public class CardViewFactory {
                 .map(CardSubtype::getDisplayName)
                 .toList()
                 : List.of();
+        PayLifeOrPayManaCost additionalCost = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(PayLifeOrPayManaCost.class::isInstance)
+                .map(PayLifeOrPayManaCost.class::cast)
+                .findFirst()
+                .orElse(null);
 
         // Prepare cards keep their front face on the battlefield and print the prepare spell inset,
         // so the spell is projected as a nested view rather than as a face the client flips to.
@@ -266,6 +294,8 @@ public class CardViewFactory {
                 0,
                 chooseCreatureTypeCost,
                 creatureTypeChoices,
+                additionalCost != null ? additionalCost.lifeAmount() : 0,
+                additionalCost != null ? additionalCost.manaCost() : null,
                 collectEvidenceAlternativeCost != null,
                 collectEvidenceAlternativeCost != null ? collectEvidenceAlternativeCost.minimumManaValue() : 0,
                 prepareSpellView);
@@ -277,7 +307,26 @@ public class CardViewFactory {
      */
     public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
                                        List<ActivatedAbility> grantedGraveyardAbilities) {
+        return createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities, false);
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       boolean graveyardAbilitiesSuppressed) {
         CardView base = create(card, grantedSubtypes, grantedGraveyardAbilities);
+        if (graveyardAbilitiesSuppressed) {
+            return base.toBuilder()
+                    .keywords(Set.of())
+                    .hasTapAbility(false)
+                    .hasConvoke(false)
+                    .hasHarmonize(false)
+                    .activatedAbilities(List.of())
+                    .graveyardActivatedAbilities(List.of())
+                    .handActivatedAbilities(List.of())
+                    .exileActivatedAbilities(List.of())
+                    .graveyardCastRequiresDiscard(false)
+                    .build();
+        }
         if (base.needsTarget() || !disturbBackFaceNeedsTarget(card)) {
             return base;
         }
@@ -288,7 +337,17 @@ public class CardViewFactory {
                                        List<ActivatedAbility> grantedGraveyardAbilities,
                                        int additionalGraveyardExileCount,
                                        String additionalGraveyardExileLabel) {
-        CardView base = createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities);
+        return createForGraveyard(card, grantedSubtypes, grantedGraveyardAbilities, false,
+                additionalGraveyardExileCount, additionalGraveyardExileLabel);
+    }
+
+    public CardView createForGraveyard(Card card, List<CardSubtype> grantedSubtypes,
+                                       List<ActivatedAbility> grantedGraveyardAbilities,
+                                       boolean graveyardAbilitiesSuppressed,
+                                       int additionalGraveyardExileCount,
+                                       String additionalGraveyardExileLabel) {
+        CardView base = createForGraveyard(
+                card, grantedSubtypes, grantedGraveyardAbilities, graveyardAbilitiesSuppressed);
         if (additionalGraveyardExileCount <= 0) {
             return base;
         }
@@ -364,6 +423,11 @@ public class CardViewFactory {
                 ability.isRequiresXValue(),
                 ability.isXValueFromControlledCreatureCounters(),
                 ability.getXValueFromCardsInHandColor(),
+                ability.getEffects().stream()
+                        .filter(WaterbendCost.class::isInstance)
+                        .map(WaterbendCost.class::cast)
+                        .anyMatch(WaterbendCost::scalesWithX),
+                ability.getMinimumXValue(),
                 modalEffect != null ? modalEffect.choicesRequired() : 0,
                 modalEffect != null ? modalEffect.choicesMax() : 0,
                 modalOptions);

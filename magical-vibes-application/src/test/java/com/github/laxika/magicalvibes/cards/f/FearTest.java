@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.cards.b.BlackKnight;
+import com.github.laxika.magicalvibes.cards.c.ClockworkBeast;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,16 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Fear.class, GrizzlyBears.class, BlackKnight.class, ClockworkBeast.class,
+        HowlingMine.class, Mountain.class})
 class FearTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Fear puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -42,9 +41,7 @@ class FearTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Fear attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -59,14 +56,23 @@ class FearTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Grants fear keyword =====
+    @Test
+    @DisplayName("Fear can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
 
+        harness.setHand(player1, List.of(new Fear()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
+    }
     @Test
     @DisplayName("Enchanted creature has fear")
     void enchantedCreatureHasFear() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent fearPerm = new Permanent(new Fear());
         fearPerm.setAttachedTo(bearsPerm.getId());
@@ -74,31 +80,21 @@ class FearTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isTrue();
     }
-
-    // ===== Blocking restrictions =====
-
     @Test
     @DisplayName("Creature with fear cannot be blocked by non-black non-artifact creature")
     void cannotBeBlockedByNonBlackNonArtifactCreature() {
         // Attacker: GrizzlyBears enchanted with Fear (player1)
-        Permanent attackerPerm = new Permanent(new GrizzlyBears());
-        attackerPerm.setSummoningSick(false);
+        Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
 
         Permanent fearPerm = new Permanent(new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
         // Blocker: GrizzlyBears (green, non-artifact) on player2
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -110,24 +106,17 @@ class FearTest extends BaseCardTest {
     @DisplayName("Creature with fear can be blocked by a black creature")
     void canBeBlockedByBlackCreature() {
         // Attacker: GrizzlyBears enchanted with Fear (player1)
-        Permanent attackerPerm = new Permanent(new GrizzlyBears());
-        attackerPerm.setSummoningSick(false);
+        Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
 
         Permanent fearPerm = new Permanent(new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
-        // Blocker: DrossCrocodile (black creature) on player2
-        Permanent blockerPerm = new Permanent(new DrossCrocodile());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        // Blocker: BlackKnight (black creature) on player2
+        addCreatureReady(player2, new BlackKnight());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // declareBlockers succeeds without throwing — black creature can block fear
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -137,40 +126,44 @@ class FearTest extends BaseCardTest {
     @DisplayName("Creature with fear can be blocked by an artifact creature")
     void canBeBlockedByArtifactCreature() {
         // Attacker: GrizzlyBears enchanted with Fear (player1)
-        Permanent attackerPerm = new Permanent(new GrizzlyBears());
-        attackerPerm.setSummoningSick(false);
+        Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
 
         Permanent fearPerm = new Permanent(new Fear());
         fearPerm.setAttachedTo(attackerPerm.getId());
         gd.playerBattlefields.get(player1.getId()).add(fearPerm);
 
-        // Blocker: Chimeric Staff animated as artifact creature on player2
-        Permanent staffPerm = new Permanent(new com.github.laxika.magicalvibes.cards.c.ChimericStaff());
-        staffPerm.setSummoningSick(false);
-        staffPerm.setAnimatedUntilEndOfTurn(true);
-        staffPerm.setAnimatedPower(3);
-        staffPerm.setAnimatedToughness(3);
-        gd.playerBattlefields.get(player2.getId()).add(staffPerm);
+        // Blocker: ClockworkBeast (artifact creature) on player2
+        addCreatureReady(player2, new ClockworkBeast());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // declareBlockers succeeds without throwing — artifact creature can block fear
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
 
-    // ===== Effects stop when removed =====
+    @Test
+    @DisplayName("Creature with fear cannot be blocked by a noncreature artifact")
+    void cannotBeBlockedByNonCreatureArtifact() {
+        Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
+        attackerPerm.setAttacking(true);
 
+        Permanent fearPerm = new Permanent(new Fear());
+        fearPerm.setAttachedTo(attackerPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).add(fearPerm);
+
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new HowlingMine()));
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
     @Test
     @DisplayName("Creature loses fear when Fear aura is removed")
     void effectsStopWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent fearPerm = new Permanent(new Fear());
         fearPerm.setAttachedTo(bearsPerm.getId());
@@ -185,19 +178,12 @@ class FearTest extends BaseCardTest {
         // Verify fear is gone
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FEAR)).isFalse();
     }
-
-    // ===== Does not affect other creatures =====
-
     @Test
     @DisplayName("Fear does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent fearPerm = new Permanent(new Fear());
         fearPerm.setAttachedTo(bearsPerm.getId());
@@ -206,15 +192,10 @@ class FearTest extends BaseCardTest {
         // Other creature should not have fear
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FEAR)).isFalse();
     }
-
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fear fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Fear()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -230,36 +211,23 @@ class FearTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fear");
         harness.assertNotOnBattlefield(player1, "Fear");
     }
-
-    // ===== Creature with innate fear keyword =====
-
     @Test
     @DisplayName("Creature with fear keyword granted directly cannot be blocked by non-black non-artifact creature")
     void innateKeywordBlockingRestriction() {
         // Simulate a creature that has fear as an innate keyword
-        Permanent attackerPerm = new Permanent(new GrizzlyBears());
-        attackerPerm.setSummoningSick(false);
+        Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
         attackerPerm.setAttacking(true);
         attackerPerm.getGrantedKeywords().add(Keyword.FEAR);
-        gd.playerBattlefields.get(player1.getId()).add(attackerPerm);
 
         // Blocker: GrizzlyBears (green) on player2
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(fear)");
     }
-
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
@@ -276,4 +244,3 @@ class FearTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 }
-

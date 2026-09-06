@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "72")
+@CardRegistration(set = "LEG", collectorNumber = "219")
 public class AxelrodGunnarson extends Card {
 
     public AxelrodGunnarson() {

@@ -19,11 +19,13 @@ public enum CounterType {
     BRICK,
     CARRION,
     CHARGE,
+    CONQUEROR,
     CHORUS,
     CORPSE,
     CUBE,
     CREDIT,
     CURRENCY,
+    COIN,
     DEATH,
     DEVOTION,
     DELAY,
@@ -31,6 +33,7 @@ public enum CounterType {
     DIVINITY,
     DOOM,
     DREAD,
+    DREAM,
     ECHO,
     EMBER,
     ELIXIR,
@@ -42,6 +45,7 @@ public enum CounterType {
     FILIBUSTER,
     FILM,
     FINALITY,
+    FIRE,
     FLAME,
     FORESHADOW,
     FLOOD,
@@ -49,6 +53,7 @@ public enum CounterType {
     FUSE,
     GEM,
     GHOSTFORM,
+    GLYPH,
     GOLD,
     GROWTH,
     INGENUITY,
@@ -58,6 +63,7 @@ public enum CounterType {
     HOURGLASS,
     HOOFPRINT,
     HUNGER,
+    INTERVENTION,
     ICE,
     FELLOWSHIP,
     INCUBATION,
@@ -80,6 +86,7 @@ public enum CounterType {
     DEFENSE,
     DEPLETION,
     MANNEQUIN,
+    MATRIX,
     MINING,
     MUSIC,
     NET,
@@ -94,6 +101,7 @@ public enum CounterType {
     OIL,
     ORE,
     PAIN,
+    PALLIATION,
     PARALYZATION,
     PETAL,
     PETRIFICATION,
@@ -119,11 +127,16 @@ public enum CounterType {
     PLUS_ZERO_PLUS_TWO,
     SCREAM,
     SHELL,
+    SHIELD,
+    SKEWER,
     SLEIGHT,
+    SLEEP,
     SLIME,
     SHRED,
     SOOT,
     SOUL,
+    STASH,
+    SUPPLY,
     STORAGE,
     STUDY,
     TASK,
@@ -151,28 +164,31 @@ public enum CounterType {
     DECAYED,
     FLYING,
     FIRST_STRIKE,
+    VIGILANCE,
+    DOUBLE_STRIKE,
     HEXPROOF,
     INDESTRUCTIBLE,
     LIFELINK,
     MENACE,
     REACH,
     TRAMPLE,
-    VIGILANCE,
     WINCH;
 
     public Keyword grantedKeyword() {
         return switch (this) {
             case FLYING -> Keyword.FLYING;
             case FIRST_STRIKE -> Keyword.FIRST_STRIKE;
+            case DOUBLE_STRIKE -> Keyword.DOUBLE_STRIKE;
             case DEATHTOUCH -> Keyword.DEATHTOUCH;
             case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;
+            case VIGILANCE -> Keyword.VIGILANCE;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
             case MENACE -> Keyword.MENACE;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
-            case VIGILANCE -> Keyword.VIGILANCE;
+
             default -> null;
         };
     }

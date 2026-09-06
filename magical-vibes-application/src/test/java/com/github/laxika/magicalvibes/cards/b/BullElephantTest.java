@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BullElephant.class, Forest.class, Island.class})
 class BullElephantTest extends BaseCardTest {
 
     private long forestsControlledBy(UUID playerId) {
@@ -81,6 +83,24 @@ class BullElephantTest extends BaseCardTest {
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId()).stream()
                 .filter(c -> c.getSubtypes().contains(CardSubtype.FOREST)).count()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Bull Elephant");
+    }
+
+    @Test
+    @DisplayName("Returns controlled Forests to their owners' hands")
+    void returnsControlledForestsToTheirOwnersHands() {
+        Forest player1Forest = new Forest();
+        player1Forest.setOwnerId(player1.getId());
+        Forest player2Forest = new Forest();
+        player2Forest.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, player1Forest);
+        harness.addToBattlefield(player1, player2Forest);
+        castBullElephant();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(player1Forest.getId()));
+        assertThat(gd.playerHands.get(player2.getId())).anyMatch(card -> card.getId().equals(player2Forest.getId()));
         harness.assertOnBattlefield(player1, "Bull Elephant");
     }
 

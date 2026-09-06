@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -113,6 +114,18 @@ class UntapStepServiceTest {
         return perm;
     }
 
+    @Test
+    void skippedStepPreservesNextUntapRestriction() {
+        Permanent permanent = addPermanent(player1Id, createCardWithName("Creature"));
+        permanent.tap();
+        permanent.setSkipUntapCount(1);
+
+        sut.untapPermanents(gd, player1Id, null, true);
+
+        assertThat(permanent.isTapped()).isTrue();
+        assertThat(permanent.getSkipUntapCount()).isEqualTo(1);
+    }
+
     @Nested
     @DisplayName("Normal untap behavior")
     class NormalUntap {
@@ -205,6 +218,40 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Attached Aura can lock its host based on a counter on the Aura")
+        void attachedAuraChecksItsOwnCounter() {
+            Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            creature.tap();
+            Card auraCard = createCardWithName("Cocoon");
+            auraCard.addEffect(EffectSlot.STATIC,
+                    DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(creature.getId());
+            aura.setCounterCount(CounterType.PUPA, 1);
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(creature.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Attached Aura can lock its host based on a counter on the host")
+        void attachedAuraChecksEnchantedPermanentCounter() {
+            Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
+            creature.tap();
+            creature.setCounterCount(CounterType.SLEEP, 1);
+            Card auraCard = createCardWithName("Venarian Gold");
+            auraCard.addEffect(EffectSlot.STATIC,
+                    DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));
+            Permanent aura = addPermanent(player1Id, auraCard);
+            aura.setAttachedTo(creature.getId());
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(creature.isTapped()).isTrue();
         }
 
         @Test
@@ -329,6 +376,24 @@ class UntapStepServiceTest {
     @Nested
     @DisplayName("Seedborn Muse untap")
     class SeedbornMuseUntap {
+
+        @Test
+        @DisplayName("Self-scoped effect untaps only its source during an opponent's untap step")
+        void selfScopedEffectOnlyUntapsSource() {
+            Card waterskinCard = createCardWithName("Bender's Waterskin");
+            waterskinCard.addEffect(EffectSlot.STATIC,
+                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+                            TurnStep.UNTAP, null, TapUntapScope.SELF));
+            Permanent waterskin = addPermanent(player2Id, waterskinCard);
+            waterskin.tap();
+            Permanent otherPermanent = addPermanent(player2Id, createCardWithName("Other Permanent"));
+            otherPermanent.tap();
+
+            sut.untapPermanents(gd, player1Id);
+
+            assertThat(waterskin.isTapped()).isFalse();
+            assertThat(otherPermanent.isTapped()).isTrue();
+        }
 
         @Test
         @DisplayName("Non-active player's permanents untap when they control Seedborn Muse")

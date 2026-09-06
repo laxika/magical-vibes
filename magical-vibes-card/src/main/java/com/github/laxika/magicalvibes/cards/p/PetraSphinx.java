@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerNameCardRevealTop
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "10")
+@CardRegistration(set = "LEG", collectorNumber = "30")
 public class PetraSphinx extends Card {
 
     public PetraSphinx() {

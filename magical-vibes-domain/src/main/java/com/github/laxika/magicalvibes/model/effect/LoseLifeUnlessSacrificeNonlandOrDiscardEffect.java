@@ -28,11 +28,25 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param lifeLoss  life lost when the player neither sacrifices a nonland permanent nor discards a card
  * @param recipient how the affected player is derived from the stack entry
  */
-public record LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, LoseLifeRecipient recipient)
+public record LoseLifeUnlessSacrificeNonlandOrDiscardEffect(
+        int lifeLoss, LoseLifeRecipient recipient, boolean targetsPlayer)
         implements CardEffect {
 
     /** Acts on the player carried on the stack entry's {@code targetId} (Torment of Scarabs). */
     public LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss) {
-        this(lifeLoss, LoseLifeRecipient.TARGET_PLAYER);
+        this(lifeLoss, LoseLifeRecipient.TARGET_PLAYER, false);
+    }
+
+    public LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, LoseLifeRecipient recipient) {
+        this(lifeLoss, recipient, false);
+    }
+
+    public LoseLifeUnlessSacrificeNonlandOrDiscardEffect(int lifeLoss, boolean targetsPlayer) {
+        this(lifeLoss, LoseLifeRecipient.TARGET_PLAYER, targetsPlayer);
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

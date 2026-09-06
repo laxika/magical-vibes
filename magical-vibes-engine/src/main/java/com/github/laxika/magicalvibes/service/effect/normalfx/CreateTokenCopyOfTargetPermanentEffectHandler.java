@@ -42,7 +42,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                     ? entry.getTargetIds()
                     : !entry.getTargetCardIds().isEmpty()
                     ? entry.getTargetCardIds()
-                    : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+                     : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
         } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
                 && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());

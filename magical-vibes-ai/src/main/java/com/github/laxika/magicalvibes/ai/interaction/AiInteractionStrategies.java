@@ -42,6 +42,7 @@ public final class AiInteractionStrategies {
         register(new ExiledSpellCopyChoiceAiStrategy());
         register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new ExiledCreatureCopyChoiceAiStrategy());
+        register(new KohExiledCreatureChoiceAiStrategy());
         register(new ExileCardFromHandAndCreateTokenCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
@@ -90,11 +91,13 @@ public final class AiInteractionStrategies {
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
+        register(new RemoveTimeCounterCostChoiceAiStrategy());
         register(new CraftMaterialChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardLibraryCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new SearchOutsideGameOrExileCardChoiceAiStrategy());
+        register(new ShuffleCardsFromOutsideGameChoiceAiStrategy());
         register(new PermanentChoiceAiStrategy());
         register(new SylvanLibraryChoiceAiStrategy());
         register(new AdNauseamRepeatChoiceAiStrategy());
@@ -108,6 +111,7 @@ public final class AiInteractionStrategies {
         register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
         register(new NivMizzetColorPairChoiceAiStrategy());
         register(new FaceUpExiledCardChoiceAiStrategy());
+        register(new ETBExiledCardTargetChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

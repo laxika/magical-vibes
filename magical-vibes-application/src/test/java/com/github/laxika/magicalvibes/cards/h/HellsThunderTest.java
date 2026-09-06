@@ -28,6 +28,7 @@ class HellsThunderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Hell's Thunder");
         harness.assertInGraveyard(player1, "Hell's Thunder");
     }
@@ -62,6 +63,7 @@ class HellsThunderTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Hell's Thunder");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

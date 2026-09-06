@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "CHR", collectorNumber = "75")
+@CardRegistration(set = "LEG", collectorNumber = "225")
 public class DakkonBlackblade extends Card {
 
     public DakkonBlackblade() {

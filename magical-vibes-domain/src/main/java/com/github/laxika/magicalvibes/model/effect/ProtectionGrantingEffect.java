@@ -21,7 +21,8 @@ import java.util.Set;
  * <p>Scope note: this covers the printed, statically-known protection shapes
  * ({@code ProtectionFromColorsEffect}, {@code ProtectionFromCardTypesEffect},
  * {@code ProtectionFromSubtypesEffect}, {@code ProtectionFromManaValueEffect},
- * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromAllOtherManaValuesEffect}).
+ * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromMonocoloredEffect},
+ * {@code ProtectionFromAllOtherManaValuesEffect}).
  * Protection whose
  * protected set is only known at runtime from game state — a chosen color
  * ({@code ProtectionFromChosenColorEffect}, resolved via {@link ChooseColorEffect}) or a
@@ -37,6 +38,11 @@ public interface ProtectionGrantingEffect extends CardEffect {
 
     /** Whether this effect protects against sources with two or more colors. */
     default boolean protectionFromMulticolored() {
+        return false;
+    }
+
+    /** Whether this effect protects against sources with exactly one color. */
+    default boolean protectionFromMonocolored() {
         return false;
     }
 

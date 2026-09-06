@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 import java.util.UUID;
 
@@ -10,5 +11,11 @@ import java.util.UUID;
  * battlefield when the trigger fires.
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
-                                              CardEffect effect) {
+                                              CardEffect effect, TargetFilter targetFilter,
+                                              boolean untilEndOfNextTurn, int registrationTurnNumber) {
+
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
+                                           CardEffect effect) {
+        this(controllerId, sourceCard, slot, effect, null, false, -1);
+    }
 }

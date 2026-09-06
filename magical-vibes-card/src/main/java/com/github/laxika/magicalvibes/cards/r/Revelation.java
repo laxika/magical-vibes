@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "68")
+@CardRegistration(set = "LEG", collectorNumber = "202")
 public class Revelation extends Card {
 
     public Revelation() {

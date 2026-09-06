@@ -14,6 +14,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed(RocketLauncher.class)
 class RocketLauncherTest extends BaseCardTest {
 
+    private void advanceToEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+    }
+
     @Test
     @DisplayName("Deals 1 damage to any target and destroys itself at the next end step")
     void damagesPlayerAndDestroysItselfAtEndStep() {
@@ -27,10 +33,7 @@ class RocketLauncherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(launcher);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(launcher);
         harness.assertInGraveyard(player1, "Rocket Launcher");
@@ -45,5 +48,15 @@ class RocketLauncherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("continuously");
+    }
+
+    @Test
+    @DisplayName("Survives the end step without activation")
+    void survivesEndStepWithoutActivation() {
+        Permanent launcher = harness.addToBattlefieldAndReturn(player1, new RocketLauncher());
+
+        advanceToEndStep();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(launcher);
     }
 }

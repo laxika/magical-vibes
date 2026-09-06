@@ -147,6 +147,12 @@ class FaceOracleMapperTest {
                 .containsExactly(Keyword.FIRST_STRIKE);
     }
 
+    @Test
+    void keywordWithEmDashParameterIsRecognized() {
+        assertThat(map(face().text("Warp\u2014{B}, Pay 2 life.").keywords(List.of("Warp")), FRONT).keywords())
+                .containsExactly(Keyword.WARP);
+    }
+
     /**
      * Capitalisation runs on the full combined list, before any narrowing — reversing the order
      * would stop keyword lines being capitalised on back faces.

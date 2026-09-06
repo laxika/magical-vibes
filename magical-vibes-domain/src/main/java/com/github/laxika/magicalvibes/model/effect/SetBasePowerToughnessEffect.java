@@ -56,6 +56,12 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
         this(power, toughness, GrantScope.TARGET);
     }
 
+    /** One-shot setter with a resolution-time predicate over the target. */
+    public SetBasePowerToughnessEffect(int power, int toughness, EffectDuration duration,
+                                       PermanentPredicate filter) {
+        this(power, toughness, GrantScope.TARGET, duration, filter);
+    }
+
     /**
      * One-shot "target creature has base toughness X until end of turn" — base power untouched.
      */
@@ -79,7 +85,7 @@ public record SetBasePowerToughnessEffect(Integer power, Integer toughness, Gran
     @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
-            case TARGET -> TargetSpec.benign(duration == EffectDuration.PERMANENT
+            case TARGET -> TargetSpec.benign(filter != null || duration == EffectDuration.PERMANENT
                     ? TargetPredicates.permanent()
                     : TargetPredicates.creature());
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());

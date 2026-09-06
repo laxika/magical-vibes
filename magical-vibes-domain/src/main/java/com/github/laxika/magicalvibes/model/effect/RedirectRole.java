@@ -15,6 +15,9 @@ public enum RedirectRole {
     /** The ability's controller ("you"; for a creature's own ability, its owner). */
     CONTROLLER,
 
+    /** The ability's source permanent and its controller ("this creature and/or you"). */
+    SOURCE_PERMANENT_AND_CONTROLLER,
+
     /** The permanent the ability's Aura source is attached to ("enchanted creature"). */
     ENCHANTED_PERMANENT
 }

@@ -150,8 +150,8 @@ public class AnimationSupport {
         for (UUID targetId : targetIds) {
             switch (effect.duration()) {
                 case UNTIL_YOUR_NEXT_TURN -> animateOneUntilNextTurn(gameData, entry, effect, targetId);
-                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED ->
-                        animateOneWhileSourceTapped(gameData, entry, effect, targetId);
+                case WHILE_SOURCE_TAPPED, WHILE_SOURCE_REMAINS_TAPPED, UNTIL_CONTROLLERS_NEXT_UPKEEP ->
+                        animateOneWithFloatingDuration(gameData, entry, effect, targetId);
                 default -> animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
             }
         }
@@ -257,7 +257,7 @@ public class AnimationSupport {
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
     }
 
-    private void animateOneWhileSourceTapped(GameData gameData, StackEntry entry,
+    private void animateOneWithFloatingDuration(GameData gameData, StackEntry entry,
                                              AnimatePermanentsEffect effect, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null || entry.getSourcePermanentId() == null) {
@@ -296,11 +296,12 @@ public class AnimationSupport {
                     target.getId(), null, null, duration, 0));
         }
 
+        String durationText = duration == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP
+                ? "until your next upkeep" : "for as long as " + entry.getCard().getName() + " remains tapped";
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " becomes a " + power + "/" + toughness + " creature for as long as "
-                        + entry.getCard().getName() + " remains tapped."));
-        log.info("Game {} - {} becomes a {}/{} creature while {} remains tapped",
-                gameData.id, target.getCard().getName(), power, toughness, entry.getCard().getName());
+                " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
+        log.info("Game {} - {} becomes a {}/{} creature ({})",
+                gameData.id, target.getCard().getName(), power, toughness, duration);
     }
 
     private void addAnimationCardTypeFloatingEffect(GameData gameData, StackEntry entry,
@@ -579,10 +580,21 @@ public class AnimationSupport {
         // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").
         target.getPersistentGrantedCardTypes().addAll(effect.grantedCardTypes());
 
+        boolean colorReplaced = false;
         if (effect.animatedColor() != null) {
-            target.getGrantedColors().add(effect.animatedColor());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId,
+                    new GrantColorEffect(effect.animatedColor(), GrantScope.TARGET, true),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+            colorReplaced = true;
         }
-        target.getGrantedColors().addAll(effect.animatedColors());
+        for (CardColor color : effect.animatedColors()) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId,
+                    new GrantColorEffect(color, GrantScope.TARGET, !colorReplaced),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+            colorReplaced = true;
+        }
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {

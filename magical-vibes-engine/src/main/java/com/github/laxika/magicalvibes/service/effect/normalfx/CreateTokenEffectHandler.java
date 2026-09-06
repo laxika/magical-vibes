@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
+import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -30,17 +32,20 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler;
+    private final CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
     private final TriggerCollectionService triggerCollectionService;
 
     public CreateTokenEffectHandler(PermanentControlSupport permanentControlSupport,
                                     GameQueryService gameQueryService,
                                     AmountEvaluationService amountEvaluationService,
                                     CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler,
+                                    CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler,
                                     @Lazy TriggerCollectionService triggerCollectionService) {
         this.permanentControlSupport = permanentControlSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
         this.tokenCopyHandler = tokenCopyHandler;
+        this.enchantedPermanentTokenCopyHandler = enchantedPermanentTokenCopyHandler;
         this.triggerCollectionService = triggerCollectionService;
     }
 
@@ -81,9 +86,15 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             Boolean accepted = gameData.resolvedMayAccepted;
             gameData.resolvedMayAccepted = null;
             if (Boolean.TRUE.equals(accepted)) {
-                tokenCopyHandler.resolve(gameData, entry,
-                        new CreateTokenCopyOfEquippedCreatureEffect(
-                                pending.amount(), false, false, pending.crownPermanentId()));
+                if (pending.copyEnchantedPermanent()) {
+                    enchantedPermanentTokenCopyHandler.resolve(gameData, entry,
+                            new CreateTokenCopyOfEnchantedPermanentEffect(
+                                    pending.amount(), pending.replacementPermanentId()));
+                } else {
+                    tokenCopyHandler.resolve(gameData, entry,
+                            new CreateTokenCopyOfEquippedCreatureEffect(
+                                    pending.amount(), false, false, pending.replacementPermanentId()));
+                }
                 return;
             }
             if (Boolean.FALSE.equals(accepted)) {
@@ -96,7 +107,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             if (crown != null) {
                 gameData.tokenCreationReplacementUsedThisTurn.add(crown.getId());
                 gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                        crown.getId(), amount, power, toughness);
+                        crown.getId(), amount, power, toughness, false);
                 gameData.resolvingMayEffectFromStack = true;
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         crown.getCard(),
@@ -105,6 +116,20 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                                 amount, false, false, crown.getId())),
                         crown.getCard().getName()
                                 + " — You may create that many tokens that are copies of the equipped creature."));
+                return;
+            }
+            Permanent moonlit = availableMoonlitMeditation(gameData, controllerId);
+            if (moonlit != null) {
+                gameData.tokenCreationReplacementUsedThisTurn.add(moonlit.getId());
+                gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
+                        moonlit.getId(), amount, power, toughness, true);
+                gameData.resolvingMayEffectFromStack = true;
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        moonlit.getCard(),
+                        controllerId,
+                        List.of(new CreateTokenCopyOfEnchantedPermanentEffect(amount, moonlit.getId())),
+                        moonlit.getCard().getName()
+                                + " — You may create that many tokens that are copies of the enchanted permanent."));
                 return;
             }
         }
@@ -124,6 +149,25 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                     || permanent.getAttachedTo() == null
                     || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .noneMatch(MirrormindCrownEffect.class::isInstance)) {
+                continue;
+            }
+            if (gameQueryService.findPermanentById(gameData, permanent.getAttachedTo()) != null) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private Permanent availableMoonlitMeditation(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : battlefield) {
+            if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
+                    || permanent.getAttachedTo() == null
+                    || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .noneMatch(MoonlitMeditationEffect.class::isInstance)) {
                 continue;
             }
             if (gameQueryService.findPermanentById(gameData, permanent.getAttachedTo()) != null) {

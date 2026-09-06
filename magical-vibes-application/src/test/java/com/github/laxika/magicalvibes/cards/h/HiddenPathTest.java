@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SavaenElves;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,27 +17,36 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HiddenPath.class, GrizzlyBears.class, EliteVanguard.class, Forest.class})
+@CardUsed({HiddenPath.class, SavaenElves.class, Squire.class, Forest.class})
 class HiddenPathTest extends BaseCardTest {
 
     @Test
     @DisplayName("Green creatures gain forestwalk on both battlefields")
     void grantsForestwalkToGreenCreatures() {
         harness.addToBattlefield(player1, new HiddenPath());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SavaenElves());
+        harness.addToBattlefield(player2, new SavaenElves());
 
-        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.FORESTWALK)).isTrue();
-        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Grizzly Bears"), Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Savaen Elves"), Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Savaen Elves"), Keyword.FORESTWALK)).isTrue();
     }
 
     @Test
     @DisplayName("Non-green creatures do not gain forestwalk")
     void doesNotGrantForestwalkToNonGreenCreatures() {
         harness.addToBattlefield(player1, new HiddenPath());
-        harness.addToBattlefield(player1, new EliteVanguard());
+        harness.addToBattlefield(player1, new Squire());
 
-        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Elite Vanguard"), Keyword.FORESTWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Squire"), Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Hidden Path does not grant forestwalk to a noncreature Forest")
+    void doesNotGrantForestwalkToNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new HiddenPath());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.FORESTWALK)).isFalse();
     }
 
     @Test
@@ -69,32 +77,24 @@ class HiddenPathTest extends BaseCardTest {
     @Test
     @DisplayName("Green creatures lose forestwalk when Hidden Path leaves")
     void forestwalkIsLostWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new HiddenPath());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent hiddenPath = harness.addToBattlefieldAndReturn(player1, new HiddenPath());
+        harness.addToBattlefield(player2, new SavaenElves());
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FORESTWALK)).isTrue();
+        Permanent elves = findPermanent(player2, "Savaen Elves");
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FORESTWALK)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(permanent -> permanent.getCard().getName().equals("Hidden Path"));
+        gd.playerBattlefields.get(player1.getId()).remove(hiddenPath);
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FORESTWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FORESTWALK)).isFalse();
     }
 
     private Permanent declareCombat() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SavaenElves());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new EliteVanguard());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new Squire());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         return blocker;
     }

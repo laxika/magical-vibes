@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CursedLand.class, Forest.class, GrizzlyBears.class})
 class CursedLandTest extends BaseCardTest {
 
     // ===== Targeting =====
@@ -35,8 +37,7 @@ class CursedLandTest extends BaseCardTest {
     @DisplayName("Cannot enchant a non-land creature")
     void cannotEnchantCreature() {
         addLand(player2); // a legal target exists so the Aura is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CursedLand()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -58,8 +59,7 @@ class CursedLandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Cursed Land")
-                        && p.isAttached()
+                .anyMatch(p -> p.isAttached()
                         && p.getAttachedTo().equals(land.getId()));
     }
 
@@ -77,6 +77,7 @@ class CursedLandTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.noncombatDamageDealtToPlayersThisTurn.get(player2.getId())).isEqualTo(1);
     }
 
     @Test
@@ -110,17 +111,28 @@ class CursedLandTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
+    @Test
+    void usesControllerAtTriggerTime() {
+        Permanent land = addLand(player2);
+        attachCursedLand(land);
+        int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerBattlefields.get(player1.getId()).add(land);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(player2LifeBefore - 1);
+    }
+
     // ===== Helpers =====
 
     private void attachCursedLand(Permanent land) {
-        Permanent cursedLand = new Permanent(new CursedLand());
+        Permanent cursedLand = harness.addToBattlefieldAndReturn(player1, new CursedLand());
         cursedLand.setAttachedTo(land.getId());
-        gd.playerBattlefields.get(player1.getId()).add(cursedLand);
     }
 
     private Permanent addLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 }

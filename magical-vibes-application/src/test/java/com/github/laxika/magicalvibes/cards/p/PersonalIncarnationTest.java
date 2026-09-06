@@ -1,22 +1,80 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.Sacrifice;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({PersonalIncarnation.class, ProdigalSorcerer.class, GrizzlyBears.class, Sacrifice.class, PlatinumAngel.class})
 class PersonalIncarnationTest extends BaseCardTest {
+
+    @Test
+    void negativeLifeTotalRemainsUnchanged() {
+        PersonalIncarnation card = new PersonalIncarnation();
+        card.setOwnerId(player1.getId());
+        Permanent incarnation = addCreatureReady(player1, card);
+        addCreatureReady(player1, new PlatinumAngel());
+        gd.playerLifeTotals.put(player1.getId(), -10);
+
+        harness.setHand(player1, List.of(new Sacrifice()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstantWithSacrifice(player1, 0, null, incarnation.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(-10);
+    }
+
+    @Test
+    void onlyOwnerMayActivateAbility() {
+        PersonalIncarnation card = new PersonalIncarnation();
+        card.setOwnerId(player1.getId());
+        Permanent incarnation = addCreatureReady(player2, card);
+        gd.stolenCreatures.put(incarnation.getId(), player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, incarnation), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void deathTriggerAffectsOwnerNotController() {
+        PersonalIncarnation card = new PersonalIncarnation();
+        card.setOwnerId(player1.getId());
+        Permanent incarnation = addCreatureReady(player2, card);
+        gd.stolenCreatures.put(incarnation.getId(), player1.getId());
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        gd.playerLifeTotals.put(player2.getId(), 20);
+
+        harness.setHand(player2, List.of(new Sacrifice()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstantWithSacrifice(player2, 0, null, incarnation.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
 
     @Test
     @DisplayName("Activating {0} registers a next-1-damage redirect shield destined for the owner")
     void activationCreatesShieldToOwner() {
-        Permanent incarnation = addReadyPermanent(player1, new PersonalIncarnation());
+        Permanent incarnation = addCreatureReady(player1, new PersonalIncarnation());
 
         harness.activateAbility(player1, indexOf(player1, incarnation), null, null);
         harness.passBothPriorities();
@@ -32,15 +90,15 @@ class PersonalIncarnationTest extends BaseCardTest {
     @Test
     @DisplayName("The next 1 damage to Personal Incarnation is dealt to its owner instead")
     void redirectsDamageToOwner() {
-        Permanent incarnation = addReadyPermanent(player1, new PersonalIncarnation());
-        Permanent pyromancer = addReadyPermanent(player1, new ProdigalPyromancer());
+        Permanent incarnation = addCreatureReady(player1, new PersonalIncarnation());
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, indexOf(player1, incarnation), null, null);
         harness.passBothPriorities();
 
-        // Pyromancer pings the Incarnation for 1 — that 1 damage is dealt to its owner instead
-        harness.activateAbility(player1, indexOf(player1, pyromancer), null, incarnation.getId());
+        // Sorcerer pings the Incarnation for 1 — that 1 damage is dealt to its owner instead
+        harness.activateAbility(player1, indexOf(player1, sorcerer), null, incarnation.getId());
         harness.passBothPriorities();
 
         assertThat(incarnation.getMarkedDamage()).isEqualTo(0);
@@ -50,7 +108,7 @@ class PersonalIncarnationTest extends BaseCardTest {
     @Test
     @DisplayName("When Personal Incarnation dies, its owner loses half their life, rounded up (odd life)")
     void deathTriggerLosesHalfLifeRoundedUp() {
-        harness.addToBattlefield(player1, new PersonalIncarnation());
+        addCreatureReady(player1, new PersonalIncarnation());
         gd.playerLifeTotals.put(player1.getId(), 15);
 
         setupCombatWhereIncarnationDies();
@@ -65,7 +123,7 @@ class PersonalIncarnationTest extends BaseCardTest {
     @Test
     @DisplayName("Half-life loss rounds up from an even life total")
     void deathTriggerRoundsFromEvenLife() {
-        harness.addToBattlefield(player1, new PersonalIncarnation());
+        addCreatureReady(player1, new PersonalIncarnation());
         gd.playerLifeTotals.put(player1.getId(), 20);
 
         setupCombatWhereIncarnationDies();
@@ -75,8 +133,6 @@ class PersonalIncarnationTest extends BaseCardTest {
         // 20 / 2 = 10; 20 - 10 = 10
         assertThat(gd.getLife(player1.getId())).isEqualTo(10);
     }
-
-    // ===== Helpers =====
 
     /** Personal Incarnation (player1) attacks and is blocked by a 6/6 (player2); the 6/6 kills it. */
     private void setupCombatWhereIncarnationDies() {
@@ -96,13 +152,6 @@ class PersonalIncarnationTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-    }
-
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private int indexOf(Player player, Permanent perm) {

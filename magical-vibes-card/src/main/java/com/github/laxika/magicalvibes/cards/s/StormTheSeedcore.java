@@ -18,8 +18,8 @@ public class StormTheSeedcore extends Card {
 
     public StormTheSeedcore() {
         target(TargetFilters.creatureYouControl(), 0, 4)
-                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
-                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
+                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4), null));
         addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), GrantScope.OWN_CREATURES));
     }

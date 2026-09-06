@@ -55,7 +55,7 @@ public class RevealTopCardLandToBattlefieldElseToHandEffectHandler implements No
             log.info("Game {} - {} puts {} onto the battlefield ({})",
                     gameData.id, playerName, topCard.getName(), sourceName);
         } else {
-            gameData.playerHands.get(controllerId).add(topCard);
+            gameData.addCardToHand(controllerId, topCard);
             gameLogService.append(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their hand (" + sourceName + ")."));
         }
     }

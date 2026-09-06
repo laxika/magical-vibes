@@ -11,18 +11,31 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param imprint if true, also imprints the exiled card onto the source permanent
  *                (e.g. Ixalan's Binding uses imprint for its "can't cast same name" static)
  * @param targetPredicate optional restriction on the permanent target
+ * @param exileIfSourceAlreadyLeft whether the target is still exiled if the source left before
+ *                                 this effect resolved; no later return is registered in that case
  */
 public record ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint,
-                                                          PermanentPredicate targetPredicate)
+                                                          PermanentPredicate targetPredicate,
+                                                          boolean exileIfSourceAlreadyLeft)
         implements CardEffect {
 
     /** Default constructor — no imprint. */
     public ExileTargetPermanentUntilSourceLeavesEffect() {
-        this(false, null);
+        this(false, null, false);
     }
 
     public ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint) {
-        this(imprint, null);
+        this(imprint, null, false);
+    }
+
+    public ExileTargetPermanentUntilSourceLeavesEffect(
+            boolean imprint, PermanentPredicate targetPredicate) {
+        this(imprint, targetPredicate, false);
+    }
+
+    /** Models separate enter and leave triggers, where the enter trigger can resolve second. */
+    public static ExileTargetPermanentUntilSourceLeavesEffect evenIfSourceAlreadyLeft() {
+        return new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true);
     }
 
     @Override

@@ -25,6 +25,11 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
         return false;
     }
 
+    /** True if this permission applies only during its controller's turn. */
+    default boolean onlyDuringControllerTurn() {
+        return false;
+    }
+
     /** Number of additional cards the player must exile from their graveyard to cast the spell. */
     default int additionalGraveyardExileCount() {
         return 0;
@@ -43,6 +48,11 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
     /** Additional costs required when using this permission. */
     default List<CastingCost> additionalCosts() {
         return List.of();
+    }
+
+    /** True if a spell cast through this permission is exiled instead of returned to its graveyard. */
+    default boolean exileAfterResolution() {
+        return false;
     }
 
     /** Counter applied to a permanent cast with this permission as it enters. */

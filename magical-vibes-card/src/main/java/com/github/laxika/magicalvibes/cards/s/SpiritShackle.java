@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "163")
+@CardRegistration(set = "LEG", collectorNumber = "117")
 public class SpiritShackle extends Card {
 
     public SpiritShackle() {

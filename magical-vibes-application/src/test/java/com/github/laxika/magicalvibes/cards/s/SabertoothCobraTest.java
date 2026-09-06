@@ -1,17 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.p.PsionicGift;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SabertoothCobra.class, GiantMantis.class, Incinerate.class})
 class SabertoothCobraTest extends BaseCardTest {
 
     private int poison() {
@@ -20,22 +25,15 @@ class SabertoothCobraTest extends BaseCardTest {
 
     /** Player1's Sabertooth Cobra deals its combat damage to player2. */
     private void dealCombatDamageToPlayer2() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities(); // resolve the two damage triggers
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
     }
 
     /** Advance to player2's upkeep and resolve the delayed obligation into the pay-or-poison prompt. */
     private void advanceToPlayer2UpkeepObligation() {
         gd.turnNumber = 2;
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // UNTAP -> UPKEEP: delayed trigger onto the stack
-        harness.passBothPriorities(); // resolve it -> pay-or-poison prompt
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
     }
 
     @Test
@@ -47,6 +45,22 @@ class SabertoothCobraTest extends BaseCardTest {
         dealCombatDamageToPlayer2();
 
         assertThat(poison()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(PsionicGift.class)
+    @DisplayName("Both damage effects resolve as one triggered ability")
+    void damageCreatesOneTriggeredAbility() {
+        Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(cobra.getId());
+
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -65,8 +79,8 @@ class SabertoothCobraTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Paying {2} before the upkeep avoids the second poison counter")
-    void payAvoidsSecondPoison() {
+    @DisplayName("Paying {2} at the next upkeep prompt avoids the second poison counter")
+    void payAvoidsSecondPoisonAtUpkeepPrompt() {
         Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
         cobra.setAttacking(true);
 
@@ -82,11 +96,52 @@ class SabertoothCobraTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(PsionicGift.class)
+    @DisplayName("Noncombat damage also gives the damaged player a poison counter")
+    void noncombatDamageGivesPoison() {
+        Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(cobra.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(poison()).isEqualTo(1);
+        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).hasSize(1);
+    }
+
+    @Test
+    @CardUsed(PsionicGift.class)
+    @DisplayName("The delayed poison still applies after the Cobra leaves the battlefield")
+    void delayedPoisonSurvivesSourceLeavingBattlefield() {
+        Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(cobra.getId());
+
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player2, 0, cobra.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cobra);
+        resolveAllTriggers();
+
+        assertThat(poison()).isEqualTo(1);
+        advanceToPlayer2UpkeepObligation();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(poison()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("No poison and no upkeep obligation when the Cobra is blocked")
     void blockedCreatesNothing() {
         Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
         cobra.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GiantMantis());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

@@ -13,31 +13,30 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
+@CardRegistration(set = "TLA", collectorNumber = "103")
 @CardRegistration(set = "IKO", collectorNumber = "91")
 public class HeartlessAct extends Card {
 
-    public HeartlessAct() {
-        PermanentPredicate creatureWithNoCounters = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ANY))
-        ));
+    private static final PermanentPredicate CREATURE_WITHOUT_COUNTERS = new PermanentAllOfPredicate(List.of(
+            new PermanentIsCreaturePredicate(),
+            new PermanentNotPredicate(new PermanentHasCountersPredicate(CounterType.ANY))));
 
+    public HeartlessAct() {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature with no counters on it",
-                        new DestroyTargetPermanentEffect(),
+                        new DestroyTargetPermanentEffect(CREATURE_WITHOUT_COUNTERS),
                         new PermanentPredicateTargetFilter(
-                                creatureWithNoCounters,
+                                CREATURE_WITHOUT_COUNTERS,
                                 "Target must be a creature with no counters on it.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove up to three counters from target creature",
                         new RemoveUpToCountersFromTargetEffect(3, new PermanentIsCreaturePredicate()),
-                        new PermanentPredicateTargetFilter(
-                                new PermanentIsCreaturePredicate(),
-                                "Target must be a creature."))
+                        TargetFilters.creature())
         )));
     }
 }

@@ -42,6 +42,7 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (hand == null || hand.isEmpty()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " has no cards in hand to shuffle."));
                 log.info("Game {} - {} has no cards in hand for {}", gameData.id, playerName, cardName);
                 continue;

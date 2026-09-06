@@ -45,7 +45,8 @@ public class ReturnUpToNTargetPermanentsToHandEffectHandler implements NormalEff
         List<UUID> permanentIds = new ArrayList<>();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(controllerId);
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(entry.getSourcePermanentId());
         if (e.opponentChooses()) {
             UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
             if (opponentId == null) {
@@ -76,7 +77,7 @@ public class ReturnUpToNTargetPermanentsToHandEffectHandler implements NormalEff
 
         int maxCount = Math.min(e.maxCount(), permanentIds.size());
         playerInputService.beginMultiPermanentChoice(gameData, chooserId, permanentIds, maxCount,
-                new MultiPermanentChoiceContext.ReturnTargetPermanentsToHand(),
+                new MultiPermanentChoiceContext.ReturnTargetPermanentsToHand(e.thenEffect()),
                 "Choose up to " + maxCount + " permanent" + (maxCount == 1 ? "" : "s")
                         + " to return to their owners' hands.");
     }

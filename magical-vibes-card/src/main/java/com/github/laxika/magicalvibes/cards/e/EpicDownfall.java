@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 
+@CardRegistration(set = "TLA", collectorNumber = "96")
 @CardRegistration(set = "ELD", collectorNumber = "85")
 public class EpicDownfall extends Card {
 

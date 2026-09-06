@@ -13,15 +13,21 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record ReturnUpToNTargetPermanentsToHandEffect(
         int maxCount,
         PermanentPredicate filter,
-        boolean opponentChooses
+        boolean opponentChooses,
+        CardEffect thenEffect
 ) implements CardEffect {
 
     public ReturnUpToNTargetPermanentsToHandEffect(int maxCount) {
-        this(maxCount, null, false);
+        this(maxCount, null, false, null);
+    }
+
+    public ReturnUpToNTargetPermanentsToHandEffect(
+            int maxCount, PermanentPredicate filter, CardEffect thenEffect) {
+        this(maxCount, filter, false, thenEffect);
     }
 
     public static ReturnUpToNTargetPermanentsToHandEffect opponentChooses(
             int maxCount, PermanentPredicate filter) {
-        return new ReturnUpToNTargetPermanentsToHandEffect(maxCount, filter, true);
+        return new ReturnUpToNTargetPermanentsToHandEffect(maxCount, filter, true, null);
     }
 }

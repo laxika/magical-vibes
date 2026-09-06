@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Karoo.class, Plains.class, Island.class})
 class KarooTest extends BaseCardTest {
 
     @Test
@@ -24,9 +26,7 @@ class KarooTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent karoo = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Karoo"))
-                .findFirst().orElseThrow();
+        Permanent karoo = findPermanent(player1, "Karoo");
         assertThat(karoo.isTapped()).isTrue();
     }
 
@@ -34,7 +34,7 @@ class KarooTest extends BaseCardTest {
     @DisplayName("Auto-sacrifices when controller has no untapped Plains")
     void autoSacrificesWithoutUntappedPlains() {
         harness.addToBattlefield(player1, new Plains());
-        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
+        findPermanent(player1, "Plains").tap();
         harness.addToBattlefield(player1, new Island());
         playAndResolveEtb();
 
@@ -43,6 +43,18 @@ class KarooTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Karoo");
         harness.assertOnBattlefield(player1, "Plains");
         harness.assertOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Does not use an untapped Plains controlled by an opponent")
+    void doesNotUseOpponentsUntappedPlains() {
+        harness.addToBattlefield(player2, new Plains());
+        playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Karoo");
+        harness.assertInGraveyard(player1, "Karoo");
+        harness.assertOnBattlefield(player2, "Plains");
     }
 
     @Test
@@ -57,8 +69,7 @@ class KarooTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Karoo");
         harness.assertNotOnBattlefield(player1, "Plains");
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Plains"))).isTrue();
+        harness.assertInHand(player1, "Plains");
     }
 
     @Test
@@ -71,17 +82,28 @@ class KarooTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        UUID plainsId = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Plains"))
-                .map(Permanent::getId)
-                .findFirst().orElseThrow();
+        UUID plainsId = findPermanent(player1, "Plains").getId();
         harness.handleMultiplePermanentsChosen(player1, List.of(plainsId));
 
         harness.assertOnBattlefield(player1, "Karoo");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Plains")).count()).isEqualTo(1);
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .filter(c -> c.getName().equals("Plains")).count()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Plains")).isEqualTo(1);
+        harness.assertInHand(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("Returns a controlled Plains to its owner's hand")
+    void returnsControlledPlainsToOwnersHand() {
+        Plains plains = new Plains();
+        plains.setOwnerId(player2.getId());
+        gd.playerBattlefields.get(player1.getId()).add(new Permanent(plains));
+
+        playAndResolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Karoo");
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerHands.get(player2.getId())).contains(plains);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(plains);
     }
 
     @Test
@@ -103,7 +125,7 @@ class KarooTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent land = findPermanent(player1, "Karoo");
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

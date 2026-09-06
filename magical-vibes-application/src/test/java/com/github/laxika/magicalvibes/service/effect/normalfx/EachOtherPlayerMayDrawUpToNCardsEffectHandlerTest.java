@@ -11,8 +11,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class EachOtherPlayerMayDrawUpToNCardsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
@@ -42,8 +42,8 @@ class EachOtherPlayerMayDrawUpToNCardsEffectHandlerTest extends AbstractPlayerIn
         gd.chosenXValue = 2;
         resolveEffect(gd, entry, effect);
 
-        verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
-        verify(drawService, never()).resolveDrawCard(gd, player1Id);
+        verify(drawService).resolveDrawCards(gd, player2Id, 2);
+        verify(drawService, never()).resolveDrawCards(eq(gd), eq(player1Id), anyInt());
         assertThat(gd.pendingEachOtherPlayerDrawUpToQueue).isEmpty();
         assertThat(gd.chosenXValue).isNull();
     }

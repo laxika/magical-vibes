@@ -21,6 +21,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UnpredictableCycloneTest extends BaseCardTest {
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.q.QuantumRiddler.class)
+    void additionalCyclingDrawKeepsItsSourceAfterTheFirstCastChoice() {
+        harness.addToBattlefield(player1, new UnpredictableCyclone());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.q.QuantumRiddler());
+        harness.setHand(player1, List.of(new ImposingVantasaur()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingCardDraws).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cycling digs to a shared card type and offers that card for free")
     void cyclingDigsToSharedTypeAndOffersFreeCast() {
         Permanent cyclone = harness.addToBattlefieldAndReturn(player1, new UnpredictableCyclone());

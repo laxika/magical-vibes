@@ -1,19 +1,27 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.cards.k.KarplusanForest;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.EnumSet;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DriftOfTheDead.class, KarplusanForest.class, SnowCoveredPlains.class})
 class DriftOfTheDeadTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cannot attack because it has defender")
+    void cannotAttackBecauseOfDefender() {
+        Permanent drift = addDrift(player1);
+        addSnowLand(player1);
+
+        assertThat(als.canAttack(gd, drift, player1.getId())).isFalse();
+    }
 
     @Test
     @DisplayName("Is 0/0 with no snow lands")
@@ -41,8 +49,8 @@ class DriftOfTheDeadTest extends BaseCardTest {
     void ignoresNonsnowLands() {
         Permanent drift = addDrift(player1);
         addSnowLand(player1);
-        harness.addToBattlefield(player1, new Plains());
-        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new KarplusanForest());
+        harness.addToBattlefield(player1, new KarplusanForest());
 
         assertThat(gqs.getEffectivePower(gd, drift)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drift)).isEqualTo(1);
@@ -78,14 +86,10 @@ class DriftOfTheDeadTest extends BaseCardTest {
     }
 
     private Permanent addDrift(Player player) {
-        harness.addToBattlefield(player, new DriftOfTheDead());
-        return findPermanent(player, "Drift of the Dead");
+        return addCreatureReady(player, new DriftOfTheDead());
     }
 
     private Permanent addSnowLand(Player player) {
-        Permanent snowLand = new Permanent(new Plains());
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(player.getId()).add(snowLand);
-        return snowLand;
+        return harness.addToBattlefieldAndReturn(player, new SnowCoveredPlains());
     }
 }

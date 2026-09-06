@@ -32,7 +32,7 @@ public class LordOfTresserhorn extends Card {
                 2,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
                 SacrificeRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardForTargetPlayerEffect(2));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardForTargetPlayerEffect(2, false, true));
 
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
                 "{B}: Regenerate Lord of Tresserhorn."));

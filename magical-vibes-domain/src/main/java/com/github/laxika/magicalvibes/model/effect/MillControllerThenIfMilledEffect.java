@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 /**
  * "Mill {@code count} cards. If at least one card matching {@code filter} is milled this way,
@@ -17,27 +18,33 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param elseEffect optional synchronous follow-up when no matching card was milled
  */
 public record MillControllerThenIfMilledEffect(DynamicAmount count, CardPredicate filter, CardEffect thenEffect,
-                                               CardEffect elseEffect)
+                                               CardEffect elseEffect, boolean requireAllCardsMilled,
+                                               boolean thenEffectTargets)
         implements CardEffect {
 
     /** Compatibility constructor for a dynamic mill count without an "otherwise" effect. */
     public MillControllerThenIfMilledEffect(DynamicAmount count, CardPredicate filter, CardEffect thenEffect) {
-        this(count, filter, thenEffect, null);
+        this(count, filter, thenEffect, null, false, false);
     }
 
     /** Convenience constructor for a fixed mill count. */
     public MillControllerThenIfMilledEffect(int count, CardPredicate filter, CardEffect thenEffect) {
-        this(new Fixed(count), filter, thenEffect, null);
+        this(new Fixed(count), filter, thenEffect, null, false, false);
     }
 
     /** Convenience constructor for a fixed mill count with an "otherwise" effect. */
     public MillControllerThenIfMilledEffect(int count, CardPredicate filter, CardEffect thenEffect,
                                             CardEffect elseEffect) {
-        this(new Fixed(count), filter, thenEffect, elseEffect);
+        this(new Fixed(count), filter, thenEffect, elseEffect, false, false);
+    }
+
+    public static MillControllerThenIfMilledEffect whenAllCardsMilled(int count, CardEffect thenEffect) {
+        return new MillControllerThenIfMilledEffect(
+                new Fixed(count), new CardTruePredicate(), thenEffect, null, true, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return thenEffect.targetSpec();
+        return thenEffectTargets ? TargetSpec.NONE : thenEffect.targetSpec();
     }
 }

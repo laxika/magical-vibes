@@ -3,9 +3,17 @@
 
 All paths relative to `cards/`.
 
+## Library and manifest effects
+
+| Manifest the top card, then put counters on it | `f/FierceInvocation.java` / `w/Wildcall.java` | `ManifestTopCardAndPutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)` / `ManifestTopCardAndPutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())` |
+
+| 3-chapter double-faced Saga with a delayed X-payment combat trigger on its back face | `t/TheRiseOfSozin.java` / `f/FireLordSozin.java` | Front: chapter I destroys all creatures, chapter II targets an opponent and uses `ChooseCardNameAndExileFromZonesEffect(..., 4)`, and chapter III uses `ExileSelfAndReturnTransformedEffect()`. Back: `ON_COMBAT_DAMAGE_TO_PLAYER` uses `PayXManaReanimateCreaturesWithTotalManaValueXEffect()` |
+
 ## Activated abilities
 
-| Sacrifice white creature + per-attacking-red-creature payment | `h/Heroism.java` | SacrificePermanentCost(creature + WHITE, "Sacrifice a white creature") + PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect(attacking creature + RED, "{2}{R}") — each matching attacker controller independently pays or that creature deals no combat damage this turn |
+| Tap plus mana to force a chosen creature type to attack | `w/WalkingDesecration.java` | `(true, "{B}", CreaturesOfChosenTypeMustAttackThisTurnEffect)` - chooses the type on resolution and applies the transient must-attack requirement to matching creatures on every battlefield |
+
+| Sacrifice white creature + per-attacking-red-creature payment | `h/Heroism.java` | SacrificePermanentCost(creature + WHITE, "Sacrifice a white creature") + PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect(attacking creature + RED, "{2}{R}") - each matching attacker controller independently pays or that creature deals no combat damage this turn |
 
 | Planeswalker with source-tracked exile, filtered X return, and opponent hand/graveyard exile | `a/AshiokNightmareWeaver.java` | `ExileTopCardsToSourceEffect(... TARGET_OPPONENT, true)` + `ReturnCardExiledWithSourceToBattlefieldEffect(CardTypePredicate(CREATURE), true, NIGHTMARE)` + `ExileAllOpponentsHandsEffect` + `ExileGraveyardCardsEffect(ALL_OPPONENTS)` |
 
@@ -52,12 +60,14 @@ All paths relative to `cards/`.
 | Create token | `d/DragonRoost.java` | CreateTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillEffect(2, TARGET_PLAYER), true)` |
 | Reveal until basic land (to hand, rest GY) | `h/HermitDruid.java` | `(true, "{G}", RevealUntilBasicLandToHandRestToGraveyardEffect)` — nonbasics do not stop |
+| Reveal until chosen creature type to battlefield | `r/RiptideShapeshifter.java` | `SacrificeSelfCost` + `RevealUntilChosenCreatureTypeToBattlefieldEffect` — chooses the type on resolution, puts the first matching creature (including Changeling) onto the battlefield, then shuffles the other reveals |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
 | Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE), false)` |
 | Land (choose subtype + tap for any color restricted to chosen creature type, and that spell can't be countered) | `c/CavernOfSouls.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE)` |
 | Land (restricted chosen-type spells or abilities) | `e/EclipsedRealms.java` | ON_ENTER_BATTLEFIELD `ChooseSubtypeOnEnterEffect(allowedTypes)` + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_SPELL_OR_ABILITY)` |
 | Mana dork (tap for N any color, creature spells only) | `s/SomberwaldSage.java` | `(true, null, AwardAnyColorManaEffect(3, CREATURE_SPELL_ONLY), false)` |
+| Land (tap for any color restricted to multicolored spells) | `p/PillarOfTheParuns.java` | `(true, null, AwardAnyColorManaEffect(1, MULTICOLORED_SPELLS), false)` |
 | Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
 | Mana dork (G or U + conditional Nissa life) | `a/AvidReclaimer.java` | two `{T}` abilities: AwardManaEffect(GREEN\|BLUE) + ConditionalEffect(ControlsPermanent(NISSA), GainLifeEffect(2)) — conditional rider resolved inline on mana abilities |
 | Animate self (X/X) | `c/ChimericStaff.java` | AnimatePermanentsEffect(XValue, XValue, subtypes, …, SELF, UEOT) |
@@ -72,6 +82,7 @@ All paths relative to `cards/`.
 | X-cost mass destroy (combat damage gated) | `s/SteelHellkite.java` | BoostSelfEffect pump + DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect with maxActivationsPerTurn=1 — X-cost, once per turn, only affects damaged player's permanents |
 | Loyalty (no target) | `a/AjaniOutlandChaperone.java` | `(+1, effects, false, description)` |
 | Loyalty (with target filter) | `a/AjaniOutlandChaperone.java` | `(-2, effects, true, description, filter)` |
+| Planeswalker with optional resolution-time creature sacrifice tutor, any-number milled-creature hand selection, and Rhino Warrior token | `v/VivienOnTheHunt.java` | +2 `MayEffect(SacrificePermanentThenEffect(PermanentIsCreaturePredicate(), SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanentEffect(), "a creature", false, false), "Sacrifice a creature?")`; +1 `MillControllerAndPutAnyNumberOfMilledCreaturesIntoHandEffect(5)`; −1 `CreateTokenEffect("Rhino", 4, 4, GREEN, [RHINO, WARRIOR])` |
 
 ## Planeswalkers
 
@@ -120,6 +131,7 @@ All paths relative to `cards/`.
 | Loyalty one-pass Torment punisher / destroy+draw / each-opponent burn+draw | `n/NicolBolasTheDeceiver.java` | +3 `TormentOfHailfireEffect.once(3)` (fixed 1 iteration of each-opponent three-way punisher); −3 `DestroyTargetPermanentEffect` + `DrawCardEffect(1)` with creature filter; −11 `DealDamageToPlayersEffect(7, EACH_OPPONENT)` + `DrawCardEffect(7)` |
 | Loyalty keywords+conditional counter / may-sac reflexive any-target / hand Vampire | `s/SorinImperiousBloodlord.java` | +1 GrantKeywordEffect(DEATHTOUCH+LIFELINK, TARGET) + ConditionalEffect(TargetPermanentMatches(VAMPIRE), PutCounterOnTargetPermanentEffect(+1/+1)) with ControlledPermanentPredicateTargetFilter(creature); +1 MayEffect(SacrificePermanentThenEffect(VAMPIRE, SequenceEffect(DealDamageToAnyTargetEffect(3), GainLifeEffect(3)))) — sac first, then any-target chosen as reflexive trigger goes on stack; −3 MayEffect(PutCardToBattlefieldEffect(creature+VAMPIRE)) |
 | Multi-target tap ability (equip mover) | `b/BrassSquire.java` | `ActivatedAbility(true, null, effects, desc, multiTargetFilters, 2, 2)` — tap to attach Equipment to creature, instant speed, uses `AttachTargetEquipmentToTargetCreatureEffect` |
+| Multi-target ability with shared creature-type restriction | `s/SecretTunnel.java` | `ActivatedAbility(true, "{4}", List.of(new MakeCreatureUnblockableEffect()), desc, List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureYouControl()), 2, 2).withMultiTargetConstraint(SHARE_CREATURE_TYPES)` |
 | Transform DFC | `b/BloodlineKeeper.java` | Front face with `setBackFaceCard(new LordOfLineage())` + `getBackFaceClassName()` override. Activated ability with `TransformSelfEffect` + subtype count restriction (`CardSubtype.VAMPIRE, 5`). Back face is a separate Card subclass (`LordOfLineage`) |
 | Activated fight + delayed death-return transform DFC | `g/GoldenGuardian.java` / `g/GoldForgeGarrison.java` | Front: `{2}` `SourceFightsTargetCreatureEffect()` + `RegisterDelayedSelfReturnTransformedEffect()` targeting another creature you control; the registration is created only if the source remains on the battlefield through resolution. Back: `{T}` `AwardAnyColorManaEffect(2)` + `{4},{T}` `CreateTokenEffect("Golem", 4, 4, null, [GOLEM], {}, {ARTIFACT})` |
 | Transforming creature into a planeswalker + discard/reanimate/library-exile loyalty abilities | `n/NicolBolasTheRavager.java` / `n/NicolBolasTheArisen.java` | Front: ETB `DiscardEffect(1, EACH_OPPONENT)` + sorcery-speed `{4}{U}{B}{R}` `ExileSelfAndReturnTransformedEffect()`. Back: `+2 DrawCardEffect(2)`, `−3 DealDamageToTargetCreatureOrPlaneswalkerEffect(10)`, `−4` targeted all-graveyards `ReturnCardFromGraveyardEffect` filtered to creature/planeswalker, `−12 ExileAllButBottomCardOfTargetLibraryEffect()` |

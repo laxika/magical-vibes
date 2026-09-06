@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "M19", collectorNumber = "108")
 @CardRegistration(set = "FDN", collectorNumber = "177")
 @CardRegistration(set = "SOI", collectorNumber = "121")
+@CardRegistration(set = "DIS", collectorNumber = "47")
 public class MacabreWaltz extends Card {
 
     public MacabreWaltz() {

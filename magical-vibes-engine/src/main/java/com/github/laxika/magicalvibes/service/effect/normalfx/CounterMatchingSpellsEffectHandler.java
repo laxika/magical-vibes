@@ -25,7 +25,8 @@ public class CounterMatchingSpellsEffectHandler implements NormalEffectHandlerBe
     private static final Set<StackEntryType> SPELL_TYPES = Set.of(
             StackEntryType.CREATURE_SPELL, StackEntryType.ENCHANTMENT_SPELL,
             StackEntryType.SORCERY_SPELL, StackEntryType.INSTANT_SPELL,
-            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL);
+            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL,
+            StackEntryType.BATTLE_SPELL);
 
     private final CounterSupport counterSupport;
     private final TargetLegalityService targetLegalityService;
@@ -51,11 +52,13 @@ public class CounterMatchingSpellsEffectHandler implements NormalEffectHandlerBe
             toCounter.add(se);
         }
 
+        int counteredCount = 0;
         for (StackEntry target : toCounter) {
             StackEntry resolved = counterSupport.findCounterTarget(gameData, target.getCard().getId(), entry);
-            if (resolved != null) {
-                counterSupport.counterSpell(gameData, entry, resolved);
+            if (resolved != null && counterSupport.counterSpell(gameData, entry, resolved)) {
+                counteredCount++;
             }
         }
+        entry.setEventValue(counteredCount);
     }
 }

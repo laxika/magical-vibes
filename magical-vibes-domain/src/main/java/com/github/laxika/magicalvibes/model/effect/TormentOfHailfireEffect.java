@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -20,25 +21,31 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                           nonland permanents
  */
 public record TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
-                                      PermanentPredicate sacrificePredicate) implements CardEffect {
+                                      PermanentPredicate sacrificePredicate,
+                                      DynamicAmount dynamicIterations) implements CardEffect {
 
     /** Uses the stack entry's {@code xValue} as the iteration count (Torment of Hailfire). */
     public TormentOfHailfireEffect(int lifeLoss) {
-        this(lifeLoss, null, null);
+        this(lifeLoss, null, null, null);
     }
 
     /** Uses a custom permanent filter for the sacrifice option. */
     public TormentOfHailfireEffect(int lifeLoss, PermanentPredicate sacrificePredicate) {
-        this(lifeLoss, null, sacrificePredicate);
+        this(lifeLoss, null, sacrificePredicate, null);
+    }
+
+    public TormentOfHailfireEffect(int lifeLoss, Integer fixedIterations,
+                                   DynamicAmount dynamicIterations) {
+        this(lifeLoss, fixedIterations, null, dynamicIterations);
     }
 
     /** One pass over each opponent (Nicol Bolas, the Deceiver +3). */
     public static TormentOfHailfireEffect once(int lifeLoss) {
-        return new TormentOfHailfireEffect(lifeLoss, 1, null);
+        return new TormentOfHailfireEffect(lifeLoss, 1, null, null);
     }
 
     /** One pass over each opponent with a custom sacrifice filter. */
     public static TormentOfHailfireEffect once(int lifeLoss, PermanentPredicate sacrificePredicate) {
-        return new TormentOfHailfireEffect(lifeLoss, 1, sacrificePredicate);
+        return new TormentOfHailfireEffect(lifeLoss, 1, sacrificePredicate, null);
     }
 }

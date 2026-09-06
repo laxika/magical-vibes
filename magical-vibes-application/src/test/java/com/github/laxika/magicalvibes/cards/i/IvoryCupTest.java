@@ -5,16 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IvoryCup.class, WhiteKnight.class, GrizzlyBears.class})
 class IvoryCupTest extends BaseCardTest {
 
     // ===== Controller casts white spell =====
@@ -23,13 +23,10 @@ class IvoryCupTest extends BaseCardTest {
     @DisplayName("Controller casts white spell, pays {1}, gains 1 life")
     void controllerCastsWhiteSpellAndPays() {
         harness.addToBattlefield(player1, new IvoryCup());
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromHand(player1, new WhiteKnight(), "{W}{W}");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-
-        harness.castCreature(player1, 0);
 
         // Trigger goes on the stack unconditionally
         GameData gd = harness.getGameData();
@@ -51,13 +48,11 @@ class IvoryCupTest extends BaseCardTest {
     @DisplayName("Controller casts white spell, declines to pay, no life gain")
     void controllerCastsWhiteSpellAndDeclines() {
         harness.addToBattlefield(player1, new IvoryCup());
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromHand(player1, new WhiteKnight(), "{W}{W}");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -69,13 +64,10 @@ class IvoryCupTest extends BaseCardTest {
     @DisplayName("Accepting without enough mana gains no life")
     void acceptWithoutManaNoLife() {
         harness.addToBattlefield(player1, new IvoryCup());
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        // No spare mana to pay {1}
+        harness.castFromHand(player1, new WhiteKnight(), "{W}{W}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -95,12 +87,9 @@ class IvoryCupTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new EliteVanguard()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castFromHand(player2, new WhiteKnight(), "{W}{W}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
-
-        harness.castCreature(player2, 0);
 
         // Resolve the trigger (controller of Ivory Cup chooses)
         harness.passBothPriorities();
@@ -119,10 +108,7 @@ class IvoryCupTest extends BaseCardTest {
     @DisplayName("Non-white spell does not trigger Ivory Cup")
     void nonWhiteSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new IvoryCup());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY

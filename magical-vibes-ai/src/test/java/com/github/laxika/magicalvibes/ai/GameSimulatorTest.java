@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingInferno;
 import com.github.laxika.magicalvibes.cards.o.OpenTheWay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -287,6 +288,21 @@ class GameSimulatorTest {
 
         assertThat(actions).extracting(SimulationAction.ActivateAbility::targetId)
                 .contains(feaster.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Amount-distribution abilities are not enumerated without assignments")
+    void amountDistributionAbilityIsNotEnumerated() {
+        Permanent inferno = harness.addToBattlefieldAndReturn(player1, new LivingInferno());
+        inferno.setSummoningSick(false);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        assertThat(simulator.getLegalActions(gd, player1.getId()))
+                .noneMatch(action -> action instanceof SimulationAction.ActivateAbility activation
+                        && activation.permanentId().equals(inferno.getId()));
     }
 
     @Test

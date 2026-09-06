@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({WallOfDust.class, GrizzlyBears.class})
 class WallOfDustTest extends BaseCardTest {
 
     private void advanceTurn() {
@@ -23,22 +24,27 @@ class WallOfDustTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When Wall of Dust blocks an attacker, the block trigger references it and flags it as can't-attack-next-turn")
-    void blockingFlagsAttacker() {
-        Permanent attacker = addReadyBear(player1);
-        attacker.setAttacking(true);
-        addReadyWall(player2);
+    @DisplayName("Defender prevents Wall of Dust from attacking")
+    void defenderPreventsAttacking() {
+        addCreatureReady(player1, new WallOfDust());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("When Wall of Dust blocks an attacker, its trigger flags that attacker for next turn")
+    void blockingFlagsAttacker() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new WallOfDust());
+
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // The block trigger references the blocked attacker (not Wall of Dust itself)
         assertThat(gd.stack).anyMatch(se ->
                 se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && se.getCard().getName().equals("Wall of Dust")
+                        && se.getSourcePermanentId().equals(wall.getId())
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
@@ -48,7 +54,7 @@ class WallOfDustTest extends BaseCardTest {
     @Test
     @DisplayName("The restriction arms only on the creature's controller's next turn, not the intervening opponent turn")
     void restrictionArmsOnControllersNextTurn() {
-        Permanent bear = addReadyBear(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         bear.setCantAttackNextTurn(true); // state produced by the block trigger
 
         // The intervening opponent turn must not arm the restriction.
@@ -63,10 +69,7 @@ class WallOfDustTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(bear.isCantAttackThisTurn()).isTrue();
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -74,7 +77,7 @@ class WallOfDustTest extends BaseCardTest {
     @Test
     @DisplayName("The restriction wears off after the one turn and the creature can attack again")
     void restrictionWearsOff() {
-        Permanent bear = addReadyBear(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         bear.setCantAttackThisTurn(true); // already armed for player1's current turn
         harness.forceActivePlayer(player1);
 
@@ -87,21 +90,5 @@ class WallOfDustTest extends BaseCardTest {
         // The restriction is gone, so the creature is a legal attacker again.
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
-    }
-
-    // ===== Helpers =====
-
-    private Permanent addReadyBear(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyWall(Player player) {
-        Permanent perm = new Permanent(new WallOfDust());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 }

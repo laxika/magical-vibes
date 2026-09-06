@@ -1,48 +1,30 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Pyroclasm.class, GrizzlyBears.class, GiantSpider.class, PaladinEnVec.class})
 class PyroclasmTest extends BaseCardTest {
-
-    private static Card indestructibleCreature() {
-        Card card = new Card();
-        card.setName("Darksteel Sentinel");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{6}");
-        card.setColor(CardColor.WHITE);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
-        return card;
-    }
-
-    
 
     @Test
     @DisplayName("Casting Pyroclasm puts it on the stack as a sorcery")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Pyroclasm()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -56,10 +38,7 @@ class PyroclasmTest extends BaseCardTest {
     void destroysCreaturesWithToughnessTwoOrLess() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Pyroclasm()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -70,10 +49,7 @@ class PyroclasmTest extends BaseCardTest {
     @DisplayName("Pyroclasm does not destroy creatures with toughness greater than 2")
     void doesNotDestroyCreaturesWithToughnessGreaterThanTwo() {
         harness.addToBattlefield(player2, new GiantSpider());
-        harness.setHand(player1, List.of(new Pyroclasm()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Giant Spider");
@@ -84,10 +60,7 @@ class PyroclasmTest extends BaseCardTest {
     void doesNotDealDamageToPlayers() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new Pyroclasm()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -96,26 +69,32 @@ class PyroclasmTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Forest.class)
+    @DisplayName("Pyroclasm does not damage noncreature permanents")
+    void doesNotDamageNoncreaturePermanents() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
     @DisplayName("Creatures with protection from red survive Pyroclasm")
     void protectionFromRedSurvives() {
         harness.addToBattlefield(player2, new PaladinEnVec());
-        harness.setHand(player1, List.of(new Pyroclasm()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Paladin en-Vec");
     }
 
     @Test
+    @CardUsed(DarksteelSentinel.class)
     @DisplayName("Indestructible creatures survive Pyroclasm")
     void indestructibleCreaturesSurvive() {
-        harness.addToBattlefield(player2, indestructibleCreature());
-        harness.setHand(player1, List.of(new Pyroclasm()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.addToBattlefield(player2, new DarksteelSentinel());
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Darksteel Sentinel");

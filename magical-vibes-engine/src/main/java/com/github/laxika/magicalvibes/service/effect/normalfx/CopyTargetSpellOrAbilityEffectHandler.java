@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityRetargetE
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -102,6 +103,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             case StackEntryAnyOfPredicate anyOf ->
                     anyOf.predicates().stream().anyMatch(p -> matchesTargetPredicate(stackEntry, p));
             case StackEntryIsSingleTargetPredicate ignored -> stackEntry.isSingleTarget();
+            case StackEntryIsCopyPredicate ignored -> stackEntry.isCopy();
             default -> true;
         };
     }

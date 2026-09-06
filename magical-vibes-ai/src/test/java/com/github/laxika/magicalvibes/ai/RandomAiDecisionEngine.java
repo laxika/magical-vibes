@@ -210,6 +210,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                     telemetry.recordSkip("ability: variable loyalty cost (unsupported)", permanent.getCard().getName());
                     continue;
                 }
+                if (EffectResolution.needsDamageDistribution(ability.getEffects())) {
+                    telemetry.recordSkip("ability: amount distribution (unsupported)", permanent.getCard().getName());
+                    continue;
+                }
                 if (ability.isMultiTarget()) {
                     telemetry.recordSkip("ability: multi-target (unsupported)", permanent.getCard().getName());
                     continue;

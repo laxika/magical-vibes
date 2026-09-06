@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -63,6 +64,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -182,7 +184,9 @@ public class GraveyardReturnSupport {
 
         if (targetCard == null
                 || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId))
+                targetCard, effect.filter(), sourceCardId, gameData, targetOwnerId,
+                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getXValue()))
                 || (effect.targetNotPutIntoGraveyardThisCombat()
                 && targetOwnerId != null
                 && gameData.cardsPutIntoGraveyardThisCombat
@@ -301,11 +305,11 @@ public class GraveyardReturnSupport {
                 returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, targetCard,
                         effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                         effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
-                        effect.exileAtYourNextEndStep());
+                        effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect));
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, controllerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
-                        null, effect.grantIndestructible());
+                        null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect));
             }
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
@@ -377,7 +381,9 @@ public class GraveyardReturnSupport {
                 : gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return effect.filter() == null
                 || predicateEvaluationService.matchesCardPredicate(
-                card, effect.filter(), sourceCardId, gameData, cardOwnerId);
+                card, effect.filter(), sourceCardId, gameData, cardOwnerId,
+                entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
+                entry.getXValue());
     }
 
     private CardSubtype findSourceChosenSubtype(GameData gameData, StackEntry entry, UUID sourceCardId) {
@@ -554,11 +560,20 @@ public class GraveyardReturnSupport {
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
-                            grantedEffect, p.getId(), null, null, EffectDuration.PERMANENT, 0));
+                            grantedEffect, p.getId(), null, null,
+                            effect.battlefieldEffectGrantDuration() == null
+                                    ? EffectDuration.PERMANENT
+                                    : effect.battlefieldEffectGrantDuration(), 0));
                 }
             }
             break;
         }
+    }
+
+    private boolean losesAllAbilitiesBeforeEntering(ReturnCardFromGraveyardEffect effect) {
+        return effect.battlefieldEffectGrants() != null
+                && effect.battlefieldEffectGrants().stream()
+                .anyMatch(LosesAllAbilitiesEffect.class::isInstance);
     }
 
     public void resolveReturnAll(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
@@ -622,9 +637,11 @@ public class GraveyardReturnSupport {
                     trackedIds.remove(card.getId());
                     graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
                     if (toBattlefield) {
-                        putCardOntoBattlefield(gameData, controllerId, card,
-                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+                        Permanent returnedPermanent = putCardOntoBattlefield(gameData, controllerId, card,
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), false,
+                                null, false, losesAllAbilitiesBeforeEntering(effect));
                         applyBattlefieldReturnRiders(gameData, controllerId, card, effect);
+                        queueNextUpkeepExile(gameData, entry, effect, controllerId, returnedPermanent);
                     } else {
                         permanentRemovalService.addCardToHandFromGraveyard(
                                 gameData, controllerId, controllerId, card);
@@ -689,17 +706,22 @@ public class GraveyardReturnSupport {
                         gameData.playerDecks.get(targetPlayerId).addFirst(card);
                     } else if (effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
                         gameData.playerDecks.get(targetPlayerId).addLast(card);
-                    } else if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
-                            || effect.sacrificeAtEndStep()) {
-                        putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
-                                effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                                effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
-                                effect.exileAtYourNextEndStep());
-                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
                     } else {
-                        putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
-                                effect.enterTapped(), effect.enterAttacking());
+                        Permanent returnedPermanent;
+                        if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                                || effect.sacrificeAtEndStep()) {
+                            returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
+                                    effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
+                                    effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
+                                    effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect));
+                        } else {
+                            returnedPermanent = putCardOntoBattlefield(gameData, targetPlayerId, card,
+                                    effect.grantColor(), effect.grantSubtype(), effect.enterTapped(),
+                                    effect.enterAttacking(), null, false,
+                                    losesAllAbilitiesBeforeEntering(effect));
+                        }
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect);
+                        queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
                     }
                     returnedCards.add(card);
                 }
@@ -726,6 +748,15 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 returnedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse(""), destName);
+    }
+
+    private void queueNextUpkeepExile(GameData gameData, StackEntry entry,
+                                      ReturnCardFromGraveyardEffect effect, UUID controllerId,
+                                      Permanent returnedPermanent) {
+        if (effect.exileAtNextUpkeep() && returnedPermanent != null) {
+            gameData.queueDelayedAction(new ExilePermanentAtNextUpkeep(
+                    controllerId, returnedPermanent.getId(), entry.getCard()));
+        }
     }
 
     private void resolveReturnAllWithAttachments(GameData gameData, StackEntry entry,
@@ -971,10 +1002,11 @@ public class GraveyardReturnSupport {
                         putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, randomCard,
                                 effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
                                 effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
-                                effect.exileAtYourNextEndStep());
+                                effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect));
                     } else {
                         putCardOntoBattlefield(gameData, controllerId, randomCard,
-                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking());
+                                effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
+                                null, false, losesAllAbilitiesBeforeEntering(effect));
                     }
                     applyBattlefieldReturnRiders(gameData, controllerId, randomCard, effect);
                 } else if (effect.battlefieldIfCreatureElseExile()) {
@@ -1072,6 +1104,7 @@ public class GraveyardReturnSupport {
                 .mandatory(effect.mandatory() || effect.greatestPower())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -1101,12 +1134,16 @@ public class GraveyardReturnSupport {
     public void resolveFromAllGraveyards(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                           UUID controllerId, UUID sourceCardId) {
         List<Card> cardPool = new ArrayList<>();
+        Set<UUID> eventCardIds = effect.eventCardIdsOnly()
+                ? new HashSet<>(entry.getEventCardIds())
+                : Set.of();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if (matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
+                if ((!effect.eventCardIdsOnly() || eventCardIds.contains(card.getId()))
+                        && matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                     cardPool.add(card);
                 }
             }
@@ -1138,6 +1175,7 @@ public class GraveyardReturnSupport {
                 .mandatory(effect.mandatory())
                 .enterWithCounter(effect.enterWithCounter(), effect.enterWithCounterCount())
                 .enterWithCounters(effect.enterWithCounters())
+                .mandatory(effect.mandatory() || effect.greatestPower())
                 .cardPool(cardPool);
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -1180,6 +1218,24 @@ public class GraveyardReturnSupport {
                                                 String logVerbPhrase, String logSuffix) {
         processTargetedGraveyardTargets(gameData, entry, targetCardIds, cardConsumer,
                 logVerbPhrase, logSuffix);
+    }
+
+    public void putTargetedGraveyardCardsOnTopInChosenOrder(GameData gameData, StackEntry entry) {
+        List<Card> movedCards = new ArrayList<>();
+        processTargetedGraveyardTargets(gameData, entry, entry.getTargetCardIds(),
+                (graveyard, card) -> movedCards.add(card),
+                " puts ", " on top of their library from graveyard.");
+        if (movedCards.isEmpty()) {
+            return;
+        }
+        UUID controllerId = entry.getControllerId();
+        if (movedCards.size() == 1) {
+            gameData.playerDecks.get(controllerId).addFirst(movedCards.getFirst());
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, movedCards, false, controllerId,
+                "Put these cards on top of your library in any order."));
     }
 
     public void processTargetedGraveyardTargets(GameData gameData, StackEntry entry, List<UUID> targetIds,
@@ -1299,6 +1355,36 @@ public class GraveyardReturnSupport {
                                          CardColor grantColor, CardSubtype grantSubtype,
                                          boolean enterTapped, boolean enterAttacking,
                                          CounterType enterWithCounter, boolean grantIndestructible) {
+        return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, enterWithCounter, grantIndestructible, false);
+    }
+
+    public Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter, boolean grantIndestructible,
+                                         boolean losesAllAbilities) {
+        return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, enterWithCounter, grantIndestructible,
+                losesAllAbilities, enterWithCounter == null ? 0 : 1);
+    }
+
+    public Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter, boolean grantIndestructible,
+                                         boolean losesAllAbilities, int enterWithCounterAmount) {
+        return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, enterWithCounter, grantIndestructible,
+                losesAllAbilities, enterWithCounterAmount, permanent -> { });
+    }
+
+    private Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter, boolean grantIndestructible,
+                                         boolean losesAllAbilities, int enterWithCounterAmount,
+                                         Consumer<Permanent> beforeEntry) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         // The card stays in the graveyard it was being returned from (the caller already removed it).
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
@@ -1314,13 +1400,15 @@ public class GraveyardReturnSupport {
         Permanent permanent = new Permanent(card);
         initializePlaneswalkerLoyalty(permanent, card);
         applyPermanentGrants(permanent, grantColor, grantSubtype, grantIndestructible);
-        if (enterWithCounter != null) {
-            permanent.setCounterCount(enterWithCounter, 1);
+        permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
+        if (enterWithCounter != null && enterWithCounterAmount > 0) {
+            permanent.setCounterCount(enterWithCounter, enterWithCounterAmount);
         }
         if (enterTapped) {
             permanent.tap();
         }
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
+        beforeEntry.accept(permanent);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (enterAttacking) {
             permanent.setAttacking(true);
@@ -1397,10 +1485,13 @@ public class GraveyardReturnSupport {
 
             Permanent permanent = new Permanent(card);
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+            UUID battlefieldControllerId = batch.underOwnersControl()
+                    ? card.getOwnerId() != null ? card.getOwnerId() : graveyardOwnerId
+                    : batch.controllerId();
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, batch.controllerId(), permanent, enterTappedTypes, simultaneouslyEntered);
+                    gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(permanent);
-            enteredPermanents.add(new ReturnedPermanent(batch.controllerId(), permanent, card));
+            enteredPermanents.add(new ReturnedPermanent(battlefieldControllerId, permanent, card));
         }
 
         for (ReturnedPermanent returned : enteredPermanents) {
@@ -1463,8 +1554,29 @@ public class GraveyardReturnSupport {
      * enters tapped when {@code enterTapped} is true (Dance of the Dead).
      */
     public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card, boolean enterTapped) {
+        return reanimateTargetedCard(gameData, controllerId, card, enterTapped, permanent -> { });
+    }
+
+    /**
+     * Reanimates a targeted card after allowing linked objects to adopt the new permanent ID before
+     * battlefield-entry processing begins. Reanimation Auras use this to remain continuously
+     * attached while their enchanted card changes zones.
+     */
+    public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card,
+                                             boolean enterTapped, Consumer<Permanent> beforeEntry) {
+        if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+            return null;
+        }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-        return putCardOntoBattlefield(gameData, controllerId, card, null, null, enterTapped, false, null);
+        return putCardOntoBattlefield(gameData, controllerId, card, null, null, enterTapped, false,
+                null, false, false, 0, permanent -> {
+                    permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+                    if (graveyardOwnerId != null && !controllerId.equals(graveyardOwnerId)) {
+                        trackStolenCreature(gameData, permanent.getId(), controllerId, graveyardOwnerId);
+                    }
+                    beforeEntry.accept(permanent);
+                });
     }
 
     /**
@@ -1534,6 +1646,18 @@ public class GraveyardReturnSupport {
                                                               boolean exileIfLeavesBattlefield,
                                                               boolean enterTapped, boolean enterAttacking,
                                                               boolean exileAtYourNextEndStep) {
+        return putCardOntoBattlefieldWithHasteAndExile(gameData, controllerId, card, grantHaste, exileAtEndStep,
+                sacrificeAtEndStep, exileIfLeavesBattlefield, enterTapped, enterAttacking,
+                exileAtYourNextEndStep, false);
+    }
+
+    public Permanent putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
+                                                              boolean grantHaste, boolean exileAtEndStep,
+                                                              boolean sacrificeAtEndStep,
+                                                              boolean exileIfLeavesBattlefield,
+                                                              boolean enterTapped, boolean enterAttacking,
+                                                              boolean exileAtYourNextEndStep,
+                                                              boolean losesAllAbilities) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
@@ -1547,6 +1671,7 @@ public class GraveyardReturnSupport {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         initializePlaneswalkerLoyalty(permanent, card);
+        permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
@@ -1570,7 +1695,7 @@ public class GraveyardReturnSupport {
             gameData.queueDelayedAction(exileAtYourNextEndStep
                     ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
                     controllerId)
-                    : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                    : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
         }
         if (sacrificeAtEndStep) {
             gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
@@ -1654,7 +1779,7 @@ public class GraveyardReturnSupport {
     }
 
     public void handleCreatureEtbAndLegendRule(GameData gameData, UUID controllerId, Permanent permanent, Card card) {
-        if (gameQueryService.isCreature(gameData, permanent)) {
+        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         }
         if (!gameData.interaction.isAwaitingInput()) {
@@ -2518,21 +2643,53 @@ public class GraveyardReturnSupport {
      * pile-separation dispositions this completes the flow — there is no second choice.
      */
     public void completeGiftsUngivenChoice(GameData gameData, List<UUID> chosenCardIds) {
+        completeGiftsUngivenChoice(gameData, chosenCardIds, false);
+    }
+
+    /**
+     * Completes a Gifts-style opponent choice. The chosen cards go to the controller's graveyard;
+     * the remaining cards either go to hand or enter the controller's battlefield tapped.
+     */
+    public void completeGiftsUngivenChoice(GameData gameData, List<UUID> chosenCardIds,
+                                            boolean remainingCardsEnterBattlefieldTapped) {
         PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         UUID controllerId = state.controllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
         String chooserName = gameData.playerIdToName.get(state.targetPlayerId());
+        Set<CardType> enterTappedTypes = remainingCardsEnterBattlefieldTapped
+                ? battlefieldEntryService.snapshotEnterTappedTypes(gameData) : Set.of();
+        List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<Permanent> enteredPermanents = new ArrayList<>();
 
         for (Card card : state.cards()) {
             if (chosenCardIds.contains(card.getId())) {
                 gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
                 gameLogService.append(gameData, GameLog.textCardText(chooserName + " chooses ", card,
                         ", putting it into " + controllerName + "'s graveyard."));
+            } else if (remainingCardsEnterBattlefieldTapped) {
+                if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
+                    gameData.playerDecks.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(card);
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            " can't enter the battlefield from a library; it stays in the library."));
+                    continue;
+                }
+
+                Permanent permanent = new Permanent(card, Zone.LIBRARY);
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                permanent.tap();
+                simultaneouslyEntered.add(permanent);
+                enteredPermanents.add(permanent);
+                gameLogService.append(gameData, GameLog.entersBattlefieldTappedUnder(card, controllerName));
             } else {
                 gameData.addCardToHand(controllerId, card);
                 gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
                         " into their hand."));
             }
+        }
+
+        for (Permanent permanent : enteredPermanents) {
+            handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, permanent.getCard());
         }
     }
 
@@ -2574,6 +2731,7 @@ public class GraveyardReturnSupport {
     public Permanent putCardOntoBattlefieldFromExile(GameData gameData, UUID controllerId, Card card) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
         initializePlaneswalkerLoyalty(permanent, card);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
