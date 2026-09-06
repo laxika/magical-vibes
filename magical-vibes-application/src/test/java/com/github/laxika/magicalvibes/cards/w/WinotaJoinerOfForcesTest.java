@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,6 +22,8 @@ class WinotaJoinerOfForcesTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Human attacker puts a Human onto the battlefield tapped and attacking")
     void nonHumanAttackerPutsHumanOntoBattlefieldAttacking() {
+        gd.playerAutoStopSteps.put(player1.getId(), EnumSet.of(
+                TurnStep.DECLARE_ATTACKERS, TurnStep.DECLARE_BLOCKERS));
         addCreatureReady(player1, new WinotaJoinerOfForces());
         addCreatureReady(player1, new GrizzlyBears());
         EliteVanguard human = new EliteVanguard();

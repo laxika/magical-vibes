@@ -115,6 +115,9 @@ public class EtbEffectResolver {
         // re-evaluation at stack resolution, and source-untapped clauses are sampled at entry.
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
+            if (!conditional.interveningIf()) {
+                return effect;
+            }
             Zone sourceZone = ctx.sourcePermanent() == null
                     ? (ctx.wasCastFromHand() ? Zone.HAND : null)
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);

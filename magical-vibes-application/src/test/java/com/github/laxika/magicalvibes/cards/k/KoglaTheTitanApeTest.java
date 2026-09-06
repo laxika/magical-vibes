@@ -124,6 +124,7 @@ class KoglaTheTitanApeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, targetIds);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private void declareAttackAndResolveTrigger(Permanent kogla) {

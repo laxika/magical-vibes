@@ -168,6 +168,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_DISCARD_EVENT,
     /** Triggers whenever any player cycles a card. */
     ON_ANY_PLAYER_CYCLES,
+    /** A triggered ability of the card being cycled, independent of the cycling draw. */
+    ON_SELF_CYCLED,
     /** Triggers whenever this permanent's controller scries. Checked by
      *  {@code TriggerCollectionService.checkScryTriggers}. */
     ON_CONTROLLER_SCRIES,

@@ -24,9 +24,10 @@ class PricklyMarmosetTest extends BaseCardTest {
         Permanent marmoset = harness.addToBattlefieldAndReturn(player1, new PricklyMarmoset());
         harness.setHand(player1, List.of(new Censor()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(marmoset.getEffectivePower()).isEqualTo(4);
@@ -45,6 +46,7 @@ class PricklyMarmosetTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(marmoset.getEffectivePower()).isEqualTo(2);
@@ -59,9 +61,10 @@ class PricklyMarmosetTest extends BaseCardTest {
         Permanent marmoset = harness.addToBattlefieldAndReturn(player1, new PricklyMarmoset());
         harness.setHand(player1, List.of(new Censor()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(marmoset.getPowerModifier()).isEqualTo(2);
 

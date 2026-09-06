@@ -82,6 +82,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.lenient;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -537,13 +538,14 @@ class EnterTriggerCollectorServiceTest {
     @Test
     @DisplayName("Ally-creature scan queues a graveyard target choice for optional exile")
     void allyCreatureQueuesGraveyardTargeting() {
-        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard());
+        var effect = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, effect);
 
         service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2), 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
+        verify(graveyardTargetingService).handleGraveyardCardsExileETBTargeting(
+                eq(gd), eq(player1Id), any(Card.class), eq(List.of(effect)), eq(effect));
     }
 
     @Test

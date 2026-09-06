@@ -87,7 +87,7 @@ class DrannithMagistrateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromLibraryTop(player2, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("library");
+                .hasMessageContaining("Spells can't be cast from libraries");
     }
 
     @Test

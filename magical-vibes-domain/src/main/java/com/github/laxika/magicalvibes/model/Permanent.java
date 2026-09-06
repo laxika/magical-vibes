@@ -1392,6 +1392,7 @@ public class Permanent {
             case DEATHTOUCH -> CounterType.DEATHTOUCH;
             case DECAYED -> CounterType.DECAYED;
             case LIFELINK -> CounterType.LIFELINK;
+            case VIGILANCE -> CounterType.VIGILANCE;
             case REACH -> CounterType.REACH;
             case TRAMPLE -> CounterType.TRAMPLE;
             case HEXPROOF -> CounterType.HEXPROOF;

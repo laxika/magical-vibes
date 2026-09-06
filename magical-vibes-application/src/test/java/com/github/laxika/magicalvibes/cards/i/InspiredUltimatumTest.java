@@ -28,7 +28,7 @@ class InspiredUltimatumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InspiredUltimatum()));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId(), List.of(creature.getId()));
+        harness.castSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
@@ -48,7 +48,7 @@ class InspiredUltimatumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InspiredUltimatum()));
         addMana();
 
-        harness.castSorcery(player1, 0, player2.getId(), List.of(player2.getId()));
+        harness.castSorcery(player1, 0, List.of(player2.getId(), player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(10);
@@ -63,7 +63,7 @@ class InspiredUltimatumTest extends BaseCardTest {
         addMana();
 
         assertThatThrownBy(() ->
-                harness.castSorcery(player1, 0, creature.getId(), List.of(player2.getId()))
+                harness.castSorcery(player1, 0, List.of(creature.getId(), player2.getId()))
         ).isInstanceOf(IllegalStateException.class);
     }
 

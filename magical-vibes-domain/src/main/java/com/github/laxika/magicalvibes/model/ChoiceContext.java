@@ -756,7 +756,20 @@ public sealed interface ChoiceContext {
     record SpellManaValueParityChoice(UUID controllerId) implements ChoiceContext {}
 
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
-    record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
+    record ManaValueParityChoice(UUID permanentId, Card creatureCard, UUID targetId,
+                                 boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                 List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                 List<UUID> convokeCreatureIds) implements ChoiceContext {
+        public ManaValueParityChoice {
+            targetIds = List.copyOf(targetIds);
+            repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+        }
+
+        public ManaValueParityChoice(UUID permanentId) {
+            this(permanentId, null, null, false, 0, 0, false, List.of(), List.of(), List.of());
+        }
+    }
 
     /**
      * Choosing a number in an inclusive range for {@code permanentId} (e.g. Shapeshifter's "choose a

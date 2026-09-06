@@ -59,7 +59,7 @@ class SnapdaxApexOfTheHuntTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBear.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("opponent controls");
+                .hasMessageContaining("Invalid permanent");
     }
 
     private void triggerMutation(Permanent snapdax) {

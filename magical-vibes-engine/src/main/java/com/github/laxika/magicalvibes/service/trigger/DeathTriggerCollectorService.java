@@ -2627,7 +2627,10 @@ public class DeathTriggerCollectorService {
                 null,
                 match.permanent().getId()
         );
-        entry.setDyingPermanentManaValue(cd.dyingPermanent().getCard().getManaValue());
+        Card dyingCard = cd.dyingPermanent() != null ? cd.dyingPermanent().getCard() : cd.dyingCard();
+        if (dyingCard != null) {
+            entry.setDyingPermanentManaValue(dyingCard.getManaValue());
+        }
         match.gameData().stack.add(entry);
         logAllyNontokenCreatureDeath(match);
         return true;

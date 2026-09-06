@@ -106,9 +106,10 @@ class OffspringsRevengeTest extends BaseCardTest {
     }
 
     private void advanceToPlayer1NextTurn() {
+        declareAttackers(List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }

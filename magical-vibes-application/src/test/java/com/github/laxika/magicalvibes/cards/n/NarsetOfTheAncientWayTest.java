@@ -52,6 +52,7 @@ class NarsetOfTheAncientWayTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
@@ -64,7 +65,7 @@ class NarsetOfTheAncientWayTest extends BaseCardTest {
 
     @Test
     void minusTwoDrawsAndDamagesForDiscardedNonlandManaValue() {
-        addReadyNarset(player1, 2);
+        Permanent narset = addReadyNarset(player1, 2);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card discarded = new Shock();
         Card drawn = new Mountain();
@@ -79,7 +80,7 @@ class NarsetOfTheAncientWayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(narset.getCard(), discarded);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 

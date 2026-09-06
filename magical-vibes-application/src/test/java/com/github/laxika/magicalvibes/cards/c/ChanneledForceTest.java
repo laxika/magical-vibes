@@ -20,6 +20,7 @@ class ChanneledForceTest extends BaseCardTest {
     @Test
     @DisplayName("X=2 makes the target player draw two and deals two damage to the target creature")
     void drawsAndDealsXDamage() {
+        harness.setHand(player2, List.of());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, new ArrayList<>(List.of(
                 new ChanneledForce(), new GrizzlyBears(), new GrizzlyBears())));
@@ -42,6 +43,7 @@ class ChanneledForceTest extends BaseCardTest {
     @Test
     @DisplayName("The creature or planeswalker target may be omitted")
     void mayOmitDamageTarget() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, new ArrayList<>(List.of(
                 new ChanneledForce(), new GrizzlyBears())));
         harness.addMana(player1, ManaColor.BLUE, 1);

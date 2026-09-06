@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -65,14 +64,14 @@ class KinnanBonderProdigyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        PendingInteraction.LibraryRevealChoice search =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         assertThat(search).isNotNull();
-        assertThat(search.params().cards()).extracting(Card::getName)
+        assertThat(search.allCards().stream().filter(card -> search.validCardIds().contains(card.getId())))
+                .extracting(Card::getName)
                 .containsExactly("Llanowar Elves", "Grizzly Bears");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMultipleCardsChosen(player1, List.of(search.validCardIds().getFirst()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())

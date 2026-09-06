@@ -119,7 +119,7 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect copy) {
             GraveyardSearchScope scope = copy.targetSpec().graveyardScope().orElseThrow();
-            return new Target(copy.filter(), scope, "to exile and copy", 1, 0);
+            return new Target(copy.filter(), scope, "to exile and copy", 1, 1);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndGainLifeEffect exile) {
             return new Target(exile.filter(), GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 1);

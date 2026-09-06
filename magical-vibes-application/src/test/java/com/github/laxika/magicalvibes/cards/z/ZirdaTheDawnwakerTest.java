@@ -66,7 +66,7 @@ class ZirdaTheDawnwakerTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't block");
+                .hasMessageContaining("Invalid blocker index");
         assertThat(zirda.isTapped()).isTrue();
         assertThat(attacker.isAttackedThisTurn()).isTrue();
     }

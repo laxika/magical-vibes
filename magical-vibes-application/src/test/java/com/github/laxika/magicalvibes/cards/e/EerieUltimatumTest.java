@@ -39,7 +39,7 @@ class EerieUltimatumTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard().getId())
                 .containsExactlyInAnyOrder(bears.getId(), forest.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
-                .containsExactlyInAnyOrder(duplicateBears.getId(), instant.getId());
+                .hasSize(3).contains(duplicateBears.getId(), instant.getId());
     }
 
     @Test

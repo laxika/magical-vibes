@@ -1616,6 +1616,18 @@ public class TriggerCollectionService {
     // ── Source deals damage to a player (noncombat) ────────────────────
 
     public void checkCycleTriggers(GameData gameData, UUID cyclingPlayerId, Card cycledCard) {
+        List<CardEffect> selfEffects = cycledCard.getEffects(EffectSlot.ON_SELF_CYCLED);
+        if (!selfEffects.isEmpty()) {
+            if (selfEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
+                        cycledCard, cyclingPlayerId, new ArrayList<>(selfEffects), null));
+            } else {
+                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, cycledCard,
+                        cyclingPlayerId, cycledCard.getName() + "'s ability", new ArrayList<>(selfEffects)));
+            }
+            gameLogService.append(gameData, GameLog.abilityTriggers(cycledCard));
+        }
         TriggerContext ctx = new TriggerContext.Cycle(cyclingPlayerId, cycledCard);
         boolean[] anyTriggered = {false};
         gameData.forEachPermanent((playerId, perm) -> {

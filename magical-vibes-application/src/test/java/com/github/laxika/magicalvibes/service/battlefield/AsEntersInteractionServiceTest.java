@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -70,6 +71,23 @@ class AsEntersInteractionServiceTest {
         verify(etbTriggerService).processCreatureETBEffects(
                 gameData, controllerId, card, null, false, 0, 0, false,
                 java.util.List.of(), java.util.List.of(), java.util.List.of());
+    }
+
+    @Test
+    void parityChoiceDefersCreatureEnterTriggersAndPreservesCastContext() {
+        Card card = creature("Parity Creature");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseManaValueParityOnEnterEffect());
+        Permanent entering = new Permanent(card);
+        gameData.playerBattlefields.get(controllerId).add(entering);
+        UUID target = UUID.randomUUID();
+
+        service.handleCreatureEnteredBattlefield(gameData, controllerId, card, target, true,
+                2, 3, true, java.util.List.of(target));
+
+        verify(playerInputService).beginManaValueParityChoice(gameData, controllerId,
+                new ChoiceContext.ManaValueParityChoice(entering.getId(), card, target, true,
+                        2, 3, true, java.util.List.of(target), java.util.List.of(), java.util.List.of()));
+        verifyNoInteractions(etbTriggerService);
     }
 
     @Test

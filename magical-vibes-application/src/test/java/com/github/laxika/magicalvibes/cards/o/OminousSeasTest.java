@@ -75,7 +75,9 @@ class OminousSeasTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OminousSeas()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
         harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(seas.getCounterCount(CounterType.FORESHADOW)).isEqualTo(1);

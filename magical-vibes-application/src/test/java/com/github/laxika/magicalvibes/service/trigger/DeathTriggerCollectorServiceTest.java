@@ -1430,6 +1430,7 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(gd.stack.get(0).getDyingPermanentManaValue()).isEqualTo(ctx.dyingCard().getManaValue());
         }
 
         @Test

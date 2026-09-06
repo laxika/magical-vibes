@@ -20,9 +20,10 @@ class DrannithHealerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DrannithHealer());
         harness.setHand(player1, List.of(new Censor()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
@@ -40,6 +41,7 @@ class DrannithHealerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

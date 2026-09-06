@@ -36,7 +36,7 @@ class MythosOfBrokkosTest extends BaseCardTest {
         PendingInteraction.GraveyardChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.mandatory()).isTrue();
+        assertThat(choice.mandatory()).isFalse();
         assertThat(choice.validIndices()).containsExactly(0, 1, 2);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
 
@@ -66,6 +66,8 @@ class MythosOfBrokkosTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 1);
 
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Island");

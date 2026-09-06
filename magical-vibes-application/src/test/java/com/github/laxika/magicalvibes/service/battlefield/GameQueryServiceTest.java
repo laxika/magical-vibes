@@ -1859,8 +1859,10 @@ class GameQueryServiceTest {
             addPermanent(player1Id, createCreatureWithStaticEffect(
                     "Cunning Nightbonder", 2, 2, CardColor.BLUE,
                     new ControllerSpellsCantBeCounteredEffect(new CardKeywordPredicate(Keyword.FLASH))));
-            Card flashSpell = creatureOnStack("Flash creature", 2, player1Id);
+            Card flashSpell = createCreature("Flash creature", 2, 2, CardColor.GREEN);
             flashSpell.setKeywords(EnumSet.of(Keyword.FLASH));
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, flashSpell, player1Id,
+                    "Flash creature", new ArrayList<>()));
             Card ordinarySpell = new Card();
             ordinarySpell.setName("Ordinary spell");
             ordinarySpell.setType(CardType.INSTANT);

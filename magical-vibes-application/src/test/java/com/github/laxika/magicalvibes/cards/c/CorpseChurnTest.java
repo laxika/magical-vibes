@@ -36,7 +36,7 @@ class CorpseChurnTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, creatureIndex);
 
         harness.assertInHand(player1, "Grizzly Bears");
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
     @Test
@@ -48,17 +48,18 @@ class CorpseChurnTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
         harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     @Test
-    void doesNotOfferReturnWhenGraveyardHasNoCreature() {
+    void acceptingReturnWithNoCreatureFinishesWithoutCardChoice() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         castAndResolve();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
     private void castAndResolve() {

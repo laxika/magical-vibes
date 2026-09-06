@@ -61,7 +61,7 @@ class ChargeOfTheForeverBeastTest extends BaseCardTest {
 
         assertThatThrownBy(() -> castCharge(target.getId(), 1))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("not playable");
+                .hasMessageContaining("Revealed card must be creature card");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
     }

@@ -1196,7 +1196,11 @@ public class PlayerInputService {
     }
 
     public void beginManaValueParityChoice(GameData gameData, UUID playerId, UUID permanentId) {
-        ChoiceContext.ManaValueParityChoice choiceContext = new ChoiceContext.ManaValueParityChoice(permanentId);
+        beginManaValueParityChoice(gameData, playerId, new ChoiceContext.ManaValueParityChoice(permanentId));
+    }
+
+    public void beginManaValueParityChoice(GameData gameData, UUID playerId,
+                                           ChoiceContext.ManaValueParityChoice choiceContext) {
 
         List<String> options = List.of("ODD", "EVEN");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

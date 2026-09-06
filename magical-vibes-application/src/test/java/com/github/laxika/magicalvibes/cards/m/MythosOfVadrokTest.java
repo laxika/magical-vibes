@@ -36,12 +36,13 @@ class MythosOfVadrokTest extends BaseCardTest {
     void enhancedModeLocksCreatureFromAttacking() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         target.setSummoningSick(false);
-        castWithMana(Map.of(target.getId(), 1), true);
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castWithMana(Map.of(target.getId(), 1, other.getId(), 4), true);
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("can't attack");
+                .hasMessageContaining("Invalid attacker index");
 
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
         declareAttackers(player2, List.of(0));

@@ -53,7 +53,14 @@ class ArchipelagoreTest extends BaseCardTest {
 
         assertThat(elves.isTapped()).isTrue();
         assertThat(elves.getSkipUntapCount()).isEqualTo(1);
-        assertThat(bear.getSkipUntapCount()).isEqualTo(2);
+        assertThat(bear.getSkipUntapCount()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(elves.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(elves.isTapped()).isFalse();
     }
 
     private void resolveOneTrigger() {

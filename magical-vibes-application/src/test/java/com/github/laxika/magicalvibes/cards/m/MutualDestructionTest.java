@@ -29,7 +29,8 @@ class MutualDestructionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrifice.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).contains(sacrifice.getCard());
+        harness.assertInGraveyard(player1, "Mutual Destruction");
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target.getCard());
     }

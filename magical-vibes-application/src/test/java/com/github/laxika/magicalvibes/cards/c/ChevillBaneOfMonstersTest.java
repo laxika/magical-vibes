@@ -44,6 +44,7 @@ class ChevillBaneOfMonstersTest extends BaseCardTest {
 
     @Test
     void triggersForBountiedOpponentPermanentAndDrawsACard() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new ChevillBaneOfMonsters());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         forest.setCounterCount(CounterType.BOUNTY, 1);
@@ -59,6 +60,7 @@ class ChevillBaneOfMonstersTest extends BaseCardTest {
 
     @Test
     void doesNotTriggerForUnbountiedOrOwnPermanents() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new ChevillBaneOfMonsters());
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         ownBears.setCounterCount(CounterType.BOUNTY, 1);

@@ -51,7 +51,7 @@ class BlisterspitGremlinTest extends BaseCardTest {
         Permanent gremlin = addReadyGremlin();
         gremlin.tap();
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
 

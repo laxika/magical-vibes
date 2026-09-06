@@ -39,7 +39,7 @@ class SlitherwispTest extends BaseCardTest {
     void nonFlashSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new Slitherwisp());
         harness.setHand(player1, List.of(new AngelsMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castInstant(player1, 0);
 

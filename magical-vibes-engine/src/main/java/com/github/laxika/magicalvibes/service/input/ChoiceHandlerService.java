@@ -3576,7 +3576,14 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        if (ctx.creatureCard() != null) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), ctx.creatureCard(),
+                    ctx.targetId(), ctx.wasCastFromHand(), ctx.etbMode(), ctx.xValue(), ctx.kicked(),
+                    ctx.targetIds(), ctx.repeatedAdditionalCosts(), ctx.convokeCreatureIds());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        } else {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleNumberChoice(GameData gameData, Player player, String numberName, ChoiceContext.NumberChoice ctx) {

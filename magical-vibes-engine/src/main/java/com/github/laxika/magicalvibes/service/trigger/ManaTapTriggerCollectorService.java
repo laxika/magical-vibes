@@ -55,7 +55,7 @@ public class ManaTapTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setNonTargeting(true);
-            match.gameData().enqueueTrigger(entry);
+            match.gameData().pendingManaAbilityTriggers.add(entry);
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
         }

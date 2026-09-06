@@ -90,7 +90,8 @@ class GeneralKudroOfDrannithTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, target.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstHuman.getId(), secondHuman.getId()));
+        harness.handlePermanentChosen(player1, firstHuman.getId());
+        harness.handlePermanentChosen(player1, secondHuman.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(general).doesNotContain(firstHuman, secondHuman);

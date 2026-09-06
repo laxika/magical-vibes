@@ -37,6 +37,9 @@ class SavaiThundermaneTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bearsId);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
@@ -83,6 +86,7 @@ class SavaiThundermaneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

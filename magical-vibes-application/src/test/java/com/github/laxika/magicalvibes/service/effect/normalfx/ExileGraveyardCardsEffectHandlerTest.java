@@ -118,9 +118,10 @@ class ExileGraveyardCardsEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
-            assertThat(gd.getPlayerExiledCards(player2Id))
-                    .extracting(Card::getName)
-                    .containsExactlyInAnyOrder("Grizzly Bears", "Leonin Scimitar");
+            verify(exileService).exileCard(eq(gd), eq(player2Id),
+                    argThat(card -> card.getName().equals("Grizzly Bears")));
+            verify(exileService).exileCard(eq(gd), eq(player2Id),
+                    argThat(card -> card.getName().equals("Leonin Scimitar")));
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("exiled") && logEntry.plainText().contains("2 cards")));
             // Two cards leaving the graveyard in one event fires a single leave-graveyard trigger
@@ -164,9 +165,10 @@ class ExileGraveyardCardsEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
-            assertThat(gd.getPlayerExiledCards(player2Id))
-                    .extracting(Card::getName)
-                    .containsExactlyInAnyOrder("Grizzly Bears", "Shock");
+            verify(exileService).exileCard(eq(gd), eq(player2Id),
+                    argThat(card -> card.getName().equals("Grizzly Bears")));
+            verify(exileService).exileCard(eq(gd), eq(player2Id),
+                    argThat(card -> card.getName().equals("Shock")));
             verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
         }
     }

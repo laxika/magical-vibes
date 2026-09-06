@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEn
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -324,6 +325,16 @@ public class AsEntersInteractionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
+            return;
+        }
+
+        if (card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseManaValueParityOnEnterEffect.class::isInstance)) {
+            Permanent entering = gameData.playerBattlefields.get(controllerId).getLast();
+            playerInputService.beginManaValueParityChoice(gameData, controllerId,
+                    new ChoiceContext.ManaValueParityChoice(entering.getId(), card, targetId,
+                            wasCastFromHand, etbMode, xValue, kicked, targetIds,
+                            repeatedAdditionalCosts, convokeCreatureIds));
             return;
         }
 

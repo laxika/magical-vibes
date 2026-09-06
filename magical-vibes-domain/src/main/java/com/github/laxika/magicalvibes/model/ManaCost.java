@@ -531,7 +531,7 @@ public class ManaCost {
         if (!assignHybrids(available, coloredOnly, extraGeneric, regularUsed)) {
             return false;
         }
-        int remaining = pool.getTotal() - regularUsed[0] - residualFlexibleOvercount(pool)
+        int remaining = genericPayableTotal(pool) - regularUsed[0]
                 + xCostOnlyAvailable(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
     }
@@ -917,7 +917,7 @@ public class ManaCost {
         if (!assignHybrids(available, coloredOnly, extraGeneric, regularUsed)) {
             return false;
         }
-        int remaining = pool.getTotal() - regularUsed[0] - residualFlexibleOvercount(pool)
+        int remaining = genericPayableTotal(pool) - regularUsed[0]
                 + xCostOnlyAvailable(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
     }
@@ -976,25 +976,18 @@ public class ManaCost {
         if (!assignHybrids(available, coloredOnly, extraGeneric, regularUsed)) {
             return false;
         }
-        int remaining = pool.getTotal() - regularUsed[0] - residualFlexibleOvercount(pool)
+        int remaining = genericPayableTotal(pool) - regularUsed[0]
                 + xCostOnlyAvailable(pool);
         int xDemand = hasX() ? xValue * effectiveXMultiplier() : 0;
         return remaining >= genericCost + extraGeneric[0] + xDemand + additionalGenericCost;
     }
 
-    /**
-     * Portion of a pool's {@code flexibleOvercount} not already reflected in its per-color
-     * amounts (which {@link ManaPool#get} corrects for). Summing per-color availability
-     * double-counts mutually-exclusive taps (e.g. a dual land counted as both R and G), so
-     * this must be subtracted from a per-color reconstruction of the generic-payable total.
-     * Always 0 for a plain {@link ManaPool}.
-     */
-    private static int residualFlexibleOvercount(ManaPool pool) {
-        int residual = pool.getFlexibleOvercount();
-        for (ManaColor color : ManaColor.values()) {
-            residual -= pool.getPerColorOvercount(color);
+    private int genericPayableTotal(ManaPool pool) {
+        int total = pool.getTotal();
+        if (cumulativeUpkeepPayment) {
+            total += pool.getCumulativeUpkeepOnlyColorless() + pool.getCumulativeUpkeepOnlyColoredTotal();
         }
-        return Math.max(0, residual);
+        return total;
     }
 
     private int artifactOnlyManaUsedForColoredCosts(ManaPool pool) {
