@@ -891,6 +891,10 @@ public class GameData {
     public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
+    /** Specific creatures whose combat damage dealt to them is prevented during the current combat. */
+    public final Set<UUID> creaturesWithCombatDamagePreventedThisCombat = ConcurrentHashMap.newKeySet();
+    /** Specific creatures whose combat damage is prevented during the current combat. */
+    public final Set<UUID> creaturesPreventedFromDealingCombatDamageThisCombat = ConcurrentHashMap.newKeySet();
     /**
      * Players who play with their hand revealed for as long as a given source permanent remains on
      * the battlefield (Stromgald Spy), keyed by that source permanent's id. Entries stay until the
@@ -4409,6 +4413,10 @@ public class GameData {
                         .addAll(predicates));
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
+        copy.creaturesWithCombatDamagePreventedThisCombat.addAll(
+                this.creaturesWithCombatDamagePreventedThisCombat);
+        copy.creaturesPreventedFromDealingCombatDamageThisCombat.addAll(
+                this.creaturesPreventedFromDealingCombatDamageThisCombat);
         this.colorDamagePreventionUntilEndOfTurn.forEach((targetId, colors) -> {
             Set<CardColor> copied = ConcurrentHashMap.newKeySet();
             copied.addAll(colors);

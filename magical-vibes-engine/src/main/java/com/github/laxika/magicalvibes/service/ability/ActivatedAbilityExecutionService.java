@@ -1537,9 +1537,10 @@ public class ActivatedAbilityExecutionService {
                 permanent.setReturnToHandAtNextUntap(true);
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " will return to its owner's hand during its controller's next untap step."));
-            } else if (effect instanceof SacrificeSelfAtEndStepEffect) {
+            } else if (effect instanceof SacrificeSelfAtEndStepEffect sacrifice) {
                 gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
-                        permanent.getId(), playerId, permanent.getCard()));
+                        permanent.getId(), playerId, permanent.getCard(),
+                        sacrifice.currentControllerSacrifices()));
             } else if (effect instanceof SacrificeSelfEffect
                     && permanentRemovalService.removePermanentToGraveyard(gameData, permanent)) {
                 triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, permanent.getCard());

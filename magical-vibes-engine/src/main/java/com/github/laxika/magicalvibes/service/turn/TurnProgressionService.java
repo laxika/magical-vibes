@@ -111,8 +111,8 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
             gameData.expireEndOfCombatFloatingEffects();
-            gameData.creaturesWithCombatDamagePrevented.clear();
-            gameData.creaturesPreventedFromDealingCombatDamage.clear();
+            gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
+            gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }

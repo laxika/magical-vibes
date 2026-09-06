@@ -367,7 +367,9 @@ public class DamagePreventionService {
         if (gameQueryService.isDamagePreventable(gameData, isCombatDamage)
                 && gameQueryService.isDamagePreventedByControlledPredicate(gameData, permanent, isCombatDamage)) return 0;
         // Foxfire: prevent all combat damage that would be dealt to specific target creatures this turn
-        if (isCombatDamage && gameQueryService.isDamagePreventable(gameData, true) && gameData.creaturesWithCombatDamagePrevented.contains(permanent.getId())) return 0;
+        if (isCombatDamage && gameQueryService.isDamagePreventable(gameData, true)
+                && (gameData.creaturesWithCombatDamagePrevented.contains(permanent.getId())
+                || gameData.creaturesWithCombatDamagePreventedThisCombat.contains(permanent.getId()))) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
         if (gameQueryService.isDamagePreventable(gameData, isCombatDamage)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());

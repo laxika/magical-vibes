@@ -29,7 +29,7 @@ public class GoblinSkiPatrol extends Card {
                 List.of(
                         new BoostSelfEffect(2, 0, EffectDuration.PERMANENT),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF, GrantDuration.INDEFINITE),
-                        new SacrificeSelfAtEndStepEffect()
+                        SacrificeSelfAtEndStepEffect.byCurrentController()
                 ),
                 "{1}{R}: This creature gets +2/+0 and gains flying. Its controller sacrifices it at "
                         + "the beginning of the next end step. Activate only once and only if you "

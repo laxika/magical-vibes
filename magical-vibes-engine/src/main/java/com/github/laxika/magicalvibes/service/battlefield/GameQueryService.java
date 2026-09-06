@@ -8023,7 +8023,9 @@ public class GameQueryService {
         if (isCombatDamage && gameData.preventAllCombatDamageByAttackingCreatures && creature.isAttacking()) {
             return true;
         }
-        if (isCombatDamage && gameData.creaturesPreventedFromDealingCombatDamage.contains(creature.getId())) {
+        if (isCombatDamage
+                && (gameData.creaturesPreventedFromDealingCombatDamage.contains(creature.getId())
+                || gameData.creaturesPreventedFromDealingCombatDamageThisCombat.contains(creature.getId()))) {
             return true;
         }
         if (isCombatDamage && isAllCombatDamageByControlledCreaturePrevented(gameData, creature)) {

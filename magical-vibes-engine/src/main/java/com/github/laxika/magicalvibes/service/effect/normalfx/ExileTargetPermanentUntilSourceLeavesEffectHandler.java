@@ -58,6 +58,12 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             }
         }
 
+        if (sourcePermanent == null && !e.exileIfSourceAlreadyLeft()) {
+            log.info("Game {} - Source permanent for {} no longer on battlefield, effect does nothing",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
         Card card = target.getOriginalCard();
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);

@@ -3811,7 +3811,8 @@ public class StepTriggerService {
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new SacrificeSelfEffect())),
+                        new ArrayList<>(List.of(new SacrificeSelfEffect(
+                                pending.currentControllerSacrifices()))),
                         null,
                         pending.permanentId());
                 entry.setNonTargeting(true);

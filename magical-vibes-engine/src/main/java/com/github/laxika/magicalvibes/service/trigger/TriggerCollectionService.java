@@ -3465,6 +3465,8 @@ public class TriggerCollectionService {
                     null,
                     null
             );
+            entry.setTriggeringCardId(triggeringEntry.getCard().getId());
+            entry.setTriggeringPermanentControllerId(triggeringEntry.getControllerId());
             gameData.stack.add(entry);
             if (oncePerTurn) gameData.oncePerTurnTriggersFiredThisTurn.add(source.getId());
 

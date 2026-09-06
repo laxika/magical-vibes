@@ -56,8 +56,8 @@ class WintersChillTest extends BaseCardTest {
         stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(attacker.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(attacker.getId());
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -96,14 +96,14 @@ class WintersChillTest extends BaseCardTest {
         harness.passBothPriorities();
         stopAtDeclareBlockers();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(attacker.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(attacker.getId());
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         gs.advanceStep(gd);
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).doesNotContain(attacker.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).doesNotContain(attacker.getId());
     }
 
     @Test
@@ -117,8 +117,8 @@ class WintersChillTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(attacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).doesNotContain(attacker.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).doesNotContain(attacker.getId());
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
 
@@ -138,9 +138,9 @@ class WintersChillTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player2, ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(firstAttacker.getId())
+        assertThat(gd.creaturesWithCombatDamagePreventedThisCombat).contains(firstAttacker.getId())
                 .doesNotContain(secondAttacker.getId());
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(firstAttacker.getId())
+        assertThat(gd.creaturesPreventedFromDealingCombatDamageThisCombat).contains(firstAttacker.getId())
                 .doesNotContain(secondAttacker.getId());
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
