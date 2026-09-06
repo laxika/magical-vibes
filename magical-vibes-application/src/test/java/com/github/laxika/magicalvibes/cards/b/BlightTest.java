@@ -119,6 +119,7 @@ class BlightTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, land.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveStackFully();
 
         harness.assertNotOnBattlefield(player2, Forest.class.getSimpleName());

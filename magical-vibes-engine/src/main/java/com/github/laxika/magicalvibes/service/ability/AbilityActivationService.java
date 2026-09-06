@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -953,6 +954,29 @@ public class AbilityActivationService {
                 player.getUsername() + " pays {1} for Guardian Angel prevention."));
         log.info("Game {} - {} pays {1} for Guardian Angel prevention to target {}",
                 gameData.id, player.getUsername(), targetId);
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /** Pays for one outstanding draw-step life-loss obligation without using the stack. */
+    public void payDrawStepLifeLoss(GameData gameData, Player player, UUID sourceCardId) {
+        UUID playerId = player.getId();
+        LoseLifeAtNextDrawStepUnlessPays obligation = gameData
+                .getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class).stream()
+                .filter(action -> action.playerId().equals(playerId)
+                        && action.sourceCard().getId().equals(sourceCardId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No unpaid draw-step life-loss obligation"));
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        ManaCost cost = new ManaCost("{" + obligation.payAmount() + "}");
+        if (pool == null || !cost.canPay(pool)) {
+            throw new IllegalStateException("Not enough mana to pay for the draw-step life-loss obligation");
+        }
+        cost.pay(pool);
+        gameData.delayedActions.remove(obligation);
+        gameData.revertableManaActivations.clear();
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " pays {" + obligation.payAmount() + "} for ",
+                obligation.sourceCard(), "'s draw-step obligation."));
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 

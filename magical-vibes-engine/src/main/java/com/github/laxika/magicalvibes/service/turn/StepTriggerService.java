@@ -2721,29 +2721,22 @@ public class StepTriggerService {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_DRAW_STEP);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.DRAW_STEP);
 
-        // Nafs Asp: "that player loses N life at the beginning of their next draw step unless they
-        // pay {M} before that draw step." Delayed trigger keyed to the damaged player's own draw
-        // step — fired here as a "you may pay {M}; if you don't, lose N life" prompt controlled by
-        // that player (paying avoids the loss, declining incurs it).
+        // Payment permissions expire as this draw step begins; only unpaid obligations remain.
         if (gameData.hasDelayedAction(LoseLifeAtNextDrawStepUnlessPays.class)) {
             List<LoseLifeAtNextDrawStepUnlessPays> pending = gameData.drainDelayedActions(
                     LoseLifeAtNextDrawStepUnlessPays.class, a -> a.playerId().equals(activePlayerId));
             for (LoseLifeAtNextDrawStepUnlessPays action : pending) {
-                ForcedCostOrElseEffect payOrLoseLife = new ForcedCostOrElseEffect(
-                        new PayManaCost("{" + action.payAmount() + "}"),
-                        new ArrayList<>(List.of(new LoseLifeEffect(action.lifeLoss()))),
-                        true);
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         action.sourceCard(),
                         activePlayerId,
                         action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(payOrLoseLife))));
+                        new ArrayList<>(List.of(new LoseLifeEffect(action.lifeLoss())))));
 
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers — " + gameData.playerIdToName.get(activePlayerId)
-                        + " loses " + action.lifeLoss() + " life unless they pay {" + action.payAmount() + "}."));
-                log.info("Game {} - {} delayed draw-step pay-or-lose-life trigger pushed for {}",
+                        + " loses " + action.lifeLoss() + " life."));
+                log.info("Game {} - {} delayed draw-step life-loss trigger pushed for {}",
                         gameData.id, action.sourceCard().getName(), gameData.playerIdToName.get(activePlayerId));
             }
         }

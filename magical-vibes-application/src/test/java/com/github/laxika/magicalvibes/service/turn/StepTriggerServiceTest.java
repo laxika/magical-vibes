@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -211,6 +213,25 @@ class StepTriggerServiceTest {
 
     @Mock
     private AmountEvaluationService amountEvaluationService;
+
+    @Test
+    void drawStepExpiresOnlyActivePlayersPaymentObligations() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays activeObligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
+        LoseLifeAtNextDrawStepUnlessPays opponentObligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player2Id, 1, 1, source);
+        gd.queueDelayedAction(activeObligation);
+        gd.queueDelayedAction(opponentObligation);
+
+        sut.handleDrawStepTriggers(gd);
+
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(opponentObligation);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private StepTriggerService sut;
 

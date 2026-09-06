@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.ability;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -156,6 +157,58 @@ class AbilityActivationServiceTest {
         // No Angel of Jubilation — life payments and creature sacrifices are legal ability costs.
         lenient().when(gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData))
                 .thenReturn(true);
+    }
+
+    @Test
+    void drawStepPaymentRemovesOnlyOneIdenticalObligation() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
+        gameData.queueDelayedAction(obligation);
+        gameData.queueDelayedAction(obligation);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 2);
+        gameData.priorityPassedBy.add(player2Id);
+
+        service.payDrawStepLifeLoss(gameData, player1, source.getId());
+
+        assertThat(gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(obligation);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotalAllMana()).isEqualTo(1);
+        assertThat(gameData.priorityPassedBy).containsExactly(player2Id);
+        assertThat(gameData.stack).isEmpty();
+        verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
+    }
+
+    @Test
+    void failedDrawStepPaymentPreservesObligationAndMana() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 2, source);
+        gameData.queueDelayedAction(obligation);
+        gameData.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> service.payDrawStepLifeLoss(gameData, player1, source.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Not enough mana");
+
+        assertThat(gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(obligation);
+        assertThat(gameData.playerManaPools.get(player1Id).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    void cannotPayAnotherPlayersDrawStepObligation() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
+        gameData.queueDelayedAction(obligation);
+        gameData.playerManaPools.get(player2Id).add(ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> service.payDrawStepLifeLoss(gameData, player2, source.getId()))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("No unpaid");
+
+        assertThat(gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(obligation);
+        assertThat(gameData.playerManaPools.get(player2Id).getTotalAllMana()).isEqualTo(1);
     }
 
     @Nested

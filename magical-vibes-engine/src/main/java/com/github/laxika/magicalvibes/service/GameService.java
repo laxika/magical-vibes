@@ -1604,6 +1604,18 @@ public class GameService {
         }
     }
 
+    /** Pays for one pending life-loss obligation before the affected player's next draw step. */
+    public void payDrawStepLifeLoss(GameData gameData, Player player, UUID sourceCardId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> payDrawStepLifeLoss(gameData, actionPlayer, sourceCardId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.payDrawStepLifeLoss(gameData, player, sourceCardId);
+        }
+    }
+
     public void payGuardianAngel(GameData gameData, Player player, UUID targetId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,

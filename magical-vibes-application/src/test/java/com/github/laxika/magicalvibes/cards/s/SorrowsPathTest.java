@@ -96,6 +96,8 @@ class SorrowsPathTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Twiddle()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castInstant(player2, 0, path.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         resolveAllTriggers();
 
         assertThat(path.isTapped()).isTrue();

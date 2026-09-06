@@ -81,6 +81,7 @@ class CityOfBrassTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.castAndResolveInstant(player1, 0, city.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(city.isTapped()).isTrue();
 
         resolveAllTriggers();
