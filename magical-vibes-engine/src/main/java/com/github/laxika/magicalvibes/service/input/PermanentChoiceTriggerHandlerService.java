@@ -330,6 +330,45 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleSelfTriggeredAbility(GameData gameData, List<UUID> targetIds,
+                                            MultiPermanentChoiceContext.SelfTriggeredAbilityTargets context) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                context.sourceCard(),
+                context.controllerId(),
+                context.sourceCard().getName() + "'s ability",
+                new ArrayList<>(context.effects()),
+                context.sourcePermanentId(),
+                targetIds);
+        if (context.eventValue() != null) {
+            entry.setEventValue(context.eventValue());
+        }
+        pushTriggeredEntry(gameData, entry);
+
+        gameLogService.append(gameData, GameLog.builder().card(context.sourceCard()).text("'s "
+                + context.eventDescription() + " trigger targets " + targetIds.size() + " creature"
+                + (targetIds.size() == 1 ? "" : "s") + ".").build());
+        log.info("Game {} - {} {} trigger targets {} creature(s)", gameData.id,
+                context.sourceCard().getName(), context.eventDescription(), targetIds.size());
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleKayaSpiritsJusticeTokenChoice(GameData gameData, UUID targetId,
                                                      PermanentChoiceContext.KayaSpiritsJusticeTokenChoice kaya) {
         StackEntry entry = new StackEntry(
@@ -912,6 +951,17 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleChosenPermanentAttackTarget(GameData gameData, UUID attackTargetId,
+                                                   PermanentChoiceContext.ChosenPermanentAttackTarget context) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, context.permanentId());
+        if (permanent != null && gameQueryService.isCreature(gameData, permanent)) {
+            permanent.setAttacking(true);
+            permanent.setAttackedOrBlockedSinceLastUpkeep(true);
+            permanent.setAttackTarget(attackTargetId);
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -54,6 +54,13 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false);
     }
 
+    /** Creates a fixed-cap form that also restricts the chosen cards' total mana value. */
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              int maxTotalManaValue) {
+        this(filter, maxTargets, false, false, null, maxTotalManaValue, null, null, null, 0,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false);
+    }
+
     /** Creates a dynamic-cap form whose up-to cap is evaluated from the spell's cast context. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter,
                                                               DynamicAmount dynamicMaxTargets) {

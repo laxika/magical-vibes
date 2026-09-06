@@ -636,6 +636,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
+    /** Winota: choose the player or planeswalker for the selected Human to attack. */
+    record ChosenPermanentAttackTarget(UUID permanentId) implements PermanentChoiceContext {}
+
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
             implements PermanentChoiceContext {

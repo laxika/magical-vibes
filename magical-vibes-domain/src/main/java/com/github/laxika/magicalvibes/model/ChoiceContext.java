@@ -636,6 +636,9 @@ public sealed interface ChoiceContext {
     /** Choosing a number at resolution for a spell with no permanent to store it on. */
     record SpellNumberChoice(UUID controllerId) implements ChoiceContext {}
 
+    /** Choosing odd or even at resolution for a spell with no permanent to store it on. */
+    record SpellManaValueParityChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
     record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
 
@@ -656,11 +659,20 @@ public sealed interface ChoiceContext {
                                       boolean wasCastFromHand, int etbMode,
                                       boolean kicked) implements ChoiceContext {}
 
-    /** The controller chooses the counter type for a creature's as-enters replacement. */
+    /** The controller chooses counter types for a creature's as-enters replacement. */
     record AsEntersCounterTypeChoice(UUID permanentId, UUID controllerId, Card card, UUID targetId,
                                      boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
                                      List<UUID> targetIds, int exiledCardCount,
-                                     List<CounterType> counterTypes) implements ChoiceContext {
+                                     List<CounterType> counterTypes,
+                                     boolean requireDifferentCounterTypes) implements ChoiceContext {
+        public AsEntersCounterTypeChoice(UUID permanentId, UUID controllerId, Card card, UUID targetId,
+                                         boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                         List<UUID> targetIds, int exiledCardCount,
+                                         List<CounterType> counterTypes) {
+            this(permanentId, controllerId, card, targetId, wasCastFromHand, etbMode, xValue, kicked,
+                    targetIds, exiledCardCount, counterTypes, false);
+        }
+
         public AsEntersCounterTypeChoice {
             targetIds = List.copyOf(targetIds);
             counterTypes = List.copyOf(counterTypes);

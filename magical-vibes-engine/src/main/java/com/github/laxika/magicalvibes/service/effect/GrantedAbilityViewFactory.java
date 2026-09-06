@@ -189,6 +189,9 @@ public class GrantedAbilityViewFactory {
                     ? "Protection from " + subtypes + " creatures"
                     : "Protection from " + subtypes;
         }
+        if (protection.protectionFromManaValueParity()) {
+            return "Protection from mana values of the chosen quality";
+        }
         if (protection.protectionFromManaValueAtLeast().isPresent()) {
             return "Protection from mana value "
                     + protection.protectionFromManaValueAtLeast().getAsInt() + " or greater";

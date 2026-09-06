@@ -1706,6 +1706,77 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_MUTATES)
+    private boolean handleSelfMutatesDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null) return false;
+
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        List<CardEffect> effects = new ArrayList<>(List.of(effect));
+        int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
+        if (targetGroupIndex >= 0) {
+            List<CardEffect> groupedEffects = sourceCard.getEffects(EffectSlot.ON_SELF_MUTATES).stream()
+                    .filter(candidate -> sourceCard.getEffectTargetIndex(candidate) == targetGroupIndex)
+                    .toList();
+            if (!groupedEffects.isEmpty()) {
+                if (groupedEffects.getFirst() != effect) return true;
+                effects = new ArrayList<>(groupedEffects);
+            }
+        }
+        boolean needsTarget = effects.stream().anyMatch(candidate ->
+                candidate.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || candidate.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || candidate.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), effects,
+                    "mutation", source.getId()));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    effects,
+                    null,
+                    source.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            gameData.enqueueTrigger(entry);
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on mutating",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_MUTATES)
+    private boolean handleAllyCreatureMutatesDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureMutates mutation = (TriggerContext.CreatureMutates) ctx;
+        Permanent source = match.permanent();
+        if (source == null || mutation.mutatedPermanent() == null) return false;
+
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                mutation.mutatedPermanent().getId(),
+                source.getId());
+        entry.setTriggeringPermanentId(mutation.mutatedPermanent().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers for a controlled creature mutating",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = SequenceEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,

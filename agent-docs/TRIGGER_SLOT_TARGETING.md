@@ -317,6 +317,9 @@ with a `TriggeringCardConditionalEffect(CardSubtypePredicate(...))` for "Wheneve
 `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` (Extractor Demon; global watcher — fires on every permanent
 with the slot whenever another creature leaves the battlefield by any means, checked in
 `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`.
+`ON_ALLY_CREATURE_LEAVES_BATTLEFIELD` is the controller-scoped sibling; effects implementing
+`LeavingCreatureCountersAwareEffect` receive a snapshot of the leaving creature's concrete
+counters before the trigger is queued.
 Non-targeting: a "you may have target player mill two cards" is a `MayEffect`-wrapped
 `MillEffect(2, TARGET_PLAYER)` whose "may" and player target are resolved on the stack),
 `ON_SELF_MILLED`, `STATE_TRIGGERED`, `BEGINNING_OF_COMBAT_TRIGGERED`,
@@ -640,3 +643,7 @@ handling as `ON_CONTROLLER_DRAWS`, but does not fire on later draws in the same 
 `triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`
 and `ExileTopCardsMayPlayUntilNextTurnEffect.forTriggeringPermanentController(...)` when a trigger says
 that creature's controller may use their library.
+
+Creature-enter watchers whose trigger effect targets a graveyard card use the same
+`handleGraveyardCardsExileETBTargeting` selector directly from `EnterTriggerCollectorService`, since the
+effect belongs to the watching permanent rather than to the entering card.

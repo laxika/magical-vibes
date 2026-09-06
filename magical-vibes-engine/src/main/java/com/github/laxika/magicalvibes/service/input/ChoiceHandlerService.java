@@ -379,6 +379,10 @@ public class ChoiceHandlerService {
             handleSpellNumberChoice(gameData, player, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellManaValueParityChoice) {
+            handleSpellManaValueParityChoice(gameData, player, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ManaValueParityChoice ctx) {
             handleManaValueParityChoice(gameData, player, colorName, ctx);
             return;
@@ -3334,11 +3338,18 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses a " + choice + " counter for ", ctx.card(), "."));
 
         if (ctx.exiledCardCount() > 1) {
+            List<CounterType> remainingCounterTypes = ctx.counterTypes();
+            if (ctx.requireDifferentCounterTypes()) {
+                remainingCounterTypes = remainingCounterTypes.stream()
+                        .filter(type -> type != counterType)
+                        .toList();
+            }
             playerInputService.beginAsEntersCounterTypeChoice(gameData,
                     new ChoiceContext.AsEntersCounterTypeChoice(
                             ctx.permanentId(), ctx.controllerId(), ctx.card(), ctx.targetId(),
                             ctx.wasCastFromHand(), ctx.etbMode(), ctx.xValue(), ctx.kicked(),
-                            ctx.targetIds(), ctx.exiledCardCount() - 1, ctx.counterTypes()));
+                            ctx.targetIds(), ctx.exiledCardCount() - 1, remainingCounterTypes,
+                            ctx.requireDifferentCounterTypes()));
             return;
         }
 
@@ -4345,6 +4356,26 @@ public class ChoiceHandlerService {
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses " + chosenNumber + "."));
         log.info("Game {} - {} chooses number {} for a spell", gameData.id, player.getUsername(), chosenNumber);
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleSpellManaValueParityChoice(GameData gameData, Player player, String parityName) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(parityName)) {
+            throw new IllegalArgumentException("Invalid mana value parity choice: " + parityName);
+        }
+
+        com.github.laxika.magicalvibes.model.ManaValueParity parity =
+                com.github.laxika.magicalvibes.model.ManaValueParity.valueOf(parityName);
+        gameData.chosenSpellManaValueParity = parity;
+        gameData.interaction.clearAwaitingInput();
+
+        gameLogService.append(gameData,
+                GameLog.text(player.getUsername() + " chooses " + parityName.toLowerCase() + "."));
+        log.info("Game {} - {} chooses {} for a spell", gameData.id, player.getUsername(),
+                parityName.toLowerCase());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

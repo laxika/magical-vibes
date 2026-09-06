@@ -83,6 +83,11 @@ public interface ProtectionGrantingEffect extends CardEffect {
         return OptionalInt.empty();
     }
 
+    /** Whether this effect protects from source mana values matching the source permanent's chosen odd/even quality. */
+    default boolean protectionFromManaValueParity() {
+        return false;
+    }
+
     /**
      * The possible chosen numbers for protection from every other mana value. An empty set means
      * this effect does not have this protection shape.

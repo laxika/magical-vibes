@@ -345,6 +345,13 @@ public class CombatBlockService {
                             + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
                 }
             }
+            for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
+                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
+                        && blockerCount < restriction.minBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
+                }
+            }
         }
 
         // CR 509.1a: validate "can't block alone" — if any declared blocker has this restriction,
@@ -1787,6 +1794,7 @@ public class CombatBlockService {
                     blockedAttacker.getId(),
                     blockedAttacker.getId()
             );
+            trigger.setAttackedTargetId(blockedAttacker.getAttackTarget());
             // "It" references the blocked creature without targeting it — can't fizzle.
             trigger.setNonTargeting(true);
             trigger.setSourcePermanentSnapshot(new Permanent(blockedAttacker));
@@ -2411,6 +2419,11 @@ public class CombatBlockService {
 
         int minimumBlockers = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
+                minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
+            }
+        }
+        for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
             if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
                 minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
             }

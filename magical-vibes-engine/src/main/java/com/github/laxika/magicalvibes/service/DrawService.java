@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrant
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.CyclingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedEffect;
@@ -35,11 +36,13 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentO
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardThenBottomRestEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
@@ -76,6 +79,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -100,6 +104,7 @@ public class DrawService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final DredgeSupport dredgeSupport;
+    private final ExileBottomRandomSupport exileBottomRandomSupport;
 
     public DrawService(GameQueryService gameQueryService,
                        ExileService exileService,
@@ -112,7 +117,8 @@ public class DrawService {
                        @Lazy GraveyardService graveyardService,
                        ConditionEvaluationService conditionEvaluationService,
                        GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
-                       DredgeSupport dredgeSupport) {
+                       DredgeSupport dredgeSupport,
+                       ExileBottomRandomSupport exileBottomRandomSupport) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -125,9 +131,18 @@ public class DrawService {
         this.conditionEvaluationService = conditionEvaluationService;
         this.grantedTriggeredAbilitySupport = grantedTriggeredAbilitySupport;
         this.dredgeSupport = dredgeSupport;
+        this.exileBottomRandomSupport = exileBottomRandomSupport;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
+        resolveDrawCard(gameData, playerId, null);
+    }
+
+    public void resolveCyclingDrawCard(GameData gameData, UUID playerId, Card cycledCard) {
+        resolveDrawCard(gameData, playerId, cycledCard);
+    }
+
+    private void resolveDrawCard(GameData gameData, UUID playerId, Card cycledCard) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             return;
         }
@@ -378,6 +393,12 @@ public class DrawService {
             return;
         }
 
+        Permanent cycloneSource = findCyclingDrawReplacementSource(gameData, playerId, cycledCard);
+        if (cycloneSource != null) {
+            resolveUnpredictableCycloneDrawReplacement(gameData, playerId, cycledCard, cycloneSource);
+            return;
+        }
+
         performDrawCard(gameData, playerId);
     }
 
@@ -410,7 +431,91 @@ public class DrawService {
             return;
         }
 
+        Card cycledCard = pendingCyclingCard(gameData, playerId);
+        Permanent cycloneSource = findCyclingDrawReplacementSource(gameData, playerId, cycledCard);
+        if (cycloneSource != null) {
+            resolveUnpredictableCycloneDrawReplacement(gameData, playerId, cycledCard, cycloneSource);
+            return;
+        }
+
         performDrawCard(gameData, playerId);
+    }
+
+    private Card pendingCyclingCard(GameData gameData, UUID playerId) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null || !entry.isCyclingAbility() || !playerId.equals(entry.getControllerId())) {
+            return null;
+        }
+        return entry.getCard();
+    }
+
+    private Permanent findCyclingDrawReplacementSource(GameData gameData, UUID playerId,
+                                                       Card cycledCard) {
+        if (cycledCard == null || cycledCard.hasType(CardType.LAND)) {
+            return null;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasReplacement = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CyclingDrawReplacementEffect.class::isInstance);
+            if (hasReplacement && !permanent.getCard().getId().equals(cycledCard.getId())) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
+    private void resolveUnpredictableCycloneDrawReplacement(GameData gameData, UUID playerId,
+                                                             Card cycledCard, Permanent source) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        EnumSet<CardType> cycledTypes = EnumSet.of(cycledCard.getType());
+        cycledTypes.addAll(cycledCard.getAdditionalTypes());
+
+        Card match = null;
+        int exiledCount = 0;
+        if (deck != null) {
+            while (!deck.isEmpty()) {
+                Card card = deck.removeFirst();
+                exileService.exileCard(gameData, playerId, card, source.getId());
+                exiledCount++;
+                if (sharesCardType(card, cycledTypes)) {
+                    match = card;
+                    break;
+                }
+            }
+        }
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (exiledCount > 0) {
+            gameLogService.append(gameData, GameLog.text(playerName + " exiles " + exiledCount
+                    + " card" + (exiledCount == 1 ? "" : "s")
+                    + " from the top of their library with Unpredictable Cyclone."));
+        }
+
+        if (match == null) {
+            exileBottomRandomSupport.bottomCardsExiledWithSource(gameData, source.getId(), null);
+            return;
+        }
+
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                match,
+                playerId,
+                List.of(new MayCastExiledCardThenBottomRestEffect(source.getId())),
+                "Cast " + match.getName() + " without paying its mana cost?",
+                match.getId()
+        ));
+    }
+
+    private boolean sharesCardType(Card card, EnumSet<CardType> cardTypes) {
+        if (cardTypes.contains(card.getType())) {
+            return true;
+        }
+        return card.getAdditionalTypes().stream().anyMatch(cardTypes::contains);
     }
 
     private boolean preventDrawIfNeeded(GameData gameData, UUID playerId) {

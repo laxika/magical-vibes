@@ -110,6 +110,12 @@ public class InteractionPromptProjectionRegistry {
                 this::projectEcologicalAppreciationSearchChoice);
         register(PendingInteraction.EcologicalAppreciationOpponentChoice.class,
                 this::projectEcologicalAppreciationOpponentChoice);
+        register(PendingInteraction.EmergentUltimatumSearchChoice.class,
+                this::projectEmergentUltimatumSearchChoice);
+        register(PendingInteraction.EmergentUltimatumOpponentSelectionChoice.class,
+                this::projectEmergentUltimatumOpponentSelectionChoice);
+        register(PendingInteraction.EmergentUltimatumOpponentChoice.class,
+                this::projectEmergentUltimatumOpponentChoice);
         register(PendingInteraction.VerdantMasterySearchChoice.class,
                 this::projectVerdantMasterySearchChoice);
         register(PendingInteraction.VerdantMasteryLandChoice.class,
@@ -626,6 +632,31 @@ public class InteractionPromptProjectionRegistry {
                 cardViews(interaction.cards()),
                 2,
                 "Choose two cards to shuffle into the library. Put the rest onto the battlefield.");
+    }
+
+    private InteractionPromptMessage projectEmergentUltimatumSearchChoice(
+            GameData gameData, PendingInteraction.EmergentUltimatumSearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                Math.min(3, interaction.pool().size()),
+                "Choose up to three monocolored cards with different names to exile.");
+    }
+
+    private InteractionPromptMessage projectEmergentUltimatumOpponentChoice(
+            GameData gameData, PendingInteraction.EmergentUltimatumOpponentChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                1,
+                "Choose one card to shuffle into its owner's library.");
+    }
+
+    private InteractionPromptMessage projectEmergentUltimatumOpponentSelectionChoice(
+            GameData gameData, PendingInteraction.EmergentUltimatumOpponentSelectionChoice interaction) {
+        return InteractionPromptMessage.multiPermanentPick(
+                List.of(), new ArrayList<>(interaction.opponentIds()), 1,
+                "Choose an opponent to choose a card for Emergent Ultimatum.");
     }
 
     private InteractionPromptMessage projectVerdantMasterySearchChoice(

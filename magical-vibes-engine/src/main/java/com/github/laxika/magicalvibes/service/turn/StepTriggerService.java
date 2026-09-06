@@ -5448,7 +5448,8 @@ public class StepTriggerService {
                         || conditional.condition() instanceof ControllerCastTwoOrMoreSpellsThisTurn
                         || conditional.condition() instanceof ControllerDrewAtLeastCardsThisTurn
                         || conditional.condition() instanceof Coven
-                        || conditional.condition() instanceof MaxSpeed)) {
+                        || conditional.condition() instanceof MaxSpeed
+                        || conditional.condition() instanceof SourceCounterThreshold)) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, controllerId))) {
                     log.info("Game {} - {} beginning-of-combat trigger skipped ({} not met)",

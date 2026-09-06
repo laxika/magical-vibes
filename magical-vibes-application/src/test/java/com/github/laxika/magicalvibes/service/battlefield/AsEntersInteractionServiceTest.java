@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -19,11 +22,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -99,6 +105,25 @@ class AsEntersInteractionServiceTest {
                 org.mockito.ArgumentMatchers.eq(gameData),
                 org.mockito.ArgumentMatchers.eq(controllerId),
                 anyList(), anyString());
+        verifyNoInteractions(etbTriggerService);
+    }
+
+    @Test
+    void chooseCounterTypesStartsTheRequiredNumberOfDistinctChoices() {
+        Card card = creature("Grimdancer");
+        card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ChooseCounterTypeOnEnterEffect(2,
+                        CounterType.MENACE, CounterType.DEATHTOUCH, CounterType.LIFELINK));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
+
+        service.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+
+        var context = forClass(ChoiceContext.AsEntersCounterTypeChoice.class);
+        verify(playerInputService).beginAsEntersCounterTypeChoice(eq(gameData), context.capture());
+        assertThat(context.getValue().exiledCardCount()).isEqualTo(2);
+        assertThat(context.getValue().counterTypes()).containsExactly(
+                CounterType.MENACE, CounterType.DEATHTOUCH, CounterType.LIFELINK);
+        assertThat(context.getValue().requireDifferentCounterTypes()).isTrue();
         verifyNoInteractions(etbTriggerService);
     }
 

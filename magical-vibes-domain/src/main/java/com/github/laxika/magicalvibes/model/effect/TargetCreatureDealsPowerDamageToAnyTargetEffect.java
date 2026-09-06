@@ -12,10 +12,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * 1 (any target).</p>
  */
 public record TargetCreatureDealsPowerDamageToAnyTargetEffect(int sourceTargetGroup, int victimTargetGroup,
-                                                               boolean allowPlayerTarget) implements CardEffect {
+                                                               boolean allowPlayerTarget,
+                                                               boolean excessDamageToControllerIfSourceHasTrample)
+        implements CardEffect {
 
     public TargetCreatureDealsPowerDamageToAnyTargetEffect(int sourceTargetGroup, int victimTargetGroup) {
-        this(sourceTargetGroup, victimTargetGroup, true);
+        this(sourceTargetGroup, victimTargetGroup, true, false);
+    }
+
+    public TargetCreatureDealsPowerDamageToAnyTargetEffect(int sourceTargetGroup, int victimTargetGroup,
+                                                           boolean allowPlayerTarget) {
+        this(sourceTargetGroup, victimTargetGroup, allowPlayerTarget, false);
     }
 
     /** "Target creature you control deals damage equal to its power to any target" — groups 0 and 1. */
@@ -26,6 +33,11 @@ public record TargetCreatureDealsPowerDamageToAnyTargetEffect(int sourceTargetGr
     /** "Target creature deals damage equal to its power to target permanent". */
     public static TargetCreatureDealsPowerDamageToAnyTargetEffect toTargetPermanent() {
         return new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false);
+    }
+
+    /** Target creature deals power damage to a creature, with its trample excess to that creature's controller. */
+    public static TargetCreatureDealsPowerDamageToAnyTargetEffect withTrampleExcessToController() {
+        return new TargetCreatureDealsPowerDamageToAnyTargetEffect(0, 1, false, true);
     }
 
     @Override

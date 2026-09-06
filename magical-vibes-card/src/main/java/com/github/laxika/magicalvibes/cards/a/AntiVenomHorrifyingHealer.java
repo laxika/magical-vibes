@@ -23,6 +23,6 @@ public class AntiVenomHorrifyingHealer extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
                         .build()));
-        addEffect(EffectSlot.STATIC, new PreventDamageToOtherCreaturesAndAddPlusCountersEffect(true));
+        addEffect(EffectSlot.STATIC, PreventDamageToOtherCreaturesAndAddPlusCountersEffect.forSource(false));
     }
 }

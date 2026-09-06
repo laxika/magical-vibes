@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -74,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -1656,6 +1659,23 @@ class GameQueryServiceTest {
 
             assertThat(gqs.hasProtectionFromSource(gd, target, source)).isTrue();
         }
+
+        @Test
+        @DisplayName("returns true when source mana value matches chosen parity")
+        void returnsTrueFromMatchingManaValueParity() {
+            Card targetCard = createCreatureWithStaticEffect("Lavabrink Venturer", 3, 3, CardColor.WHITE,
+                    new ProtectionFromManaValueParityEffect());
+            Permanent target = addPermanent(player1Id, targetCard);
+            target.setChosenManaValueParity(ManaValueParity.EVEN);
+
+            Card evenSourceCard = createCreature("Even Source", 2, 2, CardColor.GREEN);
+            evenSourceCard.setManaCost("{1}{G}");
+            Card oddSourceCard = createCreature("Odd Source", 3, 3, CardColor.GREEN);
+            oddSourceCard.setManaCost("{2}{G}");
+
+            assertThat(gqs.hasProtectionFromSource(gd, target, addPermanent(player2Id, evenSourceCard))).isTrue();
+            assertThat(gqs.hasProtectionFromSource(gd, target, addPermanent(player2Id, oddSourceCard))).isFalse();
+        }
     }
 
     // ===== cantBeTargetedBySpellColor =====
@@ -1814,6 +1834,24 @@ class GameQueryServiceTest {
                     "Shock", new ArrayList<>()));
 
             assertThat(gqs.isUncounterable(gd, instant)).isFalse();
+        }
+
+        @Test
+        @DisplayName("keyword-restricted controller protection matches only spells with that keyword")
+        void keywordRestrictedControllerProtection() {
+            addPermanent(player1Id, createCreatureWithStaticEffect(
+                    "Cunning Nightbonder", 2, 2, CardColor.BLUE,
+                    new ControllerSpellsCantBeCounteredEffect(new CardKeywordPredicate(Keyword.FLASH))));
+            Card flashSpell = creatureOnStack("Flash creature", 2, player1Id);
+            flashSpell.setKeywords(EnumSet.of(Keyword.FLASH));
+            Card ordinarySpell = new Card();
+            ordinarySpell.setName("Ordinary spell");
+            ordinarySpell.setType(CardType.INSTANT);
+            gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, ordinarySpell,
+                    player1Id, "Ordinary spell", new ArrayList<>()));
+
+            assertThat(gqs.isUncounterable(gd, flashSpell)).isTrue();
+            assertThat(gqs.isUncounterable(gd, ordinarySpell)).isFalse();
         }
 
         @Test

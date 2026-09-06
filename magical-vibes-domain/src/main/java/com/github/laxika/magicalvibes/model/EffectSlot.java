@@ -172,6 +172,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_PLAYER_TAPS_LAND,
     /** "Whenever you tap a creature for mana"; checked on the tapping player's battlefield. */
     ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
+    /** "Whenever you tap a nonland permanent for mana"; checked on the tapping player's battlefield. */
+    ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
     ON_ALLY_PERMANENT_SACRIFICED,
     /** Triggers whenever an opponent gains control of a permanent from this permanent's controller. */
@@ -1191,5 +1193,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT,
     ON_EQUIPMENT_ATTACHED_TO_CREATURE,
     ON_SELF_BECOMES_SADDLED,
+    ON_ALLY_CREATURE_MUTATES,
+    ON_SELF_MUTATES,
     ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE
 }

@@ -361,6 +361,36 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast colored spells whose mana cost does not contain {X}. */
+    record ColoredSpellsWithoutX() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addColoredSpellWithoutXOnlyColorless(amount);
+        }
+
+        @Override
+        public String description() {
+            return "colored spells without {X} only";
+        }
+    }
+
+    /** Mana that can't be spent to pay generic mana costs (Jegantha, the Wellspring). */
+    record ColoredCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addColoredCostOnlyColorless(amount);
+            } else {
+                pool.addColoredCostOnlyMana(color, amount);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "colored costs only";
+        }
+    }
+
     /** Mana spendable only to cast kicked spells (Elfhame Druid). Stored in the kicked-only bucket. */
     record KickedCosts() implements ManaRestriction {
         @Override

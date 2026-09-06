@@ -134,6 +134,7 @@ public sealed interface DynamicAmount permits
         TargetPlayerLifeTotal,
         TargetPlayerPoisonCounters,
         TimesSourceRegeneratedThisTurn,
+        TimesSourceMutated,
         TargetManaValue,
         TargetPermanentColorCount,
         TargetCardsManaValueSum,

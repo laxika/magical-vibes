@@ -529,6 +529,8 @@ public class Permanent {
     @Setter private boolean solved;
     /** Whether this permanent is harnessed. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean harnessed;
+    /** Number of times this permanent has mutated. Permanent state; never cleared by {@link #resetModifiers()}. */
+    private int timesMutated;
     /** Whether this permanent is saddled until end of turn. */
     @Setter private boolean saddled;
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
@@ -839,6 +841,7 @@ public class Permanent {
         this.monstrous = source.monstrous;
         this.solved = source.solved;
         this.harnessed = source.harnessed;
+        this.timesMutated = source.timesMutated;
         this.saddled = source.saddled;
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.devouredCreatures.addAll(source.devouredCreatures);
@@ -866,6 +869,10 @@ public class Permanent {
 
     public Card getOriginalCard() {
         return originalCard;
+    }
+
+    public void recordMutation() {
+        timesMutated++;
     }
 
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {
@@ -1340,6 +1347,7 @@ public class Permanent {
             case TRAMPLE -> CounterType.TRAMPLE;
             case HEXPROOF -> CounterType.HEXPROOF;
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
+            case MENACE -> CounterType.MENACE;
             default -> null;
         };
         return (keyword == Keyword.MENACE && suspected)

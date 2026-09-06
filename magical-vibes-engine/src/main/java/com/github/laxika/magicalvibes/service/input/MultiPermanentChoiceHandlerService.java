@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -429,11 +430,16 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber
                 && permanentIds.stream().anyMatch(id -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    StackEntry resolvingEntry = ((MultiPermanentChoiceContext.FlickerAnyNumber) context).resolvingEntry();
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(resolvingEntry.getCard().getId())
+                            .withSourceControllerId(resolvingEntry.getControllerId())
+                            .withSourcePermanentId(resolvingEntry.getSourcePermanentId());
                     return permanent == null
                             || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
                             || !predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, permanent,
-                            ((MultiPermanentChoiceContext.FlickerAnyNumber) context).effect().filter());
+                            permanent, ((MultiPermanentChoiceContext.FlickerAnyNumber) context).effect().filter(),
+                            filterContext);
                 })) {
             throw new IllegalStateException("A selected permanent is no longer an eligible permanent you control");
         }
@@ -481,6 +487,8 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost exileArtifactsContext) {
             abilityActivationService.completeActivatedAbilityExileArtifactsCostChoice(
                     gameData, player, exileArtifactsContext, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
+            triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {

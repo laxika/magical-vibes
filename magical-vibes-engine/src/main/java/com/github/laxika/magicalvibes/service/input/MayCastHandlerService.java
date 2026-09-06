@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetNoncreatureCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
@@ -715,19 +716,27 @@ public class MayCastHandlerService {
                                               PendingMayAbility ability,
                                               PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
         handlePlayFromGraveyardChoice(gameData, player, accepted, ability, effect.filter(),
-                player.getId(), false);
+                player.getId(), false, true);
+    }
+
+    public void handleCastFromNoncreatureGraveyardChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+            CastTargetNoncreatureCardFromGraveyardEffect effect) {
+        handlePlayFromGraveyardChoice(gameData, player, accepted, ability, effect.cardFilter(),
+                player.getId(), false, false);
     }
 
     public void handleCastFromSpecificGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                       PendingMayAbility ability, UUID graveyardOwnerId) {
         handlePlayFromGraveyardChoice(gameData, player, accepted, ability, null,
-                graveyardOwnerId, true);
+                graveyardOwnerId, true, false);
     }
 
     private void handlePlayFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                PendingMayAbility ability, CardPredicate filter,
                                                UUID expectedGraveyardOwnerId,
-                                               boolean exileInsteadOfGraveyard) {
+                                               boolean exileInsteadOfGraveyard,
+                                               boolean allowLand) {
         Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -764,6 +773,13 @@ public class MayCastHandlerService {
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardToPlay.getId());
 
         if (cardToPlay.hasType(CardType.LAND)) {
+            if (!allowLand) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast from the graveyard."));
+                graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToPlay);
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
 

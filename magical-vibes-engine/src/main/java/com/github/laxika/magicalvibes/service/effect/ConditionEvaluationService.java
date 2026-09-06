@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPer
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSpellsThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedAtLeastThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNotCastSpellThisGame;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpellsThisTurn;
@@ -875,6 +876,9 @@ public class ConditionEvaluationService {
             case ControllerCastFourOrMoreSpellsThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastFourOrMoreSpellsThisTurn(
                             gameData, ctx.controllerId(), c.filter());
+            case ControllerCycledCardNamedAtLeastThisGame c ->
+                    ctx.controllerId() != null
+                            && gameData.getCardsCycledThisGameByNameCount(ctx.controllerId(), c.cardName()) >= c.minimum();
             case ControllerCastSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), null, c.filter(), c.fromHandOnly());

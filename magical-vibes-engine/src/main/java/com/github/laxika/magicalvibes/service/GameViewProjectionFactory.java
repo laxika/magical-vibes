@@ -667,7 +667,7 @@ public class GameViewProjectionFactory {
             if (card.getManaCost() == null
                     || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
                     || cantCastDueToAttackExile) continue;
-            if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE)) continue;
+            if (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) continue;
             if (castingPermissionService.isSpellRestricted(gameData, playerId, card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, playerId, card)) continue;
             if (castingPermissionService.isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) continue;
@@ -787,10 +787,10 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
+        if (!gameQueryService.canPlayerCastSpellsFromZone(gameData, playerId, Zone.LIBRARY)) {
             return playable;
         }
-        if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY)) {
+        if (!gameQueryService.canCastSpellFromZone(gameData, topCard, Zone.LIBRARY, playerId)) {
             return playable;
         }
 

@@ -222,6 +222,12 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, null, null, 0, false, false);
     }
 
+    /** Exile a target permanent matching {@code filter}, immediately return it under its owner's control. */
+    public static FlickerEffect flickerTarget(PermanentPredicate filter) {
+        return new FlickerEffect(FlickerScope.TARGET, filter, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, false, false);
+    }
+
     /** Immediately flicker a target and add an end step when resolving in the turn's first end step. */
     public static FlickerEffect flickerTargetWithAdditionalEndStep() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
@@ -282,7 +288,7 @@ public record FlickerEffect(
     @Override
     public TargetSpec targetSpec() {
         if (scope == FlickerScope.TARGET) {
-            return TargetSpec.benign(TargetPredicates.permanent());
+            return TargetSpec.benign(TargetPredicates.permanent(), filter);
         }
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());

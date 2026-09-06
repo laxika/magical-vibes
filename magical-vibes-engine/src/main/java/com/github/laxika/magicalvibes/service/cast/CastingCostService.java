@@ -534,7 +534,9 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                List<CardEffect> effects = new ArrayList<>(perm.getCard().getEffects(EffectSlot.STATIC));
+                effects.addAll(gameQueryService.getGrantedEffects(gameData, perm));
+                for (CardEffect effect : effects) {
                     if (effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
                         if (activatedAbility && !taxEffect.taxesActivatedAbilities()) continue;
                         for (UUID tid : allTargetIds) {
@@ -827,10 +829,19 @@ public class CastingCostService {
     public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
                                                 Permanent sourcePermanent, ActivatedAbility ability,
                                                 UUID targetId, List<UUID> targetIds) {
+        return getActivatedAbilityCostReduction(gameData, activatingPlayerId, sourcePermanent, ability,
+                targetId, targetIds, Integer.MAX_VALUE);
+    }
+
+    public int getActivatedAbilityCostReduction(GameData gameData, UUID activatingPlayerId,
+                                                Permanent sourcePermanent, ActivatedAbility ability,
+                                                UUID targetId, List<UUID> targetIds,
+                                                int maximumReductionForMinimumOneMana) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
         if (battlefield == null) return 0;
 
         int reduction = 0;
+        boolean preventsReductionBelowOneMana = false;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 ActivatedAbilityCostReducingEffect reducer = activeActivatedAbilityCostReducer(
@@ -847,10 +858,13 @@ public class CastingCostService {
                                 .withSourcePermanentId(permanent.getId()))) {
                     reduction += evaluateActivatedAbilityCostReduction(
                             gameData, reducer, permanent, activatingPlayerId);
+                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
                 }
             }
         }
-        return reduction;
+        return preventsReductionBelowOneMana
+                ? Math.min(reduction, maximumReductionForMinimumOneMana)
+                : reduction;
     }
 
     /**

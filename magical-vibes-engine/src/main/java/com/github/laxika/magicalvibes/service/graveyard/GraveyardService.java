@@ -124,6 +124,20 @@ public class GraveyardService {
      * returned list; everyone else ignores it.
      */
     public List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
+        return resolveMillPlayer(gameData, targetPlayerId, count, false);
+    }
+
+    /**
+     * Mills cards and returns those still available in either the graveyard or exile afterward.
+     * This is used by effects whose follow-up can act on cards diverted from the graveyard by a
+     * replacement effect.
+     */
+    public List<Card> resolveMillPlayerIncludingExiled(GameData gameData, UUID targetPlayerId, int count) {
+        return resolveMillPlayer(gameData, targetPlayerId, count, true);
+    }
+
+    private List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count,
+                                         boolean includeCardsDivertedToExile) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
         int additionalCards = 0;
@@ -203,7 +217,13 @@ public class GraveyardService {
                 log.info("Game {} - {} triggers on being milled", gameData.id, card.getName());
             }
         }
-        return cardsEnteredGraveyard;
+        if (!includeCardsDivertedToExile) {
+            return cardsEnteredGraveyard;
+        }
+        return milledCards.stream()
+                .filter(card -> cardsEnteredGraveyard.contains(card)
+                        || gameData.findExiledCard(card.getId()) != null)
+                .toList();
     }
 
     /**

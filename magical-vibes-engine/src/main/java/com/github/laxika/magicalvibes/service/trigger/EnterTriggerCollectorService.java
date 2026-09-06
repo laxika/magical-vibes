@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreaturePowerBranchEffect;
@@ -343,6 +344,25 @@ public class EnterTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             graveyardTargetingService.handleReturnToHandETBTargeting(
+                    match.gameData(), match.controllerId(), sourceCard, List.of(effect), effect);
+        }
+        logTriggered(match);
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = ExileGraveyardCardsEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = ExileGraveyardCardsEffect.class,
+                    slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    })
+    private boolean handleCreatureEnterExileGraveyardCard(TriggerMatchContext match,
+                                                           ExileGraveyardCardsEffect effect,
+                                                           TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
                     match.gameData(), match.controllerId(), sourceCard, List.of(effect), effect);
         }
         logTriggered(match);

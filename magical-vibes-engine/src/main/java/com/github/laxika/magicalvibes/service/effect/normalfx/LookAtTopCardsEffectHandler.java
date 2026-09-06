@@ -146,13 +146,18 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
         boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
-        boolean anyNumber = chooseCount > 1 || randomBottom;
+        boolean remainingToHand = e.restDestination() == LookDestination.HAND;
+        boolean anyNumber = chooseCount > 1 || randomBottom || remainingToHand;
 
         if (matchingCards.isEmpty()) {
             if (e.recordChosenCount()) {
                 entry.setEventValue(0);
             }
-            if (remainingToExile) {
+            if (remainingToHand) {
+                for (Card card : topCards) {
+                    gameData.addCardToHand(controllerId, card);
+                }
+            } else if (remainingToExile) {
                 for (Card card : topCards) {
                     gameData.addToExile(controllerId, card);
                 }
@@ -213,6 +218,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 ? "Choose any number of eligible cards to put onto the battlefield. Exile the rest."
                 : restToGraveyard
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go into your graveyard."
+                : remainingToHand
+                ? "Choose any number of eligible cards to put onto the battlefield. The rest go into your hand."
                 : e.cloakChosenPermanents()
                 ? "Choose exactly " + minCount + " cards to cloak. The rest go to the bottom of your library in a random order."
                 : randomBottom
@@ -226,7 +233,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
-                e.battlefieldSelectionFollowUp(), false, false));
+                e.battlefieldSelectionFollowUp(), false, remainingToHand, remainingToHand));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

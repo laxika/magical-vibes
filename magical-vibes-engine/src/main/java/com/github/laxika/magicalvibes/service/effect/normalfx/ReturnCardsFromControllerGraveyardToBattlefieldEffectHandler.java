@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -57,6 +59,18 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
         }
 
         if (matching.isEmpty()) {
+            return;
+        }
+
+        if (e.distinctNames()) {
+            int distinctNameCount = (int) matching.stream().map(Card::getName).distinct().count();
+            gameData.pendingGraveyardReturnBatch = new PendingGraveyardReturnBatch(
+                    controllerId, List.of(), Map.of());
+            gameData.pendingGraveyardReturnQueue.add(
+                    new PendingGraveyardReturnChoice(controllerId, distinctNameCount, e.filter(),
+                            GraveyardChoiceDestination.BATTLEFIELD, true, false, false,
+                            false, true, Set.of(), Set.of()));
+            graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
             return;
         }
 

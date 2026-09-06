@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -56,13 +57,15 @@ public class TokenCopySupport {
         List<Permanent> tokens = new ArrayList<>();
         Card artifactTokenTemplate = null;
         for (Card sourceCard : sourceCards) {
-            Card tokenTemplate = buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
+            Card tokenTemplate = buildTokenCopyCard(
+                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
             int tokenMultiplier = gameQueryService.getTokenMultiplier(
                     gameData, tokenControllerId, tokenTemplate.hasType(CardType.CREATURE));
             for (int copy = 0; copy < tokenMultiplier; copy++) {
                 Card tokenCard = copy == 0
                         ? tokenTemplate
-                        : buildTokenCopyCard(sourceCard, effect, gameQueryService::isCreatureSubtype);
+                        : buildTokenCopyCard(
+                                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
                 if (artifactTokenTemplate == null && tokenCard.hasType(CardType.ARTIFACT)) {
                     artifactTokenTemplate = tokenCard;
                 }
@@ -148,6 +151,11 @@ public class TokenCopySupport {
 
     private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
                                            Predicate<CardSubtype> isCreatureSubtype) {
+        return buildTokenCopyCard(sourceCard, effect, isCreatureSubtype, null);
+    }
+
+    private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
+                                           Predicate<CardSubtype> isCreatureSubtype, Card targetingSourceCard) {
         boolean hasPTOverride = effect.powerOverride() != null || effect.toughnessOverride() != null;
 
         Card tokenCard = new Card();
@@ -240,6 +248,11 @@ public class TokenCopySupport {
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);
+        if (targetingSourceCard != null && effect.additionalSlotEffects() != null) {
+            List<CardEffect> additionalEffects =
+                    effect.additionalSlotEffects().values().stream().flatMap(List::stream).toList();
+            tokenCard.appendSpellTargetingForEffectsFrom(targetingSourceCard, additionalEffects);
+        }
         return tokenCard;
     }
 }

@@ -18,28 +18,44 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * creature card with mana value X from your graveyard to the battlefield." When
  * {@code maxTotalManaValue} is set, the controller chooses up to {@code maxCount} matching cards
  * at resolution, subject to their aggregate mana value not exceeding the cap. Cards returned by
- * the automatic path enter tapped when {@code enterTapped} is true.
+ * the automatic path enter tapped when {@code enterTapped} is true. When {@code distinctNames} is
+ * true, the controller chooses any number of matching cards, with no two chosen cards sharing a
+ * name, and all chosen cards enter the battlefield simultaneously.
  */
 public record ReturnCardsFromControllerGraveyardToBattlefieldEffect(
         CardPredicate filter,
         int maxCount,
         boolean manaValueEqualsX,
         Integer maxTotalManaValue,
-        boolean enterTapped
+        boolean enterTapped,
+        boolean distinctNames
 ) implements CardEffect {
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount) {
-        this(filter, maxCount, false, null, false);
+        this(filter, maxCount, false, null, false, false);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
                                                                   int maxTotalManaValue) {
-        this(filter, maxCount, false, maxTotalManaValue, false);
+        this(filter, maxCount, false, maxTotalManaValue, false, false);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
                                                                   boolean manaValueEqualsX) {
-        this(filter, maxCount, manaValueEqualsX, null, false);
+        this(filter, maxCount, manaValueEqualsX, null, false, false);
+    }
+
+    public ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate filter, int maxCount,
+                                                                  boolean manaValueEqualsX,
+                                                                  Integer maxTotalManaValue,
+                                                                  boolean enterTapped) {
+        this(filter, maxCount, manaValueEqualsX, maxTotalManaValue, enterTapped, false);
+    }
+
+    public static ReturnCardsFromControllerGraveyardToBattlefieldEffect anyNumberOfDistinctNames(
+            CardPredicate filter) {
+        return new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
+                filter, Integer.MAX_VALUE, false, null, false, true);
     }
 
     public ReturnCardsFromControllerGraveyardToBattlefieldEffect {

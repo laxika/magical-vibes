@@ -55,7 +55,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             case OWN_ALL_MATCHING -> resolveOwnAllMatching(gameData, entry, e);
             case TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_CONTROLLER_GRAVEYARD ->
                     resolveTargetAnyGraveyardCards(gameData, entry, e);
-            case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry);
+            case TARGET_CARDS_OPPONENT_GRAVEYARD -> resolveTargetOpponentCards(gameData, entry, e);
             case TARGET_PLAYER_ENTIRE, DYING_CREATURE_CONTROLLER -> resolveTargetPlayerEntire(gameData, entry);
             case TARGET_PLAYER_ALL_MATCHING -> resolveTargetPlayerAllMatching(gameData, entry, e);
             case ALL_PLAYERS -> resolveAllGraveyards(gameData, entry, e);
@@ -254,7 +254,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, builder.build());
     }
 
-    private void resolveTargetOpponentCards(GameData gameData, StackEntry entry) {
+    private void resolveTargetOpponentCards(GameData gameData, StackEntry entry,
+                                            ExileGraveyardCardsEffect effect) {
         List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
 
@@ -266,10 +267,19 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         List<Card> exiledCards = new ArrayList<>();
         for (UUID cardId : targetCardIds) {
             Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-            if (card != null) {
-                exiledCards.add(card);
-                graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
+            if (card == null) {
+                continue;
             }
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwnerId == null || graveyardOwnerId.equals(entry.getControllerId())) {
+                continue;
+            }
+            if (effect.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
+                continue;
+            }
+            exiledCards.add(card);
+            graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
         }
 
         if (!exiledCards.isEmpty()) {

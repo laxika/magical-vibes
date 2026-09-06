@@ -43,6 +43,7 @@ public enum CounterType {
     FILM,
     FINALITY,
     FLAME,
+    FORESHADOW,
     FLOOD,
     FUNGUS,
     FUSE,
@@ -153,8 +154,10 @@ public enum CounterType {
     HEXPROOF,
     INDESTRUCTIBLE,
     LIFELINK,
+    MENACE,
     REACH,
     TRAMPLE,
+    VIGILANCE,
     WINCH;
 
     public Keyword grantedKeyword() {
@@ -166,8 +169,10 @@ public enum CounterType {
             case LIFELINK -> Keyword.LIFELINK;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
+            case MENACE -> Keyword.MENACE;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
+            case VIGILANCE -> Keyword.VIGILANCE;
             default -> null;
         };
     }

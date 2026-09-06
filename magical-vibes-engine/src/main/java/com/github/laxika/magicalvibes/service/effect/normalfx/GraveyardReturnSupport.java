@@ -2142,7 +2142,7 @@ public class GraveyardReturnSupport {
                     new PendingGraveyardReturnChoice(next.playerId(), next.remainingCount() - 1, next.filter(),
                             next.destination(), next.skipRemainingOnDecline(), next.mandatory(),
                             next.fromBattlefieldThisTurn(), next.distinctManaValues(),
-                            next.excludedManaValues(), next.excludedCardIds()));
+                            next.distinctNames(), next.excludedManaValues(), next.excludedCardIds()));
         }
 
         GraveyardChoiceDestination destination = next.destination();

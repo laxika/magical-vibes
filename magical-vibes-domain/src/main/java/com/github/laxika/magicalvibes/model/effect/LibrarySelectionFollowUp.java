@@ -9,4 +9,9 @@ public interface LibrarySelectionFollowUp {
     CardEffect createEffect(List<UUID> selectedPermanentIds);
 
     String prompt();
+
+    /** Whether the follow-up is offered as a separate reflexive may ability. */
+    default boolean optional() {
+        return true;
+    }
 }

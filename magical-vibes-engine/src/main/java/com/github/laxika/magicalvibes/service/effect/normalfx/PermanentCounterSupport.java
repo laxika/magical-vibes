@@ -190,7 +190,7 @@ public class PermanentCounterSupport {
                     case LEVEL -> perm.setCounterCount(CounterType.LEVEL, perm.getCounterCount(CounterType.LEVEL) + placed);
                     case RITUAL -> perm.setCounterCount(CounterType.RITUAL, perm.getCounterCount(CounterType.RITUAL) + placed);
                     case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
-                         REACH, TRAMPLE -> {
+                         MENACE, REACH, TRAMPLE, VIGILANCE -> {
                         perm.setCounterCount(counterType, perm.getCounterCount(counterType) + placed);
                         perm.setCounterTimestamp(counterType, gameData.nextTimestamp());
                     }
@@ -443,7 +443,7 @@ public class PermanentCounterSupport {
             case THEFT -> { target.setCounterCount(CounterType.THEFT, target.getCounterCount(CounterType.THEFT) + count); yield "theft"; }
             case TIDE -> { target.setCounterCount(CounterType.TIDE, target.getCounterCount(CounterType.TIDE) + count); yield "tide"; }
             case DEATHTOUCH, DECAYED, FLYING, FIRST_STRIKE, HEXPROOF, INDESTRUCTIBLE, LIFELINK,
-                 REACH, TRAMPLE -> {
+                 MENACE, REACH, TRAMPLE, VIGILANCE -> {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) + count);
                 if (count > 0) {
                     target.setCounterTimestamp(counterType, gameData.nextTimestamp());

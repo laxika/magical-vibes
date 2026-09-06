@@ -407,7 +407,7 @@ public class DamagePreventionService {
             // Vigor: "If damage would be dealt to another creature you control, prevent that damage.
             // Put a +1/+1 counter on that creature for each 1 damage prevented this way." The effect
             // lives on a different permanent (Vigor) controlled by this creature's controller.
-            if (damage > 0 && hasOtherCreatureDamagePreventionSource(gameData, permanent)) {
+            if (damage > 0 && hasOtherCreatureDamagePreventionSource(gameData, permanent, isCombatDamage)) {
                 if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
                     int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
                     if (counters > 0) {
@@ -639,7 +639,8 @@ public class DamagePreventionService {
      * {@link PreventDamageToOtherCreaturesAndAddPlusCountersEffect}. Such damage is fully prevented and
      * replaced with +1/+1 counters by the caller.
      */
-    private boolean hasOtherCreatureDamagePreventionSource(GameData gameData, Permanent creature) {
+    private boolean hasOtherCreatureDamagePreventionSource(GameData gameData, Permanent creature,
+                                                            boolean isCombatDamage) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -648,7 +649,10 @@ public class DamagePreventionService {
                 .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::isInstance)
                         .map(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::cast)
-                        .anyMatch(effect -> effect.includeSource() || !source.getId().equals(creature.getId())));
+                        .anyMatch(effect -> (!isCombatDamage || !effect.noncombatOnly())
+                                && (effect.sourceOnly()
+                                ? source.getId().equals(creature.getId())
+                                : effect.includeSource() || !source.getId().equals(creature.getId()))));
     }
 
     /**

@@ -71,6 +71,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.EcologicalAppreciationSearchChoice,
         PendingInteraction.EcologicalAppreciationOpponentChoice,
+        PendingInteraction.EmergentUltimatumSearchChoice,
+        PendingInteraction.EmergentUltimatumOpponentSelectionChoice,
+        PendingInteraction.EmergentUltimatumOpponentChoice,
         PendingInteraction.VerdantMasterySearchChoice,
         PendingInteraction.VerdantMasteryLandChoice,
         PendingInteraction.GuidedPassageChoice,
@@ -210,6 +213,70 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), 2, 2);
+        }
+    }
+
+    record EmergentUltimatumSearchChoice(UUID playerId, java.util.List<Card> pool)
+            implements PendingInteraction {
+        public EmergentUltimatumSearchChoice {
+            pool = java.util.List.copyOf(pool);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, Math.min(3, pool.size()));
+        }
+    }
+
+    record EmergentUltimatumOpponentChoice(UUID playerId, UUID controllerId,
+                                            java.util.List<Card> cards)
+            implements PendingInteraction {
+        public EmergentUltimatumOpponentChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
+    }
+
+    record EmergentUltimatumOpponentSelectionChoice(UUID controllerId,
+                                                     java.util.List<UUID> opponentIds,
+                                                     java.util.List<Card> cards)
+            implements PendingInteraction {
+        public EmergentUltimatumOpponentSelectionChoice {
+            opponentIds = java.util.List.copyOf(opponentIds);
+            cards = java.util.List.copyOf(cards);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return controllerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiPermanentPick(
+                    java.util.List.of(), opponentIds, 1, 1);
         }
     }
 
@@ -1559,31 +1626,40 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                 String prompt, int minCount, boolean reorderToLibraryTop,
-                                Integer minimumTotalManaValue, Integer maxTotalManaValue) implements PendingInteraction {
+                                Integer minimumTotalManaValue, Integer maxTotalManaValue,
+                                Integer maxTotalPower) implements PendingInteraction {
 
         /** Optional choice ({@code minCount} 0) — the shape used by every graveyard-targeting flow. */
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount, String prompt) {
-            this(playerId, cards, maxCount, prompt, 0, false, null, null);
+            this(playerId, cards, maxCount, prompt, 0, false, null, null, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                     String prompt, int minCount) {
-            this(playerId, cards, maxCount, prompt, minCount, false, null, null);
+            this(playerId, cards, maxCount, prompt, minCount, false, null, null, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                     String prompt, int minCount, boolean reorderToLibraryTop) {
-            this(playerId, cards, maxCount, prompt, minCount, reorderToLibraryTop, null, null);
+            this(playerId, cards, maxCount, prompt, minCount, reorderToLibraryTop, null, null, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                     String prompt, int minCount, Integer maxTotalManaValue) {
-            this(playerId, cards, maxCount, prompt, minCount, false, null, maxTotalManaValue);
+            this(playerId, cards, maxCount, prompt, minCount, false, null, maxTotalManaValue, null);
         }
 
         public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
                                     String prompt, int minCount, boolean reorderToLibraryTop,
                                     Integer minimumTotalManaValue, Integer maxTotalManaValue) {
+            this(playerId, cards, maxCount, prompt, minCount, reorderToLibraryTop,
+                    minimumTotalManaValue, maxTotalManaValue, null);
+        }
+
+        public MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
+                                    String prompt, int minCount, boolean reorderToLibraryTop,
+                                    Integer minimumTotalManaValue, Integer maxTotalManaValue,
+                                    Integer maxTotalPower) {
             this.playerId = playerId;
             this.cards = java.util.List.copyOf(cards);
             this.maxCount = maxCount;
@@ -1592,6 +1668,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this.reorderToLibraryTop = reorderToLibraryTop;
             this.minimumTotalManaValue = minimumTotalManaValue;
             this.maxTotalManaValue = maxTotalManaValue;
+            this.maxTotalPower = maxTotalPower;
         }
 
         /** The selectable card IDs, in begin-time order (derived from {@link #cards}). */
@@ -3016,8 +3093,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean payLifePerSelection,
                                LibrarySelectionFollowUp battlefieldSelectionFollowUp,
                                boolean selectLandsAfterHand,
-                               boolean selectedToBattlefieldSimultaneously)
+                               boolean selectedToBattlefieldSimultaneously,
+                               boolean remainingToHand)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, false);
+        }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                    java.util.List<UUID> validCardIds, boolean remainingToGraveyard,

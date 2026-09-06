@@ -113,6 +113,7 @@ public sealed interface PermanentPredicate permits
         PermanentManaValueEqualsSourceCountersPredicate,
         PermanentManaValueAtMostXPredicate,
         PermanentManaValueEqualsXPredicate,
+        PermanentManaValueParityPredicate,
         PermanentMaxManaValuePredicate,
         PermanentMaxManaValueXPredicate,
         PermanentMinManaValuePredicate,

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -228,7 +229,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Permanent> toExile = battlefield.stream()
-                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
+                .filter(p -> matchesControllerPermanentFilter(gameData, entry, p, e))
                 .toList();
         exileControllersPermanentsAtStep(gameData, entry, e, toExile);
     }
@@ -244,9 +245,18 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> toExile = permanentIds.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(p -> p != null
-                        && predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
+                        && matchesControllerPermanentFilter(gameData, entry, p, e))
                 .toList();
         exileControllersPermanentsAtStep(gameData, entry, e, toExile);
+    }
+
+    private boolean matchesControllerPermanentFilter(
+            GameData gameData, StackEntry entry, Permanent permanent, FlickerEffect effect) {
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId());
+        return predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), context);
     }
 
     private void exileControllersPermanentsAtStep(
@@ -335,8 +345,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
         List<UUID> validIds = battlefield.stream()
-                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, effect.filter()))
+                .filter(permanent -> matchesControllerPermanentFilter(gameData, entry, permanent, effect))
                 .map(Permanent::getId)
                 .toList();
         if (validIds.isEmpty()) return;

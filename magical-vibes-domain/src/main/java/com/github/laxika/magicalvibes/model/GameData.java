@@ -133,6 +133,8 @@ public class GameData {
      * {@link #getSpellsCastThisGameByNameCount} (Approach of the Second Sun's "cast another spell named ... this game").
      */
     private final Map<UUID, Map<String, Integer>> spellNameCastCountsThisGame = new ConcurrentHashMap<>();
+    /** Per-player count of cards cycled this game, keyed by card name. */
+    private final Map<UUID, Map<String, Integer>> cardNameCycleCountsThisGame = new ConcurrentHashMap<>();
     /**
      * Transient mana spent to cast a spell, keyed by spell card instance id.
      * Populated during spell payment and consumed when spell-cast triggers fire.
@@ -401,6 +403,8 @@ public class GameData {
     /** Tracks exiled card UUIDs that have ice counters (Draugr Necromancer). */
     public final Set<UUID> exiledCardsWithIceCounters = ConcurrentHashMap.newKeySet();
     public final Set<UUID> exiledCardsWithStudyCounters = ConcurrentHashMap.newKeySet();
+    /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
+    public final Map<UUID, UUID> lukkaExileCastPermissions = new ConcurrentHashMap<>();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
     public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     /** Spells exiled with suspend counters and waiting for their owners' upkeeps. */
@@ -527,6 +531,8 @@ public class GameData {
     public CardColor chosenSpellColor;
     /** Resolution-time "choose a number" answer for a spell with no permanent to store it on. */
     public Integer chosenSpellNumber;
+    /** Resolution-time odd/even mana value quality choice for a spell with no permanent to store it on. */
+    public ManaValueParity chosenSpellManaValueParity;
     /** Resolution-time Turnabout permanent type choice. */
     public CardType chosenSpellPermanentType;
     /** Resolution-time card type choice for a spell with no permanent to store it on. */
@@ -704,6 +710,8 @@ public class GameData {
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public final RetetherOperationState retetherOperation = new RetetherOperationState();
+    public final AuspiciousStarrixOperationState auspiciousStarrixOperation =
+            new AuspiciousStarrixOperationState();
     public boolean cleanupDiscardPending;
     /** Tracks exile-until-source-leaves connections (O-ring style).
      *  Maps source permanent UUID to the exiled cards + owner info.
@@ -761,6 +769,8 @@ public class GameData {
     public final Set<UUID> playersWithProtectionFromEverythingUntilNextTurn = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
+    /** Players whose opponents' creatures cannot deal damage this turn (Thwart the Enemy). */
+    public final Set<UUID> playersWithDamageFromOpponentCreaturesPrevented = ConcurrentHashMap.newKeySet();
     /** Players for whom damage from matching source permanents is prevented this turn. */
     public final Map<UUID, Set<PermanentPredicate>> playersWithDamageFromMatchingSourcesPrevented =
             new ConcurrentHashMap<>();
@@ -2699,6 +2709,13 @@ public class GameData {
         consumeNextInstantSorceryUncounterableGrant(playerId, card);
     }
 
+    /** Records a card cycled by the given player during this game. */
+    public void recordCardCycled(UUID playerId, Card card) {
+        if (card == null || card.getName() == null) return;
+        cardNameCycleCountsThisGame.computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>())
+                .merge(card.getName(), 1, Integer::sum);
+    }
+
     public void recordSpellCastFromHand(Card card) {
         if (card != null) spellsCastFromHandThisTurn.add(card.getId());
     }
@@ -2939,6 +2956,11 @@ public class GameData {
      */
     public int getSpellsCastThisGameByNameCount(UUID playerId, String name) {
         return spellNameCastCountsThisGame.getOrDefault(playerId, Map.of()).getOrDefault(name, 0);
+    }
+
+    /** Returns how many cards with the given name the player has cycled this game. */
+    public int getCardsCycledThisGameByNameCount(UUID playerId, String name) {
+        return cardNameCycleCountsThisGame.getOrDefault(playerId, Map.of()).getOrDefault(name, 0);
     }
 
     /**
@@ -3487,6 +3509,7 @@ public class GameData {
             exileInsteadOfGraveyard.remove(cardId);
             exiledCardTimeCounters.remove(cardId);
             exiledCardHitCounters.remove(cardId);
+            lukkaExileCastPermissions.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
         }
         return removed;
@@ -3578,6 +3601,7 @@ public class GameData {
         removedIds.forEach(exiledCardHitCounters::remove);
         removedIds.forEach(exiledCardRefineCounters::remove);
         removedIds.forEach(exiledCardsWithStudyCounters::remove);
+        removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
         removedIds.forEach(cardId -> {
             exilePlayPermissionSourcePermanents.remove(cardId);
@@ -3811,6 +3835,7 @@ public class GameData {
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.chosenSpellColor = this.chosenSpellColor;
         copy.chosenSpellNumber = this.chosenSpellNumber;
+        copy.chosenSpellManaValueParity = this.chosenSpellManaValueParity;
         copy.chosenSpellPermanentType = this.chosenSpellPermanentType;
         copy.chosenSpellCardType = this.chosenSpellCardType;
         copy.turnaboutTap = this.turnaboutTap;
@@ -3966,6 +3991,7 @@ public class GameData {
         copy.playersWithProtectionFromEverythingUntilNextTurn
                 .addAll(this.playersWithProtectionFromEverythingUntilNextTurn);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
+        copy.playersWithDamageFromOpponentCreaturesPrevented.addAll(this.playersWithDamageFromOpponentCreaturesPrevented);
         this.playersWithDamageFromMatchingSourcesPrevented.forEach((k, v) ->
                 copy.playersWithDamageFromMatchingSourcesPrevented.put(k, new HashSet<>(v)));
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
@@ -4101,6 +4127,8 @@ public class GameData {
         copy.mostRecentSpellCastThisTurn = this.mostRecentSpellCastThisTurn;
         this.spellNameCastCountsThisGame.forEach((k, v) ->
                 copy.spellNameCastCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
+        this.cardNameCycleCountsThisGame.forEach((k, v) ->
+                copy.cardNameCycleCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.dayNight = this.dayNight;
         copy.playersWhoseCreatureSpellsWereCounteredByOpponentsThisTurn
@@ -4250,6 +4278,7 @@ public class GameData {
         copy.spellsWithDreamCounterOnResolution.addAll(this.spellsWithDreamCounterOnResolution);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
         copy.exiledCardsWithStudyCounters.addAll(this.exiledCardsWithStudyCounters);
+        copy.lukkaExileCastPermissions.putAll(this.lukkaExileCastPermissions);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);
 
@@ -4508,6 +4537,18 @@ public class GameData {
         copy.retetherOperation.pendingAuraChoices.addAll(this.retetherOperation.pendingAuraChoices);
         copy.retetherOperation.pendingPlacements.addAll(this.retetherOperation.pendingPlacements);
         copy.retetherOperation.activeChoice = this.retetherOperation.activeChoice;
+
+        copy.auspiciousStarrixOperation.permanentCards.addAll(
+                this.auspiciousStarrixOperation.permanentCards);
+        copy.auspiciousStarrixOperation.pendingAuraChoices.addAll(
+                this.auspiciousStarrixOperation.pendingAuraChoices);
+        copy.auspiciousStarrixOperation.auraAttachmentTargets.putAll(
+                this.auspiciousStarrixOperation.auraAttachmentTargets);
+        copy.auspiciousStarrixOperation.enterTappedTypesSnapshot.addAll(
+                this.auspiciousStarrixOperation.enterTappedTypesSnapshot);
+        copy.auspiciousStarrixOperation.activeAuraChoice =
+                this.auspiciousStarrixOperation.activeAuraChoice;
+        copy.auspiciousStarrixOperation.controllerId = this.auspiciousStarrixOperation.controllerId;
 
         // --- Map<UUID, Map<Integer, Integer>> (activated ability uses) ---
         this.activatedAbilityUsesThisTurn.forEach((k, v) ->

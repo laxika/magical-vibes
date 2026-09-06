@@ -278,6 +278,7 @@ public class AbilityActivationService {
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> poolBefore = snapshotPoolColors(manaPool);
         EnumMap<ManaColor, Integer> creatureManaBefore = snapshotCreatureManaColors(manaPool);
+        EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
         int totalManaBefore = manaPool.getTotalAllMana();
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
@@ -468,6 +469,7 @@ public class AbilityActivationService {
         // pendingManaAbilityTriggers so they don't block sorcery-speed spell casting
         // when mana is being tapped to pay a cost.
         int stackBeforeTriggers = gameData.stack.size();
+        boolean manaTypeChoicePending = isAwaitingOwnManaColorChoice(gameData, playerId);
         if (permanent.getCard().hasType(CardType.LAND)) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
@@ -475,10 +477,12 @@ public class AbilityActivationService {
             triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
         }
         triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
-        if (!isAwaitingOwnManaColorChoice(gameData, playerId)) {
+        if (!manaTypeChoicePending) {
             triggerCollectionService.checkManaAbilityResolutionTriggers(
                     gameData, permanent, playerId, manaPool.getTotalAllMana() - totalManaBefore);
         }
+        triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
+                gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
         List<StackEntry> deferred = List.of();
         if (gameData.stack.size() > stackBeforeTriggers) {
@@ -488,7 +492,7 @@ public class AbilityActivationService {
             gameData.pendingManaAbilityTriggers.addAll(deferred);
         }
 
-        if (isAwaitingOwnManaColorChoice(gameData, playerId)) {
+        if (manaTypeChoicePending) {
             // A land whose type was overridden into several basic types stops to ask which colour to
             // add, so its mana does not exist yet. Recording now would log an activation with no
             // mana, and reverting it would untap the land while leaving the colour it went on to
@@ -1846,6 +1850,7 @@ public class AbilityActivationService {
                 List.of(),
                 List.of()
         );
+        stackEntry.setCyclingAbility(ability.isCyclingAbility());
         gameData.stack.add(stackEntry);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
 
@@ -1853,7 +1858,7 @@ public class AbilityActivationService {
         // cycle or discard" trigger (e.g. Curator of Mysteries) lands above the cycling draw and
         // resolves first.
         if (discarded) {
-            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
         }
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from their hand."));
@@ -2075,7 +2080,7 @@ public class AbilityActivationService {
             gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
         }
         gameData.discardCausedByOpponent = false;
-        collectDiscardTriggersAsAbilityCost(gameData, playerId, card);
+        collectDiscardTriggersAsAbilityCost(gameData, playerId, card, ability.isCyclingAbility());
 
         // Push the ability onto the stack with its graveyard targets (cost effects are not resolved)
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -2098,6 +2103,7 @@ public class AbilityActivationService {
                 graveyardCardIds,
                 List.of()
         );
+        stackEntry.setCyclingAbility(ability.isCyclingAbility());
         gameData.stack.add(stackEntry);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
@@ -4490,7 +4496,8 @@ public class AbilityActivationService {
         int genericCost = manaCost.getGenericCost();
         int equipReduction = Math.min(
                 castingCostService.getActivatedAbilityCostReduction(
-                        gameData, playerId, permanent, ability, targetId, targetIds),
+                        gameData, playerId, permanent, ability, targetId, targetIds,
+                        Math.max(0, totalManaCost + additionalGenericCost - 1)),
                 genericCost);
         additionalGenericCost -= equipReduction;
         int battlefieldReduction = Math.min(
@@ -6222,8 +6229,13 @@ public class AbilityActivationService {
     }
 
     private void collectDiscardTriggersAsAbilityCost(GameData gameData, UUID playerId, Card discardedCard) {
+        collectDiscardTriggersAsAbilityCost(gameData, playerId, discardedCard, false);
+    }
+
+    private void collectDiscardTriggersAsAbilityCost(GameData gameData, UUID playerId, Card discardedCard,
+                                                     boolean cycled) {
         int stackBefore = gameData.stack.size();
-        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard);
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discardedCard, cycled);
         if (gameData.stack.size() > stackBefore) {
             gameData.pendingActivatedAbilityCostTriggers.addAll(
                     new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size())));

@@ -2206,6 +2206,19 @@ public class LibraryChoiceHandlerService {
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" onto the battlefield. The rest are exiled.").build());
             }
+        } else if (libraryRevealChoice.remainingToHand()) {
+            for (Card card : remainingCards) {
+                gameData.addCardToHand(controllerId, card);
+            }
+
+            if (selectedCards.isEmpty()) {
+                gameLogService.append(gameData, GameLog.text(
+                        playerName + " puts the cards into their hand."));
+            } else {
+                gameLogService.append(gameData,
+                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                                .text(" onto the battlefield and the rest into their hand.").build());
+            }
         } else if (libraryRevealChoice.randomRemainingToBottom()) {
             // Shuffle remaining cards and put them on the bottom of the library (Gishath, etc.)
             Collections.shuffle(remainingCards);
@@ -2388,14 +2401,18 @@ public class LibraryChoiceHandlerService {
 
         StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
         CardEffect followUpEffect = followUp.createEffect(selectedPermanentIds);
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceEntry.getCard(),
-                sourceEntry.getControllerId(),
-                sourceEntry.getCard().getName() + "'s reflexive ability",
-                List.of(new MayEffect(followUpEffect, followUp.prompt())),
-                null,
-                sourceEntry.getSourcePermanentId()));
+        if (followUp.optional()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceEntry.getCard(),
+                    sourceEntry.getControllerId(),
+                    sourceEntry.getCard().getName() + "'s reflexive ability",
+                    List.of(new MayEffect(followUpEffect, followUp.prompt())),
+                    null,
+                    sourceEntry.getSourcePermanentId()));
+        } else {
+            sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(followUpEffect));
+        }
     }
 
     private void handleHandSelectionThenLandSelection(GameData gameData, UUID controllerId,

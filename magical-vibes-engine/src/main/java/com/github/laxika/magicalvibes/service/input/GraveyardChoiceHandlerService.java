@@ -307,7 +307,8 @@ public class GraveyardChoiceHandlerService {
                         gameData.pendingGraveyardReturnQueue.addFirst(new PendingGraveyardReturnChoice(
                                 next.playerId(), next.remainingCount(), next.filter(), next.destination(),
                                 next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
-                                next.distinctManaValues(), excludedManaValues));
+                                next.distinctManaValues(), next.distinctNames(), excludedManaValues,
+                                next.excludedCardIds()));
                     }
                 }
                 case BATTLEFIELD -> {
@@ -500,6 +501,23 @@ public class GraveyardChoiceHandlerService {
                     triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
                 }
             }
+
+            if (!gameData.pendingGraveyardReturnQueue.isEmpty()
+                    && gameData.pendingGraveyardReturnQueue.getFirst().distinctNames()) {
+                PendingGraveyardReturnChoice next = gameData.pendingGraveyardReturnQueue.removeFirst();
+                Set<UUID> excludedCardIds = new HashSet<>(next.excludedCardIds());
+                List<Card> graveyard = gameData.playerGraveyards.getOrDefault(next.playerId(), List.of());
+                for (Card graveyardCard : graveyard) {
+                    if (graveyardCard.getName().equals(card.getName())) {
+                        excludedCardIds.add(graveyardCard.getId());
+                    }
+                }
+                gameData.pendingGraveyardReturnQueue.addFirst(new PendingGraveyardReturnChoice(
+                        next.playerId(), next.remainingCount(), next.filter(), next.destination(),
+                        next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
+                        next.distinctManaValues(), next.distinctNames(), next.excludedManaValues(),
+                        excludedCardIds));
+            }
         }
 
         // Check if there are more "each player returns" graveyard choices queued
@@ -586,6 +604,25 @@ public class GraveyardChoiceHandlerService {
         for (UUID cardId : cardIds) {
             if (!validIds.contains(cardId)) {
                 throw new IllegalStateException("Invalid card: " + cardId);
+            }
+        }
+
+        Integer maxTotalPower = multiGraveyardChoice.maxTotalPower();
+        if (maxTotalPower != null) {
+            List<Card> selectedCards = new ArrayList<>();
+            for (UUID cardId : cardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card == null) {
+                    throw new IllegalStateException("Selected card is no longer in a graveyard");
+                }
+                selectedCards.add(card);
+            }
+            int selectedPower = selectedCards.stream()
+                    .mapToInt(card -> card.getPower() == null ? 0 : card.getPower())
+                    .sum();
+            if (selectedPower > maxTotalPower) {
+                throw new IllegalStateException("Selected cards exceed the total power "
+                        + maxTotalPower + " limit");
             }
         }
 

@@ -100,6 +100,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Training", Keyword.TRAINING);
         KEYWORD_MAP.put("Disturb", Keyword.DISTURB);
         KEYWORD_MAP.put("Morph", Keyword.MORPH);
+        KEYWORD_MAP.put("Mutate", Keyword.MUTATE);
         KEYWORD_MAP.put("Skulk", Keyword.SKULK);
         KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);

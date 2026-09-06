@@ -621,6 +621,9 @@ public class TargetLegalityService {
         if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
             throw new IllegalStateException("Cannot target the same card twice");
         }
+        if (effect.maxTargets() > 0 && targetCardIds.size() > effect.maxTargets()) {
+            throw new IllegalStateException("Too many target cards selected");
+        }
 
         int totalManaValue = 0;
         for (UUID cardId : targetCardIds) {

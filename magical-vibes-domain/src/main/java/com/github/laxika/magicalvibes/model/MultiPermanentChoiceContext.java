@@ -75,6 +75,16 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Selects up to a mutation-count number of creature targets for a mutation trigger. */
+    record SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                       String eventDescription, UUID sourcePermanentId,
+                                       Integer eventValue) implements MultiPermanentChoiceContext {
+
+        public SelfTriggeredAbilityTargets {
+            effects = List.copyOf(effects);
+        }
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total)
             implements MultiPermanentChoiceContext {

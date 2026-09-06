@@ -71,6 +71,7 @@ public enum Keyword {
     TRAINING,
     DISTURB,
     MORPH,
+    MUTATE,
     SKULK,
     SOULBOND,
     MIRACLE,

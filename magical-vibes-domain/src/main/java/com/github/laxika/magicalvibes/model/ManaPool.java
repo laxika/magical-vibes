@@ -85,6 +85,12 @@ public class ManaPool {
     private int foretellSpellOnlyColorless;
     /** Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). */
     private int xCostOnlyColorless;
+    /** Colorless mana spendable only to cast colored spells without {X} in their mana cost (Titans' Nest). */
+    private int coloredSpellWithoutXOnlyColorless;
+    /** Colored mana that can't be spent to pay generic mana costs (Jegantha, the Wellspring). */
+    private final EnumMap<ManaColor, Integer> coloredCostOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Colorless remainder of mana carrying Jegantha's no-generic restriction. */
+    private int coloredCostOnlyColorless;
     /** Colorless mana spendable only to pay cumulative upkeep costs (Adarkar Unicorn, Snowfall). */
     private int cumulativeUpkeepOnlyColorless;
     /** Colored mana that can only be spent to cast instant or sorcery spells (e.g. Abstract Paintmage). */
@@ -202,6 +208,7 @@ public class ManaPool {
             flashbackOnlyMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
+            coloredCostOnlyMana.put(color, 0);
             disturbOrInstantSorceryOnlyColored.put(color, 0);
             cumulativeUpkeepOnlyColored.put(color, 0);
             creatureSpellOnlyMana.put(color, 0);
@@ -256,6 +263,9 @@ public class ManaPool {
         this.disturbOrInstantSorceryOnlyColorless = source.disturbOrInstantSorceryOnlyColorless;
         this.foretellSpellOnlyColorless = source.foretellSpellOnlyColorless;
         this.xCostOnlyColorless = source.xCostOnlyColorless;
+        this.coloredSpellWithoutXOnlyColorless = source.coloredSpellWithoutXOnlyColorless;
+        coloredCostOnlyMana.putAll(source.coloredCostOnlyMana);
+        this.coloredCostOnlyColorless = source.coloredCostOnlyColorless;
         this.cumulativeUpkeepOnlyColorless = source.cumulativeUpkeepOnlyColorless;
         instantSorceryOnlyColored.putAll(source.instantSorceryOnlyColored);
         foretellOrInstantSorceryOnlyColored.putAll(source.foretellOrInstantSorceryOnlyColored);
@@ -514,9 +524,12 @@ public class ManaPool {
         disturbOrInstantSorceryOnlyColorless = 0;
         foretellSpellOnlyColorless = 0;
         xCostOnlyColorless = 0;
+        coloredSpellWithoutXOnlyColorless = 0;
+        coloredCostOnlyColorless = 0;
         cumulativeUpkeepOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             instantSorceryOnlyColored.put(color, 0);
+            coloredCostOnlyMana.put(color, 0);
             foretellOrInstantSorceryOnlyColored.put(color, 0);
             disturbOrInstantSorceryOnlyColored.put(color, 0);
             foretellSpellOnlyColored.put(color, 0);
@@ -552,6 +565,36 @@ public class ManaPool {
             total += value;
         }
         return total;
+    }
+
+    public int getColoredCostOnlyMana(ManaColor color) {
+        return coloredCostOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getColoredCostOnlyManaTotal() {
+        return coloredCostOnlyMana.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public int getColoredCostOnlyColorless() {
+        return coloredCostOnlyColorless;
+    }
+
+    public void addColoredCostOnlyColorless(int amount) {
+        coloredCostOnlyColorless += amount;
+    }
+
+    public void removeColoredCostOnlyColorless(int amount) {
+        coloredCostOnlyColorless = Math.max(0, coloredCostOnlyColorless - amount);
+    }
+
+    /** Adds mana that can't be spent to pay generic mana costs. */
+    public void addColoredCostOnlyMana(ManaColor color, int amount) {
+        coloredCostOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public void removeColoredCostOnlyMana(ManaColor color, int amount) {
+        int current = coloredCostOnlyMana.getOrDefault(color, 0);
+        coloredCostOnlyMana.put(color, Math.max(0, current - amount));
     }
 
     /**
@@ -607,6 +650,9 @@ public class ManaPool {
             total += value;
         }
         total += xCostOnlyColorless;
+        total += coloredSpellWithoutXOnlyColorless;
+        total += getColoredCostOnlyManaTotal();
+        total += coloredCostOnlyColorless;
         total += cumulativeUpkeepOnlyColorless;
         total += getCumulativeUpkeepOnlyColoredTotal();
         total += getFlashbackOnlyManaTotal();
@@ -1597,6 +1643,41 @@ public class ManaPool {
         xCostOnlyColorless = Math.max(0, xCostOnlyColorless - amount);
     }
 
+    public int getColoredSpellWithoutXOnlyColorless() {
+        return coloredSpellWithoutXOnlyColorless;
+    }
+
+    public void addColoredSpellWithoutXOnlyColorless(int amount) {
+        coloredSpellWithoutXOnlyColorless += amount;
+    }
+
+    public void removeColoredSpellWithoutXOnlyColorless(int amount) {
+        coloredSpellWithoutXOnlyColorless = Math.max(0, coloredSpellWithoutXOnlyColorless - amount);
+    }
+
+    /** Temporarily exposes Titans' Nest mana to the ordinary payment algorithm for a matching spell. */
+    public ColoredSpellWithoutXManaState promoteColoredSpellWithoutXOnlyMana() {
+        int promoted = coloredSpellWithoutXOnlyColorless;
+        int regularBefore = pool.getOrDefault(ManaColor.COLORLESS, 0);
+        coloredSpellWithoutXOnlyColorless = 0;
+        pool.merge(ManaColor.COLORLESS, promoted, Integer::sum);
+        return new ColoredSpellWithoutXManaState(regularBefore, promoted);
+    }
+
+    /** Restores unspent Titans' Nest mana after the matching spell payment. */
+    public void restorePromotedColoredSpellWithoutXOnlyMana(ColoredSpellWithoutXManaState state) {
+        int spent = Math.max(0, state.regularBefore() + state.promoted()
+                - pool.getOrDefault(ManaColor.COLORLESS, 0));
+        int remaining = Math.max(0, state.promoted() - spent);
+        if (remaining > 0) {
+            pool.merge(ManaColor.COLORLESS, -remaining, Integer::sum);
+            coloredSpellWithoutXOnlyColorless += remaining;
+        }
+    }
+
+    public record ColoredSpellWithoutXManaState(int regularBefore, int promoted) {
+    }
+
     public int getCumulativeUpkeepOnlyColorless() {
         return cumulativeUpkeepOnlyColorless;
     }
@@ -2514,6 +2595,7 @@ public class ManaPool {
         disturbOrInstantSorceryOnlyColorless += moveColoredManaToColorless(disturbOrInstantSorceryOnlyColored);
         foretellSpellOnlyColorless += moveColoredManaToColorless(foretellSpellOnlyColored);
         cumulativeUpkeepOnlyColorless += moveColoredManaToColorless(cumulativeUpkeepOnlyColored);
+        coloredCostOnlyColorless += moveColoredManaToColorless(coloredCostOnlyMana);
         moveColoredManaToColorless(flashbackOnlyMana);
         moveColoredManaToColorless(graveyardOnlyMana);
         moveColoredManaToColorless(abilityOnlyMana);
@@ -2589,6 +2671,10 @@ public class ManaPool {
         foretellSpellOnlyColorless = 0;
         moveManaToPool(replacementColor, xCostOnlyColorless);
         xCostOnlyColorless = 0;
+        moveManaToPool(replacementColor, coloredSpellWithoutXOnlyColorless);
+        coloredSpellWithoutXOnlyColorless = 0;
+        moveManaToPool(replacementColor, coloredCostOnlyColorless);
+        coloredCostOnlyColorless = 0;
         moveManaToPool(replacementColor, cumulativeUpkeepOnlyColorless);
         cumulativeUpkeepOnlyColorless = 0;
         moveManaToPool(replacementColor, restrictedRed);
@@ -2607,6 +2693,7 @@ public class ManaPool {
         moveManaTo(replacementColor, foretellOrInstantSorceryOnlyColored);
         moveManaTo(replacementColor, foretellSpellOnlyColored);
         moveManaTo(replacementColor, cumulativeUpkeepOnlyColored);
+        moveManaTo(replacementColor, coloredCostOnlyMana);
         moveManaTo(replacementColor, flashbackOnlyMana);
         moveManaTo(replacementColor, abilityOnlyMana);
         moveManaToBuckets(replacementColor, subtypeCreatureMana);
@@ -2760,6 +2847,7 @@ public class ManaPool {
         drainColorBucket(disturbOrInstantSorceryOnlyColored, protectedColors);
         drainColorBucket(foretellSpellOnlyColored, protectedColors);
         drainColorBucket(cumulativeUpkeepOnlyColored, protectedColors);
+        drainColorBucket(coloredCostOnlyMana, protectedColors);
         drainColorBucket(flashbackOnlyMana, protectedColors);
         drainColorBucket(graveyardOnlyMana, protectedColors);
         drainColorBucket(artifactOnlyMana, protectedColors);
@@ -2798,6 +2886,8 @@ public class ManaPool {
             disturbOrInstantSorceryOnlyColorless = 0;
             foretellSpellOnlyColorless = 0;
             xCostOnlyColorless = 0;
+            coloredSpellWithoutXOnlyColorless = 0;
+            coloredCostOnlyColorless = 0;
             cumulativeUpkeepOnlyColorless = 0;
         }
         if (!protectedColors.contains(ManaColor.RED)) {
@@ -2860,7 +2950,8 @@ public class ManaPool {
                 amount += artifactOnlyColorless + artifactAbilityOnlyColorless + myrOnlyColorless
                         + powerstoneOnlyColorless + legendarySpellOnlyColorless + instantSorceryOnlyColorless
                         + foretellOrInstantSorceryOnlyColorless + disturbOrInstantSorceryOnlyColorless
-                        + foretellSpellOnlyColorless + xCostOnlyColorless
+                        + foretellSpellOnlyColorless + xCostOnlyColorless + coloredSpellWithoutXOnlyColorless
+                        + coloredCostOnlyColorless
                         + colorlessSubtypeSpellOrAbilityMana.values().stream().mapToInt(Integer::intValue).sum()
                         + cumulativeUpkeepOnlyColorless;
             }
@@ -2875,6 +2966,7 @@ public class ManaPool {
             amount += getInstantSorceryOnlyColored(color);
             amount += getForetellSpellOnlyColored(color);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
+            amount += coloredCostOnlyMana.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);
@@ -2925,6 +3017,7 @@ public class ManaPool {
             amount += getInstantSorceryOnlyColored(color);
             amount += getForetellSpellOnlyColored(color);
             amount += cumulativeUpkeepOnlyColored.getOrDefault(color, 0);
+            amount += coloredCostOnlyMana.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             amount += graveyardOnlyMana.getOrDefault(color, 0);
             amount += abilityOnlyMana.getOrDefault(color, 0);

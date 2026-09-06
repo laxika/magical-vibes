@@ -1263,7 +1263,7 @@ public class PermanentRemovalService {
             // Any permanent an opponent controls is put into a graveyard (Prince of Thralls).
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers(
-                        gameData, target.getOriginalCard(), controllerId, ownerId);
+                        gameData, target.getOriginalCard(), controllerId, ownerId, new Permanent(target));
             }
             // Any permanent owned by another player is put into a graveyard (Kothophed, Soul Hoarder).
             if (!creatureDeathTriggersSuppressed) {

@@ -1566,6 +1566,11 @@ public class CastingPermissionService {
                 castableIds.add(entry.card().getId());
             }
         }
+        for (ExiledCardEntry entry : gameData.exiledCards) {
+            if (hasLukkaExilePermission(gameData, playerId, entry)) {
+                castableIds.add(entry.card().getId());
+            }
+        }
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -1625,6 +1630,7 @@ public class CastingPermissionService {
     public boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry entry = gameData.findExiledCard(cardId);
         if (entry == null) return false;
+        if (hasLukkaExilePermission(gameData, playerId, entry)) return true;
         if (findTemporaryExileCastPermission(gameData, playerId, entry, false) != null) return true;
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
@@ -1897,5 +1903,16 @@ public class CastingPermissionService {
         return effect.accessScope() == ExileAccessScope.CONTROLLER
                 ? sourceControllerId.equals(playerId)
                 : playerId.equals(entry.exilerId());
+    }
+
+    private boolean hasLukkaExilePermission(GameData gameData, UUID playerId,
+                                            ExiledCardEntry entry) {
+        if (!playerId.equals(gameData.lukkaExileCastPermissions.get(entry.card().getId()))) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream().anyMatch(permanent ->
+                permanent.getCard().hasType(CardType.PLANESWALKER)
+                        && permanent.getCard().getName().startsWith("Lukka,"));
     }
 }

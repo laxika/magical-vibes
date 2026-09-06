@@ -537,6 +537,7 @@ public class ActivatedAbilityExecutionService {
                             || manaAbilityEffectHandlerRegistry.isRevertable(e));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int totalManaBefore = pool.getTotalAllMana();
+            java.util.EnumMap<ManaColor, Integer> manaTypesBefore = pool.getAllManaTotals();
             java.util.EnumMap<ManaColor, Integer> poolBefore =
                     revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
             java.util.EnumMap<ManaColor, Integer> creatureManaBefore =
@@ -544,7 +545,9 @@ public class ActivatedAbilityExecutionService {
             int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
 
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue);
-            if (!AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
+            boolean manaTypeChoicePending = AbilityActivationService.isAwaitingOwnManaColorChoice(
+                    gameData, playerId);
+            if (!manaTypeChoicePending) {
                 int stackBeforeManaResolutionTriggers = gameData.stack.size();
                 triggerCollectionService.checkManaAbilityResolutionTriggers(
                         gameData, permanent, playerId,
@@ -555,6 +558,10 @@ public class ActivatedAbilityExecutionService {
                     gameData.stack.subList(stackBeforeManaResolutionTriggers, gameData.stack.size()).clear();
                     gameData.pendingManaAbilityTriggers.addAll(manaResolutionTriggers);
                 }
+            }
+            if (ability.isRequiresTap()) {
+                triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
+                        gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
             }
             if (ability.isRequiresTap() && gameQueryService.isCreature(gameData, permanent)) {
                 triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
@@ -591,7 +598,7 @@ public class ActivatedAbilityExecutionService {
                 gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredActivationTriggers);
             }
-            if (AbilityActivationService.isAwaitingOwnManaColorChoice(gameData, playerId)) {
+            if (manaTypeChoicePending) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
                 gameData.pendingRevertableManaActivation = new PendingManaActivation(

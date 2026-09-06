@@ -38,9 +38,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -703,6 +705,63 @@ public class Card {
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
                         registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+    }
+
+    /**
+     * Appends the target groups used by the supplied effects from another card. This is used when
+     * an effect copies a permanent but adds an effect whose target declaration belongs to the card
+     * creating the copy rather than to the copied permanent.
+     */
+    public void appendSpellTargetingForEffectsFrom(Card source, Collection<CardEffect> effects) {
+        assertMutable();
+        if (source == null || effects == null || effects.isEmpty()) {
+            return;
+        }
+
+        Set<CardEffect> effectSet = Collections.newSetFromMap(new IdentityHashMap<>());
+        effectSet.addAll(effects);
+        Set<Integer> sourceTargetIndices = new java.util.HashSet<>();
+        for (CardEffect effect : effectSet) {
+            List<Integer> targetIndices = source.effectTargetIndexMap.get(effect);
+            if (targetIndices != null) {
+                sourceTargetIndices.addAll(targetIndices);
+            }
+        }
+        if (sourceTargetIndices.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, Integer> targetIndexMap = new HashMap<>();
+        for (SpellTarget sourceTarget : source.spellTargets) {
+            if (!sourceTargetIndices.contains(sourceTarget.getIndex())) {
+                continue;
+            }
+            int targetIndex = spellTargets.size();
+            spellTargets.add(new SpellTarget(
+                    this,
+                    sourceTarget.getFilter(),
+                    sourceTarget.getMinTargets(),
+                    sourceTarget.getMaxTargets(),
+                    sourceTarget.getKickedMinTargets(),
+                    sourceTarget.getKickedMaxTargets(),
+                    targetIndex,
+                    sourceTarget.isXScaled(),
+                    sourceTarget.getDynamicMinTargets(),
+                    sourceTarget.getDynamicMaxTargets()));
+            targetIndexMap.put(sourceTarget.getIndex(), targetIndex);
+        }
+
+        source.effectTargetIndexMap.forEach((effect, targetIndices) -> {
+            if (!effectSet.contains(effect)) {
+                return;
+            }
+            targetIndices.forEach(sourceTargetIndex -> {
+                Integer targetIndex = targetIndexMap.get(sourceTargetIndex);
+                if (targetIndex != null) {
+                    registerEffectTargetIndex(effect, targetIndex);
+                }
+            });
+        });
     }
 
     /**

@@ -258,6 +258,11 @@ public record PreventDamageEffect(
         return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null);
     }
 
+    /** "Prevent all damage that would be dealt this turn by creatures your opponents control" (Thwart the Enemy). */
+    public static PreventDamageEffect allByOpponentCreatures() {
+        return new PreventDamageEffect(PreventionScope.ALL_BY_OPPONENT_CREATURES, null, false, null, null, null);
+    }
+
     /** "Prevent all damage that would be dealt by creatures this turn; you gain life equal to damage prevented this way." */
     public static PreventDamageEffect allByCreaturesAndGainLife() {
         return new PreventDamageEffect(PreventionScope.ALL_BY_CREATURES, null, false, null, null, null, true);

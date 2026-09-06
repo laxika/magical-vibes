@@ -58,7 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param choosePredicate   when non-null, only matching cards are eligible to be chosen
  * @param restDestination   where the not-chosen cards go ({@code BOTTOM_OF_LIBRARY},
  *                          {@code BOTTOM_OF_LIBRARY_RANDOM}, {@code TOP_OF_LIBRARY},
- *                          {@code GRAVEYARD} or {@code EXILE})
+ *                          {@code HAND}, {@code GRAVEYARD} or {@code EXILE})
  * @param reveal            when true the whole look is public (the looked-at cards are logged) —
  *                          distinct from the may-reveal flows, which reveal only the chosen cards
  * @param chosenDestination where the chosen cards go ({@code HAND}, {@code BATTLEFIELD} or
@@ -434,6 +434,14 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true, false, null, null,
                 false, 0, 0, followUp);
+    }
+
+    /** Put any number of matching cards onto the battlefield and the rest into your hand. */
+    public static LookAtTopCardsEffect putAnyNumberMatchingOntoBattlefieldRestToHand(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), choosePredicate,
+                LookDestination.HAND, false, LibrarySearchDestination.BATTLEFIELD, true,
+                false, null, null, false, 0, 0, null);
     }
 
     /** Choose exactly two of the top five cards to enter the battlefield cloaked. */

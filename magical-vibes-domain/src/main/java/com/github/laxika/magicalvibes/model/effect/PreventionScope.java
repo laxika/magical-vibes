@@ -92,5 +92,7 @@ public enum PreventionScope {
      *  predicate is built at resolution from the chosen target. */
     ALL_COMBAT_EXCEPT_TARGET,
     /** "Prevent all damage that would be dealt by creatures this turn" (Ethereal Haze). */
-    ALL_BY_CREATURES
+    ALL_BY_CREATURES,
+    /** "Prevent all damage that would be dealt this turn by creatures your opponents control" (Thwart the Enemy). */
+    ALL_BY_OPPONENT_CREATURES
 }

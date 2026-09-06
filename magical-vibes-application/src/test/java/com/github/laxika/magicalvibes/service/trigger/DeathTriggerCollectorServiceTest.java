@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHa
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -63,8 +64,10 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -178,6 +181,30 @@ class DeathTriggerCollectorServiceTest {
 
     private TriggerMatchContext match(Permanent perm, UUID controllerId, CardEffect rawEffect) {
         return new TriggerMatchContext(gd, perm, controllerId, rawEffect);
+    }
+
+    @Test
+    @DisplayName("Uses the dying permanent snapshot for conditional opponent-permanent triggers")
+    void usesDyingPermanentSnapshotForConditionalOpponentPermanentTrigger() {
+        Card watcherCard = createCreature("Watcher", 1, 3);
+        Permanent watcher = new Permanent(watcherCard);
+        Card dyingCard = createArtifact("Bountied Artifact");
+        Permanent dyingPermanent = new Permanent(dyingCard);
+        dyingPermanent.setCounterCount(CounterType.BOUNTY, 1);
+        var effect = new TriggeringPermanentConditionalEffect(
+                new PermanentHasCountersPredicate(CounterType.BOUNTY),
+                SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect()));
+        var context = new TriggerContext.OpponentPermanentGraveyard(
+                dyingCard, PLAYER2_ID, PLAYER2_ID, dyingPermanent);
+        when(predicateEvaluationService.matchesPermanentPredicate(
+                gd, dyingPermanent, effect.predicate())).thenReturn(true);
+
+        assertThat(svc.handleOpponentPermanentGraveyardConditional(
+                match(watcher, PLAYER1_ID, effect), effect, context)).isTrue();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect.wrapped());
+        verify(predicateEvaluationService).matchesPermanentPredicate(gd, dyingPermanent, effect.predicate());
     }
 
     // ── ON_DEATH handlers ──────────────────────────────────────────────

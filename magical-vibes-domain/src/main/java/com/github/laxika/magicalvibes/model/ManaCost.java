@@ -393,8 +393,8 @@ public class ManaCost {
             for (int i = 0; i < entry.getValue(); i++) {
                 if (autoMode) {
                     // Auto: prefer mana, fall back to life
-                    if (pool.get(entry.getKey()) > 0) {
-                        pool.remove(entry.getKey());
+                    if (coloredManaAvailable(pool, entry.getKey()) > 0) {
+                        removeColoredMana(pool, entry.getKey());
                     } else {
                         lifeCost += 2;
                     }
@@ -404,7 +404,7 @@ public class ManaCost {
                         lifeCost += 2;
                         lifeSymbolsRemaining--;
                     } else {
-                        pool.remove(entry.getKey());
+                        removeColoredMana(pool, entry.getKey());
                     }
                 }
             }
@@ -419,7 +419,7 @@ public class ManaCost {
             } else {
                 ManaColor color = pickAvailableColor(hybrid.colors(), pool);
                 if (color != null) {
-                    pool.remove(color);
+                    removeColoredMana(pool, color);
                 } else if (autoMode) {
                     lifeCost += 2;
                 }
@@ -475,7 +475,7 @@ public class ManaCost {
         }
         for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                pool.remove(entry.getKey());
+                removeColoredMana(pool, entry.getKey());
             }
         }
         return lifeCost;
@@ -484,21 +484,27 @@ public class ManaCost {
     /** {@link #canPay(ManaPool, int)} for the non-Phyrexian part, with pool mana pre-reserved for Phyrexian symbols. */
     private boolean canPayRestWithReserved(ManaPool pool, int xValue, Map<ManaColor, Integer> reserved) {
         Map<ManaColor, Integer> available = availableByColor(pool);
+        Map<ManaColor, Integer> coloredOnly = coloredCostOnlyByColor(pool);
+        int[] regularUsed = {0};
         for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
             int left = available.get(entry.getKey()) - entry.getValue();
             if (left < 0) {
                 return false;
             }
+            int fromColoredOnly = Math.min(entry.getValue(), coloredOnly.getOrDefault(entry.getKey(), 0));
+            coloredOnly.merge(entry.getKey(), -fromColoredOnly, Integer::sum);
+            regularUsed[0] += entry.getValue() - fromColoredOnly;
             available.put(entry.getKey(), left);
         }
-        if (!reserveColoredCosts(available)) {
+        if (!reserveColoredCosts(available, coloredOnly, regularUsed)) {
             return false;
         }
         int[] extraGeneric = {0};
-        if (!assignHybrids(available, extraGeneric)) {
+        if (!assignHybrids(available, coloredOnly, extraGeneric, regularUsed)) {
             return false;
         }
-        int remaining = totalOf(available) - residualFlexibleOvercount(pool) + xCostOnlyAvailable(pool);
+        int remaining = pool.getTotal() - regularUsed[0] - residualFlexibleOvercount(pool)
+                + xCostOnlyAvailable(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
     }
 
@@ -861,14 +867,17 @@ public class ManaCost {
             return canPay(rewritten, xValue);
         }
         Map<ManaColor, Integer> available = availableByColor(pool);
-        if (!reserveColoredCosts(available)) {
+        Map<ManaColor, Integer> coloredOnly = coloredCostOnlyByColor(pool);
+        int[] regularUsed = {0};
+        if (!reserveColoredCosts(available, coloredOnly, regularUsed)) {
             return false;
         }
         int[] extraGeneric = {0};
-        if (!assignHybrids(available, extraGeneric)) {
+        if (!assignHybrids(available, coloredOnly, extraGeneric, regularUsed)) {
             return false;
         }
-        int remaining = totalOf(available) - residualFlexibleOvercount(pool) + xCostOnlyAvailable(pool);
+        int remaining = pool.getTotal() - regularUsed[0] - residualFlexibleOvercount(pool)
+                + xCostOnlyAvailable(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
     }
 
@@ -917,14 +926,17 @@ public class ManaCost {
             return canPayWithAdditionalGenericCost(rewritten, xValue, additionalGenericCost);
         }
         Map<ManaColor, Integer> available = availableByColor(pool);
-        if (!reserveColoredCosts(available)) {
+        Map<ManaColor, Integer> coloredOnly = coloredCostOnlyByColor(pool);
+        int[] regularUsed = {0};
+        if (!reserveColoredCosts(available, coloredOnly, regularUsed)) {
             return false;
         }
         int[] extraGeneric = {0};
-        if (!assignHybrids(available, extraGeneric)) {
+        if (!assignHybrids(available, coloredOnly, extraGeneric, regularUsed)) {
             return false;
         }
-        int remaining = totalOf(available) - residualFlexibleOvercount(pool) + xCostOnlyAvailable(pool);
+        int remaining = pool.getTotal() - regularUsed[0] - residualFlexibleOvercount(pool)
+                + xCostOnlyAvailable(pool);
         int xDemand = hasX() ? xValue * effectiveXMultiplier() : 0;
         return remaining >= genericCost + extraGeneric[0] + xDemand + additionalGenericCost;
     }
@@ -963,7 +975,58 @@ public class ManaCost {
         return used;
     }
 
+    private int coloredCostOnlyUsedForColoredCosts(ManaPool pool) {
+        int used = 0;
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            used += Math.min(entry.getValue(), coloredCostOnlyAvailable(pool, entry.getKey()));
+        }
+        return used;
+    }
+
+    private void reserveColoredCostOnlyForFixedCosts(Map<ManaColor, Integer> coloredOnly) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            int fromColoredOnly = Math.min(entry.getValue(), coloredOnly.getOrDefault(entry.getKey(), 0));
+            coloredOnly.merge(entry.getKey(), -fromColoredOnly, Integer::sum);
+        }
+    }
+
+    private static int coloredCostOnlyTotal(ManaPool pool) {
+        return pool.getColoredCostOnlyManaTotal() + pool.getColoredCostOnlyColorless();
+    }
+
+    private static int regularManaUsedForFixedColoredCost(ManaPool pool, ManaColor color, int required) {
+        int requiredFromRegular = Math.max(0, required - coloredCostOnlyAvailable(pool, color));
+        return Math.min(requiredFromRegular, pool.get(color));
+    }
+
     // ── Hybrid mana support (shared by the core canPay/pay path) ───────
+
+    private static int coloredManaAvailable(ManaPool pool, ManaColor color) {
+        return pool.get(color) + coloredCostOnlyAvailable(pool, color);
+    }
+
+    private static int coloredCostOnlyAvailable(ManaPool pool, ManaColor color) {
+        return pool.getColoredCostOnlyMana(color)
+                + (color == ManaColor.COLORLESS ? pool.getColoredCostOnlyColorless() : 0);
+    }
+
+    private static void removeColoredMana(ManaPool pool, ManaColor color) {
+        if (color == ManaColor.COLORLESS && pool.getColoredCostOnlyColorless() > 0) {
+            pool.removeColoredCostOnlyColorless(1);
+        } else if (pool.getColoredCostOnlyMana(color) > 0) {
+            pool.removeColoredCostOnlyMana(color, 1);
+        } else {
+            pool.remove(color);
+        }
+    }
+
+    private static Map<ManaColor, Integer> coloredCostOnlyByColor(ManaPool pool) {
+        Map<ManaColor, Integer> coloredOnly = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            coloredOnly.put(color, coloredCostOnlyAvailable(pool, color));
+        }
+        return coloredOnly;
+    }
 
     private Map<ManaColor, Integer> availableByColor(ManaPool pool) {
         return availableByColor(pool, false);
@@ -972,7 +1035,7 @@ public class ManaCost {
     private Map<ManaColor, Integer> availableByColor(ManaPool pool, boolean artifactContext) {
         Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
-            int amount = pool.get(color);
+            int amount = coloredManaAvailable(pool, color);
             if (artifactContext) {
                 amount += pool.getArtifactOnlyMana(color);
                 amount += pool.getArtifactSpellOrAbilityOnlyMana(color);
@@ -1000,6 +1063,23 @@ public class ManaCost {
         return true;
     }
 
+    private boolean reserveColoredCosts(Map<ManaColor, Integer> available,
+                                        Map<ManaColor, Integer> coloredOnly,
+                                        int[] regularUsed) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            int need = entry.getValue();
+            int left = available.get(entry.getKey()) - need;
+            if (left < 0) {
+                return false;
+            }
+            int fromColoredOnly = Math.min(need, coloredOnly.getOrDefault(entry.getKey(), 0));
+            coloredOnly.merge(entry.getKey(), -fromColoredOnly, Integer::sum);
+            regularUsed[0] += need - fromColoredOnly;
+            available.put(entry.getKey(), left);
+        }
+        return true;
+    }
+
     private static int totalOf(Map<ManaColor, Integer> available) {
         return available.values().stream().mapToInt(Integer::intValue).sum();
     }
@@ -1015,6 +1095,29 @@ public class ManaCost {
             ManaColor chosen = pickRichestColor(hybrid.colors(), available);
             if (chosen != null) {
                 available.put(chosen, available.get(chosen) - 1);
+            } else if (hybrid.genericAlternative() >= 0) {
+                extraGeneric[0] += hybrid.genericAlternative();
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean assignHybrids(Map<ManaColor, Integer> available,
+                                  Map<ManaColor, Integer> coloredOnly,
+                                  int[] extraGeneric,
+                                  int[] regularUsed) {
+        for (HybridSymbol hybrid : hybridsMostConstrainedFirst(available)) {
+            ManaColor chosen = pickRichestColor(hybrid.colors(), available);
+            if (chosen != null) {
+                available.put(chosen, available.get(chosen) - 1);
+                int restricted = coloredOnly.getOrDefault(chosen, 0);
+                if (restricted > 0) {
+                    coloredOnly.put(chosen, restricted - 1);
+                } else {
+                    regularUsed[0]++;
+                }
             } else if (hybrid.genericAlternative() >= 0) {
                 extraGeneric[0] += hybrid.genericAlternative();
             } else {
@@ -1048,8 +1151,8 @@ public class ManaCost {
 
     private static ManaColor pickAvailableColor(Set<ManaColor> colors, ManaPool pool) {
         return colors.stream()
-                .max(Comparator.comparingInt(pool::get))
-                .filter(color -> pool.get(color) > 0)
+                .max(Comparator.comparingInt(color -> coloredManaAvailable(pool, color)))
+                .filter(color -> coloredManaAvailable(pool, color) > 0)
                 .orElse(null);
     }
 
@@ -1066,6 +1169,27 @@ public class ManaCost {
             if (chosen != null) {
                 available.put(chosen, available.get(chosen) - 1);
                 out[1]++;
+            } else if (hybrid.genericAlternative() >= 0) {
+                out[0] += hybrid.genericAlternative();
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean assignHybridsCounting(Map<ManaColor, Integer> available,
+                                          Map<ManaColor, Integer> coloredOnly,
+                                          int[] out) {
+        for (HybridSymbol hybrid : hybridsMostConstrainedFirst(available)) {
+            ManaColor chosen = pickRichestColor(hybrid.colors(), available);
+            if (chosen != null) {
+                available.put(chosen, available.get(chosen) - 1);
+                out[1]++;
+                int restricted = coloredOnly.getOrDefault(chosen, 0);
+                if (restricted > 0) {
+                    coloredOnly.put(chosen, restricted - 1);
+                }
             } else if (hybrid.genericAlternative() >= 0) {
                 out[0] += hybrid.genericAlternative();
             } else {
@@ -1125,6 +1249,7 @@ public class ManaCost {
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
+            available += coloredCostOnlyAvailable(pool, entry.getKey());
             if (artifactContext) {
                 available += pool.getArtifactOnlyMana(entry.getKey());
                 available += pool.getArtifactSpellOrAbilityOnlyMana(entry.getKey());
@@ -1145,7 +1270,7 @@ public class ManaCost {
 
         int remaining = pool.getTotal();
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remaining -= Math.min(entry.getValue(), pool.get(entry.getKey()));
+            remaining -= regularManaUsedForFixedColoredCost(pool, entry.getKey(), entry.getValue());
         }
 
         if (artifactContext) {
@@ -1188,6 +1313,7 @@ public class ManaCost {
             Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
             for (ManaColor color : ManaColor.values()) {
                 int amount = pool.get(color);
+                amount += coloredCostOnlyAvailable(pool, color);
                 if (artifactContext) {
                     amount += pool.getArtifactOnlyMana(color);
                     amount += pool.getArtifactSpellOrAbilityOnlyMana(color);
@@ -1257,6 +1383,7 @@ public class ManaCost {
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
+            available += coloredCostOnlyAvailable(pool, entry.getKey());
             if (artifactContext) {
                 available += pool.getArtifactOnlyMana(entry.getKey());
                 available += pool.getArtifactSpellOrAbilityOnlyMana(entry.getKey());
@@ -1277,7 +1404,7 @@ public class ManaCost {
 
         int remaining = pool.getTotal();
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remaining -= Math.min(entry.getValue(), pool.get(entry.getKey()));
+            remaining -= regularManaUsedForFixedColoredCost(pool, entry.getKey(), entry.getValue());
         }
         if (artifactContext) {
             remaining += pool.getArtifactOnlyColorless();
@@ -1322,6 +1449,7 @@ public class ManaCost {
             Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
             for (ManaColor color : ManaColor.values()) {
                 int amount = pool.get(color);
+                amount += coloredCostOnlyAvailable(pool, color);
                 if (artifactContext) {
                     amount += pool.getArtifactOnlyMana(color);
                     amount += pool.getArtifactSpellOrAbilityOnlyMana(color);
@@ -1694,6 +1822,7 @@ public class ManaCost {
         // Check each colored cost can be paid from combined sources
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
+            available += coloredCostOnlyAvailable(pool, entry.getKey());
             if (artifactContext) {
                 available += pool.getArtifactOnlyMana(entry.getKey());
                 available += pool.getArtifactSpellOrAbilityOnlyMana(entry.getKey());
@@ -1735,6 +1864,8 @@ public class ManaCost {
             totalColored += need;
         }
         int totalUsable = pool.getTotal();
+        Map<ManaColor, Integer> coloredOnly = coloredCostOnlyByColor(pool);
+        reserveColoredCostOnlyForFixedCosts(coloredOnly);
         if (artifactContext) {
             totalUsable += pool.getArtifactOnlyColorless();
             totalUsable += pool.getArtifactOnlyManaTotal();
@@ -1779,6 +1910,7 @@ public class ManaCost {
             Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
             for (ManaColor color : ManaColor.values()) {
                 int amount = pool.get(color);
+                amount += coloredCostOnlyAvailable(pool, color);
                 if (artifactContext) {
                     amount += pool.getArtifactOnlyMana(color);
                     amount += pool.getArtifactSpellOrAbilityOnlyMana(color);
@@ -1808,11 +1940,13 @@ public class ManaCost {
                 available.put(color, amount - coloredCosts.getOrDefault(color, 0));
             }
             int[] hybridOut = {0, 0};
-            if (!assignHybridsCounting(available, hybridOut)) {
+            if (!assignHybridsCounting(available, coloredOnly, hybridOut)) {
                 return false;
             }
             hybridGeneric = hybridOut[0] + hybridOut[1];
         }
+
+        totalUsable += coloredCostOnlyTotal(pool) - totalOf(coloredOnly);
 
         return totalUsable - totalColored >= genericCost + hybridGeneric
                 + xValue * effectiveXMultiplier() + additionalGenericCost;
@@ -1824,7 +1958,8 @@ public class ManaCost {
      */
     public boolean canPayFlashback(ManaPool pool, int xValue) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            int available = pool.get(entry.getKey()) + pool.getFlashbackOnlyMana(entry.getKey());
+            int available = coloredManaAvailable(pool, entry.getKey())
+                    + pool.getFlashbackOnlyMana(entry.getKey());
             if (available < entry.getValue()) {
                 return false;
             }
@@ -1834,6 +1969,7 @@ public class ManaCost {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             remaining -= entry.getValue();
         }
+        remaining += coloredCostOnlyUsedForColoredCosts(pool);
 
         return remaining >= genericCost + xValue * effectiveXMultiplier();
     }
@@ -1856,10 +1992,12 @@ public class ManaCost {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 // Prefer spending flashback-only mana first (more restricted = use first)
-                if (pool.getFlashbackOnlyMana(entry.getKey()) > 0) {
+                if (coloredCostOnlyAvailable(pool, entry.getKey()) > 0) {
+                    removeColoredMana(pool, entry.getKey());
+                } else if (pool.getFlashbackOnlyMana(entry.getKey()) > 0) {
                     pool.removeFlashbackOnlyMana(entry.getKey(), 1);
                 } else {
-                    pool.remove(entry.getKey());
+                    removeColoredMana(pool, entry.getKey());
                 }
             }
         }
@@ -1927,7 +2065,7 @@ public class ManaCost {
             return canPay(rewritten, xValue, xColorRestrictions, additionalGenericCost);
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            if (pool.get(entry.getKey()) < entry.getValue()) {
+            if (coloredManaAvailable(pool, entry.getKey()) < entry.getValue()) {
                 return false;
             }
         }
@@ -1948,6 +2086,7 @@ public class ManaCost {
         for (int count : coloredCosts.values()) {
             remaining -= count;
         }
+        remaining += coloredCostOnlyUsedForColoredCosts(pool);
         remaining -= xValue * xSymbolCount;
 
         return remaining >= genericCost + additionalGenericCost;
@@ -2009,7 +2148,7 @@ public class ManaCost {
             return calculateMaxX(rewritten, xColorRestrictions, additionalGenericCost);
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            if (pool.get(entry.getKey()) < entry.getValue()) {
+            if (coloredManaAvailable(pool, entry.getKey()) < entry.getValue()) {
                 return 0;
             }
         }
@@ -2027,6 +2166,7 @@ public class ManaCost {
         for (int count : coloredCosts.values()) {
             remaining -= count;
         }
+        remaining += coloredCostOnlyUsedForColoredCosts(pool);
 
         int maxFromGeneric = remaining - genericCost - additionalGenericCost;
         int cap = Math.min(restrictedAvailable, maxFromGeneric);
@@ -2097,7 +2237,7 @@ public class ManaCost {
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                pool.remove(entry.getKey());
+                removeColoredMana(pool, entry.getKey());
             }
         }
 
@@ -2144,7 +2284,7 @@ public class ManaCost {
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                pool.remove(entry.getKey());
+                removeColoredMana(pool, entry.getKey());
             }
         }
 
@@ -2296,6 +2436,7 @@ public class ManaCost {
         Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
         for (ManaColor color : ManaColor.values()) {
             int amount = pool.get(color)
+                    + coloredCostOnlyAvailable(pool, color)
                     + pool.getSubtypeCreatureManaForColor(creatureCtx, color)
                     + pool.getSubtypeSpellOnlyManaForColor(spellOnlyCtx, color)
                     + pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, color)
@@ -2326,6 +2467,15 @@ public class ManaCost {
             int remaining = before.get(color) - available.get(color);
             if (remaining <= 0) {
                 continue;
+            }
+            int fromColoredCostOnly = Math.min(remaining, coloredCostOnlyAvailable(pool, color));
+            if (fromColoredCostOnly > 0) {
+                if (color == ManaColor.COLORLESS) {
+                    pool.removeColoredCostOnlyColorless(fromColoredCostOnly);
+                } else {
+                    pool.removeColoredCostOnlyMana(color, fromColoredCostOnly);
+                }
+                remaining -= fromColoredCostOnly;
             }
             int fromSubtypeCreature = Math.min(remaining,
                     pool.getSubtypeCreatureManaForColor(creatureCtx, color));
@@ -2437,7 +2587,9 @@ public class ManaCost {
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
+                if (coloredCostOnlyAvailable(pool, entry.getKey()) > 0) {
+                    removeColoredMana(pool, entry.getKey());
+                } else if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
                     // Prefer spending restricted mana first (more restricted = use first)
                     pool.removeRestrictedRed(1);
                     extraRed--;
@@ -2580,7 +2732,9 @@ public class ManaCost {
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
+                if (coloredCostOnlyAvailable(pool, entry.getKey()) > 0) {
+                    removeColoredMana(pool, entry.getKey());
+                } else if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
                     pool.removeRestrictedRed(1);
                     extraRed--;
                 } else if (kickedOnlyGreenContext && entry.getKey() == ManaColor.GREEN && extraGreen > 0) {
@@ -2892,7 +3046,9 @@ public class ManaCost {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
                 // Prefer spending the most restricted mana first.
-                if (manaValueAtLeastFourContext && pool.getManaValueAtLeastFourOnlyMana(entry.getKey()) > 0) {
+                if (coloredCostOnlyAvailable(pool, entry.getKey()) > 0) {
+                    removeColoredMana(pool, entry.getKey());
+                } else if (manaValueAtLeastFourContext && pool.getManaValueAtLeastFourOnlyMana(entry.getKey()) > 0) {
                     pool.removeManaValueAtLeastFourOnlyMana(entry.getKey(), 1);
                 } else if (pool.getSubtypeCreatureManaForColor(creatureCtx, entry.getKey()) > 0) {
                     pool.removeSubtypeCreatureMana(creatureCtx, entry.getKey(), 1);
@@ -3178,7 +3334,7 @@ public class ManaCost {
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                pool.remove(entry.getKey());
+                removeColoredMana(pool, entry.getKey());
             }
         }
 

@@ -1711,6 +1711,15 @@ public class CombatDamageService {
                                 .toList();
                         firedEffect = aware.withCombatDamageDealerIds(dealerIds);
                     }
+                    int triggerDamage = trigger.oncePerDamageStep()
+                            ? combatDamageDealtToPlayer.entrySet().stream()
+                            .filter(dealer -> dealer.getValue() > 0
+                                    && (trigger.dealerPredicate() == null
+                                    || predicateEvaluationService.matchesPermanentPredicate(
+                                    dealer.getKey(), trigger.dealerPredicate(), triggerContext)))
+                            .mapToInt(Map.Entry::getValue)
+                            .sum()
+                            : damageDealt;
                     // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
                     // against them (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(
@@ -1724,7 +1733,7 @@ public class CombatDamageService {
                     );
                     // The combat damage dealt is this trigger's event value, so "put that many
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
-                    se.setEventValue(damageDealt);
+                    se.setEventValue(triggerDamage);
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
@@ -3646,11 +3655,9 @@ public class CombatDamageService {
         return effects;
     }
 
-    private boolean assignsUnblockedDamageToDefendingCreature(Permanent attacker) {
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof AssignCombatDamageToDefendingCreatureWhenUnblockedEffect) return true;
-        }
-        return false;
+    private boolean assignsUnblockedDamageToDefendingCreature(GameData gameData, Permanent attacker) {
+        return combatDamageAssignmentEffects(gameData, attacker).stream()
+                .anyMatch(AssignCombatDamageToDefendingCreatureWhenUnblockedEffect.class::isInstance);
     }
 
     /**
@@ -3659,7 +3666,7 @@ public class CombatDamageService {
      * creature to redirect to. Only applies when attacking a player (not a planeswalker).
      */
     private boolean canRedirectUnblockedDamageToDefendingCreature(GameData gameData, Permanent atk, List<Permanent> defBf) {
-        if (!assignsUnblockedDamageToDefendingCreature(atk)) return false;
+        if (!assignsUnblockedDamageToDefendingCreature(gameData, atk)) return false;
         UUID attackTarget = atk.getAttackTarget();
         if (attackTarget != null && !gameData.playerIds.contains(attackTarget)) return false;
         if (defBf == null) return false;

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachOneOfEquipmentToSamuraiSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AuspiciousStarrixSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -124,6 +125,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final AuspiciousStarrixSupport auspiciousStarrixSupport;
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
@@ -2297,6 +2299,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     }
 
     public void handlePendingAuraPlacement(GameData gameData, UUID playerId, UUID permanentId) {
+        if (gameData.auspiciousStarrixOperation.isActive()) {
+            if (auspiciousStarrixSupport.completeAuraChoice(gameData, playerId, permanentId)) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (gameData.retetherOperation.isActive()) {
             if (graveyardReturnSupport.completeRetetherAuraChoice(gameData, playerId, permanentId)) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

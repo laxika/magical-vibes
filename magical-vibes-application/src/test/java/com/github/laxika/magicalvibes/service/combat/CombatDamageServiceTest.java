@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1309,6 +1310,28 @@ class CombatDamageServiceTest {
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getSourcePermanentId()).isEqualTo(watcher.getId());
+        }
+
+        @Test
+        @DisplayName("Batched ally creature trigger snapshots matching damage total")
+        void batchedAllyCreatureTriggerSnapshotsMatchingDamageTotal() {
+            Card watcherCard = createCard("Quartzwood watcher", 2, 2);
+            watcherCard.addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                    new AllyCombatDamageTriggerEffect(null,
+                            new CreateTokenEffect("Dinosaur Beast", new EventValue(), new EventValue(), null,
+                                    List.of(), Set.of(), Set.of()), false, true));
+            Permanent watcher = new Permanent(watcherCard);
+            gameData.playerBattlefields.get(player1Id).add(watcher);
+            addAttacker("Trampler one", 2, 2, Keyword.TRAMPLE);
+            addAttacker("Trampler two", 3, 3, Keyword.TRAMPLE);
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            List<StackEntry> triggerEntries = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(CreateTokenEffect.class::isInstance))
+                    .toList();
+            assertThat(triggerEntries).hasSize(1);
+            assertThat(triggerEntries.getFirst().getEventValue()).isEqualTo(5);
         }
 
         private void stubbedDelayedDrawPredicate() {

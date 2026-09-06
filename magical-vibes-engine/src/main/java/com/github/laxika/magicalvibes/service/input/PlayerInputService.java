@@ -377,6 +377,15 @@ public class PlayerInputService {
                 playerId, new ArrayList<>(cards), maxCount, prompt, minCount, maximumTotalManaValue));
     }
 
+    public void beginMultiGraveyardChoiceWithMaximumPower(GameData gameData, UUID playerId,
+                                                           List<Card> cards, int maxCount,
+                                                           int minCount, int maximumTotalPower,
+                                                           String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt, minCount, false,
+                null, null, maximumTotalPower));
+    }
+
     public void beginAsEntersCounterTypeChoice(GameData gameData,
                                                 GraveyardTargetOperationState.AsEntersGraveyardExileContext context,
                                                 int exiledCardCount) {
@@ -1050,6 +1059,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a number for a spell", gameData.id, playerName);
+    }
+
+    public void beginSpellManaValueParityChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellManaValueParityChoice choiceContext =
+                new ChoiceContext.SpellManaValueParityChoice(playerId);
+        List<String> options = List.of("ODD", "EVEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options, "Choose odd or even."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose odd or even for a spell", gameData.id, playerName);
     }
 
     public void beginManaValueParityChoice(GameData gameData, UUID playerId, UUID permanentId) {

@@ -1217,7 +1217,9 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if players are allowed to cast spells from the given zone.
+     * Returns {@code true} if no global restriction prevents players from casting spells from the
+     * given zone. Use {@link #canPlayerCastSpellsFromZone(GameData, UUID, Zone)} for
+     * player-scoped restrictions.
      * Returns {@code false} when a {@link PlayersCantCastSpellsFromZonesEffect} whose
      * {@code zones} contains {@code zone} is on any battlefield (e.g. Ashes of the Abhorrent
      * for graveyards, Grafdigger's Cage for graveyards and libraries).
@@ -1227,12 +1229,30 @@ public class GameQueryService {
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(PlayersCantCastSpellsFromZonesEffect.class::isInstance)
                         .map(PlayersCantCastSpellsFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.zones().contains(zone)));
+                        .anyMatch(e -> e.appliesToAllPlayers() && e.zones().contains(zone)));
     }
 
     /** Returns whether the given player may cast spells from the given zone. */
     public boolean canPlayerCastSpellsFromZone(GameData gameData, UUID playerId, Zone zone) {
-        return canPlayersCastSpellsFromZone(gameData, zone)
+        boolean restrictedByStaticEffect = false;
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (hasLostAllAbilities(gameData, permanent)) continue;
+                boolean opponent = !controllerId.equals(playerId);
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(PlayersCantCastSpellsFromZonesEffect.class::isInstance)
+                        .map(PlayersCantCastSpellsFromZonesEffect.class::cast)
+                        .anyMatch(e -> e.zones().contains(zone)
+                                && (e.appliesToAllPlayers() || opponent))) {
+                    restrictedByStaticEffect = true;
+                    break;
+                }
+            }
+            if (restrictedByStaticEffect) break;
+        }
+        return !restrictedByStaticEffect
                 && (zone != Zone.GRAVEYARD
                 || !gameData.playersCantPlayFromGraveyardsThisTurn.contains(playerId));
     }
@@ -4503,8 +4523,14 @@ public class GameQueryService {
      */
     private boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
         int chosenNumber = target.getChosenNumber();
+        var chosenParity = target.getChosenManaValueParity();
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionGrantingEffect protection) {
+                if (protection.protectionFromManaValueParity()
+                        && chosenParity != null
+                        && chosenParity.matches(sourceCard.getManaValue())) {
+                    return true;
+                }
                 if (protection.protectionFromManaValueAtLeast().isPresent()
                         && sourceCard.getManaValue() >= protection.protectionFromManaValueAtLeast().getAsInt()) {
                     return true;
@@ -5610,6 +5636,8 @@ public class GameQueryService {
                 .anyMatch(effect -> (!effect.noncreatureOnly() || !creatureSpell)
                         && (effect.cardTypes().isEmpty()
                         || effect.cardTypes().stream().anyMatch(card::hasType))
+                        && (effect.predicate() == null
+                        || predicateEvaluationService.matchesCardPredicate(card, effect.predicate(), null))
                         && (effect.minimumManaValue() == null
                         || manaValue >= effect.minimumManaValue()));
     }
@@ -7439,11 +7467,17 @@ public class GameQueryService {
 
     /** Returns whether Ethereal Haze-style prevention applies to damage from this source. */
     public boolean isDamageByCreaturePrevented(GameData gameData, Permanent source) {
-        return isDamagePreventable(gameData)
-                && gameData.preventAllDamageByCreatures
-                && source != null
-                && isCreature(gameData, source)
-                && !damageCantBePreventedFromSource(gameData, source);
+        if (!isDamagePreventable(gameData) || source == null || !isCreature(gameData, source)
+                || damageCantBePreventedFromSource(gameData, source)) {
+            return false;
+        }
+        if (gameData.preventAllDamageByCreatures) {
+            return true;
+        }
+        UUID sourceControllerId = findPermanentController(gameData, source.getId());
+        return sourceControllerId != null
+                && gameData.playersWithDamageFromOpponentCreaturesPrevented.stream()
+                .anyMatch(playerId -> !playerId.equals(sourceControllerId));
     }
 
     /** Returns whether this creature's damage to the target creature is covered by its own static prevention. */

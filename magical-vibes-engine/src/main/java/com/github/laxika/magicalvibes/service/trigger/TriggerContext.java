@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import java.util.UUID;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.ManaColor;
 
 /**
  * Sealed hierarchy of trigger event contexts.
@@ -75,7 +77,11 @@ public sealed interface TriggerContext {
     /**
      * Context for discard triggers (ON_OPPONENT_DISCARDS).
      */
-    record Discard(UUID discardingPlayerId, Card discardedCard) implements TriggerContext {}
+    record Discard(UUID discardingPlayerId, Card discardedCard, boolean cycled) implements TriggerContext {
+        public Discard(UUID discardingPlayerId, Card discardedCard) {
+            this(discardingPlayerId, discardedCard, false);
+        }
+    }
 
     /** Context for a discard event containing one or more cards. */
     record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
@@ -108,6 +114,17 @@ public sealed interface TriggerContext {
      * (ON_CONTROLLER_TAPS_CREATURE_FOR_MANA).
      */
     record CreatureTapForMana(UUID tappingPlayerId, UUID tappedCreatureId) implements TriggerContext {}
+
+    /** Context for controller-scoped nonland-permanent mana triggers. A null set means that the
+     * source's any-color choice is still pending and the trigger must wait for that choice. */
+    record NonlandPermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
+                                      Set<ManaColor> producedManaTypes) implements TriggerContext {
+        public NonlandPermanentTapForMana {
+            if (producedManaTypes != null) {
+                producedManaTypes = Set.copyOf(producedManaTypes);
+            }
+        }
+    }
 
     /** Context for a creature's mana ability resolving, including the mana it produced. */
     record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
@@ -166,6 +183,12 @@ public sealed interface TriggerContext {
 
     /** Context for a permanent becoming saddled. */
     record SelfBecomesSaddled(UUID controllerId) implements TriggerContext {}
+
+    /** Context for a permanent mutating. */
+    record SelfMutates(UUID controllerId) implements TriggerContext {}
+
+    /** Context for a creature controlled by a player mutating. */
+    record CreatureMutates(Permanent mutatedPermanent, UUID controllerId) implements TriggerContext {}
 
     /** Context for global creature-damage triggers (ON_ANY_CREATURE_DEALT_DAMAGE). */
     record AnyCreatureDealtDamage(Permanent damagedCreature, UUID damagedCreatureControllerId,
@@ -460,9 +483,15 @@ public sealed interface TriggerContext {
      * @param dyingCard          the permanent's card, now in {@code graveyardOwnerId}'s graveyard
      * @param dyingControllerId  the player who controlled the permanent on the battlefield ("that opponent")
      * @param graveyardOwnerId   the owner of the graveyard the card was put into
+     * @param dyingPermanent     the permanent's last-known battlefield state, when available
      */
     record OpponentPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
-                                      UUID graveyardOwnerId) implements TriggerContext {}
+                                      UUID graveyardOwnerId, Permanent dyingPermanent) implements TriggerContext {
+        public OpponentPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
+                                          UUID graveyardOwnerId) {
+            this(dyingCard, dyingControllerId, graveyardOwnerId, null);
+        }
+    }
 
     /**
      * Context for ON_OTHER_PLAYER_OWNED_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers

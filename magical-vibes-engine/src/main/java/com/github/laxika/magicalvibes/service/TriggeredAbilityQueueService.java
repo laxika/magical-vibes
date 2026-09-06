@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -52,6 +53,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +92,7 @@ public class TriggeredAbilityQueueService {
             sagaChapterCounterDistributionSupport;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Autowired
     void setReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler(
@@ -400,6 +404,20 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            GraveyardCardChoosingEffect graveyardChoice = pending.effects().stream()
+                    .filter(GraveyardCardChoosingEffect.class::isInstance)
+                    .map(GraveyardCardChoosingEffect.class::cast)
+                    .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .findFirst()
+                    .orElse(null);
+            if (graveyardChoice != null) {
+                if (beginSelfTriggeredGraveyardCardChoice(gameData, pending, graveyardChoice)) {
+                    return;
+                }
+                continue;
+            }
+
             TargetFilter selfLeavesFilter = targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
             Permanent sourcePermanentSnapshot = pending.sourcePermanentId() == null
                     ? null
@@ -412,6 +430,38 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.END_STEP,
                     sourcePermanentSnapshot);
+
+            SpellTarget dynamicTarget = dynamicTargetForTriggeredEffects(pending.sourceCard(), pending.effects());
+            if (dynamicTarget != null) {
+                int mutationCount = Math.max(0, amountEvaluationService.evaluate(gameData,
+                        dynamicTarget.getDynamicMaxTargets(),
+                        new AmountContext(pending.controllerId(), sourcePermanentSnapshot, null, 0, 0)));
+                int maxTargets = Math.min(mutationCount, result.validTargets().size());
+
+                gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+                if (maxTargets == 0) {
+                    enqueueSelfTriggeredAbilityWithoutTargets(gameData, pending, sourcePermanentSnapshot);
+                    continue;
+                }
+
+                playerInputService.beginMultiPermanentChoice(
+                        gameData,
+                        pending.controllerId(),
+                        result.validTargets(),
+                        maxTargets,
+                        new MultiPermanentChoiceContext.SelfTriggeredAbilityTargets(
+                                pending.sourceCard(), pending.controllerId(), pending.effects(),
+                                pending.eventDescription(), pending.sourcePermanentId(), pending.eventValue()),
+                        pending.sourceCard().getName() + "'s ability - Choose up to " + maxTargets
+                                + " target creature" + (maxTargets == 1 ? "" : "s") + ".");
+
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s " + pending.eventDescription() + " trigger - choose up to " + maxTargets
+                                + " target creature" + (maxTargets == 1 ? "" : "s") + "."));
+                log.info("Game {} - {} {} trigger awaiting up to {} target(s)", gameData.id,
+                        pending.sourceCard().getName(), pending.eventDescription(), maxTargets);
+                return;
+            }
 
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
@@ -437,6 +487,102 @@ public class TriggeredAbilityQueueService {
                     pending.sourceCard().getName(), pending.eventDescription());
             return;
         }
+    }
+
+    private boolean beginSelfTriggeredGraveyardCardChoice(GameData gameData,
+            PermanentChoiceContext.SelfTriggeredAbilityTarget pending,
+            GraveyardCardChoosingEffect effect) {
+        CardPredicate filter = effect.graveyardChoiceFilter();
+        GraveyardSearchScope scope = effect.targetSpec().graveyardScope()
+                .orElse(GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID graveyardOwnerId : scope.graveyardOwners(gameData.orderedPlayerIds, pending.controllerId())) {
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) {
+                continue;
+            }
+            for (Card graveyardCard : graveyard) {
+                if (filter == null || predicateEvaluationService.matchesCardPredicate(
+                        graveyardCard, filter, pending.sourceCard().getId(), gameData, graveyardOwnerId,
+                        null, null, 0)) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+
+        int minTargets = effect.graveyardChoiceMinTargets();
+        if (matchingCards.isEmpty() || matchingCards.size() < minTargets) {
+            if (minTargets == 0) {
+                Permanent sourceSnapshot = pending.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+                enqueueSelfTriggeredAbilityWithoutTargets(gameData, pending, sourceSnapshot);
+            } else {
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s " + pending.eventDescription() + " trigger has no valid graveyard targets."));
+            }
+            return false;
+        }
+
+        gameData.graveyardTargetOperation.card = pending.sourceCard();
+        gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+        gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
+
+        int maxTargets = Math.min(effect.graveyardChoiceMaxTargets(), matchingCards.size());
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
+        String prompt = pending.sourceCard().getName() + "'s " + pending.eventDescription()
+                + " trigger — Choose up to " + maxTargets + " target " + filterLabel
+                + (maxTargets == 1 ? " card" : " cards") + " from your graveyard.";
+        Integer maxTotalPower = effect.graveyardChoiceMaxTotalPower();
+        if (maxTotalPower != null) {
+            playerInputService.beginMultiGraveyardChoiceWithMaximumPower(
+                    gameData, pending.controllerId(), matchingCards, maxTargets, minTargets,
+                    maxTotalPower, prompt);
+        } else {
+            playerInputService.beginMultiGraveyardChoice(
+                    gameData, pending.controllerId(), matchingCards, maxTargets, minTargets, prompt);
+        }
+
+        gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                "'s " + pending.eventDescription() + " trigger — choose graveyard targets."));
+        log.info("Game {} - {} {} trigger awaiting up to {} graveyard target(s)",
+                gameData.id, pending.sourceCard().getName(), pending.eventDescription(), maxTargets);
+        return true;
+    }
+
+    private SpellTarget dynamicTargetForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+        int targetGroupIndex = effects.stream()
+                .mapToInt(sourceCard::getEffectTargetIndex)
+                .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
+                .findFirst()
+                .orElse(-1);
+        if (targetGroupIndex < 0) {
+            return null;
+        }
+        SpellTarget target = sourceCard.getSpellTargets().get(targetGroupIndex);
+        return target.getDynamicMaxTargets() == null ? null : target;
+    }
+
+    private void enqueueSelfTriggeredAbilityWithoutTargets(GameData gameData,
+            PermanentChoiceContext.SelfTriggeredAbilityTarget pending,
+            Permanent sourcePermanentSnapshot) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                pending.sourceCard(),
+                pending.controllerId(),
+                pending.sourceCard().getName() + "'s ability",
+                new ArrayList<>(pending.effects()),
+                (UUID) null,
+                pending.sourcePermanentId());
+        entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        if (pending.eventValue() != null) {
+            entry.setEventValue(pending.eventValue());
+        }
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                "'s " + pending.eventDescription() + " trigger has no targets."));
     }
 
     private TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {

@@ -42,4 +42,9 @@ public interface ActivatedAbilityCostReducingEffect extends CardEffect {
     default boolean appliesSymmetrically() {
         return true;
     }
+
+    /** Whether this reduction must leave at least one mana in the activation cost. */
+    default boolean preventsReductionBelowOneMana() {
+        return false;
+    }
 }

@@ -129,6 +129,7 @@ filter directly rather than reusing a factory whose wording does not match.
 | `PermanentManaValueAtMostOwnCountersPredicate` | `(CounterType)` | permanents whose mana value ≤ the number of that counter type on them (Corrosion rust destroy) |
 | `PermanentManaValueEqualsSourceCountersPredicate` | `(CounterType)` | permanents whose mana value **equals** the number of that counter type on the evaluating **source** permanent ("destroy each creature with mana value equal to the number of age counters on this enchantment" — Wave of Terror). Falls back to `FilterContext.sourcePermanentSnapshot()` once the source is gone (CR 608.2b) |
 | `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
+| `PermanentManaValueParityPredicate` | `(ManaValueParity parity)` | permanents whose mana value is odd or even; Obosh, the Preypiercer |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
 | `PermanentToughnessAtMostControlledSubtypeCountPredicate` | `(CardSubtype)` | permanents with toughness <= the number of permanents with that subtype controlled by the source's controller (Scourge of Fleets) |
 | `PermanentPowerEqualsToughnessPredicate` | `()` | creatures whose effective power equals their effective toughness. Wrap in `PermanentNotPredicate` for "whose power and toughness aren't equal" (Gilt-Leaf Winnower) |
@@ -370,6 +371,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasSourceChosenColorPredicate` | `()` | a card containing the color chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful for spell-cast triggers such as Jeweled Torque |
 | `CardHasSourceChosenCardTypePredicate` | `()` | a card with a card type chosen by the source permanent; needs the `GameData` overload and the source card ID, and is useful with global spell taxes |
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |
+| `CardKeywordPredicate` | `(Keyword)` | a card with the named keyword, including `MUTATE` for creature cards with a mutate ability |
 | `CardIsAuraEnchantCreaturePredicate` | `()` | an Aura card whose enchant ability restricts it to creatures ("enchant creature", "enchant creature you control", …). An Aura's enchant restriction is its spell target filter, so this looks for a `PermanentIsCreaturePredicate` in that filter (directly or inside a `PermanentAllOfPredicate`); Auras that enchant players, lands, artifacts, or any permanent never match. Use as a `GrantFlashToCardTypeEffect` filter (Rootwater Shaman) |
 | `CardHasFlashbackPredicate` | `()` | a card that has a flashback casting option (Runic Repetition's "target exiled card with flashback") |
 | `CardHasAdventurePredicate` | `()` | a card that has an Adventure casting option (Memory Theft's exiled-card follow-up) |

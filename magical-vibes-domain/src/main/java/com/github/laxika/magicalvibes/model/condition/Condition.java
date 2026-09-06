@@ -72,6 +72,7 @@ public sealed interface Condition permits
         ControlledMountAsCast,
         ColorSpentToCast,
         ControllerCastFourOrMoreSpellsThisTurn,
+        ControllerCycledCardNamedAtLeastThisGame,
         ControllerCastAnotherSpellThisTurn,
         ControllerCastSpellThisTurn,
         ControllerHasNotCastSpellThisGame,
