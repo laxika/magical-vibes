@@ -3806,12 +3806,10 @@ public class StepTriggerService {
                 if (gameQueryService.findPermanentById(gameData, pending.permanentId()) == null) {
                     continue;
                 }
-                UUID currentControllerId = gameQueryService.findPermanentController(
-                        gameData, pending.permanentId());
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
-                        currentControllerId,
+                        pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         null,

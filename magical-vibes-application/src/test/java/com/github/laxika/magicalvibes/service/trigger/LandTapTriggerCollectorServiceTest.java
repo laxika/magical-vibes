@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
@@ -30,11 +31,13 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -46,6 +49,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.Set;
 import java.util.UUID;
@@ -80,6 +84,12 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private LifeSupport lifeSupport;
+
+    @Mock
+    private ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
+
+    @Mock
+    private DealDamageToPlayersEffectHandler dealDamageHandler;
 
     @InjectMocks
     private LandTapTriggerCollectorService sut;
@@ -503,6 +513,31 @@ class LandTapTriggerCollectorServiceTest {
     @Nested
     @DisplayName("ON_ANY_PLAYER_TAPS_LAND — AddOneOfEachManaTypeProducedByLandEffect")
     class AddOneOfEachManaType {
+
+        @Test
+        @DisplayName("resolves a combined mana-and-damage ability immediately")
+        void resolvesCombinedManaAndDamageAbilityImmediately() {
+            Permanent triggerPerm = createPermanent("Overabundance");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = SequenceEffect.of(
+                    new AddOneOfEachManaTypeProducedByLandEffect(false),
+                    new DealDamageOnLandTapEffect(1));
+            var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
+
+            when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+            when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+            verify(dealDamageHandler).resolve(
+                    eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
+                            1, DamageRecipient.TARGET_PLAYER)));
+        }
 
         @Test
         @DisplayName("adds one additional mana of the type produced by the tapped land")

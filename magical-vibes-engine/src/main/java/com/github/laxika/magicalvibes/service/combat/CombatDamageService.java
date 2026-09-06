@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
@@ -2465,7 +2466,8 @@ public class CombatDamageService {
                 int damageAmount = damageAmounts.getOrDefault(targetId, 0);
                 List<CardEffect> sourceSpecificEffects = effects.stream()
                         .filter(effect -> effect instanceof DamageSourceAwareEffect
-                                || effect instanceof DamageSourceControllerAwareEffect)
+                                || effect instanceof DamageSourceControllerAwareEffect
+                                || effect instanceof PerDamageSourceTriggerEffect)
                         .toList();
                 effects.removeAll(sourceSpecificEffects);
                 if (!sourceSpecificEffects.isEmpty()) {
@@ -2498,7 +2500,9 @@ public class CombatDamageService {
         for (DealtDamageTriggerData data : triggerData) {
             for (CardEffect effect : data.dealtDamageEffects()) {
                 CardEffect effectToAdd = effect;
-                if (effect instanceof DamageSourceAwareEffect aware) {
+                if (effect instanceof PerDamageSourceTriggerEffect perSource) {
+                    effectToAdd = perSource.effect();
+                } else if (effect instanceof DamageSourceAwareEffect aware) {
                     effectToAdd = aware.bindDamageSource(
                             data.sourceCard(), data.sourcePermanentId(), data.sourceControllerId(), data.damageDealt());
                 } else if (effect instanceof DamageSourceControllerAwareEffect aware) {

@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentIdAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
@@ -4087,8 +4088,10 @@ public class TriggerCollectionService {
                 sourceCard, sourcePermanentId);
 
         for (CardEffect effect : effects) {
-            var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, effect);
-            dispatch(match, EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
+            CardEffect dispatchedEffect = effect instanceof PerDamageSourceTriggerEffect perSource
+                    ? perSource.effect() : effect;
+            var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, dispatchedEffect);
+            dispatch(match, EffectSlot.ON_DEALT_DAMAGE, dispatchedEffect, ctx);
         }
     }
 

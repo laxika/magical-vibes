@@ -510,6 +510,7 @@ Compact lookup: effect name + constructor signature, organized by category.
 
 - `DestroyEnchantedCreatureOnLeaveEffect()` / `(UUID enchantedPermanentId, boolean cannotBeRegenerated)` — `ON_SELF_LEAVES_BATTLEFIELD`: destroy the creature the source Aura enchanted. The collector captures the host's permanent ID before the Aura disappears; use the card-definition constructor for the default no-regeneration form
 - `DistributeCountersAmongTargetsEffect.chosenAmongTargetCreaturesEtb(CounterType, int)` — fixed chosen counter distribution for an ETB ability; target-to-counter assignments come from the shared ETB assignment buffer (Wurmskin Forger)
+- `DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(CounterType, DynamicAmount, PermanentPredicate)` — chosen spell counter distribution that explicitly permits an empty target group (Stolen Goodies)
 For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
 - `DistributeCountersAmongTargetsEffect.evenlyAmongTargetPermanents(CounterType, int, PermanentPredicate)` — fixed even counter distribution across a target group narrowed to matching permanents, such as Vehicles and/or creatures you control.

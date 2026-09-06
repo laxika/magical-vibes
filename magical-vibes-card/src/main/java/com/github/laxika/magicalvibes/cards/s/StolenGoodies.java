@@ -14,7 +14,7 @@ import java.util.List;
 public class StolenGoodies extends Card {
 
     public StolenGoodies() {
-        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
+        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new Fixed(3),
                 new PermanentAllOfPredicate(List.of(

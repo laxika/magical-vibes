@@ -54,6 +54,7 @@ public class SystemsOverride extends Card {
                                         false,
                                         true,
                                         false,
-                                        new PermanentTruePredicate())));
+                                        new PermanentTruePredicate(),
+                                        false)));
     }
 }

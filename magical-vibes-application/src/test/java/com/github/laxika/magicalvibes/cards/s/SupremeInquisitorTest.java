@@ -39,7 +39,7 @@ class SupremeInquisitorTest extends BaseCardTest {
         assertThat(gd.exiledCards.stream()
                 .filter(entry -> entry.ownerId().equals(player2.getId()))
                 .toList())
-                .allMatch(ExiledCardEntry::faceDown);
+                .noneMatch(ExiledCardEntry::faceDown);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isTapped)

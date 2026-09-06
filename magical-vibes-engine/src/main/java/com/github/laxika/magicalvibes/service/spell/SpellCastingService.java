@@ -4638,6 +4638,10 @@ public class SpellCastingService {
                         com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
                 Map<UUID, Integer> counterAssignments =
                         damageAssignments == null ? Map.of() : damageAssignments;
+                if (counterAssignments.isEmpty() && expectedTotal > 0
+                        && !distributeCounters.allowsNoTargets()) {
+                    throw new IllegalStateException("At least one counter assignment is required");
+                }
                 int assignedTotal = counterAssignments.values().stream().mapToInt(Integer::intValue).sum();
                 if (!counterAssignments.isEmpty() && assignedTotal != expectedTotal) {
                     throw new IllegalStateException("Counter assignments must sum to " + expectedTotal);
@@ -9444,7 +9448,7 @@ public class SpellCastingService {
                 gameData, effect.total(), com.github.laxika.magicalvibes.service.effect.AmountContext
                         .forCasting(playerId, xValue));
         if (assignments.isEmpty()) {
-            if (expectedTotal == 0) {
+            if (expectedTotal == 0 || effect.allowsNoTargets()) {
                 return assignments;
             }
             throw new IllegalStateException("At least one counter assignment is required");

@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapLandsThatCouldProduceSameManaAsTappedLandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -51,6 +52,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -61,6 +63,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.github.laxika.magicalvibes.model.GameLog;
 /**
@@ -78,6 +81,31 @@ public class LandTapTriggerCollectorService {
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
+    private final ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
+
+    @CollectsTrigger(value = SequenceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleManaAbilitySequence(TriggerMatchContext match,
+            SequenceEffect sequence, TriggerContext ctx) {
+        if (sequence.steps().size() != 2
+                || !(sequence.steps().get(0) instanceof AddOneOfEachManaTypeProducedByLandEffect mana)
+                || !(sequence.steps().get(1) instanceof DealDamageOnLandTapEffect damage)) {
+            return false;
+        }
+        if (!handleAddOneOfEachManaType(match, mana, ctx)) {
+            return false;
+        }
+
+        TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
+        StackEntry entry = createLandTapDamageEntry(
+                match, damage, landTap.tappingPlayerId(), landTap.tappedLandId());
+        if (entry == null) {
+            return true;
+        }
+        dealDamageHandlerProvider.getObject().resolve(
+                match.gameData(), entry, new DealDamageToPlayersEffect(
+                        damage.damage(), DamageRecipient.TARGET_PLAYER));
+        return true;
+    }
 
     @CollectsTrigger(value = RemoveCounterFromSourceEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleControllerTapsLandRemoveCounter(TriggerMatchContext match,
@@ -107,13 +135,27 @@ public class LandTapTriggerCollectorService {
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
             DealDamageOnLandTapEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        StackEntry entry = createLandTapDamageEntry(
+                match, trigger, lt.tappingPlayerId(), lt.tappedLandId());
+        if (entry == null) {
+            return false;
+        }
         var gameData = match.gameData();
-        var tappingPlayerId = lt.tappingPlayerId();
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on land tap by {}", gameData.id,
+                match.permanent().getCard().getName(), gameData.playerIdToName.get(lt.tappingPlayerId()));
+        return true;
+    }
+
+    private StackEntry createLandTapDamageEntry(TriggerMatchContext match,
+            DealDamageOnLandTapEffect trigger, UUID tappingPlayerId, UUID tappedLandId) {
+        var gameData = match.gameData();
         if (trigger.landFilter() != null) {
-            Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
+            Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
             if (tappedLand == null
                     || !predicateEvaluationService.matchesPermanentPredicate(gameData, tappedLand, trigger.landFilter())) {
-                return false;
+                return null;
             }
         }
         var sourceCard = match.permanent().getCard();
@@ -128,12 +170,7 @@ public class LandTapTriggerCollectorService {
                 match.permanent().getId());
         entry.setNonTargeting(true);
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on land tap by {}", gameData.id,
-                sourceCard.getName(), gameData.playerIdToName.get(tappingPlayerId));
-
-        return true;
+        return entry;
     }
 
     @CollectsTrigger(value = GainLifeWhenOpponentTapsLandOfSubtypeEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)

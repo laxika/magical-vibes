@@ -163,8 +163,7 @@ class RegenerationTest extends BaseCardTest {
         harness.activateAbility(player1, 3, null, null);
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.activateAbilityWithMultiTargets(player1, 0, 0,
-                List.of(regenAura.getId(), newlyEnchanted.getId()));
+        harness.activateAbility(player1, 0, null, regenAura.getId());
         harness.passBothPriorities();
         assertThat(regenAura.getAttachedTo()).isEqualTo(newlyEnchanted.getId());
         harness.passBothPriorities();

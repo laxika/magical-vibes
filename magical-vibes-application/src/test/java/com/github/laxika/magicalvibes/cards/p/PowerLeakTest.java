@@ -116,11 +116,9 @@ class PowerLeakTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
-    // ===== The prompt is capped at the damage dealt =====
-
     @Test
-    @DisplayName("Payment prompt is capped at 2 even with more mana available")
-    void promptCappedAtTwo() {
+    @DisplayName("Payment prompt allows all available mana")
+    void promptAllowsAllAvailableMana() {
         Permanent enchantment = addEnchantment(player2);
         attachPowerLeak(enchantment);
 
@@ -133,7 +131,7 @@ class PowerLeakTest extends BaseCardTest {
                 (PendingInteraction.XValueChoice) gd.interaction.activeInteraction();
         assertThat(ctx).isNotNull();
         assertThat(ctx.playerId()).isEqualTo(player2.getId());
-        assertThat(ctx.maxValue()).isEqualTo(2);
+        assertThat(ctx.maxValue()).isEqualTo(5);
     }
 
     @Test
