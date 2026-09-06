@@ -82,7 +82,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
             // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
             if (e.tapWhenControlLost()) {
-                gameData.permanentsToTapWhenControlLost.add(target.getId());
+                gameData.registerControlLossTapTrigger(
+                        target.getId(), entry.getControllerId(), entry.getCard());
             }
         }
     }

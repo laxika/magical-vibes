@@ -21,9 +21,9 @@ class NecromasterDragonTest extends BaseCardTest {
     void payingCreatesTokenAndMillsEachOpponent() {
         addAttackingDragon();
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         resolveCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

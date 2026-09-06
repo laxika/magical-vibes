@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,10 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ForceSpike.class, LlanowarElves.class, DarkRitual.class})
 class ForceSpikeTest extends BaseCardTest {
-
-    // ===== Counter-unless-pays: opponent cannot pay =====
-
     @Test
     @DisplayName("Counters spell when opponent has no mana to pay {1}")
     void countersWhenOpponentCannotPay() {
@@ -38,8 +38,25 @@ class ForceSpikeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Counter-unless-pays: opponent pays =====
+    @Test
+    @DisplayName("Counters a noncreature spell when its controller cannot pay {1}")
+    void countersNoncreatureSpellWhenControllerCannotPay() {
+        DarkRitual ritual = new DarkRitual();
+        harness.setHand(player1, List.of(ritual));
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
+        harness.setHand(player2, List.of(new ForceSpike()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, ritual.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dark Ritual");
+        assertThat(gd.stack).isEmpty();
+    }
     @Test
     @DisplayName("Spell is not countered when opponent pays {1}")
     void spellNotCounteredWhenOpponentPays() {
@@ -67,9 +84,6 @@ class ForceSpikeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
-
-    // ===== Counter-unless-pays: opponent declines =====
-
     @Test
     @DisplayName("Spell is countered when opponent declines to pay")
     void spellCounteredWhenOpponentDeclines() {

@@ -70,7 +70,6 @@ class FountainportTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handlePermanentChosen(player1, findPermanent(player1, "Fish").getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Fish");

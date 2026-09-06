@@ -1,25 +1,30 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({EssenceFlare.class, BalduvianBears.class, ZuranOrb.class})
 class EssenceFlareTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature gets +2/+0")
     void enchantedCreatureGetsBoost() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new EssenceFlare());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -28,12 +33,10 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to base stats when Essence Flare is removed")
     void boostStopsWhenRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
 
-        Permanent aura = new Permanent(new EssenceFlare());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -44,11 +47,10 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("At enchanted creature controller's upkeep, a -0/-1 counter is placed on it")
     void upkeepPutsMinusCounter() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
 
-        Permanent aura = new Permanent(new EssenceFlare());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         int countersBefore = creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE);
 
@@ -64,11 +66,10 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("Counter trigger does not fire during aura controller's upkeep")
     void doesNotTriggerDuringAuraControllerUpkeep() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
 
-        Permanent aura = new Permanent(new EssenceFlare());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         int countersBefore = creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE);
 
@@ -81,11 +82,10 @@ class EssenceFlareTest extends BaseCardTest {
     @Test
     @DisplayName("Counters accumulate and shrink toughness over multiple upkeeps")
     void countersAccumulateOverUpkeeps() {
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
 
-        Permanent aura = new Permanent(new EssenceFlare());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -100,5 +100,17 @@ class EssenceFlareTest extends BaseCardTest {
 
         // Second -0/-1 brings toughness to 0; SBA destroys the creature (and the Aura falls off).
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Cannot enchant a noncreature permanent")
+    void cannotEnchantNonCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ZuranOrb());
+        harness.setHand(player1, List.of(new EssenceFlare()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 }

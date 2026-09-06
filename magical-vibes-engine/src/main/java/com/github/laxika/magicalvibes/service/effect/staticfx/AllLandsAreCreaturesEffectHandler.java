@@ -40,7 +40,8 @@ public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBea
                         || (e.scope() == GrantScope.OPPONENT_LANDS
                                 && !context.targetOnSameBattlefield()))
                 && (e.requiredSubtype() == null
-                        || context.target().getCard().getSubtypes().contains(e.requiredSubtype()))
+                        || context.target().getCard().getSubtypes().contains(e.requiredSubtype())
+                        || accumulator.getGrantedSubtypes().contains(e.requiredSubtype()))
                 && !gameQueryService.hasSelfBecomeCreatureEffect(context.gameData(), context.target())) {
             accumulator.setAnimatedCreature(true);
             accumulator.setBasePTOverride(e.power(), e.toughness());

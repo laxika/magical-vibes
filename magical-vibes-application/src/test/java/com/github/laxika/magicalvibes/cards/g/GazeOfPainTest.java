@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BalduvianBears.class, GazeOfPain.class, GiantGrowth.class})
 class GazeOfPainTest extends BaseCardTest {
 
     private void castGaze() {
@@ -24,25 +27,17 @@ class GazeOfPainTest extends BaseCardTest {
     }
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addDefenderCreature() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-        return blocker;
+        return addCreatureReady(player2, new BalduvianBears());
     }
 
     private void advanceToUnblockedMay() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }
@@ -84,6 +79,31 @@ class GazeOfPainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each unblocked creature gets its own may ability")
+    void eachUnblockedAttackerGetsItsOwnMayAbility() {
+        castGaze();
+        Permanent firstAttacker = addAttacker();
+        Permanent secondAttacker = addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, victim.getId());
+        harness.passBothPriorities();
+
+        advanceToUnblockedMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage)
+                .contains(firstAttacker.getId(), secondAttacker.getId());
+    }
+
+    @Test
     @DisplayName("Accepting after the attacker leaves uses its last known power")
     void acceptedAbilityUsesLastKnownAttackerPower() {
         castGaze();
@@ -96,6 +116,29 @@ class GazeOfPainTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Accepting after a pumped attacker leaves uses its last known power")
+    void acceptedAbilityUsesLastKnownPumpedAttackerPower() {
+        castGaze();
+        Permanent attacker = addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(5);
     }
 
     @Test
@@ -131,6 +174,21 @@ class GazeOfPainTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("An unblocked creature controlled by the opponent does not trigger Gaze of Pain")
+    void opponentControlledAttackerDoesNotTrigger() {
+        castGaze();
+        Permanent attacker = addCreatureReady(player2, new BalduvianBears());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
     }
 
     @Test

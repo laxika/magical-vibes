@@ -32,6 +32,9 @@ public enum PreventionScope {
      *  Non-targeting: every creature on the battlefield as the ability resolves gets its own next-N
      *  shield and every player gets one too; creatures entering later are unaffected. */
     NEXT_TO_EACH_CREATURE_AND_PLAYER,
+    /** "Prevent the next N damage that would be dealt to each creature you control this turn" (Samite Censer-Bearer).
+     *  Every creature controlled by the ability's controller as it resolves gets its own next-N shield. */
+    NEXT_TO_CONTROLLED_CREATURES,
     /** "Prevent all combat damage that would be dealt this turn" (Fog, Holy Day). */
     ALL_COMBAT,
     /** "Prevent all combat damage that would be dealt this turn by attacking creatures" (Harmless Assault). */
@@ -68,6 +71,8 @@ public enum PreventionScope {
     ALL_BY_SELF,
     /** "Prevent all damage that would be dealt to you and creatures you control this turn" (Safe Passage). */
     ALL_TO_CONTROLLER_AND_CREATURES,
+    /** "Prevent all damage that would be dealt to you and creatures you control this turn by matching sources." */
+    ALL_TO_CONTROLLER_AND_CREATURES_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that would be dealt to you this turn" (Riot Control). Unlike
      *  {@link #ALL_TO_CONTROLLER_AND_CREATURES} the controller's creatures are not shielded. */
     ALL_TO_CONTROLLER,
@@ -77,6 +82,8 @@ public enum PreventionScope {
     ALL_TO_CONTROLLER_FROM_ATTACKERS,
     /** "Prevent all damage that would be dealt to you this turn by creatures matching a predicate." */
     ALL_TO_CONTROLLER_FROM_MATCHING_SOURCES,
+    /** "Prevent the next damage that would be dealt to you by a source matching a predicate." */
+    NEXT_TO_CONTROLLER_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that would be dealt to players this turn by sources matching a predicate." */
     ALL_TO_PLAYERS_FROM_MATCHING_SOURCES,
     /** "Prevent all damage that sources of the chosen colors would deal this turn" (Luminesce). */

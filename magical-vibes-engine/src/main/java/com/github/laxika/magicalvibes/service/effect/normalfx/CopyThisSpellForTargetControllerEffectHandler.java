@@ -36,7 +36,9 @@ public class CopyThisSpellForTargetControllerEffectHandler implements NormalEffe
         if (targetId == null) {
             return;
         }
-        UUID copyControllerId = gameQueryService.findPermanentController(gameData, targetId);
+        UUID copyControllerId = gameData.playerIds.contains(targetId)
+                ? targetId
+                : gameQueryService.findPermanentController(gameData, targetId);
         if (copyControllerId == null) {
             return;
         }

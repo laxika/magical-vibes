@@ -60,7 +60,7 @@ class RootwaterThiefTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).extracting("id").contains(exiledCard.getId());
-        assertThat(gd.findExiledCard(exiledCard.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(exiledCard.getId()).faceDown()).isFalse();
     }
 
     @Test

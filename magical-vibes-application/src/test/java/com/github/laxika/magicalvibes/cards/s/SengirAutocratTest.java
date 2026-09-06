@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.i.IcatianTown;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SengirAutocrat.class)
+@CardUsed({SengirAutocrat.class, IcatianTown.class})
 class SengirAutocratTest extends BaseCardTest {
 
     @Test
@@ -63,6 +64,25 @@ class SengirAutocratTest extends BaseCardTest {
         assertThat(serfTokens(player1)).isEmpty();
         assertThat(serfTokens(player2)).isEmpty();
         assertThat(findPermanents(player2, "Sengir Autocrat")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield exiles Serf tokens but not other tokens")
+    void leavesBattlefieldExilesOnlySerfTokens() {
+        harness.castFromHand(player1, new IcatianTown(), "{5}{W}");
+        resolveAllTriggers();
+
+        Permanent autocrat = castAndResolveAutocrat(player1);
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(4);
+        assertThat(serfTokens(player1)).hasSize(3);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, autocrat));
+        resolveAllTriggers();
+
+        assertThat(serfTokens(player1)).isEmpty();
+        assertThat(findPermanents(player1, "Citizen")).hasSize(4);
     }
 
     private Permanent castAndResolveAutocrat(com.github.laxika.magicalvibes.model.Player player) {

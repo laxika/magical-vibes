@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(RagingSpirit.class)
 class RagingSpiritTest extends BaseCardTest {
 
     @Test
@@ -18,8 +22,6 @@ class RagingSpiritTest extends BaseCardTest {
     void activatingMakesItColorless() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RagingSpirit());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        assertThat(gqs.getEffectiveColors(gd, spirit)).containsExactly(CardColor.RED);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -32,6 +34,7 @@ class RagingSpiritTest extends BaseCardTest {
     void wearsOffAtEndOfTurn() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RagingSpirit());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        List<CardColor> originalColors = List.copyOf(gqs.getEffectiveColors(gd, spirit));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -41,7 +44,7 @@ class RagingSpiritTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectiveColors(gd, spirit)).containsExactly(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, spirit)).containsExactlyElementsOf(originalColors);
     }
 
     @Test

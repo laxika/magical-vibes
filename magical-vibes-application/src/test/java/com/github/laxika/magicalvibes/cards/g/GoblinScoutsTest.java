@@ -1,31 +1,34 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.FemerefKnight;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinScouts.class, FemerefKnight.class, Mountain.class})
 class GoblinScoutsTest extends BaseCardTest {
 
-    private List<Permanent> scoutTokens(UUID playerId) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Goblin Scout"))
+    private List<Permanent> scoutTokens(Player player) {
+        return findPermanents(player, "Goblin Scout").stream()
+                .filter(permanent -> permanent.getCard().isToken())
                 .toList();
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new GoblinScouts()));
-        harness.addMana(player1, ManaColor.RED, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinScouts(), "{3}{R}{R}");
         harness.passBothPriorities();
     }
 
@@ -34,7 +37,7 @@ class GoblinScoutsTest extends BaseCardTest {
     void resolvingCreatesThreeTokens() {
         cast();
 
-        List<Permanent> tokens = scoutTokens(player1.getId());
+        List<Permanent> tokens = scoutTokens(player1);
         assertThat(tokens).hasSize(3);
 
         for (Permanent token : tokens) {
@@ -51,8 +54,8 @@ class GoblinScoutsTest extends BaseCardTest {
     void tokensEnterUnderControllerControl() {
         cast();
 
-        assertThat(scoutTokens(player1.getId())).hasSize(3);
-        assertThat(scoutTokens(player2.getId())).isEmpty();
+        assertThat(scoutTokens(player1)).hasSize(3);
+        assertThat(scoutTokens(player2)).isEmpty();
     }
 
     @Test
@@ -62,5 +65,46 @@ class GoblinScoutsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Goblin Scouts");
+    }
+
+    @Test
+    @DisplayName("Mountainwalk prevents blocking while the defending player controls a Mountain")
+    void mountainwalkPreventsBlockingWithMountain() {
+        cast();
+
+        Permanent attacker = scoutTokens(player1).getFirst();
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.addToBattlefield(player2, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new FemerefKnight());
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Mountainwalk permits blocking while the defending player controls no Mountain")
+    void mountainwalkPermitsBlockingWithoutMountain() {
+        cast();
+
+        Permanent attacker = scoutTokens(player1).getFirst();
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FemerefKnight());
+
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

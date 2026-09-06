@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class MayEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +57,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         UUID choicePlayerId = switch (e.choicePlayer()) {
             case CONTROLLER -> entry.getControllerId();
             case ACTIVE_PLAYER -> entry.getActivePlayerId();
+            case DEFENDING_PLAYER -> findDefendingPlayerId(gameData, entry.getAttackedTargetId());
             case TARGET_PLAYER -> targetId != null && gameData.playerIds.contains(targetId) ? targetId : null;
             case TARGET_PERMANENT_CONTROLLER -> targetId == null
                     ? null
@@ -71,10 +76,23 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             gameData.resolvingMayEffectFromStack = false;
             return;
         }
+        if (e.wrapped() instanceof SacrificeEnchantedCreatureEffect
+                && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId)) {
+            gameData.resolvingMayEffectFromStack = false;
+            if (e.elseEffect() != null) {
+                EffectHandler elseHandler = effectHandlerRegistry.getHandler(e.elseEffect());
+                if (elseHandler != null) {
+                    elseHandler.resolve(gameData, entry, e.elseEffect());
+                }
+            }
+            return;
+        }
+
+        boolean defendingPlayerChoice = e.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER;
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
-                choicePlayerId,
+                defendingPlayerChoice ? entry.getControllerId() : choicePlayerId,
                 List.of(e.wrapped()),
                 entry.getCard().getName() + " - " + e.prompt(),
                 targetId,
@@ -85,7 +103,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 0,
                 entry.getAttackedTargetId(),
                 e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null,
-                null,
+                defendingPlayerChoice ? choicePlayerId : null,
                 entry.getSourcePermanentSnapshot(),
                 null,
                 entry.getTriggeringCardId(),
@@ -94,6 +112,18 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getTriggeringPermanentPowerAtTrigger(),
                 null
         ));
+    }
+
+    private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, UUID choicePlayerId) {
+        UUID enchantedId = entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot().getAttachedTo()
+                : null;
+        if (enchantedId == null && entry.getSourcePermanentId() != null) {
+            var aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            enchantedId = aura == null ? null : aura.getAttachedTo();
+        }
+        return enchantedId != null
+                && choicePlayerId.equals(gameQueryService.findPermanentController(gameData, enchantedId));
     }
 
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
@@ -106,5 +136,14 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             }
         }
         return null;
+    }
+
+    private UUID findDefendingPlayerId(GameData gameData, UUID attackedTargetId) {
+        if (attackedTargetId == null) {
+            return null;
+        }
+        return gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId
+                : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

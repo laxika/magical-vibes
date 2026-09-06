@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,23 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AncestralMemories.class, Island.class})
 class AncestralMemoriesTest extends BaseCardTest {
-
-    private void addMana(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addMana(player, ManaColor.BLUE, 3);
-        harness.addMana(player, ManaColor.COLORLESS, 2);
-    }
 
     @Test
     @DisplayName("Resolving enters library reveal choice state")
     void resolvingEntersRevealChoiceState() {
         setupTopCards(sevenCards());
 
-        harness.setHand(player1, List.of(new AncestralMemories()));
-        addMana(player1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -43,10 +36,7 @@ class AncestralMemoriesTest extends BaseCardTest {
         List<Card> cards = sevenCards();
         setupTopCards(cards);
 
-        harness.setHand(player1, List.of(new AncestralMemories()));
-        addMana(player1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -68,15 +58,27 @@ class AncestralMemoriesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Requires choosing two cards when at least two cards are available")
+    void requiresChoosingTwoCardsWhenAvailable() {
+        List<Card> cards = sevenCards();
+        setupTopCards(cards);
+
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(cards.getFirst().getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Invalid number of cards selected");
+    }
+
+    @Test
     @DisplayName("Choosing clears the awaiting state and empties the revealed cards from the library")
     void choosingClearsStateAndLibrary() {
         List<Card> cards = sevenCards();
         setupTopCards(cards);
 
-        harness.setHand(player1, List.of(new AncestralMemories()));
-        addMana(player1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -90,16 +92,11 @@ class AncestralMemoriesTest extends BaseCardTest {
     @DisplayName("With only two cards in library, both go directly to hand (no choice needed)")
     void twoCardsInLibraryBothGoToHand() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        Card cardA = new GrizzlyBears();
-        Card cardB = new Shock();
-        gd.playerDecks.get(player1.getId()).add(cardA);
-        gd.playerDecks.get(player1.getId()).add(cardB);
+        Card cardA = new Island();
+        Card cardB = new Island();
+        harness.setLibrary(player1, List.of(cardA, cardB));
 
-        harness.setHand(player1, List.of(new AncestralMemories()));
-        addMana(player1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -111,12 +108,9 @@ class AncestralMemoriesTest extends BaseCardTest {
     @DisplayName("With empty library, nothing is drawn")
     void emptyLibrary() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
-        harness.setHand(player1, List.of(new AncestralMemories()));
-        addMana(player1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AncestralMemories(), "{2}{U}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -126,14 +120,12 @@ class AncestralMemoriesTest extends BaseCardTest {
     private List<Card> sevenCards() {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            cards.add(i % 2 == 0 ? new GrizzlyBears() : new Shock());
+            cards.add(new Island());
         }
         return cards;
     }
 
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 }

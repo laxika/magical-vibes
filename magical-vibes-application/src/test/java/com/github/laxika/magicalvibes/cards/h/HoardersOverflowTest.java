@@ -28,7 +28,7 @@ class HoardersOverflowTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent overflow = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(overflow.getCounterCount(CounterType.STASH)).isEqualTo(1);

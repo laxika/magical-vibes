@@ -90,7 +90,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                     entered.setAttachedTo(interaction.attachToPermanentId());
                 }
             } else {
-                gameData.playerHands.get(playerId).add(chosen);
+                gameData.addCardToHand(playerId, chosen);
             }
             String zoneName = fromLibrary ? "library"
                     : fromHand ? "hand"

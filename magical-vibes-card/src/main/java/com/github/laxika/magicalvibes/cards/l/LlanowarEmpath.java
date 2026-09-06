@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "185")
+@CardRegistration(set = "FUT", collectorNumber = "130")
 public class LlanowarEmpath extends Card {
 
     public LlanowarEmpath() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.e.ElvenRiders;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
+import com.github.laxika.magicalvibes.cards.g.Graxiplon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +53,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       per-creature fact caches against cross-pair pollution and order dependence.</li>
  * </ul>
  */
+@CardUsed({
+        BlackKnight.class,
+        CloudSprite.class,
+        ElvenRiders.class,
+        Forest.class,
+        GiantSpider.class,
+        GoblinRaider.class,
+        GrizzlyBears.class,
+        ScatheZombies.class,
+        SeveredLegion.class,
+        ShuCavalry.class,
+        StratusWalk.class,
+        WallOfAir.class,
+        WhiteKnight.class,
+        ZodiacMonkey.class
+})
 class BlockLegalityContextTest extends BaseCardTest {
 
     private Permanent attacking(Player player, Card card) {
@@ -171,6 +189,20 @@ class BlockLegalityContextTest extends BaseCardTest {
 
         harness.addToBattlefield(player2, new Forest());
         assertThat(reason(bears, monkey)).contains("Zodiac Monkey can't be blocked (forestwalk)");
+    }
+
+    @Test
+    @CardUsed(Graxiplon.class)
+    @DisplayName("Shared-type defender condition is re-evaluated by pair legality")
+    void sharedTypeDefenderCondition() {
+        Permanent graxiplon = attacking(player1, new Graxiplon());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(reason(blocker, graxiplon)).contains("Graxiplon can't be blocked");
+
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        assertThat(reason(blocker, graxiplon)).isEmpty();
     }
 
     @Test

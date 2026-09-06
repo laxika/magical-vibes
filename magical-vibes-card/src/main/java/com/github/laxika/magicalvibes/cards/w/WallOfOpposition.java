@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "56")
+@CardRegistration(set = "LEG", collectorNumber = "171")
 public class WallOfOpposition extends Card {
 
     public WallOfOpposition() {

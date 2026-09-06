@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.TormentOfHailfireEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -51,6 +54,8 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
     private final LifeSupport lifeSupport;
     private final DestructionSupport destructionSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,9 +73,16 @@ public class TormentOfHailfireEffectHandler implements NormalEffectHandlerBean {
             // Fresh entry: seed the iteration counter and start processing.
             state.reset();
             state.active = true;
-            int iterations = torment.fixedIterations() != null
-                    ? torment.fixedIterations()
-                    : entry.getXValue();
+            int iterations;
+            if (torment.fixedIterations() != null) {
+                iterations = torment.fixedIterations();
+            } else if (torment.dynamicIterations() != null) {
+                var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                iterations = amountEvaluationService.evaluate(gameData, torment.dynamicIterations(),
+                        AmountContext.forStackEntry(entry, source));
+            } else {
+                iterations = entry.getXValue();
+            }
             state.remainingIterations = Math.max(0, iterations);
             advance(gameData, entry, sourceName, lifeLoss, torment.sacrificePredicate());
             return;

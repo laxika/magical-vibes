@@ -13,4 +13,12 @@ public sealed interface TargetFilter permits
         PermanentPredicateTargetFilter,
         PlayerPredicateTargetFilter,
         StackEntryPredicateTargetFilter {
+
+    /**
+     * Whether the active player, rather than the ability's controller, chooses the target for a
+     * step-triggered ability using this filter.
+     */
+    default boolean activePlayerChoosesTarget() {
+        return false;
+    }
 }

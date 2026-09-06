@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesFractionRoundedUpEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class EachPlayerSacrificesFractionRoundedUpEffectHandler implements Norma
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -47,6 +49,9 @@ public class EachPlayerSacrificesFractionRoundedUpEffectHandler implements Norma
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
         for (UUID playerId : orderedApnap(gameData, activePlayerId)) {
+            if (!gameQueryService.canEffectCauseSacrifice(gameData, playerId, entry.getControllerId())) {
+                continue;
+            }
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null || battlefield.isEmpty()) {
                 continue;

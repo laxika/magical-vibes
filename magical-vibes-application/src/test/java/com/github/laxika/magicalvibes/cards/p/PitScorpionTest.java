@@ -1,20 +1,20 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PitScorpion.class, GrizzlyBears.class, HermeticStudy.class})
 class PitScorpionTest extends BaseCardTest {
 
     private Permanent addReadyScorpion() {
-        Permanent perm = new Permanent(new PitScorpion());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new PitScorpion());
     }
 
     @Test
@@ -37,7 +37,7 @@ class PitScorpionTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -45,14 +45,29 @@ class PitScorpionTest extends BaseCardTest {
     void noPoisonWhenBlocked() {
         Permanent scorpion = addReadyScorpion();
         scorpion.setAttacking(true);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to a player also gives that player a poison counter")
+    void noncombatDamageGivesPoisonCounter() {
+        harness.setLife(player2, 20);
+        Permanent scorpion = addReadyScorpion();
+        Permanent aura = new Permanent(new HermeticStudy());
+        aura.setAttachedTo(scorpion.getId());
+        gd.playerBattlefields.get(player1.getId()).add(aura);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.assertLife(player2, 19);
     }
 }

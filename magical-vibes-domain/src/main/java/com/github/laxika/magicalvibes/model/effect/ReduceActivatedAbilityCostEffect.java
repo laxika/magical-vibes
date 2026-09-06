@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -7,8 +9,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * by {@code amount}, for all players (static, symmetric). E.g. Heartstone with a creature
  * predicate and amount 1.
  */
-public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount)
+public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, DynamicAmount amount)
         implements ActivatedAbilityCostReducingEffect {
+
+    public ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int amount) {
+        this(predicate, new Fixed(amount));
+    }
 
     @Override
     public PermanentPredicate affectedPermanents() {
@@ -17,6 +23,11 @@ public record ReduceActivatedAbilityCostEffect(PermanentPredicate predicate, int
 
     @Override
     public int genericCostReduction() {
-        return amount;
+        return amount instanceof Fixed fixed ? fixed.value() : 0;
+    }
+
+    @Override
+    public DynamicAmount genericCostReductionAmount() {
+        return amount instanceof Fixed ? null : amount;
     }
 }

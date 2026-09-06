@@ -557,7 +557,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new SelfDealtDamageThisTurn(n), wrapped)` | - | yes | yes (end step) | source has dealt **n or more** damage this turn to *any* recipient — players, planeswalkers, battles, creatures; combat and noncombat alike (Chandra, Fire of Kaladesh). Reads `damageDealtThisTurnBySource`, accumulated in `DamageSupport` (noncombat) and `CombatDamageService` (combat). Damage dealt earlier in the same resolution already counts |
 | `ConditionalEffect(new NotCondition(new SourceHasDealtDamage()), wrapped)` | yes | yes | - | source has not dealt damage since it became this game object; use for conditional static abilities such as Palladia-Mors's hexproof. The damage source record is persistent for the permanent object and is not cleared at turn cleanup |
-| `ConditionalEffect(new SelfDealtDamageToOpponentThisTurn(), wrapped)` | - | yes | yes (end step) | source dealt (combat) damage to an opponent of its *current* controller this turn (Whirling Dervish) — reads `combatDamageToPlayersThisTurn` |
+| `ConditionalEffect(new SelfDealtDamageToOpponentThisTurn(), wrapped)` | - | yes | yes (end step) | source dealt damage to an opponent of its *current* controller this turn (Whirling Dervish) — reads player recipients in `damageRecipientsBySource`, including noncombat damage |
 | `ConditionalEffect(new SelfWasDealtDamageThisTurn(), wrapped)` | - | yes | yes (end step) | source was dealt damage this turn, combat or not (Wall of Resistance); pass a positive minimum to require N or more damage (Rushing-Tide Zubera) — reads `damageDealtToPermanentsThisTurn` |
 | `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new Enchanted(), wrapped)` | yes | yes | - |
@@ -589,6 +589,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `DRAW_TRIGGERED` deals 1 damage to controller only while tapped |
+| `ConditionalEffect(new SourceStartedTurnUntapped(), wrapped)` | - | yes | - | intervening-if "if this permanent started the turn untapped" — reads the source's status before its controller's untap step; use for Rasputin Dreamweaver's upkeep trigger |
 | `ConditionalEffect(new SourceIsCreature(), wrapped)` | - | yes | - | intervening-if "if this permanent is a creature" — reads the source's effective creature type |
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
@@ -605,6 +606,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
 | `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
 | `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |
+| `ConditionalEffect(new SourceBlocksWithAtLeastAndOnlyMatchingBlockers(minimumBlockers, blockerPredicate), wrapped)` | - | yes | yes (block) | retains the blocked attacker as trigger context, counts its complete blocking group, and requires every blocker to match the supplied predicate |
 | `ConditionalEffect(new OpponentPoisoned(), wrapped)` | yes | - | - |
 
 **Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`staticfx` `StaticEffectHandlerBean`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).

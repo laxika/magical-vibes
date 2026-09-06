@@ -39,13 +39,14 @@ class EnduringScalelordTest extends BaseCardTest {
     void triggersForHydra() {
         Permanent scalelord = castScalelord();
         Permanent hydra = harness.addToBattlefieldAndReturn(player1, new FeralHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, hydra.getId());
         resolveSpellAndTriggers();
 
-        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

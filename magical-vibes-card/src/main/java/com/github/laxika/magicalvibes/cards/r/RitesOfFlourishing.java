@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 
 @CardRegistration(set = "M12", collectorNumber = "192")
+@CardRegistration(set = "FUT", collectorNumber = "137")
 public class RitesOfFlourishing extends Card {
 
     public RitesOfFlourishing() {

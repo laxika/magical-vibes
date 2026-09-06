@@ -28,14 +28,33 @@ class DarkpactTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, antedCard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, antedCard.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(antedCard.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactly(libraryTop.getId());
         assertThat(gd.antedCardIds).containsExactly(libraryTop.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Exchanges the ante card into the library when the library is empty")
+    void exchangesAnteCardWithEmptyLibrary() {
+        Card antedCard = new GrizzlyBears();
+        harness.setExile(player1, List.of(antedCard));
+        gd.markCardAsAnted(antedCard);
+        harness.setLibrary(player1, List.of());
+        Card spell = new Darkpact();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, antedCard.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(antedCard.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.antedCardIds).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
     }
 

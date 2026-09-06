@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IvoryTower.class, GrizzlyBears.class})
 class IvoryTowerTest extends BaseCardTest {
 
     private List<Card> bears(int count) {
@@ -78,10 +80,23 @@ class IvoryTowerTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         // Grow the hand while the trigger is on the stack: 8 - 4 = 4 at resolution.
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerHands.get(player1.getId()).add(new GrizzlyBears());
+        harness.setHand(player1, bears(8));
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
+    }
+
+    @Test
+    @DisplayName("Gains no life when the hand falls to four cards before resolution")
+    void noLifeWhenHandShrinksBeforeResolution() {
+        harness.addToBattlefield(player1, new IvoryTower());
+        harness.setHand(player1, bears(6));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, bears(4));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }

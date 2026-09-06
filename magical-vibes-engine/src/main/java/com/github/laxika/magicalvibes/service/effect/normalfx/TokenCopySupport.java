@@ -166,16 +166,17 @@ public class TokenCopySupport {
         tokenCard.setColors(effect.colorOverride() != null
                 ? List.of(effect.colorOverride())
                 : sourceCard.getColors());
-        if (effect.removeLegendary()) {
-            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
-            if (sourceCard.getSupertypes() != null) {
-                supertypes.addAll(sourceCard.getSupertypes());
-            }
-            supertypes.remove(CardSupertype.LEGENDARY);
-            tokenCard.setSupertypes(supertypes);
-        } else {
-            tokenCard.setSupertypes(sourceCard.getSupertypes());
+        EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+        if (sourceCard.getSupertypes() != null) {
+            supertypes.addAll(sourceCard.getSupertypes());
         }
+        if (effect.removeLegendary()) {
+            supertypes.remove(CardSupertype.LEGENDARY);
+        }
+        if (effect.additionalSupertypes() != null) {
+            supertypes.addAll(effect.additionalSupertypes());
+        }
+        tokenCard.setSupertypes(supertypes);
         tokenCard.setPower(effect.powerOverride() != null ? effect.powerOverride() : sourceCard.getPower());
         tokenCard.setToughness(effect.toughnessOverride() != null ? effect.toughnessOverride() : sourceCard.getToughness());
         tokenCard.setCardText(sourceCard.getCardText());

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "86")
+@CardRegistration(set = "LEG", collectorNumber = "260")
 public class Stangg extends Card {
 
     public Stangg() {

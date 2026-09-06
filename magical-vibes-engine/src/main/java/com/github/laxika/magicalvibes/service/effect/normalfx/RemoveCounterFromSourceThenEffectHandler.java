@@ -74,7 +74,9 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 .text(" removes a ").text(permanentCounterSupport.counterTypeName(counterType))
                 .text(" counter.").build());
 
-        beginReflexiveTrigger(gameData, entry, e.thenEffect());
+        if (!e.onlyIfLastCounterRemoved() || source.getCounterCount(counterType) == 0) {
+            beginReflexiveTrigger(gameData, entry, e.thenEffect());
+        }
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {

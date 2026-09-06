@@ -43,9 +43,10 @@ class ThalakosDeceiverTest extends BaseCardTest {
 
         advanceToUnblockedMay();
 
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Thalakos Deceiver");
         harness.assertInGraveyard(player1, "Thalakos Deceiver");
@@ -66,7 +67,6 @@ class ThalakosDeceiverTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(land);
 
         advanceToUnblockedMay();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(target.getId())
@@ -81,6 +81,8 @@ class ThalakosDeceiverTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(target);
 
         advanceToUnblockedMay();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player1, "Thalakos Deceiver");

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.b.BogImp;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FeralShadow;
+import com.github.laxika.magicalvibes.cards.g.GibberingHyenas;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PurrajOfUrborg.class, FeralShadow.class, GibberingHyenas.class})
 class PurrajOfUrborgTest extends BaseCardTest {
 
     private Permanent addPurraj() {
@@ -27,7 +29,7 @@ class PurrajOfUrborgTest extends BaseCardTest {
     }
 
     private void giveBlackSpell(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new BogImp()));
+        harness.setHand(player, List.of(new FeralShadow()));
         harness.addMana(player, ManaColor.BLACK, 1);
         harness.addMana(player, ManaColor.COLORLESS, 2);
     }
@@ -85,6 +87,23 @@ class PurrajOfUrborgTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepting without {B} leaves Purraj unchanged")
+    void acceptingWithoutPaymentLeavesPurrajUnchanged() {
+        Permanent purraj = addPurraj();
+        giveBlackSpell(player1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, purraj)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, purraj)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("An opponent's black spell also triggers the ability")
     void opponentBlackSpellTriggers() {
         Permanent purraj = addPurraj();
@@ -112,8 +131,9 @@ class PurrajOfUrborgTest extends BaseCardTest {
     @DisplayName("A nonblack spell does not trigger the ability")
     void nonBlackSpellDoesNotTrigger() {
         Permanent purraj = addPurraj();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new GibberingHyenas()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
 

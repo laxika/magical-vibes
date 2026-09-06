@@ -1,29 +1,26 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HarborGuardian.class, Forest.class})
 class HarborGuardianTest extends BaseCardTest {
 
     @Test
     @DisplayName("When it attacks, the defending player may draw a card (accept)")
     void defendingPlayerDraws() {
         addCreatureReady(player1, new HarborGuardian());
-        setDeck(player2, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
 
-        declareAttackers(player1, List.of(0), null);
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -39,9 +36,9 @@ class HarborGuardianTest extends BaseCardTest {
     @DisplayName("Defending player may decline the draw")
     void defendingPlayerDeclines() {
         addCreatureReady(player1, new HarborGuardian());
-        setDeck(player2, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
 
-        declareAttackers(player1, List.of(0), null);
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player2.getId()).size();
@@ -50,16 +47,22 @@ class HarborGuardianTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore);
     }
 
-    private void declareAttackers(Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices, attackTargets);
+    @Test
+    @DisplayName("When the other player attacks, the defending player receives the choice")
+    void otherPlayerAttacks() {
+        addCreatureReady(player2, new HarborGuardian());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }

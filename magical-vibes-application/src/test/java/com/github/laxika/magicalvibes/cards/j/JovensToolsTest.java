@@ -46,6 +46,22 @@ class JovensToolsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A non-Wall cannot join a Wall block")
+    void mixedWallAndNonWallBlockIsIllegal() {
+        restrictAttacker();
+
+        addCreatureReady(player2, new WallOfKelp());
+        addCreatureReady(player2, new Joven());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1), new BlockerAssignment(1, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Walls");
+    }
+
+    @Test
     @DisplayName("Restriction wears off at end of turn")
     void restrictionWearsOff() {
         restrictAttacker();

@@ -1,14 +1,27 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+
 /**
- * Static replacement effect: if a player taps a permanent for mana, it produces the configured
- * multiple of that mana instead. Used by Mana Reflection and Nyxbloom Ancient. Multiple instances
+ * Static replacement effect that multiplies mana produced by a matching permanent. The no-arg
+ * form is used by Mana Reflection and matches every permanent at two times; a predicate and
+ * multiplier narrow and scale the affected mana source for cards such as Virtue of Strength.
+ * Nyxbloom Ancient uses the all-permanent form with a multiplier of three. Multiple instances
  * stack multiplicatively. Applied in mana-ability resolution via
  * {@code GameQueryService.manaProductionMultiplier}.
  */
-public record ManaReflectionEffect(int multiplier) implements CardEffect {
+public record ManaReflectionEffect(PermanentPredicate permanentFilter, int multiplier) implements CardEffect {
 
     public ManaReflectionEffect() {
-        this(2);
+        this(new PermanentTruePredicate(), 2);
+    }
+
+    public ManaReflectionEffect(PermanentPredicate permanentFilter) {
+        this(permanentFilter, 2);
+    }
+
+    public ManaReflectionEffect(int multiplier) {
+        this(new PermanentTruePredicate(), multiplier);
     }
 }

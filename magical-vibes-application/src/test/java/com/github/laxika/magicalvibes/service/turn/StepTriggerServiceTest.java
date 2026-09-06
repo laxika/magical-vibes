@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStep;
@@ -34,6 +37,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerMayDrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -61,7 +66,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -81,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -94,6 +103,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -205,6 +215,25 @@ class StepTriggerServiceTest {
     @Mock
     private AmountEvaluationService amountEvaluationService;
 
+    @Test
+    void drawStepExpiresOnlyActivePlayersPaymentObligations() {
+        Card source = new Card();
+        LoseLifeAtNextDrawStepUnlessPays activeObligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player1Id, 1, 1, source);
+        LoseLifeAtNextDrawStepUnlessPays opponentObligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player2Id, 1, 1, source);
+        gd.queueDelayedAction(activeObligation);
+        gd.queueDelayedAction(opponentObligation);
+
+        sut.handleDrawStepTriggers(gd);
+
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class))
+                .containsExactly(opponentObligation);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private StepTriggerService sut;
 
     private GameData gd;
@@ -218,7 +247,8 @@ class StepTriggerServiceTest {
         // mock would silently return nulls and break them.
         TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(
                 gameQueryService, predicateEvaluationService, targetLegalityService);
-        ValidTargetService validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
+        ValidTargetService validTargetService = new ValidTargetService(
+                gameQueryService, predicateEvaluationService, targetLegalityService, null, null, null);
         sut = new StepTriggerService(
                 drawService,
                 gameQueryService,
@@ -260,6 +290,10 @@ class StepTriggerServiceTest {
         gd.playerHands.put(player2Id, new ArrayList<>());
         gd.playerGraveyards.put(player1Id, new ArrayList<>());
         gd.playerGraveyards.put(player2Id, new ArrayList<>());
+        lenient().when(gameQueryService.getEffectiveGraveyardEffects(
+                        eq(gd), any(Card.class), any(EffectSlot.class)))
+                .thenAnswer(invocation -> ((Card) invocation.getArgument(1))
+                        .getEffects(invocation.getArgument(2)));
     }
 
     @Nested
@@ -440,6 +474,60 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Discard echo cost is carried into the upkeep trigger")
+        void discardEchoCostIsCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Discard Echo");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            DiscardCardTypeCost discardCost = new DiscardCardTypeCost(null, null);
+            gd.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(), discardCost, card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(((PayEchoCost) echo.forcedCost()).handCardCost()).isSameAs(discardCost);
+        }
+
+        @Test
+        @DisplayName("Echo paid effects are carried into the upkeep trigger")
+        void echoPaidEffectsAreCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Echo Payment Trigger");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            EachOtherPlayerMayDrawUpToNCardsEffect paidEffect =
+                    new EachOtherPlayerMayDrawUpToNCardsEffect(3);
+            gd.queueDelayedAction(new EchoAtNextUpkeep(
+                    permanent.getId(), "{0}", List.of(paidEffect), card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(echo.paidEffects()).containsExactly(paidEffect);
+        }
+
+        @Test
+        @DisplayName("Non-mana echo cost is carried into the upkeep trigger")
+        void nonManaEchoCostIsCarriedIntoUpkeepTrigger() {
+            Card card = createCardWithName("Sacrifice Echo");
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+            SacrificeMultiplePermanentsCost sacrificeCost =
+                    new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate());
+            gd.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(), sacrificeCost, card));
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            ForcedCostOrElseEffect echo = (ForcedCostOrElseEffect)
+                    gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(((PayEchoCost) echo.forcedCost()).cost()).isSameAs(sacrificeCost);
+        }
+
+        @Test
         @DisplayName("Unique creature-count leader lets an intervening-if upkeep ability trigger")
         void uniqueCreatureCountLeaderTriggers() {
             Card card = createCardWithName("Wild Mammoth");
@@ -574,6 +662,37 @@ class StepTriggerServiceTest {
 
             // processNextUpkeepPlayerTarget consumes the pending trigger and asks for target selection
             verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Enchanted creature controller chooses an opponent for a control-changing upkeep effect")
+        void enchantedCreatureControllerChoosesControlChangeOpponent() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Custody Battle");
+            card.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+                    new ForcedCostOrElseEffect(
+                            new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
+                            List.of(new TargetPlayerGainsControlOfEnchantedPermanentEffect()), true));
+            Permanent host = new Permanent(createCardWithName("Host Creature"));
+            Permanent aura = new Permanent(card);
+            aura.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player2Id).add(aura);
+
+            when(gameQueryService.findPermanentController(gd, host.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(targetLegalityService.matchesPlayerPredicate(
+                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), eq(aura.getId())))
+                    .thenReturn(true);
+            when(targetLegalityService.matchesPlayerPredicate(
+                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), eq(aura.getId())))
+                    .thenReturn(false);
+
+            sut.handleUpkeepTriggers(gd);
+
+            verify(playerInputService).beginAnyTargetChoice(
+                    eq(gd), eq(player1Id), any(),
+                    argThat((List<UUID> ids) -> ids.equals(List.of(player2Id))), any());
         }
 
         @Test
@@ -1490,6 +1609,25 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Source-counter intervening-if checks the beginning-of-combat threshold")
+        void sourceCounterThresholdInterveningIfChecksThreshold() {
+            Card card = createCardWithName("Counter Combat Card");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new SourceCounterThreshold(2, CounterType.CHARGE), new GainLifeEffect(1)));
+            Permanent permanent = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            permanent.setCounterCount(CounterType.CHARGE, 2);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+        }
+
+        @Test
         @DisplayName("Total-power intervening-if allows beginning-of-combat trigger at threshold")
         void controlledCreaturesTotalPowerInterveningIfAllowsAtThreshold() {
             Card card = createCardWithName("Surrak, the Hunt Caller");
@@ -1571,6 +1709,27 @@ class StepTriggerServiceTest {
     @Nested
     @DisplayName("handleEndStepTriggers")
     class HandleEndStepTriggers {
+
+        @Test
+        void delayedEndStepAbilityRetainsControllerAndAffectedObjectAfterSourceLeaves() {
+            Card source = createCardWithName("Delayed destruction source");
+            UUID sourceId = UUID.randomUUID();
+            UUID affectedId = UUID.randomUUID();
+            gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
+                    player2Id, source, sourceId, affectedId,
+                    new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect()));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourceId);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(affectedId);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.hasDelayedAction(
+                    com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)).isFalse();
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
 
         @Test
         @DisplayName("Permanent with controller end-step effect pushes trigger onto stack")
@@ -1995,7 +2154,7 @@ class StepTriggerServiceTest {
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
                     DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
-                    DelayedPermanentActionKind.EXILE_AT_END_STEP);
+                    DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,
                     DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
             verify(permanentRemovalService).processDelayedPermanentActions(gd,

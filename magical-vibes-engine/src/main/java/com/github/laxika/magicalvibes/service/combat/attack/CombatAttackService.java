@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -54,9 +55,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
+import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -123,11 +124,14 @@ import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -164,6 +168,9 @@ public class CombatAttackService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
+
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
 
     private record AttackerDeclarationPrompt(List<Integer> attackableIndices,
                                              List<Integer> mustAttackIndices,
@@ -532,6 +539,13 @@ public class CombatAttackService {
                     attackable, mustAttack, availableTargets, taxPerCreature, mustAttackWithAtLeastOne);
         });
 
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of());
+        Set<UUID> ableToAttack = prompt.attackableIndices().stream()
+                .filter(index -> index >= 0 && index < battlefield.size())
+                .map(index -> battlefield.get(index).getId())
+                .collect(Collectors.toSet());
+        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(gameData.activePlayerId, ableToAttack);
+
         if (prompt.attackableIndices().isEmpty()) {
             UUID activeId = gameData.activePlayerId;
             String playerName = gameData.playerIdToName.get(activeId);
@@ -601,7 +615,7 @@ public class CombatAttackService {
         validateMatchingCreatureAlsoAttacks(gameData, battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
-        validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
+        validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices, attackTargets);
 
         // Ekundu Cyclops: "if a creature you control attacks, this creature also attacks if able"
         validateAttacksAlongsideOtherCreature(gameData, playerId, attackable, uniqueIndices);
@@ -620,6 +634,11 @@ public class CombatAttackService {
         }
 
         // Empty declaration is always valid — no tax or target validation needed
+        gameData.creaturesAbleToAttackAtDeclareAttackersThisTurn.put(playerId, attackable.stream()
+                .map(battlefield::get)
+                .map(Permanent::getId)
+                .collect(Collectors.toSet()));
+
         if (attackerIndices.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
@@ -719,8 +738,9 @@ public class CombatAttackService {
             }
         }
 
-        // Validate attacking bands (CR 702.22c/d): each band needs >=1 creature with banding and
-        // <=1 without, and all its members must attack the same player or planeswalker.
+        // Validate attacking bands (CR 702.22c/d): ordinary bands need >=1 creature with banding
+        // and <=1 without, while a "bands with other" band needs matching named creatures and at
+        // least one creature with that ability. All members must attack the same target.
         List<Set<Integer>> validatedBands = validateBands(gameData, battlefield, uniqueIndices, resolvedTargets, bands);
 
         // --- All validation passed — commit state changes ---
@@ -740,11 +760,7 @@ public class CombatAttackService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int lifeCost = payPhyrexianAttackTax(pool, phyrexianPayments, attackerIndices.size());
             if (lifeCost > 0) {
-                int lifeLoss = lifeCost
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-                int currentLife = gameData.playerLifeTotals.get(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
-                gameData.lifeLostThisTurn.merge(playerId, lifeLoss, Integer::sum);
+                lifeSupport.applyLifePayment(gameData, playerId, lifeCost, "Phyrexian attack tax");
             }
         }
 
@@ -851,27 +867,6 @@ public class CombatAttackService {
                     }
                 }
 
-                // "Whenever this creature attacks, defending player may draw a card" (Sibilant Spirit).
-                // Route the optional draw to the defending player (or the controller of the attacked
-                // planeswalker), not the attacking creature's controller.
-                List<CardEffect> defendingPlayerDraws = allEffects.stream()
-                        .filter(e -> e instanceof DefendingPlayerMayDrawCardEffect).toList();
-                if (!defendingPlayerDraws.isEmpty()) {
-                    allEffects.removeAll(defendingPlayerDraws);
-                    UUID attackedTargetId = attacker.getAttackTarget();
-                    UUID defendingPlayerId = attackedTargetId == null ? null
-                            : gameData.playerIds.contains(attackedTargetId)
-                                    ? attackedTargetId
-                                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                    if (defendingPlayerId != null) {
-                        for (CardEffect ignored : defendingPlayerDraws) {
-                            gameData.queueMayAbility(attacker.getCard(), defendingPlayerId,
-                                    new MayEffect(new DrawCardEffect(), "Draw a card?"));
-                        }
-                        gameLogService.append(gameData,
-                                GameLog.builder().card(attacker.getCard()).text("'s ability triggers.").build());
-                    }
-                }
 
                 // "Whenever this creature attacks for the first time each turn" (Aurelia, the
                 // Warleader): drop the wrapped effects entirely once this permanent has already
@@ -940,6 +935,13 @@ public class CombatAttackService {
                         && ce.condition() instanceof ControllerCastSpellThisTurn
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof VoidCondition
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof VoidCondition ? ce.wrapped() : e);
 
                 // Filter out renown conditionals when the attacker isn't renowned (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
@@ -1012,8 +1014,20 @@ public class CombatAttackService {
                     for (CardEffect effect : nonTargetingMayEffects) {
                         com.github.laxika.magicalvibes.model.effect.MayEffect may =
                                 (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
-                        gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId(),
-                                attacker.getAttackTarget());
+                        if (may.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER) {
+                            UUID attackedTargetId = attacker.getAttackTarget();
+                            UUID defendingPlayerId = attackedTargetId == null ? null
+                                    : gameData.playerIds.contains(attackedTargetId)
+                                            ? attackedTargetId
+                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                            if (defendingPlayerId != null) {
+                                gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, null,
+                                        attacker.getId(), defendingPlayerId, new Permanent(attacker));
+                            }
+                        } else {
+                            gameData.queueMayAbility(attacker.getCard(), playerId, may, null, attacker.getId(),
+                                    attacker.getAttackTarget());
+                        }
                     }
 
                     if (!otherEffects.isEmpty()) {
@@ -1026,6 +1040,7 @@ public class CombatAttackService {
                                         && choosingEffect.choosesGraveyardCards()
                                         || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                         boolean needsTarget = otherEffects.stream()
+                                .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
                                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                         UUID attackedTargetId = attacker.getAttackTarget();
                         UUID defendingPlayerId = attackedTargetId == null ? null
@@ -1540,22 +1555,24 @@ public class CombatAttackService {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard != null) {
             for (Card card : new ArrayList<>(graveyard)) {
-                List<CardEffect> gyAttackEffects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
+                List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
                 if (gyAttackEffects.isEmpty()) continue;
 
                 for (CardEffect effect : gyAttackEffects) {
                     CardEffect innerEffect = effect;
 
+                    ConditionContext triggerContext = new ConditionContext(playerId, null, null, card,
+                            false, false, false, false, null, attackerIndices.size(), null, null, false);
+                    if (!graveyardAttackConditionsMet(gameData, innerEffect, triggerContext)) {
+                        log.info("Game {} - {} graveyard attack trigger skipped because its condition was not met",
+                                gameData.id, card.getName());
+                        continue;
+                    }
+
                     // Unwrap minimum-attackers conditionals — check minimum before offering the trigger
                     if (innerEffect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers mac) {
-                        ConditionContext ctx = new ConditionContext(playerId, null, null, card,
-                                false, false, false, false, null, attackerIndices.size(), null, null, false);
-                        if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
-                            log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
-                                    gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());
-                            continue;
-                        }
                         innerEffect = ce.wrapped();
                     }
 
@@ -1596,7 +1613,13 @@ public class CombatAttackService {
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
-                for (CardEffect attackedEffect : perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU)) {
+                List<CardEffect> candidateEffects = new ArrayList<>(
+                        perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU));
+                if (gameData.playerIds.contains(attackedTargetId)) {
+                    candidateEffects.addAll(
+                            perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY));
+                }
+                for (CardEffect attackedEffect : candidateEffects) {
                     // Some triggers only fire for attackers matching a condition (e.g. Raking Canopy:
                     // "a creature with flying"). The condition is checked here at declaration time.
                     if (attackedEffect instanceof DealDamageToTriggeringAttackerEffect damageEffect
@@ -1630,7 +1653,7 @@ public class CombatAttackService {
                     gameData.stack.add(attackedTrigger);
                     gameLogService.append(gameData,
                             GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} ON_CREATURE_ATTACKS_YOU trigger for {} attacking",
+                    log.info("Game {} - {} attacked-player trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                 } finally {
                     gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -2164,7 +2187,8 @@ public class CombatAttackService {
 
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,
-                                                    Set<Integer> declaredAttackerIndices) {
+                                                    Set<Integer> declaredAttackerIndices,
+                                                    Map<Integer, UUID> attackTargets) {
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return;
@@ -2179,18 +2203,26 @@ public class CombatAttackService {
                 gameData, playerId, attackableIndices);
         int maxRequirements = 0;
         for (int idx : restrictionValidGroupAttackers) {
-            maxRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
+            maxRequirements += attackLegalityService.getMaximumMustAttackRequirementCount(
+                    gameData, battlefield.get(idx));
         }
         for (int idx : attackableIndices) {
             if (isRestrictionValidSingleton(gameData, battlefield, idx)) {
                 maxRequirements = Math.max(maxRequirements,
-                        attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)));
+                        attackLegalityService.getMaximumMustAttackRequirementCount(
+                                gameData, battlefield.get(idx)));
             }
         }
 
+        UUID defaultTargetId = gameQueryService.getOpponentId(gameData, playerId);
         int satisfiedRequirements = 0;
         for (int idx : declaredAttackerIndices) {
-            satisfiedRequirements += attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx));
+            UUID targetId = attackTargets != null ? attackTargets.get(idx) : null;
+            if (targetId == null) {
+                targetId = defaultTargetId;
+            }
+            satisfiedRequirements += attackLegalityService.getMustAttackRequirementCount(
+                    gameData, battlefield.get(idx), targetId);
         }
 
         if (satisfiedRequirements < maxRequirements) {
@@ -2202,7 +2234,8 @@ public class CombatAttackService {
             }
             for (int idx : restrictionValidAttackers) {
                 if (!declaredAttackerIndices.contains(idx)
-                        && attackLegalityService.getMustAttackRequirementCount(gameData, battlefield.get(idx)) > 0) {
+                        && attackLegalityService.getMaximumMustAttackRequirementCount(
+                        gameData, battlefield.get(idx)) > 0) {
                     throw new IllegalStateException("Creature at index " + idx + " must attack this combat");
                 }
             }
@@ -2261,7 +2294,8 @@ public class CombatAttackService {
             Permanent creature = battlefield.get(idx);
             boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
-            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)) {
+            if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
+                    && !canOnlyAttackAlone(gameData, creature)) {
                 throw new IllegalStateException(creature.getCard().getName()
                         + " must also attack when another creature you control attacks");
             }
@@ -2437,7 +2471,7 @@ public class CombatAttackService {
 
     /**
      * Validates the declared attacking bands (CR 702.22c/d) and returns them as index sets ready to
-     * stamp with band ids. Each band must: contain at least two declared attackers, include at least
+     * stamp with band ids. Each band must: contain at least one declared attacker, include at least
      * one creature with banding and at most one without, keep every member attacking the same target,
      * and not share a creature with another band. Returns an empty list when no bands are declared.
      */
@@ -2455,9 +2489,6 @@ public class CombatAttackService {
                 continue;
             }
             Set<Integer> members = new LinkedHashSet<>(band);
-            if (members.size() < 2) {
-                throw new IllegalStateException("A band must contain at least two creatures");
-            }
             int withBanding = 0;
             int withoutBanding = 0;
             UUID sharedTarget = null;
@@ -2484,9 +2515,13 @@ public class CombatAttackService {
                 }
             }
             if (withBanding < 1) {
-                throw new IllegalStateException("A band must contain at least one creature with banding");
+                List<Permanent> bandPermanents = members.stream().map(battlefield::get).toList();
+                if (!gameQueryService.canUseBandsWithOther(gameData, bandPermanents)) {
+                    throw new IllegalStateException("A band must contain at least one creature with banding");
+                }
             }
-            if (withoutBanding > 1) {
+            if (withoutBanding > 1 && !gameQueryService.canUseBandsWithOther(
+                    gameData, members.stream().map(battlefield::get).toList())) {
                 throw new IllegalStateException("A band can contain at most one creature without banding");
             }
             result.add(members);
@@ -2593,6 +2628,15 @@ public class CombatAttackService {
             }
         }
         return lifeCost;
+    }
+
+    private boolean graveyardAttackConditionsMet(
+            GameData gameData, CardEffect effect, ConditionContext context) {
+        if (!(effect instanceof ConditionalEffect conditional)) {
+            return true;
+        }
+        return conditionEvaluationService.isMet(gameData, conditional.condition(), context)
+                && graveyardAttackConditionsMet(gameData, conditional.wrapped(), context);
     }
 
     /**

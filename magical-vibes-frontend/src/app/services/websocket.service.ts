@@ -215,7 +215,7 @@ export interface Card {
   modalOptional: boolean;
   modalModesMayRepeat?: boolean;
   modalOptions: ModalOptionView[] | null;
-  /** Additional counters to remove when casting this card from exile. */
+  /** Additional counters to remove when casting this card from a non-hand zone. */
   exileCastCounterCost: number;
   /** A mandatory creature-type choice made as an additional cast cost. */
   additionalChooseCreatureType?: boolean;

@@ -42,6 +42,6 @@ public class HydaelynTheMothercrystal extends Card {
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
-                                new DrawCardEffect()));
+                                new DrawCardEffect(), false));
     }
 }

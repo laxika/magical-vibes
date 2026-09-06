@@ -23,8 +23,7 @@ class ShrinkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shrink()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(-5);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
@@ -37,8 +36,7 @@ class ShrinkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shrink()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(-5);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
@@ -51,8 +49,7 @@ class ShrinkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shrink()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -60,6 +57,22 @@ class ShrinkTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Shrink fizzles if its target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        Permanent bear = addCreatureReady(player1, new SpectralBears());
+        harness.setHand(player1, List.of(new Shrink()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test

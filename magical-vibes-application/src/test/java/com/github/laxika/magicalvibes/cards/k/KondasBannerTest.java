@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Goblin shares only the color, Samite Healer only the creature type, Balduvian
  * Barbarians both, and Grizzly Bears neither.
  */
+@CardUsed({KondasBanner.class, KamahlPitFighter.class, BalduvianBarbarians.class, GrizzlyBears.class,
+        RagingGoblin.class, SamiteHealer.class})
 class KondasBannerTest extends BaseCardTest {
 
     @Test

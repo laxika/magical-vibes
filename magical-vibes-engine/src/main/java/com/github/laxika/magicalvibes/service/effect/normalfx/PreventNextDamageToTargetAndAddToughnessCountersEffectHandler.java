@@ -35,6 +35,8 @@ public class PreventNextDamageToTargetAndAddToughnessCountersEffectHandler imple
         if (target != null) {
             target.setDamageToCounterPreventionShield(
                     target.getDamageToCounterPreventionShield() + prevent.amount());
+            gameData.registerSacredBoonShield(
+                    target.getId(), entry.getControllerId(), entry.getCard(), prevent.amount());
             gameLogService.append(gameData, GameLog.builder()
                     .text("The next " + prevent.amount() + " damage that would be dealt to ")
                     .card(target.getCard())

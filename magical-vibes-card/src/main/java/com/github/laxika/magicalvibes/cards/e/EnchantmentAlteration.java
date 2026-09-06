@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPerm
 
 @CardRegistration(set = "CHR", collectorNumber = "19")
 @CardRegistration(set = "USG", collectorNumber = "72")
+@CardRegistration(set = "LEG", collectorNumber = "53")
 public class EnchantmentAlteration extends Card {
 
     public EnchantmentAlteration() {

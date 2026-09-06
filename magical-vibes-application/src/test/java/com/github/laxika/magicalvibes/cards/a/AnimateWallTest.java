@@ -26,9 +26,6 @@ class AnimateWallTest extends BaseCardTest {
         aura.setAttachedTo(wall.getId());
         return aura;
     }
-
-    // ===== Attacking despite defender =====
-
     @Test
     @DisplayName("Enchanted Wall can attack as though it didn't have defender")
     void enchantedWallCanAttack() {
@@ -38,6 +35,22 @@ class AnimateWallTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
+        declareAttackers(List.of(wallIndex));
+
+        assertThat(wall.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolved Animate Wall lets the enchanted Wall attack")
+    void resolvedAnimateWallLetsWallAttack() {
+        Permanent wall = addWall();
+        harness.setHand(player1, List.of(new AnimateWall()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, wall.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
         declareAttackers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
@@ -66,9 +79,6 @@ class AnimateWallTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
-
-    // ===== Targeting restriction (Enchant Wall) =====
-
     @Test
     @DisplayName("Can enchant a Wall")
     void canEnchantWall() {
@@ -86,13 +96,45 @@ class AnimateWallTest extends BaseCardTest {
     void cannotEnchantNonWall() {
         // A legal Wall target exists (so the Aura is playable), but we aim at the non-Wall.
         addWall();
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new AnimateWall()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Wall");
+    }
+
+    @Test
+    void canEnchantOpponentsWall() {
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
+        harness.setHand(player1, List.of(new AnimateWall()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, wall.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void resolvingAnimateWallAttachesToTargetedWall() {
+        Permanent wall = addWall();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AnimateWall()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, wall.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof AnimateWall)
+                .findFirst()
+                .orElseThrow();
+        assertThat(aura.getAttachedTo()).isEqualTo(wall.getId());
+
+        int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
+        declareAttackers(List.of(wallIndex));
+
+        assertThat(wall.isAttacking()).isTrue();
     }
 }

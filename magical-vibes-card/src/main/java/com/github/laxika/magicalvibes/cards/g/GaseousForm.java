@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "5ED", collectorNumber = "90")
 @CardRegistration(set = "4ED", collectorNumber = "74")
 @CardRegistration(set = "BTD", collectorNumber = "8")
+@CardRegistration(set = "LEG", collectorNumber = "59")
 public class GaseousForm extends Card {
 
     public GaseousForm() {

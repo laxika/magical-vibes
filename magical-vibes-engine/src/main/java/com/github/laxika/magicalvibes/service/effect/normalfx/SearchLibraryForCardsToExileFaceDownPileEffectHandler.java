@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileF
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -56,6 +57,7 @@ public class SearchLibraryForCardsToExileFaceDownPileEffectHandler implements No
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
+            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
@@ -65,11 +67,11 @@ public class SearchLibraryForCardsToExileFaceDownPileEffectHandler implements No
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                 LibrarySearchParams.builder(controllerId, new ArrayList<>(deck))
                         .remainingCount(picks)
-                        .canFailToFind(true)
+                        .canFailToFind(false)
                         .destination(LibrarySearchDestination.EXILE_FACE_DOWN_PILE)
                         .sourcePermanentId(sourcePermanentId)
                         .build(),
-                "Search your library for a card to exile in the face-down pile (" + picks + " remaining).", true);
+                "Search your library for a card to exile in the face-down pile (" + picks + " remaining).", false);
 
         log.info("Game {} - {} searches library for {} cards to exile in a face-down pile",
                 gameData.id, playerName, picks);
@@ -77,8 +79,7 @@ public class SearchLibraryForCardsToExileFaceDownPileEffectHandler implements No
 
     private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry, UUID controllerId) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId != null
-                && gameQueryService.findPermanentById(gameData, sourcePermanentId) != null) {
+        if (sourcePermanentId != null) {
             return sourcePermanentId;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);

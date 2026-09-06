@@ -91,10 +91,38 @@ class SerraPaladinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Vigilance ability cannot target a creature with protection from white")
+    void vigilanceCannotTargetProtectionFromWhite() {
+        Permanent paladin = addPaladinReady();
+        Permanent shade = addCreatureReady(player2, new IhsansShade());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, shade.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(paladin.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Vigilance ability grants vigilance to target creature")
     void grantsVigilance() {
         Permanent paladin = addPaladinReady();
         Permanent reveka = addCreatureReady(player1, new RevekaWizardSavant());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, reveka.getId());
+        harness.passBothPriorities();
+
+        assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(paladin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance ability can target an opponent's creature")
+    void grantsVigilanceToOpponentsCreature() {
+        Permanent paladin = addPaladinReady();
+        Permanent reveka = addCreatureReady(player2, new RevekaWizardSavant());
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(GorillaChieftain.class)
 class GorillaChieftainTest extends BaseCardTest {
 
     @Test
@@ -24,6 +27,16 @@ class GorillaChieftainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot activate regeneration without enough mana")
+    void cannotActivateWithoutEnoughMana() {
+        addCreatureReady(player1, new GorillaChieftain());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Regeneration shield saves Gorilla Chieftain from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
         Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
@@ -31,10 +44,8 @@ class GorillaChieftainTest extends BaseCardTest {
         chieftain.setBlocking(true);
         chieftain.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new com.github.laxika.magicalvibes.cards.h.HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
@@ -53,10 +64,8 @@ class GorillaChieftainTest extends BaseCardTest {
         chieftain.setBlocking(true);
         chieftain.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new com.github.laxika.magicalvibes.cards.h.HillGiant());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);

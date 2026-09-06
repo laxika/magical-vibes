@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import java.util.UUID;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Sealed hierarchy of trigger event contexts.
@@ -83,6 +85,9 @@ public sealed interface TriggerContext {
     /** Context for a discard event containing one or more cards. */
     record DiscardEvent(UUID discardingPlayerId, int discardedCount) implements TriggerContext {}
 
+    /** Context for cycling triggers. */
+    record Cycle(UUID cyclingPlayerId, Card cycledCard) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
@@ -107,7 +112,16 @@ public sealed interface TriggerContext {
     /**
      * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
      */
-    record LandTap(UUID tappingPlayerId, UUID tappedLandId) implements TriggerContext {}
+    record LandTap(UUID tappingPlayerId, UUID tappedLandId, Set<ManaColor> producedColors)
+            implements TriggerContext {
+        public LandTap(UUID tappingPlayerId, UUID tappedLandId) {
+            this(tappingPlayerId, tappedLandId, Set.of());
+        }
+
+        public LandTap {
+            producedColors = Set.copyOf(producedColors);
+        }
+    }
 
     /**
      * Context for controller-scoped creature-mana triggers
@@ -156,7 +170,12 @@ public sealed interface TriggerContext {
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
      */
-    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) implements TriggerContext {}
+    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
+                            Card sourceCard, UUID sourcePermanentId) implements TriggerContext {
+        public DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
+            this(damagedCreature, damageDealt, damageSourceControllerId, null, null);
+        }
+    }
 
     record OpponentPermanentDealtExcessDamage(Permanent damagedPermanent,
                                               UUID damagedPermanentControllerId,
@@ -264,7 +283,7 @@ public sealed interface TriggerContext {
     record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
                            int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
 
-    /** Context for "whenever this creature or another creature you control is turned face up" triggers. */
+    /** Context for triggers watching a permanent being turned face up. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}
 
     /** Context for a permanent controlled by a player transforming. */
@@ -395,12 +414,14 @@ public sealed interface TriggerContext {
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
-                                   int dyingCreatureToughness, boolean wasCreature) implements TriggerContext {
+                                   int dyingCreatureToughness, boolean wasCreature,
+                                   List<UUID> dyingPermanentCardIds) implements TriggerContext {
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
             this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId,
-                    dyingCreaturePower, dyingCreatureToughness, true);
+                    dyingCreaturePower, dyingCreatureToughness, true,
+                    dyingCreatureCardId == null ? List.of() : List.of(dyingCreatureCardId));
         }
 
         @Override
@@ -491,7 +512,14 @@ public sealed interface TriggerContext {
      * @param graveyardOwnerId   the owner of the graveyard the card was put into
      */
     record AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
-                                 UUID graveyardOwnerId) implements TriggerContext {}
+                                 UUID graveyardOwnerId, Permanent dyingPermanent,
+                                 int dyingPower, int dyingToughness) implements TriggerContext {
+        public AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId, UUID graveyardOwnerId) {
+            this(dyingCard, dyingControllerId, graveyardOwnerId, null,
+                    dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0,
+                    dyingCard != null && dyingCard.getToughness() != null ? dyingCard.getToughness() : 0);
+        }
+    }
 
     /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
@@ -598,14 +626,21 @@ public sealed interface TriggerContext {
      * this event (already summed across every simultaneous target).
      */
     record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
-                             int totalDamage, Map<UUID, Integer> damageToPlayers) implements TriggerContext {
+                             int totalDamage, Map<UUID, Integer> damageToPlayers,
+                             UUID singleCreatureSpellTargetId,
+                             Map<UUID, Integer> damageToPermanents) implements TriggerContext {
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
-            this(sourceCard, sourceControllerId, null, totalDamage, Map.of());
+            this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of());
         }
 
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage,
                                  Map<UUID, Integer> damageToPlayers) {
-            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers);
+            this(sourceCard, sourceControllerId, null, totalDamage, damageToPlayers, null, Map.of());
+        }
+
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                                 int totalDamage, Map<UUID, Integer> damageToPlayers) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null, Map.of());
         }
     }
 

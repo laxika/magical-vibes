@@ -35,9 +35,8 @@ class SavannahTest extends BaseCardTest {
     }
 
     private Permanent addSavannahReady() {
-        Permanent savannah = new Permanent(new Savannah());
+        Permanent savannah = harness.addToBattlefieldAndReturn(player1, new Savannah());
         savannah.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(savannah);
         return savannah;
     }
 }

@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingConnive;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +19,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBean {
 
-    private final DrawService drawService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,14 +42,20 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        drawService.resolveDrawCard(gameData, controllerId);
+        Permanent source = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        int amount = Math.max(0, amountEvaluationService.evaluate(gameData, e.amount(),
+                AmountContext.forStackEntry(entry, source)));
+
+        playerInteractionSupport.applyDrawCards(gameData, controllerId, amount);
         gameData.pendingConnive = null;
         List<Card> hand = gameData.playerHands.get(controllerId);
-        if (sourcePermanentId != null && hand != null && !hand.isEmpty()) {
-            gameData.pendingConnive = new PendingConnive(sourcePermanentId);
+        int discardAmount = Math.min(amount, hand == null ? 0 : hand.size());
+        if (sourcePermanentId != null && discardAmount > 0) {
+            gameData.pendingConnive = new PendingConnive(sourcePermanentId, discardAmount);
         }
 
         gameData.discardCausedByOpponent = false;
-        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, 1);
+        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, discardAmount);
     }
 }

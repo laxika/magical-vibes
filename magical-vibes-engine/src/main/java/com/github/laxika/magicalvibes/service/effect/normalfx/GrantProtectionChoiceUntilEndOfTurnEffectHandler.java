@@ -42,12 +42,8 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .toList();
-        // With no qualifying permanents there is nothing the colour choice could apply to.
-        if (targets.isEmpty()) {
-            return;
-        }
-
         UUID choosingPlayerId = e.targetControllerChooses()
+                && !targets.isEmpty()
                 ? gameQueryService.findPermanentController(gameData, targets.getFirst().getId())
                 : entry.getControllerId();
         if (choosingPlayerId == null) {

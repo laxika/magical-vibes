@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.action.DestroyNonAttackersAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.NoDefenderAttackPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
@@ -220,6 +222,12 @@ public class AttackLegalityService {
             return false;
         }
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+        if (targetIsPlayer
+                && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
+                && gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance))) {
+            return false;
+        }
         // The protected player is the attacked player, or the controller of the attacked planeswalker.
         UUID protectedPlayerId = targetIsPlayer ? targetId
                 : gameQueryService.findPermanentController(gameData, targetId);
@@ -327,6 +335,9 @@ public class AttackLegalityService {
         boolean[] restricted = {false};
         UUID creatureController = gameData.findControllerOf(creature);
         gameData.forEachPermanent((playerId, permanent) -> {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                return;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
                     if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
@@ -432,6 +443,10 @@ public class AttackLegalityService {
         }
 
         UUID creatureControllerId = gameData.findControllerOf(creature);
+        if (gameData.getDelayedActions(DestroyNonAttackersAtEndStep.class).stream()
+                .anyMatch(action -> action.playerId().equals(creatureControllerId))) {
+            count[0]++;
+        }
 
         List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, creature).grantedEffects();
         if (grantedEffects.stream().anyMatch(MustAttackPlayerEffect.class::isInstance)) {
@@ -501,8 +516,8 @@ public class AttackLegalityService {
             count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(CombatAttackRequirementEffect.class::isInstance)
                     .map(CombatAttackRequirementEffect.class::cast)
-                    .filter(e -> predicateEvaluationService.matchesPermanentPredicate(
-                            creature, e.affectedPredicate(), matcherContext))
+                    .filter(e -> isCombatAttackRequirementApplicable(
+                            gameData, creature, permanent, e, matcherContext))
                     .count();
         });
 
@@ -516,6 +531,81 @@ public class AttackLegalityService {
         }
 
         return count[0];
+    }
+
+    /**
+     * Returns the number of attack requirements this creature can satisfy while attacking the
+     * given target. Requirements without a specified target are satisfied by any legal target.
+     */
+    public int getMustAttackRequirementCount(GameData gameData, Permanent creature, UUID targetId) {
+        int count = getMustAttackRequirementCount(gameData, creature);
+        List<UUID> requiredTargetIds = getRequiredAttackTargetIds(gameData, creature);
+        count -= requiredTargetIds.size();
+        if (targetId != null) {
+            count += (int) requiredTargetIds.stream().filter(targetId::equals).count();
+        }
+        return count;
+    }
+
+    /**
+     * Returns the greatest number of attack requirements this creature can satisfy with one legal
+     * attack target.
+     */
+    public int getMaximumMustAttackRequirementCount(GameData gameData, Permanent creature) {
+        UUID controllerId = gameData.findControllerOf(creature);
+        if (controllerId == null) {
+            return 0;
+        }
+        int maximum = 0;
+        for (UUID targetId : getValidAttackTargetIds(gameData, controllerId)) {
+            maximum = Math.max(maximum, getMustAttackRequirementCount(gameData, creature, targetId));
+        }
+        return maximum;
+    }
+
+    /**
+     * Returns the legal specific attack targets required by matching static combat requirements.
+     * A target is omitted when the requirement is inactive or the creature cannot attack it.
+     */
+    public List<UUID> getRequiredAttackTargetIds(GameData gameData, Permanent creature) {
+        List<UUID> targetIds = new ArrayList<>();
+        gameData.forEachPermanent((sourceControllerId, sourcePermanent) -> {
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(sourcePermanent.getOriginalCard().getId())
+                    .withSourceControllerId(sourceControllerId);
+            for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof CombatAttackRequirementEffect requirement)
+                        || !isCombatAttackRequirementApplicable(
+                        gameData, creature, sourcePermanent, requirement, context)) {
+                    continue;
+                }
+                UUID targetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
+                if (targetId != null) {
+                    targetIds.add(targetId);
+                }
+            }
+        });
+        return targetIds;
+    }
+
+    private boolean isCombatAttackRequirementApplicable(GameData gameData, Permanent creature,
+                                                         Permanent sourcePermanent,
+                                                         CombatAttackRequirementEffect requirement,
+                                                         FilterContext context) {
+        if (!requirement.isActive(gameData, sourcePermanent)
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                creature, requirement.affectedPredicate(), context)) {
+            return false;
+        }
+        UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
+        return requiredTargetId == null || canAttackRequiredTarget(gameData, creature, requiredTargetId);
+    }
+
+    private boolean canAttackRequiredTarget(GameData gameData, Permanent creature, UUID targetId) {
+        UUID creatureControllerId = gameData.findControllerOf(creature);
+        return creatureControllerId != null
+                && getValidAttackTargetIds(gameData, creatureControllerId).contains(targetId)
+                && canAttackDefender(gameData, creature, targetId);
     }
 
     /**

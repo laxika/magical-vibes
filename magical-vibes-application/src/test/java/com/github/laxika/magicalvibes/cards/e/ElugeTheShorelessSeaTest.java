@@ -36,6 +36,7 @@ class ElugeTheShorelessSeaTest extends BaseCardTest {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new ElugeTheShorelessSea()));
         harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0, 0, mountain.getId());
         harness.passBothPriorities();
@@ -58,6 +59,7 @@ class ElugeTheShorelessSeaTest extends BaseCardTest {
         addCreatureReady(player1, new ElugeTheShorelessSea());
 
         declareAttackers(player1, List.of(1));
+        harness.handlePermanentChosen(player1, island.getId());
         resolveAllTriggers();
 
         assertThat(island.getCounterCount(CounterType.FLOOD)).isEqualTo(1);

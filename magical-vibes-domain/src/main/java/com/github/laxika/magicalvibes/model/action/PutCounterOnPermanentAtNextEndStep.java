@@ -9,4 +9,9 @@ import java.util.UUID;
 public record PutCounterOnPermanentAtNextEndStep(
         Card sourceCard, UUID controllerId, UUID permanentId, PutCounterOnTargetPermanentEffect effect)
         implements DelayedAction {
+
+    public PutCounterOnPermanentAtNextEndStep(UUID permanentId, UUID controllerId,
+            com.github.laxika.magicalvibes.model.CounterType counterType, int amount, Card sourceCard) {
+        this(sourceCard, controllerId, permanentId, new PutCounterOnTargetPermanentEffect(counterType, amount));
+    }
 }

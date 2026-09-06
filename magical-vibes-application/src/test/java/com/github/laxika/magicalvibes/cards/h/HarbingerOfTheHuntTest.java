@@ -38,7 +38,7 @@ class HarbingerOfTheHuntTest extends BaseCardTest {
         Permanent airElemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.activateAbility(player1, 0, 1, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(airElemental.getMarkedDamage()).isEqualTo(1);

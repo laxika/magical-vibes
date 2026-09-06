@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.List;
+import java.util.Collections;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,12 +28,15 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        var copyEffect = (CreateTokenCopyOfEnchantedPermanentEffect) effect;
+        UUID auraPermanentId = copyEffect.auraPermanentId() != null
+                ? copyEffect.auraPermanentId() : entry.getSourcePermanentId();
+        Permanent aura = gameQueryService.findPermanentById(gameData, auraPermanentId);
         Permanent enchanted = null;
 
         if (aura != null && aura.getAttachedTo() != null) {
             enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        } else if (aura == null) {
+        } else if (aura == null && copyEffect.auraPermanentId() == null) {
             Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
             if (auraSnapshot != null && auraSnapshot.getAttachedTo() != null) {
                 enchanted = gameQueryService.findPermanentById(gameData, auraSnapshot.getAttachedTo());
@@ -45,9 +50,13 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
             log.info("Game {} - Enchanted permanent is no longer available, no token created", gameData.id);
             return;
         }
+        if (copyEffect.amount() <= 0) {
+            return;
+        }
 
-        tokenCopySupport.createTokenCopies(
-                gameData, entry, List.of(enchanted.getCard()), enchanted,
-                entry.getControllerId(), ((CreateTokenCopyOfEnchantedPermanentEffect) effect).copyEffect());
+        Card sourceCard = enchanted.getCard();
+        tokenCopySupport.createTokenCopies(gameData, entry,
+                Collections.nCopies(copyEffect.amount(), sourceCard), enchanted,
+                copyEffect.copyEffect());
     }
 }

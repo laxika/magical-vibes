@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SylvanLibraryDrawEffect;
-import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link SylvanLibraryDrawEffect}: the controller draws two additional cards, then (via
+ * Resolves {@link SylvanLibraryDrawEffect}: after the additional draws, the controller (via
  * {@link PendingInteraction.SylvanLibraryChoice}) chooses two cards in their hand drawn this turn;
  * for each they pay 4 life or put it on top of their library.
  */
@@ -27,8 +24,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SylvanLibraryDrawEffectHandler implements NormalEffectHandlerBean {
 
-    private final DrawService drawService;
-    private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -41,12 +36,6 @@ public class SylvanLibraryDrawEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
-
-        // Draw two additional cards.
-        drawService.resolveDrawCard(gameData, controllerId);
-        drawService.resolveDrawCard(gameData, controllerId);
-        gameLogService.append(gameData,
-                GameLog.text(controllerName + " draws two additional cards (" + sourceName + ")."));
 
         // Determine which cards still in hand were drawn this turn (hand order preserved).
         List<UUID> drawnThisTurn = gameData.cardsDrawnThisTurnIds.getOrDefault(controllerId, List.of());

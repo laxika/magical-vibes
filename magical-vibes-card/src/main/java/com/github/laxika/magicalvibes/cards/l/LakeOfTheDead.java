@@ -38,7 +38,8 @@ public class LakeOfTheDead extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
-                                "Sacrifice a Swamp"),
+                                "Sacrifice a Swamp",
+                                false),
                         new AwardManaEffect(ManaColor.BLACK),
                         new AwardManaEffect(ManaColor.BLACK),
                         new AwardManaEffect(ManaColor.BLACK),

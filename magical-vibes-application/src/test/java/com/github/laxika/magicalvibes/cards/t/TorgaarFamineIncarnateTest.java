@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +13,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TorgaarFamineIncarnate.class, TolarianScholar.class, Forest.class})
 class TorgaarFamineIncarnateTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Cast with full mana cost (no sacrifices), ETB sets opponent life to 10")
@@ -34,7 +35,7 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
     @DisplayName("Cast with sacrifice reduces mana cost by 2 per creature")
     void castWithSacrificeReducesCost() {
         // Add a creature to battlefield to sacrifice
-        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.t.TolarianScholar());
+        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
 
         harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
         // {6}{B}{B} minus 2 for sacrificing 1 creature = {4}{B}{B}
@@ -53,9 +54,9 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
     @Test
     @DisplayName("Cast with multiple sacrifices reduces cost further")
     void castWithMultipleSacrificesReducesCostFurther() {
-        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.t.TolarianScholar());
-        Permanent creature2 = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.t.TolarianScholar());
-        Permanent creature3 = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.t.TolarianScholar());
+        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Permanent creature2 = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
+        Permanent creature3 = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
 
         harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
         // {6}{B}{B} minus 6 for sacrificing 3 creatures = {B}{B}
@@ -126,7 +127,7 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
     @DisplayName("Cannot sacrifice non-creatures for cost reduction")
     void cannotSacrificeNonCreatures() {
         // Add a non-creature permanent (land)
-        com.github.laxika.magicalvibes.cards.f.Forest forest = new com.github.laxika.magicalvibes.cards.f.Forest();
+        Forest forest = new Forest();
         Permanent land = new Permanent(forest);
         gd.playerBattlefields.get(player1.getId()).add(land);
 
@@ -137,13 +138,13 @@ class TorgaarFamineIncarnateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreatureWithSacrificeForReduction(
                 player1, 0, player2.getId(), List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Can only sacrifice creatures");
+                .hasMessageContaining("not eligible to reduce this spell's cost");
     }
 
     @Test
     @DisplayName("Sacrificed creatures go to graveyard")
     void sacrificedCreaturesGoToGraveyard() {
-        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.t.TolarianScholar());
+        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new TolarianScholar());
 
         harness.setHand(player1, List.of(new TorgaarFamineIncarnate()));
         harness.addMana(player1, ManaColor.BLACK, 2);

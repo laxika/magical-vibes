@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "72")
+@CardRegistration(set = "FUT", collectorNumber = "149")
 public class PhosphorescentFeast extends Card {
 
     public PhosphorescentFeast() {

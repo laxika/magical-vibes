@@ -66,8 +66,9 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
                 target.getTransientColors().add(color);
             }
             target.setColorOverridden(true);
+            SetTargetColorEffect resolvedEffect = new SetTargetColorEffect(color, e.spellOnly(), false);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(), e,
+                    entry.getCard().getName(), null, entry.getControllerId(), resolvedEffect,
                     target.getId(), null, null, EffectDuration.PERMANENT, 0));
 
             

@@ -40,7 +40,8 @@ class AnafenzaKinTreeSpiritTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AnafenzaKinTreeSpirit());
 
         harness.setHand(player1, List.of(new MassProduction()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 

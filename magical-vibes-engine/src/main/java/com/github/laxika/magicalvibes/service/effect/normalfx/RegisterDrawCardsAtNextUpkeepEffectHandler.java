@@ -37,7 +37,8 @@ public class RegisterDrawCardsAtNextUpkeepEffectHandler implements NormalEffectH
         if (drawerId == null) {
             return;
         }
-        gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(drawerId, e.count(), entry.getCard(), e.upTo()));
+        gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(drawerId, e.count(), entry.getCard(), e.upTo(),
+                gameData.turnNumber, gameData.activePlayerId));
 
         String playerName = gameData.playerIdToName.get(drawerId);
         log.info("Game {} - {} registers delayed draw of {} at next upkeep", gameData.id, playerName, e.count());

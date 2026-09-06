@@ -21,12 +21,12 @@ public class SpoilsOfWar extends Card {
         // this spell. Distribute X +1/+1 counters among any number of target creatures.
         // The total is evaluated at cast time and the division is announced then, riding on the
         // stack entry's assignment map (the counter analogue of Jaws of Stone).
-        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
+        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new CardsInGraveyard(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE))),
-                        CountScope.OPPONENTS)));
+                        CountScope.OPPONENTS), null));
     }
 }

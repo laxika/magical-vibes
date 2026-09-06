@@ -5,15 +5,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(VampireBats.class)
 class VampireBatsTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Ability can be activated twice in one turn")
@@ -26,8 +26,8 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bats.getEffectivePower()).isEqualTo(2);
-        assertThat(bats.getEffectiveToughness()).isEqualTo(1);
+        assertThat(bats.getPowerModifier()).isEqualTo(2);
+        assertThat(bats.getToughnessModifier()).isZero();
     }
 
     @Test
@@ -69,11 +69,51 @@ class VampireBatsTest extends BaseCardTest {
         assertThat(harness.getGameData().stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Activation requires black mana")
+    void activationRequiresBlackMana() {
+        Permanent bats = addReadyVampireBats(player1);
+        int powerModifierBefore = bats.getPowerModifier();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bats.getPowerModifier()).isEqualTo(powerModifierBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while summoning sick")
+    void canActivateWhileSummoningSick() {
+        Permanent bats = harness.addToBattlefieldAndReturn(player1, new VampireBats());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Boost expires at the end of the turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent bats = addReadyVampireBats(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isZero();
+    }
+
     private Permanent addReadyVampireBats(Player player) {
-        VampireBats card = new VampireBats();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new VampireBats());
     }
 }

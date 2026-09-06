@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -60,6 +61,12 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
         // (e.g. "if it was a Gideon planeswalker") BEFORE it leaves the battlefield.
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
+        int statValue = switch (e.stat()) {
+            case NONE, BASIC_LAND_SEARCH_COUNT -> 0;
+            case MANA_VALUE -> target.getCard().getManaValue();
+            case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
+            case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
+        };
         boolean runThen = e.thenCondition() == null
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
 
@@ -83,6 +90,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
                 };
                 StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
                         entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
+                thenEntry.setEventValue(statValue);
                 thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
                 EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());

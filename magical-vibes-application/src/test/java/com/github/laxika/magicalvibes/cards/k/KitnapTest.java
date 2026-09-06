@@ -59,6 +59,6 @@ class KitnapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Kitnap()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castInstantWithGift(player1, 0, target.getId(), giftPromised);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

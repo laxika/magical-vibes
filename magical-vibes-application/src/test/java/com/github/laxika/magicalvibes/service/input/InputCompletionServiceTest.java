@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.event.GameEventKind;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.DrawService;
+import org.springframework.test.util.ReflectionTestUtils;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.event.GameEventDispatcher;
 import com.github.laxika.magicalvibes.service.event.GameEventSubscriber;
@@ -43,6 +45,24 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class InputCompletionServiceTest {
+
+    @Test
+    void resumesPendingDrawsBeforeTriggerChoicesAndPriority() {
+        DrawService drawService = mock(DrawService.class);
+        ReflectionTestUtils.setField(service, "drawService", drawService);
+        gameData.pendingCardDraws.add(playerId);
+        doAnswer(invocation -> {
+            gameData.pendingCardDraws.clear();
+            return null;
+        }).when(drawService).resumePendingCardDraws(gameData);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        InOrder order = inOrder(drawService, playerInputService, turnProgressionService);
+        order.verify(drawService).resumePendingCardDraws(gameData);
+        order.verify(playerInputService).processNextMayAbility(gameData);
+        order.verify(turnProgressionService).resolveAutoPass(gameData);
+    }
 
     @Mock private PlayerInputService playerInputService;
     @Mock private TurnProgressionService turnProgressionService;

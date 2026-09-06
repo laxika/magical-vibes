@@ -1,6 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record SacrificeSelfEffect() implements CombatDamageTriggerContextEffect {
+/**
+ * Sacrifices the stack entry's source permanent. The default form requires the ability's
+ * controller to still control that permanent; the flagged form instructs its current controller
+ * to sacrifice it instead.
+ */
+public record SacrificeSelfEffect(boolean currentControllerSacrifices)
+        implements CombatDamageTriggerContextEffect {
+
+    public SacrificeSelfEffect() {
+        this(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

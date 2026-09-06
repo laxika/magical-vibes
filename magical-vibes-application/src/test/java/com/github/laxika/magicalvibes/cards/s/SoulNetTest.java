@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.Earthquake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoulNet.class, GrizzlyBears.class, Terror.class, Earthquake.class, Shatter.class, SolRing.class})
 class SoulNetTest extends BaseCardTest {
 
     @Test
@@ -22,14 +26,14 @@ class SoulNetTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        // Kill the opponent's creature with Shock.
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1); // to pay {1}
+        // Destroy the opponent's creature with Terror.
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2); // to pay {1} after casting Terror
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger placed
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.passBothPriorities(); // Resolve Terror; bears die; death trigger placed
         harness.passBothPriorities(); // Resolve Soul Net trigger → may-pay prompt
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -47,12 +51,12 @@ class SoulNetTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -68,12 +72,13 @@ class SoulNetTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         // No spare mana to pay {1}.
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -94,11 +99,12 @@ class SoulNetTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
+        harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -108,5 +114,53 @@ class SoulNetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void simultaneousCreatureDeathsTriggerSeparately() {
+        harness.addToBattlefield(player1, new SoulNet());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new Earthquake()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void noncreatureArtifactDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SoulNet());
+        var ring = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setLife(player1, 20);
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, ring.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof SolRing);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof SolRing);
     }
 }

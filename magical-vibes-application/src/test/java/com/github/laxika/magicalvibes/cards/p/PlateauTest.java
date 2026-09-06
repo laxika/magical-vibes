@@ -15,7 +15,7 @@ class PlateauTest extends BaseCardTest {
     @Test
     @DisplayName("Plateau produces red mana")
     void producesRedMana() {
-        Permanent plateau = addPlateauReady();
+        Permanent plateau = addCreatureReady(player1, new Plateau());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -26,7 +26,7 @@ class PlateauTest extends BaseCardTest {
     @Test
     @DisplayName("Plateau produces white mana")
     void producesWhiteMana() {
-        Permanent plateau = addPlateauReady();
+        Permanent plateau = addCreatureReady(player1, new Plateau());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -34,10 +34,4 @@ class PlateauTest extends BaseCardTest {
         assertThat(plateau.isTapped()).isTrue();
     }
 
-    private Permanent addPlateauReady() {
-        Permanent plateau = new Permanent(new Plateau());
-        plateau.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(plateau);
-        return plateau;
-    }
 }
