@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DiabolicMachine.class, AirElemental.class})
 class DiabolicMachineTest extends BaseCardTest {
@@ -28,6 +29,29 @@ class DiabolicMachineTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getTargetId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("Activating regeneration ability spends three generic mana without tapping Diabolic Machine")
+    void activatingAbilityPaysManaWithoutTappingSource() {
+        Permanent machine = addCreatureReady(player1, new DiabolicMachine());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(machine.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Diabolic Machine cannot activate regeneration without three generic mana")
+    void cannotActivateWithoutEnoughMana() {
+        addCreatureReady(player1, new DiabolicMachine());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 
     @Test
@@ -55,10 +79,7 @@ class DiabolicMachineTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new AirElemental());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Diabolic Machine");
         Permanent machine = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -78,10 +99,7 @@ class DiabolicMachineTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new AirElemental());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertNotOnBattlefield(player1, "Diabolic Machine");
         harness.assertInGraveyard(player1, "Diabolic Machine");

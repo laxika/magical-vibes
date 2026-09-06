@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.p.Pikemen;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,9 +23,12 @@ class MoraleTest extends BaseCardTest {
         Permanent nonAttacker = addCreatureReady(player1, new Pikemen());
         addCreatureReady(player2, new Pikemen());
 
+        harness.setHand(player1, List.of(new Morale()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackers(List.of(0));
 
-        harness.castFromHand(player1, new Morale(), "{1}{W}{W}");
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         // Attacking creature gets +1/+1
@@ -41,9 +45,12 @@ class MoraleTest extends BaseCardTest {
         Permanent opponentAttacker = addCreatureReady(player2, new Pikemen());
         addCreatureReady(player1, new Pikemen());
 
+        harness.setHand(player1, List.of(new Morale()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackers(player2, List.of(0));
 
-        harness.castFromHand(player1, new Morale(), "{1}{W}{W}");
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(2);
@@ -56,9 +63,12 @@ class MoraleTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new Pikemen());
         addCreatureReady(player2, new Pikemen());
 
+        harness.setHand(player1, List.of(new Morale()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackers(List.of(0));
 
-        harness.castFromHand(player1, new Morale(), "{1}{W}{W}");
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);

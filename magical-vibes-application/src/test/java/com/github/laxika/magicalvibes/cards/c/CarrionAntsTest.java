@@ -15,6 +15,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CarrionAntsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cannot activate without paying {1}")
+    void cannotActivateWithoutMana() {
+        addCreatureReady(player1, new CarrionAnts());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Paying {1} gives +1/+1 until end of turn")
     void payManaBoostsSelf() {
         Permanent ants = addCreatureReady(player1, new CarrionAnts());
@@ -40,17 +52,6 @@ class CarrionAntsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ants)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ants)).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Cannot activate without paying {1}")
-    void cannotActivateWithoutMana() {
-        addCreatureReady(player1, new CarrionAnts());
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
-
-        assertThat(gd.stack).isEmpty();
     }
 
     @Test

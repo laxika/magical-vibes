@@ -27,9 +27,7 @@ class OrcishOriflammeTest extends BaseCardTest {
     @DisplayName("Does not buff a non-attacking creature you control")
     void doesNotBuffNonAttackingCreatures() {
         harness.addToBattlefield(player1, new OrcishOriflamme());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findBears(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -72,13 +70,12 @@ class OrcishOriflammeTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Orcish Oriflamme leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new OrcishOriflamme());
+        Permanent oriflamme = harness.addToBattlefieldAndReturn(player1, new OrcishOriflamme());
         Permanent bears = addAttackingBears(player1);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Orcish Oriflamme"));
+        gd.playerBattlefields.get(player1.getId()).remove(oriflamme);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
@@ -87,9 +84,5 @@ class OrcishOriflammeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(true);
         return creature;
-    }
-
-    private Permanent findBears(Player controller) {
-        return findPermanent(controller, "Grizzly Bears");
     }
 }

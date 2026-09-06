@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -83,28 +86,72 @@ class GameOfChaosTest extends BaseCardTest {
         assertThat(o2 - o1).isEqualTo(-(c2 - c1));
 
         // The second flip's winner is prompted to flip again.
-        PendingInteraction.MayAbilityChoice nextChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
-        assertThat(nextChoice).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
         UUID expectedDecider = (c2 > c1) ? player1.getId() : player2.getId();
-        assertThat(nextChoice.playerId()).isEqualTo(expectedDecider);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(expectedDecider);
     }
 
     @Test
-    @DisplayName("Life loss does not end the spell before the flip-again choice")
-    void lifeLossWaitsUntilGameOfChaosEnds() {
-        gd.playerLifeTotals.put(player1.getId(), 1);
-        gd.playerLifeTotals.put(player2.getId(), 1);
+    @DisplayName("Accepting twice doubles the life stakes again to 4")
+    void acceptingTwiceDoublesStakesAgain() {
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        int c1 = gd.playerLifeTotals.get(player1.getId());
+        int o1 = gd.playerLifeTotals.get(player2.getId());
+
+        harness.handleMayAbilityChosen(deciderPlayer(), true);
+        int c2 = gd.playerLifeTotals.get(player1.getId());
+        int o2 = gd.playerLifeTotals.get(player2.getId());
+
+        harness.handleMayAbilityChosen(deciderPlayer(), true);
+        int c3 = gd.playerLifeTotals.get(player1.getId());
+        int o3 = gd.playerLifeTotals.get(player2.getId());
+
+        assertThat(Math.abs(c2 - c1)).isEqualTo(2);
+        assertThat(o2 - o1).isEqualTo(-(c2 - c1));
+        assertThat(Math.abs(c3 - c2)).isEqualTo(4);
+        assertThat(o3 - o2).isEqualTo(-(c3 - c2));
+    }
+
+    @Test
+    @DisplayName("A life total of 0 during the loop does not end the game until resolution finishes")
+    void lifeLossWaitsUntilResolutionFinishes() {
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 1);
         harness.setHand(player1, List.of(new GameOfChaos()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
-        Player decider = deciderPlayer();
-        harness.handleMayAbilityChosen(decider, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(deciderPlayer(), false);
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @CardUsed(ChanceEncounter.class)
+    @DisplayName("A controller win triggers that controller's coin-flip abilities")
+    void controllerWinTriggersChanceEncounter() {
+        Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        int c0 = gd.playerLifeTotals.get(player1.getId());
+
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        boolean controllerWon = gd.playerLifeTotals.get(player1.getId()) > c0;
+        harness.handleMayAbilityChosen(deciderPlayer(), false);
+        resolveAllTriggers();
+
+        assertThat(chanceEncounter.getCounterCount(CounterType.LUCK))
+                .isEqualTo(controllerWon ? 1 : 0);
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -10,30 +9,19 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Castle.class, GrizzlyBears.class})
 class CastleTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Castle()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Castle(), "{3}{W}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
     }
-
-    // ===== Static effect: buffs own untapped creatures =====
-
     @Test
     @DisplayName("Untapped creature you control gets +0/+2")
     void untappedOwnCreatureGetsBoost() {
@@ -79,9 +67,6 @@ class CastleTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
-
-    // ===== Bonus gone when source leaves =====
-
     @Test
     @DisplayName("Bonus is removed when Castle leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
@@ -93,9 +78,6 @@ class CastleTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
-
-    // ===== Static bonus survives end-of-turn reset =====
-
     @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
@@ -106,5 +88,16 @@ class CastleTest extends BaseCardTest {
         bears.resetModifiers();
 
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple Castles stack their bonuses")
+    void multipleCastlesStackBonuses() {
+        harness.addToBattlefield(player1, new Castle());
+        harness.addToBattlefield(player1, new Castle());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
     }
 }

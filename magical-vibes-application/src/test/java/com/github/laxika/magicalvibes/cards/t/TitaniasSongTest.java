@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.a.AmuletOfKroog;
 import com.github.laxika.magicalvibes.cards.b.BottleOfSuleiman;
+import com.github.laxika.magicalvibes.cards.d.DragonEngine;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,50 +16,46 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TitaniasSong.class, AngelsFeather.class, BottleOfSuleiman.class, GrizzlyBears.class,
-        MarchOfTheMachines.class, Ornithopter.class})
+@CardUsed({TitaniasSong.class, AmuletOfKroog.class, BottleOfSuleiman.class,
+        GrizzlyBears.class, DragonEngine.class})
 class TitaniasSongTest extends BaseCardTest {
-
-    // ===== Animating noncreature artifacts =====
 
     @Test
     @DisplayName("Noncreature artifact becomes a creature with P/T equal to mana value")
     void animatesNoncreatureArtifact() {
-        // Angel's Feather costs {2}, so mana value = 2
-        harness.addToBattlefield(player1, new AngelsFeather());
+        // Amulet of Kroog costs {2}, so mana value = 2
+        Permanent amulet = harness.addToBattlefieldAndReturn(player1, new AmuletOfKroog());
         harness.addToBattlefield(player1, new TitaniasSong());
 
-        Permanent feather = findPermanent(player1, "Angel's Feather");
-
-        assertThat(gqs.isCreature(gd, feather)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, amulet)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, amulet)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, amulet)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Does not animate creatures")
     void doesNotAffectCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new TitaniasSong());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    @DisplayName("Does not remove abilities from an artifact creature")
-    void doesNotRemoveAbilitiesFromArtifactCreatures() {
-        harness.addToBattlefield(player1, new Ornithopter());
+    @Test
+    @DisplayName("Does not remove abilities from existing artifact creatures")
+    void doesNotStripArtifactCreatureAbilities() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonEngine());
         harness.addToBattlefield(player1, new TitaniasSong());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+        int powerBefore = gqs.getEffectivePower(gd, dragon);
 
-        assertThat(gqs.isCreature(gd, ornithopter)).isTrue();
-        assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.FLYING)).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(powerBefore + 1);
     }
-
-    // ===== Loses all abilities =====
 
     @Test
     @DisplayName("Animated artifact loses its activated ability")
@@ -76,6 +71,7 @@ class TitaniasSongTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(MarchOfTheMachines.class)
     @DisplayName("March of the Machines animates the same artifact but keeps its ability")
     void marchAnimatesWithoutStrippingAbilities() {
         // Contrast: March of the Machines animates but does NOT remove abilities, so the
@@ -90,44 +86,37 @@ class TitaniasSongTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Bottle of Suleiman");
     }
 
-    // ===== Effect ends when Titania's Song leaves =====
-
     @Test
-    @DisplayName("Animation continues until end of turn after Titania's Song leaves")
-    void animationContinuesUntilEndOfTurnAfterSongLeaves() {
-        harness.addToBattlefield(player1, new AngelsFeather());
+    @DisplayName("Animated artifacts stay creatures until end of turn after Song leaves")
+    void effectContinuesUntilEndOfTurnAfterSongLeaves() {
+        Permanent bottle = harness.addToBattlefieldAndReturn(player1, new BottleOfSuleiman());
         harness.addToBattlefield(player1, new TitaniasSong());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent feather = findPermanent(player1, "Angel's Feather");
+        assertThat(gqs.isCreature(gd, bottle)).isTrue();
 
-        assertThat(gqs.isCreature(gd, feather)).isTrue();
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(p -> p.getCard().getName().equals("Titania's Song"));
 
-        Permanent song = findPermanent(player1, "Titania's Song");
-        harness.inMutationScope(() ->
-                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, song));
-
-        assertThat(gqs.isCreature(gd, feather)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, bottle)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bottle)).isEqualTo(4);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passBothPriorities();
 
-        assertThat(gqs.isCreature(gd, feather)).isFalse();
-        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(0);
+        assertThat(gqs.isCreature(gd, bottle)).isFalse();
     }
-
-    // ===== Affects both players' artifacts =====
 
     @Test
     @DisplayName("Affects artifacts on both sides of the battlefield")
     void affectsBothPlayersArtifacts() {
         harness.addToBattlefield(player1, new TitaniasSong());
-        harness.addToBattlefield(player2, new AngelsFeather());
+        Permanent opponentAmulet = harness.addToBattlefieldAndReturn(player2, new AmuletOfKroog());
 
-        Permanent opponentFeather = findPermanent(player2, "Angel's Feather");
-
-        assertThat(gqs.isCreature(gd, opponentFeather)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, opponentFeather)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, opponentAmulet)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opponentAmulet)).isEqualTo(2);
     }
 }

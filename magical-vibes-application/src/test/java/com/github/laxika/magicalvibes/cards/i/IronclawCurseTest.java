@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({IronclawCurse.class, GiantSpider.class, GrizzlyBears.class, HillGiant.class,
-        CrawWurm.class, FountainOfYouth.class})
+        CrawWurm.class, FountainOfYouth.class, GiantGrowth.class})
 class IronclawCurseTest extends BaseCardTest {
 
     /** Giant Spider (2/4) enchanted with Ironclaw Curse, attached and on the battlefield. */
@@ -84,6 +85,24 @@ class IronclawCurseTest extends BaseCardTest {
 
         assertThat(bls.canBlockAttacker(gd, spider, bears,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Block restriction uses the attacker's effective power")
+    void cantBlockAttackerWithBoostedPower() {
+        Permanent spider = cursedSpider(); // 2/3 after the curse
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2
+
+        assertThat(bls.canBlockAttacker(gd, spider, bears,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(bls.canBlockAttacker(gd, spider, bears,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
 
     @Test

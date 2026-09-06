@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,20 +18,27 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BatteringRam.class, WallOfWood.class})
+@CardUsed({BatteringRam.class, GiantSpider.class, WallOfWood.class})
 class BatteringRamTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Battering Ram gains banding for the current combat only")
+    @DisplayName("At the beginning of your combat, Battering Ram gains banding")
+    void gainsBandingAtBeginningOfCombat() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, ram, Keyword.BANDING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Battering Ram's banding grant expires at end of combat")
     void bandingExpiresAtEndOfCombat() {
         Permanent ram = addCreatureReady(player1, new BatteringRam());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
         assertThat(gqs.hasKeyword(gd, ram, Keyword.BANDING)).isTrue();
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
@@ -52,7 +60,7 @@ class BatteringRamTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(se ->
                 se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && se.getCard().getName().equals("Battering Ram")
+                        && ram.getId().equals(se.getSourcePermanentId())
                         && se.getTargetId().equals(wall.getId()));
 
         harness.passBothPriorities();
@@ -68,7 +76,7 @@ class BatteringRamTest extends BaseCardTest {
 
         Permanent ram = addCreatureReady(player1, new BatteringRam());
         ram.setAttacking(true);
-        addCreatureReady(player2, new WallOfWood()); // 0/3 survives Battering Ram's 1 damage
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -76,13 +84,12 @@ class BatteringRamTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wall of Wood");
-        harness.assertInGraveyard(player2, "Wall of Wood");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(wall.getCard());
     }
 
     @Test
     @DisplayName("When Battering Ram becomes blocked by a non-Wall creature, nothing is scheduled for destruction")
-    @CardUsed(GiantSpider.class)
     void becomesBlockedByNonWallSchedulesNothing() {
         Permanent ram = addCreatureReady(player1, new BatteringRam());
         ram.setAttacking(true);
@@ -94,4 +101,63 @@ class BatteringRamTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
     }
+
+    @Test
+    @DisplayName("A non-Wall blocker does not create Battering Ram's destruction trigger")
+    void nonWallBlockerDoesNotTriggerDestruction() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+        ram.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack)
+                .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && ram.getId().equals(se.getSourcePermanentId())
+                        && spider.getId().equals(se.getTargetId()));
+    }
+
+    @Test
+    @DisplayName("A Wall that loses its Wall subtype after blocking is still destroyed at end of combat")
+    void wallConditionIsCheckedWhenItBecomesABlocker() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+        ram.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        TestCards.mutableCard(wall).setSubtypes(List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .anyMatch(a -> a.permanentId().equals(wall.getId()));
+    }
+
+    @Test
+    @DisplayName("Battering Ram creates one destruction trigger for each blocking Wall")
+    void createsOneTriggerPerWallBlocker() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+        ram.setAttacking(true);
+        Permanent firstWall = addCreatureReady(player2, new WallOfWood());
+        Permanent secondWall = addCreatureReady(player2, new WallOfWood());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack.stream()
+                .filter(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .filter(se -> ram.getId().equals(se.getSourcePermanentId())))
+                .hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .extracting(DelayedPermanentAction::permanentId)
+                .containsExactlyInAnyOrder(firstWall.getId(), secondWall.getId());
+    }
+
 }

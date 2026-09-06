@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,14 +16,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BarlsCage.class, FountainOfYouth.class, Squire.class})
+@CardUsed({BarlsCage.class, FountainOfYouth.class, GrizzlyBears.class})
 class BarlsCageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingTargetingCreaturePutsOnStack() {
         addReadyCage(player1);
-        Permanent target = addCreatureReady(player2, new Squire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -36,10 +36,24 @@ class BarlsCageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate while already tapped because tapping is not part of the cost")
+    void canActivateWithTappedSource() {
+        Permanent cage = addReadyCage(player1);
+        cage.tap();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(cage.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Resolving makes target skip its next untap step")
     void resolvingSkipsNextUntap() {
         addReadyCage(player1);
-        Permanent target = addCreatureReady(player2, new Squire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -52,7 +66,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Does not tap the target creature")
     void doesNotTapTarget() {
         addReadyCage(player1);
-        Permanent target = addCreatureReady(player2, new Squire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -65,7 +79,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Target remains tapped during its next controller untap step")
     void targetRemainsTappedThroughNextUntapStep() {
         addReadyCage(player1);
-        Permanent target = addCreatureReady(player2, new Squire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.activateAbility(player1, 0, null, target.getId());
@@ -92,7 +106,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyCage(player1);
-        Permanent target = addCreatureReady(player2, new Squire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -104,7 +118,7 @@ class BarlsCageTest extends BaseCardTest {
     @DisplayName("Does not lock a target that leaves before resolution")
     void doesNotLockTargetThatLeavesBeforeResolution() {
         addReadyCage(player1);
-        Permanent target = addCreatureReady(player2, new Squire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -113,10 +127,23 @@ class BarlsCageTest extends BaseCardTest {
         assertThat(target.getSkipUntapCount()).isZero();
     }
 
+    @Test
+    @DisplayName("Resolves even if the source leaves before resolution")
+    void resolvesAfterSourceLeavesBeforeResolution() {
+        Permanent cage = addReadyCage(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(harness.getGameData(), cage));
+
+        harness.passBothPriorities();
+
+        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+    }
+
     private Permanent addReadyCage(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new BarlsCage());
-        perm.setSummoningSick(false);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new BarlsCage());
     }
 
     private Permanent addReadyNonCreaturePermanent(Player player) {

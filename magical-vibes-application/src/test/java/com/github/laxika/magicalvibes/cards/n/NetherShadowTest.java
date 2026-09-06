@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,34 +12,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NetherShadow.class, GrizzlyBears.class, Forest.class})
+@CardUsed({NetherShadow.class, GrizzlyBears.class, DarkRitual.class})
 class NetherShadowTest extends BaseCardTest {
-    @Test
-    void doesNotTriggerDuringOpponentsUpkeep() {
-        NetherShadow shadow = new NetherShadow();
-        harness.setGraveyard(player1, List.of(shadow,
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-
-        advanceToUpkeep(player2);
-
-        assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-    }
-
-    @Test
-    void doesNotPromptWhenConditionFailsBeforeResolution() {
-        NetherShadow shadow = new NetherShadow();
-        harness.setGraveyard(player1, List.of(shadow,
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        advanceToUpkeep(player1);
-        gd.playerGraveyards.get(player1.getId()).removeLast();
-        harness.passBothPriorities();
-
-        assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(shadow.getId()));
-    }
 
     @Test
     @DisplayName("Triggers with three creature cards above it in the graveyard")
@@ -55,6 +29,20 @@ class NetherShadowTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().sourceCard().getId()).isEqualTo(shadow.getId());
+    }
+
+    @Test
+    @DisplayName("Triggers with more than three creature cards above it")
+    void triggersWithMoreThanThreeCreaturesAbove() {
+        NetherShadow shadow = new NetherShadow();
+        harness.setGraveyard(player1, List.of(shadow,
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.pendingMayAbilities).hasSize(1);
     }
 
     @Test
@@ -107,7 +95,7 @@ class NetherShadowTest extends BaseCardTest {
     @DisplayName("Non-creature cards above it do not count toward the threshold")
     void nonCreatureCardsAboveDoNotCount() {
         harness.setGraveyard(player1, List.of(new NetherShadow(),
-                new Forest(), new Forest(), new Forest()));
+                new DarkRitual(), new DarkRitual(), new DarkRitual()));
 
         advanceToUpkeep(player1);
 
@@ -127,5 +115,37 @@ class NetherShadowTest extends BaseCardTest {
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Triggers only during its controller's upkeep")
+    void triggersOnlyDuringControllersUpkeep() {
+        harness.setGraveyard(player1, List.of(new NetherShadow(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not return when fewer than three creatures remain as the trigger resolves")
+    void conditionMustStillHoldWhenTriggerResolves() {
+        NetherShadow shadow = new NetherShadow();
+        harness.setGraveyard(player1, List.of(shadow,
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of(shadow,
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(shadow.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(shadow.getId()));
     }
 }

@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed(GhazbNOgre.class)
 class GhazbNOgreTest extends BaseCardTest {
-
-    private static final String OGRE = "Ghazbán Ogre";
 
     @Test
     @DisplayName("Player with strictly the most life gains control during controller's upkeep")
@@ -21,10 +18,8 @@ class GhazbNOgreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals(OGRE));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals(OGRE));
+        harness.assertNotOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertOnBattlefield(player2, "Ghazbán Ogre");
     }
 
     @Test
@@ -37,10 +32,8 @@ class GhazbNOgreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals(OGRE));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals(OGRE));
+        harness.assertOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
     }
 
     @Test
@@ -53,9 +46,38 @@ class GhazbNOgreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals(OGRE));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals(OGRE));
+        harness.assertOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when no player has strictly the most life at trigger time")
+    void noTriggerWhenTieAtTriggerTime() {
+        harness.addToBattlefield(player1, new GhazbNOgre());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.setLife(player2, 25);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
+    }
+
+    @Test
+    @DisplayName("Does not change control when the condition fails at resolution")
+    void noControlChangeWhenConditionFailsAtResolution() {
+        harness.addToBattlefield(player1, new GhazbNOgre());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ghazbán Ogre");
+        harness.assertNotOnBattlefield(player2, "Ghazbán Ogre");
     }
 }

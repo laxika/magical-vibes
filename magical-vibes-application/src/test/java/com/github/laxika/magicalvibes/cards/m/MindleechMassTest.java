@@ -16,10 +16,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindleechMass.class, Forest.class, ForceOfNature.class, GrizzlyBears.class})
+@CardUsed(MindleechMass.class)
 class MindleechMassTest extends BaseCardTest {
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Combat damage offers a spell from the damaged player's hand for free")
     void castsSpellFromDamagedPlayersHandForFree() {
         addAttackingMindleechMass(player1);
@@ -46,6 +47,7 @@ class MindleechMassTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GrizzlyBears.class)
     @DisplayName("Declining leaves the damaged player's spell in hand")
     void decliningLeavesSpellInDamagedPlayersHand() {
         addAttackingMindleechMass(player1);
@@ -62,6 +64,7 @@ class MindleechMassTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Forest.class)
     @DisplayName("Lands in the damaged player's hand are not offered")
     void doesNotOfferLand() {
         addAttackingMindleechMass(player1);
@@ -74,6 +77,7 @@ class MindleechMassTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({ForceOfNature.class, GrizzlyBears.class})
     @DisplayName("Blocked trample damage that does not reach a player does not trigger")
     void doesNotTriggerWithoutCombatDamageToPlayer() {
         addAttackingMindleechMass(player1);

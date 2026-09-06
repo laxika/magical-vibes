@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.d.DarkSphere;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GoblinHero;
 import com.github.laxika.magicalvibes.cards.l.Leviathan;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Inferno.class, GoblinHero.class, Leviathan.class, DarkSphere.class})
+@CardUsed({Inferno.class, GoblinHero.class, Leviathan.class, FountainOfYouth.class})
 class InfernoTest extends BaseCardTest {
 
     @Test
@@ -53,12 +53,12 @@ class InfernoTest extends BaseCardTest {
     @Test
     @DisplayName("Inferno does not affect noncreature permanents")
     void doesNotAffectNoncreaturePermanents() {
-        var darkSphere = harness.addToBattlefieldAndReturn(player2, new DarkSphere());
+        var fountainOfYouth = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         harness.castFromHand(player1, new Inferno(), "{5}{R}{R}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Dark Sphere");
-        assertThat(darkSphere.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        assertThat(fountainOfYouth.getMarkedDamage()).isZero();
     }
 }

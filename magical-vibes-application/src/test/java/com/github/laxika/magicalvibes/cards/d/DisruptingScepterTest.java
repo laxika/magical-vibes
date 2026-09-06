@@ -39,6 +39,25 @@ class DisruptingScepterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Can target the controller as the player who discards")
+    void canTargetController() {
+        addReadyScepter(player1);
+        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -75,6 +94,20 @@ class DisruptingScepterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a permanent instead of a player")
+    void cannotTargetPermanent() {
+        Permanent scepter = addReadyScepter(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(scepter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

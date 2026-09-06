@@ -30,6 +30,35 @@ class FloodTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        harness.addToBattlefieldAndReturn(player1, new Flood());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent target = addCreatureReady(player1, new Squire());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate again without tapping Flood")
+    void canActivateAgainWithoutTappingSource() {
+        Permanent flood = harness.addToBattlefieldAndReturn(player1, new Flood());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(flood.isTapped()).isFalse();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature with flying")
     void cannotTargetFlyingCreature() {
         harness.addToBattlefieldAndReturn(player1, new Flood());
@@ -60,5 +89,20 @@ class FloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target leaves before resolution")
+    void fizzlesIfTargetLeavesBeforeResolution() {
+        harness.addToBattlefieldAndReturn(player1, new Flood());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
     }
 }

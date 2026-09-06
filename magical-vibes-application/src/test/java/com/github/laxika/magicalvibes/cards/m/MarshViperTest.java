@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.FireWhip;
-import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarshViper.class, Squire.class, FireWhip.class})
+@CardUsed({MarshViper.class, GrizzlyBears.class, FireWhip.class})
 class MarshViperTest extends BaseCardTest {
 
     private Permanent addReadyViper() {
@@ -62,7 +62,7 @@ class MarshViperTest extends BaseCardTest {
     void noPoisonWhenBlocked() {
         Permanent viper = addReadyViper();
         viper.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new Squire());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

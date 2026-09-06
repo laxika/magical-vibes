@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.Badlands;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,41 +18,41 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeathWard.class, FyndhornElves.class, IcyManipulator.class, Badlands.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({DeathWard.class, FountainOfYouth.class, GrizzlyBears.class, HillGiant.class})
 class DeathWardTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Death Ward grants a regeneration shield to target creature")
     void resolvingGrantsRegenerationShield() {
-        harness.addToBattlefield(player1, new FyndhornElves());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeathWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID elfId = harness.getPermanentId(player1, "Fyndhorn Elves");
-        harness.castAndResolveInstant(player1, 0, elfId);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
 
-        Permanent elf = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elf.getRegenerationShield()).isEqualTo(1);
+        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bear.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Regeneration shield from Death Ward saves creature from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
-        harness.addToBattlefield(player1, new FyndhornElves());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeathWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID elfId = harness.getPermanentId(player1, "Fyndhorn Elves");
-        harness.castAndResolveInstant(player1, 0, elfId);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
 
-        Permanent elf = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        elf.setBlocking(true);
-        elf.addBlockingTarget(0);
+        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        bear.setBlocking(true);
+        bear.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new FyndhornElves());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -62,34 +60,37 @@ class DeathWardTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        Permanent survivedElf = findPermanent(player1, "Fyndhorn Elves");
-        assertThat(survivedElf.isTapped()).isTrue();
-        assertThat(survivedElf.getRegenerationShield()).isEqualTo(0);
+        Permanent survivedBear = findPermanent(player1, "Grizzly Bears");
+        assertThat(survivedBear.isTapped()).isTrue();
+        assertThat(survivedBear.getRegenerationShield()).isEqualTo(0);
+        assertThat(survivedBear.getMarkedDamage()).isZero();
+        assertThat(survivedBear.isBlocking()).isFalse();
     }
 
     @Test
     @DisplayName("Death Ward can target an opponent's creature")
     void canTargetOpponentsCreature() {
-        harness.addToBattlefield(player2, new FyndhornElves());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeathWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID elfId = harness.getPermanentId(player2, "Fyndhorn Elves");
-        harness.castAndResolveInstant(player1, 0, elfId);
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
 
-        Permanent elf = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(elf.getRegenerationShield()).isEqualTo(1);
+        Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(bear.getRegenerationShield()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Death Ward fizzles if the target creature is removed")
     void fizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player1, new FyndhornElves());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeathWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID elfId = harness.getPermanentId(player1, "Fyndhorn Elves");
-        harness.castInstant(player1, 0, elfId);
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
 
         harness.passBothPriorities();
@@ -98,13 +99,35 @@ class DeathWardTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target a noncreature permanent with Death Ward")
-    void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new IcyManipulator());
+    @DisplayName("Death Ward cannot replace putting a creature with 0 toughness into its owner's graveyard")
+    void doesNotRegenerateZeroToughnessCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeathWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Icy Manipulator");
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
+
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        bear.setToughnessModifier(-2);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent with Death Ward")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new DeathWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");

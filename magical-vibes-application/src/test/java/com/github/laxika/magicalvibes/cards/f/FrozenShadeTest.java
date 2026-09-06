@@ -45,19 +45,6 @@ class FrozenShadeTest extends BaseCardTest {
     }
 
     @Test
-    void canActivateWhileTapped() {
-        Permanent shade = addCreatureReady(player1, new FrozenShade());
-        shade.tap();
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
-    }
-
-    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         Permanent shade = addCreatureReady(player1, new FrozenShade());
@@ -78,6 +65,19 @@ class FrozenShadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate without haste while summoning sick because the ability does not tap")
+    void canActivateWhileSummoningSick() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new FrozenShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(1);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new FrozenShade());
@@ -87,4 +87,14 @@ class FrozenShadeTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Cannot activate ability with only mana of the wrong color")
+    void cannotActivateWithWrongColorMana() {
+        addCreatureReady(player1, new FrozenShade());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 }

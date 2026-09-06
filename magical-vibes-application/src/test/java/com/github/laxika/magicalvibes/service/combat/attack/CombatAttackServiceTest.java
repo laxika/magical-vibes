@@ -218,6 +218,7 @@ class CombatAttackServiceTest extends BaseCardTest {
 
         @Test
         @DisplayName("A forced creature that cannot satisfy its group restriction may stay home")
+        @CardUsed(OrcishConscripts.class)
         void forcedRestrictedCreatureMayStayHomeWhenNoLegalDeclarationIncludesIt() {
             Permanent conscripts = addCreatureReady(player1, new OrcishConscripts());
             conscripts.setMustAttackThisTurn(true);
@@ -461,7 +462,8 @@ class CombatAttackServiceTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("CR 508.1a: Orcish Conscripts needs the required number of other attackers")
+        @DisplayName("CR 508.1c: Orcish Conscripts needs the required number of other attackers")
+        @CardUsed({OrcishConscripts.class, GrizzlyBears.class, HillGiant.class})
         void countRestrictionNeedsEnoughOtherAttackers() {
             // Orcish Conscripts can't attack unless at least two other creatures attack.
             Permanent conscripts = addCreatureReady(player1, new OrcishConscripts());

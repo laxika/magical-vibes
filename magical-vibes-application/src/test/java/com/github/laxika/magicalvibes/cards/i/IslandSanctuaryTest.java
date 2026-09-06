@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
-import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
-import com.github.laxika.magicalvibes.cards.s.ScrybSprites;
+import com.github.laxika.magicalvibes.cards.r.RiverBoa;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,19 +18,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-@CardUsed({IslandSanctuary.class, GrizzlyBears.class, HowlingMine.class, LordOfAtlantis.class,
-        MerfolkOfThePearlTrident.class, ScrybSprites.class})
+@CardUsed({IslandSanctuary.class, GrizzlyBears.class, HowlingMine.class, RiverBoa.class, SuntailHawk.class})
 class IslandSanctuaryTest extends BaseCardTest {
 
     /** Advance the controller to their draw step and answer the "skip your draw?" prompt. */
     private void resolveDrawStepChoice(Player controller, boolean skip) {
-        harness.forceActivePlayer(controller);
         gd.turnNumber = 2; // avoid the starting player's first-turn draw skip
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.passUntil(controller, TurnStep.DRAW);
+        advanceToUpkeep(controller);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities(); // UPKEEP -> DRAW: Island Sanctuary offers the skip may-ability
         harness.handleMayAbilityChosen(controller, skip);
     }
-
     @Test
     @DisplayName("Skipping the draw does not draw a card")
     void skippingDoesNotDraw() {
@@ -38,6 +36,43 @@ class IslandSanctuaryTest extends BaseCardTest {
         harness.setHand(player1, List.of());
 
         resolveDrawStepChoice(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can use a second Island Sanctuary if the first replacement is declined")
+    void canUseSecondSanctuaryAfterDecliningFirst() {
+        harness.addToBattlefield(player1, new IslandSanctuary());
+        harness.addToBattlefield(player1, new IslandSanctuary());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveDrawStepChoice(player1, false);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can use Island Sanctuary for an extra draw during the draw step")
+    void canUseSanctuaryForExtraDrawDuringDrawStep() {
+        harness.addToBattlefield(player1, new IslandSanctuary());
+        harness.addToBattlefield(player1, new HowlingMine());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveDrawStepChoice(player1, true);
+        if (!gd.interaction.isAwaitingInput()) {
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -72,7 +107,7 @@ class IslandSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IslandSanctuary());
         resolveDrawStepChoice(player1, true);
 
-        addCreatureReady(player2, new ScrybSprites());
+        addCreatureReady(player2, new SuntailHawk());
 
         assertThatCode(() -> declareAttackers(player2, List.of(0)))
                 .doesNotThrowAnyException();
@@ -84,10 +119,9 @@ class IslandSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IslandSanctuary());
         resolveDrawStepChoice(player1, true);
 
-        addCreatureReady(player2, new LordOfAtlantis());
-        addCreatureReady(player2, new MerfolkOfThePearlTrident());
+        addCreatureReady(player2, new RiverBoa());
 
-        assertThatCode(() -> declareAttackers(player2, List.of(1)))
+        assertThatCode(() -> declareAttackers(player2, List.of(0)))
                 .doesNotThrowAnyException();
     }
 
@@ -119,30 +153,17 @@ class IslandSanctuaryTest extends BaseCardTest {
     }
 
     @Test
-    void additionalDrawDuringDrawStepCanBeSkipped() {
-        harness.addToBattlefield(player1, new IslandSanctuary());
-        harness.addToBattlefield(player1, new HowlingMine());
-        harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-
-        resolveDrawStepChoice(player1, true);
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-    }
-
-    @Test
-    void shieldRemainsAfterSanctuaryLeavesBattlefield() {
+    @DisplayName("The shield remains after Island Sanctuary leaves the battlefield")
+    void shieldPersistsAfterSanctuaryLeaves() {
         harness.addToBattlefield(player1, new IslandSanctuary());
         resolveDrawStepChoice(player1, true);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(
-                permanent -> permanent.getCard() instanceof IslandSanctuary);
+        Permanent sanctuary = findPermanent(player1, "Island Sanctuary");
+        gd.playerBattlefields.get(player1.getId()).remove(sanctuary);
         addCreatureReady(player2, new GrizzlyBears());
+
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
     }
 }

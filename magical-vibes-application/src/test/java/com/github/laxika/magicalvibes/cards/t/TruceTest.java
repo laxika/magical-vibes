@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.z.ZursWeirding;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Truce.class})
+@CardUsed({Truce.class, ZursWeirding.class})
 class TruceTest extends BaseCardTest {
 
     private void castTruce() {
@@ -83,5 +84,20 @@ class TruceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleXValueChosen(player1, 3))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Resolves a draw replacement before asking the next player's draw choice")
+    void resolvesDrawReplacementBeforeNextPlayersChoice() {
+        harness.addToBattlefield(player1, new ZursWeirding());
+        castTruce();
+
+        harness.handleXValueChosen(player1, 1);
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.assertLife(player1, 20);
     }
 }

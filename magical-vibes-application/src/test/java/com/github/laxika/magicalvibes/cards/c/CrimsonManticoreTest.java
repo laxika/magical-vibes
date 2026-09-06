@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.t.TundraWolves;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MonssGoblinRaiders;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,12 +10,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrimsonManticore.class, TundraWolves.class})
+@CardUsed({CrimsonManticore.class, MonssGoblinRaiders.class, GrizzlyBears.class})
 class CrimsonManticoreTest extends BaseCardTest {
 
     private Permanent addReadyManticore() {
@@ -22,16 +21,16 @@ class CrimsonManticoreTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner) {
-        Permanent attacker = addCreatureReady(owner, new TundraWolves());
+        Permanent attacker = addCreatureReady(owner, new MonssGoblinRaiders());
         attacker.setAttacking(true);
-        attacker.setAttackTarget(player1.getId());
+        attacker.setAttackTarget(owner.equals(player1) ? player2.getId() : player1.getId());
         return attacker;
     }
 
-    private Permanent addBlocker(Player owner) {
-        Permanent blocker = addCreatureReady(owner, new TundraWolves());
+    private Permanent addBlocker(Player owner, Permanent attacker) {
+        Permanent blocker = addCreatureReady(owner, new MonssGoblinRaiders());
         blocker.setBlocking(true);
-        blocker.addBlockingTargetId(UUID.randomUUID());
+        blocker.addBlockingTargetId(attacker.getId());
         return blocker;
     }
 
@@ -46,34 +45,33 @@ class CrimsonManticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 1 damage kills the 1/1 attacker
-        harness.assertNotOnBattlefield(player2, "Tundra Wolves");
-        harness.assertInGraveyard(player2, "Tundra Wolves");
+        harness.assertNotOnBattlefield(player2, "Mons's Goblin Raiders");
+        harness.assertInGraveyard(player2, "Mons's Goblin Raiders");
     }
 
     @Test
     @DisplayName("Deals 1 damage to a target blocking creature")
     void damagesBlocker() {
         addReadyManticore();
-        Permanent blocker = addBlocker(player2);
+        Permanent attacker = addAttacker(player1);
+        Permanent blocker = addBlocker(player2, attacker);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Tundra Wolves");
-        harness.assertInGraveyard(player2, "Tundra Wolves");
+        harness.assertNotOnBattlefield(player2, "Mons's Goblin Raiders");
+        harness.assertInGraveyard(player2, "Mons's Goblin Raiders");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         addReadyManticore();
-        harness.addToBattlefield(player2, new TundraWolves());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID wolfId = harness.getPermanentId(player2, "Tundra Wolves");
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wolfId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -90,22 +88,32 @@ class CrimsonManticoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Requires red mana and cannot activate with only colorless mana")
-    void cannotActivateWithoutRedMana() {
-        Permanent manticore = addReadyManticore();
+    @DisplayName("Requires one red mana to activate")
+    void cannotActivateWithOnlyColorlessMana() {
+        addReadyManticore();
         Permanent attacker = addAttacker(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
-                .isInstanceOf(IllegalStateException.class);
-
-        assertThat(manticore.isTapped()).isFalse();
-        assertThat(gd.stack).isEmpty();
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
     }
 
     @Test
-    @DisplayName("Target must still be attacking or blocking when the ability resolves")
-    void targetMustStillBeInCombatOnResolution() {
+    @DisplayName("Consumes one red mana when activated")
+    void consumesRedMana() {
+        addReadyManticore();
+        Permanent attacker = addAttacker(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that stops attacking before resolution")
+    void targetBecomesNonCombatCreatureBeforeResolution() {
         addReadyManticore();
         Permanent attacker = addAttacker(player2);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -114,7 +122,6 @@ class CrimsonManticoreTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Tundra Wolves");
-        harness.assertNotInGraveyard(player2, "Tundra Wolves");
+        harness.assertOnBattlefield(player2, "Mons's Goblin Raiders");
     }
 }

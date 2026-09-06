@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WinterOrb.class, Forest.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({WinterOrb.class, Forest.class, GrizzlyBears.class, Mountain.class})
 class WinterOrbTest extends BaseCardTest {
 
     @Test
@@ -68,6 +68,22 @@ class WinterOrbTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller may choose not to untap any land")
+    void mayChooseNoLandToUntap() {
+        addCreatureReady(player1, new WinterOrb());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent mountain = addCreatureReady(player1, new Mountain());
+        forest.tap();
+        mountain.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(mountain.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("An opponent's untapped Winter Orb restricts your land untap too")
     void opponentWinterOrbRestrictsYourUntap() {
         addCreatureReady(player2, new WinterOrb());
@@ -89,7 +105,8 @@ class WinterOrbTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passBothPriorities(); // END_STEP -> CLEANUP
+        harness.clearPriorityPassed();
+        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
     }
 }

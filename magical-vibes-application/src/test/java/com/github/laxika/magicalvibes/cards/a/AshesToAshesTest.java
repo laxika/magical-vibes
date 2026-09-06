@@ -33,17 +33,37 @@ class AshesToAshesTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, List.of(bearsId, giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearsId, giantId));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears")
-                        || p.getCard().getName().equals("Hill Giant"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
         // Exiled, not to graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears")
                         || c.getName().equals("Hill Giant"));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"))
+                .anyMatch(c -> c.getName().equals("Hill Giant"));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);
+    }
+
+    @Test
+    @DisplayName("Can target nonartifact creatures controlled by the caster")
+    void canTargetOwnCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setHand(player1, List.of(new AshesToAshes()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player1, "Hill Giant");
+        harness.castAndResolveSorcery(player1, 0, List.of(bearsId, giantId));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Hill Giant"));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 5);

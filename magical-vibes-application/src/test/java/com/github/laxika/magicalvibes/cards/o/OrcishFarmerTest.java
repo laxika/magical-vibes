@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,19 +14,17 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcishFarmer.class, Forest.class, BalduvianBears.class})
+@CardUsed({OrcishFarmer.class, Forest.class, GrizzlyBears.class})
 class OrcishFarmerTest extends BaseCardTest {
-
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a land")
     void activatingAbilityPutsOnStack() {
-        Permanent farmer = addCreatureReady(player1, new OrcishFarmer());
+        addCreatureReady(player1, new OrcishFarmer());
         harness.addToBattlefield(player1, new Forest());
         harness.forceActivePlayer(player1);
         UUID forestId = harness.getPermanentId(player1, "Forest");
@@ -37,37 +35,44 @@ class OrcishFarmerTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getTargetId()).isEqualTo(forestId);
-        assertThat(farmer.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Activating the ability taps Orcish Farmer as a cost")
+    void activatingAbilityTapsSource() {
+        Permanent farmer = addCreatureReady(player1, new OrcishFarmer());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+
+        assertThat(farmer.isTapped()).isTrue();
+    }
     @Test
     @DisplayName("Resolving makes the target land become a Swamp, overriding its subtypes")
     void resolvingOverridesSubtypesToSwamp() {
         Permanent forest = becomeSwamp(player1);
 
-        assertThat(gqs.isLand(gd, forest)).isTrue();
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+        assertThat(gqs.isLand(gd, forest)).isTrue();
     }
 
     @Test
     @DisplayName("Overridden Forest produces black mana instead of green")
     void overriddenForestProducesBlackMana() {
-        becomeSwamp(player1);
+        Permanent forest = becomeSwamp(player1);
 
-        int forestIndex = gd.playerBattlefields.get(player1.getId())
-                .indexOf(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest")));
-        gs.tapPermanent(gd, player1, forestIndex);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
-
     @Test
-    @DisplayName("Override survives cleanup and the target land controller's untap step")
+    @DisplayName("Override survives end-of-turn cleanup (unlike an until-end-of-turn override)")
     void overrideSurvivesEndOfTurn() {
         Permanent forest = becomeSwamp(player1);
 
-        advanceThroughCleanupToUntap(player2);
+        advanceToNextTurn(player1);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
     }
@@ -77,14 +82,13 @@ class OrcishFarmerTest extends BaseCardTest {
     void overrideClearedAtNextUntapStep() {
         Permanent forest = becomeSwamp(player1);
 
-        advanceThroughCleanupToUntap(player2);
-        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
-
+        advanceToNextTurn(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UNTAP);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
-
     @Test
     @DisplayName("Can target a land controlled by the opponent")
     void canTargetOpponentLand() {
@@ -100,38 +104,42 @@ class OrcishFarmerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's land lasts through the source controller's next untap")
+    void opponentLandExpiresOnItsOwnControllerUntap() {
+        addCreatureReady(player1, new OrcishFarmer());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UNTAP);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UNTAP);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
     @DisplayName("Cannot target a non-land permanent")
     void cannotTargetNonLand() {
         addCreatureReady(player1, new OrcishFarmer());
         harness.addToBattlefield(player1, new Forest()); // valid target so the ability is activatable
-        harness.addToBattlefield(player1, new BalduvianBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.forceActivePlayer(player1);
-        UUID bearsId = harness.getPermanentId(player1, "Balduvian Bears");
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
-
-    @Test
-    @DisplayName("Override expires at the targeted land controller's next untap step")
-    void overrideExpiresAtTargetControllerUntapStep() {
-        addCreatureReady(player2, new OrcishFarmer());
-        harness.addToBattlefield(player1, new Forest());
-        harness.forceActivePlayer(player2);
-        UUID forestId = harness.getPermanentId(player1, "Forest");
-
-        harness.activateAbility(player2, 0, null, forestId);
-        harness.passBothPriorities();
-
-        Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
-
-        advanceThroughCleanupToUntap(player1);
-
-        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
-    }
-
     /** Adds an Orcish Farmer + Forest for {@code player}, then makes the Forest become a Swamp. */
     private Permanent becomeSwamp(Player player) {
         addCreatureReady(player, new OrcishFarmer());
@@ -145,12 +153,11 @@ class OrcishFarmerTest extends BaseCardTest {
         return gqs.findPermanentById(gd, forestId);
     }
 
-    /** Advances through cleanup and stops at the requested player's untap step. */
-    private void advanceThroughCleanupToUntap(Player activePlayer) {
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
+    private void advanceToNextTurn(Player currentActivePlayer) {
+        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.forceActivePlayer(currentActivePlayer);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.UNTAP);
+        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
     }
 }

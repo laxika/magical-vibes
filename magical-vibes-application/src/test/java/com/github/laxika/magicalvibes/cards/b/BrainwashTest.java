@@ -72,6 +72,21 @@ class BrainwashTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Brainwash Auras add their attack taxes together")
+    void multipleBrainwashAurasStack() {
+        harness.setLife(player2, 20);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        enchant(bears, player1);
+        enchant(bears, player2);
+
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
     @DisplayName("Brainwash taxes only attacking — the enchanted creature blocks for free")
     void blockingWithTheEnchantedCreatureIsFree() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());

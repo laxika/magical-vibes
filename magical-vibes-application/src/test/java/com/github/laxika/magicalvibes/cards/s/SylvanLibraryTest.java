@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.Abundance;
 import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,34 +21,40 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SylvanLibrary.class, GrizzlyBears.class, LlanowarElves.class, GiantGrowth.class})
+@CardUsed({SylvanLibrary.class, GrizzlyBears.class, LlanowarElves.class})
 class SylvanLibraryTest extends BaseCardTest {
 
     private Card bears;
     private Card elves;
-    private Card growth;
+    private Card thirdCard;
     private Card filler1;
     private Card filler2;
 
     private void setup() {
         bears = new GrizzlyBears();
         elves = new LlanowarElves();
-        growth = new GiantGrowth();
+        thirdCard = new GrizzlyBears();
         filler1 = new GrizzlyBears();
         filler2 = new GrizzlyBears();
 
         harness.addToBattlefield(player1, new SylvanLibrary());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(bears, elves, growth, filler1, filler2));
+        harness.setLibrary(player1, List.of(bears, elves, thirdCard, filler1, filler2));
         harness.setLife(player1, 20);
     }
 
-    /** Advances player1 to their draw step, which draws bears and fires the Sylvan Library trigger. */
-    private void advanceToDrawAndTrigger() {
+    /** Advances player1 to their draw step, which performs the turn-based draw and fires triggers. */
+    private void advanceToDrawStep() {
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.passUntil(player1, TurnStep.DRAW); // advances UPKEEP -> DRAW, runs the draw step
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.DRAW);
+    }
+
+    /** Advances player1 to their draw step and resolves the Sylvan Library may prompt. */
+    private void advanceToDrawAndTrigger() {
+        advanceToDrawStep();
         harness.passBothPriorities(); // resolve the draw-step MayEffect from the stack -> may prompt
     }
 
@@ -67,12 +75,50 @@ class SylvanLibraryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        // Normal draw (bears) + two additional (elves, growth) are all in hand.
+        // Normal draw (bears) + two additional (elves, thirdCard) are all in hand.
         assertThat(hand()).extracting(Card::getId)
-                .containsExactlyInAnyOrder(bears.getId(), elves.getId(), growth.getId());
+                .containsExactlyInAnyOrder(bears.getId(), elves.getId(), thirdCard.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SylvanLibraryChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SylvanLibraryChoice.class).resolveCount())
                 .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Sylvan Libraries resolve their draw choices one at a time")
+    void multipleLibrariesResolveInSequence() {
+        setup();
+        harness.addToBattlefield(player1, new SylvanLibrary());
+        advanceToDrawAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Sylvan Library");
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(hand()).hasSize(3);
+        harness.assertLife(player1, 12);
+    }
+
+    @Test
+    @CardUsed(NarsetParterOfVeils.class)
+    @DisplayName("A draw-prevention effect still leaves the normal card to resolve")
+    void resolvesWithOnlyTheNormalCardWhenExtraDrawsArePrevented() {
+        setup();
+        Permanent narset = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
+        narset.setCounterCount(CounterType.LOYALTY, 5);
+        advanceToDrawAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(hand()).extracting(Card::getId).containsExactly(bears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SylvanLibraryChoice.class).resolveCount())
+                .isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertLife(player1, 16);
     }
 
     @Test
@@ -87,7 +133,7 @@ class SylvanLibraryTest extends BaseCardTest {
         // First chosen (bears) ends up nearest the top, then elves.
         assertThat(library().get(0).getId()).isEqualTo(bears.getId());
         assertThat(library().get(1).getId()).isEqualTo(elves.getId());
-        assertThat(hand()).extracting(Card::getId).containsExactly(growth.getId());
+        assertThat(hand()).extracting(Card::getId).containsExactly(thirdCard.getId());
         harness.assertLife(player1, 20);
     }
 
@@ -101,7 +147,7 @@ class SylvanLibraryTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(hand()).extracting(Card::getId)
-                .containsExactlyInAnyOrder(bears.getId(), elves.getId(), growth.getId());
+                .containsExactlyInAnyOrder(bears.getId(), elves.getId(), thirdCard.getId());
         harness.assertLife(player1, 12); // 20 - 4 - 4
     }
 
@@ -112,45 +158,74 @@ class SylvanLibraryTest extends BaseCardTest {
         advanceToDrawAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handleMultipleCardsChosen(player1, List.of(growth.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(thirdCard.getId()));
 
-        assertThat(library().get(0).getId()).isEqualTo(growth.getId());
+        assertThat(library().get(0).getId()).isEqualTo(thirdCard.getId());
         assertThat(hand()).extracting(Card::getId).containsExactlyInAnyOrder(bears.getId(), elves.getId());
         harness.assertLife(player1, 16); // 20 - 4
     }
 
     @Test
-    @DisplayName("When unable to pay, puts the cards on top instead")
-    void unableToPayPutsCardsOnTop() {
+    @DisplayName("Cards that were already in hand cannot be chosen")
+    void ignoresCardsThatWereAlreadyInHand() {
         setup();
-        harness.setLife(player1, 3);
+        Card heldCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(heldCard));
         advanceToDrawAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(heldCard.getId(), bears.getId()));
 
-        harness.assertLife(player1, 3);
-        assertThat(library()).extracting(Card::getId).contains(bears.getId(), elves.getId());
-        assertThat(hand()).extracting(Card::getId).containsExactly(growth.getId());
+        assertThat(library().get(0).getId()).isEqualTo(bears.getId());
+        assertThat(hand()).extracting(Card::getId)
+                .containsExactlyInAnyOrder(heldCard.getId(), elves.getId(), thirdCard.getId());
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @CardUsed(Abundance.class)
+    @DisplayName("Each replaced extra draw is resolved before choosing Sylvan Library cards")
+    void resolvesDrawReplacementsBeforeLibraryChoice() {
+        setup();
+        harness.addToBattlefield(player1, new Abundance());
+        advanceToDrawStep();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Abundance");
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Abundance");
     }
 
     @Test
     @CardUsed(FontOfAgonies.class)
-    @DisplayName("Paying life for cards triggers life-payment abilities")
-    void payingLifeTriggersPaymentAbilities() {
+    @DisplayName("Paying for kept cards triggers effects that watch life payments")
+    void payingForKeptCardsTriggersLifePayment() {
         setup();
-        Permanent font = harness.addToBattlefieldAndReturn(player1, new FontOfAgonies());
+        harness.addToBattlefield(player1, new FontOfAgonies());
         advanceToDrawAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of());
 
-        assertThat(font.getCounterCount(CounterType.BLOOD)).isEqualTo(8);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Font of Agonies").getCounterCount(CounterType.BLOOD))
+                .isEqualTo(8);
+        harness.assertLife(player1, 12);
     }
 
     @Test
     @CardUsed(PlatinumEmperion.class)
-    @DisplayName("When life cannot change, puts the cards on top instead")
-    void lifeCannotChangePutsCardsOnTop() {
+    @DisplayName("Cards must be put back when the controller cannot pay life")
+    void cannotPayLifeWhenLifeTotalCannotChange() {
         setup();
         harness.addToBattlefield(player1, new PlatinumEmperion());
         advanceToDrawAndTrigger();
@@ -158,8 +233,23 @@ class SylvanLibraryTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        assertThat(library()).extracting(Card::getId).contains(bears.getId(), elves.getId());
-        assertThat(hand()).extracting(Card::getId).containsExactly(growth.getId());
+        assertThat(hand()).hasSize(1);
+        assertThat(library()).hasSize(4);
+        assertThat(library()).extracting(Card::getId)
+                .containsAnyOf(bears.getId(), elves.getId(), thirdCard.getId());
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Drawing beyond a short library ends before the follow-up choice")
+    void drawingFromEmptyLibraryEndsBeforeFollowUpChoice() {
+        setup();
+        harness.setLibrary(player1, List.of(bears, elves));
+        advanceToDrawAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

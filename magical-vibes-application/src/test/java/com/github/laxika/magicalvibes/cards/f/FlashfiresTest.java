@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,29 +18,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Flashfires.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
 class FlashfiresTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
         harness.castFromHand(player1, new Flashfires(), "{3}{R}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard()).isInstanceOf(Flashfires.class);
     }
 
-    // ===== Resolution =====
-
     @Test
     @DisplayName("Destroys all Plains controlled by both players")
     void destroysAllPlains() {
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new Plains());
-        harness.castFromHand(player1, new Flashfires(), "{3}{R}");
-        harness.passBothPriorities();
+        castFlashfiresAndResolve();
 
         harness.assertNotOnBattlefield(player1, "Plains");
         harness.assertNotOnBattlefield(player2, "Plains");
@@ -53,8 +48,7 @@ class FlashfiresTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.castFromHand(player1, new Flashfires(), "{3}{R}");
-        harness.passBothPriorities();
+        castFlashfiresAndResolve();
 
         harness.assertOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player1, "Island");
@@ -62,13 +56,28 @@ class FlashfiresTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Indestructible Plains survives Flashfires")
+    void indestructiblePlainsSurvives() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        plains.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        castFlashfiresAndResolve();
+
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertNotInGraveyard(player2, "Plains");
+    }
+
+    @Test
     @DisplayName("Flashfires goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.castFromHand(player1, new Flashfires(), "{3}{R}");
-        harness.passBothPriorities();
+        castFlashfiresAndResolve();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Flashfires");
+    }
+
+    private void castFlashfiresAndResolve() {
+        harness.castFromHand(player1, new Flashfires(), "{3}{R}");
+        harness.passBothPriorities();
     }
 }

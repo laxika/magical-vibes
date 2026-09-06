@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FireDrake;
+import com.github.laxika.magicalvibes.cards.f.Firebreathing;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.t.Terror;
@@ -18,8 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AbbeyGargoyles.class, FireDrake.class, GrizzlyBears.class, Incinerate.class, Terror.class,
-        ZephyrFalcon.class})
+@CardUsed({AbbeyGargoyles.class, FireDrake.class, Firebreathing.class, GrizzlyBears.class,
+        Incinerate.class, Terror.class, ZephyrFalcon.class})
 class AbbeyGargoylesTest extends BaseCardTest {
 
     @Test
@@ -95,9 +96,21 @@ class AbbeyGargoylesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Terror()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, gargoyles.getId());
+        harness.castAndResolveInstant(player1, 0, gargoyles.getId());
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Terror");
+        harness.assertNotOnBattlefield(player1, "Abbey Gargoyles");
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by red Aura")
+    void cannotBeEnchantedByRedAura() {
+        Permanent gargoyles = addCreatureReady(player2, new AbbeyGargoyles());
+
+        harness.setHand(player1, List.of(new Firebreathing()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, gargoyles.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
     }
 }

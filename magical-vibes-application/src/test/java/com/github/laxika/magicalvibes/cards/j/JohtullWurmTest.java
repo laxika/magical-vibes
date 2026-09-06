@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.DazzlingBeauty;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JohtullWurm.class, BalduvianBears.class})
+@CardUsed({JohtullWurm.class, GrizzlyBears.class})
 class JohtullWurmTest extends BaseCardTest {
 
     @Test
@@ -23,7 +23,7 @@ class JohtullWurmTest extends BaseCardTest {
     void oneBlockerNoPenalty() {
         Permanent wurm = addCreatureReady(player1, new JohtullWurm());
         wurm.setAttacking(true);
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -38,8 +38,8 @@ class JohtullWurmTest extends BaseCardTest {
     void twoBlockersMinusTwoMinusOne() {
         Permanent wurm = addCreatureReady(player1, new JohtullWurm());
         wurm.setAttacking(true);
-        addCreatureReady(player2, new BalduvianBears());
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -57,9 +57,9 @@ class JohtullWurmTest extends BaseCardTest {
     void threeBlockersMinusFourMinusTwo() {
         Permanent wurm = addCreatureReady(player1, new JohtullWurm());
         wurm.setAttacking(true);
-        addCreatureReady(player2, new BalduvianBears());
-        addCreatureReady(player2, new BalduvianBears());
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -71,6 +71,32 @@ class JohtullWurmTest extends BaseCardTest {
 
         assertThat(wurm.getPowerModifier()).isEqualTo(-4);
         assertThat(wurm.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("The blocker penalty wears off at end of turn")
+    void penaltyExpiresAtEndOfTurn() {
+        Permanent wurm = addCreatureReady(player1, new JohtullWurm());
+        wurm.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+        harness.passBothPriorities();
+
+        assertThat(wurm.getPowerModifier()).isEqualTo(-2);
+        assertThat(wurm.getToughnessModifier()).isEqualTo(-1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(wurm.getPowerModifier()).isZero();
+        assertThat(wurm.getToughnessModifier()).isZero();
     }
 
     @Test
@@ -89,10 +115,10 @@ class JohtullWurmTest extends BaseCardTest {
 
     @Test
     @CardUsed(DazzlingBeauty.class)
-    @DisplayName("Becoming blocked without a blocker does not apply a penalty")
-    void noPenaltyWhenBlockedWithoutBlockers() {
+    @DisplayName("Becoming blocked without a creature blocking it does not apply a penalty")
+    void blockedWithoutCreatureNoPenalty() {
         Permanent wurm = addCreatureReady(player1, new JohtullWurm());
-        addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(List.of(0));
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -108,5 +134,4 @@ class JohtullWurmTest extends BaseCardTest {
         assertThat(wurm.getPowerModifier()).isZero();
         assertThat(wurm.getToughnessModifier()).isZero();
     }
-
 }

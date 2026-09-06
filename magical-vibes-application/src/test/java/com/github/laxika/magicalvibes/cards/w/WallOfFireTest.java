@@ -21,22 +21,12 @@ class WallOfFireTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Wall of Fire puts it on the stack")
     void castingPutsOnStack() {
-        WallOfFire card = new WallOfFire();
-        harness.castFromHand(player1, card, "{1}{R}{R}");
+        WallOfFire wall = new WallOfFire();
+        harness.castFromHand(player1, wall, "{1}{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
-    }
-
-    @Test
-    @DisplayName("Defender prevents Wall of Fire from attacking")
-    void defenderPreventsAttacking() {
-        Permanent wall = addCreatureReady(player1, new WallOfFire());
-
-        assertThatThrownBy(() -> declareAttackers(List.of(0)))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(wall.isAttacking()).isFalse();
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(wall);
     }
 
     @Test
@@ -50,6 +40,7 @@ class WallOfFireTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+        assertThat(entry.getCard()).isSameAs(wall.getCard());
         assertThat(entry.getTargetId()).isEqualTo(wall.getId());
     }
 
@@ -93,6 +84,26 @@ class WallOfFireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Wall of Fire cannot attack because it has defender")
+    void defenderPreventsAttacking() {
+        addCreatureReady(player1, new WallOfFire());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activating the ability consumes one red mana")
+    void activatingAbilityConsumesMana() {
+        addCreatureReady(player1, new WallOfFire());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addCreatureReady(player1, new WallOfFire());
@@ -102,4 +113,3 @@ class WallOfFireTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 }
-

@@ -39,6 +39,20 @@ class KarmaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not count Swamps controlled by Karma's controller")
+    void doesNotCountControllerSwampsForOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new Karma());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities(); // resolve trigger
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Deals no damage when the active player controls no Swamps")
     void noDamageWithoutSwamps() {
         harness.addToBattlefield(player1, new Karma());

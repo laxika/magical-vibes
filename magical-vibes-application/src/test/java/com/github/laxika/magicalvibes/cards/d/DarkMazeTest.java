@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarkMaze.class, AnabaBodyguard.class})
+@CardUsed({DarkMaze.class, GrizzlyBears.class})
 class DarkMazeTest extends BaseCardTest {
 
     private Permanent addMazeReady() {
@@ -35,7 +35,7 @@ class DarkMazeTest extends BaseCardTest {
     void abilityAllowsAttack() {
         Permanent maze = addMazeReady();
         // A blocker on the defending side so combat pauses at declare-blockers (isAttacking stays set).
-        harness.addToBattlefield(player2, new AnabaBodyguard());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -43,6 +43,17 @@ class DarkMazeTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(maze.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating Dark Maze's ability does not tap it")
+    void activationDoesNotTapMaze() {
+        Permanent maze = addMazeReady();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(maze.isTapped()).isFalse();
     }
 
     @Test

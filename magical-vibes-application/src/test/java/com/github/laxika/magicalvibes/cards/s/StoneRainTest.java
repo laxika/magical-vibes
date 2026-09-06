@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
+import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StoneRain.class, Mountain.class, ZhalfirinKnight.class})
+@CardUsed({StoneRain.class, Mountain.class, GrizzlyBears.class, CityOfBrass.class})
 class StoneRainTest extends BaseCardTest {
 
     @Test
@@ -26,7 +28,7 @@ class StoneRainTest extends BaseCardTest {
     void castingPutsOnStack() {
         harness.addToBattlefield(player2, new Mountain());
         harness.setHand(player1, List.of(new StoneRain()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
         harness.castSorcery(player1, 0, targetId);
@@ -43,10 +45,10 @@ class StoneRainTest extends BaseCardTest {
     void resolvingDestroysTargetLand() {
         harness.addToBattlefield(player2, new Mountain());
         harness.setHand(player1, List.of(new StoneRain()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Mountain");
-        harness.castAndResolveSorcery(player1, 0, targetId);
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player2, "Mountain");
@@ -57,41 +59,55 @@ class StoneRainTest extends BaseCardTest {
     void canDestroyOwnLand() {
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new StoneRain()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Mountain");
-        harness.castAndResolveSorcery(player1, 0, targetId);
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertInGraveyard(player1, "Mountain");
     }
 
     @Test
+    @DisplayName("Can destroy a nonbasic land")
+    void canDestroyNonbasicLand() {
+        harness.addToBattlefield(player2, new CityOfBrass());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "City of Brass");
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "City of Brass");
+        harness.assertInGraveyard(player2, "City of Brass");
+    }
+
+    @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
         harness.setHand(player1, List.of(new StoneRain()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = target.getId();
+        UUID targetId = harness.getPermanentId(player2, "Mountain");
         harness.castSorcery(player1, 0, targetId);
 
-        harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .removePermanentToGraveyard(harness.getGameData(), target));
+        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
 
         harness.passBothPriorities();
 
-        assertThat(gameLogContains("fizzles")).isTrue();
+        GameData gd = harness.getGameData();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     @Test
     @DisplayName("Cannot target a creature with Stone Rain")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new ZhalfirinKnight());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new StoneRain()));
-        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID creatureId = harness.getPermanentId(player2, "Zhalfirin Knight");
+        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }

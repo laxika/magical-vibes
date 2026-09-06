@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,9 +29,6 @@ class LeviathanTest extends BaseCardTest {
 
         assertThat(leviathan.isTapped()).isTrue();
     }
-
-    // ===== Upkeep: sacrifice two Islands to untap =====
-
     @Test
     @DisplayName("Upkeep: sacrificing two Islands untaps Leviathan")
     void upkeepSacrificeTwoIslandsUntaps() {
@@ -72,8 +70,47 @@ class LeviathanTest extends BaseCardTest {
         assertThat(islandCount(player1)).isEqualTo(1);
     }
 
-    // ===== Attack: can't attack unless you sacrifice two Islands =====
+    @Test
+    @DisplayName("Upkeep: sacrificing two Islands leaves other permanents untouched")
+    void upkeepSacrificeOnlyIslands() {
+        Permanent leviathan = harness.addToBattlefieldAndReturn(player1, new Leviathan());
+        leviathan.tap();
+        Permanent grizzlyBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
 
+        resolveUpkeepMay(player1, true);
+
+        assertThat(leviathan.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(grizzlyBears);
+        assertThat(islandCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Upkeep: controller chooses which two Islands to sacrifice")
+    void upkeepControllerChoosesIslandsToSacrifice() {
+        Permanent leviathan = harness.addToBattlefieldAndReturn(player1, new Leviathan());
+        leviathan.tap();
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent thirdIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(firstIsland.getId(), secondIsland.getId(), thirdIsland.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstIsland.getId(), thirdIsland.getId()));
+
+        assertThat(leviathan.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondIsland)
+                .doesNotContain(firstIsland, thirdIsland);
+    }
     @Test
     @DisplayName("Cannot attack when controlling fewer than two Islands")
     void cannotAttackWithoutTwoIslands() {
@@ -90,13 +127,25 @@ class LeviathanTest extends BaseCardTest {
         addCreatureReady(player1, new Leviathan());
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(islandCount(player1)).isZero();
+        assertThat(islandCount(player1)).isEqualTo(1);
         // Attack still went through (10/10 deals combat damage to the defender)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cannot attack using Islands controlled by the opponent")
+    void cannotAttackUsingOpponentsIslands() {
+        addCreatureReady(player1, new Leviathan());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -162,9 +211,6 @@ class LeviathanTest extends BaseCardTest {
 
         assertThat(bloodbriar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
-
-    // ===== Helpers =====
-
     private void resolveUpkeepMay(Player player, boolean accept) {
         advanceToUpkeep(player);
         harness.passBothPriorities();

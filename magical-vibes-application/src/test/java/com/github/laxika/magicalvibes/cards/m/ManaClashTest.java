@@ -65,6 +65,18 @@ class ManaClashTest extends BaseCardTest {
     }
 
     @Test
+    void doesNotTriggerCoinFlipWinAbilitiesForTargetOpponent() {
+        Permanent chanceEncounter = harness.enterBattlefieldAndReturn(player2, new ChanceEncounter());
+        harness.setHand(player1, List.of(new ManaClash()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(chanceEncounter.getCounterCount(CounterType.LUCK)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target self — must target an opponent")
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new ManaClash()));

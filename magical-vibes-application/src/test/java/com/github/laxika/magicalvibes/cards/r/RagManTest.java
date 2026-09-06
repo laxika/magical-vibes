@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
-import com.github.laxika.magicalvibes.cards.m.MarshGas;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RagMan.class, BogImp.class, BogRats.class, MarshGas.class, BloodMoon.class})
+@CardUsed({RagMan.class, BogImp.class, BogRats.class, DarkRitual.class, Disenchant.class})
 class RagManTest extends BaseCardTest {
 
     private Permanent readyRagMan() {
@@ -32,7 +33,7 @@ class RagManTest extends BaseCardTest {
     @Test
     @DisplayName("Discards the only creature card from target opponent's hand")
     void discardsCreatureAtRandom() {
-        harness.setHand(player2, List.of(new MarshGas(), new BogRats(), new BloodMoon()));
+        harness.setHand(player2, List.of(new DarkRitual(), new BogRats(), new Disenchant()));
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -41,26 +42,26 @@ class RagManTest extends BaseCardTest {
         // Only creature in hand — deterministically discarded, non-creatures untouched.
         harness.assertInGraveyard(player2, "Bog Rats");
         harness.assertNotInHand(player2, "Bog Rats");
-        harness.assertInHand(player2, "Marsh Gas");
-        harness.assertInHand(player2, "Blood Moon");
+        harness.assertInHand(player2, "Dark Ritual");
+        harness.assertInHand(player2, "Disenchant");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gameLogContains("reveals their hand")).isTrue();
-        assertThat(gameLogContains("Marsh Gas")).isTrue();
-        assertThat(gameLogContains("Blood Moon")).isTrue();
+        assertThat(gameLogContains("Dark Ritual")).isTrue();
+        assertThat(gameLogContains("Disenchant")).isTrue();
     }
 
     @Test
     @DisplayName("Only ever discards a creature card, never a noncreature")
     void onlyDiscardsCreatures() {
-        harness.setHand(player2, List.of(new MarshGas(), new BogRats(), new BloodMoon(), new BogImp()));
+        harness.setHand(player2, List.of(new DarkRitual(), new BogRats(), new Disenchant(), new BogImp()));
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         // Whichever creature is picked, the noncreature cards must all remain in hand.
-        harness.assertInHand(player2, "Marsh Gas");
-        harness.assertInHand(player2, "Blood Moon");
+        harness.assertInHand(player2, "Dark Ritual");
+        harness.assertInHand(player2, "Disenchant");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .hasSize(1)
@@ -70,7 +71,7 @@ class RagManTest extends BaseCardTest {
     @Test
     @DisplayName("Does nothing when the opponent has no creature cards")
     void noCreatureNoDiscard() {
-        harness.setHand(player2, List.of(new MarshGas(), new BloodMoon()));
+        harness.setHand(player2, List.of(new DarkRitual(), new Disenchant()));
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -78,6 +79,22 @@ class RagManTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed(TamiyoCollectorOfTales.class)
+    @DisplayName("Cannot cause a discard through Tamiyo, Collector of Tales")
+    void discardPreventionStopsRagMan() {
+        harness.setHand(player2, List.of(new BogRats()));
+        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        readyRagMan();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("reveals their hand")).isTrue();
     }
 
     @Test

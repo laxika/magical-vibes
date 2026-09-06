@@ -167,8 +167,7 @@ class VenomTest extends BaseCardTest {
                 .filter(se -> se.getCard().getName().equals("Venom")))
                 .hasSize(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .extracting(DelayedPermanentAction::permanentId)

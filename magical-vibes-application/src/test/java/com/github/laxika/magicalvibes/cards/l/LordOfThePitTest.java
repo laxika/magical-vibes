@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,11 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LordOfThePit.class, GrizzlyBears.class, GiantSpider.class})
+@CardUsed({LordOfThePit.class, GrizzlyBears.class, GiantSpider.class, JayemdaeTome.class})
 class LordOfThePitTest extends BaseCardTest {
-
-    // ===== No other creatures — deals 7 damage =====
-
     @Test
     @DisplayName("Deals 7 damage to controller when no other creatures are present")
     void deals7DamageWhenNoOtherCreatures() {
@@ -57,8 +53,19 @@ class LordOfThePitTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
-    // ===== One other creature — auto-sacrifice =====
+    @Test
+    @DisplayName("Does not count a noncreature permanent as a creature to sacrifice")
+    void doesNotSacrificeNonCreaturePermanent() {
+        harness.addToBattlefield(player1, new LordOfThePit());
+        harness.addToBattlefield(player1, new JayemdaeTome());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 7);
+        harness.assertOnBattlefield(player1, "Jayemdae Tome");
+    }
     @Test
     @DisplayName("Auto-sacrifices the only other creature")
     void autoSacrificesOnlyOtherCreature() {
@@ -86,9 +93,6 @@ class LordOfThePitTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lord of the Pit");
     }
-
-    // ===== Multiple other creatures — player chooses =====
-
     @Test
     @DisplayName("Prompts player to choose when multiple other creatures are present")
     void promptsChoiceWithMultipleCreatures() {
@@ -109,8 +113,8 @@ class LordOfThePitTest extends BaseCardTest {
     @DisplayName("Lord of the Pit itself is not in the valid sacrifice choices")
     void lordNotInValidChoices() {
         harness.addToBattlefield(player1, new LordOfThePit());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GiantSpider());
 
         Permanent lordPerm = findPermanent(player1, "Lord of the Pit");
 
@@ -140,9 +144,6 @@ class LordOfThePitTest extends BaseCardTest {
         // No damage dealt when sacrifice succeeds
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
-
-    // ===== Does not trigger during opponent's upkeep =====
-
     @Test
     @DisplayName("Does not trigger during opponent's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
@@ -156,9 +157,6 @@ class LordOfThePitTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
-
-    // ===== Edge cases =====
-
     @Test
     @DisplayName("Two Lords of the Pit — each trigger sacrifices the other Lord, no damage dealt")
     void twoLordsEachSacrificesTheOther() {
@@ -233,4 +231,3 @@ class LordOfThePitTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
-

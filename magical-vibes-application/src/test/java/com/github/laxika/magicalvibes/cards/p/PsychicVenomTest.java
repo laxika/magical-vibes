@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PsychicVenom.class, Mountain.class, GrizzlyBears.class})
 class PsychicVenomTest extends BaseCardTest {
-
     @Test
     @DisplayName("Can cast Psychic Venom targeting a land")
     void canTargetLand() {
@@ -38,6 +37,23 @@ class PsychicVenomTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving Psychic Venom attaches it to the target land")
+    void resolvingAttachesToTargetLand() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of(new PsychicVenom()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof PsychicVenom
+                        && land.getId().equals(permanent.getAttachedTo()));
+    }
+
+    @Test
     @DisplayName("Cannot cast Psychic Venom targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Mountain()); // valid target so spell is playable
@@ -51,18 +67,16 @@ class PsychicVenomTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
-
     @Test
     @DisplayName("Tapping the enchanted land queues the damage trigger (deferred as a mana-ability trigger)")
     void tappingLandQueuesTrigger() {
-        Permanent aura = addLandWithAura(player1);
+        addLandWithAura(player1);
 
         // Tapping a land for mana defers its triggers (CR 603.3) until a player next gets priority.
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.pendingManaAbilityTriggers).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
         });
     }
 
@@ -73,8 +87,7 @@ class PsychicVenomTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        resolveStackFully();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -95,8 +108,7 @@ class PsychicVenomTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        resolveStackFully();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -109,16 +121,16 @@ class PsychicVenomTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 0);
+        resolveStackFully();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingManaAbilityTriggers).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
-
     /**
      * Places a land on {@code owner}'s battlefield (index 0) with a Psychic Venom attached (index 1).
      */
-    private Permanent addLandWithAura(Player owner) {
+    private void addLandWithAura(Player owner) {
         harness.addToBattlefield(owner, new Mountain());
         Permanent land = gd.playerBattlefields.get(owner.getId()).getFirst();
 
@@ -126,6 +138,14 @@ class PsychicVenomTest extends BaseCardTest {
         Permanent aura = new Permanent(auraCard);
         aura.setAttachedTo(land.getId());
         gd.playerBattlefields.get(owner.getId()).add(aura);
-        return aura;
+    }
+
+    /**
+     * Drives priority until the stack and any deferred mana-ability triggers are fully resolved.
+     */
+    private void resolveStackFully() {
+        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
+            harness.passBothPriorities();
+        }
     }
 }

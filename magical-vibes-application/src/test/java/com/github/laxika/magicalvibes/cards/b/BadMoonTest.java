@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,9 +21,7 @@ class BadMoonTest extends BaseCardTest {
     @DisplayName("Own black creatures get +1/+1")
     void buffsOwnBlackCreatures() {
         harness.addToBattlefield(player1, new BadMoon());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
@@ -29,9 +31,7 @@ class BadMoonTest extends BaseCardTest {
     @DisplayName("Opponent's black creatures also get +1/+1")
     void buffsOpponentBlackCreatures() {
         harness.addToBattlefield(player1, new BadMoon());
-        harness.addToBattlefield(player2, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player2, "Drudge Skeletons");
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player2, new DrudgeSkeletons());
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
@@ -41,9 +41,7 @@ class BadMoonTest extends BaseCardTest {
     @DisplayName("Nonblack creatures are unaffected")
     void nonblackUnaffected() {
         harness.addToBattlefield(player1, new BadMoon());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -54,9 +52,7 @@ class BadMoonTest extends BaseCardTest {
     void twoBadMoonsStack() {
         harness.addToBattlefield(player1, new BadMoon());
         harness.addToBattlefield(player1, new BadMoon());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(3);
@@ -65,14 +61,11 @@ class BadMoonTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Bad Moon leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new BadMoon());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        Permanent badMoon = harness.addToBattlefieldAndReturn(player1, new BadMoon());
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Bad Moon"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, badMoon));
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(1);
@@ -81,15 +74,28 @@ class BadMoonTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Bad Moon resolves onto the battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-        harness.castFromHand(player1, new BadMoon(), "{1}{B}");
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player1, new DrudgeSkeletons());
+        harness.setHand(player1, List.of(new BadMoon()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
 
+        harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Bad Moon buffs itself when it becomes a creature")
+    void buffsItselfWhenItBecomesACreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent badMoon = harness.addToBattlefieldAndReturn(player1, new BadMoon());
+
+        assertThat(gqs.isCreature(gd, badMoon)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, badMoon)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, badMoon)).isEqualTo(3);
     }
 }

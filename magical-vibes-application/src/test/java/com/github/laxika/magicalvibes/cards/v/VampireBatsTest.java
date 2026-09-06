@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +18,7 @@ class VampireBatsTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated twice in one turn")
     void canActivateTwiceInOneTurn() {
-        Permanent bats = addCreatureReady(player1, new VampireBats());
+        Permanent bats = addReadyVampireBats(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -25,25 +26,14 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bats)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bats)).isEqualTo(1);
-    }
-
-    @Test
-    void canActivateWhileSummoningSick() {
-        Permanent bats = harness.addToBattlefieldAndReturn(player1, new VampireBats());
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        assertThat(gqs.getEffectivePower(gd, bats)).isEqualTo(1);
+        assertThat(bats.getPowerModifier()).isEqualTo(2);
+        assertThat(bats.getToughnessModifier()).isZero();
     }
 
     @Test
     @DisplayName("Third activation in same turn is rejected")
     void thirdActivationInSameTurnIsRejected() {
-        addCreatureReady(player1, new VampireBats());
+        addReadyVampireBats(player1);
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -59,7 +49,7 @@ class VampireBatsTest extends BaseCardTest {
     @Test
     @DisplayName("Activation limit resets on a new turn")
     void activationLimitResetsOnNewTurn() {
-        addCreatureReady(player1, new VampireBats());
+        addReadyVampireBats(player1);
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -80,13 +70,50 @@ class VampireBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activation requires black mana")
     void activationRequiresBlackMana() {
-        addCreatureReady(player1, new VampireBats());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent bats = addReadyVampireBats(player1);
+        int powerModifierBefore = bats.getPowerModifier();
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bats.getPowerModifier()).isEqualTo(powerModifierBefore);
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Ability can be activated while summoning sick")
+    void canActivateWhileSummoningSick() {
+        Permanent bats = harness.addToBattlefieldAndReturn(player1, new VampireBats());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Boost expires at the end of the turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent bats = addReadyVampireBats(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bats.getPowerModifier()).isZero();
+    }
+
+    private Permanent addReadyVampireBats(Player player) {
+        return addCreatureReady(player, new VampireBats());
+    }
 }

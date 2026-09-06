@@ -26,9 +26,6 @@ class AnimateWallTest extends BaseCardTest {
         aura.setAttachedTo(wall.getId());
         return aura;
     }
-
-    // ===== Attacking despite defender =====
-
     @Test
     @DisplayName("Enchanted Wall can attack as though it didn't have defender")
     void enchantedWallCanAttack() {
@@ -38,6 +35,22 @@ class AnimateWallTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
 
+        declareAttackers(List.of(wallIndex));
+
+        assertThat(wall.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolved Animate Wall lets the enchanted Wall attack")
+    void resolvedAnimateWallLetsWallAttack() {
+        Permanent wall = addWall();
+        harness.setHand(player1, List.of(new AnimateWall()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, wall.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        int wallIndex = gd.playerBattlefields.get(player1.getId()).indexOf(wall);
         declareAttackers(List.of(wallIndex));
 
         assertThat(wall.isAttacking()).isTrue();
@@ -66,9 +79,6 @@ class AnimateWallTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
-
-    // ===== Targeting restriction (Enchant Wall) =====
-
     @Test
     @DisplayName("Can enchant a Wall")
     void canEnchantWall() {

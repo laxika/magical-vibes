@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AncientZiggurat;
+import com.github.laxika.magicalvibes.cards.c.ChromaticLantern;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.r.RealityTwist;
+import com.github.laxika.magicalvibes.cards.u.UrzasMine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,6 +39,36 @@ class FellwarStoneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(UrzasMine.class)
+    @DisplayName("Ignores an opponent land that can produce only colorless mana")
+    void ignoresColorlessOnlyOpponentLand() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player2, new UrzasMine());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @CardUsed(ChromaticLantern.class)
+    @DisplayName("Includes mana abilities granted to an opponent's land")
+    void includesAbilitiesGrantedToOpponentLand() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player2, new ChromaticLantern());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test
@@ -92,6 +125,20 @@ class FellwarStoneTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(RealityTwist.class)
+    @DisplayName("Uses an opponent land's current replacement color")
+    void usesCurrentReplacementColorOfOpponentLand() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player2, new RealityTwist());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     @Test

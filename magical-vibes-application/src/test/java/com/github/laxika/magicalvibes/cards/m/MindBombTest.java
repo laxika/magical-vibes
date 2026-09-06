@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +30,8 @@ class MindBombTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveSorcery(player1, 0, 0); // active player chooses first (APNAP)
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities(); // active player chooses first (APNAP)
 
         // Player 1 discards 1 of its 2 remaining cards -> takes 3 - 1 = 2 damage.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
@@ -60,7 +64,8 @@ class MindBombTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
 
         // Player 1 discards all three remaining cards -> takes 3 - 3 = 0 damage.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
@@ -134,22 +139,50 @@ class MindBombTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("All players choose their discards before the cards are discarded")
-    void allPlayersChooseDiscardsBeforeCardsAreDiscarded() {
+    @CardUsed(TamiyoCollectorOfTales.class)
+    @DisplayName("A discard-preventing effect makes the chosen discard count zero")
+    void discardPreventionLeavesCardsAndDealsFullDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
         harness.setHand(player1, List.of(new MindBomb(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new HillGiant()));
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 1);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .singleElement()
+                .isInstanceOf(HillGiant.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Selected discards are not processed until every player has chosen")
+    void discardsWaitForEveryPlayerChoice() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new MindBomb(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
 
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c instanceof GrizzlyBears);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
     }
 }

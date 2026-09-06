@@ -102,6 +102,18 @@ class ClockworkSteedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep ability can be activated with X equal to zero")
+    void upkeepAbilityAllowsZero() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 2);
+
+        activateUpkeepAbility(0);
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(steed.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Upkeep ability cannot be activated outside your upkeep")
     void cannotActivateOutsideUpkeep() {
         addCreatureReady(player1, new ClockworkSteed());
@@ -139,7 +151,7 @@ class ClockworkSteedTest extends BaseCardTest {
         steed.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(steed);
 
-        Permanent blocker = addCreatureReady(player2, new ClockworkGnomes());
+        addCreatureReady(player2, new ClockworkGnomes());
 
         prepareDeclareBlockers();
 
