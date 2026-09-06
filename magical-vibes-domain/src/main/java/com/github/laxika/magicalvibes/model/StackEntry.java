@@ -44,6 +44,8 @@ public class StackEntry {
     private Integer resolvingEffectTargetGroup;
     private final UUID sourcePermanentId;
     private final Map<UUID, Integer> damageAssignments;
+    /** Controllers remembered before earlier effects in this resolution remove their permanents. */
+    private final Map<UUID, UUID> removedPermanentControllers = new HashMap<>();
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     /** Counters a permanent spell is instructed to enter with. */
     private final Map<CounterType, Integer> enteringCounters = new EnumMap<>(CounterType.class);
@@ -621,6 +623,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetCardGroupSizes);
         this.targetCardIdsByEffect = copyTargetCardIdsByEffect(source.targetCardIdsByEffect);
         this.targetFilter = source.targetFilter;
+        this.removedPermanentControllers.putAll(source.removedPermanentControllers);
         this.copy = source.copy;
         this.nonTargeting = source.nonTargeting;
         this.spellDispositionHandled = source.spellDispositionHandled;

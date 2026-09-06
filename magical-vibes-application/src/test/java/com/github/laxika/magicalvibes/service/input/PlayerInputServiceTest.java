@@ -569,7 +569,8 @@ class PlayerInputServiceTest {
             svc.beginSubtypeChoice(gd, PLAYER1_ID, permId);
 
             InteractionPromptMessage msg = projectedPrompt();
-            assertThat(msg.options()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS");
+            assertThat(msg.options()).doesNotContain("FOREST", "MOUNTAIN", "ISLAND", "PLAINS", "SWAMP", "AURA", "EQUIPMENT", "LOCUS",
+                    "URZAS", "MINE", "POWER_PLANT", "TOWER");
             assertThat(msg.prompt()).isEqualTo("Choose a creature type.");
         }
 

@@ -17,6 +17,39 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TempestEfreetTest extends BaseCardTest {
 
     @Test
+    void exchangeMovesTheSourceAfterItReturnsToTheBattlefield() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        TempestEfreet efreet = new TempestEfreet();
+        addCreatureReady(player1, efreet);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(efreet);
+        harness.addToBattlefield(player1, efreet);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player1, "Tempest Efreet");
+        harness.assertNotInGraveyard(player1, "Tempest Efreet");
+        harness.assertInGraveyard(player2, "Tempest Efreet");
+    }
+
+    @Test
+    void exchangeMovesTheSourceFromALibraryWithoutDuplicatingIt() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        TempestEfreet efreet = new TempestEfreet();
+        addCreatureReady(player1, efreet);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(efreet);
+        harness.setLibrary(player1, List.of(efreet));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(efreet);
+        harness.assertInGraveyard(player2, "Tempest Efreet");
+    }
+
+    @Test
     @DisplayName("Declining to pay 10 life exchanges the revealed card for Tempest Efreet")
     void declineExchangesCards() {
         harness.setHand(player1, new ArrayList<>());

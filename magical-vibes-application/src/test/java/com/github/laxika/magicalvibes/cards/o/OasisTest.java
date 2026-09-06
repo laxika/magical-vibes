@@ -57,7 +57,7 @@ class OasisTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Invalid target permanent");
     }
 
     @Test

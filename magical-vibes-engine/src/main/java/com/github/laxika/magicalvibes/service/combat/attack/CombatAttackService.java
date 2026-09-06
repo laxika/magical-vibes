@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -867,27 +866,6 @@ public class CombatAttackService {
                     }
                 }
 
-                // "Whenever this creature attacks, defending player may draw a card" (Sibilant Spirit).
-                // Route the optional draw to the defending player (or the controller of the attacked
-                // planeswalker), not the attacking creature's controller.
-                List<CardEffect> defendingPlayerDraws = allEffects.stream()
-                        .filter(e -> e instanceof DefendingPlayerMayDrawCardEffect).toList();
-                if (!defendingPlayerDraws.isEmpty()) {
-                    allEffects.removeAll(defendingPlayerDraws);
-                    UUID attackedTargetId = attacker.getAttackTarget();
-                    UUID defendingPlayerId = attackedTargetId == null ? null
-                            : gameData.playerIds.contains(attackedTargetId)
-                                    ? attackedTargetId
-                                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                    if (defendingPlayerId != null) {
-                        for (CardEffect ignored : defendingPlayerDraws) {
-                            gameData.queueMayAbility(attacker.getCard(), defendingPlayerId,
-                                    new MayEffect(new DrawCardEffect(), "Draw a card?"));
-                        }
-                        gameLogService.append(gameData,
-                                GameLog.builder().card(attacker.getCard()).text("'s ability triggers.").build());
-                    }
-                }
 
                 // "Whenever this creature attacks for the first time each turn" (Aurelia, the
                 // Warleader): drop the wrapped effects entirely once this permanent has already

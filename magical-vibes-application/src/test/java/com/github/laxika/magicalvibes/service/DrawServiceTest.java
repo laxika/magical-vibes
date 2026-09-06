@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -60,6 +61,34 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DrawServiceTest {
+
+    @Test
+    void multipleDrawsWaitForEachReplacementChoice() {
+        Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
+        abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());
+        gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
+        Card first = createCard("First", CardType.CREATURE);
+        Card second = createCard("Second", CardType.CREATURE);
+        gd.playerDecks.put(player1Id, new ArrayList<>(List.of(first, second)));
+        gd.playerHands.put(player1Id, new ArrayList<>());
+
+        sut.resolveDrawCards(gd, player1Id, 2);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.playerHands.get(player1Id)).isEmpty();
+        gd.pendingMayAbilities.clear();
+        sut.resolveDrawCardWithoutStaticReplacementCheck(gd, player1Id);
+        sut.resumePendingCardDraws(gd);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(first);
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        gd.pendingMayAbilities.clear();
+        sut.resolveDrawCardWithoutStaticReplacementCheck(gd, player1Id);
+        sut.resumePendingCardDraws(gd);
+
+        assertThat(gd.playerHands.get(player1Id)).containsExactly(first, second);
+        assertThat(gd.pendingCardDraws).isEmpty();
+    }
 
     @Mock
     private GameQueryService gameQueryService;

@@ -1652,6 +1652,7 @@ public class PlayerInputService {
     );
 
     static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
         NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
     }
 

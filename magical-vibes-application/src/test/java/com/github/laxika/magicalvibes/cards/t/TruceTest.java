@@ -99,5 +99,11 @@ class TruceTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.assertLife(player1, 20);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 24);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player2.getId());
     }
 }

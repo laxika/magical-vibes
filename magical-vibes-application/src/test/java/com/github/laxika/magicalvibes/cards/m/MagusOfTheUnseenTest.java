@@ -106,6 +106,7 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         harness.castEnchantment(player2, 0, artifact.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(artifact.getId()));

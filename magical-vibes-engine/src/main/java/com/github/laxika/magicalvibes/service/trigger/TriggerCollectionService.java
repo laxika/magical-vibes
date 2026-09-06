@@ -1791,6 +1791,13 @@ public class TriggerCollectionService {
         }
 
         List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+        if (!controllerId.equals(damagedPlayerId)) {
+            effects.addAll(source.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+            effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+            effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+            effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                    gameData, source, EffectSlot.ON_DAMAGE_TO_OPPONENT));
+        }
         for (CardEffect effect : effects) {
             queueNoncombatDamageToPlayerEffect(gameData, source, controllerId, damagedPlayerId, damageDealt, effect);
         }
@@ -1964,7 +1971,7 @@ public class TriggerCollectionService {
                     aura.getCard(),
                     damagedPlayerId,
                     aura.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect())),
+                    new ArrayList<>(aura.getCard().getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU)),
                     amount,
                     creatureControllerId,
                     aura.getId(),
@@ -1974,6 +1981,7 @@ public class TriggerCollectionService {
                     List.of()
             );
             entry.setDamageSourceCard(enchantedCreature.getCard());
+            entry.setTriggeringPermanentId(enchantedCreature.getId());
             gameData.stack.add(entry);
 
             gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));

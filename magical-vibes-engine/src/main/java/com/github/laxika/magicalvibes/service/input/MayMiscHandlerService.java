@@ -240,16 +240,18 @@ public class MayMiscHandlerService {
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
 
         if (!accepted) {
-            drawService.resolveDrawCardWithoutStaticReplacementCheck(gameData, drawingPlayerId);
+            if (effect.kind() == DrawReplacementKind.FASTING) {
+                drawService.resolveDrawCard(gameData, drawingPlayerId);
+            } else {
+                drawService.continueDrawAfterDecliningReplacement(
+                        gameData, drawingPlayerId, ability.sourceCard().getId());
+            }
             if (effect.kind() == DrawReplacementKind.FASTING) {
                 stepTriggerService.handleDrawStepTriggers(gameData);
             }
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -260,10 +262,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} skips draw step with {} and gains 2 life",
                     gameData.id, playerName, ability.sourceCard().getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -279,10 +278,7 @@ public class MayMiscHandlerService {
                 log.info("Game {} - {} replaces a draw with a study counter on {}",
                         gameData.id, player.getUsername(), ability.sourceCard().getName());
             }
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -301,12 +297,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} replaces a draw with a library search from {}",
                     gameData.id, player.getUsername(), ability.sourceCard().getName());
 
-            if (!gameData.interaction.isAwaitingInput()) {
-                playerInputService.processNextMayAbility(gameData);
-            }
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -325,10 +316,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} skips draw with {}", gameData.id, playerName,
                     ability.sourceCard().getName());
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -346,10 +334,7 @@ public class MayMiscHandlerService {
                         gameData.id, playerName, top.getName(), ability.sourceCard().getName());
             }
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -374,10 +359,7 @@ public class MayMiscHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw with " , ability.sourceCard(), "."));
             log.info("Game {} - {} skips draw for Island Sanctuary shield", gameData.id, playerName);
 
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

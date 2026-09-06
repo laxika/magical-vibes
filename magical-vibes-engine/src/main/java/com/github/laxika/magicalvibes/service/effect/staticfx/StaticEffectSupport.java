@@ -90,6 +90,7 @@ public class StaticEffectSupport {
     );
 
     static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
         NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
     }
 

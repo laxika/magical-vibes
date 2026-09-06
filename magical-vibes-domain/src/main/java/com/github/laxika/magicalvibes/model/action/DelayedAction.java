@@ -22,6 +22,7 @@ public sealed interface DelayedAction permits
         TargetCreatureMustAttackNextCombat,
         DelayedBeginningOfCombatTrigger,
         DelayedEndOfCombatTrigger,
+        DelayedEndStepTrigger,
         DelayedPermanentAction,
         ExilePermanentAtControllerEndStep,
         SacrificeAtEndOfCombat,

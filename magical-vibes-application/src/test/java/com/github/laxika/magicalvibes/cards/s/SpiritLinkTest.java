@@ -193,7 +193,7 @@ class SpiritLinkTest extends BaseCardTest {
         bears.setAttacking(true);
         attachSpiritLink(player1, bears);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
 
         harness.assertLife(player2, 18);
         harness.assertLife(player1, 20);
@@ -218,7 +218,8 @@ class SpiritLinkTest extends BaseCardTest {
         resolveCombat();
 
         harness.passBothPriorities();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains") && log.contains("life") && log.contains("Spirit Link"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .contains("Spirit Link's ability resolves.", "Alice gains 2 life.");
     }
 
     // ===== Targeting restriction =====

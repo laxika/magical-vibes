@@ -132,6 +132,10 @@ class LeviathanTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, choice.validIds().subList(0, 2));
+
         assertThat(islandCount(player1)).isEqualTo(1);
         // Attack still went through (10/10 deals combat damage to the defender)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(lifeBefore);

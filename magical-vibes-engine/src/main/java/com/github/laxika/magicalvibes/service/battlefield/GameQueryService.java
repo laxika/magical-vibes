@@ -282,6 +282,10 @@ public class GameQueryService {
             CardSubtype.CAVE,
             CardSubtype.GATE,
             CardSubtype.LOCUS,
+            CardSubtype.URZAS,
+            CardSubtype.MINE,
+            CardSubtype.POWER_PLANT,
+            CardSubtype.TOWER,
             CardSubtype.AURA,
             CardSubtype.EQUIPMENT,
             CardSubtype.FORTIFICATION,
@@ -798,20 +802,10 @@ public class GameQueryService {
      */
     public Set<CardSubtype> effectiveBasicLandTypes(GameData gameData, Permanent permanent) {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
-        StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (!bonus.landSubtypeOverriding()) {
-            for (CardSubtype st : permanent.getCard().getSubtypes()) {
-                if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
+        for (CardSubtype subtype : BASIC_LAND_SUBTYPES) {
+            if (hasEffectiveSubtype(gameData, permanent, subtype)) {
+                result.add(subtype);
             }
-            for (CardSubtype st : permanent.getGrantedSubtypes()) {
-                if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
-            }
-        }
-        for (CardSubtype st : bonus.grantedSubtypes()) {
-            if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
-        }
-        for (CardSubtype st : permanent.getTransientSubtypes()) {
-            if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
         }
         return result;
     }

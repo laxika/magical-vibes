@@ -106,6 +106,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once per combat damage step when the source deals combat damage to one or more blockers. */
     ON_COMBAT_DAMAGE_TO_BLOCKING_CREATURE,
     ON_DAMAGE_TO_PLAYER,
+    /** Combat or noncombat damage dealt by the source to an opponent of its controller. */
+    ON_DAMAGE_TO_OPPONENT,
     ON_ATTACK,
     ON_BECOMES_BLOCKED,
     /** Triggers once per attacking creature the controller controls that ends up unblocked

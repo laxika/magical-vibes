@@ -1280,6 +1280,13 @@ public class CombatDamageService {
             List<CardEffect> allDamageEffects = new ArrayList<>();
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            if (!attackerId.equals(defenderId)) {
+                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, creature, EffectSlot.ON_DAMAGE_TO_OPPONENT));
+            }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
             allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));

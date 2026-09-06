@@ -155,11 +155,7 @@ public class UntapStepService {
             List<Permanent> ownBattlefield = activeBattlefield;
             if (ownBattlefield != null) {
                 ownBattlefield.forEach(p -> {
-                    // Permanents stay tapped, but a queued "skip next untap" is still consumed (this
-                    // untap step would have been its chance to untap) and summoning sickness clears.
-                    if (p.getSkipUntapCount() > 0) {
-                        p.setSkipUntapCount(p.getSkipUntapCount() - 1);
-                    }
+                    // A wholly skipped step does not consume a restriction on the next untap step.
                     p.setSummoningSick(false);
                     p.setLoyaltyActivationsThisTurn(0);
                     p.setExtraLoyaltyActivationsThisTurn(0);

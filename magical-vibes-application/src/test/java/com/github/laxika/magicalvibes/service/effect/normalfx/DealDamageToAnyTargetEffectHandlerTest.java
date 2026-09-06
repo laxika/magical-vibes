@@ -24,6 +24,22 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
     }
 
     @Test
+    void unconditionalRegenerationPreventionAppliesWhenNoDamageIsDealt() {
+        Permanent creature = addPermanent(player2Id, createCreature("Creature", 2, 2));
+        StackEntry entry = createEntry(createCard("Damage spell"), player1Id, creature.getId());
+        when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(0, true);
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry, damage);
+        assertThat(creature.isCantRegenerateThisTurn()).isFalse();
+
+        dealDamageToAnyTargetHandler.resolve(gd, entry, damage.withUnconditionalRegenerationPrevention());
+        assertThat(creature.isCantRegenerateThisTurn()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
             @DisplayName("Deals lethal damage to a creature and destroys it")
             void dealsLethalDamageToCreatureAndDestroysIt() {
                 Card shockCard = createCard("Shock");

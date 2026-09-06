@@ -189,8 +189,7 @@ class RelicBindTest extends BaseCardTest {
         artifact.tap();
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
-        // resolve trigger -> mode prompt
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passPriority(player1);
         harness.handleListChoice(player1, mode);          // choose mode -> target prompt
         harness.handlePermanentChosen(player1, targetId); // choose target -> chosen mode's effect onto stack
         // resolve the chosen mode's effect

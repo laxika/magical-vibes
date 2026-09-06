@@ -86,7 +86,8 @@ class RagManTest extends BaseCardTest {
     @DisplayName("Cannot cause a discard through Tamiyo, Collector of Tales")
     void discardPreventionStopsRagMan() {
         harness.setHand(player2, List.of(new BogRats()));
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
         readyRagMan();
 
         harness.activateAbility(player1, 0, null, player2.getId());

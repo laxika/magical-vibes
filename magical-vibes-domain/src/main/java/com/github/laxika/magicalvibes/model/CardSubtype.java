@@ -17,6 +17,10 @@ public enum CardSubtype {
     DESERT("Desert"),
     CAVE("Cave"),
     LAIR("Lair"),
+    URZAS("Urza's"),
+    MINE("Mine"),
+    POWER_PLANT("Power-Plant"),
+    TOWER("Tower"),
     ANGEL("Angel"),
     ARCHON("Archon"),
     AETHERBORN("Aetherborn"),
@@ -290,7 +294,8 @@ public enum CardSubtype {
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST);
 
     private static final List<CardSubtype> LAND_TYPES = List.of(
-            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN);
+            PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
+            URZAS, MINE, POWER_PLANT, TOWER);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,

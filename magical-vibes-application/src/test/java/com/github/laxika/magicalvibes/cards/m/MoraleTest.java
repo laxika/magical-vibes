@@ -74,6 +74,8 @@ class MoraleTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
+        gs.declareBlockers(gd, player2, List.of());
+
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

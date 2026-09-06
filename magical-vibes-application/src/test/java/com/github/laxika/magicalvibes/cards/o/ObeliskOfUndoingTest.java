@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -89,15 +90,18 @@ class ObeliskOfUndoingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Does not return the target after control changes before resolution")
+    @CardUsed(com.github.laxika.magicalvibes.cards.r.RayOfCommand.class)
     void targetBecomesIllegalBeforeResolution() {
         Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new ObeliskOfUndoing());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.activateAbility(player1, 0, null, bears.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.r.RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
 
         harness.passBothPriorities();
 

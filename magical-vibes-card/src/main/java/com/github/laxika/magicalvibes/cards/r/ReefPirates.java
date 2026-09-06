@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class ReefPirates extends Card {
 
     public ReefPirates() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new MillEffect(1, MillRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new MillEffect(1, MillRecipient.TARGET_PLAYER));
     }
 }

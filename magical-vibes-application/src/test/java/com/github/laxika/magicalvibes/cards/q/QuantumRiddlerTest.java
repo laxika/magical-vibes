@@ -15,6 +15,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 class QuantumRiddlerTest extends BaseCardTest {
 
     @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.i.IslandSanctuary.class)
+    void skippedDrawsDoNotReapplyTheWholeInstructionReplacement() {
+        harness.addToBattlefield(player1, new QuantumRiddler());
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.i.IslandSanctuary());
+        harness.setHand(player1, List.of(new CerebralDownload()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DRAW);
+        addCerebralDownloadMana();
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 4; i++) {
+            assertThat(gd.interaction.isAwaitingInput()).isTrue();
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingCardDraws).isEmpty();
+    }
+
+    @Test
     void entersAndDrawsAnAdditionalCardWithOneOrFewerCardsInHand() {
         harness.setLibrary(player1, List.of(
                 new CerebralDownload(), new CerebralDownload()));

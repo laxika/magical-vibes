@@ -52,7 +52,8 @@ class StoneGiantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gqs.findPermanentById(gd, elves.getId()).getGrantedKeywords()).contains(Keyword.FLYING);
 
-        // Advance to end step — elves should be destroyed (turn may auto-advance past end step)
+        // Enter the end step, then resolve the delayed destruction ability.
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");

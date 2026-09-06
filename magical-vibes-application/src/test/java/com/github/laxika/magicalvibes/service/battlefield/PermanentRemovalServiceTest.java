@@ -332,6 +332,19 @@ class PermanentRemovalServiceTest {
     class RemovePermanentToGraveyard {
 
         @Test
+        void explicitDestinationKeepsTheBattlefieldControllerForDeathProcessing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Exchanged creature"));
+            stubGraveyardForCreature(creature, player2Id);
+
+            boolean result = prs.removePermanentToPlayerGraveyard(gd, creature, player2Id);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
+            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(creature.getOriginalCard()),
+                    eq(Zone.BATTLEFIELD), eq(player1Id), eq(creature), eq(false), eq(false));
+        }
+
+        @Test
         @DisplayName("Removes permanent from battlefield and puts card in graveyard")
         void removesFromBattlefieldAndAddsToGraveyard() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));

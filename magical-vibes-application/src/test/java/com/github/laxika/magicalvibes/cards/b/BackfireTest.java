@@ -18,6 +18,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Backfire.class, GrizzlyBears.class, HowlingMine.class, ProdigalSorcerer.class})
 class BackfireTest extends BaseCardTest {
 
+    @Test
+    void reflectedDamageUsesTheCreaturesCurrentController() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Backfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(sorcerer);
+        gd.playerBattlefields.get(player1.getId()).add(sorcerer);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     /** Enchants the opponent's creature with Backfire (controlled by player1). */
     private Permanent enchantOpponentCreature() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());

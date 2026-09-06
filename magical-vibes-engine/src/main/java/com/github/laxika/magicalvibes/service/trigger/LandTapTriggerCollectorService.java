@@ -338,6 +338,18 @@ public class LandTapTriggerCollectorService {
             }
         }
 
+        if (lt.producedColors().isEmpty()
+                && match.gameData().interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(), lt.tappingPlayerId(),
+                    match.permanent().getCard().getName() + "'s mana ability",
+                    new ArrayList<>(List.of(new AddManaOfTypeProducedByTappedPermanentEffect())),
+                    null, match.permanent().getId());
+            entry.setNonTargeting(true);
+            match.gameData().pendingManaAbilityTriggers.add(entry);
+            return true;
+        }
+
         Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
         if (producedColors.isEmpty()) {
             tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()

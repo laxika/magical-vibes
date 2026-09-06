@@ -114,6 +114,18 @@ class UntapStepServiceTest {
         return perm;
     }
 
+    @Test
+    void skippedStepPreservesNextUntapRestriction() {
+        Permanent permanent = addPermanent(player1Id, createCardWithName("Creature"));
+        permanent.tap();
+        permanent.setSkipUntapCount(1);
+
+        sut.untapPermanents(gd, player1Id, null, true);
+
+        assertThat(permanent.isTapped()).isTrue();
+        assertThat(permanent.getSkipUntapCount()).isEqualTo(1);
+    }
+
     @Nested
     @DisplayName("Normal untap behavior")
     class NormalUntap {

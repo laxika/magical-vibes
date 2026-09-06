@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
@@ -175,26 +176,57 @@ public class DrawService {
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
 
-        if (drawAmount > 1 && findReturnFromGraveyardInsteadOfDrawSourceCard(gameData, playerId) != null) {
-            gameData.pendingForbiddenCryptDraws.merge(playerId, drawAmount - 1, Integer::sum);
-            resolveDrawCardInternal(gameData, playerId);
-            return;
-        }
-
-        for (int i = 0; i < drawAmount; i++) {
-            resolveDrawCardInternal(gameData, playerId);
-            if (gameData.interaction.isAwaitingInput()
-                    && findReturnFromGraveyardInsteadOfDrawSourceCard(gameData, playerId) != null) {
-                int remaining = drawAmount - i - 1;
-                if (remaining > 0) {
-                    gameData.pendingForbiddenCryptDraws.merge(playerId, remaining, Integer::sum);
+        List<UUID> laterDraws = new ArrayList<>(gameData.pendingCardDraws);
+        gameData.pendingCardDraws.clear();
+        try {
+            for (int i = 0; i < drawAmount && gameData.status != GameStatus.FINISHED; i++) {
+                resolveDrawCardInternal(gameData, playerId);
+                if (drawChoicePending(gameData)) {
+                    for (int remaining = i + 1; remaining < drawAmount; remaining++) {
+                        gameData.pendingCardDraws.addLast(playerId);
+                    }
+                    break;
                 }
-                break;
+            }
+        } finally {
+            if (gameData.status != GameStatus.FINISHED) {
+                gameData.pendingCardDraws.addAll(laterDraws);
             }
         }
     }
 
+    /** Continues an already adjusted draw instruction after its current replacement is answered. */
+    public void resumePendingCardDraws(GameData gameData) {
+        while (!gameData.pendingCardDraws.isEmpty() && !drawChoicePending(gameData)
+                && gameData.status != GameStatus.FINISHED) {
+            resolveDrawCardInternal(gameData, gameData.pendingCardDraws.removeFirst());
+        }
+    }
+
+    private boolean drawChoicePending(GameData gameData) {
+        return gameData.interaction.isAwaitingInput() || gameData.pendingMayAbilities.stream()
+                .flatMap(pending -> pending.effects().stream()).anyMatch(CardEffect::pausesDrawInstruction);
+    }
+
     private void resolveDrawCardInternal(GameData gameData, UUID playerId) {
+        gameData.declinedDrawReplacementSources.remove(playerId);
+        gameData.pendingDrawFirstDrawStepFlags.remove(playerId);
+        resolveCurrentDrawCard(gameData, playerId, null);
+    }
+
+    /** Continues the same draw, allowing each other optional replacement to be considered. */
+    public void continueDrawAfterDecliningReplacement(GameData gameData, UUID playerId, UUID sourceCardId) {
+        gameData.declinedDrawReplacementSources
+                .computeIfAbsent(playerId, ignored -> new java.util.HashSet<>()).add(sourceCardId);
+        resolveCurrentDrawCard(gameData, playerId, gameData.pendingDrawFirstDrawStepFlags.get(playerId));
+    }
+
+    private boolean drawReplacementDeclined(GameData gameData, UUID playerId, Card card) {
+        return gameData.declinedDrawReplacementSources.getOrDefault(playerId, java.util.Set.of())
+                .contains(card.getId());
+    }
+
+    private void resolveCurrentDrawCard(GameData gameData, UUID playerId, Boolean originalFirstDrawStepDraw) {
         if (preventDrawIfNeeded(gameData, playerId)) {
             gameData.chainsDrawReplacementsApplied.remove(playerId);
             return;
@@ -222,7 +254,9 @@ public class DrawService {
         // Mark this draw as the player's turn-based draw-step draw before any replacement is applied,
         // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
         // see a stable answer even if their source enters play later in the turn.
-        boolean firstDrawStepDraw = markFirstDrawStepDraw(gameData, playerId);
+        boolean firstDrawStepDraw = originalFirstDrawStepDraw != null
+                ? originalFirstDrawStepDraw : markFirstDrawStepDraw(gameData, playerId);
+        gameData.pendingDrawFirstDrawStepFlags.put(playerId, firstDrawStepDraw);
 
         if (!firstDrawStepDraw && resolveChainsOfMephistophelesDrawReplacement(gameData, playerId)) {
             return;
@@ -245,7 +279,7 @@ public class DrawService {
 
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null) {
-            gameData.pendingMayAbilities.add(new PendingMayAbility(
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     maySkipDrawSource.card(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, maySkipDrawSource.kind())),
@@ -361,7 +395,7 @@ public class DrawService {
 
         Card abundanceSource = findAbundanceSourceCard(gameData, playerId);
         if (abundanceSource != null) {
-            gameData.pendingMayAbilities.add(new PendingMayAbility(
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     abundanceSource,
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
@@ -397,7 +431,7 @@ public class DrawService {
         Permanent counterDrawReplacementSource = findCounterDrawReplacementSource(
                 gameData, playerId, CounterType.STUDY);
         if (counterDrawReplacementSource != null) {
-            gameData.pendingMayAbilities.add(new PendingMayAbility(
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     counterDrawReplacementSource.getCard(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.STUDY_COUNTER)),
@@ -412,7 +446,7 @@ public class DrawService {
         Permanent archmageAscensionSource = findCounterThresholdDrawReplacementSource(
                 gameData, playerId, CounterType.QUEST);
         if (archmageAscensionSource != null) {
-            gameData.pendingMayAbilities.add(new PendingMayAbility(
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     archmageAscensionSource.getCard(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ARCHMAGE_ASCENSION)),
@@ -431,7 +465,7 @@ public class DrawService {
             return;
         }
 
-        Card zursWeirdingSource = findZursWeirdingSourceCard(gameData);
+        Card zursWeirdingSource = findZursWeirdingSourceCard(gameData, playerId);
         if (zursWeirdingSource != null) {
             List<Card> deck = gameData.playerDecks.get(playerId);
             UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
@@ -453,7 +487,7 @@ public class DrawService {
                         ? "Pay 2 life to put " + playerName + "'s revealed "
                                 + deck.getFirst().getName() + " into their graveyard?"
                         : "Pay 2 life to replace " + playerName + "'s draw?";
-                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         zursWeirdingSource,
                         otherPlayerId,
                         List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ZURS_WEIRDING)),
@@ -713,6 +747,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MaySkipDrawReplacementEffect replacement) {
                     return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind());
@@ -775,11 +810,12 @@ public class DrawService {
                 gameData.id, playerName, exiled.getName());
     }
 
-    private Card findZursWeirdingSourceCard(GameData gameData) {
+    private Card findZursWeirdingSourceCard(GameData gameData, UUID drawingPlayerId) {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                if (drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())) continue;
                 boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
                 if (hasEffect) {
@@ -919,6 +955,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(CounterDrawReplacementEffect.class::isInstance)
                     .map(CounterDrawReplacementEffect.class::cast)
@@ -938,6 +975,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             boolean active = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(CounterThresholdDrawReplacementEffect.class::isInstance)
                     .map(CounterThresholdDrawReplacementEffect.class::cast)
@@ -989,6 +1027,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (drawReplacementDeclined(gameData, playerId, permanent.getCard())) continue;
             boolean hasAbundanceEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof AbundanceDrawReplacementEffect);
             if (hasAbundanceEffect) {
@@ -1396,7 +1435,7 @@ public class DrawService {
             return;
         }
 
-        gameData.pendingMayAbilities.add(new PendingMayAbility(
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 drawn,
                 drawingPlayerId,
                 List.of(new MiracleRevealEffect()),

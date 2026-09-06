@@ -515,6 +515,25 @@ class LandTapTriggerCollectorServiceTest {
     class AddOneOfEachManaType {
 
         @Test
+        void waitsForTheLandsManaColorChoice() {
+            Permanent source = createPermanent("Mana Flare");
+            Permanent land = new Permanent(createLandCard("City of Brass"));
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(false);
+            when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(
+                    player2Id, null, null, null, List.of("RED"), "Choose mana."));
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player2Id, land.getId()));
+
+            assertThat(result).isTrue();
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().getControllerId()).isEqualTo(player2Id);
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isZero();
+        }
+
+        @Test
         @DisplayName("resolves a combined mana-and-damage ability immediately")
         void resolvesCombinedManaAndDamageAbilityImmediately() {
             Permanent triggerPerm = createPermanent("Overabundance");

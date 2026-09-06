@@ -4719,6 +4719,11 @@ public class SpellCastingService {
                     DealDividedDamageEffect dividedEffect =
                             findChosenDividedDamageEffect(filteredSpellEffects);
 
+                    if (dividedEffect != null) {
+                        validateDividedDamageTargetability(gameData, card, playerId,
+                                damageAssignments, dividedEffect);
+                    }
+
                     int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
 
                     if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
@@ -9534,6 +9539,28 @@ public class SpellCastingService {
                                                   int resolvedXValue, UUID targetId,
                                                   Map<UUID, Integer> assignments,
                                                   DealDividedDamageEffect dividedEffect) {
+        validateDividedDamageTargetability(gameData, card, playerId, assignments, dividedEffect);
+        validateDividedDamageAmountsAndTypes(gameData, card, playerId, resolvedXValue, targetId,
+                assignments, dividedEffect);
+    }
+
+    private void validateDividedDamageTargetability(GameData gameData, Card card, UUID playerId,
+                                                     Map<UUID, Integer> assignments,
+                                                     DealDividedDamageEffect dividedEffect) {
+        for (UUID assignedTargetId : assignments.keySet()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, assignedTargetId);
+            if (target != null) {
+                targetLegalityService.checkSpellPermanentTargetableReason(gameData, target, card, playerId,
+                                List.of(dividedEffect), null)
+                        .ifPresent(reason -> { throw new IllegalStateException(reason); });
+            }
+        }
+    }
+
+    private void validateDividedDamageAmountsAndTypes(GameData gameData, Card card, UUID playerId,
+                                                      int resolvedXValue, UUID targetId,
+                                                      Map<UUID, Integer> assignments,
+                                                      DealDividedDamageEffect dividedEffect) {
         int totalDamage = assignments.values().stream().mapToInt(Integer::intValue).sum();
         if (dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
             if (totalDamage != fixedTotal.value()) {

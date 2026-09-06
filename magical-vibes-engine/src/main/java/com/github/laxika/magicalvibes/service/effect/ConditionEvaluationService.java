@@ -2762,9 +2762,10 @@ public class ConditionEvaluationService {
      */
     private boolean sourceDealtDamageToOpponentThisTurn(GameData gameData, ConditionContext ctx) {
         if (ctx.sourcePermanentId() == null || ctx.controllerId() == null) return false;
-        Set<UUID> damagedPlayers = gameData.combatDamageToPlayersThisTurn.get(ctx.sourcePermanentId());
+        Set<UUID> damagedPlayers = gameData.damageRecipientsBySource.get(ctx.sourcePermanentId());
         if (damagedPlayers == null) return false;
-        return damagedPlayers.stream().anyMatch(playerId -> !playerId.equals(ctx.controllerId()));
+        return damagedPlayers.stream().anyMatch(playerId -> gameData.playerIds.contains(playerId)
+                && !playerId.equals(ctx.controllerId()));
     }
 
     private boolean didAnyOpponentLoseLifeThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {

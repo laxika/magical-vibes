@@ -387,8 +387,8 @@ class SpellCastingServiceTest {
     void allowsOptionalCounterDistributionWithNoTargets() {
         Card spell = createSorcery("Optional Counter Spell", "{2}{G}{G}");
         spell.target(TargetFilters.creatureYouControl(), 0, 4)
-                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
-                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
+                .addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
+                        CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4), null));
         setHand(player1Id, List.of(spell));
         addMana(player1Id, ManaColor.GREEN, 4);
         when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));

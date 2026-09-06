@@ -677,18 +677,15 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = RelicBindTapEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
             RelicBindTapEffect e, TriggerContext ctx) {
-        // Modal, targeted ability — the mode and target are chosen when the ability resolves
-        // (RelicBindTapEffectHandler). The trigger goes on the stack non-targeting; targets are
-        // free (any player / planeswalker), so the tapped permanent's controller is not needed here.
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s triggered ability",
-                new ArrayList<>(List.of(e)),
-                null,
-                match.permanent().getId()
-        ));
+        var choice = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                        com.github.laxika.magicalvibes.model.ChoiceContext.RelicBindModeChoice.DAMAGE,
+                        new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                        com.github.laxika.magicalvibes.model.ChoiceContext.RelicBindModeChoice.LIFE,
+                        new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect(1))));
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                match.permanent().getCard(), match.controllerId(), choice, match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on enchanted permanent tap (modal)",
                 match.gameData().id, match.permanent().getCard().getName());

@@ -25,8 +25,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({WhirlingDervish.class, FireWhip.class, GrizzlyBears.class, ScatheZombies.class, Terror.class})
 class WhirlingDervishTest extends BaseCardTest {
 
+    @Test
+    void damageToAnOpponentsCreatureDoesNotQualify() {
+        Permanent dervish = addDervish(player1);
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        Permanent fireWhip = new Permanent(new FireWhip());
+        fireWhip.setAttachedTo(dervish.getId());
+        gd.playerBattlefields.get(player1.getId()).add(fireWhip);
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+        harness.passBothPriorities();
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+        advanceToEndStepAndResolve(player1.getId());
+
+        assertThat(dervish.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     /** Simulates the Dervish having dealt combat damage to a player this turn. */
     private void recordCombatDamageToPlayer(Permanent creature, UUID damagedPlayerId) {
+        gd.recordDamageRecipientBySource(creature.getId(), damagedPlayerId);
         gd.combatDamageToPlayersThisTurn
                 .computeIfAbsent(creature.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(damagedPlayerId);

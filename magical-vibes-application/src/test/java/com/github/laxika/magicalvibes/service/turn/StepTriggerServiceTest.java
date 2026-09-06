@@ -1657,6 +1657,27 @@ class StepTriggerServiceTest {
     class HandleEndStepTriggers {
 
         @Test
+        void delayedEndStepAbilityRetainsControllerAndAffectedObjectAfterSourceLeaves() {
+            Card source = createCardWithName("Delayed destruction source");
+            UUID sourceId = UUID.randomUUID();
+            UUID affectedId = UUID.randomUUID();
+            gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
+                    player2Id, source, sourceId, affectedId,
+                    new com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect()));
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourceId);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(affectedId);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.hasDelayedAction(
+                    com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)).isFalse();
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
+        }
+
+        @Test
         @DisplayName("Permanent with controller end-step effect pushes trigger onto stack")
         void controllerEndStepEffectPushesTrigger() {
             Card card = createCardWithName("Jin-Gitaxias, Core Augur");

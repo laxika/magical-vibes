@@ -56,6 +56,9 @@ class RayOfCommandTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.CLEANUP);
 
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.isTapped()).isTrue();
@@ -76,8 +79,8 @@ class RayOfCommandTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Taps the creature immediately if another effect takes control of it")
-    void tapsImmediatelyWhenAnotherEffectTakesControl() {
+    @DisplayName("Taps the creature after the control-loss trigger resolves")
+    void tapsAfterAnotherEffectTakesControl() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -90,6 +93,7 @@ class RayOfCommandTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castEnchantment(player2, 0, target.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));

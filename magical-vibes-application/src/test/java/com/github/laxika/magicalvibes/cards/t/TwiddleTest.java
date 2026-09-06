@@ -32,6 +32,7 @@ class TwiddleTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -44,6 +45,7 @@ class TwiddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -56,6 +58,7 @@ class TwiddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -73,6 +76,7 @@ class TwiddleTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -129,6 +133,7 @@ class TwiddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Twiddle");
@@ -145,6 +150,7 @@ class TwiddleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, ownCreature.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownCreature.isTapped()).isFalse();
     }

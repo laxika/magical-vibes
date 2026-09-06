@@ -103,9 +103,9 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         java.util.List<UUID> effectTargets = entry.targetsForEffect(e);
         UUID targetId = effectTargets.isEmpty() ? entry.getTargetId() : effectTargets.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) return;
-
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID controllerId = target == null ? entry.getRemovedPermanentControllers().get(targetId)
+                : gameQueryService.findPermanentController(gameData, target.getId());
+        if (controllerId == null) return;
         String cardName = entry.getCard().getName();
 
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {

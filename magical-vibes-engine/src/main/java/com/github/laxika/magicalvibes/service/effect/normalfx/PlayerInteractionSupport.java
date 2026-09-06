@@ -381,6 +381,10 @@ public class PlayerInteractionSupport {
         cardRevealService.revealToAllPlayers(
                 gameData, playerId, GameEventFact.RevealZone.HAND, hand);
 
+        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
+            return;
+        }
+
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             if (hand.get(i).hasType(cardType)) {

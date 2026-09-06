@@ -28,6 +28,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
 
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GainControlOfTargetEffectHandler gainControlOfTargetEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +44,10 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         // seize while iterating. Skip permanents the controller already controls (a no-op steal).
         // The predicate may be source-relative (e.g. "permanents you own" — Gruul Charm), so the
         // resolving controller has to reach the evaluation as the filter context's source controller.
-        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         List<Permanent> toSeize = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
@@ -56,6 +60,15 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         ControlDuration duration = e.duration();
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
         for (Permanent permanent : toSeize) {
+            if (duration.isSourceLinked()) {
+                StackEntry individual = new StackEntry(entry.getEntryType(), entry.getCard(), controllerId,
+                        entry.getDescription(), List.of(controlEffect), permanent.getId(),
+                        entry.getSourcePermanentId());
+                individual.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                individual.setNonTargeting(true);
+                gainControlOfTargetEffectHandler.resolve(gameData, individual, controlEffect);
+                continue;
+            }
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
                     controlEffect, duration.toEffectDuration(), null,
                     entry.getCard().getName());

@@ -75,6 +75,7 @@ class SerpentGeneratorTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, token.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);

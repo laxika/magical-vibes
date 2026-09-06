@@ -3211,15 +3211,12 @@ public class StepTriggerService {
                 return;
             }
 
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    playerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(triggeredEffects),
-                    (UUID) null,
-                    perm.getId()
-            ));
+            StackEntry endOfCombatEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(), playerId, perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(triggeredEffects), (UUID) null, perm.getId());
+            endOfCombatEntry.setSourcePermanentSnapshot(new Permanent(perm));
+            endOfCombatEntry.setNonTargeting(true);
+            gameData.enqueueTrigger(endOfCombatEntry);
 
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} end-of-combat trigger pushed onto stack",
@@ -3704,6 +3701,15 @@ public class StepTriggerService {
     private record DelayedReturningGraveyardCard(Card card, UUID ownerId) {}
 
     public void handleEndStepTriggers(GameData gameData) {
+        for (var delayed : gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(delayed.effect())), delayed.affectedPermanentId(),
+                    delayed.sourcePermanentId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
 
         if (gameData.hasDelayedAction(PutCounterOnPermanentAtNextEndStep.class)) {

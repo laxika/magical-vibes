@@ -442,6 +442,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.NumberChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Number is outside the offered range: " + colorName);
+            }
             handleNumberChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -3749,7 +3752,8 @@ public class ChoiceHandlerService {
 
             int mana = removed * ctx.manaMultiplier();
             if (ctx.colors().size() == 1) {
-                ManaColor color = ctx.colors().getFirst();
+                ManaColor color = ManaProductionSupport.effectiveColor(
+                        gameData, ctx.playerId(), ctx.colors().getFirst());
                 ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
                 pool.add(color, mana);
                 if (ctx.fromCreature()) {

@@ -203,6 +203,18 @@ public class PermanentRemovalService {
     private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
                                                boolean destroyedBySpellOrAbility,
                                                boolean ignoreMayLibraryReplacement) {
+        return removePermanentToGraveyard(gameData, target, destroyedBySpellOrAbility,
+                ignoreMayLibraryReplacement, null);
+    }
+
+    /** Moves a permanent into an explicitly named player's graveyard, retaining normal removal processing. */
+    public boolean removePermanentToPlayerGraveyard(GameData gameData, Permanent target, UUID destinationPlayerId) {
+        return removePermanentToGraveyard(gameData, target, false, false, destinationPlayerId);
+    }
+
+    private boolean removePermanentToGraveyard(GameData gameData, Permanent target,
+                                               boolean destroyedBySpellOrAbility,
+                                               boolean ignoreMayLibraryReplacement, UUID destinationPlayerId) {
         // Replacement effect: exile instead of going to graveyard (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, true, "going to the graveyard")) {
             return true;
@@ -244,7 +256,7 @@ public class PermanentRemovalService {
             return false;
         }
         UUID controllerId = removed.get().controllerId();
-        UUID ownerId = removed.get().ownerId();
+        UUID ownerId = destinationPlayerId == null ? removed.get().ownerId() : destinationPlayerId;
 
         if (!creatureDeathTriggersSuppressed) {
             triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD);

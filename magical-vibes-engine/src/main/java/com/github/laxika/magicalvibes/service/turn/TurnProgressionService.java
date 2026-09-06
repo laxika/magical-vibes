@@ -110,6 +110,7 @@ public class TurnProgressionService {
         }
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
+            combatService.clearCombatState(gameData);
             gameData.expireEndOfCombatFloatingEffects();
             gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
             gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
@@ -317,7 +318,6 @@ public class TurnProgressionService {
                 handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             } else if (next == TurnStep.END_OF_COMBAT) {
                 processEndOfCombatActions(gameData);
-                combatService.clearCombatState(gameData);
                 stepTriggerService.handleEndOfCombatTriggers(gameData);
             } else if (next == TurnStep.END_STEP) {
                 stepTriggerService.handleEndStepTriggers(gameData);

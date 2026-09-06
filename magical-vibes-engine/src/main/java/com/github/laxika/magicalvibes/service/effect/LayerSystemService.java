@@ -153,7 +153,8 @@ public class LayerSystemService {
     private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.of(
             CardSubtype.SWAMP, CardSubtype.ISLAND, CardSubtype.FOREST,
             CardSubtype.MOUNTAIN, CardSubtype.PLAINS, CardSubtype.DESERT,
-            CardSubtype.GATE, CardSubtype.LOCUS);
+            CardSubtype.GATE, CardSubtype.LOCUS, CardSubtype.URZAS,
+            CardSubtype.MINE, CardSubtype.POWER_PLANT, CardSubtype.TOWER);
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -2435,6 +2436,15 @@ public class LayerSystemService {
             for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
                 switch (instance.effect()) {
+                    case AnimateNoncreatureArtifactsEffect animation -> {
+                        if (animation.losesAllAbilities()
+                                && board.marchAnimatedIds().contains(target.permanent().getId())) {
+                            state.loseAllAbilities(instance.timestamp());
+                            board.clearGrantedEffects(target.permanent().getId());
+                            board.recordProvenance(target.permanent().getId(),
+                                    ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
+                        }
+                    }
                     case LosesAllAbilitiesEffect ignored -> {
                         state.loseAllAbilities(instance.timestamp());
                         board.clearGrantedEffects(target.permanent().getId());

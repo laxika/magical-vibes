@@ -199,18 +199,19 @@ public class CombatService {
         List<SacrificeAtEndOfCombat> actions = gameData.drainDelayedActions(SacrificeAtEndOfCombat.class);
         for (SacrificeAtEndOfCombat action : actions) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            // "sacrifice it and it deals N damage to you" (Time Elemental): the damage is a delayed
-            // triggered ability that fires even if the creature already left the battlefield (last-known
-            // information). Deal it before the sacrifice so source-based prevention still sees the source.
-            if (action.damageToController() > 0 && action.controllerId() != null) {
-                Card source = perm != null ? perm.getCard() : action.sourceCard();
-                if (source != null) {
-                    StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source,
-                            action.controllerId(), source.getName(), List.<CardEffect>of(),
-                            (UUID) null, action.permanentId());
-                    damageSupport.dealDamageToPlayer(gameData, damageEntry, action.controllerId(),
-                            action.damageToController());
-                }
+            Card source = action.sourceCard() != null ? action.sourceCard() : perm == null ? null : perm.getCard();
+            if (action.damageToController() > 0 && action.controllerId() != null && source != null) {
+                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        source, action.controllerId(), source.getName() + "'s delayed ability",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(),
+                                new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
+                                        action.damageToController(),
+                                        com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER)),
+                        (UUID) null, action.permanentId());
+                delayed.setNonTargeting(true);
+                if (perm != null) delayed.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.enqueueTrigger(delayed);
+                continue;
             }
             if (perm != null) {
                 UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, action.permanentId());

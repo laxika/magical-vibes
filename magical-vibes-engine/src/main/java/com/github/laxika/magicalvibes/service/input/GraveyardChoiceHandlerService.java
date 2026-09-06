@@ -530,21 +530,6 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
-        if (destination == GraveyardChoiceDestination.HAND) {
-            Integer pendingDraws = gameData.pendingForbiddenCryptDraws.get(playerId);
-            if (pendingDraws != null && pendingDraws > 0) {
-                if (pendingDraws == 1) {
-                    gameData.pendingForbiddenCryptDraws.remove(playerId);
-                } else {
-                    gameData.pendingForbiddenCryptDraws.put(playerId, pendingDraws - 1);
-                }
-                drawServiceProvider.getObject().resolveDrawCard(gameData, playerId);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-        }
-
         // Check if there are more "each player returns" graveyard choices queued
         if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);

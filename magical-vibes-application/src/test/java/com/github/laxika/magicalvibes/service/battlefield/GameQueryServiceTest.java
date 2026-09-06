@@ -115,6 +115,16 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
 
+    @Test
+    void urzaLandTypesAreNotCreatureTypes() {
+        for (CardSubtype subtype : List.of(CardSubtype.URZAS, CardSubtype.MINE,
+                CardSubtype.POWER_PLANT, CardSubtype.TOWER)) {
+            assertThat(gqs.isCreatureSubtype(subtype)).isFalse();
+            assertThat(com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport
+                    .isCreatureSubtype(subtype)).isFalse();
+        }
+    }
+
     @Mock
     private StaticEffectHandlerRegistry staticEffectRegistry;
 

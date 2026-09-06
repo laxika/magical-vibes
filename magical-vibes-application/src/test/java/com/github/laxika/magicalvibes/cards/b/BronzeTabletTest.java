@@ -132,7 +132,7 @@ class BronzeTabletTest extends BaseCardTest {
     }
 
     @Test
-    void sourceReturnedToHandBeforeResolutionIsPutIntoGraveyardOnPayment() {
+    void sourceReturnedToHandBeforeResolutionIsNotMovedOnPayment() {
         Permanent tablet = addReadyTablet();
         addCreatureReady(player2, new TimeElemental());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -149,9 +149,10 @@ class BronzeTabletTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(tablet.getOriginalCard());
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(tablet.getOriginalCard());
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerHands.get(player1.getId())).contains(tablet.getOriginalCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(tablet.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        assertThat(gd.findExiledCard(bears.getOriginalCard().getId())).isNotNull();
     }
 
     @Test

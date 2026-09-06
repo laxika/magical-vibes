@@ -521,7 +521,12 @@ public class GameData {
      */
     public final List<UUID> revealHandDiscardUnlessPaysRemaining = new ArrayList<>();
 
-    public final Map<UUID, Integer> pendingForbiddenCryptDraws = new ConcurrentHashMap<>();
+    /** Remaining individual draws after an interactive replacement, in resolution order. */
+    public final Deque<UUID> pendingCardDraws = new ArrayDeque<>();
+    /** Optional replacement sources declined for the draw currently being resolved. */
+    public final Map<UUID, Set<UUID>> declinedDrawReplacementSources = new ConcurrentHashMap<>();
+    /** Preserves the turn-based draw exemption while an optional replacement is answered. */
+    public final Map<UUID, Boolean> pendingDrawFirstDrawStepFlags = new ConcurrentHashMap<>();
 
     public PendingInteraction.DiscardChoice pendingDiscardToLibraryChoice;
     public int pendingDiscardToLibraryCardIndex = -1;
@@ -1015,6 +1020,8 @@ public class GameData {
     public PendingGraveyardReturnBatch pendingGraveyardReturnBatch;
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
+    /** Draw count before the current optional draw instruction, retained across replacement choices. */
+    public Integer pendingEachPlayerDrawUpToInitialCount;
     /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
     public final List<UUID> pendingEachOtherPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
@@ -4352,6 +4359,7 @@ public class GameData {
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
+        copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
@@ -4801,7 +4809,10 @@ public class GameData {
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
-        copy.pendingForbiddenCryptDraws.putAll(this.pendingForbiddenCryptDraws);
+        copy.pendingCardDraws.addAll(this.pendingCardDraws);
+        this.declinedDrawReplacementSources.forEach((playerId, sources) ->
+                copy.declinedDrawReplacementSources.put(playerId, new java.util.HashSet<>(sources)));
+        copy.pendingDrawFirstDrawStepFlags.putAll(this.pendingDrawFirstDrawStepFlags);
         copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice;
         copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;
         copy.pendingDiscardToLibraryDecision = this.pendingDiscardToLibraryDecision;

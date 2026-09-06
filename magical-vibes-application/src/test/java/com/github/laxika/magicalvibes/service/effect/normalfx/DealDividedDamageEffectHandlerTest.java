@@ -158,8 +158,8 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
         }
 
         @Test
-        @DisplayName("Uses the declared target count when one target becomes illegal")
-        void usesDeclaredTargetCountWhenOneTargetBecomesIllegal() {
+        @DisplayName("Divides damage among the remaining legal targets")
+        void dividesDamageAmongRemainingLegalTargets() {
             Card fireball = createCard("Fireball");
             UUID removedTargetId = UUID.randomUUID();
             StackEntry entry = evenEntry(
@@ -175,8 +175,8 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(13);
+            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 7);
         }
     }
 

@@ -202,6 +202,15 @@ class SylvanLibraryTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
                 .contains("Abundance");
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Abundance");
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SylvanLibraryChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(hand()).hasSize(3);
+        harness.assertLife(player1, 12);
     }
 
     @Test
@@ -241,12 +250,15 @@ class SylvanLibraryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Drawing beyond a short library ends before the follow-up choice")
-    void drawingFromEmptyLibraryEndsBeforeFollowUpChoice() {
+    @DisplayName("An empty-library loss waits until the ability finishes resolving")
+    void drawingFromEmptyLibraryLosesAfterFollowUpChoice() {
         setup();
         harness.setLibrary(player1, List.of(bears, elves));
         advanceToDrawAndTrigger();
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SylvanLibraryChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId(), elves.getId()));
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

@@ -63,7 +63,7 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
         StackEntry creatureEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
-                controllerId,
+                e.auraIsSource() ? entry.getControllerId() : controllerId,
                 sourceName + " deals damage to its controller",
                 List.of(),
                 controllerId,
