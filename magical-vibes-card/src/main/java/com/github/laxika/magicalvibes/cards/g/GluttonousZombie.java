@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "8ED", collectorNumber = "136")
 @CardRegistration(set = "9ED", collectorNumber = "134")
+@CardRegistration(set = "ONS", collectorNumber = "151")
 public class GluttonousZombie extends Card {
 }

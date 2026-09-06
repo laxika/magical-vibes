@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -29,6 +30,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
+    private final DrawService drawService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
@@ -51,11 +53,10 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
         }
 
         String name = target.getCard().getName();
-        CardSubtype requiredTargetSubtype = effect instanceof ExileTargetPermanentAndAllWithSameNameFromZonesEffect e
-                ? e.requiredTargetSubtype()
-                : null;
-        boolean chooseAnyNumber = effect instanceof ExileTargetPermanentAndAllWithSameNameFromZonesEffect e
-                && e.chooseAnyNumber();
+        ExileTargetPermanentAndAllWithSameNameFromZonesEffect exileEffect =
+                (ExileTargetPermanentAndAllWithSameNameFromZonesEffect) effect;
+        CardSubtype requiredTargetSubtype = exileEffect.requiredTargetSubtype();
+        boolean chooseAnyNumber = exileEffect.chooseAnyNumber();
         boolean targetHasRequiredSubtype = requiredTargetSubtype == null
                 || target.getCard().getSubtypes().contains(requiredTargetSubtype);
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
@@ -69,7 +70,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
         }
 
         if (chooseAnyNumber) {
-            beginAnyNumberChoice(gameData, entry, controllerId, name);
+            beginAnyNumberChoice(gameData, entry, controllerId, name, exileEffect.drawForHandExiled());
             return;
         }
 
@@ -87,6 +88,12 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             Collections.shuffle(library);
         }
 
+        if (exileEffect.drawForHandExiled()) {
+            for (int i = 0; i < fromHand; i++) {
+                drawService.resolveDrawCard(gameData, controllerId);
+            }
+        }
+
         String controllerName = gameData.playerIdToName.get(controllerId);
         int total = fromGraveyard + fromHand + fromLibrary;
         gameLogService.append(gameData, GameLog.text(entry.getCard().getName() + " exiles " + total
@@ -96,7 +103,8 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
                 gameData.id, entry.getCard().getName(), total, name, controllerName);
     }
 
-    private void beginAnyNumberChoice(GameData gameData, StackEntry entry, UUID controllerId, String name) {
+    private void beginAnyNumberChoice(GameData gameData, StackEntry entry, UUID controllerId, String name,
+                                      boolean drawForHandExiled) {
         List<Card> matchingCards = collectMatchingCards(gameData, controllerId, name);
         List<Card> library = gameData.playerDecks.get(controllerId);
         if (matchingCards.isEmpty()) {
@@ -110,7 +118,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             return;
         }
         playerInputService.beginMultiZoneExileChoice(
-                gameData, entry.getControllerId(), matchingCards, controllerId, name);
+                gameData, entry.getControllerId(), matchingCards, controllerId, name, drawForHandExiled);
     }
 
     private List<Card> collectMatchingCards(GameData gameData, UUID playerId, String name) {

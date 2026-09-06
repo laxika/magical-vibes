@@ -16,11 +16,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({FootNinjas.class, GrizzlyBears.class})
 class FootNinjasTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Entering the battlefield gains 3 life")
     void enteringTheBattlefieldGainsLife() {
         harness.setHand(player1, List.of(new FootNinjas()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

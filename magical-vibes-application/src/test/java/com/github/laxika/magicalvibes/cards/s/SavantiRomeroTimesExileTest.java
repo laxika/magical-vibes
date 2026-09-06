@@ -42,10 +42,11 @@ class SavantiRomeroTimesExileTest extends BaseCardTest {
     }
 
     private void runBeginningOfCombat(Player activePlayer) {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.BEGINNING_OF_COMBAT));
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

@@ -34,6 +34,6 @@ public class HelmOfObedience extends Card {
                 ),
                 null,
                 null,
-                null));
+                null).withMinimumXValue(1));
     }
 }

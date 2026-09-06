@@ -131,9 +131,9 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                         || gameQueryService.getEffectivePower(gameData, opponentTarget)
                         <= gameQueryService.getEffectivePower(gameData, ownTarget))
                 && (!exchange.requireSharedArtifactOrCreatureType()
-                        || gameQueryService.sharesArtifactOrCreatureType(ownTarget, opponentTarget))
+                        || gameQueryService.sharesArtifactOrCreatureType(gameData, ownTarget, opponentTarget))
                 && (!exchange.requireSharedCardType()
-                        || gameQueryService.sharesCardType(ownTarget, opponentTarget));
+                        || gameQueryService.sharesCardType(gameData, ownTarget, opponentTarget));
         if (!stillLegal) {
             logFizzle(gameData, entry, exchange, ownTarget);
             return;

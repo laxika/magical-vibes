@@ -43,6 +43,6 @@ public class MutagenManLivingOoze extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsTokenPredicate(),
-                        new PermanentControlledBySourceControllerPredicate())), 1));
+                        new PermanentControlledBySourceControllerPredicate())), new com.github.laxika.magicalvibes.model.amount.Fixed(1), false));
     }
 }

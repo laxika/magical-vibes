@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 
 @CardRegistration(set = "5ED", collectorNumber = "187")
 @CardRegistration(set = "4ED", collectorNumber = "153")
+@CardRegistration(set = "LEG", collectorNumber = "114")
 public class PitScorpion extends Card {
 
     public PitScorpion() {
         // Whenever this creature deals damage to a player, that player gets a poison counter.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER));
     }
 }

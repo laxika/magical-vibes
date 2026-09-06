@@ -26,7 +26,7 @@ class MindSpiralTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize + 3);
         assertThat(bear.isTapped()).isFalse();
         assertThat(bear.getCounterCount(CounterType.STUN)).isZero();
-        assertThat(findPermanent(player2, "Fish")).isNull();
+        harness.assertNotOnBattlefield(player2, "Fish");
     }
 
     @Test

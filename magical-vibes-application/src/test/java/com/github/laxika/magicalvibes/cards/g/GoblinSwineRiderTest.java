@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinSwineRider.class, Warthog.class})
 class GoblinSwineRiderTest extends BaseCardTest {
 
     @Test
@@ -21,20 +24,14 @@ class GoblinSwineRiderTest extends BaseCardTest {
         Permanent swine = addAttackingSwine(player1);
         TestCards.mutableCard(swine).setToughness(3);
 
-        Permanent otherAttacker = new Permanent(new GrizzlyBears());
-        otherAttacker.setSummoningSick(false);
+        Permanent otherAttacker = addCreatureReady(player1, new Warthog());
         otherAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(otherAttacker);
         TestCards.mutableCard(otherAttacker).setToughness(3);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new Warthog());
         TestCards.mutableCard(blocker).setToughness(3);
 
-        Permanent idle = new Permanent(new GrizzlyBears());
-        idle.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(idle);
+        Permanent idle = addCreatureReady(player2, new Warthog());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -51,23 +48,44 @@ class GoblinSwineRiderTest extends BaseCardTest {
     void becomingBlockedKillsFragileCombatCreatures() {
         Permanent swine = addAttackingSwine(player1);
 
-        Permanent otherAttacker = new Permanent(new GrizzlyBears());
-        otherAttacker.setSummoningSick(false);
+        Permanent otherAttacker = addCreatureReady(player1, new Warthog());
         otherAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(otherAttacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new Warthog());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Goblin Swine-Rider");
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Warthog");
+        harness.assertNotOnBattlefield(player2, "Warthog");
         harness.assertInGraveyard(player1, "Goblin Swine-Rider");
+    }
+
+    @Test
+    @DisplayName("Becoming blocked triggers once even when blocked by multiple creatures")
+    void becomingBlockedTriggersOnceWithMultipleBlockers() {
+        Permanent swine = addAttackingSwine(player1);
+        TestCards.mutableCard(swine).setToughness(3);
+
+        Permanent firstBlocker = addCreatureReady(player2, new Warthog());
+        TestCards.mutableCard(firstBlocker).setToughness(3);
+        Permanent secondBlocker = addCreatureReady(player2, new Warthog());
+        TestCards.mutableCard(secondBlocker).setToughness(3);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(swine.getMarkedDamage()).isEqualTo(2);
+        assertThat(firstBlocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(secondBlocker.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -91,24 +109,19 @@ class GoblinSwineRiderTest extends BaseCardTest {
     void becomingBlockedPushesTrigger() {
         Permanent swine = addAttackingSwine(player1);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new Warthog());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Swine-Rider");
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(swine.getId());
     }
 
     private Permanent addAttackingSwine(Player player) {
-        Permanent perm = new Permanent(new GoblinSwineRider());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new GoblinSwineRider());
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

@@ -100,7 +100,7 @@ class BrillianceUnleashedTest extends BaseCardTest {
         addMana();
         gs.playCard(gd, player1, 0,
                 ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}),
-                graveyardTarget, null, List.of(permanentTarget), List.of());
+                null, null, List.of(permanentTarget, graveyardTarget), List.of());
         harness.passBothPriorities();
     }
 

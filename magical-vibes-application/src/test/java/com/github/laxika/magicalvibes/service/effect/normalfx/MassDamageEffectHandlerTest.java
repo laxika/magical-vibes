@@ -55,8 +55,10 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
                 assertThat(elves.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, elves, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 2, player1Id, pyroCard, null);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, elves, 2, player1Id, pyroCard, null);
             }
 
             @Test
@@ -82,7 +84,8 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 2, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 2, player1Id, pyroCard, null);
             }
 
             @Test
@@ -117,8 +120,10 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
                 verify(gameOutcomeService).checkWinCondition(gd);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, angel, 4, player1Id);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 4, player1Id);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, angel, 4, player1Id, hurricaneCard, null);
+                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
+                        gd, bears, 4, player1Id, hurricaneCard, null);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 4);
                 verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 4);
                 verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);

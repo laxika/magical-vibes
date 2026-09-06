@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "230")
+@CardRegistration(set = "ONS", collectorNumber = "313")
 public class BloodstainedMire extends Card {
 
     public BloodstainedMire() {

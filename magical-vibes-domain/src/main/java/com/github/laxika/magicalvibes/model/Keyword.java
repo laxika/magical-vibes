@@ -13,6 +13,8 @@ public enum Keyword {
     SPLIT_SECOND,
     FADING,
     VANISHING,
+    GRAFT,
+    FORTIFY,
     VIGILANCE,
     BACKUP,
     SHROUD,
@@ -34,6 +36,7 @@ public enum Keyword {
     PLAINSWALK,
     HEXPROOF,
     INFECT,
+    POISONOUS,
     WITHER,
     INTIMIDATE,
     METALCRAFT,
@@ -48,6 +51,7 @@ public enum Keyword {
     DAYBOUND,
     NIGHTBOUND,
     KICKER,
+    BARGAIN,
     CREW,
     EXPLORE,
     EXPLOIT,
@@ -71,6 +75,7 @@ public enum Keyword {
     TRAINING,
     DISTURB,
     MORPH,
+    MUTATE,
     SKULK,
     SOULBOND,
     MIRACLE,
@@ -110,12 +115,15 @@ public enum Keyword {
     CAMOUFLAGE,
     DOUBLE,
     PLOT,
+    WARP,
     AMASS,
+    ASSEMBLE,
     WATERBEND,
     FIREBENDING,
     BLOW_UP,
     ALLIANCE,
-    DISGUISE;
+    DISGUISE,
+    STATION;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

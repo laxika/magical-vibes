@@ -19,6 +19,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({TheLastRoninsTechnique.class, GrizzlyBears.class})
 class TheLastRoninsTechniqueTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Creates three untapped, nonattacking Ninja Turtle Spirit tokens when cast normally")
     void createsTokensNormally() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -266,9 +267,18 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         }
         if (e.forcedCost() instanceof PayEchoCost echoCost) {
             String alternativeCost = gameQueryService.findAlternativeEchoCost(gameData, entry.getControllerId());
+            CostEffect resolvedEchoCost;
+            if (alternativeCost != null) {
+                resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(alternativeCost);
+            } else if (echoCost.handCardCost() != null) {
+                resolvedEchoCost = echoCost.handCardCost();
+            } else if (echoCost.cost() != null) {
+                resolvedEchoCost = echoCost.cost();
+            } else {
+                resolvedEchoCost = new com.github.laxika.magicalvibes.model.effect.PayManaCost(echoCost.echoCost());
+            }
             e = new ForcedCostOrElseEffect(
-                    new com.github.laxika.magicalvibes.model.effect.PayManaCost(
-                            alternativeCost == null ? echoCost.echoCost() : alternativeCost),
+                    resolvedEchoCost,
                     e.elseEffects(), e.optional(), e.anyPlayerMayPay(), e.payerIsEnchantedController(),
                     e.payerIsDefendingPlayer(), e.paidEffects());
         }

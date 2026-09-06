@@ -7,9 +7,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +33,7 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,6 +70,16 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             log.info("Game {} - lock ability fizzles, target left the battlefield", gameData.id);
+            return;
+        }
+        TargetPredicate declaredTarget = lock.declaredTarget() != null
+                ? lock.declaredTarget() : TargetPredicates.creature();
+        FilterContext targetContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        if (!targetPredicateEvaluationService.matchesPermanent(declaredTarget, target, targetContext)) {
             return;
         }
 

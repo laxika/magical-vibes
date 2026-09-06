@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LeshracsRite.class, BalduvianBears.class, Swamp.class, ZuranOrb.class})
 class LeshracsRiteTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -25,9 +26,7 @@ class LeshracsRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Leshrac's Rite puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new BalduvianBears());
 
         harness.setHand(player1, List.of(new LeshracsRite()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -41,9 +40,7 @@ class LeshracsRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Leshrac's Rite attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new BalduvianBears());
 
         harness.setHand(player1, List.of(new LeshracsRite()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -58,18 +55,29 @@ class LeshracsRiteTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
+    @Test
+    @DisplayName("Leshrac's Rite can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent opponentCreature = addCreatureReady(player2, new BalduvianBears());
+
+        harness.setHand(player1, List.of(new LeshracsRite()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.SWAMPWALK)).isTrue();
+    }
+
     // ===== Grants swampwalk =====
 
     @Test
     @DisplayName("Enchanted creature has swampwalk")
     void enchantedCreatureHasSwampwalk() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent ritePerm = new Permanent(new LeshracsRite());
+        Permanent ritePerm = harness.addToBattlefieldAndReturn(player1, new LeshracsRite());
         ritePerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(ritePerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.SWAMPWALK)).isTrue();
     }
@@ -79,23 +87,15 @@ class LeshracsRiteTest extends BaseCardTest {
     void enchantedCreatureCannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent rite = new Permanent(new LeshracsRite());
+        Permanent rite = harness.addToBattlefieldAndReturn(player1, new LeshracsRite());
         rite.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(rite);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -109,23 +109,15 @@ class LeshracsRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can be blocked while defending player controls no Swamp")
     void enchantedCreatureCanBeBlockedWithoutDefendingSwamp() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent rite = new Permanent(new LeshracsRite());
+        Permanent rite = harness.addToBattlefieldAndReturn(player1, new LeshracsRite());
         rite.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(player1.getId()).add(rite);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -140,13 +132,10 @@ class LeshracsRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses swampwalk when Leshrac's Rite is removed")
     void effectsStopWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent ritePerm = new Permanent(new LeshracsRite());
+        Permanent ritePerm = harness.addToBattlefieldAndReturn(player1, new LeshracsRite());
         ritePerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(ritePerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.SWAMPWALK)).isTrue();
 
@@ -160,17 +149,12 @@ class LeshracsRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Leshrac's Rite does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = addCreatureReady(player1, new BalduvianBears());
 
-        Permanent ritePerm = new Permanent(new LeshracsRite());
+        Permanent ritePerm = harness.addToBattlefieldAndReturn(player1, new LeshracsRite());
         ritePerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(ritePerm);
 
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.SWAMPWALK)).isFalse();
     }
@@ -180,12 +164,11 @@ class LeshracsRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Leshrac's Rite")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new ZuranOrb());
         harness.setHand(player1, List.of(new LeshracsRite()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Zuran Orb");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
@@ -75,6 +77,12 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
 
     public static ReturnToHandEffect target() {
         return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0);
+    }
+
+    /** Returns a target nonland permanent or suspended card to its owner's hand. */
+    public static ReturnToHandEffect targetNonlandPermanentOrSuspendedCard() {
+        return new ReturnToHandEffect(BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD,
+                null, 0, 0);
     }
 
     public static ReturnToHandEffect target(PermanentPredicate filter) {
@@ -243,6 +251,11 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         // requireBattlefieldTarget guard); the target-players scopes target a player (the old
         // validator imposed no guard there). SELF acts on the source permanent without choosing a
         // target, but marks it as self-targeting so trigger collectors retain the source id.
+        if (scope == BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD) {
+            return TargetSpec.benign(TargetPredicates.anyOf(
+                    TargetPredicates.permanents(new PermanentNotPredicate(new PermanentIsLandPredicate())),
+                    TargetPredicates.exileCard()));
+        }
         if (scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
                 || scope == BounceScope.AURAS_ATTACHED_TO_TARGET) {
             if (scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE) {
@@ -270,7 +283,9 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
     public RemovalKind removalKind() {
         // Only a single-target bounce is targeted removal; the mass/self scopes are board
         // sweeps or self-return, not single-target removal.
-        return scope == BounceScope.TARGET || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
+        return scope == BounceScope.TARGET
+                || scope == BounceScope.TARGET_NONLAND_PERMANENT_OR_SUSPENDED_CARD
+                || scope == BounceScope.TARGET_CHOSEN_CREATURE_TYPE
                 ? RemovalKind.BOUNCE : null;
     }
 

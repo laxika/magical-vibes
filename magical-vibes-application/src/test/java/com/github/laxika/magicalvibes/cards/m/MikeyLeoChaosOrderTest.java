@@ -20,6 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({MikeyLeoChaosOrder.class, Forest.class, FumeSpitter.class, GavonyTownship.class, GrizzlyBears.class})
 class MikeyLeoChaosOrderTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void clearInitialHand() {
+        harness.setHand(player1, List.of());
+    }
+
     @Test
     @DisplayName("Draws a card when you put a counter on a creature you control")
     void drawsWhenCounterIsPutOnControlledCreature() {

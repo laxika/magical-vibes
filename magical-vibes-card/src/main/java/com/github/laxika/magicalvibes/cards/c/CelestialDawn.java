@@ -18,9 +18,8 @@ public class CelestialDawn extends Card {
         // Lands you control are Plains.
         addEffect(EffectSlot.STATIC, new ControlledLandsBecomeTypeEffect(CardSubtype.PLAINS));
 
-        // Nonland permanents you control are white. (The clause about spells you control and nonland
-        // cards you own outside the battlefield has no observable effect in this engine — colour is
-        // only read for objects on the battlefield — so it is covered by the permanent-side setter.)
+        // Nonland permanents you control, spells you control, and nonland cards you own outside the
+        // battlefield are white. The shared color query applies this effect outside the battlefield.
         addEffect(EffectSlot.STATIC, new ControlledNonlandPermanentsAreColorEffect(CardColor.WHITE));
 
         // You may spend white mana as though it were mana of any color. You may spend other mana

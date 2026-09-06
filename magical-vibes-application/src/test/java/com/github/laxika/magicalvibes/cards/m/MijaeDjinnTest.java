@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,15 +23,10 @@ class MijaeDjinnTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        boolean lostFlip = gd.gameLog.stream()
-                .map(GameLogEntry::plainText)
-                .anyMatch(log -> log.contains("loses the coin flip for Mijae Djinn"));
-        if (lostFlip) {
-            assertThat(djinn.isAttacking()).isFalse();
-            assertThat(djinn.isTapped()).isTrue();
-        } else {
-            assertThat(djinn.isAttacking()).isTrue();
-            assertThat(djinn.isTapped()).isTrue();
-        }
+        boolean wonFlip = gameLogContains("wins the coin flip for Mijae Djinn");
+        boolean lostFlip = gameLogContains("loses the coin flip for Mijae Djinn");
+        assertThat(wonFlip).isNotEqualTo(lostFlip);
+        assertThat(djinn.isAttacking()).isEqualTo(wonFlip);
+        assertThat(djinn.isTapped()).isTrue();
     }
 }

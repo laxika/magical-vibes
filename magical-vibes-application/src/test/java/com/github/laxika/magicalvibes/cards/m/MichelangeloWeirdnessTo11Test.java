@@ -89,7 +89,9 @@ class MichelangeloWeirdnessTo11Test extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return harness.enterBattlefieldAndReturn(player1, new MichelangeloWeirdnessTo11());
+        Permanent michelangelo = harness.enterBattlefieldAndReturn(player1, new MichelangeloWeirdnessTo11());
+        resolveAllTriggers();
+        return michelangelo;
     }
 
     private void activateMutagen(Permanent mutagen, java.util.UUID targetId) {

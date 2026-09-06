@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ClockworkBeast.class, GrizzlyBears.class})
 class ClockworkBeastTest extends BaseCardTest {
 
     @Test
@@ -43,6 +48,35 @@ class ClockworkBeastTest extends BaseCardTest {
 
         assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Blocking removes a +1/+0 counter at end of combat")
+    void blockingRemovesCounterAtEndOfCombat() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent beast = addCreatureReady(player2, new ClockworkBeast());
+        beast.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 7);
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(7);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Attacking with no +1/+0 counters does not make the count negative")
+    void attackingWithNoCountersDoesNotGoNegative() {
+        Permanent beast = addCreatureReady(player1, new ClockworkBeast());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(beast.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
     }
 
     @Test
@@ -96,14 +130,27 @@ class ClockworkBeastTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
+    @Test
+    @DisplayName("Upkeep ability cannot be activated during an opponent's upkeep")
+    void cannotActivateDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new ClockworkBeast());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+    }
+
     private void activateUpkeepAbility(int x) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, x);
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().getLast());
     }
 
     private void leaveEndOfCombat() {

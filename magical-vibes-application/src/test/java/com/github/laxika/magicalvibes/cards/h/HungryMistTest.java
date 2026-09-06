@@ -67,6 +67,8 @@ class HungryMistTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Hungry Mist");
     }
 

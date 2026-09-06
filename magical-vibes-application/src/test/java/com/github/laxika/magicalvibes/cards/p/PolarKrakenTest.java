@@ -1,20 +1,24 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PolarKraken.class, Island.class, BalduvianBears.class})
 class PolarKrakenTest extends BaseCardTest {
 
     private long landsControlledBy(UUID playerId) {
@@ -26,11 +30,7 @@ class PolarKrakenTest extends BaseCardTest {
     @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new PolarKraken()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 8);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PolarKraken(), "{8}{U}{U}{U}");
         harness.passBothPriorities();
 
         Permanent kraken = gd.playerBattlefields.get(player1.getId()).stream()
@@ -57,6 +57,57 @@ class PolarKrakenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kraken);
         assertThat(landsControlledBy(player1.getId())).isEqualTo(0);
         harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("A nonland permanent cannot pay cumulative upkeep")
+    void nonlandCannotPayCumulativeUpkeep() {
+        Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kraken).contains(bears);
+        harness.assertInGraveyard(player1, "Polar Kraken");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep cannot be paid with only part of the required lands")
+    void partialCumulativeUpkeepPaymentIsNotAllowed() {
+        Permanent kraken = harness.addToBattlefieldAndReturn(player1, new PolarKraken());
+        kraken.setCounterCount(CounterType.AGE, 1);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(kraken.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(kraken).contains(island);
+        harness.assertInGraveyard(player1, "Polar Kraken");
+    }
+
+    @Test
+    @DisplayName("Trample assigns excess combat damage to the defending player")
+    void trampleAssignsExcessCombatDamageToDefendingPlayer() {
+        harness.setLife(player2, 20);
+        Permanent kraken = addCreatureReady(player1, new PolarKraken());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kraken)));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+        harness.passBothPriorities();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 9));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(11);
     }
 
     @Test

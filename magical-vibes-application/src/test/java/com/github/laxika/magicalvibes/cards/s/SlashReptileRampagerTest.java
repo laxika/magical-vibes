@@ -18,6 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({SlashReptileRampager.class, GrizzlyBears.class})
 class SlashReptileRampagerTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Does not trigger when Slash itself enters the battlefield")
     void doesNotTriggerOnItsOwnEntry() {

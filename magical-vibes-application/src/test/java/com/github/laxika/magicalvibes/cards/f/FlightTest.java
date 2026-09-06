@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,14 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Flight.class, GrizzlyBears.class, Island.class})
 class FlightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Flight attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Flight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -36,15 +37,42 @@ class FlightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flight can enchant an opponent creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(aura.getAttachedTo()).isEqualTo(bearsPerm.getId());
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flight fizzles if its target creature leaves before resolution")
+    void fizzlesIfTargetRemoved() {
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bearsPerm);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Flight");
+        harness.assertNotOnBattlefield(player1, "Flight");
+    }
+
+    @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new Flight());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Flight());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
@@ -52,13 +80,10 @@ class FlightTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses flying when Flight is removed")
     void flyingStopsWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new Flight());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Flight());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
 
@@ -70,14 +95,11 @@ class FlightTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Flight")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new Flight()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -85,17 +107,12 @@ class FlightTest extends BaseCardTest {
     @Test
     @DisplayName("Flight does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
+        Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent auraPerm = new Permanent(new Flight());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Flight());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
     }

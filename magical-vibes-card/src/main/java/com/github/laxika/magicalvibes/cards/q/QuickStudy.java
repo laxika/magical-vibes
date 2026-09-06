@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "SOS", collectorNumber = "65")
+@CardRegistration(set = "WOE", collectorNumber = "65")
 public class QuickStudy extends Card {
 
     public QuickStudy() {

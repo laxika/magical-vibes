@@ -35,9 +35,9 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SkipNextUntapEffect) effect;
         switch (e.scope()) {
-            case TARGET -> resolveTarget(gameData, entry, effect);
-            case SELF -> resolveSelf(gameData, entry);
-            case ENCHANTED -> resolveEnchanted(gameData, entry);
+            case TARGET -> resolveTarget(gameData, entry, e);
+            case SELF -> resolveSelf(gameData, entry, e);
+            case ENCHANTED -> resolveEnchanted(gameData, entry, e);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
@@ -45,20 +45,20 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
-    private void resolveSelf(GameData gameData, StackEntry entry) {
+    private void resolveSelf(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             return;
         }
 
-        source.setSkipUntapCount(Math.max(source.getSkipUntapCount(), 1));
+        source.setSkipUntapCount(Math.max(source.getSkipUntapCount(), e.untapSteps()));
 
         
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
     }
 
-    private void resolveEnchanted(GameData gameData, StackEntry entry) {
+    private void resolveEnchanted(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
         Permanent attachment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (attachment == null || attachment.getAttachedTo() == null) {
             return;
@@ -69,10 +69,10 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        lockTarget(gameData, host);
+        lockTarget(gameData, host, e.untapSteps());
     }
 
-    private void resolveTarget(GameData gameData, StackEntry entry, CardEffect effect) {
+    private void resolveTarget(GameData gameData, StackEntry entry, SkipNextUntapEffect effect) {
         // Multi-target: lock each valid target of this effect's target group — the group's slice of
         // the flat target list for effects bound via target(...).addEffect(...) (e.g. Decision
         // Paralysis: "Tap up to two target creatures. Those creatures don't untap …"), or the whole
@@ -84,7 +84,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
                 if (target == null) {
                     continue;
                 }
-                lockTarget(gameData, target);
+                lockTarget(gameData, target, effect.untapSteps());
             }
             return;
         }
@@ -95,11 +95,11 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        lockTarget(gameData, target);
+        lockTarget(gameData, target, effect.untapSteps());
     }
 
-    private void lockTarget(GameData gameData, Permanent target) {
-        target.setSkipUntapCount(Math.max(target.getSkipUntapCount(), 1));
+    private void lockTarget(GameData gameData, Permanent target, int untapSteps) {
+        target.setSkipUntapCount(Math.max(target.getSkipUntapCount(), untapSteps));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
@@ -119,7 +119,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
-            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), 1));
+            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
             count++;
         }
 
@@ -145,7 +145,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
-            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), 1));
+            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
             count++;
         }
 
@@ -165,7 +165,7 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) return;
 
-            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), 1));
+            p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
             count[0]++;
         });
 

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,45 +21,46 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Afterlife.class, FemerefScouts.class, Forest.class})
 class AfterlifeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target creature and gives its controller a 1/1 white flying Spirit")
     void destroysCreatureAndCreatesTokenForController() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new FemerefScouts());
+        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
 
         castAfterlife(targetId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Femeref Scouts");
+        harness.assertInGraveyard(player2, "Femeref Scouts");
         assertSpiritToken(player2);
     }
 
     @Test
     @DisplayName("Target creature can't be regenerated")
     void targetCannotBeRegenerated() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
+        harness.addToBattlefield(player2, new FemerefScouts());
+        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
+        Permanent scouts = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId)).findFirst().orElseThrow();
-        bears.setRegenerationShield(1);
+        scouts.setRegenerationShield(1);
 
         castAfterlife(targetId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Femeref Scouts");
+        harness.assertInGraveyard(player2, "Femeref Scouts");
     }
 
     @Test
     @DisplayName("Can target own creature — its controller gets the Spirit token")
     void canTargetOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new FemerefScouts());
+        UUID targetId = harness.getPermanentId(player1, "Femeref Scouts");
 
         castAfterlife(targetId);
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Femeref Scouts");
         assertSpiritToken(player1);
     }
 
@@ -80,8 +82,8 @@ class AfterlifeTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles when target leaves the battlefield before resolution — no token created")
     void fizzlesWhenTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new FemerefScouts());
+        UUID targetId = harness.getPermanentId(player2, "Femeref Scouts");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

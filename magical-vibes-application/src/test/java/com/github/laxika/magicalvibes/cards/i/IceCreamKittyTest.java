@@ -64,6 +64,7 @@ class IceCreamKittyTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        kitty.setSummoningSick(false);
         harness.activateAbility(player1, battlefieldIndex(kitty), 1, null, null);
         harness.passBothPriorities();
 

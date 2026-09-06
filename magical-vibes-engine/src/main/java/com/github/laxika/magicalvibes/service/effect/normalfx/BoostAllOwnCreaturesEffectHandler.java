@@ -48,13 +48,18 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                .withSourceControllerId(entry.getControllerId());
+                .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(source);
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (boost.excludeTargets()

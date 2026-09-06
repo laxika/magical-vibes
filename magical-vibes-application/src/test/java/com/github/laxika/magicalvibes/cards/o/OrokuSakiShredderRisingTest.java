@@ -18,6 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({OrokuSakiShredderRising.class, Forest.class, GrizzlyBears.class})
 class OrokuSakiShredderRisingTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Combat damage draws a card and makes Oroku Saki's controller lose 1 life")
     void combatDamageDrawsAndLosesLife() {
@@ -32,7 +37,7 @@ class OrokuSakiShredderRisingTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 
     @Test

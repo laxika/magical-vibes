@@ -30,7 +30,16 @@ public class PutCounterOnOneTargetEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var counterEffect = (PutCounterOnOneTargetEffect) effect;
-        List<UUID> legalTargets = entry.targetsForEffect(effect).stream()
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        boolean returnedCardTargets = targetIds.isEmpty() && !entry.getTargetCardIds().isEmpty();
+        if (returnedCardTargets) {
+            targetIds = entry.getTargetCardIds().stream()
+                    .map(cardId -> findPermanentByCardId(gameData, cardId))
+                    .filter(java.util.Objects::nonNull)
+                    .map(Permanent::getId)
+                    .toList();
+        }
+        List<UUID> legalTargets = targetIds.stream()
                 .filter(targetId -> {
                     Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                     return target != null && gameQueryService.isCreature(gameData, target);
@@ -44,6 +53,9 @@ public class PutCounterOnOneTargetEffectHandler implements NormalEffectHandlerBe
                 permanentCounterSupport.placeCounterOnPermanent(gameData, entry,
                         gameQueryService.findPermanentById(gameData, chosenTargetId),
                         counterEffect.counterType(), 1);
+            }
+            if (returnedCardTargets) {
+                entry.setTargetId(null);
             }
             gameData.rerunCurrentEffectAfterInteraction = false;
             return;
@@ -63,5 +75,21 @@ public class PutCounterOnOneTargetEffectHandler implements NormalEffectHandlerBe
                 new PermanentChoiceContext.ResolvingModalTarget(entry.getCard(), entry.getControllerId()));
         playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), legalTargets,
                 "Choose a creature to put a counter on.");
+    }
+
+    private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (cardId.equals(permanent.getCard().getId())
+                        || (permanent.getOriginalCard() != null
+                        && cardId.equals(permanent.getOriginalCard().getId()))) {
+                    return permanent;
+                }
+            }
+        }
+        return null;
     }
 }

@@ -79,7 +79,7 @@ class DonLeoProblemSolversTest extends BaseCardTest {
 
     private void beginEndStepTrigger() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
     }

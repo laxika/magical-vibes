@@ -19,6 +19,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Technodrome.class, Spellbook.class, Forest.class, GrizzlyBears.class})
 class TechnodromeTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Cannot attack while its power is below six")
     void cannotAttackBelowSixPower() {

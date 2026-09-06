@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.a.ApocalypseChime;
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
+import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MemoryLapse.class, GrizzlyBears.class, ApocalypseChime.class, Commandeer.class})
+@CardUsed({MemoryLapse.class, GrizzlyBears.class, DarkRitual.class})
 class MemoryLapseTest extends BaseCardTest {
 
     @Test
@@ -53,8 +53,7 @@ class MemoryLapseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         // Countered creature sits on top of its owner's library, not in graveyard or battlefield.
@@ -63,6 +62,27 @@ class MemoryLapseTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Counters a noncreature spell and puts it on top of its owner's library")
+    void countersNonCreatureSpellAndPutsOnTopOfLibrary() {
+        DarkRitual ritual = new DarkRitual();
+        harness.setHand(player1, List.of(ritual));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.setHand(player2, List.of(new MemoryLapse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, ritual.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Dark Ritual");
+        harness.assertNotInGraveyard(player1, "Dark Ritual");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -77,8 +97,7 @@ class MemoryLapseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Memory Lapse");
@@ -108,30 +127,31 @@ class MemoryLapseTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Memory Lapse");
     }
 
+    @CardUsed(Commandeer.class)
     @Test
     @DisplayName("Puts a countered spell on its owner's library when another player controls it")
     void putsControlledSpellOnItsOwnersLibrary() {
-        ApocalypseChime chime = new ApocalypseChime();
-        harness.setHand(player1, List.of(chime, new MemoryLapse()));
+        DarkRitual ritual = new DarkRitual();
+        harness.setHand(player1, List.of(ritual, new MemoryLapse()));
         harness.setHand(player2, List.of(new Commandeer(), new MemoryLapse(), new MemoryLapse()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new MemoryLapse()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castArtifact(player1, 0);
+        harness.castInstant(player1, 0);
         harness.passPriority(player1);
-        harness.castInstantWithAlternateExileFromHand(player2, 0, chime.getId(), List.of(1, 2));
+        harness.castInstantWithAlternateExileFromHand(player2, 0, ritual.getId(), List.of(1, 2));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
 
-        harness.castInstant(player1, 0, chime.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ritual.getId());
 
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Apocalypse Chime");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Dark Ritual");
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Memory Lapse");
     }
 }

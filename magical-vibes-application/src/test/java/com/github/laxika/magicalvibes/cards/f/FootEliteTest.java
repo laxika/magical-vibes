@@ -50,6 +50,6 @@ class FootEliteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, footElite.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("another creature you control");
+                .hasMessageContaining("Invalid permanent");
     }
 }

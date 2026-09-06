@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShieldWall.class, GrizzlyBears.class})
 class ShieldWallTest extends BaseCardTest {
 
     @Test
@@ -20,10 +21,7 @@ class ShieldWallTest extends BaseCardTest {
     void resolvingBoostsAllOwnCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ShieldWall()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -42,10 +40,7 @@ class ShieldWallTest extends BaseCardTest {
     void doesNotBoostOpponentCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ShieldWall()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
@@ -61,10 +56,7 @@ class ShieldWallTest extends BaseCardTest {
     @DisplayName("Boost resets at cleanup step")
     void boostResetsAtCleanup() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ShieldWall()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -79,5 +71,29 @@ class ShieldWallTest extends BaseCardTest {
                 assertThat(p.getEffectiveToughness()).isEqualTo(2);
             }
         }
+    }
+
+    @Test
+    @DisplayName("Works with an empty battlefield")
+    void worksWithEmptyBattlefield() {
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not boost creatures that enter after resolution")
+    void doesNotBoostCreaturesEnteringAfterResolution() {
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
+        harness.passBothPriorities();
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(laterCreature.getPowerModifier()).isEqualTo(0);
+        assertThat(laterCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
     }
 }

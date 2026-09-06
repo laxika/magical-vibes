@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BrothersOfFire;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MazeOfIth.class, GrizzlyBears.class, Shock.class})
+@CardUsed({MazeOfIth.class, Squire.class, BrothersOfFire.class})
 class MazeOfIthTest extends BaseCardTest {
 
     @Test
@@ -30,6 +31,7 @@ class MazeOfIthTest extends BaseCardTest {
         activateMaze(maze, attacker);
 
         assertThat(attacker.isTapped()).isFalse();
+        assertThat(maze.isTapped()).isTrue();
     }
 
     @Test
@@ -46,18 +48,46 @@ class MazeOfIthTest extends BaseCardTest {
     }
 
     @Test
+    void doesNotPreventCombatDamageDealtByOtherCreatures() {
+        harness.setLife(player2, 20);
+        Permanent maze = addMaze();
+        Permanent protectedAttacker = addAttacker(player1, player2, 2, 2);
+        addAttacker(player1, player2, 2, 2);
+
+        activateMaze(maze, protectedAttacker);
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+    @Test
     @DisplayName("Prevents combat damage dealt to the target creature")
     void preventsCombatDamageDealtToTarget() {
         Permanent maze = addMaze();
         Permanent attacker = addAttacker(player1, player2, 2, 2);
-        addBlocker(player2, 3, 3, 0);
+        addCreatureReady(player2, new BrothersOfFire());
 
-        activateMaze(maze, attacker);
-        resolveCombat();
+        activateMazeAndStopAtBlockers(maze, attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
+    @Test
+    void doesNotPreventCombatDamageDealtToOtherCreatures() {
+        Permanent maze = addMaze();
+        Permanent protectedAttacker = addAttacker(player1, player2, 2, 2);
+        Permanent otherAttacker = addAttacker(player1, player2, 2, 2);
+        addCreatureReady(player2, new BrothersOfFire());
+
+        activateMazeAndStopAtBlockers(maze, protectedAttacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedAttacker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
+    }
     @Test
     @DisplayName("Does not prevent noncombat damage to the target creature")
     void doesNotPreventNoncombatDamage() {
@@ -66,19 +96,17 @@ class MazeOfIthTest extends BaseCardTest {
 
         activateMaze(maze, attacker);
 
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        Permanent brothers = addCreatureReady(player2, new BrothersOfFire());
+        activateBrothersOfFire(brothers, attacker);
 
-        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttacker() {
         Permanent maze = addMaze();
-        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bystander = addCreatureReady(player1, new Squire());
         prepareActivation();
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(maze);
@@ -91,6 +119,7 @@ class MazeOfIthTest extends BaseCardTest {
     void canTargetOpponentsAttacker() {
         Permanent maze = addMaze();
         Permanent attacker = addAttacker(player2, player1, 2, 2);
+        attacker.tap();
 
         activateMaze(maze, attacker);
 
@@ -108,6 +137,21 @@ class MazeOfIthTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    private void activateMazeAndStopAtBlockers(Permanent maze, Permanent target) {
+        prepareActivation();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(maze);
+        harness.activateAbility(player1, index, null, target.getId());
+        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
+    }
+
+    private void activateBrothersOfFire(Permanent brothers, Permanent target) {
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+        int index = gd.playerBattlefields.get(player2.getId()).indexOf(brothers);
+        harness.activateAbility(player2, index, null, target.getId());
+        harness.passBothPriorities();
+    }
+
     private void prepareActivation() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -115,26 +159,13 @@ class MazeOfIthTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent attacker = new Permanent(bears);
-        attacker.setSummoningSick(false);
+        Card creature = new Squire();
+        creature.setPower(power);
+        creature.setToughness(toughness);
+        Permanent attacker = addCreatureReady(owner, creature);
         attacker.setAttacking(true);
         attacker.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(attacker);
         return attacker;
     }
 
-    private Permanent addBlocker(Player owner, int power, int toughness, int blockedAttackerIndex) {
-        Card bears = new GrizzlyBears();
-        bears.setPower(power);
-        bears.setToughness(toughness);
-        Permanent blocker = new Permanent(bears);
-        blocker.setSummoningSick(false);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(blockedAttackerIndex);
-        gd.playerBattlefields.get(owner.getId()).add(blocker);
-        return blocker;
-    }
 }

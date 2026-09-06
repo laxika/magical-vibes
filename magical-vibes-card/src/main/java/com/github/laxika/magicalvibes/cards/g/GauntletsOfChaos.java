@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "373")
 @CardRegistration(set = "CHR", collectorNumber = "99")
+@CardRegistration(set = "LEG", collectorNumber = "278")
 public class GauntletsOfChaos extends Card {
 
     public GauntletsOfChaos() {

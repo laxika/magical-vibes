@@ -41,7 +41,7 @@ class VenusTornBetweenWorldsTest extends BaseCardTest {
         Permanent venus = harness.addToBattlefieldAndReturn(player2, new VenusTornBetweenWorlds());
         harness.setHand(player1, List.of(new JudgmentBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castInstant(player1, 0, venus.getId());
         harness.passBothPriorities();
@@ -67,7 +67,9 @@ class VenusTornBetweenWorldsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }

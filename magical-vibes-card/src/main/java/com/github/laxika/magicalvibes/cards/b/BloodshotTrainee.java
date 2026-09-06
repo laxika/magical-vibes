@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "85")
+@CardRegistration(set = "FUT", collectorNumber = "110")
 public class BloodshotTrainee extends Card {
 
     public BloodshotTrainee() {

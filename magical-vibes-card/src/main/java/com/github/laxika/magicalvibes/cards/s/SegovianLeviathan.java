@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "97")
 @CardRegistration(set = "5ED", collectorNumber = "122")
 @CardRegistration(set = "4ED", collectorNumber = "99")
+@CardRegistration(set = "LEG", collectorNumber = "76")
 public class SegovianLeviathan extends Card {
 
     public SegovianLeviathan() {

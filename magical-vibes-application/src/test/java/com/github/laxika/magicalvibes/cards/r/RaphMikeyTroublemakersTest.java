@@ -24,6 +24,7 @@ class RaphMikeyTroublemakersTest extends BaseCardTest {
     @Test
     @DisplayName("Reveals a creature, offers all legal attack destinations, and puts it tapped and attacking")
     void revealsCreatureAndChoosesAttackDestination() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
         addCreatureReady(player1, new RaphMikeyTroublemakers());
         Permanent planeswalker = addTestPlaneswalker(player2, 4);
         Permanent battle = addTestBattle(player1, player2);
@@ -38,7 +39,7 @@ class RaphMikeyTroublemakersTest extends BaseCardTest {
         assertThat(choice.validPermanentIds()).contains(planeswalker.getId(), battle.getId());
 
         harness.handlePermanentChosen(player1, battle.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
         assertThat(creature.isTapped()).isTrue();
@@ -62,6 +63,7 @@ class RaphMikeyTroublemakersTest extends BaseCardTest {
         card.setName("Test Battle");
         card.setType(CardType.BATTLE);
         Permanent battle = new Permanent(card);
+        battle.setCounterCount(CounterType.DEFENSE, 5);
         battle.setProtectorPlayerId(protector.getId());
         gd.playerBattlefields.get(controller.getId()).add(battle);
         return battle;

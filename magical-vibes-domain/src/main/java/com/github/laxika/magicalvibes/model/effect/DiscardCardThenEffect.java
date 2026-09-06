@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.CardType;
  * @param alternateCardType if non-null, use {@code alternateThenEffect} when the discarded card
  *                          has this type
  * @param alternateThenEffect alternate reflexive effect selected by {@code alternateCardType}
+ * @param recipient         player who must discard; the default is the stack-entry controller
  */
 public record DiscardCardThenEffect(
         CardPredicate filter,
@@ -29,25 +30,46 @@ public record DiscardCardThenEffect(
         CardPredicate condition,
         boolean useEntryTarget,
         CardType alternateCardType,
-        CardEffect alternateThenEffect
+        CardEffect alternateThenEffect,
+        DiscardRecipient recipient
 ) implements CardEffect {
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription) {
-        this(filter, thenEffect, cardDescription, null, false, null, null);
+        this(filter, thenEffect, cardDescription, null, false, null, null, DiscardRecipient.CONTROLLER);
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardPredicate condition) {
-        this(filter, thenEffect, cardDescription, condition, false, null, null);
+        this(filter, thenEffect, cardDescription, condition, false, null, null,
+                DiscardRecipient.CONTROLLER);
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  boolean useEntryTarget) {
-        this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null);
+        this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null,
+                DiscardRecipient.CONTROLLER);
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardType alternateCardType, CardEffect alternateThenEffect) {
-        this(filter, thenEffect, cardDescription, null, false, alternateCardType, alternateThenEffect);
+        this(filter, thenEffect, cardDescription, null, false, alternateCardType, alternateThenEffect,
+                DiscardRecipient.CONTROLLER);
+    }
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 CardPredicate condition, boolean useEntryTarget,
+                                 CardType alternateCardType, CardEffect alternateThenEffect) {
+        this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
+                alternateThenEffect, DiscardRecipient.CONTROLLER);
+    }
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 DiscardRecipient recipient) {
+        this(filter, thenEffect, cardDescription, null, false, null, null, recipient);
+    }
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 DiscardRecipient recipient, boolean useEntryTarget) {
+        this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null, recipient);
     }
 }

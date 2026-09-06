@@ -67,8 +67,8 @@ class ShadrixSilverquillTest extends BaseCardTest {
         harness.handleListChoice(player1, COUNTER_MODE);
         harness.handleListChoice(player1, DRAW_MODE);
 
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

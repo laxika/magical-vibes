@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +56,13 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
         CardSubtype chosenSubtype = gameData.chosenSpellSubtype;
         gameData.chosenSpellSubtype = null;
 
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        AmountContext amountContext = AmountContext.forStackEntry(entry, source);
+        int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), amountContext);
+        int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), amountContext);
+
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(controllerId);
@@ -64,8 +74,8 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
                 if (gameQueryService.isCreature(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(
                         permanent, subtypePredicate, filterContext)) {
-                    permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
-                    permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
+                    permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
+                    permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
                     affectedCount[0]++;
                 }
             }
@@ -74,9 +84,9 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(String.format(" gives %+d/%+d to %d creature(s) until end of turn.",
-                        boost.powerBoost(), boost.toughnessBoost(), affectedCount[0]))
+                        powerBoost, toughnessBoost, affectedCount[0]))
                 .build());
         log.info("Game {} - {} gives {}/{} to {} creatures of chosen subtype",
-                gameData.id, entry.getCard().getName(), boost.powerBoost(), boost.toughnessBoost(), affectedCount[0]);
+                gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, affectedCount[0]);
     }
 }

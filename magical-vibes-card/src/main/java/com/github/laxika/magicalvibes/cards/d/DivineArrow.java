@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "10")
+@CardRegistration(set = "IKO", collectorNumber = "9")
 public class DivineArrow extends Card {
 
     public DivineArrow() {

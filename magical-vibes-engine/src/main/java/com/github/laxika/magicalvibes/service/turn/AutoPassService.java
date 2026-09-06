@@ -182,6 +182,10 @@ public class AutoPassService {
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)) {
             triggerCollectionService.processNextExploitTriggerTarget(gameData);
         }
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class)) {
+            triggerCollectionService.processNextExploitPermanentTriggerTarget(gameData);
+        }
 
         // Process any pending clash targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {

@@ -73,6 +73,6 @@ class SkateboardTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("permanent");
+                .hasMessageContaining("cannot target players");
     }
 }

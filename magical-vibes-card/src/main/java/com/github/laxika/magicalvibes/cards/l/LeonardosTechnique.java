@@ -22,6 +22,6 @@ public class LeonardosTechnique extends Card {
                 new CardMaxManaValuePredicate(3)
         ));
         addEffect(EffectSlot.SPELL,
-                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(creatureCards, 2, 1));
+                ReturnTargetCardsFromGraveyardToBattlefieldEffect.withTargetBounds(creatureCards, 2, 1));
     }
 }

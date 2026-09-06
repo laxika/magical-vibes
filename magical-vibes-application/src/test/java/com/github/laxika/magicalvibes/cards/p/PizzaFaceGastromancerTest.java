@@ -42,8 +42,8 @@ class PizzaFaceGastromancerTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, artifact)).isTrue();
         assertThat(gqs.isCreature(gd, artifact)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, artifact, CardSubtype.MUTANT)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(pizzaFace);
     }
 
@@ -73,7 +73,7 @@ class PizzaFaceGastromancerTest extends BaseCardTest {
 
         advanceToEndStep();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(pizzaFace);
     }

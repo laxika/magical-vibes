@@ -66,8 +66,8 @@ class BebopRocksteadyTest extends BaseCardTest {
 
         bebopRocksteady.setAttacking(false);
         attacker.setAttacking(true);
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new com.github.laxika.magicalvibes.networking.message.BlockerAssignment(
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new com.github.laxika.magicalvibes.networking.message.BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(attacker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(bebopRocksteady))));
         harness.passBothPriorities();

@@ -38,30 +38,32 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
 
-        // Intervening-if re-check at resolution time (rule 603.4):
-        // If the source is still on the battlefield but now tapped, the ability does nothing.
-        // If the source left the battlefield, use last known information — it was untapped
-        // when the trigger was created, so the ability still resolves.
+        // Recheck the untapped condition against the live source or its last known state.
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (e.requireSourceUntapped() && source != null && source.isTapped()) {
             log.info("Game {} - {}'s draw trigger does nothing (source is tapped)",
                     gameData.id, entry.getCard().getName());
             return;
         }
 
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
         // Prefer the effect's bound target group so fuse / multi-group spells only draw for this
         // half's player(s). Unbound multi-target ("any number of target players each draw…") still
         // fans over the flat list via targetsForEffect; single-target casts fall back to targetId.
-        List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
-        if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+        List<UUID> targetPlayerIds = e.targetGroup() >= 0
+                ? entry.targetsForGroup(e.targetGroup())
+                : entry.targetsForEffect(effect);
+        if (e.targetGroup() < 0 && targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
             targetPlayerIds = Collections.singletonList(entry.getTargetId());
         }
         for (UUID targetPlayerId : targetPlayerIds) {
+            if (!gameData.playerIds.contains(targetPlayerId)) {
+                continue;
+            }
             for (int i = 0; i < amount; i++) {
                 drawService.resolveDrawCard(gameData, targetPlayerId);
             }

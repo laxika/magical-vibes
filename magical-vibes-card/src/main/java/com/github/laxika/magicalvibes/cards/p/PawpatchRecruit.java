@@ -13,8 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
@@ -23,20 +21,19 @@ import java.util.List;
 public class PawpatchRecruit extends Card {
 
     public PawpatchRecruit() {
-        PermanentPredicate anotherCreatureYouControl = new PermanentAllOfPredicate(List.of(
+        PermanentPredicate creatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentControlledBySourceControllerPredicate(),
-                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
+                new PermanentControlledBySourceControllerPredicate()
         ));
 
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         target(new ControlledPermanentPredicateTargetFilter(
-                anotherCreatureYouControl,
+                creatureYouControl,
                 "Target must be another creature you control"
         )).addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
-                        CounterType.PLUS_ONE_PLUS_ONE, 1, anotherCreatureYouControl));
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, creatureYouControl));
     }
 }

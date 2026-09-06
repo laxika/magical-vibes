@@ -55,6 +55,11 @@ public class RecordReturnedGraveyardCardValueEffectHandler implements NormalEffe
             return;
         }
 
+        if (value == ReturnedGraveyardCardValue.TOUGHNESS) {
+            entry.setEventValue(returnedCard.getToughness() == null ? 0 : returnedCard.getToughness());
+            return;
+        }
+
         // "If you return a nonland card to your hand this way": a returned land records 0.
         if (!returnedCard.hasType(CardType.LAND)) {
             entry.setEventValue(returnedCard.getManaValue());

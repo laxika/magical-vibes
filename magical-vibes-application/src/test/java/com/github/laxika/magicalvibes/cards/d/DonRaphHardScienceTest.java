@@ -28,7 +28,7 @@ class DonRaphHardScienceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MindStone());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotalMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 
     @Test
@@ -37,15 +37,15 @@ class DonRaphHardScienceTest extends BaseCardTest {
         var donRaph = harness.addToBattlefieldAndReturn(player1, new DonRaphHardScience());
         donRaph.setSummoningSick(false);
         harness.setHand(player1, List.of(new GrizzlyBears(), new MindStone()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.castArtifact(player1, 0);
     }

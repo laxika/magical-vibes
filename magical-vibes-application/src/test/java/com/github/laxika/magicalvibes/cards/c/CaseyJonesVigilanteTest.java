@@ -59,6 +59,6 @@ class CaseyJonesVigilanteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CaseyJonesVigilante()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

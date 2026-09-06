@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +11,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Greed.class, GrizzlyBears.class})
 class GreedTest extends BaseCardTest {
 
     @Test
@@ -20,7 +19,7 @@ class GreedTest extends BaseCardTest {
     void payingManaAndLifeDrawsACard() {
         harness.addToBattlefield(player1, new Greed());
         harness.setHand(player1, List.of());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setLife(player1, 20);
 
@@ -28,8 +27,9 @@ class GreedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -37,7 +37,7 @@ class GreedTest extends BaseCardTest {
     void canActivateRepeatedly() {
         harness.addToBattlefield(player1, new Greed());
         harness.setHand(player1, List.of());
-        setDeck(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.setLife(player1, 20);
 
@@ -54,7 +54,7 @@ class GreedTest extends BaseCardTest {
     @DisplayName("Cannot activate without {B} available")
     void cannotActivateWithoutMana() {
         harness.addToBattlefield(player1, new Greed());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -65,7 +65,7 @@ class GreedTest extends BaseCardTest {
     @DisplayName("Cannot activate with less than 2 life")
     void cannotActivateWithInsufficientLife() {
         harness.addToBattlefield(player1, new Greed());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setLife(player1, 1);
 
@@ -73,8 +73,4 @@ class GreedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void setDeck(Player player, List<? extends Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
 }

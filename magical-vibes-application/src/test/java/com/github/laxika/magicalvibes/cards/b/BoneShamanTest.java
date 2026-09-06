@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.cards.w.WallOfEssence;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.o.OrcishCannoneers;
+import com.github.laxika.magicalvibes.cards.w.WallOfShields;
+import com.github.laxika.magicalvibes.cards.y.YavimayaGnats;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoneShaman.class, YavimayaGnats.class, WallOfShields.class,
+        OrcishCannoneers.class, BalduvianBears.class})
 class BoneShamanTest extends BaseCardTest {
 
     @Test
@@ -23,8 +26,8 @@ class BoneShamanTest extends BaseCardTest {
     void damagedCreatureCannotRegenerate() {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
         shaman.setAttacking(true);
-        Permanent skeletons = addCreatureReady(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
+        Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
+        gnats.setRegenerationShield(1);
 
         activateAbility();
 
@@ -32,8 +35,29 @@ class BoneShamanTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
-        harness.assertInGraveyard(player2, "Drudge Skeletons");
+        harness.assertNotOnBattlefield(player2, "Yavimaya Gnats");
+        harness.assertInGraveyard(player2, "Yavimaya Gnats");
+    }
+
+    @Test
+    @DisplayName("A regeneration ability activated before combat cannot save a creature damaged by Bone Shaman")
+    void regenerationAbilityIsDenied() {
+        Permanent shaman = addCreatureReady(player1, new BoneShaman());
+        shaman.setAttacking(true);
+        addCreatureReady(player2, new YavimayaGnats());
+
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        activateAbility();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Yavimaya Gnats");
+        harness.assertInGraveyard(player2, "Yavimaya Gnats");
     }
 
     @Test
@@ -41,8 +65,8 @@ class BoneShamanTest extends BaseCardTest {
     void earlierDamageIsCoveredWhenAbilityResolvesLater() {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
         shaman.setAttacking(true);
-        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
-        Permanent wall = addCreatureReady(player2, new WallOfEssence());
+        Permanent cannoneers = addCreatureReady(player1, new OrcishCannoneers());
+        Permanent wall = addCreatureReady(player2, new WallOfShields());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -53,9 +77,9 @@ class BoneShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, wall.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wall of Essence");
-        harness.assertInGraveyard(player2, "Wall of Essence");
-        assertThat(pyromancer.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Wall of Shields");
+        harness.assertInGraveyard(player2, "Wall of Shields");
+        assertThat(cannoneers.isTapped()).isTrue();
     }
 
     @Test
@@ -63,25 +87,25 @@ class BoneShamanTest extends BaseCardTest {
     void withoutAbilityDamagedCreatureRegenerates() {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
         shaman.setAttacking(true);
-        Permanent skeletons = addCreatureReady(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
+        Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
+        gnats.setRegenerationShield(1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Drudge Skeletons");
-        assertThat(skeletons.getRegenerationShield()).isZero();
+        harness.assertOnBattlefield(player2, "Yavimaya Gnats");
+        assertThat(gnats.getRegenerationShield()).isZero();
     }
 
     @Test
     @DisplayName("A creature damaged by another source still regenerates while the ability is active")
     void damageFromAnotherSourceStillRegenerates() {
         addCreatureReady(player1, new BoneShaman());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         bears.setAttacking(true);
-        Permanent skeletons = addCreatureReady(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
+        Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
+        gnats.setRegenerationShield(1);
 
         activateAbility();
 
@@ -89,16 +113,13 @@ class BoneShamanTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertOnBattlefield(player2, "Yavimaya Gnats");
     }
 
     @Test
     @DisplayName("The ability stops applying after end-of-turn cleanup")
     void abilityWearsOffAtEndOfTurn() {
         Permanent shaman = addCreatureReady(player1, new BoneShaman());
-        Permanent skeletons = addCreatureReady(player2, new DrudgeSkeletons());
-        skeletons.setRegenerationShield(1);
-
         activateAbility();
         assertThat(shaman.isDamagedCreaturesCantRegenerateThisTurn()).isTrue();
 

@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
+import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BreathOfDreams.class, FyndhornElves.class, ZuranSpellcaster.class})
 class BreathOfDreamsTest extends BaseCardTest {
 
     @Test
@@ -48,13 +50,13 @@ class BreathOfDreamsTest extends BaseCardTest {
     @DisplayName("Green creatures get an age counter from granted cumulative upkeep")
     void greenCreatureGetsAgeCounterFromGrantedUpkeep() {
         Permanent breath = harness.addToBattlefieldAndReturn(player1, new BreathOfDreams());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
 
         advanceToUpkeep(player1);
-        // Bears' granted CU resolves first (later on stack)
+        // Fyndhorn Elves' granted CU resolves first (later on stack)
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(bears.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
@@ -64,17 +66,17 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, breath);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elves, breath);
     }
 
     @Test
     @DisplayName("Paying granted cumulative upkeep keeps the green creature")
     void payingGrantedUpkeepKeepsGreenCreature() {
         Permanent breath = harness.addToBattlefieldAndReturn(player1, new BreathOfDreams());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
 
         advanceToUpkeep(player1);
-        // Bears' granted CU resolves first
+        // Fyndhorn Elves' granted CU resolves first
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
@@ -84,22 +86,22 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, breath);
-        assertThat(bears.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elves, breath);
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Second upkeep costs two mana for own and granted cumulative upkeep")
     void secondUpkeepCostsTwoManaForBothAbilities() {
         Permanent breath = harness.addToBattlefieldAndReturn(player1, new BreathOfDreams());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
         breath.setCounterCount(CounterType.AGE, 1);
-        bears.setCounterCount(CounterType.AGE, 1);
+        elves.setCounterCount(CounterType.AGE, 1);
 
         advanceToUpkeep(player1);
 
         harness.passBothPriorities();
-        assertThat(bears.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -108,30 +110,30 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, breath);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elves, breath);
     }
 
     @Test
     @DisplayName("Grant is global: opponent's Breath still taxes your green creatures")
     void opponentsBreathTaxesYourGreenCreatures() {
         harness.addToBattlefield(player2, new BreathOfDreams());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new FyndhornElves());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(bears.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(elves.getCounterCount(CounterType.AGE)).isEqualTo(1);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elves);
     }
 
     @Test
     @DisplayName("Non-green creatures are unaffected")
     void nonGreenUnaffected() {
         harness.addToBattlefield(player1, new BreathOfDreams());
-        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
+        Permanent spellcaster = harness.addToBattlefieldAndReturn(player1, new ZuranSpellcaster());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -139,8 +141,8 @@ class BreathOfDreamsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(merfolk);
-        assertThat(merfolk.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spellcaster);
+        assertThat(spellcaster.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

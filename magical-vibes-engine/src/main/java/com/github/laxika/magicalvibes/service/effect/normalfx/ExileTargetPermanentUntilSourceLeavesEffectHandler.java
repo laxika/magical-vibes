@@ -58,7 +58,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             }
         }
 
-        if (sourcePermanentId == null) {
+        if (sourcePermanent == null && !e.exileIfSourceAlreadyLeft()) {
             log.info("Game {} - Source permanent for {} no longer on battlefield, effect does nothing",
                     gameData.id, entry.getCard().getName());
             return;
@@ -70,7 +70,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
 
         permanentRemovalService.removePermanentToExile(gameData, target);
 
-        if (e.imprint()) {
+        if (e.imprint() && sourcePermanent != null) {
             gameData.setImprintedCard(sourcePermanent.getCard(), card);
         }
 
@@ -78,7 +78,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
         log.info("Game {} - {} exiles {} until it leaves the battlefield",
                 gameData.id, entry.getCard().getName(), card.getName());
 
-        if (!card.isToken()) {
+        if (!card.isToken() && sourcePermanent != null) {
             gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
 
             var exiledEntry = gameData.findExiledCard(card.getId());

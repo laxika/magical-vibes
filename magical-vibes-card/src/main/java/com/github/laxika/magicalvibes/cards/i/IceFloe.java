@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -37,6 +38,7 @@ public class IceFloe extends Card {
                 "{T}: Tap target creature without flying that's attacking you. It doesn't untap during its controller's untap step for as long as Ice Floe remains tapped.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
                                 new PermanentIsAttackingSourceControllerPredicate(),
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
                         )),

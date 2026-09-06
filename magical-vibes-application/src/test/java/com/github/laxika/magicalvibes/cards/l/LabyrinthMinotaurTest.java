@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LabyrinthMinotaur.class, DwarvenTrader.class})
+@CardUsed({LabyrinthMinotaur.class, GrizzlyBears.class})
 class LabyrinthMinotaurTest extends BaseCardTest {
 
     @Test
@@ -98,12 +98,29 @@ class LabyrinthMinotaurTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Trigger still resolves if the blocking Minotaur leaves before resolution")
+    void triggerResolvesIfBlockerRemoved() {
+        addReadyBlocker(player2);
+        Permanent attacker = addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        attacker.tap();
+
+        harness.passBothPriorities();
+        harness.performUntapStep(player1);
+
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
     private Permanent addReadyBlocker(Player player) {
         return addCreatureReady(player, new LabyrinthMinotaur());
     }
 
     private Permanent addReadyAttacker(Player player) {
-        Permanent perm = addCreatureReady(player, new DwarvenTrader());
+        Permanent perm = addCreatureReady(player, new GrizzlyBears());
         perm.setAttacking(true);
         return perm;
     }

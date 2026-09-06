@@ -63,6 +63,35 @@ class FuneralMarchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(victim);
     }
 
+    @Test
+    @DisplayName("The trigger also fires when the enchanted creature is exiled")
+    void controllerSacrificesWhenEnchantedCreatureIsExiled() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, enchanted));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchanted, victim);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(victim.getCard());
+    }
+
+    @Test
+    @DisplayName("The trigger does not sacrifice a noncreature when no creature is available")
+    void doesNotSacrificeNoncreatureWhenNoCreatureIsAvailable() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact).doesNotContain(enchanted);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifact.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent attachFuneralMarch(Player controller, Permanent enchanted) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new FuneralMarch());
         aura.setAttachedTo(enchanted.getId());
@@ -99,6 +128,20 @@ class FuneralMarchTest extends BaseCardTest {
         // Player2 (the enchanted creature's controller) sacrifices; player1's board is untouched.
         harness.assertInGraveyard(player2, "Hill Giant");
         harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Removing Funeral March itself does not trigger its ability")
+    void auraLeavingDoesNotTriggerSacrifice() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent aura = attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enchanted, victim);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
     }
 
     @Test

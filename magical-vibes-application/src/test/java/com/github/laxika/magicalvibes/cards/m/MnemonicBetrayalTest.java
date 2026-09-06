@@ -72,5 +72,6 @@ class MnemonicBetrayalTest extends BaseCardTest {
     private void advanceToEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
+        harness.passBothPriorities();
     }
 }

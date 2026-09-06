@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "9ED", collectorNumber = "22")
+@CardRegistration(set = "ONS", collectorNumber = "41")
 public class Inspirit extends Card {
 
     public Inspirit() {

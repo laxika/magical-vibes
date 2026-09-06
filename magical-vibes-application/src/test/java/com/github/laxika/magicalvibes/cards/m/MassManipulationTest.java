@@ -73,7 +73,7 @@ class MassManipulationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card is not playable");
+                .hasMessage("Targets must be creatures and/or planeswalkers");
     }
 
     private Permanent addReadyPlaneswalker(com.github.laxika.magicalvibes.model.Player player) {

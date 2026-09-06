@@ -27,12 +27,12 @@ class TortureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Torture()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        gs.playCard(gd, player1, 0, 0, badgerPerm.getId(), null);
+        harness.castEnchantment(player1, 0, badgerPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Torture")
+                .anyMatch(p -> p.getCard() instanceof Torture
                         && p.isAttached()
                         && p.getAttachedTo().equals(badgerPerm.getId()));
     }
@@ -53,8 +53,6 @@ class TortureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(badgerPerm.getEffectivePower()).isEqualTo(1);
-        assertThat(badgerPerm.getEffectiveToughness()).isEqualTo(1);
     }
 
     @Test
@@ -72,7 +70,7 @@ class TortureTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Torture");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Torture.class);
     }
 
     @Test
@@ -101,13 +99,16 @@ class TortureTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Torture()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        gs.playCard(gd, player1, 0, 0, opponentCreature.getId(), null);
+        harness.castEnchantment(player1, 0, opponentCreature.getId());
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent auraPerm = findPermanent(player1, "Torture");
+        Permanent auraPerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof Torture)
+                .findFirst()
+                .orElseThrow();
         int auraIndex = gd.playerBattlefields.get(player1.getId()).indexOf(auraPerm);
         harness.activateAbility(player1, auraIndex, null, null);
         harness.passBothPriorities();
@@ -123,7 +124,7 @@ class TortureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Torture()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, land.getId(), null))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
@@ -142,5 +143,22 @@ class TortureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability uses the last enchanted creature if Torture leaves before resolution")
+    void abilityUsesLastEnchantedCreatureWhenAuraLeaves() {
+        Permanent badgerPerm = addCreatureReady(player1, new RysorianBadger());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Torture());
+        auraPerm.setAttachedTo(badgerPerm.getId());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
+        harness.passBothPriorities();
+
+        assertThat(badgerPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 }

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RootMaze;
-import com.github.laxika.magicalvibes.cards.s.SterlingGrove;
+import com.github.laxika.magicalvibes.cards.a.Aurochs;
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
+import com.github.laxika.magicalvibes.cards.r.RitualOfSubdual;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EssenceFilter.class, CircleOfProtectionWhite.class, RitualOfSubdual.class, Aurochs.class})
 class EssenceFilterTest extends BaseCardTest {
 
     private void castEssenceFilter(int mode) {
@@ -25,29 +26,29 @@ class EssenceFilterTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 0 destroys every enchantment regardless of color")
     void allEnchantmentsMode() {
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.addToBattlefield(player2, new RootMaze());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CircleOfProtectionWhite());
+        harness.addToBattlefield(player2, new RitualOfSubdual());
+        harness.addToBattlefield(player2, new Aurochs());
 
         castEssenceFilter(0);
 
-        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
-        harness.assertNotOnBattlefield(player2, "Root Maze");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Circle of Protection: White");
+        harness.assertNotOnBattlefield(player2, "Ritual of Subdual");
+        harness.assertOnBattlefield(player2, "Aurochs");
     }
 
     @Test
     @DisplayName("Mode 1 destroys only nonwhite enchantments")
     void nonwhiteEnchantmentsMode() {
-        harness.addToBattlefield(player1, new GloriousAnthem());
-        harness.addToBattlefield(player1, new SterlingGrove());
-        harness.addToBattlefield(player2, new RootMaze());
+        harness.addToBattlefield(player1, new CircleOfProtectionWhite());
+        harness.addToBattlefield(player2, new CircleOfProtectionWhite());
+        harness.addToBattlefield(player2, new RitualOfSubdual());
 
         castEssenceFilter(1);
 
-        harness.assertOnBattlefield(player1, "Glorious Anthem");
-        harness.assertOnBattlefield(player1, "Sterling Grove");
-        harness.assertNotOnBattlefield(player2, "Root Maze");
+        harness.assertOnBattlefield(player1, "Circle of Protection: White");
+        harness.assertOnBattlefield(player2, "Circle of Protection: White");
+        harness.assertNotOnBattlefield(player2, "Ritual of Subdual");
     }
 
     @Test

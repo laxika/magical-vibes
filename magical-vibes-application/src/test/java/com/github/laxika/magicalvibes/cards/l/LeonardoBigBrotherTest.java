@@ -17,6 +17,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({LeonardoBigBrother.class, GrizzlyBears.class})
 class LeonardoBigBrotherTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Gets +1/+0 for each other creature its controller controls")
     void getsPowerForOtherCreaturesYouControl() {

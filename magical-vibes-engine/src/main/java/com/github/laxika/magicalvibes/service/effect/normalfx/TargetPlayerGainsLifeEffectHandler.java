@@ -28,8 +28,9 @@ public class TargetPlayerGainsLifeEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetPlayerGainsLifeEffect) effect;
-        List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
-        if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+        List<UUID> targetPlayerIds = e.targetGroup() >= 0
+                ? entry.targetsForGroup(e.targetGroup()) : entry.targetsForEffect(effect);
+        if (e.targetGroup() < 0 && targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
             targetPlayerIds = Collections.singletonList(entry.getTargetId());
         }
         if (targetPlayerIds.isEmpty()) {

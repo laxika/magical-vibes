@@ -50,6 +50,7 @@ class RockSoldiersTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Rock Soldiers");
     }

@@ -21,4 +21,9 @@ public record AllOf(List<Condition> conditions) implements Condition {
     public String conditionNotMetReason() {
         return conditions.stream().map(Condition::conditionNotMetReason).collect(Collectors.joining(" and "));
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return !conditions.isEmpty() && conditions.stream().allMatch(Condition::isEtbTriggerGate);
+    }
 }

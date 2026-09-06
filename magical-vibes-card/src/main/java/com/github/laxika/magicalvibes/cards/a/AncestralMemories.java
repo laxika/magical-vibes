@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class AncestralMemories extends Card {
 
     public AncestralMemories() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(7, 2));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(7, 2));
     }
 }

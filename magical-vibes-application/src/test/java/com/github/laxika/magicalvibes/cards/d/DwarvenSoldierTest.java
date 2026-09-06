@@ -53,7 +53,7 @@ class DwarvenSoldierTest extends BaseCardTest {
     @Test
     @DisplayName("When Dwarven Soldier blocks an Orc it gets +0/+2 until end of turn")
     void blocksOrcBoosts() {
-        Permanent attacker = addReadyCreature(player1, true); // Orc attacker
+        addReadyCreature(player1, true); // Orc attacker
         Permanent soldier = addCreatureReady(player2, new DwarvenSoldier());
 
         declareAttackers(List.of(0));
@@ -68,7 +68,7 @@ class DwarvenSoldierTest extends BaseCardTest {
     @Test
     @DisplayName("When Dwarven Soldier blocks a non-Orc it gets no boost")
     void blocksNonOrcDoesNothing() {
-        Permanent attacker = addReadyCreature(player1, false); // non-Orc attacker
+        addReadyCreature(player1, false); // non-Orc attacker
         Permanent soldier = addCreatureReady(player2, new DwarvenSoldier());
 
         declareAttackers(List.of(0));

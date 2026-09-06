@@ -18,6 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({DarkLeoShredder.class, NinjaOfTheDeepHours.class, GrizzlyBears.class})
 class DarkLeoShredderTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void stopBeforeCombatDamage() {
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS));
+    }
+
     @Test
     @DisplayName("Attacking Ninjas you control have deathtouch")
     void attackingNinjasYouControlHaveDeathtouch() {

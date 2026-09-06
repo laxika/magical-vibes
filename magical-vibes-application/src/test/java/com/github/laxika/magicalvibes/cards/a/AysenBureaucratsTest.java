@@ -49,6 +49,18 @@ class AysenBureaucratsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Illegal target does not pay the tap activation cost")
+    void illegalTargetDoesNotPayTapCost() {
+        Permanent bureaucrats = addCreatureReady(player1, new AysenBureaucrats());
+        Permanent giant = addCreatureReady(player2, new AbbeyGargoyles());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bureaucrats.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         addCreatureReady(player1, new AysenBureaucrats());

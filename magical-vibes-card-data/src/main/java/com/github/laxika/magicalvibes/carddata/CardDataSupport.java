@@ -48,6 +48,8 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Split second", Keyword.SPLIT_SECOND);
         KEYWORD_MAP.put("Fading", Keyword.FADING);
         KEYWORD_MAP.put("Vanishing", Keyword.VANISHING);
+        KEYWORD_MAP.put("Graft", Keyword.GRAFT);
+        KEYWORD_MAP.put("Fortify", Keyword.FORTIFY);
         KEYWORD_MAP.put("Vigilance", Keyword.VIGILANCE);
         KEYWORD_MAP.put("Backup", Keyword.BACKUP);
         KEYWORD_MAP.put("Shroud", Keyword.SHROUD);
@@ -69,6 +71,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Plainswalk", Keyword.PLAINSWALK);
         KEYWORD_MAP.put("Hexproof", Keyword.HEXPROOF);
         KEYWORD_MAP.put("Infect", Keyword.INFECT);
+        KEYWORD_MAP.put("Poisonous", Keyword.POISONOUS);
         KEYWORD_MAP.put("Wither", Keyword.WITHER);
         KEYWORD_MAP.put("Intimidate", Keyword.INTIMIDATE);
         KEYWORD_MAP.put("Battle Cry", Keyword.BATTLE_CRY);
@@ -81,6 +84,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
         KEYWORD_MAP.put("Haunt", Keyword.HAUNT);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
+        KEYWORD_MAP.put("Bargain", Keyword.BARGAIN);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
         KEYWORD_MAP.put("Persist", Keyword.PERSIST);
@@ -100,6 +104,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Training", Keyword.TRAINING);
         KEYWORD_MAP.put("Disturb", Keyword.DISTURB);
         KEYWORD_MAP.put("Morph", Keyword.MORPH);
+        KEYWORD_MAP.put("Mutate", Keyword.MUTATE);
         KEYWORD_MAP.put("Skulk", Keyword.SKULK);
         KEYWORD_MAP.put("Soulbond", Keyword.SOULBOND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
@@ -142,11 +147,14 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Double", Keyword.DOUBLE);
         KEYWORD_MAP.put("Amass", Keyword.AMASS);
         KEYWORD_MAP.put("Plot", Keyword.PLOT);
+        KEYWORD_MAP.put("Warp", Keyword.WARP);
+        KEYWORD_MAP.put("Assemble", Keyword.ASSEMBLE);
         KEYWORD_MAP.put("Waterbend", Keyword.WATERBEND);
         KEYWORD_MAP.put("Firebending", Keyword.FIREBENDING);
         KEYWORD_MAP.put("Suspect", Keyword.SUSPECT);
         KEYWORD_MAP.put("Disguise", Keyword.DISGUISE);
         KEYWORD_MAP.put("Alliance", Keyword.ALLIANCE);
+        KEYWORD_MAP.put("Station", Keyword.STATION);
     }
 
     /** {@link #KEYWORD_MAP} keyed by lowercase spelling — upstream casing differs between sources. */

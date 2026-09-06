@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
@@ -11,11 +13,13 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * Resolves {@link PutCappedCountersOnSourceEffect}: put up to the evaluated amount of counters on
@@ -32,6 +36,7 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,7 +57,24 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
         int requested = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
         int current = source.getCounterCount(e.counterType());
-        int toAdd = Math.min(requested, e.cap() - current);
+        int maximum = Math.min(requested, e.cap() - current);
+        if (maximum <= 0) {
+            return;
+        }
+
+        if (gameData.chosenXValue == null) {
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    entry.getControllerId(), null, null,
+                    new ChoiceContext.CappedCounterAmountChoice(source.getId()),
+                    IntStream.rangeClosed(0, maximum).mapToObj(Integer::toString).toList(),
+                    "Choose how many counters to put on " + source.getCard().getName() + "."));
+            return;
+        }
+
+        int toAdd = Math.min(gameData.chosenXValue, maximum);
+        gameData.chosenXValue = null;
+        gameData.rerunCurrentEffectAfterInteraction = false;
         if (toAdd <= 0) {
             return;
         }

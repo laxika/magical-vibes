@@ -61,9 +61,11 @@ class SpicyOatmealPizzaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        assertThatThrownBy(() -> harness.castArtifact(player1, 0, targetId))
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("target");
+                .hasMessageContaining("Invalid permanent");
     }
 
     @Test

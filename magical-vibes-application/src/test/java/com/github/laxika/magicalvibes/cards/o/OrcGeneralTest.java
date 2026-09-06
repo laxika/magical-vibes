@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinRockSled;
+import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,22 +13,23 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcGeneral.class, GoblinPiker.class, GrizzlyBears.class})
+@CardUsed({OrcGeneral.class, GoblinRockSled.class, Squire.class})
 class OrcGeneralTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another Orc or Goblin boosts other Orcs on all battlefields")
     void activationSacrificesAnotherOrcOrGoblinAndBoostsOtherOrcs() {
-        Permanent general = addReady(player1, new OrcGeneral());
-        Permanent sacrificed = addReady(player1, new GoblinPiker());
-        Permanent allyOrc = addReady(player1, new OrcGeneral());
-        Permanent nonOrc = addReady(player1, new GrizzlyBears());
-        Permanent opponentOrc = addReady(player2, new OrcGeneral());
+        Permanent general = addCreatureReady(player1, new OrcGeneral());
+        Permanent sacrificed = addCreatureReady(player1, new GoblinRockSled());
+        Permanent allyOrc = addCreatureReady(player1, new OrcGeneral());
+        Permanent nonOrc = addCreatureReady(player1, new Squire());
+        Permanent nonOrcGoblin = addCreatureReady(player1, new GoblinRockSled());
+        Permanent opponentOrc = addCreatureReady(player2, new OrcGeneral());
 
         harness.activateAbility(player1, battlefieldIndex(general), null, null);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(sacrificed.getId(), allyOrc.getId());
+        assertThat(choice.validIds()).contains(sacrificed.getId(), allyOrc.getId(), nonOrcGoblin.getId());
         assertThat(choice.validIds()).doesNotContain(general.getId(), nonOrc.getId());
 
         harness.handlePermanentChosen(player1, sacrificed.getId());
@@ -42,6 +43,9 @@ class OrcGeneralTest extends BaseCardTest {
         assertThat(opponentOrc.getPowerModifier()).isEqualTo(1);
         assertThat(opponentOrc.getToughnessModifier()).isEqualTo(1);
         assertThat(nonOrc.getPowerModifier()).isZero();
+        assertThat(nonOrc.getToughnessModifier()).isZero();
+        assertThat(nonOrcGoblin.getPowerModifier()).isZero();
+        assertThat(nonOrcGoblin.getToughnessModifier()).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -54,17 +58,21 @@ class OrcGeneralTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without another Orc or Goblin to sacrifice")
     void activationRequiresAnotherOrcOrGoblin() {
-        Permanent general = addReady(player1, new OrcGeneral());
+        Permanent general = addCreatureReady(player1, new OrcGeneral());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(general), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
     }
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void activationRequiresUntappedSource() {
+        Permanent general = addCreatureReady(player1, new OrcGeneral());
+        addCreatureReady(player1, new GoblinRockSled());
+        general.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(general), null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private int battlefieldIndex(Permanent permanent) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import java.util.List;
 
 @CardRegistration(set = "STX", collectorNumber = "104")
+@CardRegistration(set = "FUT", collectorNumber = "116")
 public class GrinningIgnus extends Card {
 
     public GrinningIgnus() {

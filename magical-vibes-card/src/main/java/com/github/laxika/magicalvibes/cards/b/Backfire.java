@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageE
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "4ED", collectorNumber = "62")
+@CardRegistration(set = "LEG", collectorNumber = "47")
 public class Backfire extends Card {
 
     public Backfire() {
@@ -14,6 +15,6 @@ public class Backfire extends Card {
                 // Whenever enchanted creature deals damage to you, this Aura deals that much
                 // damage to that creature's controller.
                 .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU,
-                        new EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect());
+                        new EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect(true));
     }
 }

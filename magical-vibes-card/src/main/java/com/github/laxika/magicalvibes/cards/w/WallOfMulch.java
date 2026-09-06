@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "208")
+@CardRegistration(set = "ONS", collectorNumber = "298")
 public class WallOfMulch extends Card {
 
     public WallOfMulch() {

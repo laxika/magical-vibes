@@ -18,6 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({PartyDude.class, Memnite.class, Shock.class})
 class PartyDudeTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void clearInitialHand() {
+        harness.setHand(player1, List.of());
+    }
+
     @Test
     @DisplayName("When it enters, each player creates a Food token")
     void eachPlayerCreatesFoodOnEntry() {

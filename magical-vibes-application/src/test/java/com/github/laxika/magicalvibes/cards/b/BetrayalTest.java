@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Betrayal.class, GrizzlyBears.class})
 class BetrayalTest extends BaseCardTest {
 
     @Test
@@ -67,14 +69,16 @@ class BetrayalTest extends BaseCardTest {
     void tappingEnchantedCreatureDraws() {
         Permanent creature = attachAura();
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int auraControllerHandBefore = gd.playerHands.get(player1.getId()).size();
+        int enchantedCreatureControllerHandBefore = gd.playerHands.get(player2.getId()).size();
 
         creature.tap();
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(auraControllerHandBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(enchantedCreatureControllerHandBefore);
     }
 
     @Test

@@ -49,4 +49,9 @@ public record PutTargetCardsFromGraveyardOnTopOfLibraryEffect(
     public boolean fromOtherGraveyards() {
         return source != GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
     }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetPredicates.graveyardCards(filter, source));
+    }
 }

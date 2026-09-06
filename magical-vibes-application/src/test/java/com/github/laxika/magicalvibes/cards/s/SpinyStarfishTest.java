@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpinyStarfish.class, Shock.class})
 class SpinyStarfishTest extends BaseCardTest {
 
     @Test
@@ -56,18 +58,58 @@ class SpinyStarfishTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creating a regeneration shield without using it creates no Starfish token")
+    void unusedRegenerationShieldCreatesNoToken() {
+        Permanent starfish = addReadyStarfish(player1);
+        activateRegeneration(starfish);
+
+        advanceToEndStepAndResolve();
+
+        assertThat(countStarfishTokens()).isZero();
+    }
+
+    @Test
     @DisplayName("{U} grants a regeneration shield")
     void activatedAbilityGrantsShield() {
         Permanent starfish = addReadyStarfish(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        activateRegeneration(starfish);
 
         assertThat(gd.stack).isEmpty();
         assertThat(starfish.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability triggers at the beginning of an opponent's end step")
+    void triggersAtOpponentEndStep() {
+        Permanent starfish = addReadyStarfish(player1);
+        starfish.setRegenerationShield(1);
+        shockStarfish(starfish);
+
+        advanceToEndStepAndResolve(player2);
+
+        assertThat(countStarfishTokens()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The end-step trigger uses the regeneration count if Starfish leaves before resolution")
+    void usesLastKnownRegenerationCountAfterLeavingBattlefield() {
+        Permanent starfish = addReadyStarfish(player1);
+        starfish.setRegenerationShield(1);
+        shockStarfish(starfish);
+
+        queueEndStepTrigger(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player2, 0, starfish.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spiny Starfish");
+        resolveAllTriggers();
+
+        assertThat(countStarfishTokens()).isEqualTo(1);
     }
 
     /** Player 2 Shocks the Starfish, which is lethal to its 0/1 body and consumes a shield. */
@@ -78,17 +120,32 @@ class SpinyStarfishTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, starfish.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, starfish.getId());
     }
 
     private void advanceToEndStepAndResolve() {
-        harness.forceActivePlayer(player1);
+        advanceToEndStepAndResolve(player1);
+    }
+
+    private void advanceToEndStepAndResolve(Player activePlayer) {
+        queueEndStepTrigger(activePlayer);
+        resolveAllTriggers();
+    }
+
+    private void queueEndStepTrigger(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
 
-        harness.passBothPriorities(); // advance to end step (queues any trigger)
-        harness.passBothPriorities(); // resolve the trigger
+    private void activateRegeneration(Permanent starfish) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int starfishIndex = gd.playerBattlefields.get(player1.getId()).indexOf(starfish);
+        harness.activateAbility(player1, starfishIndex, null, null);
+        harness.passBothPriorities();
     }
 
     private long countStarfishTokens() {
@@ -98,9 +155,6 @@ class SpinyStarfishTest extends BaseCardTest {
     }
 
     private Permanent addReadyStarfish(Player player) {
-        Permanent perm = new Permanent(new SpinyStarfish());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SpinyStarfish());
     }
 }

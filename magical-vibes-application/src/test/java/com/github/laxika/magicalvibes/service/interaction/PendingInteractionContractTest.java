@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
+import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
 import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
@@ -67,6 +68,7 @@ class PendingInteractionContractTest {
             PendingOpponentChoosesCardToHandRestToGraveyard.class,
             PendingMemoriesReturningChoice.class,
             PendingMurmursFromBeyondChoice.class,
+            PendingAnimalMagnetismChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
             PendingDubiousChallengeChoice.class,
@@ -85,6 +87,7 @@ class PendingInteractionContractTest {
             PendingWhimsOfTheFates.class,
             PendingValkiCopyChoice.class,
             PendingValkiHandExileChoice.class,
+            PendingInteraction.PortentOfCalamityState.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class);
     private static final Set<Class<?>> AI_DIRECT_PATHS = Set.of(

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,6 +58,8 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
     private ExileService exileService;
     @Mock
     private GraveyardService graveyardService;
+    @Mock
+    private InteractionHandlerRegistry interactionHandlerRegistry;
     @InjectMocks
     private GraveyardReturnSupport support;
     private GameData gd;
@@ -93,10 +97,6 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
             return card;
         }
 
-        // =========================================================================
-        // describeFilter A?€�t static utility method
-        // =========================================================================
-
     @Test
             @DisplayName("Moves targeted cards from graveyard to top of library")
             void movesCardsToTopOfLibrary() {
@@ -118,8 +118,13 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
                 putCardsOnTopOfLibraryHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
-                assertThat(gd.playerDecks.get(player1Id)).extracting(Card::getName)
-                        .containsExactlyInAnyOrder("Leonin Scimitar", "Rod of Ruin");
+                assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
+                        interaction instanceof PendingInteraction.LibraryReorder reorder
+                                && reorder.playerId().equals(player1Id)
+                                && reorder.deckOwnerId().equals(player1Id)
+                                && !reorder.toBottom()
+                                && reorder.cards().equals(List.of(artifact1, artifact2))));
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("on top of their library") && logEntry.plainText().contains("from graveyard")));
             }

@@ -42,7 +42,7 @@ class GuacMarshmallowPizzaTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("target");
+                .hasMessageContaining("Target");
     }
 
     @Test

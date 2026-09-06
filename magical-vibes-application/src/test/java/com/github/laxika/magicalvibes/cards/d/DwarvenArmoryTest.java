@@ -1,27 +1,29 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DwarvenArmory.class, Forest.class, BalduvianBears.class})
 class DwarvenArmoryTest extends BaseCardTest {
 
     @Test
     @DisplayName("During upkeep, sacrificing a land puts a +2/+2 counter on target creature")
     void putsPlusTwoCounterDuringUpkeep() {
         harness.addToBattlefield(player1, new DwarvenArmory());
-        harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
@@ -34,7 +36,27 @@ class DwarvenArmoryTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
-        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest.getCard());
+    }
+
+    @Test
+    @DisplayName("Cannot be activated without paying the generic mana cost")
+    void requiresTwoMana() {
+        harness.addToBattlefield(player1, new DwarvenArmory());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+        assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
     }
 
     @Test
@@ -42,7 +64,7 @@ class DwarvenArmoryTest extends BaseCardTest {
     void worksDuringOpponentUpkeep() {
         harness.addToBattlefield(player1, new DwarvenArmory());
         harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
@@ -61,7 +83,7 @@ class DwarvenArmoryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DwarvenArmory());
         harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
@@ -82,7 +104,7 @@ class DwarvenArmoryTest extends BaseCardTest {
     void cannotActivateOutsideUpkeep() {
         harness.addToBattlefield(player1, new DwarvenArmory());
         harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -98,7 +120,7 @@ class DwarvenArmoryTest extends BaseCardTest {
     @DisplayName("Cannot be activated without a land to sacrifice")
     void requiresLandToSacrifice() {
         harness.addToBattlefield(player1, new DwarvenArmory());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);

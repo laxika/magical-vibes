@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -131,14 +133,36 @@ public class MiscTriggerCollectorService {
         this.permanentControlSupport = permanentControlSupport;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_GIVES_GIFT)
+    private boolean handleControllerGivesGift(
+            TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(),
+                GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_BECOMES_UNTAPPED)
     private boolean handleSelfBecomesUntapped(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;
         Card card = match.permanent().getCard();
-        List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
-        if (triggeredEffects.isEmpty() || triggeredEffects.getFirst() != effect) {
+        List<CardEffect> cardEffects = card.getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED);
+        if (cardEffects.isEmpty() || cardEffects.getFirst() != effect) {
             return true;
         }
+        List<CardEffect> triggeredEffects = cardEffects.stream()
+                .map(triggeredEffect -> triggeredEffect instanceof DestroyLinkedPermanentEffect destroy
+                        ? new DestroyLinkedPermanentEffect(
+                                destroy.cannotBeRegenerated(), match.permanent().getChosenPermanentId())
+                        : triggeredEffect)
+                .toList();
 
         boolean needsTarget = triggeredEffects.stream()
                 .anyMatch(triggeredEffect ->
@@ -368,7 +392,8 @@ public class MiscTriggerCollectorService {
         if (as.sacrificedCard() == null
                 || !predicateEvaluationService.matchesPermanentPredicate(
                         new Permanent(as.sacrificedCard()), conditional.predicate(),
-                        FilterContext.of(match.gameData())
+                        new FilterContext(null, match.permanent().getCard().getId(),
+                                match.controllerId(), null, match.permanent(), match.permanent().getId())
                                 .withSourceCardId(match.permanent().getCard().getId())
                                 .withSourceControllerId(match.controllerId())
                                 .withSourcePermanentId(match.permanent().getId())
@@ -417,8 +442,10 @@ public class MiscTriggerCollectorService {
         TriggerContext.OpponentPermanentSacrificed sacrificed =
                 (TriggerContext.OpponentPermanentSacrificed) ctx;
         if (sacrificed.sacrificedCard() == null
-                || !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
-                new Permanent(sacrificed.sacrificedCard()), conditional.predicate())) {
+                || !predicateEvaluationService.matchesPermanentPredicate(
+                new Permanent(sacrificed.sacrificedCard()), conditional.predicate(),
+                new FilterContext(null, match.permanent().getCard().getId(),
+                        match.controllerId(), null, match.permanent(), match.permanent().getId()))) {
             return false;
         }
 
@@ -650,18 +677,15 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = RelicBindTapEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
             RelicBindTapEffect e, TriggerContext ctx) {
-        // Modal, targeted ability — the mode and target are chosen when the ability resolves
-        // (RelicBindTapEffectHandler). The trigger goes on the stack non-targeting; targets are
-        // free (any player / planeswalker), so the tapped permanent's controller is not needed here.
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s triggered ability",
-                new ArrayList<>(List.of(e)),
-                null,
-                match.permanent().getId()
-        ));
+        var choice = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                        com.github.laxika.magicalvibes.model.ChoiceContext.RelicBindModeChoice.DAMAGE,
+                        new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                        com.github.laxika.magicalvibes.model.ChoiceContext.RelicBindModeChoice.LIFE,
+                        new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect(1))));
+        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                match.permanent().getCard(), match.controllerId(), choice, match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on enchanted permanent tap (modal)",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -684,6 +708,17 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to draw on enchanted permanent tap",
                 match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = BoostTargetCreatureEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapBoostTarget(TriggerMatchContext match,
+            BoostTargetCreatureEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                "fortified permanent became tapped", match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 
@@ -890,6 +925,33 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleConditionalOnControllerLifeGain(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeGain.lifeGainedAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller life gain during controller's turn",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCounterOnTarget(TriggerMatchContext match,
             PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
@@ -1018,6 +1080,25 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on energy gain (self-boost)",
                 gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTriggers({
+            @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE),
+            @CollectsTrigger(value = BoostSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    })
+    private boolean handleLifeChangeBoostSelf(TriggerMatchContext match,
+            BoostSelfEffect effect, TriggerContext ctx) {
+        Card sourceCard = match.permanent().getCard();
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         return true;
     }
 
@@ -1325,25 +1406,36 @@ public class MiscTriggerCollectorService {
             slot = EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleConditionalCardPutIntoOpponentGraveyard(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
             return false;
         }
 
-        TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
+        Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
+        if (sourceCard == null) return false;
+        ConditionContext conditionContext = match.permanent() != null
+                ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                : ConditionContext.forCard(sourceCard, match.controllerId());
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(), conditionContext)) {
+            return false;
+        }
+
         var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-        gameData.enqueueTrigger(new StackEntry(
+        String cardName = sourceCard.getName();
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
+                sourceCard,
                 match.controllerId(),
                 cardName + "'s ability",
                 new ArrayList<>(List.of(conditional)),
-                cardPut.graveyardOwnerId(),
-                match.permanent().getId()
-        ));
+                match.permanent() == null ? null : cardPut.graveyardOwnerId(),
+                match.permanent() == null ? null : match.permanent().getId()
+        );
+        if (match.permanent() == null) {
+            entry.setNonTargeting(true);
+        }
+        gameData.enqueueTrigger(entry);
 
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
         return true;
     }
@@ -1717,11 +1809,99 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_MUTATES)
+    private boolean handleSelfMutatesDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        if (source == null) return false;
+
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        List<CardEffect> effects = new ArrayList<>(List.of(effect));
+        int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
+        if (targetGroupIndex >= 0) {
+            List<CardEffect> groupedEffects = sourceCard.getEffects(EffectSlot.ON_SELF_MUTATES).stream()
+                    .filter(candidate -> sourceCard.getEffectTargetIndex(candidate) == targetGroupIndex)
+                    .toList();
+            if (!groupedEffects.isEmpty()) {
+                if (groupedEffects.getFirst() != effect) return true;
+                effects = new ArrayList<>(groupedEffects);
+            }
+        }
+        boolean needsTarget = effects.stream().anyMatch(candidate ->
+                candidate.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || candidate.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || candidate.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), effects,
+                    "mutation", source.getId()));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    effects,
+                    null,
+                    source.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            gameData.enqueueTrigger(entry);
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on mutating",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_MUTATES)
+    private boolean handleAllyCreatureMutatesDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureMutates mutation = (TriggerContext.CreatureMutates) ctx;
+        Permanent source = match.permanent();
+        if (source == null || mutation.mutatedPermanent() == null) return false;
+
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : source.getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                mutation.mutatedPermanent().getId(),
+                source.getId());
+        entry.setTriggeringPermanentId(mutation.mutatedPermanent().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers for a controlled creature mutating",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTrigger(value = SequenceEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
     private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
             SequenceEffect effect, TriggerContext ctx) {
         return enqueueNoncombatDamageTrigger(match, effect);
+    }
+
+    @CollectsTrigger(value = MayEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
+    private boolean handleAllySourceDealtNoncombatDamageToOpponentMay(TriggerMatchContext match,
+            MayEffect effect, TriggerContext ctx) {
+        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
+        if (match.permanent() == null || !match.controllerId().equals(damage.sourceControllerId())) {
+            return false;
+        }
+
+        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), effect,
+                null, match.permanent().getId(), damage.damageAmount());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on noncombat damage to opponent (may ability)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
@@ -2088,6 +2268,33 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life loss", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleConditionalOnControllerLifeLoss(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
+                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
+            return false;
+        }
+
+        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(conditional.wrapped())),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lifeLoss.lifeLostAmount());
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on controller life loss during controller's turn",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

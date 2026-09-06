@@ -57,9 +57,9 @@ class MichelangelosTechniqueTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects a selection whose combined mana value is over six")
     void rejectsSelectionOverTotalManaValue() {
-        Card llanowarElves = new LlanowarElves();
+        Card grizzlyBears = new GrizzlyBears();
         Card serraAngel = new SerraAngel();
-        setLibrary(llanowarElves, serraAngel, new Forest(), new Forest(),
+        setLibrary(grizzlyBears, serraAngel, new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest(), new Forest());
         harness.setHand(player1, List.of(new MichelangelosTechnique()));
         addMana(4, 1);
@@ -68,7 +68,7 @@ class MichelangelosTechniqueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
-                player1, List.of(llanowarElves.getId(), serraAngel.getId())))
+                player1, List.of(grizzlyBears.getId(), serraAngel.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("total mana value limit of 6");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class))

@@ -58,7 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param choosePredicate   when non-null, only matching cards are eligible to be chosen
  * @param restDestination   where the not-chosen cards go ({@code BOTTOM_OF_LIBRARY},
  *                          {@code BOTTOM_OF_LIBRARY_RANDOM}, {@code TOP_OF_LIBRARY},
- *                          {@code GRAVEYARD} or {@code EXILE})
+ *                          {@code HAND}, {@code GRAVEYARD} or {@code EXILE})
  * @param reveal            when true the whole look is public (the looked-at cards are logged) —
  *                          distinct from the may-reveal flows, which reveal only the chosen cards
  * @param chosenDestination where the chosen cards go ({@code HAND}, {@code BATTLEFIELD} or
@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                                     instead be put into hand
  * @param chooseTotalManaValueAtMost when non-null, the selected cards' combined mana value may not
  *                                  exceed this resolution-time amount
+ * @param battlefieldEntryReplacement optional replacement applied as a selected permanent enters
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -104,8 +105,36 @@ public record LookAtTopCardsEffect(
         int payLifePerSelectedCard,
         LibrarySelectionFollowUp battlefieldSelectionFollowUp,
         boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+        EnterWithCountersEffect battlefieldEntryReplacement,
         DynamicAmount chooseTotalManaValueAtMost
 ) implements CombatDamageAmountAwareEffect {
+    public LookAtTopCardsEffect(DynamicAmount lookCount,
+        DynamicAmount chooseCount,
+        CardPredicate choosePredicate,
+        LookDestination restDestination,
+        boolean reveal,
+        LibrarySearchDestination chosenDestination,
+        boolean optional,
+        boolean gainLifeEqualToChosenCardManaValue,
+        DynamicAmount chooseManaValueAtMost,
+        CardEffect effectIfNoCardChosen,
+        boolean recordChosenCount,
+        int loseLifePerSelectedCard,
+        boolean exactChooseCount,
+        boolean grantHaste,
+        boolean returnToHandAtEndStep,
+        boolean cloakChosenPermanents,
+        int payLifePerSelectedCard,
+        LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+        boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+        EnterWithCountersEffect battlefieldEntryReplacement) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination, optional,
+                gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, effectIfNoCardChosen,
+                recordChosenCount, loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep,
+                cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp,
+                selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, null);
+    }
+
 
     public LookAtTopCardsEffect(
             DynamicAmount lookCount, DynamicAmount chooseCount, CardPredicate choosePredicate,
@@ -122,7 +151,25 @@ public record LookAtTopCardsEffect(
                 effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount,
                 grantHaste, returnToHandAtEndStep, cloakChosenPermanents,
                 payLifePerSelectedCard, battlefieldSelectionFollowUp,
-                selectedCardMayGoToHandIfBattlefieldDeclined, null);
+                selectedCardMayGoToHandIfBattlefieldDeclined, null, null);
+    }
+
+    public LookAtTopCardsEffect(
+            DynamicAmount lookCount, DynamicAmount chooseCount, CardPredicate choosePredicate,
+            LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen, boolean recordChosenCount,
+            int loseLifePerSelectedCard, boolean exactChooseCount, boolean grantHaste,
+            boolean returnToHandAtEndStep, boolean cloakChosenPermanents,
+            int payLifePerSelectedCard, LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+            EnterWithCountersEffect battlefieldEntryReplacement) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount,
+                grantHaste, returnToHandAtEndStep, cloakChosenPermanents,
+                payLifePerSelectedCard, battlefieldSelectionFollowUp, false,
+                battlefieldEntryReplacement, null);
     }
 
     public LookAtTopCardsEffect(
@@ -147,6 +194,18 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost,
                 null, false, 0, false, false, false, false, 0, null, true);
+    }
+
+    public LookAtTopCardsEffect(
+            DynamicAmount lookCount, DynamicAmount chooseCount,
+            CardPredicate choosePredicate, LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            EnterWithCountersEffect battlefieldEntryReplacement) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                null, false, 0, false, false, false, false, 0, null,
+                battlefieldEntryReplacement);
     }
 
     public LookAtTopCardsEffect(
@@ -458,6 +517,16 @@ public record LookAtTopCardsEffect(
                 LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost);
     }
 
+    /** You may put one matching card within a mana-value cap onto the battlefield with a replacement. */
+    public static LookAtTopCardsEffect mayPutMatchingOntoBattlefieldRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, DynamicAmount chooseManaValueAtMost,
+            EnterWithCountersEffect battlefieldEntryReplacement) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD, true, false, chooseManaValueAtMost,
+                battlefieldEntryReplacement);
+    }
+
     /** You may put one matching card onto the battlefield tapped; the rest go to the bottom randomly. */
     public static LookAtTopCardsEffect mayPutOneMatchingOntoBattlefieldRestOnBottomRandom(
             int lookCount, CardPredicate choosePredicate) {
@@ -482,6 +551,22 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true, false, null, null,
                 false, 0, 0, followUp);
+    }
+
+    /** Put any number of matching cards onto the battlefield and the rest into your hand. */
+    public static LookAtTopCardsEffect putAnyNumberMatchingOntoBattlefieldRestToHand(
+            int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(lookCount), choosePredicate,
+                LookDestination.HAND, false, LibrarySearchDestination.BATTLEFIELD, true,
+                false, null, null, false, 0, 0, null);
+    }
+
+    /** You may put any number of matching cards onto the battlefield tapped; the rest are shuffled into the library. */
+    public static LookAtTopCardsEffect mayPutAnyNumberMatchingOntoBattlefieldTappedShuffleRest(
+            DynamicAmount lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(lookCount, lookCount, choosePredicate,
+                LookDestination.SHUFFLE_INTO_LIBRARY, true,
+                LibrarySearchDestination.BATTLEFIELD_TAPPED, true);
     }
 
     /** Choose exactly two of the top five cards to enter the battlefield cloaked. */
@@ -510,7 +595,7 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD, true, false, null,
                 null, false, 0, false, false, false, false, 0, null, false,
-                new Fixed(maxTotalManaValue));
+                null, new Fixed(maxTotalManaValue));
     }
 
     /** Put one of the looked-at cards on top of your library and the rest on the bottom (Cream of the Crop). */

@@ -18,6 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({WestWindAvatar.class, Forest.class, GrizzlyBears.class, HornedStoneseeker.class})
 class WestWindAvatarTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void clearInitialHand() {
+        harness.setHand(player1, List.of());
+    }
+
     @Test
     @DisplayName("Its ETB trigger can sacrifice a land and gain 3 life")
     void etbSacrificesLandAndGainsLife() {
@@ -82,7 +87,7 @@ class WestWindAvatarTest extends BaseCardTest {
 
         resolveEndStepTrigger();
 
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears.getCard(), drawnCard);
     }
 
     @Test

@@ -99,6 +99,22 @@ class SerraBestiaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Aura controller sacrifices Serra Bestiary when it enchants an opponent's creature")
+    void auraControllerSacrificesAuraWhenEnchantedCreatureIsOpponent() {
+        Permanent walkers = addCreatureReady(player2, new BeastWalkers());
+        attachSerraBestiary(player1, walkers);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Serra Bestiary");
+        harness.assertInGraveyard(player1, "Serra Bestiary");
+    }
+
+    @Test
     @DisplayName("Accepting without enough mana sacrifices Serra Bestiary")
     void acceptingWithoutEnoughManaSacrificesAura() {
         Permanent walkers = addCreatureReady(player1, new BeastWalkers());

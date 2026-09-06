@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +14,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Rebirth.class, AirElemental.class, GrizzlyBears.class, HillGiant.class})
 class RebirthTest extends BaseCardTest {
 
     private void castRebirth() {
-        harness.setHand(player1, List.of(new Rebirth()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Rebirth(), "{3}{G}{G}{G}");
         harness.passBothPriorities(); // resolve Rebirth -> active player prompted first (APNAP)
     }
 
@@ -107,5 +107,18 @@ class RebirthTest extends BaseCardTest {
         // Player2 could not ante: life unchanged, nothing exiled.
         harness.assertLife(player2, 12);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An accepted card is recorded as anted")
+    void acceptedCardIsMarkedAsAnted() {
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player2, List.of());
+
+        castRebirth();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.antedCardIds).containsExactly(topCard.getId());
     }
 }

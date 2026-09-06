@@ -40,9 +40,10 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(artifact.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
+        harness.handlePermanentChosen(player1, artifact.getId());
+        resolveAllTriggers();
 
         assertThat(leatherhead.getCounterCount(CounterType.HEXPROOF)).isZero();
         harness.assertInGraveyard(player2, "Spellbook");
@@ -61,7 +62,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(damagedPlayerArtifact.getId())
                 .doesNotContain(ownArtifact.getId(), damagedPlayerCreature.getId());
     }
@@ -78,6 +79,44 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
 
         assertThat(leatherhead.getCounterCount(CounterType.HEXPROOF)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    void canRemoveAnotherKindOfCounterAndDestroyAfterCombatEnds() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setCounterCount(CounterType.HEXPROOF, 0);
+        leatherhead.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        leatherhead.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        leatherhead.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(leatherhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Spellbook");
+    }
+
+    @Test
+    void choosesWhichKindOfCounterToRemove() {
+        Permanent leatherhead = addLeatherhead(player1);
+        leatherhead.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        leatherhead.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "Remove a +1/+1 counter");
+        harness.handlePermanentChosen(player1, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(leatherhead.getCounterCount(CounterType.HEXPROOF)).isEqualTo(1);
+        assertThat(leatherhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Spellbook");
     }
 
     private Permanent castLeatherhead() {

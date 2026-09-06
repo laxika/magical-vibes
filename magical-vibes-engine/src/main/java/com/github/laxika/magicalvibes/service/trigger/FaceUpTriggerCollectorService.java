@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -69,8 +71,10 @@ public class FaceUpTriggerCollectorService {
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP)
     private boolean handleCreatureTurnsFaceUp(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentTurnsFaceUp faceUp = (TriggerContext.PermanentTurnsFaceUp) ctx;
+        Card sourceCard = match.permanent().getCard();
         CardEffect resolvedEffect = effect;
         if (effect instanceof TriggeringCardConditionalEffect conditional
                 && !predicateEvaluationService.matchesCardPredicate(
@@ -79,8 +83,17 @@ public class FaceUpTriggerCollectorService {
             return false;
         } else if (effect instanceof TriggeringCardConditionalEffect conditional) {
             resolvedEffect = conditional.wrapped();
+        } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
+                && !predicateEvaluationService.matchesPermanentPredicate(
+                faceUp.turnedPermanent(), conditional.predicate(), FilterContext.of(match.gameData())
+                        .withSourceCardId(sourceCard.getId())
+                        .withSourceControllerId(match.controllerId())
+                        .withSourcePermanentSnapshot(match.permanent())
+                        .withSourcePermanentId(match.permanent().getId()))) {
+            return false;
+        } else if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+            resolvedEffect = conditional.wrapped();
         }
-        Card sourceCard = match.permanent().getCard();
         boolean untapsTurnedPermanent = resolvedEffect instanceof UntapPermanentsEffect untap
                 && untap.scope() == TapUntapScope.TARGET;
         if (!untapsTurnedPermanent && resolvedEffect.targetSpec().declaredTarget() != null) {

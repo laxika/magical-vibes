@@ -31,8 +31,8 @@ public class LeatherheadSwampStalker extends Card {
                 new PermanentControlledByDefendingPlayerPredicate()));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
                 new RemoveCounterFromSourceThenEffect(
-                        CounterType.HEXPROOF,
+                        CounterType.ANY,
                         new DestroyTargetPermanentEffect(artifactOrEnchantmentControlledByDefendingPlayer)),
-                "Remove a hexproof counter from Leatherhead?"));
+                "Remove a counter from Leatherhead?"));
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
@@ -38,9 +39,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +161,7 @@ public class Card {
      */
     private boolean sacrificeAtEndStep;
     private boolean requiresCreatureMana;
+    private boolean requiresBasicLandMana;
     /**
      * When true, this Aura enchants a player even though it isn't a Curse (e.g. Wheel of Sun and
      * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
@@ -210,6 +214,8 @@ public class Card {
     private RevealCardsFromHandCastingCost morphRevealCost;
     /** Optional permanent-return component of a morph face-up cost. */
     private ReturnPermanentsCost morphAdditionalCost;
+    /** Optional discard component of a morph face-up cost. */
+    private DiscardCardTypeCost morphDiscardCost;
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
@@ -330,6 +336,7 @@ public class Card {
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
         this.requiresCreatureMana = source.requiresCreatureMana;
+        this.requiresBasicLandMana = source.requiresBasicLandMana;
         this.enchantPlayer = source.enchantPlayer;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = source.additionalManaCostPerExtraTarget;
@@ -349,6 +356,7 @@ public class Card {
         this.morphCostReduction = source.morphCostReduction;
         this.morphRevealCost = source.morphRevealCost;
         this.morphAdditionalCost = source.morphAdditionalCost;
+        this.morphDiscardCost = source.morphDiscardCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
@@ -412,6 +420,7 @@ public class Card {
         this.cantBeCopied = face.cantBeCopied;
         this.sacrificeAtEndStep = face.sacrificeAtEndStep;
         this.requiresCreatureMana = face.requiresCreatureMana;
+        this.requiresBasicLandMana = face.requiresBasicLandMana;
         this.enchantPlayer = face.enchantPlayer;
         this.additionalCostPerExtraTarget = face.additionalCostPerExtraTarget;
         this.additionalManaCostPerExtraTarget = face.additionalManaCostPerExtraTarget;
@@ -429,6 +438,8 @@ public class Card {
         this.morphCost = face.morphCost;
         this.morphCostReduction = face.morphCostReduction;
         this.morphRevealCost = face.morphRevealCost;
+        this.morphAdditionalCost = face.morphAdditionalCost;
+        this.morphDiscardCost = face.morphDiscardCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
         this.castCondition = face.castCondition;
         this.flashCastCondition = face.flashCastCondition;
@@ -513,6 +524,7 @@ public class Card {
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
+    public void setRequiresBasicLandMana(boolean requiresBasicLandMana) { assertMutable(); this.requiresBasicLandMana = requiresBasicLandMana; }
     public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAdditionalManaCostPerExtraTarget(String additionalManaCostPerExtraTarget) { assertMutable(); this.additionalManaCostPerExtraTarget = additionalManaCostPerExtraTarget; }
@@ -713,6 +725,63 @@ public class Card {
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 targetIndices.forEach(targetIndex ->
                         registerEffectTargetIndex(effect, targetIndexOffset + targetIndex)));
+    }
+
+    /**
+     * Appends the target groups used by the supplied effects from another card. This is used when
+     * an effect copies a permanent but adds an effect whose target declaration belongs to the card
+     * creating the copy rather than to the copied permanent.
+     */
+    public void appendSpellTargetingForEffectsFrom(Card source, Collection<CardEffect> effects) {
+        assertMutable();
+        if (source == null || effects == null || effects.isEmpty()) {
+            return;
+        }
+
+        Set<CardEffect> effectSet = Collections.newSetFromMap(new IdentityHashMap<>());
+        effectSet.addAll(effects);
+        Set<Integer> sourceTargetIndices = new java.util.HashSet<>();
+        for (CardEffect effect : effectSet) {
+            List<Integer> targetIndices = source.effectTargetIndexMap.get(effect);
+            if (targetIndices != null) {
+                sourceTargetIndices.addAll(targetIndices);
+            }
+        }
+        if (sourceTargetIndices.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, Integer> targetIndexMap = new HashMap<>();
+        for (SpellTarget sourceTarget : source.spellTargets) {
+            if (!sourceTargetIndices.contains(sourceTarget.getIndex())) {
+                continue;
+            }
+            int targetIndex = spellTargets.size();
+            spellTargets.add(new SpellTarget(
+                    this,
+                    sourceTarget.getFilter(),
+                    sourceTarget.getMinTargets(),
+                    sourceTarget.getMaxTargets(),
+                    sourceTarget.getKickedMinTargets(),
+                    sourceTarget.getKickedMaxTargets(),
+                    targetIndex,
+                    sourceTarget.isXScaled(),
+                    sourceTarget.getDynamicMinTargets(),
+                    sourceTarget.getDynamicMaxTargets()));
+            targetIndexMap.put(sourceTarget.getIndex(), targetIndex);
+        }
+
+        source.effectTargetIndexMap.forEach((effect, targetIndices) -> {
+            if (!effectSet.contains(effect)) {
+                return;
+            }
+            targetIndices.forEach(sourceTargetIndex -> {
+                Integer targetIndex = targetIndexMap.get(sourceTargetIndex);
+                if (targetIndex != null) {
+                    registerEffectTargetIndex(effect, targetIndex);
+                }
+            });
+        });
     }
 
     /**
@@ -1003,6 +1072,7 @@ public class Card {
         this.morphCostReduction = morphCostReduction;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphDiscardCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1013,6 +1083,7 @@ public class Card {
         this.morphCostReduction = null;
         this.morphRevealCost = null;
         this.morphAdditionalCost = null;
+        this.morphDiscardCost = null;
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{3}"),
                 new RevealCardsFromHandCastingCost(revealPredicate, revealLabel))));
@@ -1024,6 +1095,17 @@ public class Card {
         this.morphCost = morphCost;
         this.morphRevealCost = null;
         this.morphAdditionalCost = additionalCost;
+        this.morphDiscardCost = null;
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
+    }
+
+    /** Adds morph whose face-up cost is discarding a card matching the supplied cost. */
+    public void addMorph(String morphCost, DiscardCardTypeCost additionalCost) {
+        assertMutable();
+        this.morphCost = morphCost;
+        this.morphRevealCost = null;
+        this.morphAdditionalCost = null;
+        this.morphDiscardCost = additionalCost;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 
@@ -1034,6 +1116,7 @@ public class Card {
         this.morphCostReduction = null;
         this.morphRevealCost = new RevealCardsFromHandCastingCost(revealPredicate, revealLabel);
         this.morphAdditionalCost = null;
+        this.morphDiscardCost = null;
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
     }
 

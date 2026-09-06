@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * may play those cards (any type, lands included). When {@code withoutPayingManaCost} is
  * {@code true} the play is free; otherwise it is played at its normal costs and timing. When
  * {@code freeCastFilter} is non-null, only matching cards are free; all other exiled cards retain
- * normal play permission (Nahiri, Forged in Fury).
+ * normal play permission (Nahiri, Forged in Fury). The count is evaluated when the effect resolves.
  * <p>
  * Grants {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireEndOfTurn} (and, for the
  * free variant, {@code exilePlayWithoutPayingManaCost}). The filter is used for mixed normal/free

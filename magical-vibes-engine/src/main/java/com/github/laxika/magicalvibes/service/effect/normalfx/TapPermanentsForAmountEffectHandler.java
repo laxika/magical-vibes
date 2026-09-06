@@ -92,9 +92,10 @@ public class TapPermanentsForAmountEffectHandler implements NormalEffectHandlerB
     }
 
     private void tapAll(GameData gameData, StackEntry entry, List<Permanent> candidates) {
+        UUID tappingPlayerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         int tapped = 0;
         for (Permanent candidate : candidates) {
-            if (tapUntapSupport.tapPermanent(gameData, candidate)) {
+            if (tapUntapSupport.tapPermanent(gameData, candidate, tappingPlayerId)) {
                 tapped++;
             }
         }

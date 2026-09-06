@@ -46,6 +46,7 @@ class RocksteadyCrashCourserTest extends BaseCardTest {
     @DisplayName("Boars you control can't be blocked by more than one creature")
     void controlledBoarCannotBeBlockedByTwoCreatures() {
         Permanent boar = createBoar();
+        addCreatureReady(player1, new RocksteadyCrashCourser());
         Permanent blockerOne = addCreatureReady(player2, new GrizzlyBears());
         Permanent blockerTwo = addCreatureReady(player2, new GrizzlyBears());
         boar.setAttacking(true);
@@ -107,7 +108,7 @@ class RocksteadyCrashCourserTest extends BaseCardTest {
     private Permanent createBoar() {
         Permanent victim = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new CurseOfTheSwine()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castSorcery(player1, 0, 1, victim.getId());

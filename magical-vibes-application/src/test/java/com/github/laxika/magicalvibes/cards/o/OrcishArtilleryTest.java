@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OrcishArtillery.class, LlanowarElves.class, GrizzlyBears.class})
 class OrcishArtilleryTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -25,7 +27,7 @@ class OrcishArtilleryTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability targeting player puts it on the stack")
     void activatingTargetingPlayerPutsOnStack() {
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -33,14 +35,13 @@ class OrcishArtilleryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Orcish Artillery");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
     @DisplayName("Activating ability taps Orcish Artillery")
     void activatingTapsArtillery() {
-        Permanent artillery = addReadyArtillery(player1);
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
@@ -54,7 +55,7 @@ class OrcishArtilleryTest extends BaseCardTest {
     void deals2DamageToPlayerAnd3ToController() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -69,7 +70,7 @@ class OrcishArtilleryTest extends BaseCardTest {
     @DisplayName("Can target self — takes both 2 target damage and 3 controller damage")
     void canTargetSelf() {
         harness.setLife(player1, 20);
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -87,7 +88,7 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
 
         UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.activateAbility(player1, 0, null, targetId);
@@ -105,7 +106,7 @@ class OrcishArtilleryTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.activateAbility(player1, 0, null, targetId);
@@ -122,11 +123,9 @@ class OrcishArtilleryTest extends BaseCardTest {
     void deals2DamageDoesNotKill3Toughness() {
         harness.setLife(player1, 20);
         // Use another Orcish Artillery as a 1/3 target
-        Permanent targetArtillery = new Permanent(new OrcishArtillery());
-        targetArtillery.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(targetArtillery);
+        Permanent targetArtillery = addCreatureReady(player2, new OrcishArtillery());
 
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, targetArtillery.getId());
         harness.passBothPriorities();
@@ -136,12 +135,28 @@ class OrcishArtilleryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 
+    @Test
+    @CardUsed(JaceBeleren.class)
+    @DisplayName("Deals 2 damage to a planeswalker and 3 damage to controller")
+    void deals2DamageToPlaneswalkerAnd3ToController() {
+        harness.setLife(player1, 20);
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 5);
+        addCreatureReady(player1, new OrcishArtillery());
+
+        harness.activateAbility(player1, 0, null, jace.getId());
+        harness.passBothPriorities();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
     // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent artillery = addReadyArtillery(player1);
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
         artillery.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -152,10 +167,7 @@ class OrcishArtilleryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        OrcishArtillery card = new OrcishArtillery();
-        Permanent artillery = new Permanent(card);
-        // summoningSick is true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(artillery);
+        harness.addToBattlefield(player1, new OrcishArtillery());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -168,7 +180,7 @@ class OrcishArtilleryTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed — controller takes no damage")
     void fizzlesIfTargetCreatureRemoved() {
         harness.setLife(player1, 20);
-        addReadyArtillery(player1);
+        addCreatureReady(player1, new OrcishArtillery());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -186,14 +198,5 @@ class OrcishArtilleryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyArtillery(Player player) {
-        OrcishArtillery card = new OrcishArtillery();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
 

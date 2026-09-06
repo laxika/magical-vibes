@@ -73,7 +73,7 @@ public class TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHandE
 
         for (int i = 0; i < targets.size(); i++) {
             if (entry.isTargetLegal(i) && revealed[i] != null) {
-                gameData.playerHands.get(targets.get(i)).add(revealed[i]);
+                gameData.addCardToHand(targets.get(i), revealed[i]);
             }
         }
 

@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElementalAugury.class})
 class ElementalAuguryTest extends BaseCardTest {
 
     @Test
@@ -80,5 +83,37 @@ class ElementalAuguryTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 2, 0)));
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(size);
+    }
+
+    @Test
+    @DisplayName("Reorders all available cards when the target library has fewer than three cards")
+    void reordersAllAvailableCardsInShortTargetLibrary() {
+        List<Card> targetDeck = List.of(new ElementalAugury(), new ElementalAugury());
+        harness.setLibrary(player2, targetDeck);
+        harness.addToBattlefield(player1, new ElementalAugury());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactlyElementsOf(targetDeck);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(targetDeck.get(1), targetDeck.get(0));
+    }
+
+    @Test
+    @DisplayName("Rejects a permanent as the target")
+    void rejectsPermanentTarget() {
+        harness.addToBattlefield(player1, new ElementalAugury());
+        var permanentTarget = harness.addToBattlefieldAndReturn(player2, new ElementalAugury());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanentTarget.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

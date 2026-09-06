@@ -101,6 +101,10 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                         List.of(),
                         controllerId);
             }
+            if (e.action() == com.github.laxika.magicalvibes.model.effect.TargetLibraryAction.MAY_SHUFFLE) {
+                resolveMayShuffle(gameData, entry, controllerId, targetPlayerId,
+                        List.of(), 0, controllerName, targetName);
+            }
             return;
         }
 

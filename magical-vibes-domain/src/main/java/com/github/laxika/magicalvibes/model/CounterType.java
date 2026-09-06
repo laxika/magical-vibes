@@ -33,6 +33,7 @@ public enum CounterType {
     DIVINITY,
     DOOM,
     DREAD,
+    DREAM,
     ECHO,
     EMBER,
     ELIXIR,
@@ -46,11 +47,13 @@ public enum CounterType {
     FINALITY,
     FIRE,
     FLAME,
+    FORESHADOW,
     FLOOD,
     FUNGUS,
     FUSE,
     GEM,
     GHOSTFORM,
+    GLYPH,
     GOLD,
     GROWTH,
     INGENUITY,
@@ -60,6 +63,7 @@ public enum CounterType {
     HOURGLASS,
     HOOFPRINT,
     HUNGER,
+    INTERVENTION,
     ICE,
     FELLOWSHIP,
     INCUBATION,
@@ -82,6 +86,7 @@ public enum CounterType {
     DEFENSE,
     DEPLETION,
     MANNEQUIN,
+    MATRIX,
     MINING,
     MUSIC,
     NET,
@@ -122,7 +127,10 @@ public enum CounterType {
     PLUS_ZERO_PLUS_TWO,
     SCREAM,
     SHELL,
+    SHIELD,
+    SKEWER,
     SLEIGHT,
+    SLEEP,
     SLIME,
     SHRED,
     SOOT,
@@ -156,10 +164,12 @@ public enum CounterType {
     DECAYED,
     FLYING,
     FIRST_STRIKE,
+    VIGILANCE,
     DOUBLE_STRIKE,
     HEXPROOF,
     INDESTRUCTIBLE,
     LIFELINK,
+    MENACE,
     REACH,
     TRAMPLE,
     WINCH;
@@ -172,10 +182,13 @@ public enum CounterType {
             case DEATHTOUCH -> Keyword.DEATHTOUCH;
             case DECAYED -> Keyword.DECAYED;
             case LIFELINK -> Keyword.LIFELINK;
+            case VIGILANCE -> Keyword.VIGILANCE;
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
+            case MENACE -> Keyword.MENACE;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
+
             default -> null;
         };
     }

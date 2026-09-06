@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "110")
+@CardRegistration(set = "LEG", collectorNumber = "297")
 public class TriassicEgg extends Card {
 
     public TriassicEgg() {

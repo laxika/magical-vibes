@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Resurrection.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({Resurrection.class, GrizzlyBears.class, Plains.class})
 class ResurrectionTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,7 @@ class ResurrectionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Resurrection()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -52,12 +51,12 @@ class ResurrectionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature card in a graveyard")
     void cannotTargetNonCreatureCard() {
-        Card instant = new HolyDay();
-        harness.setGraveyard(player1, List.of(instant));
+        Card nonCreature = new Plains();
+        harness.setGraveyard(player1, List.of(nonCreature));
         harness.setHand(player1, List.of(new Resurrection()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, instant.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -9,4 +9,9 @@ import java.util.UUID;
  * owner's library in a random order. Used by Possibility Storm.
  */
 public record MayCastExiledCardThenBottomRestEffect(UUID sourcePermanentId) implements CardEffect {
+
+    @Override
+    public boolean pausesDrawInstruction() {
+        return true;
+    }
 }

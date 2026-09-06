@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "357")
+@CardRegistration(set = "LEG", collectorNumber = "299")
 public class WhiteManaBattery extends Card {
 
     public WhiteManaBattery() {

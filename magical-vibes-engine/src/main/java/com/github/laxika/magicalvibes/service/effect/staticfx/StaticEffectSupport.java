@@ -90,6 +90,7 @@ public class StaticEffectSupport {
     );
 
     static {
+        NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
         NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
     }
 
@@ -311,6 +312,10 @@ public class StaticEffectSupport {
      */
     public boolean matchesStaticLeaf(Permanent target, PermanentPredicate leaf) {
         return predicateEvaluationService.matchesStaticLeaf(target, leaf);
+    }
+
+    public boolean sharesCreatureType(Permanent first, Permanent second) {
+        return predicateEvaluationService.sharesCreatureType(first, second);
     }
 
     /**

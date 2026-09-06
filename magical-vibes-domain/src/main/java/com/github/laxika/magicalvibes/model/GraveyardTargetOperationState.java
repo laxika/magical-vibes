@@ -19,12 +19,17 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeCollectEvidenceResume;
     /** Resolution-time selection of cards to return for an aggregate mana-value effect. */
     public boolean resolutionTimeReturnCardsToBattlefieldResume;
+    /** Resolution-time choice of one targeted card to put onto the battlefield for a bargained spell. */
+    public boolean resolutionTimeBargainedReturnChoiceResume;
+    /** The targeted cards retained while the bargained battlefield replacement is being chosen. */
+    public List<UUID> resolutionTimeBargainedReturnTargetCardIds = List.of();
 
     public Card card;
     public UUID controllerId;
     public List<CardEffect> effects;
     public StackEntryType entryType;
     public int xValue;
+    public CardSubtype chosenCreatureType;
     public boolean anyNumber;
     public boolean giftPromised;
     /**
@@ -64,6 +69,8 @@ public class GraveyardTargetOperationState {
     public Card physicalCard;
     /** Whether the pending spell was cast as an Adventure. */
     public boolean castWithAdventure;
+    /** Whether the pending spell's optional kicker-style cost was paid. */
+    public boolean kicked;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
     /** Whether the source permanent was cast for an alternate cost when its trigger fired. */
@@ -136,6 +143,12 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimeExileThenEffectChoiceMade;
     /** The card chosen for the optional graveyard exile, or {@code null} for a decline. */
     public UUID resolutionTimeExileThenEffectChosenCardId;
+    /** Whether an optional any-number graveyard exile with a follow-up is awaiting its answer. */
+    public boolean resolutionTimeExileAnyNumberThenEffectResume;
+    /** Whether the optional any-number graveyard exile has been answered. */
+    public boolean resolutionTimeExileAnyNumberThenEffectChoiceMade;
+    /** The cards chosen for the optional any-number graveyard exile, or an empty list for a decline. */
+    public List<UUID> resolutionTimeExileAnyNumberThenEffectChosenCardIds;
     /**
      * Resolution-time "target opponent chooses a card in your graveyard" (Forgotten Lore or Shrouded
      * Lore). When set,
@@ -169,14 +182,15 @@ public class GraveyardTargetOperationState {
     /** Card selected by the opponent for the resolution-time graveyard choice. */
     public UUID opponentChoosesCardToHandChosenCardId;
     /**
-     * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
-     * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the
-     * chosen cards tracked with the entering permanent and then resumes the entry by running its
-     * ETB triggers, instead of pushing a new stack entry. Set by
+     * As-enters graveyard exile choice. When set,
+     * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen cards
+     * tracked with the entering permanent and then resumes the entry by running its ETB triggers,
+     * instead of pushing a new stack entry. Set by
      * {@code BattlefieldEntryService.handleCreatureEnteredBattlefield}.
      */
     public AsEntersGraveyardExileContext asEntersExile;
     public MilledCreatureReturnContext milledCreatureReturn;
+    public MilledCreaturesToHandContext milledCreaturesToHand;
 
     /**
      * The entry context needed to resume {@code BattlefieldEntryService.processCreatureETBEffects}
@@ -210,6 +224,12 @@ public class GraveyardTargetOperationState {
 
     public record MilledCreatureReturnContext(List<UUID> chosenCardIds) {
         public MilledCreatureReturnContext {
+            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
+        }
+    }
+
+    public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
+        public MilledCreaturesToHandContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

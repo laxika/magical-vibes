@@ -47,7 +47,7 @@ public class CounterUnlessDiscardsEffectHandler implements NormalEffectHandlerBe
         String prompt = "Discard a card to prevent " + targetEntry.getCard().getName() + " from being countered?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId,
-                List.of(new CounterUnlessDiscardsEffect()),
+                List.of((CounterUnlessDiscardsEffect) effect),
                 prompt, targetCardId));
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
+import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IceFloe.class, KjeldoranWarrior.class, KjeldoranSkyknight.class})
 class IceFloeTest extends BaseCardTest {
 
     // ===== Activated ability: tap target attacking creature =====
@@ -24,8 +26,8 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts it on the stack targeting the attacker")
     void activatingPutsOnStack() {
-        addReadyIceFloe(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
 
         harness.activateAbility(player1, 0, null, attacker.getId());
 
@@ -38,8 +40,8 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability taps the attacking creature")
     void resolvingTapsAttacker() {
-        addReadyIceFloe(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
@@ -50,8 +52,8 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability taps Ice Floe itself")
     void activatingTapsIceFloe() {
-        Permanent iceFloe = addReadyIceFloe(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent iceFloe = addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
 
         harness.activateAbility(player1, 0, null, attacker.getId());
 
@@ -61,8 +63,8 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with flying")
     void cannotTargetFlyer() {
-        addReadyIceFloe(player1);
-        Permanent flyer = addAttacker(player2, player1, new SuntailHawk());
+        addCreatureReady(player1, new IceFloe());
+        Permanent flyer = addAttacker(player2, player1, new KjeldoranSkyknight());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, flyer.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -72,10 +74,31 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking you")
     void cannotTargetNonAttacker() {
-        addReadyIceFloe(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new IceFloe());
+        Permanent creature = addCreatureReady(player2, new KjeldoranWarrior());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(Island.class)
+    @DisplayName("Cannot target an attacking noncreature permanent")
+    void cannotTargetNoncreature() {
+        addCreatureReady(player1, new IceFloe());
+        Permanent land = addAttacker(player2, player1, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature attacking another player")
+    void cannotTargetCreatureAttackingAnotherPlayer() {
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player1, player2, new KjeldoranWarrior());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -84,8 +107,8 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Locked creature does not untap during its controller's untap step while Ice Floe is tapped")
     void lockedCreatureDoesNotUntap() {
-        addReadyIceFloe(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
 
         harness.forceActivePlayer(player2);
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -103,8 +126,8 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Locked creature untaps once Ice Floe untaps")
     void lockedCreatureUntapsWhenIceFloeUntaps() {
-        Permanent iceFloe = addReadyIceFloe(player1);
-        Permanent attacker = addAttacker(player2, player1, new GrizzlyBears());
+        Permanent iceFloe = addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
 
         harness.forceActivePlayer(player2);
         harness.activateAbility(player1, 0, null, attacker.getId());
@@ -125,7 +148,7 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing NOT to untap Ice Floe keeps it tapped")
     void choosingNotToUntapKeepsTapped() {
-        Permanent iceFloe = addReadyIceFloe(player1);
+        Permanent iceFloe = addCreatureReady(player1, new IceFloe());
         iceFloe.tap();
 
         advanceToNextTurnWithMayChoice(player2, false);
@@ -136,7 +159,7 @@ class IceFloeTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing to untap Ice Floe untaps it")
     void choosingToUntapWorks() {
-        Permanent iceFloe = addReadyIceFloe(player1);
+        Permanent iceFloe = addCreatureReady(player1, new IceFloe());
         iceFloe.tap();
 
         advanceToNextTurnWithMayChoice(player2, true);
@@ -145,13 +168,6 @@ class IceFloeTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
-    private Permanent addReadyIceFloe(Player player) {
-        Permanent perm = new Permanent(new IceFloe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
         Permanent perm = new Permanent(card);
@@ -168,9 +184,8 @@ class IceFloeTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UPKEEP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -179,9 +194,8 @@ class IceFloeTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // Cascades into advanceTurn -> may ability prompt
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }
