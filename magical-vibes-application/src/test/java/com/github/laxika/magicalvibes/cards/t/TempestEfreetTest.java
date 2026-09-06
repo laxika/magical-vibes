@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TempestEfreet.class, GrizzlyBears.class})
 class TempestEfreetTest extends BaseCardTest {
 
     @Test
@@ -50,11 +52,32 @@ class TempestEfreetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
+        assertThat(gd.lifeLostThisTurn.get(player2.getId())).isEqualTo(10);
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
         // No exchange: Tempest Efreet stays where the sacrifice put it (its controller's graveyard).
         harness.assertInGraveyard(player1, "Tempest Efreet");
         harness.assertNotInGraveyard(player2, "Tempest Efreet");
+    }
+
+    @Test
+    @DisplayName("The exchange moves Tempest Efreet from its current zone")
+    void exchangeMovesEfreetFromCurrentZone() {
+        harness.setHand(player1, new ArrayList<>());
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        TempestEfreet efreet = new TempestEfreet();
+        addCreatureReady(player1, efreet);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(efreet.getId()));
+        harness.setHand(player1, new ArrayList<>(List.of(efreet)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotInHand(player1, "Tempest Efreet");
+        harness.assertInGraveyard(player2, "Tempest Efreet");
     }
 
     @Test

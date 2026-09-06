@@ -22,6 +22,18 @@ class DarkRitualTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Adds three black mana to mana already left in the pool")
+    void addsToExistingBlackMana() {
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.castFromHand(player1, new DarkRitual(), "{B}");

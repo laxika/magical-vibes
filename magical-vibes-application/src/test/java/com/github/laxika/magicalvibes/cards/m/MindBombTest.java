@@ -27,8 +27,7 @@ class MindBombTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // active player chooses first (APNAP)
+        harness.castAndResolveSorcery(player1, 0, 0); // active player chooses first (APNAP)
 
         // Player 1 discards 1 of its 2 remaining cards -> takes 3 - 1 = 2 damage.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
@@ -61,8 +60,7 @@ class MindBombTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Player 1 discards all three remaining cards -> takes 3 - 3 = 0 damage.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
@@ -133,5 +131,25 @@ class MindBombTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("All players choose their discards before the cards are discarded")
+    void allPlayersChooseDiscardsBeforeCardsAreDiscarded() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.setHand(player1, List.of(new MindBomb(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 }

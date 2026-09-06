@@ -45,6 +45,31 @@ class OrcishOriflammeTest extends BaseCardTest {
     }
 
     @Test
+    void bonusRemovedWhenCreatureStopsAttacking() {
+        harness.addToBattlefield(player1, new OrcishOriflamme());
+        Permanent bears = addAttackingBears(player1);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+
+        bears.setAttacking(false);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @CardUsed(Opalescence.class)
+    @Test
+    void animatedOriflammeAlsoBuffsItselfWhileAttacking() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent oriflamme = addCreatureReady(player1, new OrcishOriflamme());
+        oriflamme.setAttacking(true);
+
+        assertThat(gqs.isCreature(gd, oriflamme)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, oriflamme)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, oriflamme)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Bonus is removed when Orcish Oriflamme leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new OrcishOriflamme());

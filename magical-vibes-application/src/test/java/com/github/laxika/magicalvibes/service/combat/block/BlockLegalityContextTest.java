@@ -53,6 +53,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       per-creature fact caches against cross-pair pollution and order dependence.</li>
  * </ul>
  */
+@CardUsed({
+        BlackKnight.class,
+        CloudSprite.class,
+        ElvenRiders.class,
+        Forest.class,
+        GiantSpider.class,
+        GoblinRaider.class,
+        GrizzlyBears.class,
+        ScatheZombies.class,
+        SeveredLegion.class,
+        ShuCavalry.class,
+        StratusWalk.class,
+        WallOfAir.class,
+        WhiteKnight.class,
+        ZodiacMonkey.class
+})
 class BlockLegalityContextTest extends BaseCardTest {
 
     private Permanent attacking(Player player, Card card) {

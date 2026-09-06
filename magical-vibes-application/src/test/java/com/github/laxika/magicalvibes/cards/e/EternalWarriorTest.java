@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EternalWarrior.class, GrizzlyBears.class, Plains.class})
 class EternalWarriorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature has vigilance")
     void enchantedCreatureHasVigilance() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new EternalWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EternalWarrior());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
     }
@@ -32,12 +32,10 @@ class EternalWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses vigilance when Eternal Warrior is removed")
     void vigilanceStopsWhenRemoved() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new EternalWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EternalWarrior());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
@@ -47,16 +45,26 @@ class EternalWarriorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Vigilance keeps the enchanted creature untapped when it attacks")
+    void vigilanceKeepsEnchantedCreatureUntappedWhenAttacking() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new EternalWarrior());
+        aura.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of(0));
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Eternal Warrior")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.setHand(player1, List.of(new EternalWarrior()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
-
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

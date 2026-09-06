@@ -128,6 +128,22 @@ class HurkylsRecallTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns artifacts based on ownership rather than control")
+    void returnsOwnedArtifactsRegardlessOfController() {
+        Permanent targetOwnedArtifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        gd.stolenCreatures.put(targetOwnedArtifact.getId(), player2.getId());
+
+        harness.setHand(player1, List.of(new HurkylsRecall()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(targetOwnedArtifact);
+        assertThat(gd.playerHands.get(player2.getId())).contains(targetOwnedArtifact.getCard());
+    }
+
+    @Test
     @DisplayName("Works when target player has no artifacts")
     void worksWithNoArtifacts() {
         harness.addToBattlefield(player2, new GrizzlyBears());

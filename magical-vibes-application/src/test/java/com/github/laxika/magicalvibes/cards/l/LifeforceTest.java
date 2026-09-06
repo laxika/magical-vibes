@@ -37,6 +37,27 @@ class LifeforceTest extends BaseCardTest {
     }
 
     @Test
+    void countersBlackNoncreatureSpell() {
+        harness.addToBattlefield(player1, new Lifeforce());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        DarkRitual ritual = new DarkRitual();
+        harness.setHand(player2, List.of(ritual));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0);
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, ritual.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(ritual);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot counter a non-black spell")
     void cannotTargetNonBlackSpell() {
         harness.addToBattlefield(player1, new Lifeforce());

@@ -34,9 +34,7 @@ class BrandTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Brand()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new Brand(), "{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownedByPlayer1);

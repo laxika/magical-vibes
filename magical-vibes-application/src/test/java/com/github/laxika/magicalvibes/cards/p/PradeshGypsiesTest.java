@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PradeshGypsies.class, GrizzlyBears.class})
 class PradeshGypsiesTest extends BaseCardTest {
 
     @Test
@@ -24,6 +26,20 @@ class PradeshGypsiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
+        assertThat(bear.getPowerModifier()).isEqualTo(-2);
+        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target a creature an opponent controls")
+    void weakensOpponentCreature() {
+        setupGypsies();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
         assertThat(bear.getPowerModifier()).isEqualTo(-2);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
     }
@@ -58,9 +74,8 @@ class PradeshGypsiesTest extends BaseCardTest {
     }
 
     private void setupGypsies() {
-        harness.addToBattlefield(player1, new PradeshGypsies());
+        addCreatureReady(player1, new PradeshGypsies());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        findPermanent(player1, "Pradesh Gypsies").setSummoningSick(false);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);

@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiritLink.class, GrizzlyBears.class, Mountain.class, ProdigalSorcerer.class})
 class SpiritLinkTest extends BaseCardTest {
 
     // ===== Unblocked attacker deals damage to player =====
@@ -28,17 +29,18 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Grizzly Bears (2/2) with Spirit Link attacks unblocked
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         attachSpiritLink(player1, bears);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        harness.passBothPriorities();
+
         // Player2 takes 2 combat damage: 20 - 2 = 18
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         // Player1 gains 2 life from Spirit Link: 20 + 2 = 22
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -51,17 +53,18 @@ class SpiritLinkTest extends BaseCardTest {
         GrizzlyBears bigCreature = new GrizzlyBears();
         bigCreature.setPower(4);
         bigCreature.setToughness(4);
-        Permanent attacker = addReadyCreature(player1, bigCreature);
+        Permanent attacker = addCreatureReady(player1, bigCreature);
         attacker.setAttacking(true);
         attachSpiritLink(player1, attacker);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        harness.passBothPriorities();
+
         // Player2 takes 4 damage: 20 - 4 = 16
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
         // Player1 gains 4 life: 10 + 4 = 14
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        harness.assertLife(player1, 14);
     }
 
     // ===== Blocked attacker deals damage to blocker =====
@@ -72,19 +75,19 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Grizzly Bears (2/2) with Spirit Link attacks, blocked by 2/2
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         attachSpiritLink(player1, attacker);
 
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        harness.passBothPriorities();
         // Bears dealt 2 damage to blocker → controller gains 2 life: 20 + 2 = 22
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
     }
 
     // ===== Blocker with Spirit Link =====
@@ -95,20 +98,20 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 attacks with 2/2
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Player2 blocks with 2/2 that has Spirit Link
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         attachSpiritLink(player2, blocker);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        harness.passBothPriorities();
         // Blocker dealt 2 damage to attacker → player2 gains 2 life: 20 + 2 = 22
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+        harness.assertLife(player2, 22);
     }
 
     // ===== Spirit Link on opponent's creature =====
@@ -120,24 +123,24 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player1 attacks with Grizzly Bears (2/2)
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
         // Player2 enchants player1's creature with Spirit Link
         attachSpiritLink(player2, attacker);
 
         // Player2 blocks with a 2/2 — attacker deals damage to blocker, not to player
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        harness.passBothPriorities();
         // Attacker dealt 2 to blocker → player2 (aura controller) gains 2 life: 20 + 2 = 22
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+        harness.assertLife(player2, 22);
         // Player1 does NOT gain life (not the aura controller)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     // ===== No damage, no life gain =====
@@ -148,19 +151,56 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         // Creature with Spirit Link does not attack
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         attachSpiritLink(player1, bears);
 
         // Another creature attacks unblocked
         GrizzlyBears otherBear = new GrizzlyBears();
-        Permanent otherAttacker = addReadyCreature(player1, otherBear);
+        Permanent otherAttacker = addCreatureReady(player1, otherBear);
         otherAttacker.setAttacking(true);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
         // Player1 gains no life — enchanted creature didn't deal damage
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void noncombatDamageWaitsForTriggeredLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
+        attachSpiritLink(player1, pinger);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void combatDamageWaitsForTriggeredLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        attachSpiritLink(player1, bears);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
     }
 
     // ===== Logs =====
@@ -171,13 +211,13 @@ class SpiritLinkTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
         attachSpiritLink(player1, bears);
 
         resolveCombat();
 
-        GameData gd = harness.getGameData();
+        harness.passBothPriorities();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains") && log.contains("life") && log.contains("Spirit Link"));
     }
 
@@ -186,7 +226,7 @@ class SpiritLinkTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Spirit Link attaches it to target creature")
     void resolvingAttachesToTargetCreature() {
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SpiritLink()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -194,7 +234,6 @@ class SpiritLinkTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Spirit Link")
                         && p.isAttached()
@@ -219,13 +258,6 @@ class SpiritLinkTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private Permanent addReadyCreature(Player player, GrizzlyBears card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private void attachSpiritLink(Player controller, Permanent target) {
         SpiritLink card = new SpiritLink();
         Permanent aura = new Permanent(card);
@@ -233,4 +265,3 @@ class SpiritLinkTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(controller.getId()).add(aura);
     }
 }
-

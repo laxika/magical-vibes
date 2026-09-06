@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BallLightning.class, GrizzlyBears.class})
 class BallLightningTest extends BaseCardTest {
@@ -25,9 +26,8 @@ class BallLightningTest extends BaseCardTest {
     void canAttackImmediatelyAndDealsSixDamage() {
         harness.setLife(player2, 20);
 
-        Permanent ballLightning = new Permanent(new BallLightning());
+        Permanent ballLightning = harness.addToBattlefieldAndReturn(player1, new BallLightning());
         ballLightning.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(ballLightning);
 
         declareAttackers(player1, List.of(0));
 
@@ -63,8 +63,7 @@ class BallLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices itself at end step")
     void sacrificesItselfAtEndStep() {
-        Permanent ballLightning = new Permanent(new BallLightning());
-        gd.playerBattlefields.get(player1.getId()).add(ballLightning);
+        Permanent ballLightning = harness.addToBattlefieldAndReturn(player1, new BallLightning());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -108,14 +107,42 @@ class BallLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Casting requires RRR mana")
     void castingRequiresTripleRed() {
-        harness.setHand(player1, List.of(new BallLightning()));
-        harness.addMana(player1, ManaColor.RED, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BallLightning(), "{R}{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Ball Lightning");
+    }
+
+    @Test
+    @DisplayName("Cannot be cast with only two red mana")
+    void cannotBeCastWithOnlyTwoRedMana() {
+        harness.setHand(player1, List.of(new BallLightning()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Card is not playable");
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself at the beginning of the opponent's end step")
+    void sacrificesItselfAtOpponentsEndStep() {
+        harness.addToBattlefieldAndReturn(player1, new BallLightning());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ball Lightning");
+        harness.assertInGraveyard(player1, "Ball Lightning");
     }
 }

@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.StealArtifact;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CursedRack.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class})
 class CursedRackTest extends BaseCardTest {
 
     @Test
@@ -30,7 +35,7 @@ class CursedRackTest extends BaseCardTest {
                 new Forest(), new Forest(), new Mountain()
         )));
 
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.CLEANUP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -51,7 +56,7 @@ class CursedRackTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new Forest(), new Mountain()
         )));
 
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.CLEANUP);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
@@ -71,7 +76,7 @@ class CursedRackTest extends BaseCardTest {
                 new Mountain(), new Plains()
         )));
 
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -94,9 +99,34 @@ class CursedRackTest extends BaseCardTest {
         // Remove Cursed Rack before cleanup — max hand size returns to seven.
         gd.playerBattlefields.get(player1.getId()).clear();
 
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.CLEANUP);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(6);
+    }
+
+    @Test
+    @CardUsed(StealArtifact.class)
+    void chosenOpponentRemainsAffectedAfterControlChange() {
+        Permanent rack = harness.addToBattlefieldAndReturn(player1, new CursedRack());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new StealArtifact()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castEnchantment(player2, 0, rack.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(rack.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(rack.getId()));
+        harness.setHand(player2, new ArrayList<>(List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new Forest(), new Mountain(), new Plains()
+        )));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
     }
 }

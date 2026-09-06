@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ClayStatue.class, GrizzlyBears.class})
 class ClayStatueTest extends BaseCardTest {
 
     // ===== Regeneration ability =====
@@ -55,10 +57,8 @@ class ClayStatueTest extends BaseCardTest {
         statuePerm.setBlocking(true);
         statuePerm.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -78,10 +78,8 @@ class ClayStatueTest extends BaseCardTest {
         statuePerm.setBlocking(true);
         statuePerm.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -95,9 +93,6 @@ class ClayStatueTest extends BaseCardTest {
     // ===== Helper methods =====
 
     private Permanent addStatueReady(Player player) {
-        Permanent perm = new Permanent(new ClayStatue());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ClayStatue());
     }
 }
