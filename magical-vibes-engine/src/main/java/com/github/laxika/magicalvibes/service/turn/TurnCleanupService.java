@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetOpponentMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -579,9 +580,25 @@ public class TurnCleanupService {
             List<Permanent> bf = gameData.playerBattlefields.get(otherPlayerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(RememberTargetPlayerEffect.class::isInstance);
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (!own && effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
-                        maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                    if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
+                        UUID affectedPlayerId = null;
+                        if (hasChosenPlayer) {
+                            affectedPlayerId = perm.getRememberedTargetPlayerId();
+                            if (affectedPlayerId == null) {
+                                UUID originalControllerId = gameData.stolenCreatures
+                                        .getOrDefault(perm.getId(), otherPlayerId);
+                                affectedPlayerId = gameData.orderedPlayerIds.stream()
+                                        .filter(id -> !id.equals(originalControllerId))
+                                        .findFirst()
+                                        .orElse(null);
+                            }
+                        }
+                        if (hasChosenPlayer ? playerId.equals(affectedPlayerId) : !own) {
+                            maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize);
+                        }
                     } else if (own && effect instanceof ControllerMaxHandSizeEffect handSizeEffect) {
                         maxHandSize = handSizeEffect.applyToMaximumHandSize(maxHandSize, perm);
                     }

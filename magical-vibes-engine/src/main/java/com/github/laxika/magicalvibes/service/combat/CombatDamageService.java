@@ -1340,6 +1340,8 @@ public class CombatDamageService {
                         List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
                         List<UUID> creatureTargetIds = defenderBf == null ? List.of() : defenderBf.stream()
                                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                                .filter(permanent -> !gameQueryService.hasProtectionFromSource(
+                                        gameData, permanent, creature.getCard(), attackerId))
                                 .map(Permanent::getId)
                                 .toList();
                         if (creatureTargetIds.isEmpty()) {

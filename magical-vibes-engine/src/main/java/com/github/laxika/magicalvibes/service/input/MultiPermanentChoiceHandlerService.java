@@ -867,7 +867,9 @@ public class MultiPermanentChoiceHandlerService {
 
         if (!permanentIds.isEmpty()) {
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
-            if (source != null) {
+            UUID sourceController = source == null ? null
+                    : gameQueryService.findPermanentController(gameData, sourcePermId);
+            if (source != null && playerId.equals(sourceController)) {
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, source)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, source.getCard());
                     gameLogService.append(gameData, GameLog.isSacrificed(source.getCard()));

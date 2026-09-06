@@ -41,6 +41,7 @@ class BatteringRamTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, ram, Keyword.BANDING)).isTrue();
 
+        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

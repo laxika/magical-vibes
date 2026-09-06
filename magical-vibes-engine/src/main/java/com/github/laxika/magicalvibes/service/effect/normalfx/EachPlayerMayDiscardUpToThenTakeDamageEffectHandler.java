@@ -16,6 +16,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
 
 /**
  * Resolves {@link EachPlayerMayDiscardUpToThenTakeDamageEffect} (Mind Bomb): in APNAP order,
@@ -40,6 +41,8 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
+    private final ObjectProvider<com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService>
+            cardChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,6 +62,8 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
             state.currentPlayerId = null;
             state.remaining.clear();
             state.chosenAmounts.clear();
+            state.deferDiscards = true;
+            state.selectedDiscards.clear();
             state.remaining.addLast(gameData.activePlayerId);
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(gameData.activePlayerId)) {
@@ -77,6 +82,12 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
             state.chosenAmounts.put(playerId, chosenCount);
 
             if (chosenCount <= 0) {
+                beginNextPlayer(gameData, entry, amount, cardName);
+                return;
+            }
+
+            if (!gameQueryService.canEffectCauseDiscard(gameData, playerId, entry.getControllerId())) {
+                state.chosenAmounts.put(playerId, 0);
                 beginNextPlayer(gameData, entry, amount, cardName);
                 return;
             }
@@ -116,8 +127,10 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
                     new PendingInteraction.XValueChoice(nextPlayerId, maxDiscard, prompt, cardName));
             return;
         }
-        for (var selection : state.chosenAmounts.entrySet()) {
-            dealDamage(gameData, entry, selection.getKey(), amount - selection.getValue());
+        var discardedCounts = cardChoiceHandlerServiceProvider.getObject().discardCollectedCards(
+                gameData, List.copyOf(state.selectedDiscards), entry.getControllerId());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            dealDamage(gameData, entry, playerId, amount - discardedCounts.getOrDefault(playerId, 0));
         }
         state.reset();
     }

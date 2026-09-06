@@ -6930,12 +6930,10 @@ public class GameQueryService {
      * creature, or land (Gauntlets of Chaos' "shares one of those types with it"). Uses each
      * permanent's card types.
      */
-    public boolean sharesArtifactCreatureOrLandType(Permanent a, Permanent b) {
-        Card aCard = a.getCard();
-        Card bCard = b.getCard();
-        return (aCard.hasType(CardType.ARTIFACT) && bCard.hasType(CardType.ARTIFACT))
-                || (aCard.hasType(CardType.CREATURE) && bCard.hasType(CardType.CREATURE))
-                || (aCard.hasType(CardType.LAND) && bCard.hasType(CardType.LAND));
+    public boolean sharesArtifactCreatureOrLandType(GameData gameData, Permanent a, Permanent b) {
+        return (isArtifact(gameData, a) && isArtifact(gameData, b))
+                || (isCreature(gameData, a) && isCreature(gameData, b))
+                || (isLand(gameData, a) && isLand(gameData, b));
     }
 
     /**
@@ -6943,23 +6941,15 @@ public class GameQueryService {
      * creature (Legerdemain's "another target permanent that shares one of those types with it",
      * where "those types" are only artifact and creature). Uses each permanent's card types.
      */
-    public boolean sharesArtifactOrCreatureType(Permanent a, Permanent b) {
-        Card aCard = a.getCard();
-        Card bCard = b.getCard();
-        return (aCard.hasType(CardType.ARTIFACT) && bCard.hasType(CardType.ARTIFACT))
-                || (aCard.hasType(CardType.CREATURE) && bCard.hasType(CardType.CREATURE));
+    public boolean sharesArtifactOrCreatureType(GameData gameData, Permanent a, Permanent b) {
+        return (isArtifact(gameData, a) && isArtifact(gameData, b))
+                || (isCreature(gameData, a) && isCreature(gameData, b));
     }
 
     /** Returns whether two permanents share at least one card type. */
-    public boolean sharesCardType(Permanent a, Permanent b) {
-        Card aCard = a.getCard();
-        Card bCard = b.getCard();
-        for (CardType cardType : CardType.values()) {
-            if (aCard.hasType(cardType) && bCard.hasType(cardType)) {
-                return true;
-            }
-        }
-        return false;
+    public boolean sharesCardType(GameData gameData, Permanent a, Permanent b) {
+        Set<CardType> aTypes = getEffectiveCardTypes(gameData, a);
+        return getEffectiveCardTypes(gameData, b).stream().anyMatch(aTypes::contains);
     }
 
     /**

@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
 
@@ -817,6 +818,8 @@ public class StepTriggerService {
                     && ce.interveningIf()
                     && !conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, activePlayerId)));
+            upkeepEffects.removeIf(e -> e instanceof PlayerWithMostLifeGainsControlOfSourceCreatureEffect
+                    && !PlayerWithMostLifeGainsControlOfSourceCreatureEffect.hasUniqueLifeLeader(gameData));
             if (upkeepEffects.isEmpty()) continue;
 
             // "Choose one that hasn't been chosen —" (Demonic Pact): the mode is picked as the

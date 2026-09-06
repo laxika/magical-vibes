@@ -116,6 +116,7 @@ public class CombatBlockService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -1308,6 +1309,8 @@ public class CombatBlockService {
                     gameData, attacker, EffectSlot.ON_ATTACKS_UNBLOCKED));
             List<UUID> defendingCreatureIds = defenderBattlefield == null ? List.of() : defenderBattlefield.stream()
                     .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                    .filter(permanent -> targetLegalityService.checkTriggeredPermanentTargetableReason(
+                            gameData, permanent, attacker.getCard(), activeId).isEmpty())
                     .map(Permanent::getId)
                     .toList();
             effects = effects.stream().map(effect -> {

@@ -65,6 +65,7 @@ class PitScorpionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         harness.assertLife(player2, 19);

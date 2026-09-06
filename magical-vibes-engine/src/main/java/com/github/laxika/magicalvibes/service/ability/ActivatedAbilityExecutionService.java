@@ -1877,16 +1877,16 @@ public class ActivatedAbilityExecutionService {
                 continue;
             }
             for (Permanent p : battlefield) {
-                if (!p.getCard().hasType(CardType.LAND)) {
+                if (!gameQueryService.isLand(gameData, p)) {
                     continue;
                 }
                 if (!predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.landPredicate())) {
                     continue;
                 }
-                collectManaColorsFromEffects(p.getCard().getEffects(EffectSlot.ON_TAP), colors);
-                for (ActivatedAbility ability : p.getCard().getActivatedAbilities()) {
-                    collectManaColorsFromEffects(ability.getEffects(), colors);
-                }
+                landManaTypeSupport.manaTypesCouldProduce(gameData, p).stream()
+                        .filter(color -> color != ManaColor.COLORLESS)
+                        .map(color -> CardColor.valueOf(color.name()))
+                        .forEach(colors::add);
             }
         }
         return colors;
@@ -1911,23 +1911,6 @@ public class ActivatedAbilityExecutionService {
     private Set<ManaColor> collectManaTypesSacrificedLandCouldProduce(GameData gameData, Permanent source) {
         return landManaTypeSupport.manaTypesCouldProduce(
                 gameData, source.getChosenSacrificedPermanentSnapshot());
-    }
-
-    private void collectManaColorsFromEffects(List<CardEffect> effects, Set<CardColor> colors) {
-        for (CardEffect effect : effects) {
-            if (effect instanceof AwardManaEffect award) {
-                ManaColor manaColor = award.color();
-                if (manaColor != null && manaColor != ManaColor.COLORLESS) {
-                    colors.add(CardColor.valueOf(manaColor.name()));
-                }
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                colors.add(CardColor.WHITE);
-                colors.add(CardColor.BLUE);
-                colors.add(CardColor.BLACK);
-                colors.add(CardColor.RED);
-                colors.add(CardColor.GREEN);
-            }
-        }
     }
 
     private void pushAbilityOnStack(GameData gameData,

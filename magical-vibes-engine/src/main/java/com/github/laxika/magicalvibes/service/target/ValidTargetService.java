@@ -219,7 +219,23 @@ public class ValidTargetService {
                 validPermanentIds.removeIf(id -> {
                     Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                     return candidate != null && selected.stream()
-                            .noneMatch(sel -> gameQueryService.sharesCardType(sel, candidate));
+                            .noneMatch(sel -> gameQueryService.sharesCardType(gameData, sel, candidate));
+                });
+            }
+            if ((card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
+                    || card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE)
+                    && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream().noneMatch(sel ->
+                            card.getMultiTargetConstraint()
+                                            == MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
+                                    ? gameQueryService.sharesArtifactCreatureOrLandType(gameData, sel, candidate)
+                                    : gameQueryService.sharesArtifactOrCreatureType(gameData, sel, candidate));
                 });
             }
             if (card.getMultiTargetConstraint()
@@ -629,6 +645,22 @@ public class ValidTargetService {
                     Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                     return candidate == null || selected.stream()
                             .noneMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, candidate));
+                });
+            }
+            if ((ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
+                    || ability.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_ARTIFACT_OR_CREATURE_TYPE)
+                    && alreadySelectedIds != null && !alreadySelectedIds.isEmpty()) {
+                MultiTargetConstraint constraint = ability.getMultiTargetConstraint();
+                List<Permanent> selected = alreadySelectedIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                    return candidate == null || selected.stream().noneMatch(sel ->
+                            constraint == MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
+                                    ? gameQueryService.sharesArtifactCreatureOrLandType(gameData, sel, candidate)
+                                    : gameQueryService.sharesArtifactOrCreatureType(gameData, sel, candidate));
                 });
             }
 

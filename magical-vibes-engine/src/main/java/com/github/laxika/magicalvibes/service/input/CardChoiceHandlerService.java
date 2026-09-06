@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -373,6 +374,11 @@ public class CardChoiceHandlerService {
             handlePlaguecrafterDiscardCardChosen(gameData, player, cardIndex, discardChoice);
             return;
         }
+        if (gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards
+                && player.getId().equals(gameData.eachPlayerRummage.currentPlayerId)) {
+            handleDeferredEachPlayerDiscardCardChosen(gameData, player, cardIndex, discardChoice);
+            return;
+        }
 
         List<Integer> validIndices = discardChoice.validIndices();
         if (cardIndex == -1 && discardChoice.declinable()) {
@@ -534,13 +540,52 @@ public class CardChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    private void handleDeferredEachPlayerDiscardCardChosen(GameData gameData, Player player, int cardIndex,
+            PendingInteraction.DiscardChoice discardChoice) {
+        List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
+        Set<UUID> selectedIds = gameData.eachPlayerRummage.selectedDiscards.stream()
+                .filter(selection -> selection.playerId().equals(player.getId()))
+                .map(EachPlayerRummageState.SelectedDiscard::cardId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<Card> remainingCards = hand.stream()
+                .filter(card -> !selectedIds.contains(card.getId()))
+                .toList();
+        if (!discardChoice.validIndices().contains(cardIndex)
+                || cardIndex < 0 || cardIndex >= remainingCards.size()) {
+            throw new IllegalStateException("Invalid discard card index: " + cardIndex);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.eachPlayerRummage.selectedDiscards.add(new EachPlayerRummageState.SelectedDiscard(
+                player.getId(), remainingCards.get(cardIndex).getId()));
+        int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
+        if (remainingDiscards > 0) {
+            List<Integer> remainingValidIndices = java.util.stream.IntStream.range(0, remainingCards.size() - 1)
+                    .boxed()
+                    .toList();
+            playerInputService.beginDiscardChoice(gameData, player.getId(), remainingValidIndices,
+                    discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
+                    discardChoice.stopAfterDiscardingType(), false);
+            return;
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void discardCollectedPlaguecrafterCards(GameData gameData) {
         PlaguecrafterState state = gameData.plaguecrafter;
-        List<PlaguecrafterState.SelectedDiscard> selected = List.copyOf(state.selectedDiscards);
-        List<PlaguecrafterState.SelectedDiscard> actualDiscards = new ArrayList<>();
+        List<EachPlayerRummageState.SelectedDiscard> selected = state.selectedDiscards.stream()
+                .map(selection -> new EachPlayerRummageState.SelectedDiscard(
+                        selection.playerId(), selection.cardId()))
+                .toList();
+        discardCollectedCards(gameData, selected, state.sourceControllerId);
+    }
+
+    public Map<UUID, Integer> discardCollectedCards(GameData gameData,
+            List<EachPlayerRummageState.SelectedDiscard> selected, UUID sourceControllerId) {
+        List<EachPlayerRummageState.SelectedDiscard> actualDiscards = new ArrayList<>();
         Map<UUID, Card> cardsById = new HashMap<>();
 
-        for (PlaguecrafterState.SelectedDiscard selection : selected) {
+        for (EachPlayerRummageState.SelectedDiscard selection : selected) {
             List<Card> hand = gameData.playerHands.get(selection.playerId());
             if (hand == null) {
                 continue;
@@ -559,13 +604,14 @@ public class CardChoiceHandlerService {
             }
         }
 
-        for (PlaguecrafterState.SelectedDiscard selection : actualDiscards) {
+        Map<UUID, Integer> discardedCounts = new HashMap<>();
+        for (EachPlayerRummageState.SelectedDiscard selection : actualDiscards) {
             Card card = cardsById.get(selection.cardId());
             if (card == null) {
                 continue;
             }
 
-            boolean causedByOpponent = !selection.playerId().equals(state.sourceControllerId);
+            boolean causedByOpponent = !selection.playerId().equals(sourceControllerId);
             gameData.discardCausedByOpponent = causedByOpponent;
             boolean replacedByBattlefield = false;
             if (hasEnterBattlefieldOnDiscardEffect(card) && causedByOpponent) {
@@ -592,7 +638,9 @@ public class CardChoiceHandlerService {
             checkPendingUntapOnDiscardType(gameData, card);
             checkPendingBoostSourceByDiscardedManaValue(gameData, card);
             checkPendingConniveOnDiscard(gameData, card);
+            discardedCounts.merge(selection.playerId(), 1, Integer::sum);
         }
+        return discardedCounts;
     }
 
     private void finishDiscardChoice(GameData gameData, Player player, UUID playerId,
@@ -694,7 +742,7 @@ public class CardChoiceHandlerService {
         if (followUp.graveyardReturnCount() > 0) {
             for (int i = 0; i < followUp.graveyardReturnCount(); i++) {
                 gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
-                        playerId, 1, null, GraveyardChoiceDestination.HAND, false));
+                        playerId, 1, null, GraveyardChoiceDestination.HAND, false, true, false));
             }
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
             if (gameData.interaction.isAwaitingInput()) {

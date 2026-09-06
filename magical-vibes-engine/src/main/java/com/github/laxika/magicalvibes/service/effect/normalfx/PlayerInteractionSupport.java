@@ -234,17 +234,33 @@ public class PlayerInteractionSupport {
      * card (empty library) or was consumed by a draw-replacement interaction.
      */
     public void applyDrawRevealDiscardUnlessLand(GameData gameData, UUID playerId) {
+        Integer beforeDrawCount = gameData.pendingDrawRevealDiscardDrawCounts.remove(playerId);
+        if (beforeDrawCount == null) {
+            beforeDrawCount = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of()).size();
+            gameData.pendingDrawRevealDiscardDrawCounts.put(playerId, beforeDrawCount);
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            applyDrawCards(gameData, playerId, 1);
+            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                return;
+            }
+            gameData.pendingDrawRevealDiscardDrawCounts.remove(playerId);
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
 
-        List<Card> hand = gameData.playerHands.get(playerId);
-        int before = hand == null ? 0 : hand.size();
-        applyDrawCards(gameData, playerId, 1);
-
-        hand = gameData.playerHands.get(playerId);
-        if (hand == null || hand.size() <= before) {
+        List<UUID> drawnCardIds = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of());
+        if (drawnCardIds.size() <= beforeDrawCount) {
             return;
         }
 
-        Card drawn = hand.get(hand.size() - 1);
+        UUID drawnCardId = drawnCardIds.getLast();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card drawn = hand == null ? null : hand.stream()
+                .filter(card -> card.getId().equals(drawnCardId))
+                .findFirst()
+                .orElse(null);
+        if (drawn == null) {
+            return;
+        }
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals ", drawn, "."));
 
@@ -252,7 +268,7 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        hand.remove(hand.size() - 1);
+        hand.remove(drawn);
         gameData.discardCausedByOpponent = false;
         graveyardService.discardCard(gameData, playerId, drawn);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));

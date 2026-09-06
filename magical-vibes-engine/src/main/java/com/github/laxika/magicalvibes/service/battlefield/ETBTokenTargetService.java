@@ -396,7 +396,7 @@ public class ETBTokenTargetService {
                 validPermanentTargets.removeIf(id -> {
                     Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                     return candidate != null && selected.stream()
-                            .noneMatch(first -> gameQueryService.sharesCardType(first, candidate));
+                            .noneMatch(first -> gameQueryService.sharesCardType(gameData, first, candidate));
                 });
             }
 

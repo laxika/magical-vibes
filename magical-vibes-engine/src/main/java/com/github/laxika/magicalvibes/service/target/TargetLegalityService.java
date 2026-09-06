@@ -2198,19 +2198,19 @@ public class TargetLegalityService {
                         }
                     }
                     case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE -> {
-                        if (!gameQueryService.sharesArtifactCreatureOrLandType(a, b)) {
+                        if (!gameQueryService.sharesArtifactCreatureOrLandType(gameData, a, b)) {
                             throw new IllegalStateException(
                                     "Chosen permanents must share an artifact, creature, or land type");
                         }
                     }
                     case SHARE_ARTIFACT_OR_CREATURE_TYPE -> {
-                        if (!gameQueryService.sharesArtifactOrCreatureType(a, b)) {
+                        if (!gameQueryService.sharesArtifactOrCreatureType(gameData, a, b)) {
                             throw new IllegalStateException(
                                     "Chosen permanents must share an artifact or creature type");
                         }
                     }
                     case SHARE_CARD_TYPE -> {
-                        if (!gameQueryService.sharesCardType(a, b)) {
+                        if (!gameQueryService.sharesCardType(gameData, a, b)) {
                             throw new IllegalStateException("Chosen permanents must share a card type");
                         }
                     }

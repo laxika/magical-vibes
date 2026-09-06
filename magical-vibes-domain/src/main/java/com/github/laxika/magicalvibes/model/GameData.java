@@ -580,6 +580,8 @@ public class GameData {
      * completion is not itself an X-value choice (e.g. the each-player discard-then-draw of Flux).
      */
     public boolean rerunCurrentEffectAfterInteraction;
+    /** Draw-count checkpoint for a draw/reveal/discard effect paused by a replacement choice. */
+    public final Map<UUID, Integer> pendingDrawRevealDiscardDrawCounts = new ConcurrentHashMap<>();
     /**
      * CR 704.3 / 104.3b — while a stack entry's effect list is being resolved (including across an
      * async pause/resume and any nested sub-resolutions), the player-loss state-based action is not
@@ -4203,6 +4205,7 @@ public class GameData {
         copy.chosenSpellCardType = this.chosenSpellCardType;
         copy.turnaboutTap = this.turnaboutTap;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
+        copy.pendingDrawRevealDiscardDrawCounts.putAll(this.pendingDrawRevealDiscardDrawCounts);
         copy.deferPlayerLossCheck = this.deferPlayerLossCheck;
         copy.effectResolutionDepth = this.effectResolutionDepth;
         copy.eachPlayerRummage.active = this.eachPlayerRummage.active;
@@ -4210,6 +4213,8 @@ public class GameData {
         copy.eachPlayerRummage.pendingDraw = this.eachPlayerRummage.pendingDraw;
         copy.eachPlayerRummage.remaining.addAll(this.eachPlayerRummage.remaining);
         copy.eachPlayerRummage.chosenAmounts.putAll(this.eachPlayerRummage.chosenAmounts);
+        copy.eachPlayerRummage.deferDiscards = this.eachPlayerRummage.deferDiscards;
+        copy.eachPlayerRummage.selectedDiscards.addAll(this.eachPlayerRummage.selectedDiscards);
         copy.eachPlayerPutsCardFromHandOnTopOfLibrary.active =
                 this.eachPlayerPutsCardFromHandOnTopOfLibrary.active;
         copy.eachPlayerPutsCardFromHandOnTopOfLibrary.remaining.addAll(
