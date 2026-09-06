@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPa
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
@@ -301,7 +302,13 @@ public class GameViewProjectionFactory {
 
     /** Face-down battlefield creatures revealed to a player by a turn-scoped permission. */
     Map<UUID, CardView> collectFaceDownPermanentReveals(GameData data, UUID viewerId) {
-        if (!data.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(viewerId)) {
+        boolean hasStaticPermission = data.playerBattlefields.getOrDefault(viewerId, List.of()).stream()
+                .filter(permanent -> !permanent.isFaceDown()
+                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !gameQueryService.computeStaticBonus(data, permanent).losesAllAbilities())
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
+                        data, permanent, LookAtFaceDownCreaturesEffect.class));
+        if (!data.playersWhoMayLookAtFaceDownCreaturesThisTurn.contains(viewerId) && !hasStaticPermission) {
             return Map.of();
         }
 

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
-import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.AsEntersGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -504,9 +504,8 @@ public class AsEntersInteractionService {
             return;
         }
 
-        // "As this creature enters, exile any number of creature cards from your graveyard"
-        // (CR 614.1c, Sutured Ghoul). The exiled cards are tracked with the entering permanent so
-        // its characteristic-defining power/toughness can be derived from them.
+        // As-enters graveyard exiles are tracked with the entering permanent so its continuous
+        // effects can derive values from the exiled cards.
         ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect limitedGraveyardExile =
                 card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .filter(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
@@ -517,19 +516,34 @@ public class AsEntersInteractionService {
                         .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
                         .map(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
+        AsEntersGraveyardExileEffect filteredGraveyardExile =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(AsEntersGraveyardExileEffect.class::isInstance)
+                        .map(AsEntersGraveyardExileEffect.class::cast)
+                        .findFirst().orElse(null);
         boolean needsGraveyardExile = requiredGraveyardExile != null
                 || limitedGraveyardExile != null
-                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect);
+                || filteredGraveyardExile != null;
         if (needsGraveyardExile) {
-            List<Card> creatureCards = gameData.playerGraveyards
+            List<Card> graveyardCards = gameData.playerGraveyards
                     .getOrDefault(controllerId, List.of()).stream()
-                    .filter(c -> c.hasType(CardType.CREATURE))
+                    .filter(c -> filteredGraveyardExile == null
+                            ? c.hasType(CardType.CREATURE)
+                            : predicateEvaluationService.matchesCardPredicate(
+                            c, filteredGraveyardExile.filter(), card.getId()))
                     .toList();
-            int maxExiledCards = limitedGraveyardExile == null && requiredGraveyardExile == null
-                    ? creatureCards.size()
-                    : Math.min(Math.max(xValue, 0), creatureCards.size());
-            if (!creatureCards.isEmpty() && maxExiledCards > 0) {
+            int maxExiledCards;
+            int minExiledCards;
+            if (filteredGraveyardExile != null) {
+                maxExiledCards = Math.min(Math.max(filteredGraveyardExile.maximumCards(), 0), graveyardCards.size());
+                minExiledCards = Math.min(Math.max(filteredGraveyardExile.minimumCards(), 0), maxExiledCards);
+            } else {
+                maxExiledCards = limitedGraveyardExile == null && requiredGraveyardExile == null
+                        ? graveyardCards.size()
+                        : Math.min(Math.max(xValue, 0), graveyardCards.size());
+                minExiledCards = requiredGraveyardExile == null ? 0 : maxExiledCards;
+            }
+            if (!graveyardCards.isEmpty() && maxExiledCards > 0) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 gameData.graveyardTargetOperation.asEntersExile =
@@ -539,9 +553,10 @@ public class AsEntersInteractionService {
                                 limitedGraveyardExile == null ? 0 : limitedGraveyardExile.countersPerCard(),
                                 requiredGraveyardExile == null ? List.of() : requiredGraveyardExile.counterTypes());
                 playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
-                        new ArrayList<>(creatureCards), maxExiledCards,
-                        requiredGraveyardExile == null ? 0 : maxExiledCards,
-                        limitedGraveyardExile == null
+                        new ArrayList<>(graveyardCards), maxExiledCards, minExiledCards,
+                        filteredGraveyardExile != null
+                                ? card.getName() + " — Exile a matching card from your graveyard."
+                                : limitedGraveyardExile == null
                                 ? card.getName() + " — Exile any number of creature cards from your graveyard."
                                 : card.getName() + " — Exile up to " + xValue
                                 + " creature cards from your graveyard.");

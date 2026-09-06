@@ -317,6 +317,7 @@ on what the mana may pay for.
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealDamageToAnyTargetEffect(new XValue(), false, true) + ShuffleIntoLibraryEffect |
 | X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateTokenEffect(new XValue(), ...) + ShuffleIntoLibraryEffect |
 | Fight (two-target) | `p/PreyUpon.java` | FightTargetsEffect, multi-target: creature you control + creature you don't control |
+| Fight-triggered delayed counters | `f/FoeRazerRegent.java` | `ON_ALLY_CREATURE_FIGHTS` `PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 2)`; the fighting creature id is remembered and the counters are put on it at the next end step |
 | Attached Role then reflexive fight | `c/CurseOfTheWerefox.java` | `CreateTokenAttachedToTargetThenEffect` for the target creature you control + `EnteringCreatureFightsTargetCreatureEffect` for the optional opponent-creature target chosen after token creation |
 | Fight (any two creatures) | `b/BloodFeud.java` | FightTargetsEffect, both targets are any creature (no controller restriction). Cross-group distinct is the default — no extra flags needed when oracle text says "another target" |
 | Counter + target spell cost reduction | `b/BrushOff.java` | STATIC ReduceOwnCastCostIfTargetingStackEntryEffect(StackEntryTypeInPredicate(INSTANT_SPELL, SORCERY_SPELL), 2) + SPELL CounterSpellEffect — costs {1}{U} less when targeting an instant or sorcery spell, counters any spell |

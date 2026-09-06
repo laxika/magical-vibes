@@ -1487,6 +1487,7 @@ public class ActivatedAbilityExecutionService {
                         permanent.getId(),
                         permanent.getCard(),
                         delayed.spellFilter(),
+                        delayed.stackEntryFilter(),
                         delayed.resolvedEffects(),
                         delayed.oneShot(),
                         delayed.sourceMustRemainOnBattlefield(),

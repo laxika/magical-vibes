@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerHasMoreCardsInHandThanController;
@@ -917,6 +918,12 @@ public class CombatAttackService {
                 allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
                         && ce.interveningIf()
                         && ce.condition() instanceof ControlsPermanentCount ? ce.wrapped() : e);
+
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
+                        && ce.condition() instanceof ControlledCreaturesTotalPowerAtLeast
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
                 // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce

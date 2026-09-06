@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -183,6 +185,54 @@ class FlickerEffectHandlerTest {
 
             verify(grantKeywordEffectHandler).grantToPermanent(
                     eq(gd), eq(entry), any(Permanent.class), eq(Set.of(Keyword.FIRST_STRIKE)));
+        }
+
+        @Test
+        @DisplayName("Returns the permanent tapped when requested")
+        void returnsTapped() {
+            Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
+            Card sourceCard = createCreatureCard("Ojutai Exemplars");
+            FlickerEffect effect = new FlickerEffect(
+                    FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
+                    true, null, null, 0, false, false);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), 0, target.getId(), null);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns a self-flickered permanent face down and processes face-down ETB triggers")
+        void returnsSelfFaceDown() {
+            Permanent target = new Permanent(createCreatureCard("Shorecrasher Elemental"));
+            Card sourceCard = createCreatureCard("Shorecrasher Elemental");
+            FlickerEffect effect = FlickerEffect.flickerSelfFaceDown();
+            StackEntry entry = new StackEntry(
+                    StackEntryType.ACTIVATED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                    List.of(effect), null, target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+
+            handler.resolve(gd, entry, effect);
+
+            ArgumentCaptor<Permanent> returnedCaptor = ArgumentCaptor.forClass(Permanent.class);
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(player1Id), returnedCaptor.capture());
+            assertThat(returnedCaptor.getValue().isFaceDown()).isTrue();
+            verify(battlefieldEntryService).processFaceDownCreatureETBTriggers(
+                    eq(gd), eq(player1Id), eq(target.getCard()));
+            verify(battlefieldEntryService, never()).handleCreatureEnteredBattlefield(
+                    eq(gd), eq(player1Id), eq(target.getCard()), eq(null), eq(false));
         }
     }
 

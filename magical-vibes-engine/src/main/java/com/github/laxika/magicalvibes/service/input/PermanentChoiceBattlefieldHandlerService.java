@@ -1985,6 +1985,18 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature no longer exists");
         }
 
+        Permanent sacrificedSnapshot = new Permanent(toSacrifice);
+        int sacrificedPower = gameQueryService.getEffectivePower(gameData, toSacrifice);
+        int sacrificedColorCount = gameQueryService.getEffectiveColors(gameData, toSacrifice).size();
+        int sacrificedToughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
+        StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
+        if (originalEntry != null) {
+            originalEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
+            originalEntry.setSacrificedPower(sacrificedPower);
+            originalEntry.setSacrificedColorCount(sacrificedColorCount);
+            originalEntry.setSacrificedToughness(sacrificedToughness);
+        }
+
         permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -2001,6 +2013,14 @@ public class PermanentChoiceBattlefieldHandlerService {
             if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)
                     && !gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.processNextExploitTriggerTarget(gameData);
+            }
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class)
+                    && !gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextExploitPermanentTriggerTarget(gameData);
+            }
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPlayerTriggerTarget.class)
+                    && !gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextExploitPlayerTriggerTarget(gameData);
             }
             if (gameData.interaction.isAwaitingInput()) {
                 return;

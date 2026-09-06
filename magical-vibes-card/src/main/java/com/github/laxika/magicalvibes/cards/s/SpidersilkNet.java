@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "206")
+@CardRegistration(set = "DTK", collectorNumber = "244")
 public class SpidersilkNet extends Card {
 
     public SpidersilkNet() {

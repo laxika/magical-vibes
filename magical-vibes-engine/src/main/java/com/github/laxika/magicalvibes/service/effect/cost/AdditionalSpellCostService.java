@@ -722,7 +722,7 @@ public class AdditionalSpellCostService {
                     if (discardCostIndices(gameData, playerId, card, cost).size() < cost.count()) return false;
                 }
                 case RevealCardFromHandCost cost -> {
-                    if (revealCardIndices(gameData, playerId, card, cost).isEmpty()) return false;
+                    if (!cost.optional() && revealCardIndices(gameData, playerId, card, cost).isEmpty()) return false;
                 }
                 case DiscardRandomCardCost ignored -> {
                     if (hand.stream().noneMatch(candidate -> !candidate.getId().equals(card.getId()))) return false;
@@ -2393,6 +2393,9 @@ public class AdditionalSpellCostService {
                                       int spellCardIndex) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         String label = cost.label() != null ? cost.label() + " card" : "a card";
+        if (cost.optional() && handCardIndex == null) {
+            return -1;
+        }
         if (handCardIndex == null || handCardIndex == spellCardIndex || hand == null) {
             throw new IllegalStateException("Must reveal " + label + " to cast " + card.getName());
         }

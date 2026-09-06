@@ -2346,6 +2346,44 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextExploitPermanentTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class)) {
+            PermanentChoiceContext.ExploitPermanentTriggerTarget pending =
+                    gameData.peekPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class);
+            TargetFilter targetFilter = targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    targetFilter,
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.ATTACK,
+                    pending.sourcePermanentId() == null
+                            ? null
+                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()));
+
+            if (result.validTargets().isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class);
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s exploit ability has no valid targets."));
+                log.info("Game {} - {} exploit trigger skipped (no valid permanent targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                    pending.sourceCard().getName() + "'s exploit ability - Choose target creature.");
+
+            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                    "'s exploit ability triggers - choose a target creature."));
+            log.info("Game {} - {} exploit trigger awaiting permanent target selection",
+                    gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextClashTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
             PermanentChoiceContext.ClashTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);

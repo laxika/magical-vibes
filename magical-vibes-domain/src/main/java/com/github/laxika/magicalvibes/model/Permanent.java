@@ -535,6 +535,10 @@ public class Permanent {
     @Setter private boolean spectacle;
     /** Whether this permanent's optional collect-evidence additional cost was paid. */
     @Setter private boolean collectEvidenceCostPaid;
+    /** Whether the spell's optional reveal-a-card-from-hand additional cost was paid. */
+    @Setter private boolean revealCardFromHandCostPaid;
+    /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
+    @Setter private boolean controlledDragonAsCast;
     /** Repeatable additional mana payments made to cast this permanent's spell. */
     private List<String> repeatedAdditionalCosts = List.of();
     /** Whether the required tribute counters were placed on this permanent as it entered. */
@@ -867,6 +871,8 @@ public class Permanent {
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
+        this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
+        this.controlledDragonAsCast = source.controlledDragonAsCast;
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.castFromZone = source.castFromZone;

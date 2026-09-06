@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "82")
+@CardRegistration(set = "DTK", collectorNumber = "124")
 public class UltimatePrice extends Card {
 
     public UltimatePrice() {

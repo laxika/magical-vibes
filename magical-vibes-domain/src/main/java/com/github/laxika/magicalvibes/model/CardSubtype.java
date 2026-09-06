@@ -247,6 +247,7 @@ public enum CardSubtype {
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
     TYVAR("Tyvar"),
+    UGIN("Ugin"),
     TREASURE("Treasure"),
     CLUE("Clue"),
     BLOOD("Blood"),
@@ -299,7 +300,7 @@ public enum CardSubtype {
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
-            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, SAMUT, YANLING);
+            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANLING);
 
     public static List<CardSubtype> basicLandTypes() {
         return BASIC_LAND_TYPES;

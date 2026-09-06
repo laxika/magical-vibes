@@ -1664,10 +1664,9 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * "Whenever a creature an opponent controls enters, you may attach this Aura to that creature"
-     * (Prison Term). Resolves the entering permanent (under an opponent's control) and queues a
-     * "you may attach" whose {@code targetId} is that creature and {@code sourcePermanentId} is this
-     * Aura, so the Aura's controller chooses whether to move it.
+     * Resolves an Aura attachment to the creature that caused the opponent-creature enter trigger.
+     * Optional markers queue the existing may-attach flow; mandatory markers queue a non-targeting
+     * stack entry with the entering permanent already identified.
      */
     @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
             slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
@@ -1680,15 +1679,31 @@ public class EnterTriggerCollectorService {
             // The creature already left the battlefield; nothing to attach to.
             return true;
         }
-        var may = new MayEffect(new AttachSourceAuraToTargetCreatureEffect(),
-                "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    enteringPermanentId, match.permanent().getId());
+        if (effect.optional()) {
+            var may = new MayEffect(new AttachSourceAuraToTargetCreatureEffect(),
+                    "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                        enteringPermanentId, match.permanent().getId());
+            }
+        } else {
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        match.controllerId(),
+                        sourceCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(new AttachSourceAuraToTargetCreatureEffect())),
+                        enteringPermanentId,
+                        match.permanent().getId());
+                entry.setNonTargeting(true);
+                match.gameData().stack.add(entry);
+            }
         }
         logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (may attach aura)",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        log.info("Game {} - {} triggers for {} entering ({} attach aura)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(),
+                effect.optional() ? "may" : "mandatory");
         return true;
     }
 

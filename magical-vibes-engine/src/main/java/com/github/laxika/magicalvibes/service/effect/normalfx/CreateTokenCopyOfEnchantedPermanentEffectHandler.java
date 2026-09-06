@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.Collections;
 import java.util.UUID;
@@ -58,6 +57,6 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
         Card sourceCard = enchanted.getCard();
         tokenCopySupport.createTokenCopies(gameData, entry,
                 Collections.nCopies(copyEffect.amount(), sourceCard), enchanted,
-                new CreateTokenCopyOfTargetPermanentEffect());
+                copyEffect.copyEffect());
     }
 }

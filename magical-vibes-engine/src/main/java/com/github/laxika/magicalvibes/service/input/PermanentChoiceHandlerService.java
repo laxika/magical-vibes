@@ -363,6 +363,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleExploitSacrifice(gameData, permanentId, exploitSac);
         } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {
             triggerHandler.handleExploitTrigger(gameData, permanentId, exploitTt);
+        } else if (context instanceof PermanentChoiceContext.ExploitPermanentTriggerTarget exploitPt) {
+            triggerHandler.handleExploitPermanentTrigger(gameData, permanentId, exploitPt);
+        } else if (context instanceof PermanentChoiceContext.ExploitPlayerTriggerTarget exploitPl) {
+            triggerHandler.handleExploitPlayerTrigger(gameData, permanentId, exploitPl);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {

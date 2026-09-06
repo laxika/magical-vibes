@@ -344,6 +344,16 @@ public class CastingCostService {
                 buildCostModifierSnapshot(gameData, playerId), false, 0, true, Zone.HAND, false);
     }
 
+    /** Returns the generic adjustment supplied by effects that explicitly modify alternate costs. */
+    public int getAlternateHandCastCostModifier(GameData gameData, UUID playerId, Card card) {
+        CostModificationContext context = new CostModificationContext(
+                gameData, playerId, card, false, 0, false, Zone.HAND, false, false, false);
+        return buildCostModifierSnapshot(gameData, playerId).modifiers().stream()
+                .mapToInt(modifier -> modifier.handler().modifyAlternateCost(
+                        context, modifier.effect(), modifier.source()))
+                .sum();
+    }
+
     private int getCastCostModifier(GameData gameData, UUID playerId, Card card,
                                     CostModifierSnapshot snapshot, boolean flashbackCost, int xValue,
                                     boolean plottingFromHand) {
@@ -1623,7 +1633,8 @@ public class CastingCostService {
             int additionalCost = card.getMorphCost() != null
                     ? getCastCostModifierForFaceDownSpell(gameData, playerId, card)
                     : card.getKeywords().contains(Keyword.PLOT)
-                    ? getPlotCostModifier(gameData, playerId, card) : -emergeReduction;
+                    ? getPlotCostModifier(gameData, playerId, card)
+                    : -emergeReduction + getAlternateHandCastCostModifier(gameData, playerId, card);
             if (!(manaCost.get().treasureManaOnly()
                     ? pool.canPayWithTreasureMana(cost, additionalCost)
                     : cost.canPay(pool, additionalCost))) return false;

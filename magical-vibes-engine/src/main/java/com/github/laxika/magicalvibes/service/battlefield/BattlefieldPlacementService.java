@@ -279,15 +279,13 @@ public class BattlefieldPlacementService {
             triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlacedOnEntry);
         }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(
+                    gameData, permanent, simultaneouslyEntered);
         }
         // "Whenever a -1/-1 counter is put on a creature" (Flourishing Defenses) also sees a creature
         // that enters with -1/-1 counters (e.g. Leech Bonder, or persist) — CR ruling.
         permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                 gameData, permanent, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
-        permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
-                gameData, permanent, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE),
-                controllerId, simultaneouslyEntered);
         for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
             if (counter.getKey() == CounterType.PLUS_ONE_PLUS_ONE
                     || counter.getKey() == CounterType.MINUS_ONE_MINUS_ONE) {
@@ -1141,7 +1139,8 @@ public class BattlefieldPlacementService {
                             card, kicked, false, permanent.isProwl(), permanent.isMadness(), false, false,
                             permanent.getCastFromZone(), xValue, null, null, false,
                             false, false, null, null, null, repeatedAdditionalCosts,
-                            permanent.isAlternateCost(), 0);
+                            permanent.isAlternateCost(), false, false, false, false, false, 0, false,
+                            false, permanent.isRevealCardFromHandCostPaid(), permanent.isControlledDragonAsCast());
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                         continue;
                     }

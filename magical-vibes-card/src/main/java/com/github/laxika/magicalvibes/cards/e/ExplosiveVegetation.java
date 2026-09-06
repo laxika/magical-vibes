@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
+@CardRegistration(set = "DTK", collectorNumber = "186")
 @CardRegistration(set = "ONS", collectorNumber = "263")
 public class ExplosiveVegetation extends Card {
 

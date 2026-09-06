@@ -823,8 +823,14 @@ public class PermanentCounterSupport {
     }
 
     public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target) {
+        firePlusOnePlusOneCounterTriggers(gameData, target, List.of());
+    }
+
+    public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target,
+                                                   List<Permanent> excludedSources) {
         firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
-        firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(gameData, target);
+        firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                gameData, target, 1, null, excludedSources);
         fireCounterPutOnControlledCreatureTriggers(gameData, target, 1);
     }
 
@@ -1148,6 +1154,50 @@ public class PermanentCounterSupport {
                 gameData, target, 1, null, List.of());
     }
 
+    /** Fires watchers for a +1/+1 counter-placement event on another controlled creature. */
+    private void firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(
+            GameData gameData, Permanent target, List<Permanent> excludedSources) {
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+            return;
+        }
+
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetControllerId == null) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        Set<UUID> excludedSourceIds = excludedSources.stream().map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        for (Permanent watcher : new ArrayList<>(battlefield)) {
+            if (watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())) {
+                continue;
+            }
+            Card card = watcher.getCard();
+            List<CardEffect> effects = card.getEffects(
+                    EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE);
+            if (effects.isEmpty()) {
+                continue;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    targetControllerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    watcher.getId()));
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} triggers for a +1/+1 counter on another creature",
+                    gameData.id, card.getName());
+        }
+    }
+
     public void firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
             GameData gameData, Permanent target, int count, UUID placingPlayerId) {
         firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
@@ -1157,6 +1207,9 @@ public class PermanentCounterSupport {
     public void firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
             GameData gameData, Permanent target, int count, UUID placingPlayerId,
             List<Permanent> excludedSources) {
+        if (count > 0) {
+            firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(gameData, target, excludedSources);
+        }
         if (count <= 0 || target == null || !gameQueryService.isCreature(gameData, target)
                 || predicateEvaluationService.matchesPermanentPredicate(target,
                 new PermanentHasSubtypePredicate(CardSubtype.HYDRA),

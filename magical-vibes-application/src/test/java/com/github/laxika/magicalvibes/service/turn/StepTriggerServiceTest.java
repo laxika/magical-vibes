@@ -102,6 +102,7 @@ import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
@@ -1592,8 +1593,24 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Source-counter intervening-if skips beginning-of-combat trigger below threshold")
-        void sourceCounterThresholdInterveningIfSkipsWhenUnmet() {
+        @DisplayName("Total-power intervening-if skips beginning-of-combat trigger when unmet")
+        void controlledCreaturesTotalPowerInterveningIfSkipsWhenUnmet() {
+            Card card = createCardWithName("Surrak, the Hunt Caller");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+            when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(7);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Source-counter intervening-if checks the beginning-of-combat threshold")
+        void sourceCounterThresholdInterveningIfChecksThreshold() {
             Card card = createCardWithName("Counter Combat Card");
             card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                     new SourceCounterThreshold(2, CounterType.CHARGE), new GainLifeEffect(1)));
@@ -1603,8 +1620,24 @@ class StepTriggerServiceTest {
             sut.handleBeginningOfCombatTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-
             permanent.setCounterCount(CounterType.CHARGE, 2);
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Total-power intervening-if allows beginning-of-combat trigger at threshold")
+        void controlledCreaturesTotalPowerInterveningIfAllowsAtThreshold() {
+            Card card = createCardWithName("Surrak, the Hunt Caller");
+            card.addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
+                    new ControlledCreaturesTotalPowerAtLeast(8), new GainLifeEffect(1)));
+            Permanent source = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(source);
+            when(gameQueryService.isCreature(gd, source)).thenReturn(true);
+            when(gameQueryService.getEffectivePower(gd, source)).thenReturn(8);
+
             sut.handleBeginningOfCombatTriggers(gd);
 
             assertThat(gd.stack).hasSize(1);

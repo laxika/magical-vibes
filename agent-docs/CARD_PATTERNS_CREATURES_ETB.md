@@ -6,6 +6,11 @@ For an ETB that free-casts an instant from your graveyard, use
 `CastTargetInstantOrSorceryFromGraveyardEffect(CONTROLLERS_GRAVEYARD, true, true,
 CardTypePredicate(INSTANT))` as in `t/TorrentialGearhulk.java`.
 
+ETB Exploit plus an exploit trigger that uses the sacrificed creature's toughness uses
+`MayEffect(ExploitEffect)` on `ON_ENTER_BATTLEFIELD` and
+`ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect` on `ON_EXPLOIT`, as in
+`p/ProfanerOfTheDead.java`.
+
 For an ETB that pays X and then offers a free cast of an instant or sorcery with mana value X
 from any graveyard, use `PayXManaCastTargetInstantOrSorceryFromGraveyardEffect()` as in
 `h/HaloForager.java`.

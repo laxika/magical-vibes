@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -101,6 +103,23 @@ public class DamageTriggerCollectorService {
     private final CreatureControlService creatureControlService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final TapUntapSupport tapUntapSupport;
+
+    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_FIGHTS)
+    private boolean handleAllyCreatureFightsPutCounters(TriggerMatchContext match,
+            PutCounterOnTargetPermanentEffect trigger, TriggerContext ctx) {
+        TriggerContext.CreatureFights fights = (TriggerContext.CreatureFights) ctx;
+        Permanent fightingCreature = fights.fightingCreature();
+        if (fightingCreature == null) return false;
+
+        match.gameData().queueDelayedAction(new PutCounterOnPermanentAtNextEndStep(
+                match.permanent().getCard(), match.controllerId(), fightingCreature.getId(), trigger));
+        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
+                " triggers to put counters on " + fightingCreature.getCard().getName() + " at the next end step."));
+        log.info("Game {} - {} schedules counters for {} at the next end step",
+                match.gameData().id, match.permanent().getCard().getName(), fightingCreature.getCard().getName());
+        return true;
+    }
 
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER)

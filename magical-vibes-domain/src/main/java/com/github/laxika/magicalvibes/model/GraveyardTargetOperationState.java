@@ -180,10 +180,10 @@ public class GraveyardTargetOperationState {
     /** Card selected by the opponent for the resolution-time graveyard choice. */
     public UUID opponentChoosesCardToHandChosenCardId;
     /**
-     * As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
-     * Ghoul). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the
-     * chosen cards tracked with the entering permanent and then resumes the entry by running its
-     * ETB triggers, instead of pushing a new stack entry. Set by
+     * As-enters graveyard exile choice. When set,
+     * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen cards
+     * tracked with the entering permanent and then resumes the entry by running its ETB triggers,
+     * instead of pushing a new stack entry. Set by
      * {@code BattlefieldEntryService.handleCreatureEnteredBattlefield}.
      */
     public AsEntersGraveyardExileContext asEntersExile;

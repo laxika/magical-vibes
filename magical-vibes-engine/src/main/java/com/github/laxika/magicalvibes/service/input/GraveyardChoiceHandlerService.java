@@ -1184,9 +1184,8 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        // As-enters "exile any number of creature cards from your graveyard" (CR 614.1c, Sutured
-        // Ghoul): exile the chosen cards tracked with the entering permanent, then resume the entry
-        // so its ETB triggers fire with the exiled cards already recorded.
+        // As-enters graveyard exile: exile the chosen cards tracked with the entering permanent,
+        // then resume the entry so its ETB triggers fire with the exiled cards already recorded.
         if (gameData.graveyardTargetOperation.asEntersExile != null) {
             var context = gameData.graveyardTargetOperation.asEntersExile;
             gameData.graveyardTargetOperation.asEntersExile = null;

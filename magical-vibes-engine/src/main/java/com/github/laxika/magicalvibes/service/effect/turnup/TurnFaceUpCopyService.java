@@ -137,6 +137,7 @@ public class TurnFaceUpCopyService {
         }
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is turned face up."));
+        triggerCollectionService.checkGraveyardAllyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
         triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(gameData, controllerId, source);
         triggerCollectionService.checkSelfOrAnyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);
         triggerCollectionService.checkSelfOrAllyPermanentTurnsFaceUpTriggers(gameData, controllerId, source);

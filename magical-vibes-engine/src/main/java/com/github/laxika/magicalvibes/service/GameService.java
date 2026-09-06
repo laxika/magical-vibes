@@ -1331,6 +1331,8 @@ public class GameService {
                     gameData, controllerId, permanent);
             triggerCollectionService.checkSelfOrAllyCreatureTurnsFaceUpTriggers(
                     gameData, controllerId, permanent);
+            triggerCollectionService.checkGraveyardAllyPermanentTurnsFaceUpTriggers(
+                    gameData, controllerId, permanent);
         }
 
         List<CardEffect> effects = permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP).stream()
@@ -1361,11 +1363,21 @@ public class GameService {
             }
             boolean targetsSpell = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
+            boolean targetsGraveyard = effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
             boolean targetsPlayer = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             boolean targetsPermanent = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            if (targetsSpell) {
+            if (targetsGraveyard) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        permanent.getCard(), controllerId, effects, null, 1, xValue != null ? xValue : 0));
+                triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+                if (autoPass) {
+                    turnProgressionService.resolveAutoPass(gameData);
+                }
+                return;
+            } else if (targetsSpell) {
                 StackEntryPredicate spellFilter = null;
                 boolean includeAbilities = false;
                 if (permanent.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {

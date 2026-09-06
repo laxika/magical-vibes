@@ -1087,6 +1087,36 @@ public class ChoiceHandlerService {
                 inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
+        } else if (ctx.creatureSpellOnly() && ctx.fixedColorOptions() != null) {
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureSourceCreatureSpellOnlyMana(manaColor, 1);
+            } else {
+                manaPool.addCreatureSpellOnlyMana(manaColor, 1);
+            }
+            if (ctx.fromCaveSource()) {
+                manaPool.addCaveManaTag(manaColor, 1);
+            }
+
+            String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
+                    + " mana (creature spells only).";
+            gameLogService.append(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} adds one {} creature-spell-only mana (color combination)",
+                    gameData.id, player.getUsername(), colorName.toLowerCase());
+
+            int remaining = amount - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice
+                        .creatureSpellOnlyColorCombination(
+                                ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions())
+                        .withSnowSource(ctx.fromSnowSource())
+                        .withCaveSource(ctx.fromCaveSource());
+                List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextCtx, colors,
+                        "Choose a color of mana to add (creature spells only)."));
+                inputCompletionService.publishStateAfterInput(gameData);
+                return;
+            }
         } else if (ctx.fixedColorOptions() != null) {
             // Filter lands ("Add {R}{R}, {R}{G}, or {G}{G}") — each mana is chosen individually from
             // the fixed color list; add one and re-prompt until all picks have been made.

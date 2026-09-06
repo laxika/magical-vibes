@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNe
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
@@ -58,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.RemoveCountersFromPermanentAtNextCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -121,6 +121,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCards
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.EachPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsEachCreatureWithGreatestPower;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentsWithDifferentNames;
@@ -3715,8 +3716,7 @@ public class StepTriggerService {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(
-                                action.counterType(), action.amount()))),
+                        new ArrayList<>(List.of(action.effect())),
                         action.permanentId(), (UUID) null);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);

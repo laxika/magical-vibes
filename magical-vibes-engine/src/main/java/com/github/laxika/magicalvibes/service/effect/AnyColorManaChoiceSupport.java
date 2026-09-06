@@ -237,6 +237,10 @@ public final class AnyColorManaChoiceSupport {
                 return ChoiceContext.ManaColorSpellChoice.anyColorCombination(
                         playerId, amount, effect.spellOnlySubtypes());
             }
+            if (effect.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY) {
+                return ChoiceContext.ManaColorChoice.creatureSpellOnlyColorCombination(
+                        playerId, fromCreature, amount, effect.allowedColors());
+            }
             if (effect.restriction() == ManaSpendRestriction.SPELL_ONLY) {
                 return new ChoiceContext.SpellOnlyManaColorChoice(
                         playerId, fromCreature, amount, true);
