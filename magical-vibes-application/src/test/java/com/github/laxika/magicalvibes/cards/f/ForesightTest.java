@@ -39,7 +39,7 @@ class ForesightTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(libraryCards);
         assertThat(gd.exiledCards.stream()
                 .filter(entry -> entry.ownerId().equals(player1.getId())))
-                .allMatch(ExiledCardEntry::faceDown);
+                .noneMatch(ExiledCardEntry::faceDown);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Foresight");
     }
@@ -103,7 +103,7 @@ class ForesightTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(onlyCard);
         assertThat(gd.exiledCards.stream()
                 .filter(entry -> entry.ownerId().equals(player1.getId())))
-                .allMatch(ExiledCardEntry::faceDown);
+                .noneMatch(ExiledCardEntry::faceDown);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
     }
 

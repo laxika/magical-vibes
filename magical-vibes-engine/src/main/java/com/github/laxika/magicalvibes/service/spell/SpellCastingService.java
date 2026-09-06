@@ -4639,7 +4639,7 @@ public class SpellCastingService {
                 Map<UUID, Integer> counterAssignments =
                         damageAssignments == null ? Map.of() : damageAssignments;
                 int assignedTotal = counterAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                if (assignedTotal != expectedTotal) {
+                if (!counterAssignments.isEmpty() && assignedTotal != expectedTotal) {
                     throw new IllegalStateException("Counter assignments must sum to " + expectedTotal);
                 }
                 FilterContext assignmentContext = FilterContext.of(gameData)

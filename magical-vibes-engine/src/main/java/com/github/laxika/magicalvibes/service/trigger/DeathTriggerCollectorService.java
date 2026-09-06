@@ -871,7 +871,8 @@ public class DeathTriggerCollectorService {
         GameData gameData = match.gameData();
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    null, new Permanent(match.permanent())
             ));
         } else {
             gameData.stack.add(new StackEntry(

@@ -35,6 +35,7 @@ class BurningEarthTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -47,6 +48,7 @@ class BurningEarthTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.tapPermanent(player1, 1);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
@@ -77,6 +79,7 @@ class BurningEarthTest extends BaseCardTest {
 
         harness.tapPermanent(player2, 0);
         harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

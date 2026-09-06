@@ -93,7 +93,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 if (legalTargets.isEmpty()) {
                     return;
                 }
-                int damagePerTarget = entry.getXValue() / legalTargets.size();
+                int damagePerTarget = entry.getXValue() / declaredTargets.size();
                 Map<UUID, Integer> assignments = new LinkedHashMap<>();
                 for (UUID target : legalTargets) {
                     assignments.put(target, damagePerTarget);

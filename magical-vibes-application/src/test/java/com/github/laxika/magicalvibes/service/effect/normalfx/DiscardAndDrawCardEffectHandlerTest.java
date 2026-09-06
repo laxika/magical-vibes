@@ -59,7 +59,7 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
         verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(),
                 any(DiscardFollowUp.class));
-        verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
+        verify(drawService).resolveDrawCards(gd, player1Id, 2);
     }
 
     @Test
@@ -71,6 +71,6 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
         resolveEffect(gd, entry, effect);
 
-        verify(drawService, never()).resolveDrawCard(any(), any());
+        verify(drawService, never()).resolveDrawCards(any(), any(), anyInt());
     }
 }

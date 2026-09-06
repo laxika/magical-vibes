@@ -1334,7 +1334,9 @@ public class ActivatedAbilityExecutionService {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " adds {" + onlyType.getCode() + "} from ", permanent.getCard(), "."));
                 } else if (availableTypes.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
+                            .fixedColorCombination(playerId, isCreatureSource, 1,
+                                    List.copyOf(availableTypes));
                     List<String> types = availableTypes.stream().map(Enum::name).sorted().toList();
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, types, "Choose a type of mana to add."));
