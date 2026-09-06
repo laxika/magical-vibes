@@ -674,6 +674,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
+    /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
+    record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
+                                                List<Card> remainingRevealedCards)
+            implements PermanentChoiceContext {
+
+        public RevealUntilCardPredicateAttackTarget {
+            remainingRevealedCards = List.copyOf(remainingRevealedCards);
+        }
+    }
+
     /** Meandering Towershell: choose the opponent or opposing planeswalker it attacks on return. */
     record ExileReturnAttackTarget(PendingExileReturn pending, List<PendingExileReturn> remaining)
             implements PermanentChoiceContext {
@@ -1433,36 +1443,51 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
-                                       Integer sourcePowerAtTrigger)
-            implements PermanentChoiceContext {
+                                       Integer sourcePowerAtTrigger,
+                                       boolean sourceAlternateCostAtTrigger)
+    implements PermanentChoiceContext {
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, false);
+        }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount, null, false);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) {
-            this(sourceCard, controllerId, effects, null, 0, 0, 0, null);
+            this(sourceCard, controllerId, effects, null, 0, 0, 0, null, false);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, 0, 0, 0, null, false);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, 0, 0, null, false);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue) {
-            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null);
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null, false);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            int xValue) {
-            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null);
+            this(sourceCard, controllerId, effects, null, 0, xValue, 0, null, false);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue,
+                                           boolean sourceAlternateCostAtTrigger) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, 0, null,
+                    sourceAlternateCostAtTrigger);
         }
     }
 

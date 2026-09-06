@@ -518,7 +518,7 @@ public class AsEntersInteractionService {
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, permanent, controllerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
             permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent, controllerId);
         }
     }
 

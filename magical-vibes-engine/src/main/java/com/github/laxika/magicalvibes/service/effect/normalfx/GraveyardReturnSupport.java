@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -315,6 +316,20 @@ public class GraveyardReturnSupport {
         }
 
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            if (returnedPermanent != null && effect.enterAttacking()) {
+                UUID attackTargetId = entry.getAttackedTargetId();
+                if (attackTargetId == null && entry.getSourcePermanentId() != null) {
+                    Permanent sourcePermanent = gameQueryService.findPermanentById(
+                            gameData, entry.getSourcePermanentId());
+                    if (sourcePermanent != null) {
+                        attackTargetId = sourcePermanent.getAttackTarget();
+                    }
+                }
+                if (attackTargetId == null && effect.source() == GraveyardSearchScope.OPPONENT_GRAVEYARD) {
+                    attackTargetId = targetOwnerId;
+                }
+                returnedPermanent.setAttackTarget(attackTargetId);
+            }
             applyBattlefieldReturnRiders(gameData, controllerId, targetCard, effect, entry);
             trackAndLinkReanimatedPermanent(gameData, entry, effect, controllerId, targetCard, targetOwnerId);
             if (returnedPermanent != null
@@ -1873,6 +1888,20 @@ public class GraveyardReturnSupport {
                                          boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
                                          List<Permanent> simultaneouslyEntered,
                                          Set<Keyword> additionalKeywords, boolean enterTapped) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste,
+                exileAtEndStep, colorOverride, powerOverride, toughnessOverride, replaceSubtypes,
+                grantHasteUntilEndOfTurn, simultaneouslyEntered, additionalKeywords, enterTapped, false);
+    }
+
+    /** Variant that can remove the legendary supertype from the copied token. */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                         List<Permanent> simultaneouslyEntered,
+                                         Set<Keyword> additionalKeywords, boolean enterTapped,
+                                         boolean removeLegendary) {
         UUID controllerId = entry.getControllerId();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(
                 gameData, controllerId, sourceCard.hasType(CardType.CREATURE));
@@ -1890,7 +1919,14 @@ public class GraveyardReturnSupport {
             } else {
                 tokenCard.setColor(sourceCard.getColor());
             }
-            tokenCard.setSupertypes(sourceCard.getSupertypes());
+            if (removeLegendary && sourceCard.getSupertypes() != null) {
+                EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+                supertypes.addAll(sourceCard.getSupertypes());
+                supertypes.remove(CardSupertype.LEGENDARY);
+                tokenCard.setSupertypes(supertypes);
+            } else {
+                tokenCard.setSupertypes(sourceCard.getSupertypes());
+            }
             tokenCard.setPower(powerOverride != null ? powerOverride : sourceCard.getPower());
             tokenCard.setToughness(toughnessOverride != null ? toughnessOverride : sourceCard.getToughness());
             tokenCard.setCardText(sourceCard.getCardText());

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLa
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -1042,6 +1043,41 @@ class LandTapTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("AddManaWhenLandTappedForManaEffect")
+    class AddManaWhenLandTappedForMana {
+
+        @Test
+        @DisplayName("adds fixed-color mana when the source controller taps a land")
+        void addsManaForControllerLand() {
+            Permanent triggerPerm = createPermanent("Groundchuck & Dirtbag");
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN);
+            var ctx = new TriggerContext.LandTap(player1Id, UUID.randomUUID());
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isOne();
+        }
+
+        @Test
+        @DisplayName("does not add fixed-color mana when an opponent taps a land")
+        void ignoresOpponentLand() {
+            Permanent triggerPerm = createPermanent("Groundchuck & Dirtbag");
+            var effect = new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN);
+            var ctx = new TriggerContext.LandTap(player2Id, UUID.randomUUID());
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isZero();
         }
     }
 }

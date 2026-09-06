@@ -1486,7 +1486,8 @@ public class DamageTriggerCollectorService {
             int minTargets = effect instanceof ReturnCardFromGraveyardEffect returnEffect
                     && !returnEffect.upTo() ? 1 : 0;
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, sd.sourceControllerId(), new ArrayList<>(List.of(effect)), null, minTargets, 0));
+                    sourceCard, sd.sourceControllerId(), new ArrayList<>(List.of(effect)), null, minTargets, 0,
+                    match.permanent() != null && match.permanent().isAlternateCost()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger awaits graveyard target",
                     match.gameData().id, sourceCard.getName());

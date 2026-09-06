@@ -314,6 +314,25 @@ class CastingPermissionServiceTest {
         assertThat(svc.hasCastFromExiledWithSourcePermission(gd, player2Id, stashed.getId())).isFalse();
     }
 
+    @Test
+    @DisplayName("consumes all cards from one temporary normal-cost exile grant")
+    void consumesTemporaryNormalCostExileGrant() {
+        UUID sourcePermanentId = UUID.randomUUID();
+        UUID grantId = UUID.randomUUID();
+        Card first = new Card();
+        Card second = new Card();
+        gd.addToExile(player1Id, first, sourcePermanentId);
+        gd.addToExile(player1Id, second, sourcePermanentId);
+        gd.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+                grantId, sourcePermanentId, player1Id, first.getId(), false));
+        gd.exileCastPermissionsUntilEndOfTurn.add(new GameData.ExileCastPermission(
+                grantId, sourcePermanentId, player1Id, second.getId(), false));
+
+        assertThat(svc.consumeTemporaryCastFromExiledWithSource(gd, player1Id, first.getId())).isTrue();
+        assertThat(gd.exileCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(svc.hasCastFromExiledWithSourcePermission(gd, second.getId())).isFalse();
+    }
+
     @Nested
     @DisplayName("isSpellCastingAllowed — legendary sorcery restriction")
     class LegendarySorceryRestriction {

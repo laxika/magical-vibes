@@ -39,7 +39,7 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         if (accepted && canPay) {
-            lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
+            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry != null && effect.wrapped() != null) {
                 pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,

@@ -66,6 +66,8 @@ public class GraveyardTargetOperationState {
     public boolean castWithAdventure;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
+    /** Whether the source permanent was cast for an alternate cost when its trigger fired. */
+    public boolean sourceAlternateCostAtTrigger;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */
     public Integer triggeringPermanentPowerAtTrigger;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */

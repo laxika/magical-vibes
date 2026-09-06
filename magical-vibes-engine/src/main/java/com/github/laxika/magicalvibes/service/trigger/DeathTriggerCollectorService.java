@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1381,6 +1382,12 @@ public class DeathTriggerCollectorService {
         }
 
         CardEffect triggerEffect = conditional.wrapped();
+        if (triggerEffect instanceof ArtifactGraveyardCountersAwareEffect aware) {
+            if (ag.artifactCounters().isEmpty()) {
+                return false;
+            }
+            triggerEffect = aware.boundToArtifactGraveyardCounters(ag.artifactCounters());
+        }
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 || graveyardTargetingSupport.findTarget(List.of(triggerEffect)) != null) {
             CardEffect baked = snapshotArtifactManaValue(triggerEffect, ag.artifactManaValue());
@@ -1390,9 +1397,10 @@ public class DeathTriggerCollectorService {
             return true;
         }
 
+        boolean playerTargetOnly = !triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(),
-                new ArrayList<>(List.of(triggerEffect)), true,
+                new ArrayList<>(List.of(triggerEffect)), playerTargetOnly,
                 match.permanent().getCard().getTargetFilter(), 0, match.permanent().getId(),
                 new Permanent(match.permanent())));
         logArtifactGraveyard(match);

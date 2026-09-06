@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -2181,6 +2182,24 @@ class TargetLegalityServiceTest {
 
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryManaValuePredicate(3), player2Id))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryManaSpentLessThanManaValuePredicate only when mana spent is lower")
+        void matchesManaSpentLessThanManaValuePredicate() {
+            Card card = createCreature("Bear", CardColor.GREEN);
+            card.setManaCost("{2}{G}");
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            entry.setManaSpentToCast(2);
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaSpentLessThanManaValuePredicate(), player2Id))
+                    .isTrue();
+
+            entry.setManaSpentToCast(3);
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaSpentLessThanManaValuePredicate(), player2Id))
                     .isFalse();
         }
 

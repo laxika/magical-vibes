@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LeastToughnessDamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherControlledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPredicateRestOnBottomRandomEffectHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -68,6 +69,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
+    private final RevealUntilCardPredicateRestOnBottomRandomEffectHandler revealUntilCardHandler;
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,
                                                           PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
@@ -920,6 +922,13 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleRevealUntilCardPredicateAttackTarget(
+            GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.RevealUntilCardPredicateAttackTarget context) {
+        revealUntilCardHandler.completeAttackTargetChoice(gameData, attackTargetId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

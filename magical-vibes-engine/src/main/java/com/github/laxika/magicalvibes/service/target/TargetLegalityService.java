@@ -79,6 +79,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
@@ -501,6 +502,11 @@ public class TargetLegalityService {
                 break;
             }
             if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnCardsEffect) {
+                if (!returnCardsEffect.xScaled()
+                        && targetCardIds.size() < returnCardsEffect.minTargets()) {
+                    throw new IllegalStateException("Must target at least "
+                            + returnCardsEffect.minTargets() + " cards");
+                }
                 if (returnCardsEffect.dynamicMaxTargets() != null && xValue != null) {
                     int dynamicMaxTargets = amountEvaluationService.evaluate(gameData,
                             returnCardsEffect.dynamicMaxTargets(),
@@ -3802,6 +3808,10 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
             int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
             return manaValue <= maxManaValuePredicate.maxManaValue();
+        }
+        if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return stackEntry.getManaSpentToCast() < manaValue;
         }
         if (predicate instanceof StackEntryManaValueEqualsXPredicate) {
             // When X is unknown (target enumeration before X is chosen), match permissively —

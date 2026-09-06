@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,7 @@ public class DiscardTriggerCollectorService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsTrigger(value = OpponentCausedDiscardTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleOpponentCausedDiscard(TriggerMatchContext match,
@@ -183,6 +186,19 @@ public class DiscardTriggerCollectorService {
         log.info("Game {} - {} triggers on controller discard (damage to each opponent)",
                 gameData.id, sourceCard.getName());
         return true;
+    }
+
+    @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleConditionalDamageToEachOpponentOnDiscard(TriggerMatchContext match,
+            ConditionalEffect conditional, TriggerContext ctx) {
+        if (!(conditional.wrapped() instanceof DealDamageToPlayersEffect trigger)
+                || trigger.recipient() != DamageRecipient.EACH_OPPONENT
+                || !conditionEvaluationService.isInterveningIfMet(
+                        match.gameData(), conditional, match.permanent(), match.controllerId())) {
+            return false;
+        }
+
+        return enqueueDiscardTrigger(match, conditional, "conditional damage to each opponent");
     }
 
     @CollectsTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)

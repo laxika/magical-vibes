@@ -11,10 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * Returns targeted cards from the configured graveyard scope to the battlefield.
  *
  * <p>The one-argument form returns exactly the spell's paid X cards. The fixed-cap form returns up
- * to {@code maxTargets} cards and can restrict them to cards put into the graveyard from the
- * battlefield this turn. It can also put counters on each returned permanent. The dynamic-cap form
- * is used by ETB abilities whose cap comes from the cast context, such as multikicker payments.
- * The single-graveyard form can add haste and a delayed sacrifice rider to the returned permanents.</p>
+ * to {@code maxTargets} cards, or at least {@code minTargets} when configured, and can restrict
+ * them to cards put into the graveyard from the battlefield this turn. It can also put counters on
+ * each returned permanent. The dynamic-cap form is used by ETB abilities whose cap comes from the
+ * cast context, such as multikicker payments. The single-graveyard form can add haste and a delayed
+ * sacrifice rider to the returned permanents.</p>
  */
 public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         CardPredicate filter,
@@ -30,7 +31,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         GraveyardSearchScope source,
         boolean singleGraveyard,
         boolean grantHaste,
-        boolean sacrificeAtEndStep
+        boolean sacrificeAtEndStep,
+        int minTargets
 ) implements CardEffect {
 
     /** Creates the X-scaled form used by Return to the Ranks. */
@@ -113,8 +115,37 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               boolean singleGraveyard,
                                                               boolean grantHaste,
                                                               boolean sacrificeAtEndStep) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets,
+                maxTotalManaValue, grantColor, grantSubtype, counterType, counterCount, source,
+                singleGraveyard, grantHaste, sacrificeAtEndStep, 0);
+    }
+
+    /** Creates a fixed-cap form with a required minimum number of targets. */
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              int minTargets) {
+        this(filter, maxTargets, false, false, null, 0, null, null, null, 0,
+                GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, false, false, minTargets);
+    }
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+                                                              boolean fromBattlefieldThisTurn,
+                                                              boolean enterTapped,
+                                                              DynamicAmount dynamicMaxTargets,
+                                                              int maxTotalManaValue,
+                                                              CardColor grantColor,
+                                                              CardSubtype grantSubtype,
+                                                              CounterType counterType,
+                                                              int counterCount,
+                                                              GraveyardSearchScope source,
+                                                              boolean singleGraveyard,
+                                                              boolean grantHaste,
+                                                              boolean sacrificeAtEndStep,
+                                                              int minTargets) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
+        }
+        if (minTargets < 0 || minTargets > maxTargets) {
+            throw new IllegalArgumentException("minTargets must be between zero and maxTargets");
         }
         if (maxTotalManaValue < 0) {
             throw new IllegalArgumentException("maxTotalManaValue cannot be negative");
@@ -133,6 +164,7 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.singleGraveyard = singleGraveyard;
         this.grantHaste = grantHaste;
         this.sacrificeAtEndStep = sacrificeAtEndStep;
+        this.minTargets = minTargets;
     }
 
     public static ReturnTargetCardsFromGraveyardToBattlefieldEffect fromAllGraveyards(CardPredicate filter) {

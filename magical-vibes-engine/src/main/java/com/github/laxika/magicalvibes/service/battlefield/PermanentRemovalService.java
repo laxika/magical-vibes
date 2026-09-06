@@ -1414,7 +1414,8 @@ public class PermanentRemovalService {
             }
             if (wasArtifact && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
-                        gameData, ownerId, controllerId, target.getCard().getManaValue());
+                        gameData, ownerId, controllerId, target.getCard().getManaValue(),
+                        Map.copyOf(target.getCounters()));
             }
             if (wasEnchantment && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);

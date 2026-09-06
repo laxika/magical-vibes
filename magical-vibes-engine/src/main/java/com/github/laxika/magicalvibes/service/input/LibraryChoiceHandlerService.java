@@ -650,6 +650,7 @@ public class LibraryChoiceHandlerService {
                     : player.getUsername() + " chooses not to take a card.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
+            insertNoCardFollowUp(gameData, followUp);
             // Per ruling: if you find only one basic land with Cultivate, it must go to
             // the battlefield tapped — skipping the battlefield pick means finding zero,
             // so drop the pending hand search and shuffle.
@@ -1510,6 +1511,7 @@ public class LibraryChoiceHandlerService {
             Card chosenCard, UUID playerId) {
         LibrarySearchFollowUp.SelectedCardFollowUp selectedCardFollowUp = followUp.selectedCardFollowUp();
         if (selectedCardFollowUp != null
+                && selectedCardFollowUp.predicate() != null
                 && gameData.pendingEffectResolutionEntry != null
                 && predicateEvaluationService.matchesCardPredicate(
                         chosenCard, selectedCardFollowUp.predicate(), null, gameData, playerId)) {
@@ -1520,6 +1522,17 @@ public class LibraryChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex,
                     List.of(selectedCardFollowUp.effect()));
         }
+    }
+
+    private void insertNoCardFollowUp(GameData gameData, LibrarySearchFollowUp followUp) {
+        if (followUp.selectedCardFollowUp() == null
+                || followUp.selectedCardFollowUp().effectIfNoCardChosen() == null
+                || gameData.pendingEffectResolutionEntry == null) {
+            return;
+        }
+        gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                gameData.pendingEffectResolutionIndex,
+                List.of(followUp.selectedCardFollowUp().effectIfNoCardChosen()));
     }
 
     private void handleLibrarySearchCast(GameData gameData, Player player,
@@ -1537,6 +1550,7 @@ public class LibraryChoiceHandlerService {
             if (librarySearch.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
+            insertNoCardFollowUp(gameData, librarySearch.followUp());
             finishSearchAndResume(gameData);
             return;
         }
@@ -2050,6 +2064,15 @@ public class LibraryChoiceHandlerService {
                 || cardIds.size() > libraryRevealChoice.maxCount()) {
             throw new IllegalStateException("Invalid number of cards selected");
         }
+        if (libraryRevealChoice.totalManaValueBound() != null) {
+            int selectedManaValue = allCardsMatchingIds(libraryRevealChoice.allCards(), cardIds).stream()
+                    .mapToInt(Card::getManaValue)
+                    .sum();
+            if (selectedManaValue > libraryRevealChoice.totalManaValueBound()) {
+                throw new IllegalStateException("Selected cards exceed the total mana value limit of "
+                        + libraryRevealChoice.totalManaValueBound());
+            }
+        }
 
         UUID controllerId = libraryRevealChoice.playerId();
         List<Card> allRevealedCards = libraryRevealChoice.allCards();
@@ -2313,6 +2336,11 @@ public class LibraryChoiceHandlerService {
         }
 
         finishSearchAndResume(gameData);
+    }
+
+    private static List<Card> allCardsMatchingIds(List<Card> cards, List<UUID> ids) {
+        Set<UUID> selectedIds = new HashSet<>(ids);
+        return cards.stream().filter(card -> selectedIds.contains(card.getId())).toList();
     }
 
     private void handlePsychoticEpisodeChoice(GameData gameData, Player player,

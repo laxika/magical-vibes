@@ -29,7 +29,9 @@ import java.util.Set;
  * {@code plusOnePlusOneCountersOnReturn}, counters apply only if the exiled permanent had that
  * subtype. {@code returnUnderController} is only meaningful for {@link ReturnTiming#IMMEDIATE}
  * TARGET flickers and self-flickers that return under the effect controller's control.
- * {@code grantHaste} gives each returning permanent haste and is only meaningful for
+ * {@code returnAttacking} makes an immediate target flicker return tapped and attacking the
+ * defender recorded by the attack trigger. {@code grantHaste} gives each returning permanent
+ * haste and is only meaningful for
  * {@link ReturnTiming#AT_STEP}. {@code chooseAnyNumber} makes a controller-scoped flicker prompt
  * for any number of matching permanents instead of selecting all of them. When
  * {@code returnAtControllerNextStep} is true, a delayed return waits for the effect controller's
@@ -56,7 +58,8 @@ public record FlickerEffect(
         boolean addAdditionalEndStepIfFirst,
         CounterType counterTypeOnReturn,
         int counterAmountOnReturn,
-        Set<CardSubtype> bonusSubtypes) implements AttachedPermanentSelfTargetingEffect {
+        Set<CardSubtype> bonusSubtypes,
+        boolean returnAttacking) implements AttachedPermanentSelfTargetingEffect {
 
     public FlickerEffect {
         grantedKeywordsOnReturn = grantedKeywordsOnReturn == null
@@ -81,7 +84,7 @@ public record FlickerEffect(
                 loyaltyCountersOnPlaneswalkersOnReturn,
                 addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn,
                 chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst,
-                null, 0, Set.of());
+                null, 0, Set.of(), false);
     }
 
     public FlickerEffect(
@@ -102,6 +105,47 @@ public record FlickerEffect(
                 loyaltyCountersOnPlaneswalkersOnReturn,
                 addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn,
                 chooseAnyNumber, returnAtControllerNextStep, false);
+    }
+
+    public FlickerEffect(
+            FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+            TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+            CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+            boolean returnUnderController, boolean grantHaste,
+            boolean returnAtOwnerNextEndStep, boolean plusOnePlusOneCountersOnlyOnCreatures,
+            int loyaltyCountersOnPlaneswalkersOnReturn,
+            boolean addCounterIfReturnedUnderControllerOtherwiseTap,
+            Set<Keyword> grantedKeywordsOnReturn, boolean chooseAnyNumber,
+            boolean returnAtControllerNextStep, boolean addAdditionalEndStepIfFirst,
+            CounterType counterTypeOnReturn, int counterAmountOnReturn,
+            Set<CardSubtype> bonusSubtypes) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkersOnReturn,
+                addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn,
+                chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst,
+                counterTypeOnReturn, counterAmountOnReturn, bonusSubtypes, false);
+    }
+
+    public FlickerEffect(
+            FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
+            TurnStep returnStep, boolean returnTapped, CardSubtype bonusSubtype,
+            CardEffect bonusEffect, int plusOnePlusOneCountersOnReturn,
+            boolean returnUnderController, boolean grantHaste,
+            boolean returnAtOwnerNextEndStep, boolean plusOnePlusOneCountersOnlyOnCreatures,
+            int loyaltyCountersOnPlaneswalkersOnReturn,
+            boolean addCounterIfReturnedUnderControllerOtherwiseTap,
+            Set<Keyword> grantedKeywordsOnReturn, boolean chooseAnyNumber,
+            boolean returnAtControllerNextStep, boolean addAdditionalEndStepIfFirst,
+            boolean returnAttacking) {
+        this(scope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste,
+                returnAtOwnerNextEndStep, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkersOnReturn,
+                addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn,
+                chooseAnyNumber, returnAtControllerNextStep, addAdditionalEndStepIfFirst,
+                null, 0, Set.of(), returnAttacking);
     }
 
     public FlickerEffect(FlickerScope scope, PermanentPredicate filter, ReturnTiming timing,
@@ -274,6 +318,13 @@ public record FlickerEffect(
     public static FlickerEffect flickerTargetUnderYourControl() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
                 TurnStep.END_STEP, false, null, null, 0, true, false);
+    }
+
+    /** Immediately returns the target under your control, tapped and attacking the current defender. */
+    public static FlickerEffect flickerTargetUnderYourControlTappedAndAttacking() {
+        return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, true, null, null, 0, true, false,
+                false, false, 0, false, Set.of(), false, false, false, true);
     }
 
     /** Immediate flicker that returns the permanent with {@code counters} +1/+1 counters (Daydream). */

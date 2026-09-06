@@ -79,6 +79,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param cloakChosenPermanents when true, chosen permanents enter the battlefield cloaked
  * @param payLifePerSelectedCard life paid for each selected card, when non-zero
  * @param battlefieldSelectionFollowUp optional follow-up after battlefield selections
+ * @param selectedCardMayGoToHandIfBattlefieldDeclined when true, a declined battlefield pick may
+ *                                                     instead be put into hand
+ * @param chooseTotalManaValueAtMost when non-null, the selected cards' combined mana value may not
+ *                                  exceed this resolution-time amount
  */
 public record LookAtTopCardsEffect(
         DynamicAmount lookCount,
@@ -99,8 +103,27 @@ public record LookAtTopCardsEffect(
         boolean cloakChosenPermanents,
         int payLifePerSelectedCard,
         LibrarySelectionFollowUp battlefieldSelectionFollowUp,
-        boolean selectedCardMayGoToHandIfBattlefieldDeclined
+        boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+        DynamicAmount chooseTotalManaValueAtMost
 ) implements CombatDamageAmountAwareEffect {
+
+    public LookAtTopCardsEffect(
+            DynamicAmount lookCount, DynamicAmount chooseCount, CardPredicate choosePredicate,
+            LookDestination restDestination, boolean reveal,
+            LibrarySearchDestination chosenDestination, boolean optional,
+            boolean gainLifeEqualToChosenCardManaValue, DynamicAmount chooseManaValueAtMost,
+            CardEffect effectIfNoCardChosen, boolean recordChosenCount,
+            int loseLifePerSelectedCard, boolean exactChooseCount, boolean grantHaste,
+            boolean returnToHandAtEndStep, boolean cloakChosenPermanents,
+            int payLifePerSelectedCard, LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+            boolean selectedCardMayGoToHandIfBattlefieldDeclined) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination,
+                optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost,
+                effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount,
+                grantHaste, returnToHandAtEndStep, cloakChosenPermanents,
+                payLifePerSelectedCard, battlefieldSelectionFollowUp,
+                selectedCardMayGoToHandIfBattlefieldDeclined, null);
+    }
 
     public LookAtTopCardsEffect(
             DynamicAmount lookCount, DynamicAmount chooseCount, CardPredicate choosePredicate,
@@ -477,6 +500,17 @@ public record LookAtTopCardsEffect(
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
                 LibrarySearchDestination.BATTLEFIELD_TAPPED, true, false, null, null,
                 recordChosenCount);
+    }
+
+    /** You may put up to {@code maxCount} matching cards onto the battlefield within a total mana-value cap. */
+    public static LookAtTopCardsEffect mayPutUpToMatchingOntoBattlefieldRestOnBottomRandomWithinTotalManaValue(
+            int lookCount, CardPredicate choosePredicate, int maxCount, int maxTotalManaValue) {
+        return new LookAtTopCardsEffect(
+                new Fixed(lookCount), new Fixed(maxCount), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false,
+                LibrarySearchDestination.BATTLEFIELD, true, false, null,
+                null, false, 0, false, false, false, false, 0, null, false,
+                new Fixed(maxTotalManaValue));
     }
 
     /** Put one of the looked-at cards on top of your library and the rest on the bottom (Cream of the Crop). */

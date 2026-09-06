@@ -81,6 +81,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         int chooseManaValueAtMost = e.chooseManaValueAtMost() == null
                 ? Integer.MAX_VALUE
                 : Math.max(0, amountEvaluationService.evaluate(gameData, e.chooseManaValueAtMost(), ctx));
+        int chooseTotalManaValueAtMost = e.chooseTotalManaValueAtMost() == null
+                ? Integer.MAX_VALUE
+                : Math.max(0, amountEvaluationService.evaluate(
+                        gameData, e.chooseTotalManaValueAtMost(), ctx));
 
         // Nothing to look at (e.g. Shrine of Piercing Vision with no charge counters).
         if (lookCount <= 0) {
@@ -89,7 +93,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD
                 || e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
-            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
+            resolveMayPutOntoBattlefield(gameData, entry, e, lookCount, chooseCount,
+                    chooseManaValueAtMost, chooseTotalManaValueAtMost);
         } else if (e.chosenDestination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
             if (e.optional() && e.restDestination() == LookDestination.GRAVEYARD) {
                 resolveMayPutOneOnTopRestToGraveyard(gameData, entry, lookCount);
@@ -121,7 +126,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     //  Nissa, Genesis Mage −10: any number via LibraryRevealChoice + random bottom)
 
     private void resolveMayPutOntoBattlefield(GameData gameData, StackEntry entry,
-            LookAtTopCardsEffect e, int lookCount, int chooseCount, int chooseManaValueAtMost) {
+            LookAtTopCardsEffect e, int lookCount, int chooseCount, int chooseManaValueAtMost,
+            int chooseTotalManaValueAtMost) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, !e.reveal());
         if (result == null) return;
@@ -139,6 +145,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Card> matchingCards = topCards.stream()
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
+                .filter(card -> card.getManaValue() <= chooseTotalManaValueAtMost)
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, e.choosePredicate(), sourceCardId, gameData, controllerId))
                 .toList();
@@ -230,7 +237,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 maxCount, prompt, e.chosenDestination() == LibrarySearchDestination.BATTLEFIELD_TAPPED,
                 minCount, e.gainLifeEqualToChosenCardManaValue(), e.effectIfNoCardChosen(),
                 e.recordChosenCount(), e.cloakChosenPermanents(), false,
-                e.battlefieldSelectionFollowUp(), false, false));
+                e.battlefieldSelectionFollowUp(), false, chooseCount > 1,
+                chooseTotalManaValueAtMost == Integer.MAX_VALUE ? null : chooseTotalManaValueAtMost));
     }
 
     // ===== put one of the looked-at cards on top, rest on the bottom (Cream of the Crop) =====

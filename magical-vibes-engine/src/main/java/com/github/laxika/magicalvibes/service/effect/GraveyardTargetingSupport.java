@@ -142,7 +142,7 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnTargets) {
             int maxTargets = returnTargets.xScaled() ? 1
                     : returnTargets.hasTotalManaValueCap() ? Integer.MAX_VALUE : returnTargets.maxTargets();
-            int minTargets = returnTargets.xScaled() ? 1 : 0;
+            int minTargets = returnTargets.xScaled() ? 1 : returnTargets.minTargets();
             return new Target(returnTargets.filter(), returnTargets.source(),
                     "to the battlefield", maxTargets, minTargets);
         }

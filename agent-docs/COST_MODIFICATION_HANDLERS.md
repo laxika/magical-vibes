@@ -1,6 +1,6 @@
 # Cast-Cost Modification Handlers (`costmod`)
 
-One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect`. Its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell; `GameData.recordSpellCast` consumes it after a successful matching cast.
+One-shot reductions use `ReduceCastCostForNextSpellOfTypesThisTurnEffect` when the spell types are sufficient; its normal-effect handler evaluates the dynamic amount when it resolves, stores a pending player-scoped reduction, and `CastingCostService` exposes it only while computing the next matching spell. `ReduceCastCostForNextMatchingSpellEffect` supports arbitrary card predicates and evaluates its `DynamicAmount` at cast time, which is required for affinity-style counts. `GameData.recordSpellCast` consumes type-based reductions after a successful matching cast; matching-predicate floating reductions are consumed by `TriggerCollectionService` when the spell is cast.
 
 `ReduceColoredCastCostForMatchingSpellsEffectHandler` handles battlefield reductions that remove
 only matching colored components from a spell's mana cost. Unmatched colored reduction does not

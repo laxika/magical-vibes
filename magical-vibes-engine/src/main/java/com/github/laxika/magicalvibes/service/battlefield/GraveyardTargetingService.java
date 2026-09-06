@@ -998,7 +998,7 @@ public class GraveyardTargetingService {
                                                     ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
                                                     List<CardEffect> spellEffects) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType,
-                returnEffect.filter(), returnEffect.maxTargets(), spellEffects, 0, false,
+                returnEffect.filter(), returnEffect.maxTargets(), spellEffects, returnEffect.minTargets(), false,
                 returnEffect.fromBattlefieldThisTurn(), returnEffect.source(),
                 returnEffect.singleGraveyard(), null);
     }
@@ -1009,7 +1009,7 @@ public class GraveyardTargetingService {
                                                     int maxTargetsCap, Integer xValue,
                                                     List<CardEffect> spellEffects) {
         handleUpToNGraveyardSpellTargeting(gameData, controllerId, card, entryType,
-                returnEffect.filter(), maxTargetsCap, spellEffects, 0, false,
+                returnEffect.filter(), maxTargetsCap, spellEffects, returnEffect.minTargets(), false,
                 returnEffect.fromBattlefieldThisTurn(), returnEffect.source(),
                 returnEffect.singleGraveyard(), xValue);
     }
@@ -1052,6 +1052,10 @@ public class GraveyardTargetingService {
             matchingCards.removeIf(candidate -> matchingCards.stream()
                     .noneMatch(other -> !other.getId().equals(candidate.getId())
                             && gameQueryService.shareCreatureType(candidate, other)));
+        }
+
+        if (matchingCards.size() < minTargets) {
+            throw new IllegalStateException("Not enough legal graveyard targets");
         }
 
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());

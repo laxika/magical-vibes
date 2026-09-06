@@ -108,6 +108,10 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
+        register(PendingInteraction.TurtlesForeverSearchChoice.class,
+                this::projectTurtlesForeverSearchChoice);
+        register(PendingInteraction.TurtlesForeverOpponentChoice.class,
+                this::projectTurtlesForeverOpponentChoice);
         register(PendingInteraction.EcologicalAppreciationSearchChoice.class,
                 this::projectEcologicalAppreciationSearchChoice);
         register(PendingInteraction.EcologicalAppreciationOpponentChoice.class,
@@ -376,7 +380,7 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()),
                 exiledCardViews(gameData, interaction.validCardIds()),
                 1,
-                "Choose a creature card exiled with Lazav to copy until end of turn.");
+                "Choose a creature card exiled with " + interaction.sourceName() + " to copy.");
     }
 
     private InteractionPromptMessage projectTargetHandSpellCopyChoice(
@@ -620,6 +624,27 @@ public class InteractionPromptProjectionRegistry {
                 "Search your library for " + interaction.count()
                         + " cards to reveal. Your opponent chooses one of them for your hand; "
                         + "the rest go into your graveyard.");
+    }
+
+    private InteractionPromptMessage projectTurtlesForeverSearchChoice(
+            GameData gameData, PendingInteraction.TurtlesForeverSearchChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.pool()),
+                4,
+                "Choose exactly four legendary creature cards with different names from your library "
+                        + "and outside the game to reveal.");
+    }
+
+    private InteractionPromptMessage projectTurtlesForeverOpponentChoice(
+            GameData gameData, PendingInteraction.TurtlesForeverOpponentChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()),
+                cardViews(interaction.cards()),
+                2,
+                "Choose two cards to put into "
+                        + gameData.playerIdToName.get(interaction.controllerId())
+                        + "'s hand. Shuffle the rest into their library.");
     }
 
     private InteractionPromptMessage projectEcologicalAppreciationSearchChoice(

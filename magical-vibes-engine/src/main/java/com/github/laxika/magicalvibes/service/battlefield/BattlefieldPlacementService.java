@@ -259,7 +259,7 @@ public class BattlefieldPlacementService {
             triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlacedOnEntry);
         }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent, controllerId);
         }
         // "Whenever a -1/-1 counter is put on a creature" (Flourishing Defenses) also sees a creature
         // that enters with -1/-1 counters (e.g. Leech Bonder, or persist) — CR ruling.
@@ -274,7 +274,8 @@ public class BattlefieldPlacementService {
                 continue;
             }
             int added = counter.getValue() - countersBeforeEntry.getOrDefault(counter.getKey(), 0);
-            permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(gameData, permanent, added);
+                permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(
+                        gameData, permanent, added, controllerId);
         }
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())

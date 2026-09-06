@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -1603,7 +1604,7 @@ public class TriggeredAbilityQueueService {
                     break;
                 } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect) {
                     filter = returnEffect.filter();
-                    minTargets = 0;
+                    minTargets = returnEffect.xScaled() ? 1 : returnEffect.minTargets();
                     if (returnEffect.hasTotalManaValueCap()) {
                         anyNumber = true;
                         maxTotalManaValue = returnEffect.maxTotalManaValue();
@@ -1725,12 +1726,19 @@ public class TriggeredAbilityQueueService {
             GraveyardSearchScope scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
             GraveyardTargetingSupport.Target describedTarget =
                     graveyardTargetingSupport.findTarget(pending.effects());
+            ReturnUpToOneOfEachFilterFromGraveyardToHandEffect oneOfEachFilterEffect = pending.effects().stream()
+                    .filter(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::isInstance)
+                    .map(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::cast)
+                    .findFirst()
+                    .orElse(null);
             ReturnCardFromGraveyardEffect returnEffect = pending.effects().stream()
                     .map(this::targetedReturnEffect)
                     .filter(java.util.Objects::nonNull)
                     .findFirst()
                     .orElse(null);
-            if (returnEffect != null) {
+            if (oneOfEachFilterEffect != null) {
+                scope = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
+            } else if (returnEffect != null) {
                 filter = returnEffect.filter();
                 lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                 manaValueEqualsX = returnEffect.requiresManaValueEqualsX();
@@ -1803,9 +1811,15 @@ public class TriggeredAbilityQueueService {
                     if (graveyardCard.getManaValue() > maxManaValue) {
                         continue;
                     }
-                    if (filter == null || predicateEvaluationService.matchesCardPredicate(
+                    boolean matches = oneOfEachFilterEffect != null
+                            ? oneOfEachFilterEffect.filters().stream().anyMatch(candidateFilter ->
+                            predicateEvaluationService.matchesCardPredicate(
+                                    graveyardCard, candidateFilter, pending.sourceCard().getId(), gameData, playerId,
+                                    null, pending.sourcePowerAtTrigger()))
+                            : filter == null || predicateEvaluationService.matchesCardPredicate(
                             graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId,
-                            null, pending.sourcePowerAtTrigger())) {
+                            null, pending.sourcePowerAtTrigger());
+                    if (matches) {
                         matchingCards.add(graveyardCard);
                     }
                 }
@@ -1825,6 +1839,7 @@ public class TriggeredAbilityQueueService {
                             new ArrayList<>(pending.effects()),
                             pending.xValue());
                     entry.setNonTargeting(true);
+                    entry.setAlternateCost(pending.sourceAlternateCostAtTrigger());
                     gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s ability triggers with no graveyard targets."));
@@ -1842,6 +1857,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.controllerId = pending.controllerId();
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
             gameData.graveyardTargetOperation.xValue = pending.xValue();
+            gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =
+                    pending.sourceAlternateCostAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger =
                     pending.sourcePowerAtTrigger();
             // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
@@ -1855,13 +1872,17 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
-            String filterLabel = CardPredicateUtils.describeFilter(filter);
+            String filterLabel = oneOfEachFilterEffect != null && !oneOfEachFilterEffect.filters().isEmpty()
+                    ? CardPredicateUtils.describeFilter(oneOfEachFilterEffect.filters().getFirst())
+                    : CardPredicateUtils.describeFilter(filter);
             String zoneLabel = pending.graveyardOwnerId() != null ? "that player's graveyard" : switch (scope) {
                 case ALL_GRAVEYARDS -> "a graveyard";
                 case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
                 case CONTROLLERS_GRAVEYARD -> "your graveyard";
             };
-            int requestedMaxTargets = pending.maxCount() > 0
+            int requestedMaxTargets = oneOfEachFilterEffect != null
+                    ? oneOfEachFilterEffect.filters().size()
+                    : pending.maxCount() > 0
                     ? pending.maxCount()
                     : describedTarget == null ? 1 : describedTarget.maxTargets();
             int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
@@ -1974,6 +1995,8 @@ public class TriggeredAbilityQueueService {
         gameData.graveyardTargetOperation.controllerId = pending.controllerId();
         gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
         gameData.graveyardTargetOperation.xValue = pending.xValue();
+        gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger =
+                pending.sourceAlternateCostAtTrigger();
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
 
         if (opponents.size() == 1) {

@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachLeavingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetForEachLeavingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -81,6 +82,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1113,6 +1115,43 @@ class DeathTriggerCollectorServiceTest {
             var effect = new TriggeringArtifactControllerConditionalEffect(
                     new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER));
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER2_ID);
+
+            assertThat(svc.handleArtifactGraveyardControllerConditional(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();
+            assertThat(gd.pendingInteractions).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Controller conditional binds the artifact's counter snapshot")
+        void controllerConditionalBindsArtifactCounters() {
+            Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
+            Permanent perm = new Permanent(watcher);
+            var effect = new TriggeringArtifactControllerConditionalEffect(
+                    new PutCountersOnTargetForEachLeavingSourceCountersEffect(
+                            new PermanentIsCreaturePredicate()));
+            var ctx = new TriggerContext.ArtifactGraveyard(
+                    PLAYER1_ID, PLAYER1_ID, null, 0,
+                    Map.of(CounterType.PLUS_ONE_PLUS_ONE, 2, CounterType.CHARGE, 3));
+
+            assertThat(svc.handleArtifactGraveyardControllerConditional(
+                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            var pending = (PermanentChoiceContext.SpellTargetTriggerAnyTarget)
+                    gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            var bound = (PutCountersOnTargetForEachLeavingSourceCountersEffect) pending.effects().getFirst();
+            assertThat(bound.counters()).containsExactlyInAnyOrderEntriesOf(
+                    Map.of(CounterType.PLUS_ONE_PLUS_ONE, 2, CounterType.CHARGE, 3));
+        }
+
+        @Test
+        @DisplayName("Controller conditional does not fire when the artifact had no counters")
+        void controllerConditionalDoesNotFireWithoutArtifactCounters() {
+            Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
+            Permanent perm = new Permanent(watcher);
+            var effect = new TriggeringArtifactControllerConditionalEffect(
+                    new PutCountersOnTargetForEachLeavingSourceCountersEffect(
+                            new PermanentIsCreaturePredicate()));
+            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
             assertThat(svc.handleArtifactGraveyardControllerConditional(
                     match(perm, PLAYER1_ID, effect), effect, ctx)).isFalse();

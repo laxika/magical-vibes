@@ -1240,6 +1240,7 @@ public class GraveyardChoiceHandlerService {
             gameData.graveyardTargetOperation.controllerId = null;
             gameData.graveyardTargetOperation.effects = null;
             gameData.graveyardTargetOperation.sourcePermanentId = null;
+            gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1339,6 +1340,9 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.physicalCard = null;
         gameData.graveyardTargetOperation.castWithAdventure = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
+        boolean pendingSourceAlternateCostAtTrigger =
+                gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger;
+        gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
@@ -1450,6 +1454,7 @@ public class GraveyardChoiceHandlerService {
             if (pendingTriggeringPermanentPowerAtTrigger != null) {
                 triggeredEntry.setTriggeringPermanentPowerAtTrigger(pendingTriggeringPermanentPowerAtTrigger);
             }
+            triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);
             gameData.stack.add(triggeredEntry);
             triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);
 

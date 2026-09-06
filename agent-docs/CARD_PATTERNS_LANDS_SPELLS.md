@@ -218,6 +218,7 @@ on what the mana may pay for.
 | Draw + any-player pay gate + discard | `r/RhysticScrying.java` | DrawCardEffect(3) + MayPayManaEffect("{2}", DiscardEffect(3, CONTROLLER), ..., MayPayPayer.ANY_PLAYER) |
 | Land: choose color, then any-player pay gate prevents mana | `r/RhysticCave.java` | `ChooseColorAtResolutionEffect` + `MayPayManaEffect("{1}", ClearChosenColorEffect(), ..., MayPayPayer.ANY_PLAYER, AwardManaOfChosenColorEffect())`; the ability is intentionally non-mana so it resolves on the stack and cannot be activated during spell/ability payment |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |
+| Each player may discard hand and draw seven | `r/RaphaelsTechnique.java` | `EachPlayerMayDiscardHandThenDrawEffect(7)` — each player chooses independently in APNAP order; all choices finish before accepted players discard and draw |
 | Each player discards hand, then creates per-player tokens | `a/AwakenTheErstwhile.java` | `EachPlayerDiscardsHandThenCreatesTokensEffect(CreateTokenEffect.blackZombie(1))` — each player creates one token per card they personally discarded |
 | Each other player may draw up to N | `i/IndenturedDjinn.java` | ON_ENTER_BATTLEFIELD `EachOtherPlayerMayDrawUpToNCardsEffect(N)` — each other player chooses independently in APNAP order |
 | Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |

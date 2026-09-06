@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -376,6 +377,28 @@ class StepTriggerServiceTest {
     @Nested
     @DisplayName("handleUpkeepTriggers")
     class HandleUpkeepTriggers {
+
+        @Test
+        @DisplayName("Random discard delayed trigger waits for the controller's next upkeep")
+        void randomDiscardDelayedTriggerWaitsForControllerUpkeep() {
+            Card source = createCardWithName("Casey Jones, Vigilante");
+            gd.queueDelayedAction(new RandomDiscardCardsAtNextUpkeep(player1Id, 3, source));
+
+            gd.activePlayerId = player2Id;
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).hasSize(1);
+
+            gd.activePlayerId = player1Id;
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.getDelayedActions(RandomDiscardCardsAtNextUpkeep.class)).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve())
+                    .containsExactly(new DiscardEffect(3, DiscardRecipient.CONTROLLER, true));
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        }
 
         @Test
         @DisplayName("Opponent-upkeep emblem triggers for the active opponent")

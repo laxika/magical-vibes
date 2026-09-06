@@ -239,6 +239,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
@@ -2736,6 +2737,8 @@ public class PredicateEvaluationService {
                     entry.getCard().getManaValue() + entry.getXValue() == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
                     entry.getCard().getManaValue() + entry.getXValue() <= maxManaValue.maxManaValue();
+            case StackEntryManaSpentLessThanManaValuePredicate ignored ->
+                    entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue();
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;

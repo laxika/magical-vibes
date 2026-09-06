@@ -167,6 +167,7 @@ import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.DuringCombat;
+import com.github.laxika.magicalvibes.model.condition.DuringYourDeclareBlockers;
 import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
@@ -739,6 +740,10 @@ public class ConditionEvaluationService {
                     allMatchingCreaturesAttack(gameData, ctx, c.filter());
             case DuringCombat ignored ->
                     gameData.currentStep != null && gameData.currentStep.isCombatPhase();
+            case DuringYourDeclareBlockers ignored ->
+                    gameData.currentStep == TurnStep.DECLARE_BLOCKERS
+                            && ctx.controllerId() != null
+                            && ctx.controllerId().equals(gameData.activePlayerId);
             case FirstCombatPhase ignored ->
                     gameData.combatPhasesThisTurn == 1;
             case MinimumAttackers c ->

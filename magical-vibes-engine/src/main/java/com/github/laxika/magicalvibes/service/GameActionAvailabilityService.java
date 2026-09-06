@@ -1259,15 +1259,19 @@ public class GameActionAvailabilityService {
                 continue;
             }
 
-            if (!castingPermissionService.canCastWithTiming(gameData, playerId, castHalf,
+            boolean sneakPermission = isGrantedCyclingGraveyardCast
+                    && filteredGraveyardPermission.get().permission().sneak();
+            if (!sneakPermission && !castingPermissionService.canCastWithTiming(gameData, playerId, castHalf,
                     isActivePlayer, isMainPhase, stackEmpty)) {
                 continue;
             }
 
-            // A GraveyardCast may override the normal mana cost with an alternate one paid instead
-            // (e.g. Worldheart Phoenix's "by paying {W}{U}{B}{R}{G}").
+            // A GraveyardCast or a static permission may override the normal mana cost with an
+            // alternate one paid instead (e.g. Worldheart Phoenix or Ninja Teen).
             String graveyardAlternateManaCost = isGraveyardCast
                     ? graveyardCast.map(GraveyardCast::alternateManaCost).orElse(null)
+                    : isGrantedCyclingGraveyardCast
+                    ? filteredGraveyardPermission.get().permission().alternateManaCost()
                     : null;
             // GraveyardCast, granted flashback, emblem flashback, granted graveyard cast, and granted
             // graveyard play use the card's mana cost
@@ -1395,6 +1399,15 @@ public class GameActionAvailabilityService {
                 }
             } else if (cost instanceof DiscardCardCastingCost) {
                 if (gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
+                    return false;
+                }
+            } else if (cost instanceof ReturnPermanentsCost returnCost) {
+                List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+                long matchingCount = battlefield.stream()
+                        .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, permanent, returnCost.filter()))
+                        .count();
+                if (matchingCount < returnCost.count()) {
                     return false;
                 }
             } else {

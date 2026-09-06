@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -45,6 +47,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -87,6 +90,9 @@ class DiscardTriggerCollectorServiceTest {
 
     @Mock
     private LifeSupport lifeSupport;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
     private DiscardTriggerCollectorService sut;
@@ -591,6 +597,26 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(buccaneer.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+
+        @Test
+        @DisplayName("queues conditional damage when the condition is met")
+        void queuesConditionalDamageTrigger() {
+            Permanent classPermanent = createPermanent("Cool but Rude");
+            var effect = new ConditionalEffect(
+                    new SourceCounterThreshold(1, CounterType.LEVEL),
+                    new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+            when(conditionEvaluationService.isInterveningIfMet(
+                    eq(gd), eq(effect), eq(classPermanent), eq(player1Id))).thenReturn(true);
+
+            boolean result = registry.dispatch(
+                    match(classPermanent, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
         }
     }
 

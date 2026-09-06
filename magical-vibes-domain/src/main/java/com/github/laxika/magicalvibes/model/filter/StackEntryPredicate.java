@@ -22,6 +22,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryIsSingleTargetPredicate,
         StackEntryManaValuePredicate,
         StackEntryMaxManaValuePredicate,
+        StackEntryManaSpentLessThanManaValuePredicate,
         StackEntryManaValueEqualsXPredicate,
         StackEntryManaValueEqualsSourceCountersPredicate,
         StackEntryManaValueEqualsSourcePowerPredicate,

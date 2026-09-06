@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -26,12 +28,19 @@ public class TargetPlayerGainsLifeEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetPlayerGainsLifeEffect) effect;
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null) {
+        List<UUID> targetPlayerIds = entry.targetsForEffect(effect);
+        if (targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
+            targetPlayerIds = Collections.singletonList(entry.getTargetId());
+        }
+        if (targetPlayerIds.isEmpty()) {
             return;
         }
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, null));
-        lifeSupport.applyGainLife(gameData, targetPlayerId, amount);
+        for (UUID targetPlayerId : targetPlayerIds) {
+            if (gameData.playerIds.contains(targetPlayerId)) {
+                lifeSupport.applyGainLife(gameData, targetPlayerId, amount);
+            }
+        }
     }
 }

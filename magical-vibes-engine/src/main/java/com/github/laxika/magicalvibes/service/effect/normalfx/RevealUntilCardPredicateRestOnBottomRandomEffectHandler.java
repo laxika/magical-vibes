@@ -7,13 +7,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,6 +37,8 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AttackLegalityService attackLegalityService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -74,6 +79,13 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
         boolean toBattlefield = typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD;
         Permanent permanent = null;
         if (foundCard != null) {
+            revealedCards.remove(foundCard);
+            if (toBattlefield && typedEffect.enterTappedAndAttacking()) {
+                beginAttackTargetChoice(gameData, new PermanentChoiceContext.RevealUntilCardPredicateAttackTarget(
+                        entry.getCard(), controllerId, foundCard, revealedCards));
+                return;
+            }
+
             if (toBattlefield) {
                 permanent = new Permanent(foundCard);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
@@ -89,7 +101,6 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
                         playerName + " puts " + foundCard.getName() + " into their hand."));
             }
 
-            revealedCards.remove(foundCard);
         } else {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library — no matching card was found."));
@@ -106,6 +117,59 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
         }
         if (permanent != null && !gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
+        }
+    }
+
+    private void beginAttackTargetChoice(
+            GameData gameData, PermanentChoiceContext.RevealUntilCardPredicateAttackTarget context) {
+        var validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, context.controllerId());
+        List<UUID> validPlayerIds = gameData.orderedPlayerIds.stream()
+                .filter(validTargetIds::contains)
+                .toList();
+        List<UUID> validPermanentIds = gameData.orderedPlayerIds.stream()
+                .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
+                .filter(permanent -> validTargetIds.contains(permanent.getId()))
+                .map(Permanent::getId)
+                .toList();
+
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginAnyTargetChoice(
+                gameData, context.controllerId(), validPermanentIds, validPlayerIds,
+                "Choose the player, planeswalker, or battle for "
+                        + context.foundCard().getName() + " to attack.");
+    }
+
+    public void completeAttackTargetChoice(
+            GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.RevealUntilCardPredicateAttackTarget context) {
+        List<Card> deck = gameData.playerDecks.get(context.controllerId());
+        if (deck != null && !context.remainingRevealedCards().isEmpty()) {
+            List<Card> remainingRevealedCards = new ArrayList<>(context.remainingRevealedCards());
+            Collections.shuffle(remainingRevealedCards);
+            deck.addAll(remainingRevealedCards);
+        }
+
+        Permanent permanent = new Permanent(context.foundCard());
+        permanent.tap();
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, context.controllerId(), permanent);
+        if (context.foundCard().hasType(CardType.CREATURE)) {
+            permanent.setAttacking(true);
+            permanent.setAttackTarget(attackTargetId);
+        }
+        gameLogService.append(gameData,
+                GameLog.cardThen(context.foundCard(), " enters the battlefield tapped and attacking."));
+
+        if (context.foundCard().hasType(CardType.PLANESWALKER)
+                && context.foundCard().getLoyalty() != null) {
+            permanent.setCounterCount(CounterType.LOYALTY, context.foundCard().getLoyalty());
+            permanent.setSummoningSick(false);
+        }
+        if (context.foundCard().hasType(CardType.CREATURE)) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, context.controllerId(), context.foundCard(), null, false);
+        }
+        if (!gameData.interaction.isAwaitingInput()) {
+            legendRuleService.checkLegendRule(gameData, context.controllerId());
         }
     }
 }

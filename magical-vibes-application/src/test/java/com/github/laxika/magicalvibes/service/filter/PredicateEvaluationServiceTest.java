@@ -120,6 +120,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySupertypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -1933,6 +1934,26 @@ class PredicateEvaluationServiceTest {
             StackEntryMaxManaValuePredicate predicate = new StackEntryMaxManaValuePredicate(3);
             assertThat(evaluator.matchesStackEntryPredicate(cheapEntry, predicate, null)).isTrue();
             assertThat(evaluator.matchesStackEntryPredicate(expensiveEntry, predicate, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("matches a stack entry when mana spent is less than mana value")
+        void matchesManaSpentLessThanManaValue() {
+            Card card = new Card();
+            card.setName("Instant");
+            card.setType(CardType.INSTANT);
+            card.setManaCost("{2}{U}");
+            StackEntry entry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, card, player1Id,
+                    "Instant", new ArrayList<>());
+
+            entry.setManaSpentToCast(2);
+            assertThat(evaluator.matchesStackEntryPredicate(entry,
+                    new StackEntryManaSpentLessThanManaValuePredicate(), null)).isTrue();
+
+            entry.setManaSpentToCast(3);
+            assertThat(evaluator.matchesStackEntryPredicate(entry,
+                    new StackEntryManaSpentLessThanManaValuePredicate(), null)).isFalse();
         }
 
         private StackEntry instantControlledBy(UUID controllerId) {

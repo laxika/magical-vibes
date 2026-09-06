@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -51,6 +52,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final CreateTokenEffectHandler createTokenEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,7 +79,10 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = effect.searchPlayer() == LibrarySearchPlayer.ACTIVE_PLAYER
                 ? entry.getActivePlayerId() : entry.getControllerId();
         if (controllerId == null) return;
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) return;
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId, effect.shuffleAfterSelection())) {
+            insertNoCardFollowUp(gameData, entry, followUp);
+            return;
+        }
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
 
@@ -98,6 +103,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
+            insertNoCardFollowUp(gameData, entry, followUp);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty."
                     + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
@@ -108,6 +114,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
+            insertNoCardFollowUp(gameData, entry, followUp);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library."
                     + (effect.shuffleAfterSelection() ? " Library is shuffled." : "")));
             return;
@@ -161,6 +168,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
+            insertNoCardFollowUp(gameData, entry, followUp);
             // Pluralize the target description ("artifact card" -> "artifact cards", "card named X"
             // -> "cards named X") by promoting the first whole-word "card"; a mana-value-bound
             // description stays singular ("creature card with mana value N").
@@ -202,6 +210,21 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         log.info("Game {} - {} searches library for {} card(s) to {} ({} matches)",
                 gameData.id, playerName, count, destination, matchingCards.size());
+    }
+
+    private void insertNoCardFollowUp(GameData gameData, StackEntry entry, LibrarySearchFollowUp followUp) {
+        if (followUp.selectedCardFollowUp() == null
+                || followUp.selectedCardFollowUp().effectIfNoCardChosen() == null) {
+            return;
+        }
+        CardEffect effect = followUp.selectedCardFollowUp().effectIfNoCardChosen();
+        if (gameData.interaction.isAwaitingInput()
+                && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(effect));
+        } else if (effect instanceof CreateTokenEffect createTokenEffect) {
+            createTokenEffectHandler.resolve(gameData, entry, createTokenEffect);
+        }
     }
 
     private Permanent resolveSource(GameData gameData, StackEntry entry) {

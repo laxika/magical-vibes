@@ -157,6 +157,7 @@ public sealed interface Condition permits
         DidntGainLifeThisTurn,
         DidntPlayLandThisTurn,
         DuringCombat,
+        DuringYourDeclareBlockers,
         EnteredFromZone,
         ExiledCardTypeThreshold,
         Enchanted,

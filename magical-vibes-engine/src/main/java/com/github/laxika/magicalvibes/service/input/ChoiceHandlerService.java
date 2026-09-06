@@ -327,6 +327,10 @@ public class ChoiceHandlerService {
             handleTargetCreatureHexproofFromChosenColorChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.BecomeChosenColorAndGainHexproofChoice ctx) {
+            handleBecomeChosenColorAndGainHexproofChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.MassProtectionColorChoice ctx) {
             handleMassProtectionColorChoice(gameData, colorName, ctx);
             return;
@@ -2570,6 +2574,35 @@ public class ChoiceHandlerService {
                             + colorName + " creatures until end of turn."));
             log.info("Game {} - {} gains hexproof from {} and can't be blocked by {} creatures until end of turn",
                     gameData.id, target.getCard().getName(), colorName, colorName);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleBecomeChosenColorAndGainHexproofChoice(GameData gameData, String chosenValue,
+                                                               ChoiceContext.BecomeChosenColorAndGainHexproofChoice ctx) {
+        CardColor chosenColor = CardColor.valueOf(chosenValue);
+        gameData.interaction.clearAwaitingInput();
+
+        String colorName = chosenColor.name().charAt(0) + chosenColor.name().substring(1).toLowerCase();
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target != null) {
+            target.getTransientColors().clear();
+            target.getTransientColors().add(chosenColor);
+            target.setColorOverridden(true);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
+                    new GrantColorUntilEndOfTurnEffect(chosenColor), target.getId(), null, null,
+                    EffectDuration.UNTIL_END_OF_TURN, 0));
+            gameData.permanentHexproofFromColorsThisTurn
+                    .computeIfAbsent(target.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                    .add(chosenColor);
+
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " becomes " + colorName.toLowerCase() + " and gains hexproof from "
+                            + colorName.toLowerCase() + " until end of turn."));
+            log.info("Game {} - {} becomes {} and gains hexproof from {} until end of turn",
+                    gameData.id, target.getCard().getName(), colorName.toLowerCase(), colorName.toLowerCase());
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

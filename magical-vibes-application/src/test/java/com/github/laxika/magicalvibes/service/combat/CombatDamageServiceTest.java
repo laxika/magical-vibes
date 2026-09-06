@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -1245,6 +1246,24 @@ class CombatDamageServiceTest {
             StackEntry triggerEntry = gameData.stack.stream()
                     .filter(se -> se.getEffectsToResolve().stream()
                             .anyMatch(e -> e instanceof ConditionalEffect))
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(triggerEntry.getEventValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Sequence combat damage trigger snapshots the damage amount for nested steps")
+        void sequenceCombatDamageTriggerSnapshotsDamageAmount() {
+            addAttackerWithEffect("April", 3, 3,
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    SequenceEffect.of(
+                            new DrawCardEffect(new EventValue()),
+                            new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            StackEntry triggerEntry = gameData.stack.stream()
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(SequenceEffect.class::isInstance))
                     .findFirst()
                     .orElseThrow();
             assertThat(triggerEntry.getEventValue()).isEqualTo(3);

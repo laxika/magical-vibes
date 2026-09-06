@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -428,15 +429,25 @@ public sealed interface TriggerContext {
     record ArtifactGraveyard(UUID graveyardOwnerId,
                              UUID artifactControllerId,
                              Card artifactCard,
-                             int artifactManaValue) implements TriggerContext {
+                             int artifactManaValue,
+                             Map<CounterType, Integer> artifactCounters) implements TriggerContext {
+
+        public ArtifactGraveyard {
+            artifactCounters = Map.copyOf(artifactCounters);
+        }
 
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId) {
-            this(graveyardOwnerId, artifactControllerId, null, 0);
+            this(graveyardOwnerId, artifactControllerId, null, 0, Map.of());
         }
 
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId, Card artifactCard) {
             this(graveyardOwnerId, artifactControllerId, artifactCard,
-                    artifactCard == null ? 0 : artifactCard.getManaValue());
+                    artifactCard == null ? 0 : artifactCard.getManaValue(), Map.of());
+        }
+
+        public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId,
+                                 Card artifactCard, int artifactManaValue) {
+            this(graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue, Map.of());
         }
     }
 

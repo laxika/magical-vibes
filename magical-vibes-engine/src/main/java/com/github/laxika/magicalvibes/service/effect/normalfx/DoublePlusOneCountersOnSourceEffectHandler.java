@@ -40,6 +40,6 @@ public class DoublePlusOneCountersOnSourceEffectHandler implements NormalEffectH
 
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, current * 2);
         permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, source);
-        permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source);
+        permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source, entry.getControllerId());
     }
 }

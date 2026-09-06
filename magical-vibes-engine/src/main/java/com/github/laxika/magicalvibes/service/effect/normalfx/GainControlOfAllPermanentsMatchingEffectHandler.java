@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMat
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,8 @@ import org.springframework.stereotype.Component;
  * Resolves {@link GainControlOfAllPermanentsMatchingEffect} (Karrthus, Tyrant of Jund). Gains the
  * controller permanent control of every permanent matching the effect's predicate that they do not
  * already control, reusing the layer-2 control machinery with a per-permanent
- * {@link GainControlOfTargetEffect} floating effect.
+ * {@link GainControlOfTargetEffect} floating effect. Optional rider effects are resolved in list
+ * order for the snapshot of permanents gained by this resolution, after all control changes.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
 
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,6 +63,22 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
                     controlEffect, duration.toEffectDuration(), null,
                     entry.getCard().getName());
+        }
+
+        for (CardEffect thenEffect : e.thenEffects()) {
+            EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
+            if (handler == null) {
+                continue;
+            }
+            for (Permanent permanent : toSeize) {
+                UUID previousTargetId = entry.getTargetId();
+                entry.setTargetId(permanent.getId());
+                try {
+                    handler.resolve(gameData, entry, thenEffect);
+                } finally {
+                    entry.setTargetId(previousTargetId);
+                }
+            }
         }
     }
 }

@@ -3202,6 +3202,8 @@ public class SpellCastingService {
         if (buyback && buybackEffect != null && buybackEffect.hasLifeCost()) {
             additionalSpellCostService.validatePayLifeCost(gameData, player, card, buybackEffect.lifeCost());
         }
+        UUID sneakAttackTargetId = findSneakAttackTargetId(
+                gameData, playerId, card, alternateCostSacrificePermanentIds);
         hand.remove(cardIndex);
         int stackBeforeCastingCosts = gameData.stack.size();
         if (buyback && buybackEffect != null && buybackEffect.hasDiscardCost()) {
@@ -3471,6 +3473,10 @@ public class SpellCastingService {
             }
             entry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
             entry.setAlternateCost(usingAlternateCost);
+            if (usingAlternateCost && isSneakAlternateCost(card)) {
+                entry.setEntersTapped(true);
+                entry.setAttackedTargetId(sneakAttackTargetId);
+            }
             entry.setWebSlingingReturnedCreatureManaValue(webSlingingReturnedCreatureManaValue);
             entry.setCastTransformed(castModalBackFace);
             if (kicked && kickerEffect != null) {
@@ -4172,6 +4178,10 @@ public class SpellCastingService {
                                 c, returnToBattlefieldEffect.filter(), card.getId(), gameData,
                                 playerId, null, null, targetXValue))
                         .count();
+                if (matchingCount < returnToBattlefieldEffect.minTargets()
+                        || maxTargets < returnToBattlefieldEffect.minTargets()) {
+                    throw new IllegalStateException("Not enough legal graveyard targets");
+                }
                 if (matchingCount > 0 && maxTargets > 0) {
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(
                             gameData, playerId, card, entryType, returnToBattlefieldEffect,
@@ -6409,7 +6419,9 @@ public class SpellCastingService {
         boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
-        if (!castingPermissionService.canCastWithTiming(gameData, playerId, castHalf,
+        boolean sneakPermission = isGrantedCyclingGraveyardCast
+                && filteredGraveyardPermission.get().permission().sneak();
+        if (!sneakPermission && !castingPermissionService.canCastWithTiming(gameData, playerId, castHalf,
                 isActivePlayer, isMainPhase, stackEmpty)) {
             throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
@@ -6585,9 +6597,13 @@ public class SpellCastingService {
                     retraceDiscardHandCardIndex, exileGraveyardCardIndices);
         }
         if (isGrantedCyclingGraveyardCast) {
-            validateGraveyardCastAdditionalCosts(gameData, playerId, filteredGraveyardAdditionalCosts,
-                    retraceDiscardHandCardIndex);
+            validateGraveyardCastAdditionalCosts(gameData, player, filteredGraveyardAdditionalCosts,
+                    retraceDiscardHandCardIndex, sacrificePermanentId);
         }
+        UUID sneakAttackTargetId = isGrantedCyclingGraveyardCast
+                && filteredGraveyardPermission.get().permission().sneak()
+                ? findSneakAttackTargetId(gameData, sacrificePermanentId)
+                : null;
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt,
                 grantedFlashbackOption, harmonizeOpt,
                 disturbOpt, graveyardCastOpt,
@@ -6611,7 +6627,7 @@ public class SpellCastingService {
         }
         if (isGrantedCyclingGraveyardCast) {
             payGraveyardCastAdditionalCosts(gameData, player, card, filteredGraveyardAdditionalCosts,
-                    retraceDiscardHandCardIndex);
+                    retraceDiscardHandCardIndex, sacrificePermanentId);
         }
         payTargetingLifeCost(gameData, player, card, targetingLifeTax);
         payRemoveCountersFromControlledCreaturesCost(
@@ -6723,12 +6739,20 @@ public class SpellCastingService {
             }
             if (isGrantedCyclingGraveyardCast && filteredGraveyardPermission.isPresent()) {
                 var permission = filteredGraveyardPermission.get().permission();
+                if (permission.alternateManaCost() != null) {
+                    stackEntry.setAlternateCost(true);
+                    if (permission.sneak()) {
+                        stackEntry.setEntersTapped(true);
+                        stackEntry.setAttackedTargetId(sneakAttackTargetId);
+                    }
+                }
                 if (permission.enterWithCounter() != null) {
                     stackEntry.setEnteringCounterCount(permission.enterWithCounter(),
                             permission.enterWithCounterCount());
                 }
             }
-            stackEntry.setEntersTapped(gameData.graveyardCardsEnterTapped.remove(card.getId()));
+            stackEntry.setEntersTapped(stackEntry.isEntersTapped()
+                    || gameData.graveyardCardsEnterTapped.remove(card.getId()));
             preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
             if (grantedGraveyardCardCast) {
@@ -7669,6 +7693,10 @@ public class SpellCastingService {
                 && !castingPermissionService.consumeFreeCastFromExiledWithSource(
                         gameData, playerId, exileCardId)) {
             throw new IllegalStateException("Exile cast permission is no longer available");
+        }
+        if (!sourceFreeCast) {
+            castingPermissionService.consumeTemporaryCastFromExiledWithSource(
+                    gameData, playerId, exileCardId);
         }
         gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
                 action -> action.cardId().equals(exileCardId));
@@ -9605,9 +9633,11 @@ public class SpellCastingService {
         });
     }
 
-    private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId,
+    private void validateGraveyardCastAdditionalCosts(GameData gameData, Player player,
                                                        List<CastingCost> additionalCosts,
-                                                       Integer discardHandCardIndex) {
+                                                       Integer discardHandCardIndex,
+                                                       UUID returnPermanentId) {
+        UUID playerId = player.getId();
         for (CastingCost cost : additionalCosts) {
             if (cost instanceof LifeCastingCost lifeCost) {
                 if (!gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)) {
@@ -9618,6 +9648,9 @@ public class SpellCastingService {
                 }
             } else if (cost instanceof DiscardCardCastingCost) {
                 validateGraveyardDiscardSelection(gameData, playerId, discardHandCardIndex);
+            } else if (cost instanceof ReturnPermanentsCost returnCost) {
+                validateMorphAdditionalCost(gameData, player, returnCost,
+                        returnPermanentId == null ? List.of() : List.of(returnPermanentId));
             } else {
                 throw new IllegalStateException("Cannot pay this graveyard cast cost");
             }
@@ -9695,7 +9728,8 @@ public class SpellCastingService {
 
     private void payGraveyardCastAdditionalCosts(GameData gameData, Player player, Card card,
                                                   List<CastingCost> additionalCosts,
-                                                  Integer discardHandCardIndex) {
+                                                  Integer discardHandCardIndex,
+                                                  UUID returnPermanentId) {
         UUID playerId = player.getId();
         for (CastingCost cost : additionalCosts) {
             if (cost instanceof LifeCastingCost lifeCost) {
@@ -9714,6 +9748,9 @@ public class SpellCastingService {
                         .text(" from the graveyard.")
                         .build());
                 triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+            } else if (cost instanceof ReturnPermanentsCost returnCost) {
+                payMorphAdditionalCost(gameData, player, card, returnCost,
+                        returnPermanentId == null ? List.of() : List.of(returnPermanentId));
             } else {
                 throw new IllegalStateException("Cannot pay this graveyard cast cost");
             }
@@ -9743,6 +9780,10 @@ public class SpellCastingService {
         // mana cost (no flashback mana restriction).
         String graveyardAlternateManaCost = isGraveyardCast
                 ? graveyardCastOpt.map(GraveyardCast::alternateManaCost).orElse(null)
+                : isGrantedCyclingGraveyardCast
+                ? castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)
+                .flatMap(permission -> Optional.ofNullable(permission.permission().alternateManaCost()))
+                .orElse(null)
                 : null;
         boolean usesNormalManaCost = (isGraveyardCast && graveyardAlternateManaCost == null)
                 || grantedFlashback || emblemFlashback || grantedGraveyardCardCast
@@ -10183,6 +10224,39 @@ public class SpellCastingService {
                 .findFirst()
                 .orElse(null);
         return returnedPermanent == null ? null : returnedPermanent.getCard().getManaValue();
+    }
+
+    private UUID findSneakAttackTargetId(GameData gameData, UUID playerId, Card card,
+                                         List<UUID> alternateCostPermanentIds) {
+        if (!isSneakAlternateCost(card)) {
+            return null;
+        }
+        AlternateHandCast alternateHandCast = card.getCastingOption(AlternateHandCast.class).orElseThrow();
+        int returnIndex = alternateHandCast.getCost(SacrificePermanentsCost.class)
+                .map(SacrificePermanentsCost::count).orElse(0)
+                + alternateHandCast.getCost(TapUntappedPermanentsCost.class)
+                .map(TapUntappedPermanentsCost::count).orElse(0);
+        if (alternateCostPermanentIds.size() <= returnIndex) {
+            return null;
+        }
+        Permanent returnedPermanent = gameQueryService.findPermanentById(
+                gameData, alternateCostPermanentIds.get(returnIndex));
+        return returnedPermanent == null ? null : returnedPermanent.getAttackTarget();
+    }
+
+    private UUID findSneakAttackTargetId(GameData gameData, UUID returnedPermanentId) {
+        if (returnedPermanentId == null) {
+            return null;
+        }
+        Permanent returnedPermanent = gameQueryService.findPermanentById(gameData, returnedPermanentId);
+        return returnedPermanent == null ? null : returnedPermanent.getAttackTarget();
+    }
+
+    private boolean isSneakAlternateCost(Card card) {
+        return card.getKeywords().contains(Keyword.SNEAK)
+                && card.getCastingOption(AlternateHandCast.class)
+                .map(AlternateHandCast::sneak)
+                .orElse(false);
     }
 
     private void paySharedColorDiscardAlternativeCost(GameData gameData, Player player, Card card,

@@ -94,7 +94,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         // Fire +1/+1 counter-placement triggers after all placements.
         // Deferred past the loop since firing pushes triggered abilities onto the stack.
         for (Permanent p : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p, entry.getControllerId());
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(

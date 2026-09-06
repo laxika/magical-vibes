@@ -71,6 +71,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.SearchLibraryAndOrGraveyardChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
+        PendingInteraction.TurtlesForeverSearchChoice,
+        PendingInteraction.TurtlesForeverOpponentChoice,
         PendingInteraction.EcologicalAppreciationSearchChoice,
         PendingInteraction.EcologicalAppreciationOpponentChoice,
         PendingInteraction.VerdantMasterySearchChoice,
@@ -1270,6 +1272,56 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), count, count);
+        }
+    }
+
+    /** Turtles Forever's combined library and outside-the-game search. */
+    record TurtlesForeverSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool,
+                                      java.util.List<UUID> libraryCardIds,
+                                      java.util.List<UUID> outsideGameCardIds)
+            implements PendingInteraction {
+
+        public TurtlesForeverSearchChoice {
+            pool = java.util.List.copyOf(pool);
+            libraryCardIds = java.util.List.copyOf(libraryCardIds);
+            outsideGameCardIds = java.util.List.copyOf(outsideGameCardIds);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 4, 4);
+        }
+    }
+
+    /** The opponent's choice of which two Turtles Forever cards go to the caster's hand. */
+    record TurtlesForeverOpponentChoice(UUID playerId, UUID controllerId, java.util.List<Card> cards)
+            implements PendingInteraction {
+
+        public TurtlesForeverOpponentChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 2, 2);
         }
     }
 
@@ -3042,7 +3094,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * prompt via the game-state broadcast alone) - nothing is sent on reconnect replay either,
      * matching begin. The boolean/punisher components drive the answer handling exactly as the
      * legacy context did. {@code payLifePerSelection} marks a controller-paid hand selection
-     * whose remaining cards go to the graveyard.
+     * whose remaining cards go to the graveyard. {@code totalManaValueBound}, when present,
+     * limits the combined mana value of selected cards.
      */
     record LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -3059,8 +3112,53 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                LibrarySelectionFollowUp battlefieldSelectionFollowUp,
                                boolean selectLandsAfterHand,
                                boolean selectedToBattlefieldSimultaneously,
-                               boolean selectedToManifest)
+                               boolean selectedToManifest,
+                               Integer totalManaValueBound)
             implements PendingInteraction {
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   boolean selectedToManifest) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, selectedToManifest, null);
+        }
+
+        public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                                   java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                                   boolean selectedToHand, boolean reorderRemainingToBottom,
+                                   boolean randomRemainingToBottom, boolean remainingToExile,
+                                   int lifeCostPerSelection, UUID beneficiaryPlayerId, int maxCount,
+                                   String prompt, boolean selectedToBattlefieldTapped, int minCount,
+                                   boolean gainLifeEqualToSelectedCardManaValue,
+                                   CardEffect effectIfNoCardChosen, boolean recordSelectedCount,
+                                   boolean selectedToBattlefieldCloaked, boolean payLifePerSelection,
+                                   LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+                                   boolean selectLandsAfterHand,
+                                   boolean selectedToBattlefieldSimultaneously,
+                                   Integer maxTotalManaValue) {
+            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand,
+                    reorderRemainingToBottom, randomRemainingToBottom, remainingToExile,
+                    lifeCostPerSelection, beneficiaryPlayerId, maxCount, prompt,
+                    selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
+                    effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
+                    payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
+                    selectedToBattlefieldSimultaneously, false, maxTotalManaValue);
+        }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                    java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
@@ -3080,7 +3178,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
                     effectIfNoCardChosen, recordSelectedCount, selectedToBattlefieldCloaked,
                     payLifePerSelection, battlefieldSelectionFollowUp, selectLandsAfterHand,
-                    selectedToBattlefieldSimultaneously, false);
+                    selectedToBattlefieldSimultaneously, false, null);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3132,7 +3230,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     selectedToBattlefieldTapped, minCount, gainLifeEqualToSelectedCardManaValue,
                     effectIfNoCardChosen, recordSelectedCount, false, false,
                     battlefieldSelectionFollowUp, selectLandsAfterHand,
-                    selectedToBattlefieldSimultaneously, false);
+                    selectedToBattlefieldSimultaneously, false, null);
         }
 
         public LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
@@ -3703,9 +3801,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record ExiledCreatureCopyChoice(UUID playerId, UUID sourcePermanentId,
-                                    java.util.List<UUID> validCardIds) implements PendingInteraction {
+                                    java.util.List<UUID> validCardIds, String sourceName) implements PendingInteraction {
+        public ExiledCreatureCopyChoice(UUID playerId, UUID sourcePermanentId,
+                                        java.util.List<UUID> validCardIds) {
+            this(playerId, sourcePermanentId, validCardIds, "Lazav");
+        }
+
         public ExiledCreatureCopyChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
+            sourceName = sourceName == null ? "the source permanent" : sourceName;
         }
 
         @Override

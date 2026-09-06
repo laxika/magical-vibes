@@ -502,6 +502,7 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, perm.getId()) == null) {
             return;
         }
+        applySneakAttackState(perm, entry);
         gameData.transferCardsExiledByPermanent(entry.getPhysicalCard().getId(), perm.getId());
         registerBeheldCardReturn(gameData, entry, perm);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
@@ -539,6 +540,13 @@ public class StackResolutionService {
             battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, enteredCard);
         }
         checkLegendRuleIfIdle(gameData, controllerId);
+    }
+
+    private void applySneakAttackState(Permanent permanent, StackEntry entry) {
+        if (entry.isAlternateCost() && entry.getAttackedTargetId() != null) {
+            permanent.setAttacking(true);
+            permanent.setAttackTarget(entry.getAttackedTargetId());
+        }
     }
 
     private void registerBeheldCardReturn(GameData gameData, StackEntry entry, Permanent source) {
@@ -852,6 +860,7 @@ public class StackResolutionService {
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
+        applySneakAttackState(perm, entry);
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
         // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.

@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentIdAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -126,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -4450,6 +4452,14 @@ public class TriggerCollectionService {
                     } else {
                         effect = conditional.wrapped();
                     }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof AttacksAlone) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(attacker, watcher.controllerId()))) {
+                        matches = false;
+                    } else {
+                        effect = conditional.wrapped();
+                    }
                 } else {
                     break;
                 }
@@ -4466,8 +4476,9 @@ public class TriggerCollectionService {
             }
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, watcher.sourceCard(),
                     watcher.controllerId(), watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(triggeredEffect)));
+                    new ArrayList<>(List.of(triggeredEffect)), null, attacker.getId());
             entry.setTargetId(attacker.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(attacker));
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
@@ -6778,10 +6789,17 @@ public class TriggerCollectionService {
 
     public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
                                                                          UUID artifactControllerId, int artifactManaValue) {
+        checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(
+                gameData, graveyardOwnerId, artifactControllerId, artifactManaValue, Map.of());
+    }
+
+    public void checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                                         UUID artifactControllerId, int artifactManaValue,
+                                                                         Map<CounterType, Integer> artifactCounters) {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(graveyardOwnerId, List.of());
         Card artifactCard = graveyard.isEmpty() ? null : graveyard.getLast();
         var ctx = new TriggerContext.ArtifactGraveyard(
-                graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue);
+                graveyardOwnerId, artifactControllerId, artifactCard, artifactManaValue, artifactCounters);
 
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
@@ -7582,6 +7600,10 @@ public class TriggerCollectionService {
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forStaticEffect(perm, controllerId))) {
                     continue;
+                }
+                if (resolved instanceof LeavingPermanentCountersAwareEffect aware) {
+                    resolved = aware.boundToLeavingPermanentCounters(snapshotCountersOnPermanent(leavingPermanent));
+                    if (resolved == null) continue;
                 }
                 if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -131,6 +132,8 @@ public class EtbEffectResolver {
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
                 // Not-kicked ETB clauses use the same cast-time context.
                 case NotKicked ignored -> !ctx.kicked() ? conditional.wrapped() : null;
+                case NotCondition notCondition when notCondition.inner() instanceof CastForAlternateCost ->
+                        ctx.alternateCost() ? null : conditional.wrapped();
                 // Independent additional-kicker clauses are intervening-if conditions whose
                 // payment list is snapshotted on the spell's stack entry.
                 case RepeatedAdditionalCostPaid paid ->

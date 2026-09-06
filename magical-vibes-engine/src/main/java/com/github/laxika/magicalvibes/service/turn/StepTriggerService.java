@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.UnattachEquipmentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
@@ -77,6 +78,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardAtNextEndStepUnlessPays;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -207,6 +209,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiled
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardsToTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -498,6 +501,27 @@ public class StepTriggerService {
                         playerName + " draws " + pending.count() + " cards from ", pending.sourceCard(), "."));
                 log.info("Game {} - {} draws {} cards from delayed upkeep trigger ({})",
                         gameData.id, playerName, pending.count(), pending.sourceCard().getName());
+            }
+        }
+
+        if (gameData.hasDelayedAction(RandomDiscardCardsAtNextUpkeep.class)) {
+            List<RandomDiscardCardsAtNextUpkeep> pendingDiscards = gameData.drainDelayedActions(
+                    RandomDiscardCardsAtNextUpkeep.class,
+                    action -> action.controllerId().equals(gameData.activePlayerId));
+            for (RandomDiscardCardsAtNextUpkeep pending : pendingDiscards) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — discard " + pending.count() + " cards",
+                        new ArrayList<>(List.of(new DiscardEffect(
+                                pending.count(), DiscardRecipient.CONTROLLER, true))));
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards cards at random."));
+                log.info("Game {} - {} delayed random discard trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
             }
         }
 
@@ -3581,6 +3605,32 @@ public class StepTriggerService {
 
     public void handleEndStepTriggers(GameData gameData) {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
+
+        if (gameData.hasDelayedAction(ReturnExiledCardAtNextEndStepUnlessPays.class)) {
+            List<ReturnExiledCardAtNextEndStepUnlessPays> pendingReturns = gameData.drainDelayedActions(
+                    ReturnExiledCardAtNextEndStepUnlessPays.class);
+            for (ReturnExiledCardAtNextEndStepUnlessPays action : pendingReturns) {
+                ForcedCostOrElseEffect payOrReturn = new ForcedCostOrElseEffect(
+                        new PayManaCost("{3}{B}"),
+                        new ArrayList<>(List.of(new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
+                                action.cardId()))),
+                        true);
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.controllerId(),
+                        action.sourceCard().getName() + "'s delayed ability",
+                        new ArrayList<>(List.of(payOrReturn)),
+                        null,
+                        action.sourcePermanentId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
+                        "'s delayed ability triggers — return the exiled card unless its controller pays {3}{B}."));
+                log.info("Game {} - {} delayed return trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
+            }
+        }
 
         if (gameData.hasDelayedAction(DrawCardsAtNextEndStep.class)) {
             List<DrawCardsAtNextEndStep> pendingDraws =

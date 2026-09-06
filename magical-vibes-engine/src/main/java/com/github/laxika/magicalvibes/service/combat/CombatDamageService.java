@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCrea
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
@@ -1277,9 +1278,14 @@ public class CombatDamageService {
                 if (effect instanceof MayEffect may) {
                     if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                creature.getCard(), attackerId, List.of(effect), creature.getId(),
-                                attackerId, defenderId));
+                        if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
+                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                    creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0));
+                        } else {
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    creature.getCard(), attackerId, List.of(effect), creature.getId(),
+                                    attackerId, defenderId));
+                        }
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
                         continue;
@@ -1450,7 +1456,8 @@ public class CombatDamageService {
                             effect.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
                                     ? defenderId : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect)), graveyardOwnerId));
+                            creature.getCard(), attackerId, new ArrayList<>(List.of(effect)), graveyardOwnerId, 0, 0,
+                            creature.isAlternateCost()));
                     gameLogService.append(gameData, GameLog.text(creature.getCard().getName() + "'s combat damage trigger fires."));
                     continue;
                 }
@@ -1499,6 +1506,7 @@ public class CombatDamageService {
                 }
                 if (se.getSourcePermanentId() != null) {
                     se.setSourcePermanentSnapshot(new Permanent(creature));
+                    se.setAlternateCost(creature.isAlternateCost());
                 }
                 // Wire the combat damage dealt as the event value so "discards that many cards"
                 // (DiscardEffect with an EventValue amount, e.g. Needle Specter) or "draw that many
@@ -1606,6 +1614,12 @@ public class CombatDamageService {
     }
 
     private void setCombatDamageEventValue(StackEntry entry, CardEffect effect, int damageDealt) {
+        if (effect instanceof SequenceEffect sequence) {
+            for (CardEffect step : sequence.steps()) {
+                setCombatDamageEventValue(entry, step, damageDealt);
+            }
+            return;
+        }
         if (effect instanceof ConditionalEffect conditional) {
             setCombatDamageEventValue(entry, conditional.wrapped(), damageDealt);
             return;
@@ -1623,6 +1637,9 @@ public class CombatDamageService {
     }
 
     private boolean readsCombatDamage(CardEffect effect) {
+        if (effect instanceof SequenceEffect sequence) {
+            return sequence.steps().stream().anyMatch(this::readsCombatDamage);
+        }
         return effect instanceof DiscardEffect
                 || (effect instanceof DrawCardEffect draw && draw.amount() instanceof EventValue)
                 || (effect instanceof MillEffect mill && mill.count() instanceof EventValue)

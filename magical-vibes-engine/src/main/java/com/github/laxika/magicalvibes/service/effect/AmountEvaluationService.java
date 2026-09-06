@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsExiledWithSource;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTargetPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnStackEntryCard;
+import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.amount.TimesSourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
@@ -298,6 +300,8 @@ public class AmountEvaluationService {
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
             case CardTypesAmongControlledPermanents c ->
                     countCardTypesAmongControlledPermanents(gameData, c, ctx);
+            case CardTypesAmongSpellsCastThisTurn ignored ->
+                    countCardTypesAmongSpellsCastThisTurn(gameData, ctx);
             case CardTypesAmongCardsDiscardedThisResolution ignored ->
                     gameData.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.size();
             case CardsDrawnThisTurn c ->
@@ -361,6 +365,9 @@ public class AmountEvaluationService {
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case TotalCountersOnSource ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : ctx.sourcePermanent().getCounters().values().stream().mapToInt(Integer::intValue).sum();
             case CountersOnTargetPermanent c ->
                     countCountersOnTargetPermanent(gameData, c, ctx);
             case CountersOnStackEntryCard c ->
@@ -984,6 +991,20 @@ public class AmountEvaluationService {
                 }
                 found.addAll(gameQueryService.getEffectiveCardTypes(gameData, permanent));
             }
+        }
+        return found.size();
+    }
+
+    private int countCardTypesAmongSpellsCastThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) {
+            return 0;
+        }
+        Set<CardType> found = EnumSet.noneOf(CardType.class);
+        for (Card spell : gameData.getSpellsCastThisTurn(ctx.controllerId())) {
+            if (spell.getType() != null) {
+                found.add(spell.getType());
+            }
+            found.addAll(spell.getAdditionalTypes());
         }
         return found.size();
     }

@@ -93,6 +93,7 @@ public enum Keyword {
     MODULAR,
     PROWESS,
     DASH,
+    SNEAK,
     SUNBURST,
     PROTOTYPE,
     REBOUND,
@@ -113,6 +114,7 @@ public enum Keyword {
     WATERBEND,
     FIREBENDING,
     BLOW_UP,
+    ALLIANCE,
     DISGUISE;
 
     /**

@@ -1185,6 +1185,11 @@ public class CastingPermissionService {
                         || !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
                     continue;
                 }
+                if (permission.availabilityCondition() != null
+                        && !conditionEvaluationService.isMet(gameData, permission.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
+                    continue;
+                }
                 if (permission.oncePerControllerTurn()
                         && (!playerId.equals(gameData.activePlayerId)
                             || gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.contains(perm.getId()))) {
@@ -1758,6 +1763,23 @@ public class CastingPermissionService {
 
     public boolean consumeFreeCastFromExiledWithSource(GameData gameData, UUID playerId, UUID cardId) {
         return findFreeCastPermission(gameData, playerId, cardId, true);
+    }
+
+    /** Consumes a temporary normal-cost source-linked exile-cast grant, if present. */
+    public boolean consumeTemporaryCastFromExiledWithSource(GameData gameData, UUID playerId, UUID cardId) {
+        ExiledCardEntry entry = gameData.findExiledCard(cardId);
+        if (entry == null) return false;
+        GameData.ExileCastPermission permission = gameData.exileCastPermissionsUntilEndOfTurn.stream()
+                .filter(candidate -> candidate.cardId().equals(cardId))
+                .filter(candidate -> candidate.sourcePermanentId().equals(entry.sourcePermanentId()))
+                .filter(candidate -> candidate.castingPlayerId().equals(playerId))
+                .filter(candidate -> !candidate.withoutPayingManaCost())
+                .findFirst()
+                .orElse(null);
+        if (permission == null) return false;
+        gameData.exileCastPermissionsUntilEndOfTurn.removeIf(candidate ->
+                candidate.grantId().equals(permission.grantId()));
+        return true;
     }
 
     public boolean putsExileCastOnBottomOfOwnersLibrary(GameData gameData, UUID playerId, UUID cardId) {

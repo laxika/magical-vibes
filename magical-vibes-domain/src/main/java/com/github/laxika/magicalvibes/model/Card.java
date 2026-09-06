@@ -1156,6 +1156,11 @@ public class Card {
                 .withNinjutsu());
     }
 
+    /** Adds Sneak for {@code cost}. */
+    public void addSneak(String cost) {
+        addCastingOption(AlternateHandCast.sneak(cost));
+    }
+
     /**
      * Adds unearth for {@code cost}: return this card from the graveyard to the battlefield with
      * haste, exiled at the beginning of the next end step, sorcery speed only.

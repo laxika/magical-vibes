@@ -107,7 +107,7 @@ public class PutCountersOnControlledCreaturesByPowerAboveBasePowerEffectHandler
                 gameData.id, entry.getCard().getName(), totalPlaced, counterName, creatureCount);
 
         for (Permanent permanent : plusOneTargets) {
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent, entry.getControllerId());
         }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
