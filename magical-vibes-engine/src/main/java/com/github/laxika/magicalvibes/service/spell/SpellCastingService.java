@@ -2733,7 +2733,8 @@ public class SpellCastingService {
         }
         effectiveXValue = additionalSpellCostService.resolveXValue(
                 additionalCosts, costSelection, effectiveXValue);
-        if (additionalCosts.returnAnyNumberCost() != null && castTimeDividedDamage != null) {
+        if ((additionalCosts.returnAnyNumberCost() != null || card.hasXScaledTargets())
+                && castTimeDividedDamage != null) {
             validateDividedDamageAssignments(gameData, card, playerId, effectiveXValue, targetId,
                     damageAssignments == null ? Map.of() : damageAssignments, castTimeDividedDamage);
         }
@@ -8167,7 +8168,7 @@ public class SpellCastingService {
             }
             if (!gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, landFace,
-                        Zone.EXILE, copy ? null : exiledEntry.sourcePermanentId());
+                        sourceZone, copy || exiledEntry == null ? null : exiledEntry.sourcePermanentId());
                 turnProgressionService.resolveAutoPass(gameData);
             }
             return;
@@ -8744,7 +8745,8 @@ public class SpellCastingService {
             payLifeForLibraryTopAlternative(gameData, player, card);
         } else if (!freeTopPlay) {
             phyrexianManaPaidWithLife = paySpellManaCostFromNonHandZone(
-                    gameData, playerId, card, effectiveXValue, Zone.LIBRARY);
+                    gameData, playerId, card, effectiveXValue, Zone.LIBRARY,
+                    castingPermissionService.hasLibraryTopPermission(gameData, playerId, libraryOwnerId));
             if (usesNormalTopLibraryPermission) {
                 castingPermissionService.markTopLibraryCastPermissionUsed(gameData, playerId, card);
             }
