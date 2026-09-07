@@ -5,5 +5,9 @@ package com.github.laxika.magicalvibes.model.filter;
  * The predicate is resolution-aware: without game state it matches so target enumeration can
  * offer the broad "target card" choice before the activation cost imprints the exiled card.
  */
-public record CardSharesCardTypeWithImprintedCardPredicate() implements CardPredicate {
+public record CardSharesCardTypeWithImprintedCardPredicate(boolean requireImprintedCard) implements CardPredicate {
+
+    public CardSharesCardTypeWithImprintedCardPredicate() {
+        this(false);
+    }
 }

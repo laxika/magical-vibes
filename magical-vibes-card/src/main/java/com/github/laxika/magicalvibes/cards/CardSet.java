@@ -63,6 +63,8 @@ public enum CardSet {
     SET_ISD("ISD"),
     SET_SOI("SOI"),
     SET_MID("MID"),
+    SET_VOW("VOW"),
+    SET_OM1("OM1"),
     SET_DKA("DKA"),
     SET_AVR("AVR"),
     SET_ZEN("ZEN"),
@@ -152,7 +154,6 @@ public enum CardSet {
     SET_APC("APC"),
     SET_DKM("DKM"),
     SET_SPM("SPM"),
-    SET_OM1("OM1"),
     SET_LCI("LCI"),
     SET_BIG("BIG"),
     SET_TLA("TLA");

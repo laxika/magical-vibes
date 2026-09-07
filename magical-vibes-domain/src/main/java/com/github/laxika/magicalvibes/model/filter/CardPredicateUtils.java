@@ -46,6 +46,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasNoAbilitiesPredicate) {
             return "card with no abilities";
         }
+        if (predicate instanceof CardDoesNotShareLandTypeWithControlledLandPredicate) {
+            return "card with no shared land type";
+        }
         if (predicate instanceof CardHasManaAbilityPredicate) {
             return "card with a mana ability";
         }

@@ -206,6 +206,7 @@ public enum CardSubtype {
     SHEEP("Sheep"),
     SNAKE("Snake"),
     SLIVER("Sliver"),
+    SLUG("Slug"),
     GERM("Germ"),
     LOCUS("Locus"),
     SPHERE("Sphere"),

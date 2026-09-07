@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CanBeholdSubtype;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
@@ -104,6 +105,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasNoLandCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHandThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
+import com.github.laxika.magicalvibes.model.condition.ControllerOwnsCardInExile;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerHasMoreCardsInHandThanController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerControlsPermanent;
@@ -190,6 +192,7 @@ import com.github.laxika.magicalvibes.model.condition.ExtraTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
+import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
@@ -211,6 +214,7 @@ import com.github.laxika.magicalvibes.model.condition.AllBendingTypesCompletedTh
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.PutCounterOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
@@ -430,6 +434,9 @@ public class ConditionEvaluationService {
                             && gameData.cardsDiscardedOrCycledThisTurn
                             .getOrDefault(ctx.controllerId(), Set.of())
                             .contains(ctx.sourceCard().getId());
+            case ControllerDiscardedCardThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.cardsDiscardedThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
             case SourceEnteredThisTurn ignored ->
                     sourceEnteredThisTurn(gameData, ctx);
             case SourceEnteredBattlefieldThisTurn ignored -> {
@@ -725,6 +732,8 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playerHands.getOrDefault(ctx.controllerId(), List.of()).stream()
                             .noneMatch(card -> card.hasType(CardType.LAND));
+            case ControllerOwnsCardInExile ignored ->
+                    controllerOwnsCardInExile(gameData, ctx.controllerId());
             case ControllerHadNoCardsInHandAtTurnStart ignored ->
                     ctx.controllerId() != null
                             && gameData.handSizeAtTurnStart.getOrDefault(ctx.controllerId(), -1) == 0;
@@ -794,6 +803,8 @@ public class ConditionEvaluationService {
                             && ctx.controllerId().equals(gameData.activePlayerId);
             case FirstCombatPhase ignored ->
                     gameData.combatPhasesThisTurn == 1;
+            case ExactlyAttackers c ->
+                    ctx.xValue() == c.attackerCount();
             case MinimumAttackers c ->
                     ctx.xValue() >= c.minimumAttackers();
             case MinimumMatchingAttackers c ->
@@ -945,6 +956,10 @@ public class ConditionEvaluationService {
             case PutCounterOnCreatureThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoPutCountersOnCreaturesThisTurn.contains(ctx.controllerId());
+            case PlusOnePlusOneCounterPutOnCreatureThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn
+                            .contains(ctx.controllerId());
             case PlusOnePlusOneCounterPutOnControlledPermanentThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn
@@ -3003,6 +3018,12 @@ public class ConditionEvaluationService {
         if (controllerId == null) return false;
         return gameData.exiledCards.stream()
                 .anyMatch(entry -> !controllerId.equals(entry.ownerId()));
+    }
+
+    private boolean controllerOwnsCardInExile(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        return gameData.exiledCards.stream()
+                .anyMatch(entry -> controllerId.equals(entry.ownerId()));
     }
 
     private boolean anyLibraryAtMost(GameData gameData, int threshold) {

@@ -589,7 +589,7 @@ public class GameViewProjectionFactory {
         Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
         Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
-        // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
+        // Collect card IDs playable via static exile permissions
         Set<UUID> castableFromExileWithSource = castingPermissionService.getCastableExiledCardIds(gameData, playerId);
         Set<UUID> anyManaTypeIds = castingPermissionService.getAnyManaTypeExiledCardIds(gameData, playerId);
         Set<UUID> snowManaAsAnyColorIds = gameData.exiledCards.stream()

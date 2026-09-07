@@ -3912,6 +3912,8 @@ public class ChoiceHandlerService {
                 } else {
                     to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
                     if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                                gameData, to, player.getId());
                         UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
                         if (controllerId != null) {
                             gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
@@ -3957,6 +3959,8 @@ public class ChoiceHandlerService {
                     } else {
                         to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
                         if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                                    gameData, to, player.getId());
                             UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
                             if (controllerId != null) {
                                 gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
@@ -4001,6 +4005,8 @@ public class ChoiceHandlerService {
             } else {
                 to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + countersToPlace);
                 if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                            gameData, to, player.getId());
                     UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
                     if (controllerId != null) {
                         gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);

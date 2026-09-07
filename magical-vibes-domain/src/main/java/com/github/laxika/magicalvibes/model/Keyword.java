@@ -116,6 +116,7 @@ public enum Keyword {
     CAMOUFLAGE,
     DOUBLE,
     PLOT,
+    CLEAVE,
     WARP,
     AMASS,
     ASSEMBLE,

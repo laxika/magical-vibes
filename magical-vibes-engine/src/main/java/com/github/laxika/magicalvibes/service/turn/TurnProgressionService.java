@@ -475,10 +475,12 @@ public class TurnProgressionService {
         Long extraTurnSequence = null;
         boolean currentTurnIsExtraTurn = false;
         boolean skipUntapStep = false;
+        boolean damageCantBePrevented = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
             currentTurnIsExtraTurn = true;
             skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
+            damageCantBePrevented = Boolean.TRUE.equals(gameData.extraTurnDamageCantBePrevented.pollFirst());
             extraTurnSequence = gameData.extraTurnSequences.isEmpty()
                     ? null : gameData.extraTurnSequences.pollFirst();
             if (gameData.anyPermanentMatches(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC)
@@ -519,6 +521,7 @@ public class TurnProgressionService {
 
         String nextActiveName = gameData.playerIdToName.get(nextActive);
         gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+        gameData.damageCantBePreventedThisTurn = damageCantBePrevented;
         gameData.currentExtraTurnSequence = extraTurnSequence;
 
         // Yosei, the Morning Star: a queued "skips their next untap step" is consumed by the first
@@ -619,6 +622,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
+        gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.clear();
         gameData.playersWhoRemovedOilCountersFromControlledPermanentsThisTurn.clear();
         gameData.permanentWithOilCounterPutIntoGraveyardThisTurn = false;
         gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = false;

@@ -51,6 +51,13 @@ public class TokenCopySupport {
     public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                   Permanent sourcePermanent, UUID tokenControllerId,
                                   CreateTokenCopyOfTargetPermanentEffect effect) {
+        createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null);
+    }
+
+    public void createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                  Permanent sourcePermanent, UUID tokenControllerId,
+                                  CreateTokenCopyOfTargetPermanentEffect effect,
+                                  List<UUID> attackTargets) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return;
         }
@@ -89,9 +96,10 @@ public class TokenCopySupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        for (Permanent tokenPermanent : tokens) {
+        for (int tokenIndex = 0; tokenIndex < tokens.size(); tokenIndex++) {
+            Permanent tokenPermanent = tokens.get(tokenIndex);
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
+                gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());
             if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {
                 gameData.sourceCreatedTokens
@@ -104,8 +112,11 @@ public class TokenCopySupport {
             }
             if (effect.tappedAndAttacking()) {
                 tokenPermanent.setAttacking(true);
-                if (sourcePermanent != null) {
-                    tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
+                UUID attackTarget = attackTargets != null && !attackTargets.isEmpty()
+                        ? attackTargets.get(tokenIndex % attackTargets.size())
+                        : sourcePermanent == null ? null : sourcePermanent.getAttackTarget();
+                if (attackTarget != null) {
+                    tokenPermanent.setAttackTarget(attackTarget);
                 }
             }
 

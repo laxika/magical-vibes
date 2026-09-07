@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -89,6 +90,20 @@ public class GraveyardTargetingService {
     public void handleBattlefieldAndGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId,
             BattlefieldAndGraveyardCardChoosingEffect choosingEffect, int xValue) {
+        handleBattlefieldAndGraveyardExileTargeting(gameData, controllerId, card, effects,
+                sourcePermanentId, choosingEffect, card.getName() + "'s enter-the-battlefield ability", xValue);
+    }
+
+    public void handleBattlefieldAndGraveyardExileTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId,
+            BattlefieldAndGraveyardCardChoosingEffect choosingEffect, String abilityDescription) {
+        handleBattlefieldAndGraveyardExileTargeting(gameData, controllerId, card, effects,
+                sourcePermanentId, choosingEffect, abilityDescription, 0);
+    }
+
+    private void handleBattlefieldAndGraveyardExileTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId,
+            BattlefieldAndGraveyardCardChoosingEffect choosingEffect, String abilityDescription, int xValue) {
         PermanentPredicate battlefieldPredicate = choosingEffect.mixedZoneBattlefieldPredicate();
         CardPredicate graveyardPredicate = choosingEffect.mixedZoneGraveyardPredicate();
         List<Card> pool = new ArrayList<>();
@@ -123,7 +138,7 @@ public class GraveyardTargetingService {
                     StackEntryType.TRIGGERED_ABILITY,
                     card,
                     controllerId,
-                    card.getName() + "'s ETB ability",
+                    abilityDescription,
                     new ArrayList<>(effects),
                     xValue,
                     null,
@@ -133,9 +148,9 @@ public class GraveyardTargetingService {
                     List.of(),
                     List.of()
             ));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
-            log.info("Game {} - {} ETB mixed-zone exile pushed onto stack with 0 targets (no legal targets)",
-                    gameData.id, card.getName());
+            gameLogService.append(gameData, GameLog.text(abilityDescription + " triggers targeting no cards."));
+            log.info("Game {} - {} mixed-zone exile pushed onto stack with 0 targets (no legal targets)",
+                    gameData.id, abilityDescription);
             return;
         }
 
@@ -147,7 +162,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.xValue = xValue;
         gameData.graveyardTargetOperation.anyNumber = true;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, pool, maxTargets,
-                card.getName() + "'s ability — Choose up to " + maxTargets + " "
+                abilityDescription + " — Choose up to " + maxTargets + " "
                         + choosingEffect.mixedZoneChoiceDescription(maxTargets));
     }
 
@@ -277,6 +292,14 @@ public class GraveyardTargetingService {
         handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
                 returnEffect.filter(), returnEffect.maxTargets(),
                 returnEffect.minTargets(), " from your graveyard to return to your hand.");
+    }
+
+    /** ETB targeting for putting up to N target cards from your graveyard on top of your library. */
+    public void handlePutOnTopOfLibraryETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, PutTargetCardsFromGraveyardOnTopOfLibraryEffect putEffect) {
+        handleControllerGraveyardMultiTargetETB(gameData, controllerId, card, effects,
+                putEffect.filter(), putEffect.maxTargets(),
+                " from your graveyard on top of your library.");
     }
 
     /** ETB targeting for returning up to a computed number of cards to the battlefield. */

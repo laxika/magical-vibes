@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentManaValueAwareEffect;
@@ -358,6 +359,35 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
+        return true;
+    }
+
+    /** Queues a watcher for a creature controlled by the player exploiting a nontoken creature. */
+    @CollectsTrigger(value = CardEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE)
+    private boolean handleAllyCreatureExploit(TriggerMatchContext match, CardEffect effect,
+                                               TriggerContext ctx) {
+        TriggerContext.CreatureExploit exploit = (TriggerContext.CreatureExploit) ctx;
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(),
+                    new ArrayList<>(List.of(effect)), match.permanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            return true;
+        }
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers when {} exploits {}",
+                match.gameData().id, match.permanent().getCard().getName(),
+                exploit.exploitingCard().getName(), exploit.exploitedCard().getName());
         return true;
     }
 
@@ -1372,6 +1402,39 @@ public class MiscTriggerCollectorService {
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers to exile {} from a graveyard", gameData.id, cardName,
+                triggeringCard.getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect.class,
+            slot = EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    private boolean handleExileTriggeringPermanentCardFromLibraryWithCroakCounter(
+            TriggerMatchContext match, ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect effect,
+            TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.PermanentCardPutIntoGraveyard cardPut)) {
+            return false;
+        }
+
+        Card triggeringCard = cardPut.permanentCard();
+        var gameData = match.gameData();
+        List<Card> graveyard = gameData.playerGraveyards.get(cardPut.graveyardOwnerId());
+        if (graveyard == null || graveyard.stream().noneMatch(card -> card.getId().equals(triggeringCard.getId()))) {
+            return false;
+        }
+
+        String cardName = match.permanent().getCard().getName();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringCardId(triggeringCard.getId());
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers to exile {} with a croak counter", gameData.id, cardName,
                 triggeringCard.getName());
         return true;
     }

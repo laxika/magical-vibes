@@ -2743,8 +2743,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                           int artifactCounterCount, boolean returnToHandAtEndStep,
                           boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
                           CardPredicate enterTappedAndAttackingIf,
-                          UUID blockingAttackerId)
+                          UUID blockingAttackerId, UUID untapSourcePermanentId, java.util.Set<CardSubtype> untapSourceIfEnteredCardHasAnySubtype)
             implements PendingInteraction, HandChoice {
+    public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction,
+                          boolean drawAndRepeat, com.github.laxika.magicalvibes.model.filter.CardPredicate drawAndRepeatPredicate,
+                          String drawAndRepeatLabel, boolean putAnyNumber,
+                          boolean faceDown, int faceDownPower, int faceDownToughness,
+                          java.util.Set<CardType> faceDownCardTypes, UUID returnExiledSourceCardId,
+                          UUID returnSourcePermanentId, CounterType artifactCounterType,
+                          int artifactCounterCount, boolean returnToHandAtEndStep,
+                          boolean cloaked, CardEffect thenEffect, CardPredicate thenCondition,
+                          CardPredicate enterTappedAndAttackingIf,
+                          UUID blockingAttackerId) {
+        this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction, drawAndRepeat, drawAndRepeatPredicate, drawAndRepeatLabel, putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, returnExiledSourceCardId, returnSourcePermanentId, artifactCounterType, artifactCounterCount, returnToHandAtEndStep, cloaked, thenEffect, thenCondition, enterTappedAndAttackingIf, blockingAttackerId, null, java.util.Set.of());
+    }
+
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
@@ -3207,12 +3222,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
                          int remainingCount, DiscardFollowUp followUp, String prompt,
-                         CardType stopAfterDiscardingType, boolean declinable)
+                         CardType stopAfterDiscardingType, CardPredicate stopAfterDiscardingPredicate, boolean declinable)
             implements PendingInteraction, HandChoice {
 
         public DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
                              int remainingCount, DiscardFollowUp followUp, String prompt) {
-            this(playerId, validIndices, remainingCount, followUp, prompt, null, false);
+            this(playerId, validIndices, remainingCount, followUp, prompt, null, null, false);
+        }
+
+        public DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                             int remainingCount, DiscardFollowUp followUp, String prompt,
+                             CardType stopAfterDiscardingType, boolean declinable) {
+            this(playerId, validIndices, remainingCount, followUp, prompt,
+                    stopAfterDiscardingType, null, declinable);
         }
 
         @Override

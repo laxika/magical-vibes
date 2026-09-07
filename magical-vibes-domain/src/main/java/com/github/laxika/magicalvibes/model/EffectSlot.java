@@ -303,6 +303,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a land card is put into the controller's graveyard from their library.
      *  Fires on permanents the graveyard owner controls. */
     ON_ALLY_LAND_CARD_MILLED,
+    /** Triggers whenever a nontoken permanent card is put into the controller's graveyard from their library. */
+    ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
     /** Triggers once for each library-to-graveyard event in which one or more creature cards enter the
      *  controller's graveyard. */
     ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
@@ -653,6 +655,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
      *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
     ON_ANY_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever any permanent is dealt damage, regardless of its controller. */
+    ON_ANY_PERMANENT_DEALT_DAMAGE,
     /** Triggers whenever a creature this permanent's controller controls (matching the effect's
      *  source filter) deals damage — combat or non-combat — to a creature. Fires on the permanent
      *  with this slot, not on the damaged creature. Scans all battlefields; the reflected damage is
@@ -804,6 +808,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers when this permanent's training ability successfully puts a +1/+1 counter on it. */
+    ON_SELF_TRAINS,
+    /** Triggers whenever one or more +1/+1 counters are put on a Human the controller controls. */
+    ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN,
     ON_SELF_REACHES_LEVEL_TWO,
     ON_SELF_REACHES_LEVEL_THREE,
     /** Triggers whenever one or more counters are put on this permanent. */
@@ -902,6 +910,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  on the battlefield at the start of that resolution (sacrificing itself still counts).
      *  Fired from the exploit sacrifice completion path. Used by Overcharged Amalgam. */
     ON_EXPLOIT,
+    /** Triggers whenever a creature controlled by this permanent's controller exploits a nontoken
+     *  creature. Fired after the exploit sacrifice completes. */
+    ON_ALLY_CREATURE_EXPLOITS_NONTOKEN_CREATURE,
     /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
      *  (which fires once per combat), this fires separately for each creature declared as an attacker.
      *  Supports TriggeringCardConditionalEffect and TriggeringPermanentConditionalEffect to filter
