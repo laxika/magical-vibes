@@ -18,7 +18,7 @@ public class VesuvanDoppelganger extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 Map.of(EffectSlot.UPKEEP_TRIGGERED, List.of(
-                        new BecomeCopyOfTargetCreatureEffect(EffectSlot.UPKEEP_TRIGGERED, false))),
+                        new BecomeCopyOfTargetCreatureEffect(EffectSlot.UPKEEP_TRIGGERED, false, true))),
                 false
         ));
     }

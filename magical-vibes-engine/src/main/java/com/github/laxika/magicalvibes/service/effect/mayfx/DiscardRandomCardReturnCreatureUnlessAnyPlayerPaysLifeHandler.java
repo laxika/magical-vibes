@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -15,6 +16,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /** Handles Aether Rift's turn-order life-payment choice after a creature is discarded. */
@@ -30,6 +33,9 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
     private final InputCompletionService inputCompletionService;
     private final TriggerCollectionService triggerCollectionService;
 
+    @Autowired @Lazy
+    private LifeSupport lifeSupport;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect.class;
@@ -44,16 +50,9 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
                 .orElseThrow();
 
         if (accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost())) {
-            int lifeLoss = effect.lifeCost()
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
-            gameData.playerLifeTotals.put(player.getId(),
-                    gameData.getLife(player.getId()) - lifeLoss);
-            triggerCollectionService.checkLifePaymentTriggers(gameData, player.getId(), lifeLoss);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeLoss + " life. (",
-                    ability.sourceCard(), ")"));
+            lifeSupport.applyLifePayment(gameData, player.getId(), effect.lifeCost(), ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to prevent {}'s discarded creature from returning",
-                    gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
+                    gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }

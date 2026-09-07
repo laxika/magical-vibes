@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "USG", collectorNumber = "201")
+@CardRegistration(set = "ONS", collectorNumber = "216")
 public class LayWaste extends Card {
 
     public LayWaste() {

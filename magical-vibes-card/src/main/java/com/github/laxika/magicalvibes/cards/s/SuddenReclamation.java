@@ -16,8 +16,8 @@ public class SuddenReclamation extends Card {
     public SuddenReclamation() {
         addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.SPELL, new ReturnCardsFromControllerGraveyardToHandEffect(
-                new CardTypePredicate(CardType.CREATURE), new Fixed(1)));
+                new CardTypePredicate(CardType.CREATURE), new Fixed(1), false));
         addEffect(EffectSlot.SPELL, new ReturnCardsFromControllerGraveyardToHandEffect(
-                new CardTypePredicate(CardType.LAND), new Fixed(1)));
+                new CardTypePredicate(CardType.LAND), new Fixed(1), false));
     }
 }

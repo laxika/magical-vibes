@@ -74,7 +74,8 @@ class RemorselessPunishmentTest extends BaseCardTest {
     void sacrificesPlaneswalker() {
         harness.setLife(player2, 20);
         harness.setHand(player2, List.of());
-        harness.addToBattlefield(player2, new LilianaVess());
+        harness.addToBattlefieldAndReturn(player2, new LilianaVess())
+                .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
 
         cast();
 

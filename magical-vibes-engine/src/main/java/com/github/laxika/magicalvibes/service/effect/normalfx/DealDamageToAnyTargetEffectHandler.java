@@ -48,6 +48,13 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                 : entry.getTargetId();
         if (targetId == null) return;
 
+        if (e.preventRegenerationWithoutDamage()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null && gameQueryService.isCreature(gameData, target)) {
+                target.setCantRegenerateThisTurn(true);
+            }
+        }
+
         // Mark the target creature for exile-instead-of-die before dealing damage,
         // so that if lethal damage destroys it immediately, the replacement applies.
         if (e.exileInsteadOfDie()) {

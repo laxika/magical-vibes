@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RealityRipple.class, AngelicChorus.class, GrizzlyBears.class, Island.class, Millstone.class})
 class RealityRippleTest extends BaseCardTest {
 
     @Test
@@ -41,7 +43,9 @@ class RealityRippleTest extends BaseCardTest {
         castRealityRipple(targetId);
 
         harness.assertNotOnBattlefield(player2, "Millstone");
-        assertThat(gqs.findPermanentById(gd, targetId)).isNull();
+        assertThat(gd.phasedOutPermanents.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(targetId));
+        harness.assertNotInGraveyard(player2, "Millstone");
     }
 
     @Test
@@ -53,7 +57,9 @@ class RealityRippleTest extends BaseCardTest {
         castRealityRipple(targetId);
 
         harness.assertNotOnBattlefield(player2, "Island");
-        assertThat(gqs.findPermanentById(gd, targetId)).isNull();
+        assertThat(gd.phasedOutPermanents.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(targetId));
+        harness.assertNotInGraveyard(player2, "Island");
     }
 
     @Test
@@ -98,12 +104,11 @@ class RealityRippleTest extends BaseCardTest {
     private void castRealityRipple(UUID targetId) {
         harness.setHand(player1, List.of(new RealityRipple()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UNTAP);
     }
 }

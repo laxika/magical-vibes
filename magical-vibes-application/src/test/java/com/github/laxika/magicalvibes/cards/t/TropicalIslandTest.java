@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TropicalIsland.class)
 class TropicalIslandTest extends BaseCardTest {
@@ -34,10 +35,24 @@ class TropicalIslandTest extends BaseCardTest {
         assertThat(tropicalIsland.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Tropical Island cannot activate its other mana ability while tapped")
+    void cannotActivateOtherManaAbilityWhileTapped() {
+        Permanent tropicalIsland = addTropicalIslandReady();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(tropicalIsland.isTapped()).isTrue();
+    }
+
     private Permanent addTropicalIslandReady() {
-        Permanent tropicalIsland = new Permanent(new TropicalIsland());
+        Permanent tropicalIsland = harness.addToBattlefieldAndReturn(player1, new TropicalIsland());
         tropicalIsland.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(tropicalIsland);
         return tropicalIsland;
     }
 }

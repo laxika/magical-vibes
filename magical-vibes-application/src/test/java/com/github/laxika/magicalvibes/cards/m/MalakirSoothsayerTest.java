@@ -20,6 +20,7 @@ class MalakirSoothsayerTest extends BaseCardTest {
     @DisplayName("Cohort taps an Ally, draws a card, and loses 1 life")
     void cohortDrawsCardAndLosesLife() {
         Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
         Permanent soothsayer = addCreatureReady(player1, new MalakirSoothsayer());
         Permanent ally = addCreatureReady(player1, new HadaFreeblade());

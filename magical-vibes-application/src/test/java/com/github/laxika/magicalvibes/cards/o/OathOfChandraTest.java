@@ -79,7 +79,7 @@ class OathOfChandraTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player, List.of(new GideonOfTheTrials()));
-        harness.addMana(player, ManaColor.WHITE, 1);
+        harness.addMana(player, ManaColor.WHITE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 3);
         harness.castPlaneswalker(player, 0);
         harness.passBothPriorities();

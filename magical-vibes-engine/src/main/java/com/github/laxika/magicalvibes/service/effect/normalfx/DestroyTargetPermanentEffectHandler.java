@@ -37,6 +37,9 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
 
                 // Capture the controller before destruction (needed for token creation)
                 UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+                if (controllerId != null) {
+                    entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
+                }
 
                 destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), destroy.cannotBeRegenerated());
 

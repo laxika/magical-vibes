@@ -189,6 +189,25 @@ class SpellCastTriggerCollectorServiceTest {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
     }
 
+    @Test
+    void secondSpellDamageRequestsATargetBeforeStacking() {
+        Permanent perm = createPermanent("Second spell source");
+        Card spell = createInstant("Spell");
+        gd.recordSpellCast(player1Id, spell);
+        gd.recordSpellCast(player1Id, spell);
+        var effect = new com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect(
+                2, List.of(new DealDamageToAnyTargetEffect(2)));
+
+        boolean result = registry.dispatch(match(perm, player1Id, effect),
+                EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect,
+                new TriggerContext.SpellCast(spell, player1Id, true));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                .isNotNull();
+    }
+
     @Nested
     class ControllerCastSpellCopyTrigger {
 

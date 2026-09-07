@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeathWard.class, FountainOfYouth.class, GrizzlyBears.class, HillGiant.class})
 class DeathWardTest extends BaseCardTest {
 
     @Test
@@ -49,10 +51,8 @@ class DeathWardTest extends BaseCardTest {
         bear.setBlocking(true);
         bear.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new com.github.laxika.magicalvibes.cards.s.SerraAngel());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -63,6 +63,8 @@ class DeathWardTest extends BaseCardTest {
         Permanent survivedBear = findPermanent(player1, "Grizzly Bears");
         assertThat(survivedBear.isTapped()).isTrue();
         assertThat(survivedBear.getRegenerationShield()).isEqualTo(0);
+        assertThat(survivedBear.getMarkedDamage()).isZero();
+        assertThat(survivedBear.isBlocking()).isFalse();
     }
 
     @Test
@@ -94,6 +96,27 @@ class DeathWardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Death Ward cannot replace putting a creature with 0 toughness into its owner's graveyard")
+    void doesNotRegenerateZeroToughnessCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeathWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
+
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+        bear.setToughnessModifier(-2);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

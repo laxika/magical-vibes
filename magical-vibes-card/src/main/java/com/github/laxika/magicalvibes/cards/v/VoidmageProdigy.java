@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import java.util.List;
 
 @CardRegistration(set = "TSB", collectorNumber = "34")
+@CardRegistration(set = "ONS", collectorNumber = "120")
 public class VoidmageProdigy extends Card {
 
     public VoidmageProdigy() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "155")
+@CardRegistration(set = "ONS", collectorNumber = "227")
 @CardRegistration(set = "MKM", collectorNumber = "144")
 @CardRegistration(set = "SPM", collectorNumber = "88")
 @CardRegistration(set = "BTD", collectorNumber = "45")
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "8ED", collectorNumber = "222")
 @CardRegistration(set = "7ED", collectorNumber = "219")
 @CardRegistration(set = "6ED", collectorNumber = "206")
+@CardRegistration(set = "OM1", collectorNumber = "95")
 public class Shock extends Card {
 
     public Shock() {

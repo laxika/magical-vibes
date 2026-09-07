@@ -12,12 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DwarvenHold.class})
 class DwarvenHoldTest extends BaseCardTest {
-
-    // ===== Enters tapped =====
-
     @Test
     @DisplayName("Dwarven Hold enters the battlefield tapped")
     void entersTapped() {
@@ -29,9 +27,6 @@ class DwarvenHoldTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Dwarven Hold").isTapped()).isTrue();
     }
-
-    // ===== Upkeep storage-counter accrual =====
-
     @Test
     @DisplayName("Upkeep adds a storage counter while the land is tapped")
     void upkeepAddsStorageCounterWhileTapped() {
@@ -40,16 +35,10 @@ class DwarvenHoldTest extends BaseCardTest {
 
         // player2 ends their turn; on player1's untap step decline to untap (keep it tapped),
         // then the upkeep trigger sees a tapped land and puts a storage counter on it.
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // cascade into player1's untap → "Untap Dwarven Hold?" prompt
+        beginPlayer1UntapChoice();
         harness.handleMayAbilityChosen(player1, false); // choose NOT to untap
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // untap → upkeep, trigger onto the stack
-        harness.passBothPriorities(); // resolve the trigger
+        harness.passUntil(player1, TurnStep.UPKEEP); // untap → upkeep, trigger onto the stack
+        resolveAllTriggers();
 
         assertThat(hold.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
     }
@@ -60,12 +49,7 @@ class DwarvenHoldTest extends BaseCardTest {
         Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
         hold.tap();
 
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        beginPlayer1UntapChoice();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(hold.isTapped()).isFalse();
@@ -92,8 +76,34 @@ class DwarvenHoldTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Mana ability =====
+    @Test
+    @DisplayName("Upkeep trigger occurs only during Dwarven Hold's controller's upkeep")
+    void upkeepDoesNotTriggerDuringOpponentsUpkeep() {
+        Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        hold.tap();
 
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(hold.getCounterCount(CounterType.STORAGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does nothing if Dwarven Hold becomes untapped before resolution")
+    void upkeepTriggerDoesNothingIfHoldBecomesUntappedBeforeResolution() {
+        Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());
+        hold.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.stack).hasSize(1);
+        hold.untap();
+        resolveAllTriggers();
+
+        assertThat(hold.getCounterCount(CounterType.STORAGE)).isZero();
+    }
     @Test
     @DisplayName("Removing all storage counters adds that much red mana")
     void removingAllCountersAddsThatMuchRed() {
@@ -144,7 +154,24 @@ class DwarvenHoldTest extends BaseCardTest {
         assertThat(hold.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The mana ability cannot be activated while Dwarven Hold is tapped")
+    void cannotActivateManaAbilityWhileTapped() {
+        Permanent hold = addHoldWithCounters(3);
+        hold.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+    private void beginPlayer1UntapChoice() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UNTAP);
+    }
 
     private Permanent addHoldWithCounters(int counters) {
         Permanent hold = harness.addToBattlefieldAndReturn(player1, new DwarvenHold());

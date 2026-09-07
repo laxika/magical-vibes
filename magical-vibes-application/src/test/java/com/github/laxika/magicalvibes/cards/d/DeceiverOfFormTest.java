@@ -58,7 +58,7 @@ class DeceiverOfFormTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(Forest.class);
     }
 
@@ -77,7 +77,7 @@ class DeceiverOfFormTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(HillGiant.class);
     }
 
@@ -96,7 +96,7 @@ class DeceiverOfFormTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.advanceStep(gd);
 
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);

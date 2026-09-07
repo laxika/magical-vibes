@@ -46,6 +46,7 @@ class ExpeditionRaptorTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Expedition Raptor");
         assertThat(gd.stack).isEmpty();
     }

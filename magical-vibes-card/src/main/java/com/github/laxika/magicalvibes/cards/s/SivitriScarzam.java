@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "CHR", collectorNumber = "84")
+@CardRegistration(set = "LEG", collectorNumber = "258")
 public class SivitriScarzam extends Card {
 }

@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +60,21 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
         if (!canPayMana && !canPayLife) {
             // Can't pay either — destroy the enchanted permanent now.
             destructionSupport.tryDestroyAndLog(gameData, enchanted, entry.getCard().getName());
+            return;
+        }
+
+        if (canPayMana && canPayLife) {
+            ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice context =
+                    new ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice(
+                            payerId, entry.getCard().getName(), entry.getSourcePermanentId(),
+                            e.manaCost(), e.lifeCost());
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    payerId, null, null, context,
+                    List.of(context.payManaOption(), context.payLifeOption(),
+                            ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice.DECLINE),
+                    entry.getCard().getName() + " - " + e.manaCost() + " or "
+                            + e.lifeCost() + " life?"));
             return;
         }
 

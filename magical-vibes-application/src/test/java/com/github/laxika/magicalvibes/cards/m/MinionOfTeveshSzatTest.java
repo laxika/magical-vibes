@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.o.OrderOfTheWhiteShield;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +18,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MinionOfTeveshSzat.class, BalduvianBears.class, Forest.class, OrderOfTheWhiteShield.class})
 class MinionOfTeveshSzatTest extends BaseCardTest {
 
     private Permanent addMinionReady(Player owner) {
-        Permanent perm = harness.addToBattlefieldAndReturn(owner, new MinionOfTeveshSzat());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(owner, new MinionOfTeveshSzat());
     }
 
     // ===== Upkeep: pay {B}{B} or take 2 damage =====
@@ -80,6 +81,7 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, minion.getId());
         harness.passBothPriorities();
 
+        assertThat(minion.isTapped()).isTrue();
         Permanent after = findPermanent(player1, "Minion of Tevesh Szat");
         assertThat(after.getPowerModifier()).isEqualTo(3);
         assertThat(after.getToughnessModifier()).isEqualTo(-2);
@@ -108,16 +110,16 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
     @DisplayName("+3/-2 kills a 2/2")
     void killsTwoToughnessCreature() {
         addMinionReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalduvianBears());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Balduvian Bears");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
@@ -133,5 +135,20 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
 
         assertThat(minion.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature with protection from black")
+    void cannotTargetCreatureWithProtectionFromBlack() {
+        Permanent minion = addMinionReady(player1);
+        Permanent order = addCreatureReady(player2, new OrderOfTheWhiteShield());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, order.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(minion.isTapped()).isFalse();
+        assertThat(order.isTapped()).isFalse();
     }
 }

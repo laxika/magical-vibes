@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "261")
+@CardRegistration(set = "TMT", collectorNumber = "184")
 public class EscapeTunnel extends Card {
 
     public EscapeTunnel() {

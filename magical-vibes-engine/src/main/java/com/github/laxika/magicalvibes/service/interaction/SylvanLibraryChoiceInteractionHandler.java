@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class SylvanLibraryChoiceInteractionHandler
     private static final int LIFE_PER_CARD = 4;
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
 
@@ -95,8 +97,9 @@ public class SylvanLibraryChoiceInteractionHandler
         // card on top instead (the "pay 4 life or put on top" option that can be performed).
         int remaining = interaction.resolveCount() - topped.size();
         for (int i = 0; i < remaining; i++) {
-            if (gameData.getLife(playerId) >= LIFE_PER_CARD) {
-                lifeSupport.applyLifeLoss(gameData, playerId, LIFE_PER_CARD, "Sylvan Library");
+            if (gameData.getLife(playerId) >= LIFE_PER_CARD
+                    && gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                lifeSupport.applyLifePayment(gameData, playerId, LIFE_PER_CARD, "Sylvan Library");
             } else {
                 Card forced = takeNextEligible(hand, interaction.drawnThisTurnCardIds());
                 if (forced != null) {

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,8 +38,33 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.ensurePriority(player1);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Initiates of the Ebon Hand");
+    }
+
+    @Test
+    @DisplayName("Activation count resets at the beginning of a new turn")
+    void activationCountResetsAtTurnBoundary() {
+        addReadyInitiates(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
@@ -55,8 +83,6 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.ensurePriority(player1);
-        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
@@ -77,8 +103,6 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.ensurePriority(player1);
-        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(2);
@@ -95,8 +119,6 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
         addReadyInitiates(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.ensurePriority(player1);
-        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
 
@@ -110,6 +132,28 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Initiates of the Ebon Hand");
+        harness.assertInGraveyard(player1, "Initiates of the Ebon Hand");
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice a new object after the original leaves the battlefield")
+    void delayedSacrificeDoesNotFollowNewObject() {
+        Permanent original = addCreatureReady(player1, new InitiatesOfTheEbonHand());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, original));
+        Permanent replacement = addCreatureReady(player1, new InitiatesOfTheEbonHand());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(findPermanents(player1, "Initiates of the Ebon Hand")).containsExactly(replacement);
         harness.assertInGraveyard(player1, "Initiates of the Ebon Hand");
     }
 

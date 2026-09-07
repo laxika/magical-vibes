@@ -25,16 +25,22 @@ public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetSpellControllerLosesLifeEffect) effect;
-        UUID targetCardId = entry.getTargetId();
-        if (targetCardId == null) return;
+        UUID targetCardId = entry.getTriggeringCardId() != null
+                ? entry.getTriggeringCardId() : entry.getTargetId();
+        if (targetCardId == null && entry.getTriggeringPermanentControllerId() == null) return;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getCard().getId().equals(targetCardId)) {
+            if (targetCardId != null && se.getCard().getId().equals(targetCardId)) {
                 lifeSupport.applyLifeLoss(gameData, se.getControllerId(), e.amount(), entry.getCard().getName());
                 return;
             }
         }
-        // Target spell already left the stack (e.g. was countered by earlier effect on the same spell)
-        log.info("Game {} - Target spell no longer on stack for life loss", gameData.id);
+        UUID targetingSpellControllerId = entry.getTriggeringPermanentControllerId();
+        if (targetingSpellControllerId != null) {
+            lifeSupport.applyLifeLoss(
+                    gameData, targetingSpellControllerId, e.amount(), entry.getCard().getName());
+        } else {
+            log.info("Game {} - Target spell no longer on stack for life loss", gameData.id);
+        }
     }
 }

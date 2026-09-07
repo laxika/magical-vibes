@@ -29,6 +29,7 @@ class PrizedAmalgamTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         Permanent amalgam = findPermanent(player1, "Prized Amalgam");
         assertThat(amalgam).isNotNull();
@@ -47,6 +48,7 @@ class PrizedAmalgamTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Prized Amalgam");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent amalgam = findPermanent(player1, "Prized Amalgam");

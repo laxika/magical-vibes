@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 public class PhyrexianTyranny extends Card {
 
     public PhyrexianTyranny() {
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new LoseLifeUnlessPaysEffect(2, 2));
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new LoseLifeUnlessPaysEffect(2, 2));
+        addEffect(EffectSlot.ON_CONTROLLER_DRAWS, LoseLifeUnlessPaysEffect.forTriggeringPlayer(2, 2));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS, LoseLifeUnlessPaysEffect.forTriggeringPlayer(2, 2));
     }
 }

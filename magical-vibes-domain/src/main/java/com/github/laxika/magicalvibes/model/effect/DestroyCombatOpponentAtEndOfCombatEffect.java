@@ -19,11 +19,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param filter               the opponent must be a creature matching this predicate to be destroyed
  * @param cannotBeRegenerated  whether the scheduled destruction ignores regeneration shields
+ * @param putCounterOnSourceIfDestroyed whether the remembered source creature gets a +1/+1
+ *                                     counter at the next end step if the opponent is destroyed
  */
 public record DestroyCombatOpponentAtEndOfCombatEffect(
         PermanentPredicate filter,
-        boolean cannotBeRegenerated
+        boolean cannotBeRegenerated,
+        boolean putCounterOnSourceIfDestroyed
 ) implements CardEffect, CombatOpponentReferencingEffect {
+
+    public DestroyCombatOpponentAtEndOfCombatEffect(PermanentPredicate filter, boolean cannotBeRegenerated) {
+        this(filter, cannotBeRegenerated, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

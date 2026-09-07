@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMat
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,8 @@ import org.springframework.stereotype.Component;
  * Resolves {@link GainControlOfAllPermanentsMatchingEffect} (Karrthus, Tyrant of Jund). Gains the
  * controller permanent control of every permanent matching the effect's predicate that they do not
  * already control, reusing the layer-2 control machinery with a per-permanent
- * {@link GainControlOfTargetEffect} floating effect.
+ * {@link GainControlOfTargetEffect} floating effect. Optional rider effects are resolved in list
+ * order for the snapshot of permanents gained by this resolution, after all control changes.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,6 +31,8 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
 
     private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final EffectHandlerRegistry effectHandlerRegistry;
+    private final GainControlOfTargetEffectHandler gainControlOfTargetEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +48,10 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         // seize while iterating. Skip permanents the controller already controls (a no-op steal).
         // The predicate may be source-relative (e.g. "permanents you own" — Gruul Charm), so the
         // resolving controller has to reach the evaluation as the filter context's source controller.
-        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         List<Permanent> toSeize = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
@@ -56,9 +64,34 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         ControlDuration duration = e.duration();
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
         for (Permanent permanent : toSeize) {
+            if (duration.isSourceLinked()) {
+                StackEntry individual = new StackEntry(entry.getEntryType(), entry.getCard(), controllerId,
+                        entry.getDescription(), List.of(controlEffect), permanent.getId(),
+                        entry.getSourcePermanentId());
+                individual.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                individual.setNonTargeting(true);
+                gainControlOfTargetEffectHandler.resolve(gameData, individual, controlEffect);
+                continue;
+            }
             creatureControlService.applyControlEffect(gameData, controllerId, permanent,
                     controlEffect, duration.toEffectDuration(), null,
                     entry.getCard().getName());
+        }
+
+        for (CardEffect thenEffect : e.thenEffects()) {
+            EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
+            if (handler == null) {
+                continue;
+            }
+            for (Permanent permanent : toSeize) {
+                UUID previousTargetId = entry.getTargetId();
+                entry.setTargetId(permanent.getId());
+                try {
+                    handler.resolve(gameData, entry, thenEffect);
+                } finally {
+                    entry.setTargetId(previousTargetId);
+                }
+            }
         }
     }
 }

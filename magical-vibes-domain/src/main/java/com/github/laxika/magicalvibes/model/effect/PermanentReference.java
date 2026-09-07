@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Names a permanent an effect acts on without targeting it. Used by
- * {@link PutCounterOnReferencedPermanentEffect} and {@link DestroyReferencedPermanentEffect}.
+ * {@link PutCounterOnReferencedPermanentEffect}, {@link DestroyReferencedPermanentEffect}, and
+ * {@link RemoveReferencedPermanentFromCombatEffect}.
  *
  * <ul>
  *   <li>{@link #SOURCE} — the permanent the ability came from ("destroy this Aura", "destroy this

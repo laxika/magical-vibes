@@ -85,7 +85,7 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .filter(permanent -> permanent.getCard().getSubtypes().stream()
-                        .anyMatch(subtype -> subtype.name().equals(subtypeName)))
+                        .anyMatch(subtype -> subtype.name().equalsIgnoreCase(subtypeName)))
                 .count();
     }
 }

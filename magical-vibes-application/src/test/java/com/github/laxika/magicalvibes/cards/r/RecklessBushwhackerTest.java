@@ -33,6 +33,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         Permanent bushwhacker = findPermanent(player1, "Reckless Bushwhacker");
         assertThat(ally.getPowerModifier()).isEqualTo(1);
         assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
@@ -42,7 +43,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.advanceStep(gd);
 
         assertThat(ally.getPowerModifier()).isZero();
         assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();

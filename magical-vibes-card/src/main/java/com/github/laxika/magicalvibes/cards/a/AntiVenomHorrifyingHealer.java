@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "1")
 @CardRegistration(set = "SPM", collectorNumber = "244")
+@CardRegistration(set = "OM1", collectorNumber = "22")
 public class AntiVenomHorrifyingHealer extends Card {
 
     public AntiVenomHorrifyingHealer() {
@@ -23,6 +24,6 @@ public class AntiVenomHorrifyingHealer extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
                         .build()));
-        addEffect(EffectSlot.STATIC, new PreventDamageToOtherCreaturesAndAddPlusCountersEffect(true));
+        addEffect(EffectSlot.STATIC, PreventDamageToOtherCreaturesAndAddPlusCountersEffect.forSource(false));
     }
 }

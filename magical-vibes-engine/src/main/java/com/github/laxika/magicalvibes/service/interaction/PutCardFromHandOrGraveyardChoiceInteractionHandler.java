@@ -48,7 +48,9 @@ public class PutCardFromHandOrGraveyardChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
         if (!chosenIds.isEmpty()) {
-            support.applyChoice(gameData, player.getId(), chosenIds.getFirst(), interaction.cardName());
+            support.applyChoice(gameData, player.getId(), chosenIds.getFirst(), interaction.cardName(),
+                    interaction.enterWithCounter(), interaction.grantHaste(),
+                    interaction.returnToHandAtEndStep());
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

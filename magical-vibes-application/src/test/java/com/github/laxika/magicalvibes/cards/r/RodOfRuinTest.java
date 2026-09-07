@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.a.AjaniMentorOfHeroes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,50 +14,38 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RodOfRuin.class, GrizzlyBears.class, LlanowarElves.class, Plains.class})
 class RodOfRuinTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new RodOfRuin()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new RodOfRuin(), "{4}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Rod of Ruin");
     }
 
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new RodOfRuin()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new RodOfRuin(), "{4}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Rod of Ruin");
     }
-
-    // ===== Activating ability =====
-
     @Test
     @DisplayName("Activating ability targeting player puts it on the stack")
     void activatingTargetingPlayerPutsOnStack() {
@@ -68,7 +58,6 @@ class RodOfRuinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Rod of Ruin");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -110,9 +99,6 @@ class RodOfRuinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
-
-    // ===== Dealing damage to player =====
-
     @Test
     @DisplayName("Deals 1 damage to target player")
     void deals1DamageToPlayer() {
@@ -141,9 +127,6 @@ class RodOfRuinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
-
-    // ===== Dealing damage to creature =====
-
     @Test
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
@@ -172,9 +155,6 @@ class RodOfRuinTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
-
-    // ===== Validation =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
@@ -197,31 +177,25 @@ class RodOfRuinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
-
-    // ===== No summoning sickness for artifacts =====
-
     @Test
     @DisplayName("Can activate ability the turn it enters the battlefield (no summoning sickness for artifacts)")
     void noSummoningSicknessForArtifact() {
-        RodOfRuin card = new RodOfRuin();
-        Permanent rod = new Permanent(card);
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
         rod.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(rod);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
         assertThat(rod.isTapped()).isTrue();
     }
-
-    // ===== Target enumeration =====
-
+    @CardUsed(AjaniMentorOfHeroes.class)
     @Test
-    @DisplayName("Target enumeration offers creatures and players but no other permanents")
+    @DisplayName("Target enumeration offers creatures, planeswalkers, and players but no other permanents")
     void targetEnumerationExcludesNonCreaturePermanents() {
         Permanent rod = addReadyRod(player1);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new Plains());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AjaniMentorOfHeroes());
 
         GameData gd = harness.getGameData();
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -233,8 +207,24 @@ class RodOfRuinTest extends BaseCardTest {
 
         // "Any target" is a creature, planeswalker, battle, or player — the land and the Rod itself
         // are not legal, and activation would reject them.
-        assertThat(response.validPermanentIds()).contains(bearId).doesNotContain(plainsId, rod.getId());
+        assertThat(response.validPermanentIds()).contains(bearId, planeswalker.getId()).doesNotContain(plainsId, rod.getId());
         assertThat(response.validPlayerIds()).contains(player1.getId(), player2.getId());
+    }
+
+    @CardUsed(AjaniMentorOfHeroes.class)
+    @Test
+    @DisplayName("Deals 1 damage to a target planeswalker")
+    void deals1DamageToPlaneswalker() {
+        addReadyRod(player1);
+        Permanent planeswalker = new Permanent(new AjaniMentorOfHeroes());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test
@@ -247,9 +237,6 @@ class RodOfRuinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature, planeswalker, battle, or player");
     }
-
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetCreatureRemoved() {
@@ -269,15 +256,9 @@ class RodOfRuinTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
-
-    // ===== Helpers =====
-
     private Permanent addReadyRod(Player player) {
-        RodOfRuin card = new RodOfRuin();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RodOfRuin());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
-

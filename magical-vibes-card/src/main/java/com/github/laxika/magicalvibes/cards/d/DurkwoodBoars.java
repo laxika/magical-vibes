@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "39")
 @CardRegistration(set = "RQS", collectorNumber = "38")
 @CardRegistration(set = "S99", collectorNumber = "127")
+@CardRegistration(set = "LEG", collectorNumber = "182")
 public class DurkwoodBoars extends Card {
 }

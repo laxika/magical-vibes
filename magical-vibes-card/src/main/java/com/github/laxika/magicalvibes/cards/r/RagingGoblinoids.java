@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "85")
+@CardRegistration(set = "OM1", collectorNumber = "86")
 public class RagingGoblinoids extends Card {
 
     public RagingGoblinoids() {

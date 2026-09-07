@@ -143,7 +143,7 @@ public record ExchangeControlOfTargetPermanentsEffect(
     }
 
     /**
-     * Modal exchange whose two targets are the two members of one target group.
+     * Exchange whose two targets are the two members of one target group.
      *
      * <p>This keeps the two targets distinct within a mode while allowing a permanent to be
      * chosen once for another selected mode.</p>
@@ -161,8 +161,9 @@ public record ExchangeControlOfTargetPermanentsEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return sourceIsFirstTarget || triggeringPermanentIsFirstTarget
-                ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate)
-                : TargetSpec.NONE;
+        if (targetPairInSingleGroup() || sourceIsFirstTarget || triggeringPermanentIsFirstTarget) {
+            return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
+        }
+        return TargetSpec.NONE;
     }
 }

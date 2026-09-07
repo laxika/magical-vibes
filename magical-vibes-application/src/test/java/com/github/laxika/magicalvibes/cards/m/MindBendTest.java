@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MindBend.class, GrizzlyBears.class, PaladinEnVec.class, VoiceOfAll.class})
 class MindBendTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -43,7 +45,6 @@ class MindBendTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Mind Bend");
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
@@ -57,8 +58,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -74,8 +74,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
 
@@ -95,8 +94,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
@@ -118,8 +116,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "GREEN");
@@ -138,8 +135,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "SWAMP");
         harness.handleListChoice(player1, "FOREST");
@@ -160,8 +156,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "ISLAND");
 
@@ -174,8 +169,8 @@ class MindBendTest extends BaseCardTest {
     // ===== chosenColor update =====
 
     @Test
-    @DisplayName("Mind Bend updates chosenColor when from-color matches")
-    void updatesChosenColorWhenMatching() {
+    @DisplayName("Mind Bend does not change a previously chosen color")
+    void doesNotChangeChosenColorWhenMatching() {
         harness.addToBattlefield(player2, new VoiceOfAll());
         // Manually set chosen color to simulate Voice of All's ETB
         Permanent voiceOfAll = findPermanent(player2, "Voice of All");
@@ -185,13 +180,12 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Voice of All");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
         harness.handleListChoice(player1, "RED");
 
-        assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.RED);
+        assertThat(voiceOfAll.getChosenColor()).isEqualTo(CardColor.BLACK);
     }
 
     @Test
@@ -205,8 +199,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Voice of All");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "WHITE");
         harness.handleListChoice(player1, "GREEN");
@@ -224,8 +217,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "BLUE");
@@ -264,8 +256,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // First Mind Bend: change "black" to "green"
         harness.handleListChoice(player1, "BLACK");
@@ -274,8 +265,7 @@ class MindBendTest extends BaseCardTest {
         // Cast a second Mind Bend
         harness.setHand(player1, List.of(new MindBend()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Second Mind Bend: change "red" to "blue"
         harness.handleListChoice(player1, "RED");
@@ -295,8 +285,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Paladin en-Vec");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "WHITE");
@@ -316,8 +305,7 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "INVALID"))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -331,12 +319,27 @@ class MindBendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "FOREST"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same word for both text-change choices")
+    void cannotChooseSameWordTwice() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "BLACK"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

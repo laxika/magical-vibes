@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -16,9 +17,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +39,7 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
     private final AmountEvaluationService amountEvaluationService;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.ability.AbilityActivationService abilityActivationService;
+    private final EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport eachPlayerRevealSupport;
 
     @Override
     public Class<PendingInteraction.RevealAnyNumberOfCardsFromHandChoice> handledType() {
@@ -73,6 +78,12 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
                 .stream()
                 .filter(card -> uniqueIds.contains(card.getId()))
                 .toList();
+
+        PendingInteraction.EachPlayerRevealContext eachPlayerContext = interaction.eachPlayerRevealContext();
+        if (eachPlayerContext != null) {
+            handleEachPlayerReveal(gameData, interaction, selectedCards, eachPlayerContext);
+            return;
+        }
 
         PendingInteraction.ActivatedAbilityRevealContext abilityContext = interaction.activatedAbilityContext();
         if (abilityContext != null) {
@@ -131,6 +142,45 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         }
         entry.setEventValue(selectedCards.size());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleEachPlayerReveal(GameData gameData,
+                                        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice interaction,
+                                        List<Card> selectedCards,
+                                        PendingInteraction.EachPlayerRevealContext context) {
+        String playerName = gameData.playerIdToName.get(interaction.playerId());
+        if (selectedCards.isEmpty()) {
+            gameLogService.append(gameData, GameLog.text(playerName + " reveals no cards."));
+        } else {
+            GameLog.Builder reveal = GameLog.builder().text(playerName + " reveals ");
+            for (int i = 0; i < selectedCards.size(); i++) {
+                if (i > 0) {
+                    reveal.text(", ");
+                }
+                reveal.card(selectedCards.get(i));
+            }
+            gameLogService.append(gameData, reveal.text(".").build());
+            cardRevealService.revealToAllPlayers(
+                    gameData, interaction.playerId(), GameEventFact.RevealZone.HAND, selectedCards);
+        }
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No effect resolution is waiting for this choice");
+        }
+        Map<UUID, Integer> revealedCounts = new LinkedHashMap<>(context.revealedCounts());
+        revealedCounts.put(interaction.playerId(), selectedCards.size());
+        EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect effect =
+                new EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect(
+                        context.filter(), context.token());
+
+        gameData.interaction.clearAwaitingInput();
+        boolean begunNext = eachPlayerRevealSupport.beginNextChoice(
+                gameData, entry, context.remainingPlayerIds(), context.playerOrder(), revealedCounts, effect);
+        inputCompletionService.publishStateAfterInput(gameData);
+        if (!begunNext) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private List<UUID> selectedCardIds(List<UUID> chosenCardIds) {

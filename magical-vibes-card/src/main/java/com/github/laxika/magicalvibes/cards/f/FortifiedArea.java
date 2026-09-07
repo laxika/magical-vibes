@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
  * "Wall creatures you control get +1/+0 and have banding."
  */
 @CardRegistration(set = "4ED", collectorNumber = "26")
+@CardRegistration(set = "LEG", collectorNumber = "14")
 public class FortifiedArea extends Card {
 
     public FortifiedArea() {

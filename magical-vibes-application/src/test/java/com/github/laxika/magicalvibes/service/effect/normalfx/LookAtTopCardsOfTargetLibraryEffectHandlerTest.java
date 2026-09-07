@@ -179,6 +179,18 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     class MayShuffle {
 
         @Test
+        void emptyLibraryStillOffersShuffle() {
+            LookAtTopCardsOfTargetLibraryEffect effect =
+                    new LookAtTopCardsOfTargetLibraryEffect(5, TargetLibraryAction.MAY_SHUFFLE);
+
+            handler.resolve(gd, entryTargeting("Visions", effect), effect);
+
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            assertThat(gd.pendingMayAbilities.getFirst().description()).contains("shuffle their library");
+            assertThat(gd.pendingMayAbilities.getFirst().targetCardId()).isEqualTo(player2Id);
+        }
+
+        @Test
         @DisplayName("Queues a may-ability naming the looked-at cards (Visions)")
         void queuesMayAbility() {
             gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears"));

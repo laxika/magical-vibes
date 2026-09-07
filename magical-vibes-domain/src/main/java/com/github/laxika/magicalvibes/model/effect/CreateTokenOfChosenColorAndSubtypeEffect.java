@@ -9,13 +9,22 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.Map;
 
 public record CreateTokenOfChosenColorAndSubtypeEffect(
-        int power,
-        int toughness,
+        DynamicAmount power,
+        DynamicAmount toughness,
         Map<CardColor, CardSubtype> subtypeByColor
 ) implements TokenCreatingEffect {
 
     public CreateTokenOfChosenColorAndSubtypeEffect() {
-        this(2, 2, Map.of());
+        this(new Fixed(2), new Fixed(2), Map.of());
+    }
+
+    public CreateTokenOfChosenColorAndSubtypeEffect(int power, int toughness,
+                                                    Map<CardColor, CardSubtype> subtypeByColor) {
+        this(new Fixed(power), new Fixed(toughness), subtypeByColor);
+    }
+
+    public CreateTokenOfChosenColorAndSubtypeEffect(DynamicAmount power, DynamicAmount toughness) {
+        this(power, toughness, Map.of());
     }
 
     public CreateTokenOfChosenColorAndSubtypeEffect {
@@ -34,11 +43,11 @@ public record CreateTokenOfChosenColorAndSubtypeEffect(
 
     @Override
     public int tokenPower() {
-        return power;
+        return power instanceof Fixed fixed ? fixed.value() : 0;
     }
 
     @Override
     public int tokenToughness() {
-        return toughness;
+        return toughness instanceof Fixed fixed ? fixed.value() : 0;
     }
 }

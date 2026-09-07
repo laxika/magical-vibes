@@ -58,6 +58,7 @@ class RuinsOfOranRiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RuinsOfOranRief());
         Card creature = new Memnite();
         harness.setHand(player2, List.of(creature));
+        harness.forceActivePlayer(player2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 

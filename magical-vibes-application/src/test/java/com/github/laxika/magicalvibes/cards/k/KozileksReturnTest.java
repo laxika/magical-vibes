@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KozileksReturn.class, KozileksPathfinder.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({KozileksReturn.class, com.github.laxika.magicalvibes.cards.d.DeceiverOfForm.class, GrizzlyBears.class, SerraAngel.class})
 class KozileksReturnTest extends BaseCardTest {
 
     @Test
@@ -42,7 +42,7 @@ class KozileksReturnTest extends BaseCardTest {
         KozileksReturn returnCard = new KozileksReturn();
         harness.setGraveyard(player1, List.of(returnCard));
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new KozileksPathfinder()));
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.d.DeceiverOfForm()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.castCreature(player1, 0);
@@ -55,7 +55,8 @@ class KozileksReturnTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Kozilek's Return");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Kozilek's Return"));
-        harness.assertOnBattlefield(player1, "Kozilek's Pathfinder");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Deceiver of Form");
     }
 
     @Test
@@ -63,7 +64,7 @@ class KozileksReturnTest extends BaseCardTest {
     void decliningGraveyardTriggerLeavesCard() {
         KozileksReturn returnCard = new KozileksReturn();
         harness.setGraveyard(player1, List.of(returnCard));
-        harness.setHand(player1, List.of(new KozileksPathfinder()));
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.d.DeceiverOfForm()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.castCreature(player1, 0);

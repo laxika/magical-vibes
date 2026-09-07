@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "71")
+@CardRegistration(set = "LEG", collectorNumber = "218")
 public class ArcadesSabboth extends Card {
 
     public ArcadesSabboth() {

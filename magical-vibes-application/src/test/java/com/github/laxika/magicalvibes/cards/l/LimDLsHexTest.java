@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LimDLsHex.class, CircleOfProtectionBlack.class})
 class LimDLsHexTest extends BaseCardTest {
 
     @Test
@@ -26,8 +30,8 @@ class LimDLsHexTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1 - 1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 - 1);
+        harness.assertLife(player1, life1 - 1);
+        harness.assertLife(player2, life2 - 1);
     }
 
     @Test
@@ -46,8 +50,8 @@ class LimDLsHexTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 - 1);
+        harness.assertLife(player1, life1);
+        harness.assertLife(player2, life2 - 1);
     }
 
     @Test
@@ -62,7 +66,7 @@ class LimDLsHexTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1);
+        harness.assertLife(player1, life1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -77,10 +81,10 @@ class LimDLsHexTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true); // accept with empty pool → damage
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1 - 1);
+        harness.assertLife(player1, life1 - 1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 - 1);
+        harness.assertLife(player2, life2 - 1);
     }
 
     @Test
@@ -93,8 +97,8 @@ class LimDLsHexTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2);
+        harness.assertLife(player1, life1);
+        harness.assertLife(player2, life2);
     }
 
     @Test
@@ -111,7 +115,29 @@ class LimDLsHexTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(life1 - 1);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 - 1);
+        harness.assertLife(player1, life1 - 1);
+        harness.assertLife(player2, life2 - 1);
+    }
+
+    @Test
+    @DisplayName("Unpaid damage can be prevented for one player without protecting the other")
+    void damageCanBePreventedForOnePlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent hex = harness.addToBattlefieldAndReturn(player1, new LimDLsHex());
+        harness.addToBattlefield(player1, new CircleOfProtectionBlack());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hex.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
     }
 }

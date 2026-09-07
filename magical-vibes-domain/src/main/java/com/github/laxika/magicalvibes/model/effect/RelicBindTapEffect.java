@@ -4,12 +4,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * Relic Bind's modal triggered ability: "Whenever enchanted artifact becomes tapped, choose one —
  * this Aura deals 1 damage to target player or planeswalker; or target player gains 1 life."
  * <p>
- * Placed in the {@code ON_ENCHANTED_PERMANENT_TAPPED} slot and resolved by
- * {@code RelicBindTapEffectHandler}, which — at resolution — first prompts the controller to choose
- * a mode (a {@code ColorChoice}/list pick driven by {@code ChoiceContext.RelicBindModeChoice}) and
- * then routes the chosen mode's targeted effect through the shared {@code MayAbilityTriggerTarget}
- * target-selection flow. The engine has no cast-time modal machinery for triggered abilities, so the
- * mode and target are chosen as the ability resolves (functionally equivalent for this ability).
+ * Placed in the {@code ON_ENCHANTED_PERMANENT_TAPPED} slot. The trigger collector translates this
+ * marker into the shared triggered-modal queue: the controller chooses its mode and target before
+ * any player receives priority. The chosen damage or life-gain effect resolves normally.
  */
 public record RelicBindTapEffect() implements CardEffect {
 }

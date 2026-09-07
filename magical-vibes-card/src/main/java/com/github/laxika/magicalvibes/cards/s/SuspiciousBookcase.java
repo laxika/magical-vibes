@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "246")
+@CardRegistration(set = "SNC", collectorNumber = "245")
 public class SuspiciousBookcase extends Card {
 
     public SuspiciousBookcase() {

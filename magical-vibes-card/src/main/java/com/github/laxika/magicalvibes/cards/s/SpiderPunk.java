@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "SPM", collectorNumber = "92")
 @CardRegistration(set = "SPM", collectorNumber = "207")
 @CardRegistration(set = "SPM", collectorNumber = "210")
+@CardRegistration(set = "OM1", collectorNumber = "85")
 public class SpiderPunk extends Card {
 
     public SpiderPunk() {

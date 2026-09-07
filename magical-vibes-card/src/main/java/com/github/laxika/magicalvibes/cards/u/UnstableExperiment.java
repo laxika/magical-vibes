@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SPM", collectorNumber = "47")
+@CardRegistration(set = "OM1", collectorNumber = "45")
 public class UnstableExperiment extends Card {
 
     public UnstableExperiment() {

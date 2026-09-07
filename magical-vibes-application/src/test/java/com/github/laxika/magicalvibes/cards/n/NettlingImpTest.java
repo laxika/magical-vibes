@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -42,6 +44,29 @@ class NettlingImpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Requires the target to be declared as an attacker when it can attack")
+    void requiresTargetToAttackWhenAble() {
+        addCreatureReady(player1, new NettlingImp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        setOpponentBeforeAttackers();
+
+        harness.activateAbility(player1, 0, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        gs.declareAttackers(gd, player2, List.of(0));
+
+        assertThat(target.isAttackedThisTurn()).isTrue();
+    }
+
+    @Test
     @DisplayName("Destroys the target at the next end step if it did not attack")
     void destroysIfDidNotAttack() {
         addCreatureReady(player1, new NettlingImp());
@@ -57,6 +82,39 @@ class NettlingImpTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Allows a tapped target and destroys it because it cannot attack")
+    void allowsTappedTargetAndDestroysIt() {
+        addCreatureReady(player1, new NettlingImp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        setOpponentBeforeAttackers();
+
+        harness.activateAbility(player1, 0, 0, 0, target.getId());
+        harness.passBothPriorities();
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Still destroys the target if Nettling Imp leaves the battlefield")
+    void delayedDestructionSurvivesSourceLeavingBattlefield() {
+        Permanent imp = addCreatureReady(player1, new NettlingImp());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        setOpponentBeforeAttackers();
+
+        harness.activateAbility(player1, 0, 0, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(imp);
+
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Spares the target at the next end step if it attacked")
     void sparesIfAttacked() {
         addCreatureReady(player1, new NettlingImp());
@@ -65,7 +123,7 @@ class NettlingImpTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, 0, target.getId());
         harness.passBothPriorities();
-        target.setAttackedThisTurn(true);
+        declareAttackers(player2, List.of(0));
         runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

@@ -33,12 +33,15 @@ class ZealotIlVecTest extends BaseCardTest {
         return blocker;
     }
 
-    private void advanceToUnblockedMay() {
+    private void advanceToUnblockedMay(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
         gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 
@@ -49,11 +52,10 @@ class ZealotIlVecTest extends BaseCardTest {
         Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -69,7 +71,7 @@ class ZealotIlVecTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(victim.getMarkedDamage()).isZero();
@@ -104,9 +106,8 @@ class ZealotIlVecTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
 

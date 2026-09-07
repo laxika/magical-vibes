@@ -27,10 +27,10 @@ class PyromancersAssaultTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 }

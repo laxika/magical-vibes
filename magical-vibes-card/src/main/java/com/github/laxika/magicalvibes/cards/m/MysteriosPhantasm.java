@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "SPM", collectorNumber = "38")
+@CardRegistration(set = "OM1", collectorNumber = "39")
 public class MysteriosPhantasm extends Card {
 
     public MysteriosPhantasm() {

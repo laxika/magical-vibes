@@ -28,6 +28,8 @@ class GixsCommandTest extends BaseCardTest {
 
         harness.castModalSorceryWithModes(player1, 0, 2, new int[]{0, 2}, List.of(bears.getId()));
         harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);

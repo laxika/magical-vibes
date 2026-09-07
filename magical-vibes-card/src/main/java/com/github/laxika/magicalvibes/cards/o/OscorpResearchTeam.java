@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "40")
+@CardRegistration(set = "OM1", collectorNumber = "40")
 public class OscorpResearchTeam extends Card {
 
     public OscorpResearchTeam() {

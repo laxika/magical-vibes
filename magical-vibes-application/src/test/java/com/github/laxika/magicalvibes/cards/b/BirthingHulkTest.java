@@ -43,7 +43,7 @@ class BirthingHulkTest extends BaseCardTest {
         Permanent hulk = findPermanent(player1, "Birthing Hulk");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 1, null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(hulk), 0, null, null);
         harness.passBothPriorities();
 
         assertThat(hulk.getRegenerationShield()).isEqualTo(1);

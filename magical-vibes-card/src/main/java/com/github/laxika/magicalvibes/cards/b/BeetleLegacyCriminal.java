@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "26")
+@CardRegistration(set = "OM1", collectorNumber = "25")
 public class BeetleLegacyCriminal extends Card {
 
     public BeetleLegacyCriminal() {

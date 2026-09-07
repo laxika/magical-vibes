@@ -38,7 +38,7 @@ class ExtractTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bears);
-        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertInGraveyard(player1, "Extract");
     }

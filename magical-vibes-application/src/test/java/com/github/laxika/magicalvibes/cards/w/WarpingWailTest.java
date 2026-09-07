@@ -32,11 +32,11 @@ class WarpingWailTest extends BaseCardTest {
         @DisplayName("Exiles a creature with power or toughness 1 or less")
         void exilesSmallCreature() {
             GoblinPiker target = new GoblinPiker();
-            harness.addToBattlefield(player2, target);
+            var targetPermanent = harness.addToBattlefieldAndReturn(player2, target);
             harness.setHand(player1, List.of(new WarpingWail()));
             addMana(player1);
 
-            harness.castInstant(player1, 0, 0, target.getId());
+            harness.castInstant(player1, 0, 0, targetPermanent.getId());
             harness.passBothPriorities();
 
             assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -49,11 +49,11 @@ class WarpingWailTest extends BaseCardTest {
         @DisplayName("Also exiles a creature with power 1 or less")
         void exilesLowPowerCreature() {
             Ornithopter target = new Ornithopter();
-            harness.addToBattlefield(player2, target);
+            var targetPermanent = harness.addToBattlefieldAndReturn(player2, target);
             harness.setHand(player1, List.of(new WarpingWail()));
             addMana(player1);
 
-            harness.castInstant(player1, 0, 0, target.getId());
+            harness.castInstant(player1, 0, 0, targetPermanent.getId());
             harness.passBothPriorities();
 
             assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -64,11 +64,11 @@ class WarpingWailTest extends BaseCardTest {
         @DisplayName("Cannot target a creature with both power and toughness greater than 1")
         void rejectsLargeCreature() {
             GrizzlyBears target = new GrizzlyBears();
-            harness.addToBattlefield(player2, target);
+            var targetPermanent = harness.addToBattlefieldAndReturn(player2, target);
             harness.setHand(player1, List.of(new WarpingWail()));
             addMana(player1);
 
-            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, target.getId()))
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, targetPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -83,7 +83,7 @@ class WarpingWailTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WarpingWail()));
         addMana(player2);
 
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, divination.getId());
         harness.passBothPriorities();

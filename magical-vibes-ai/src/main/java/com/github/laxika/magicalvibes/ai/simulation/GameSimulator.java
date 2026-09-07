@@ -847,6 +847,7 @@ public class GameSimulator {
                 ManaCost cost = new ManaCost(card.getManaCost());
                 if (cost.hasX()) continue;
                 if (!cost.canPay(virtualPool)) continue;
+                if (card.isRequiresBasicLandMana() && !cost.canPayBasicLandOnly(virtualPool)) continue;
                 if (!castingCostService.canPayAdditionalSpellCosts(gd, opponentId, card)) continue;
                 if (bestCard == null || card.getManaValue() > bestCard.getManaValue()) {
                     bestIndex = i;
@@ -1124,6 +1125,18 @@ public class GameSimulator {
         ManaPool currentPool = gd.playerManaPools.get(playerId);
         Player player = new Player(playerId, "sim");
 
+        if (card.isRequiresBasicLandMana()) {
+            if (cost.canPayBasicLandOnly(currentPool, xValue, 0)) return;
+            manaManager.tapBasicLandsForCost(gd, playerId, card.getManaCost(), xValue,
+                    (index, abilityIndex) -> {
+                        if (abilityIndex == null) {
+                            gameService.tapPermanent(gd, player, index);
+                        } else {
+                            gameService.activateAbility(gd, player, index, abilityIndex, null, null, null);
+                        }
+                    });
+            return;
+        }
         if (card.isRequiresCreatureMana()) {
             if (cost.canPayCreatureOnly(currentPool)) return;
             List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());

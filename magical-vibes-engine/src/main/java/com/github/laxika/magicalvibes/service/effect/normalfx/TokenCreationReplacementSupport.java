@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCre
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
 
 import java.util.List;
@@ -111,6 +112,49 @@ public final class TokenCreationReplacementSupport {
                 original.tappedAndAttacking(), original.tapped(), Map.of(), List.of(),
                 original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
                 original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
+    }
+
+    /** Returns Jinnie Fay's replacement token while preserving event-level token riders. */
+    public static CreateTokenEffect jinnieFayToken(CreateTokenEffect original, int amount, boolean cat) {
+        return new CreateTokenEffect(
+                CardType.CREATURE,
+                amount,
+                cat ? "Cat" : "Dog",
+                cat ? 2 : 3,
+                cat ? 2 : 1,
+                CardColor.GREEN,
+                null,
+                List.of(cat ? CardSubtype.CAT : CardSubtype.DOG),
+                cat ? Set.of(Keyword.HASTE) : Set.of(Keyword.VIGILANCE),
+                Set.of(),
+                original.tappedAndAttacking(),
+                original.tapped(),
+                Map.of(),
+                List.of(),
+                original.exileAtEndOfCombat(),
+                original.exileAtEndStep(),
+                false,
+                original.initialPlusOnePlusOneCounters(),
+                original.grantedKeywordsUntilEndOfTurn(),
+                Set.of());
+    }
+
+    static Card findJinnieFay(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return null;
+        }
+        for (Permanent permanent : battlefield) {
+            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || permanent.isStaticEffectSuppressed(JinnieFayTokenReplacementEffect.class)) {
+                continue;
+            }
+            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(JinnieFayTokenReplacementEffect.class::isInstance)) {
+                return permanent.getCard();
+            }
+        }
+        return null;
     }
 
     private static boolean hasCreatureTokenReplacement(GameData gameData, UUID controllerId) {

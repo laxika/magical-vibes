@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "14")
+@CardRegistration(set = "FUT", collectorNumber = "27")
 public class MistmeadowSkulk extends Card {
 
     public MistmeadowSkulk() {

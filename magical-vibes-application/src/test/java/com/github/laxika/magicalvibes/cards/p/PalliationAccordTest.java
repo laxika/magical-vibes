@@ -36,11 +36,11 @@ class PalliationAccordTest extends BaseCardTest {
     void ignoresOwnCreaturesAndOpponentNoncreatures() {
         Permanent accord = harness.addToBattlefieldAndReturn(player1, new PalliationAccord());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentAccord = harness.addToBattlefieldAndReturn(player2, new PalliationAccord());
 
         tap(ownCreature);
         assertThat(gd.stack).isEmpty();
 
+        Permanent opponentAccord = harness.addToBattlefieldAndReturn(player2, new PalliationAccord());
         tap(opponentAccord);
         assertThat(gd.stack).isEmpty();
         assertThat(accord.getCounterCount(CounterType.PALLIATION)).isZero();

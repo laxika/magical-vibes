@@ -68,7 +68,7 @@ class EldraziObligatorTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.advanceStep(gd);
 
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
@@ -99,7 +99,8 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EldraziObligator()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0, targetId);
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, targetId);
     }
 
     private void resolveCastTrigger() {

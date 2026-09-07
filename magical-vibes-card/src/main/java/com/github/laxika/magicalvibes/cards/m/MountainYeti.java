@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "53")
+@CardRegistration(set = "LEG", collectorNumber = "159")
 public class MountainYeti extends Card {
 
     public MountainYeti() {

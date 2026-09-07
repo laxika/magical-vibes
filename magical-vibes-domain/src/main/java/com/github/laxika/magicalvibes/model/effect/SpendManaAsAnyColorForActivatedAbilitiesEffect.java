@@ -5,10 +5,18 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import java.util.Set;
 
 /**
- * Static self-only permission: mana may be spent as though it were mana of any color to pay the
- * source creature's activated ability costs.
+ * Static permission to spend mana as though it were mana of any color for activated abilities.
  */
-public record SpendManaAsAnyColorForActivatedAbilitiesEffect() implements ActivatedAbilityManaColorPermissionEffect {
+public record SpendManaAsAnyColorForActivatedAbilitiesEffect(GrantScope scope)
+        implements ActivatedAbilityManaColorPermissionEffect {
+
+    public SpendManaAsAnyColorForActivatedAbilitiesEffect() {
+        this(GrantScope.SELF);
+    }
+
+    public static SpendManaAsAnyColorForActivatedAbilitiesEffect controlledCreatures() {
+        return new SpendManaAsAnyColorForActivatedAbilitiesEffect(GrantScope.ALL_OWN_CREATURES);
+    }
 
     @Override
     public Set<ManaColor> manaColors() {

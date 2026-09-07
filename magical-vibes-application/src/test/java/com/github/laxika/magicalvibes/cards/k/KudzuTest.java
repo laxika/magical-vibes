@@ -75,6 +75,24 @@ class KudzuTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Kudzu"));
     }
 
+    @Test
+    @DisplayName("Accepting to move Kudzu with no land available leaves it in its owner's graveyard")
+    void acceptsMoveWithNoLandAvailable() {
+        Permanent tappedLand = addLand(player2);
+        Permanent aura = attachAura(player1, tappedLand);
+
+        harness.tapPermanent(player2, 0);
+        resolveUntilMayChoice();
+
+        harness.handleMayAbilityChosen(player2, true);
+        resolveStackFully();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(tappedLand);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Kudzu"));
+    }
+
     private Permanent addLand(Player player) {
         harness.addToBattlefield(player, new Mountain());
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());

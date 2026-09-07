@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
@@ -24,6 +23,7 @@ class GlassAspTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void advanceToPlayer2DrawStepObligation() {
@@ -32,12 +32,12 @@ class GlassAspTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
-    @DisplayName("Declining to pay {2} loses 2 life at the damaged player's next draw step")
-    void declineLosesLife() {
+    @DisplayName("An unpaid obligation loses 2 life at the damaged player's next draw step")
+    void unpaidObligationLosesLife() {
         Permanent asp = addReadyAsp();
         asp.setAttacking(true);
 
@@ -46,8 +46,7 @@ class GlassAspTest extends BaseCardTest {
 
         advanceToPlayer2DrawStepObligation();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeAfterCombat - 2);
     }
@@ -61,11 +60,17 @@ class GlassAspTest extends BaseCardTest {
         dealCombatDamageToPlayer2();
         int lifeAfterCombat = gd.playerLifeTotals.get(player2.getId());
 
-        advanceToPlayer2DrawStepObligation();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.handleMayAbilityChosen(player2, true);
+        gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+
+        advanceToPlayer2DrawStepObligation();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeAfterCombat);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();

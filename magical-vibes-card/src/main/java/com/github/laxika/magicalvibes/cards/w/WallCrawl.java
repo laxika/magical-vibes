@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "121")
+@CardRegistration(set = "OM1", collectorNumber = "112")
 public class WallCrawl extends Card {
 
     public WallCrawl() {

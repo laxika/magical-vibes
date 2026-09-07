@@ -14,6 +14,6 @@ public class DazzlingReflection extends Card {
     public DazzlingReflection() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new GainLifeEqualToTargetCreatureStatEffect(new TargetPower()))
-                .addEffect(EffectSlot.SPELL, new PreventNextDamageByTargetCreatureEffect());
+                .addEffect(EffectSlot.SPELL, new PreventNextDamageByTargetCreatureEffect(false));
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "109")
+@CardRegistration(set = "IKO", collectorNumber = "103")
 public class UnlikelyAid extends Card {
 
     public UnlikelyAid() {

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,13 +19,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Avalanche.class, Plains.class, SnowCoveredPlains.class})
 class AvalancheTest extends BaseCardTest {
 
     private Permanent snowLand(Player controller) {
-        Permanent snowLand = new Permanent(new Plains());
-        TestCards.mutableCard(snowLand).setSupertypes(EnumSet.of(CardSupertype.BASIC, CardSupertype.SNOW));
-        gd.playerBattlefields.get(controller.getId()).add(snowLand);
-        return snowLand;
+        return harness.addToBattlefieldAndReturn(controller, new SnowCoveredPlains());
     }
 
     private List<UUID> battlefieldIds(Player player) {
@@ -42,7 +42,9 @@ class AvalancheTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(battlefieldIds(player2)).doesNotContain(s1.getId(), s2.getId());
-        harness.assertInGraveyard(player2, "Plains");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getId())
+                .contains(s1.getCard().getId(), s2.getCard().getId());
     }
 
     @Test
@@ -53,6 +55,31 @@ class AvalancheTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4); // X=0: {2}{R}{R}
 
         harness.castSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(battlefieldIds(player2)).contains(snow.getId());
+    }
+
+    @Test
+    @DisplayName("Requires exactly X snow land targets")
+    void requiresExactlyXTargets() {
+        Permanent snow = snowLand(player2);
+        harness.setHand(player1, List.of(new Avalanche()));
+        harness.addMana(player1, ManaColor.RED, 6); // X=2: {2}{2}{R}{R}
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2, List.of(snow.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A target that stops being snow before resolution is illegal")
+    void targetThatStopsBeingSnowBeforeResolutionIsIllegal() {
+        Permanent snow = snowLand(player2);
+        harness.setHand(player1, List.of(new Avalanche()));
+        harness.addMana(player1, ManaColor.RED, 5); // X=1: {2}{R}{R}
+        harness.castSorcery(player1, 0, 1, List.of(snow.getId()));
+
+        TestCards.mutableCard(snow).setSupertypes(EnumSet.of(CardSupertype.BASIC));
         harness.passBothPriorities();
 
         assertThat(battlefieldIds(player2)).contains(snow.getId());

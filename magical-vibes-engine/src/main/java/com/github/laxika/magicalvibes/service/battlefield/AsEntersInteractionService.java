@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
-import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.AsEntersGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,11 +15,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
@@ -27,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEn
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfCreaturesSetPowerToughnessOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnOtherNontokenCreaturesFaceDownOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
@@ -227,6 +231,28 @@ public class AsEntersInteractionService {
             // No other creatures — bodyguard enters with no chosen creature
         }
 
+        boolean needsNonlandPermanentChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseNonlandPermanentOnEnterEffect.class::isInstance);
+        if (needsNonlandPermanentChoice) {
+            Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
+            List<UUID> validIds = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(permanent -> permanent != justEntered)
+                    .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!validIds.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseNonlandPermanentAsEnter(
+                                justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                                convokeCreatureIds));
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, new ArrayList<>(validIds),
+                        List.of(controllerId), "Choose a nonland permanent, or choose yourself to decline.");
+                return;
+            }
+        }
+
         boolean needsPrimalClayFormChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
         if (needsPrimalClayFormChoice) {
@@ -299,6 +325,32 @@ public class AsEntersInteractionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId(), subtypeChoice);
+            return;
+        }
+
+        if (card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(ChooseManaValueParityOnEnterEffect.class::isInstance)) {
+            Permanent entering = gameData.playerBattlefields.get(controllerId).getLast();
+            playerInputService.beginManaValueParityChoice(gameData, controllerId,
+                    new ChoiceContext.ManaValueParityChoice(entering.getId(), card, targetId,
+                            wasCastFromHand, etbMode, xValue, kicked, targetIds,
+                            repeatedAdditionalCosts, convokeCreatureIds));
+            return;
+        }
+
+        ChooseCounterTypeOnEnterEffect counterTypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseCounterTypeOnEnterEffect.class::isInstance)
+                .map(ChooseCounterTypeOnEnterEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (counterTypeChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginAsEntersCounterTypeChoice(gameData,
+                    new ChoiceContext.AsEntersCounterTypeChoice(
+                            justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
+                            etbMode, xValue, kicked, targetIds, counterTypeChoice.choicesRequired(),
+                            counterTypeChoice.counterTypes(), true));
             return;
         }
 
@@ -380,6 +432,34 @@ public class AsEntersInteractionService {
             // No other creatures — nothing is sacrificed; the creature enters as a 0/0.
         }
 
+        SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect sacrificeForPowerToughness =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(e -> e instanceof SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect)
+                        .map(SacrificeAnyNumberOfPermanentsSetPowerToughnessToCountOnEnterEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (sacrificeForPowerToughness != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(card.getId())
+                    .withSourceControllerId(controllerId);
+            List<UUID> sacrificeable = bf.stream()
+                    .filter(p -> p != justEntered)
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
+                            p, sacrificeForPowerToughness.filter(), filterContext))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!sacrificeable.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(sacrificeable), sacrificeable.size(),
+                        new MultiPermanentChoiceContext.SacrificePermanentsSetEnteringPowerToughness(
+                                justEntered.getId(), sacrificeForPowerToughness.filter(), controllerId, card,
+                                targetId, wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — sacrifice any number of permanents.");
+                return;
+            }
+        }
+
         // "As this creature enters, sacrifice any number of permanents. It enters with that many
         // +1/+1 counters on it" (CR 614.1c, Shimatsu the Bloodcloaked). Resolved before ETB triggers;
         // the entering permanent itself isn't offered.
@@ -435,9 +515,8 @@ public class AsEntersInteractionService {
             return;
         }
 
-        // "As this creature enters, exile any number of creature cards from your graveyard"
-        // (CR 614.1c, Sutured Ghoul). The exiled cards are tracked with the entering permanent so
-        // its characteristic-defining power/toughness can be derived from them.
+        // As-enters graveyard exiles are tracked with the entering permanent so its continuous
+        // effects can derive values from the exiled cards.
         ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect limitedGraveyardExile =
                 card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .filter(ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
@@ -448,19 +527,34 @@ public class AsEntersInteractionService {
                         .filter(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::isInstance)
                         .map(ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect.class::cast)
                         .findFirst().orElse(null);
+        AsEntersGraveyardExileEffect filteredGraveyardExile =
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(AsEntersGraveyardExileEffect.class::isInstance)
+                        .map(AsEntersGraveyardExileEffect.class::cast)
+                        .findFirst().orElse(null);
         boolean needsGraveyardExile = requiredGraveyardExile != null
                 || limitedGraveyardExile != null
-                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect);
+                || filteredGraveyardExile != null;
         if (needsGraveyardExile) {
-            List<Card> creatureCards = gameData.playerGraveyards
+            List<Card> graveyardCards = gameData.playerGraveyards
                     .getOrDefault(controllerId, List.of()).stream()
-                    .filter(c -> c.hasType(CardType.CREATURE))
+                    .filter(c -> filteredGraveyardExile == null
+                            ? c.hasType(CardType.CREATURE)
+                            : predicateEvaluationService.matchesCardPredicate(
+                            c, filteredGraveyardExile.filter(), card.getId()))
                     .toList();
-            int maxExiledCards = limitedGraveyardExile == null && requiredGraveyardExile == null
-                    ? creatureCards.size()
-                    : Math.min(Math.max(xValue, 0), creatureCards.size());
-            if (!creatureCards.isEmpty() && maxExiledCards > 0) {
+            int maxExiledCards;
+            int minExiledCards;
+            if (filteredGraveyardExile != null) {
+                maxExiledCards = Math.min(Math.max(filteredGraveyardExile.maximumCards(), 0), graveyardCards.size());
+                minExiledCards = Math.min(Math.max(filteredGraveyardExile.minimumCards(), 0), maxExiledCards);
+            } else {
+                maxExiledCards = limitedGraveyardExile == null && requiredGraveyardExile == null
+                        ? graveyardCards.size()
+                        : Math.min(Math.max(xValue, 0), graveyardCards.size());
+                minExiledCards = requiredGraveyardExile == null ? 0 : maxExiledCards;
+            }
+            if (!graveyardCards.isEmpty() && maxExiledCards > 0) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 gameData.graveyardTargetOperation.asEntersExile =
@@ -470,9 +564,10 @@ public class AsEntersInteractionService {
                                 limitedGraveyardExile == null ? 0 : limitedGraveyardExile.countersPerCard(),
                                 requiredGraveyardExile == null ? List.of() : requiredGraveyardExile.counterTypes());
                 playerInputService.beginMultiGraveyardChoice(gameData, controllerId,
-                        new ArrayList<>(creatureCards), maxExiledCards,
-                        requiredGraveyardExile == null ? 0 : maxExiledCards,
-                        limitedGraveyardExile == null
+                        new ArrayList<>(graveyardCards), maxExiledCards, minExiledCards,
+                        filteredGraveyardExile != null
+                                ? card.getName() + " — Exile a matching card from your graveyard."
+                                : limitedGraveyardExile == null
                                 ? card.getName() + " — Exile any number of creature cards from your graveyard."
                                 : card.getName() + " — Exile up to " + xValue
                                 + " creature cards from your graveyard.");
@@ -517,8 +612,9 @@ public class AsEntersInteractionService {
         permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
         permanentCounterSupport.recordCounterPlacedOnCreature(gameData, permanent, controllerId);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
-            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent);
-            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent);
+            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                    gameData, permanent, count, controllerId);
+            permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, permanent, controllerId);
         }
     }
 

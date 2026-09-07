@@ -28,6 +28,7 @@ class OathOfJaceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OathOfJace(), discardedOne, discardedTwo));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 3);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -31,13 +31,16 @@ class GoblinVandalTest extends BaseCardTest {
         return millstone;
     }
 
-    private void advanceToMayPayPrompt() {
+    private void advanceToMayPayPrompt(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
         // Defender declares no blocks, so Goblin Vandal is unblocked and its trigger fires.
         gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 
@@ -48,12 +51,11 @@ class GoblinVandalTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         harness.addMana(player1, ManaColor.RED, 1);
 
-        advanceToMayPayPrompt();
+        advanceToMayPayPrompt(millstone);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(millstone.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(millstone);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -66,7 +68,7 @@ class GoblinVandalTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         harness.addMana(player1, ManaColor.RED, 1);
 
-        advanceToMayPayPrompt();
+        advanceToMayPayPrompt(millstone);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -82,8 +84,8 @@ class GoblinVandalTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         harness.addMana(player1, ManaColor.RED, 1);
 
-        advanceToMayPayPrompt();
-        harness.handleMayAbilityChosen(player1, true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

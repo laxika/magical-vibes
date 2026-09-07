@@ -7,11 +7,15 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param grantPlayPermission whether the controller may cast the exiled card for as long as it
  *                            remains exiled
  */
-public record ExileNonlandCardFromTargetHandOrGraveyardEffect(boolean grantPlayPermission)
+public record ExileNonlandCardFromTargetHandOrGraveyardEffect(boolean grantPlayPermission, boolean handOnly)
         implements CardEffect {
 
     public ExileNonlandCardFromTargetHandOrGraveyardEffect() {
-        this(true);
+        this(true, false);
+    }
+
+    public ExileNonlandCardFromTargetHandOrGraveyardEffect(boolean grantPlayPermission) {
+        this(grantPlayPermission, false);
     }
 
     @Override

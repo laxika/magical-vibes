@@ -48,7 +48,7 @@ class GravityNegatorTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        gs.advanceStep(gd);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }

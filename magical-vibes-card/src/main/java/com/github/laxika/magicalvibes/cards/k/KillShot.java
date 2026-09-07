@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "KTK", collectorNumber = "15")
+@CardRegistration(set = "SNC", collectorNumber = "19")
 public class KillShot extends Card {
 
     public KillShot() {

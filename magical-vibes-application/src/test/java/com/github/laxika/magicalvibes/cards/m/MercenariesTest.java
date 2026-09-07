@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Mercenaries.class, BalduvianBears.class})
 class MercenariesTest extends BaseCardTest {
 
     @Test
@@ -81,19 +83,19 @@ class MercenariesTest extends BaseCardTest {
     void shieldOnlyProtectsActivator() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent mercs = addReadyMercenaries(player1);
+        Permanent mercs = addMercenariesWithDamageAbility(player1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        // Damage Mercenaries' own controller (player1) — their shield is for player2 only.
-        // Use a simple noncombat path: deal via combat against player2 is already covered;
-        // here verify player1 is unprotected by having mercs deal combat to player2 only
-        // (already tested) and that player1's life is unchanged by the shield install.
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerSourceNextDamageShields)
-                .anyMatch(s -> s.playerId().equals(player2.getId()) && s.sourceId().equals(mercs.getId()))
-                .noneMatch(s -> s.playerId().equals(player1.getId()));
+                .anyMatch(s -> s.playerId().equals(player2.getId()) && s.sourceId().equals(mercs.getId()));
     }
 
     @Test
@@ -101,7 +103,7 @@ class MercenariesTest extends BaseCardTest {
     void otherCreatureStillDealsDamage() {
         harness.setLife(player2, 20);
         Permanent mercs = addReadyMercenaries(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player2, 0, null, null);
@@ -119,16 +121,7 @@ class MercenariesTest extends BaseCardTest {
     @DisplayName("Prevents noncombat damage from Mercenaries to the protected player")
     void preventsNextNoncombatDamage() {
         harness.setLife(player2, 20);
-        Card card = new Mercenaries().createRuntimeCopy();
-        card.addActivatedAbility(new ActivatedAbility(
-                false,
-                null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "Mercenaries deals 1 damage to any target."
-        ));
-        Permanent mercs = new Permanent(card);
-        mercs.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mercs);
+        addMercenariesWithDamageAbility(player1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player2, 0, null, null);
@@ -142,23 +135,44 @@ class MercenariesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage from Mercenaries to a creature is not prevented")
+    void damageToCreatureIsNotPrevented() {
+        harness.setLife(player2, 20);
+        Permanent mercs = addMercenariesWithDamageAbility(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.playerId().equals(player2.getId()) && s.sourceId().equals(mercs.getId()));
+    }
+
+    @Test
     @DisplayName("Opponent pays the mana cost from their own pool")
     void opponentPaysManaFromOwnPool() {
         addReadyMercenaries(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
     }
 
     @Test
     @DisplayName("Shield is cleared at end of turn")
     void shieldClearedAtEndOfTurn() {
-        Permanent mercs = addReadyMercenaries(player1);
+        addReadyMercenaries(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -167,17 +181,23 @@ class MercenariesTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(mercs).isNotNull();
+    }
+
+    private Permanent addMercenariesWithDamageAbility(Player player) {
+        Card card = new Mercenaries().createRuntimeCopy();
+        card.addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(new DealDamageToAnyTargetEffect(1)),
+                "Mercenaries deals 1 damage to any target."
+        ));
+        return addCreatureReady(player, card);
     }
 
     private Permanent addReadyMercenaries(Player player) {
-        Permanent perm = new Permanent(new Mercenaries());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Mercenaries());
     }
 }

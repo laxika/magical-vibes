@@ -28,6 +28,7 @@ class StoneforgeAcolyteTest extends BaseCardTest {
         Card equipment = new LeoninScimitar();
         Card third = new GrizzlyBears();
         Card fourth = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, equipment, third, fourth));
         Permanent acolyte = addCreatureReady(player1, new StoneforgeAcolyte());
         Permanent ally = addCreatureReady(player1, new HadaFreeblade());
@@ -73,6 +74,7 @@ class StoneforgeAcolyteTest extends BaseCardTest {
         Card second = new GrizzlyBears();
         Card third = new GrizzlyBears();
         Card fourth = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(first, second, third, fourth));
         Permanent acolyte = addCreatureReady(player1, new StoneforgeAcolyte());
         Permanent ally = addCreatureReady(player1, new HadaFreeblade());

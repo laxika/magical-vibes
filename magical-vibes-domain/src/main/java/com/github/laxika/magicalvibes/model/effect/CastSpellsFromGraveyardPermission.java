@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CastingCost;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 import java.util.List;
 
 /**
  * Capability for a static effect that lets its controller cast spells matching {@link #filter()}
- * from their graveyard for their normal mana costs (Abandoned Sarcophagus). Read by
- * {@code CastingPermissionService} / graveyard cast paths without branching on the concrete effect.
+ * from their graveyard. Implementations may provide an alternate mana cost and additional costs.
+ * Read by {@code CastingPermissionService} / graveyard cast paths without branching on the concrete
+ * effect.
  */
 public interface CastSpellsFromGraveyardPermission extends CardEffect {
 
@@ -22,6 +23,11 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
      * (Gisa and Geralf). False grants an unlimited, any-turn permission (Abandoned Sarcophagus).
      */
     default boolean oncePerControllerTurn() {
+        return false;
+    }
+
+    /** True if this permission applies only during its controller's turn. */
+    default boolean onlyDuringControllerTurn() {
         return false;
     }
 
@@ -43,6 +49,26 @@ public interface CastSpellsFromGraveyardPermission extends CardEffect {
     /** Additional costs required when using this permission. */
     default List<CastingCost> additionalCosts() {
         return List.of();
+    }
+
+    /** Alternate mana cost used instead of the card's normal mana cost, if any. */
+    default String alternateManaCost() {
+        return null;
+    }
+
+    /** Whether the permission's alternate cost is a sneak cost. */
+    default boolean sneak() {
+        return false;
+    }
+
+    /** Condition that must be met to use this permission. */
+    default Condition availabilityCondition() {
+        return null;
+    }
+
+    /** True if a spell cast through this permission is exiled instead of returned to its graveyard. */
+    default boolean exileAfterResolution() {
+        return false;
     }
 
     /** Counter applied to a permanent cast with this permission as it enters. */

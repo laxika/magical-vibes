@@ -30,7 +30,7 @@ class RoilingWatersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 4);
     }
 
     @Test

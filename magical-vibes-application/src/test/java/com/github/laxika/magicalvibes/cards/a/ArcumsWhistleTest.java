@@ -1,19 +1,23 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcumsWhistle.class, BalduvianBears.class, GlacialWall.class})
 class ArcumsWhistleTest extends BaseCardTest {
 
     /** Puts an untapped Arcum's Whistle onto player1's battlefield and gives them the {3}. */
@@ -23,9 +27,9 @@ class ArcumsWhistleTest extends BaseCardTest {
         return whistle;
     }
 
-    /** Sets up player2 as the active player in their pre-combat main, with a Grizzly Bears out. */
+    /** Sets up player2 as the active player in their pre-combat main, with a Balduvian Bears out. */
     private Permanent setUpTargetForPlayer2() {
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         return bears;
@@ -63,7 +67,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         runEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 
     @Test
@@ -75,7 +79,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
-        bears.setAttackedThisTurn(true);
+        declareAttackers(player2, List.of(0));
 
         runEndStep();
 
@@ -119,7 +123,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @DisplayName("Cannot target a Wall")
     void rejectsWall() {
         addReadyWhistle();
-        Permanent wall = addCreatureReady(player2, new WallOfAir());
+        Permanent wall = addCreatureReady(player2, new GlacialWall());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
@@ -131,7 +135,7 @@ class ArcumsWhistleTest extends BaseCardTest {
     @DisplayName("Cannot target a creature the active player doesn't control")
     void rejectsNonActiveController() {
         addReadyWhistle();
-        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent own = addCreatureReady(player1, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
@@ -143,9 +147,50 @@ class ArcumsWhistleTest extends BaseCardTest {
     @DisplayName("Cannot activate after attackers are declared")
     void cannotActivateAfterAttackersDeclared() {
         addReadyWhistle();
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature the active player began controlling this turn")
+    void rejectsNewlyControlledCreature() {
+        addReadyWhistle();
+        Permanent fresh = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, fresh.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Declining the payment destroys the target that cannot legally attack")
+    void declineDestroysTargetThatCannotAttack() {
+        addReadyWhistle();
+        Permanent bears = setUpTargetForPlayer2();
+        bears.tap();
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        runEndStep();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot activate during a second combat phase")
+    void cannotActivateInSecondCombat() {
+        addReadyWhistle();
+        Permanent bears = setUpTargetForPlayer2();
+        gd.combatPhasesThisTurn = 2;
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)

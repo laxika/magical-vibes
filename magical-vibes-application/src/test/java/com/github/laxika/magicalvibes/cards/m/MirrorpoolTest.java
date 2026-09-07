@@ -41,8 +41,8 @@ class MirrorpoolTest extends BaseCardTest {
         Permanent mirrorpool = harness.addToBattlefieldAndReturn(player1, new Mirrorpool());
         AngelsMercy mercy = new AngelsMercy();
         harness.setHand(player1, List.of(mercy));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castInstant(player1, 0);
         harness.activateAbility(player1, 0, 1, null, mercy.getId());

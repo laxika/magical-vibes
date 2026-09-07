@@ -98,7 +98,7 @@ public class RevealTopCardMayPlayFreeEffectHandler implements NormalEffectHandle
             }
             case HAND -> {
                 deck.removeFirst();
-                gameData.playerHands.get(controllerId).add(topCard);
+                gameData.addCardToHand(controllerId, topCard);
                 gameLogService.append(gameData, GameLog.builder().card(topCard).text(" " + reason + " and is put into the player's hand.").build());
                 log.info("Game {} - {} put into hand ({})", gameData.id, topCard.getName(), reason);
             }

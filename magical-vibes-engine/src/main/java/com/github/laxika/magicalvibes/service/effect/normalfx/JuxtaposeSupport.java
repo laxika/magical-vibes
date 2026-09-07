@@ -42,6 +42,9 @@ public class JuxtaposeSupport {
 
     /** Entry point from the effect handler: begin with the creature exchange. */
     public void begin(GameData gameData, Card sourceCard, UUID controllerId, UUID targetPlayerId) {
+        if (controllerId.equals(targetPlayerId)) {
+            return;
+        }
         resolveControllerSide(gameData, sourceCard, controllerId, targetPlayerId, false);
     }
 
@@ -158,9 +161,9 @@ public class JuxtaposeSupport {
         if (matching.isEmpty()) {
             return matching;
         }
-        int maxManaValue = matching.stream().mapToInt(p -> p.getCard().getManaValue()).max().orElse(0);
+        int maxManaValue = matching.stream().mapToInt(p -> p.isFaceDown() ? 0 : p.getCard().getManaValue()).max().orElse(0);
         return matching.stream()
-                .filter(p -> p.getCard().getManaValue() == maxManaValue)
+                .filter(p -> (p.isFaceDown() ? 0 : p.getCard().getManaValue()) == maxManaValue)
                 .toList();
     }
 }

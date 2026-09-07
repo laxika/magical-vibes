@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FyndhornElder;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TeferisIsle;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RitualOfSubdual.class, Forest.class, FyndhornElder.class, Island.class,
+        Mountain.class, Plains.class, TeferisIsle.class})
 class RitualOfSubdualTest extends BaseCardTest {
 
     @Test
@@ -53,6 +58,30 @@ class RitualOfSubdualTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not replace mana from nonland permanents")
+    void doesNotReplaceNonlandMana() {
+        harness.addToBattlefield(player1, new RitualOfSubdual());
+        addCreatureReady(player1, new FyndhornElder());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Preserves the amount when a land produces multiple mana")
+    void preservesAmountForMultiManaLand() {
+        harness.addToBattlefield(player1, new RitualOfSubdual());
+        harness.addToBattlefield(player1, new TeferisIsle());
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
     @DisplayName("Affects opponent lands too")
     void affectsOpponentLands() {
         harness.addToBattlefield(player1, new RitualOfSubdual());
@@ -85,6 +114,18 @@ class RitualOfSubdualTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep triggers only during its controller's upkeep")
+    void triggersOnlyDuringControllerUpkeep() {
+        Permanent ritual = harness.addToBattlefieldAndReturn(player1, new RitualOfSubdual());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(ritual.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ritual);
+    }
+
+    @Test
     @DisplayName("Second upkeep costs {4}")
     void secondUpkeepCostsScale() {
         Permanent ritual = harness.addToBattlefieldAndReturn(player1, new RitualOfSubdual());
@@ -100,6 +141,19 @@ class RitualOfSubdualTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ritual);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Accepting an unpaid cumulative upkeep sacrifices Ritual of Subdual")
+    void cannotPayCumulativeUpkeep() {
+        Permanent ritual = harness.addToBattlefieldAndReturn(player1, new RitualOfSubdual());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ritual);
+        harness.assertInGraveyard(player1, "Ritual of Subdual");
     }
 
     @Test

@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HowlingMine.class})
 class HowlingMineTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -116,12 +118,31 @@ class HowlingMineTest extends BaseCardTest {
 
         advanceToDraw(player1);
         // Trigger is on the stack — destroy Howling Mine before resolution
-        gd.playerBattlefields.get(player1.getId()).remove(howlingMine);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, howlingMine));
         harness.passBothPriorities(); // resolve trigger — should still draw (last known state was untapped)
 
         // Normal draw + Howling Mine draw = 2 total
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
+    }
+
+    @Test
+    void triggerUsesLastKnownTappedStateWhenSourceLeaves() {
+        harness.addToBattlefield(player1, new HowlingMine());
+        Permanent howlingMine = gd.playerBattlefields.get(player1.getId()).get(0);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToDraw(player1);
+        howlingMine.tap();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, howlingMine));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }
 
     // ===== Turn 1 skip =====
@@ -140,7 +161,7 @@ class HowlingMineTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW — but entire step is skipped
 
-        // No draws at all — entire draw step skipped per rule 103.7a
+        // No draws at all — entire draw step skipped per rule 103.8a
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }

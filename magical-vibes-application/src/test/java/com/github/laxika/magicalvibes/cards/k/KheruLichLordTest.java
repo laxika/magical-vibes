@@ -45,7 +45,7 @@ class KheruLichLordTest extends BaseCardTest {
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(returned.isExileIfLeavesBattlefield()).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 
@@ -65,6 +65,7 @@ class KheruLichLordTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(creature.getId()));

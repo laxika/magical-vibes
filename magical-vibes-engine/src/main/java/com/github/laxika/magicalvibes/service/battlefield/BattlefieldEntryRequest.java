@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
@@ -21,7 +22,17 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       List<String> repeatedAdditionalCosts,
                                       int convokeCreatureCount,
                                       EnterBattlefieldOnDiscardEffect discardReplacement,
-                                      EnterWithCountersEffect enterWithCounters) {
+                                      EnterWithCountersEffect enterWithCounters,
+                                      Zone landPlayZone) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts, int convokeCreatureCount,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters, null);
+    }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
@@ -29,7 +40,7 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                    EnterBattlefieldOnDiscardEffect discardReplacement,
                                    EnterWithCountersEffect enterWithCounters) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, 0, discardReplacement, enterWithCounters);
+                repeatedAdditionalCosts, 0, discardReplacement, enterWithCounters, null);
     }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
@@ -37,14 +48,14 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                    List<String> repeatedAdditionalCosts,
                                    EnterBattlefieldOnDiscardEffect discardReplacement) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, 0, discardReplacement, null);
+                repeatedAdditionalCosts, 0, discardReplacement, null, null);
     }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
                                    List<String> repeatedAdditionalCosts) {
         this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
-                repeatedAdditionalCosts, 0, null, null);
+                repeatedAdditionalCosts, 0, null, null, null);
     }
 
     public BattlefieldEntryRequest {

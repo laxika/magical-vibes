@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.a.AlibansTower;
+import com.github.laxika.magicalvibes.cards.b.BaronSengir;
+import com.github.laxika.magicalvibes.cards.e.EronTheRelentless;
+import com.github.laxika.magicalvibes.cards.f.FeastOfTheUnicorn;
+import com.github.laxika.magicalvibes.cards.g.GrandmotherSengir;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,90 +18,51 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CemeteryGate.class, BaronSengir.class, EronTheRelentless.class, FeastOfTheUnicorn.class,
+        AlibansTower.class, GrandmotherSengir.class})
 class CemeteryGateTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
 
     @Test
     @DisplayName("Takes no combat damage from a black attacker")
     void takesNoDamageFromBlack() {
-        Permanent attacker = new Permanent(createCreature("Bog Wraith", 6, 6, CardColor.BLACK));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new BaronSengir());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new CemeteryGate());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new CemeteryGate());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        resolveCombat();
 
-        harness.passBothPriorities();
-
+        assertThat(blocker.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Cemetery Gate");
     }
 
     @Test
     @DisplayName("Takes lethal combat damage from a red attacker")
     void takesDamageFromRed() {
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 6, 6, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new EronTheRelentless());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new CemeteryGate());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new CemeteryGate());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Cemetery Gate");
+        harness.assertInGraveyard(player2, "Cemetery Gate");
     }
 
     @Test
-    @DisplayName("Cannot be targeted by a black instant")
-    void cannotBeTargetedByBlackInstant() {
-        Permanent gate = new Permanent(new CemeteryGate());
-        gate.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(gate);
-
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        harness.setHand(player1, List.of(createTargetedInstant("Dark Banishing", CardColor.BLACK, "{B}")));
+    @DisplayName("Cannot be targeted by a black ability")
+    void cannotBeTargetedByBlackAbility() {
+        addCreatureReady(player1, new GrandmotherSengir());
+        Permanent gate = addCreatureReady(player2, new CemeteryGate());
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, gate.getId(), null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, gate.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
     }
@@ -109,16 +70,36 @@ class CemeteryGateTest extends BaseCardTest {
     @Test
     @DisplayName("Can be targeted by a red instant")
     void canBeTargetedByRedInstant() {
-        Permanent gate = new Permanent(new CemeteryGate());
-        gate.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gate);
+        Permanent gate = addCreatureReady(player1, new CemeteryGate());
+        gate.setBlocking(true);
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new AlibansTower()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 0, gate.getId(), null);
+        harness.castInstant(player1, 0, gate.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aliban's Tower");
+
+        harness.passBothPriorities();
+
+        assertThat(gate.getPowerModifier()).isEqualTo(3);
+        assertThat(gate.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot be enchanted by a black Aura")
+    void cannotBeEnchantedByBlackAura() {
+        Permanent gate = addCreatureReady(player2, new CemeteryGate());
+        harness.setHand(player1, List.of(new FeastOfTheUnicorn()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, gate.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
     }
 }

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPM", collectorNumber = "123")
 @CardRegistration(set = "SPM", collectorNumber = "213")
+@CardRegistration(set = "OM1", collectorNumber = "138")
 public class AraAHeartOfTheSpider extends Card {
 
     public AraAHeartOfTheSpider() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCI", collectorNumber = "163")
+@CardRegistration(set = "IKO", collectorNumber = "134")
 public class RumblingRockslide extends Card {
 
     public RumblingRockslide() {

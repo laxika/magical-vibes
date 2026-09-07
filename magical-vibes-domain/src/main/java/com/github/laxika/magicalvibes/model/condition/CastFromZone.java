@@ -14,4 +14,9 @@ public record CastFromZone(Zone sourceZone) implements Condition {
     public String conditionNotMetReason() {
         return "spell or permanent was not cast from " + sourceZone.name().toLowerCase();
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

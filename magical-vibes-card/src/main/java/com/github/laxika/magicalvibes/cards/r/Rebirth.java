@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RebirthAnteEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "267")
+@CardRegistration(set = "LEG", collectorNumber = "200")
 public class Rebirth extends Card {
 
     public Rebirth() {

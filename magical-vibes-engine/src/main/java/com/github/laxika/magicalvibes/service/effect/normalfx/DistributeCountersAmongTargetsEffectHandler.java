@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromPermanentAtNextEndStep;
+import com.github.laxika.magicalvibes.model.action.RemoveCountersFromPermanentAtNextCleanup;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,11 +97,9 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
             }
             int placed = permanentCounterSupport.placeCounterOnPermanent(
                     gameData, entry, target, e.counterType(), assignment.getValue());
-            if (e.removeAtNextCleanup()) {
-                // Bounty of the Hunt's delayed rider: one counter comes back off per counter put on
-                // this way. TurnCleanupService sheds them, clamped to what the creature still has.
-                target.getCountersToRemoveAtNextCleanup()
-                        .merge(e.counterType(), assignment.getValue(), Integer::sum);
+            if (e.removeAtNextCleanup() && placed > 0) {
+                gameData.delayedActions.add(new RemoveCountersFromPermanentAtNextCleanup(
+                        entry.getCard(), entry.getControllerId(), target.getId(), e.counterType(), placed));
             }
             if (e.removeAtNextEndStep() && placed > 0) {
                 for (int i = 0; i < placed; i++) {

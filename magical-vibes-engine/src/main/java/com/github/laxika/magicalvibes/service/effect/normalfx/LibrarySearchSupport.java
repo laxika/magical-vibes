@@ -520,6 +520,22 @@ public class LibrarySearchSupport {
             LibrarySearchDestination destination,
             LibrarySearchFollowUp followUp,
             UUID attachToPermanentId) {
+        return performLibrarySearch(gameData, controllerId, filter, noMatchDescription, prompt,
+                reveals, canFailToFind, destination, followUp, attachToPermanentId, null);
+    }
+
+    public boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination,
+            LibrarySearchFollowUp followUp,
+            UUID attachToPermanentId,
+            Integer mayCastManaValueAtMost) {
         if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -552,6 +568,7 @@ public class LibrarySearchSupport {
                 .destination(destination)
                 .followUp(followUp)
                 .attachToPermanentId(attachToPermanentId)
+                .mayCastManaValueAtMost(mayCastManaValueAtMost)
                 .build(), prompt, canFailToFind);
 
         log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());
@@ -677,7 +694,8 @@ public class LibrarySearchSupport {
         // Universal choke point for every library search that presents cards: fire
         // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
         // library. A search of someone else's library (targetPlayerId set) is not "their library".
-        if (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId())) {
+        if ((params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
+                && params.followUp().basicLandSearchQueue() == null) {
             LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, params.playerId());
         }
 

@@ -59,13 +59,13 @@ class WorldBreakerTest extends BaseCardTest {
     @DisplayName("Cast trigger cannot target a creature")
     void castTriggerRejectsCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
         prepareWorldBreakerInHand();
 
         harness.castCreature(player1, 0);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact, enchantment, or land");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

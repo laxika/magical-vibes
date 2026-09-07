@@ -53,7 +53,7 @@ class DawnOfTheDeadTest extends BaseCardTest {
         assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
     }
 
     @Test
@@ -74,6 +74,7 @@ class DawnOfTheDeadTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).as("delayed actions after end step")
                 .isEmpty();

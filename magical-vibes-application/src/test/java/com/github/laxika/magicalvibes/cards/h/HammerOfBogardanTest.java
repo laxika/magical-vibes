@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DwarvenNomad;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HammerOfBogardan.class, DwarvenNomad.class})
 class HammerOfBogardanTest extends BaseCardTest {
 
     // ===== Casting as a spell (3 damage to any target) =====
@@ -32,26 +34,24 @@ class HammerOfBogardanTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 2);
             harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
 
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         }
 
         @Test
-        @DisplayName("Deals 3 damage to a creature, destroying a 2/2")
+        @DisplayName("Deals 3 damage to a creature, destroying it")
         void deals3DamageToCreatureDestroysIt() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new DwarvenNomad());
             harness.setHand(player1, List.of(new HammerOfBogardan()));
             harness.addMana(player1, ManaColor.RED, 2);
             harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-            UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-            harness.castSorcery(player1, 0, targetId);
-            harness.passBothPriorities();
+            UUID targetId = harness.getPermanentId(player2, "Dwarven Nomad");
+            harness.castAndResolveSorcery(player1, 0, targetId);
 
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Dwarven Nomad");
+            harness.assertInGraveyard(player2, "Dwarven Nomad");
         }
 
         @Test
@@ -62,8 +62,7 @@ class HammerOfBogardanTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 2);
             harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-            harness.castSorcery(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
 
             assertThat(gd.stack).isEmpty();
             harness.assertInGraveyard(player1, "Hammer of Bogardan");
@@ -96,6 +95,24 @@ class HammerOfBogardanTest extends BaseCardTest {
 
             harness.assertInHand(player1, "Hammer of Bogardan");
             harness.assertNotInGraveyard(player1, "Hammer of Bogardan");
+        }
+
+        @Test
+        @DisplayName("Returns only the activated Hammer when other cards share the graveyard")
+        void returnsOnlyTheActivatedCard() {
+            HammerOfBogardan hammer = new HammerOfBogardan();
+            harness.setGraveyard(player1, List.of(hammer, new DwarvenNomad()));
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.UPKEEP);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Hammer of Bogardan");
+            harness.assertNotInGraveyard(player1, "Hammer of Bogardan");
+            harness.assertInGraveyard(player1, "Dwarven Nomad");
         }
 
         @Test

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "51")
 @CardRegistration(set = "SPM", collectorNumber = "221")
+@CardRegistration(set = "OM1", collectorNumber = "57")
 public class BeholdTheSinisterSix extends Card {
 
     public BeholdTheSinisterSix() {

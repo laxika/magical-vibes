@@ -52,7 +52,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
@@ -253,6 +255,14 @@ class TargetLegalityServiceTest {
                 gd, player1Id, List.of(effect), List.of(firstOpponentCard.getId(), secondOpponentCard.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("All targets must be in a single opponent's graveyard");
+    }
+
+    @Test
+    @DisplayName("allows zero targets for an optional opponent graveyard exile")
+    void allowsZeroTargetsForOptionalOpponentGraveyardExile() {
+        ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
+
+        sut.validateMultiTargetGraveyardAbility(gd, player1Id, List.of(effect), List.of());
     }
 
     @Test
@@ -1951,6 +1961,21 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        void effectValidationRetainsDefendingPlayerAtResolution() {
+            Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));
+            Card source = createCreature("Source", CardColor.GREEN);
+            CardEffect effect = new DestroyTargetPermanentEffect();
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
+                    "Reflexive ability", List.of(effect), target.getId(), UUID.randomUUID());
+            entry.setAttackedTargetId(player2Id);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+
+            verify(targetValidationService).checkEffectTargets(eq(List.of(effect)),
+                    org.mockito.ArgumentMatchers.argThat(context -> player2Id.equals(context.defendingPlayerId())));
+        }
+
+        @Test
         @DisplayName("skips a gated-out target group when validating later trigger targets")
         void skipsGatedOutTargetGroupFilter() {
             Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));
@@ -2185,6 +2210,24 @@ class TargetLegalityServiceTest {
         }
 
         @Test
+        @DisplayName("matches StackEntryManaSpentLessThanManaValuePredicate only when mana spent is lower")
+        void matchesManaSpentLessThanManaValuePredicate() {
+            Card card = createCreature("Bear", CardColor.GREEN);
+            card.setManaCost("{2}{G}");
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            entry.setManaSpentToCast(2);
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaSpentLessThanManaValuePredicate(), player2Id))
+                    .isTrue();
+
+            entry.setManaSpentToCast(3);
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryManaSpentLessThanManaValuePredicate(), player2Id))
+                    .isFalse();
+        }
+
+        @Test
         @DisplayName("matches StackEntryMaxManaValuePredicate at and below the limit")
         void matchesMaxManaValuePredicate() {
             Card card = createCreature("Spider", CardColor.GREEN);
@@ -2238,6 +2281,50 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryManaValueEqualsSourcePowerPredicate(), player1Id, source))
                     .isTrue();
+        }
+
+        @Test
+        @DisplayName("matches a spell's mana value, power, or toughness against the source chosen number")
+        void matchesManaValuePowerOrToughnessAgainstSourceChosenNumber() {
+            Permanent source = new Permanent(createCreature("Source", CardColor.BLUE));
+            source.setChosenNumber(4);
+
+            Card powerMatchingCard = createCreature("Power match", CardColor.GREEN);
+            powerMatchingCard.setManaCost("{2}");
+            powerMatchingCard.setPower(4);
+            powerMatchingCard.setToughness(3);
+            StackEntry powerMatchingEntry = new StackEntry(powerMatchingCard, player2Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, powerMatchingEntry,
+                    new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
+                    player1Id, source)).isTrue();
+
+            Card toughnessMatchingCard = createCreature("Toughness match", CardColor.GREEN);
+            toughnessMatchingCard.setManaCost("{2}");
+            toughnessMatchingCard.setPower(3);
+            toughnessMatchingCard.setToughness(4);
+            StackEntry toughnessMatchingEntry = new StackEntry(toughnessMatchingCard, player2Id);
+            assertThat(sut.matchesStackEntryPredicate(gd, toughnessMatchingEntry,
+                    new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
+                    player1Id, source)).isTrue();
+
+            Card nonmatchingCard = createCreature("No match", CardColor.GREEN);
+            nonmatchingCard.setManaCost("{2}");
+            nonmatchingCard.setPower(3);
+            nonmatchingCard.setToughness(3);
+            StackEntry nonmatchingEntry = new StackEntry(nonmatchingCard, player2Id);
+            assertThat(sut.matchesStackEntryPredicate(gd, nonmatchingEntry,
+                    new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
+                    player1Id, source)).isFalse();
+
+            Card xCard = createCreature("X spell", CardColor.BLUE);
+            xCard.setManaCost("{X}{U}");
+            StackEntry xEntry = new StackEntry(StackEntryType.CREATURE_SPELL, xCard, player2Id,
+                    "X spell", List.of(), 3);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, xEntry,
+                    new StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate(),
+                    player1Id, source)).isTrue();
         }
 
         @Test

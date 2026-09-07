@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "162")
 @CardRegistration(set = "SPM", collectorNumber = "277")
+@CardRegistration(set = "OM1", collectorNumber = "167")
 public class DocOcksTentacles extends Card {
 
     public DocOcksTentacles() {

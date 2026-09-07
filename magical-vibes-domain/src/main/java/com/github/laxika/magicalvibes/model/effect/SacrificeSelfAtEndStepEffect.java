@@ -7,16 +7,21 @@ package com.github.laxika.magicalvibes.model.effect;
  * schedules the permanent attached to the source Aura or Equipment. Neither form targets the
  * permanent. Sacrifice, not destruction (ignores indestructible/regeneration).
  */
-public record SacrificeSelfAtEndStepEffect(boolean attachedPermanent)
+public record SacrificeSelfAtEndStepEffect(boolean attachedPermanent, boolean currentControllerSacrifices)
         implements AttachedPermanentSelfTargetingEffect {
 
     public SacrificeSelfAtEndStepEffect() {
-        this(false);
+        this(false, false);
     }
 
     /** Schedules the permanent attached to the source Equipment or Aura instead of the source. */
     public static SacrificeSelfAtEndStepEffect forAttachedPermanent() {
-        return new SacrificeSelfAtEndStepEffect(true);
+        return new SacrificeSelfAtEndStepEffect(true, false);
+    }
+
+    /** Schedules the source and instructs whoever controls it at resolution to sacrifice it. */
+    public static SacrificeSelfAtEndStepEffect byCurrentController() {
+        return new SacrificeSelfAtEndStepEffect(false, true);
     }
 
     @Override

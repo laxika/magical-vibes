@@ -1321,12 +1321,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     bestReservedMana, bestInstantsHeld,
                     String.format("%.1f", sorceryWithReserve),
                     String.format("%.1f", bestCombinedValue - sorceryWithReserve), gameId);
-            // Instant-awareness already decided cast+hold beats hold-only. Let MCTS pick
-            // which spell, but if it passes (rollouts don't model held-instant value),
-            // fall back to the evaluator so the reserve decision is not undone.
-            if (tryCastSpellMCTS(gameData)) {
-                return true;
-            }
+            // The search does not model reserved mana, so use the evaluator that enforces
+            // the chosen reservation when selecting the sorcery-speed spell.
             return tryCastSpell(gameData, bestReservedMana);
         }
 

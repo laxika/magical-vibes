@@ -119,9 +119,14 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
 
     public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,
                                      UUID graveyardOwnerId) {
+        resolveForController(gameData, entry, effect, graveyardOwnerId, entry.getTargetCardIds());
+    }
+
+    public void resolveForController(GameData gameData, StackEntry entry, CardEffect effect,
+                                     UUID graveyardOwnerId, List<UUID> targetCardIds) {
         var e = (ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect;
         List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-        if (graveyard == null || graveyard.isEmpty() || entry.getTargetCardIds().isEmpty()) {
+        if (graveyard == null || graveyard.isEmpty() || targetCardIds == null || targetCardIds.isEmpty()) {
             return;
         }
 
@@ -130,7 +135,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 : null;
         List<Card> cardsToReturn = new ArrayList<>();
         int totalManaValue = 0;
-        for (UUID targetCardId : entry.getTargetCardIds()) {
+        for (UUID targetCardId : targetCardIds) {
             Card card = graveyard.stream()
                     .filter(graveyardCard -> graveyardCard.getId().equals(targetCardId))
                     .findFirst().orElse(null);

@@ -34,6 +34,8 @@ import java.util.Set;
  *                            controller after the copy is created
  * @param replaceSubtypes   when {@code true}, the token's creature types are replaced by
  *                          {@code additionalSubtypes} instead of added to the copied types
+ * @param removeLegendary   when {@code true}, the token copy does not have the legendary supertype
+ * @param trackWithSource   when {@code true}, the exiled card is tracked with the source permanent
  */
 public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         CardPredicate filter,
@@ -48,7 +50,9 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         boolean createZombieTokenWithExiledCardStats,
         boolean targetPutIntoGraveyardFromAnywhereThisTurn,
         CardSubtype exileOtherControlledTokensOfSubtype,
-        boolean replaceSubtypes
+        boolean replaceSubtypes,
+        boolean removeLegendary,
+        boolean trackWithSource
 ) implements CardEffect {
 
     /** Compact form without Eternalize-style P/T/color overrides (Séance). */
@@ -59,7 +63,33 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             boolean grantHaste,
             boolean exileAtEndStep) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
-                null, null, null, Set.of(), false, false, null, false);
+                null, null, null, Set.of(), false, false, null, false, false, false);
+    }
+
+    /** Compact form that can optionally track the exiled card with the source permanent. */
+    public ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+            CardPredicate filter,
+            boolean ownGraveyardOnly,
+            List<CardSubtype> additionalSubtypes,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean trackWithSource) {
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                null, null, null, Set.of(), false, false, null, false, false, trackWithSource);
+    }
+
+    /** Compact form that can optionally remove legendary and track the exiled card with the source. */
+    public ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+            CardPredicate filter,
+            boolean ownGraveyardOnly,
+            List<CardSubtype> additionalSubtypes,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean removeLegendary,
+            boolean trackWithSource) {
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                null, null, null, Set.of(), false, false, null, false,
+                removeLegendary, trackWithSource);
     }
 
     /** Eternalize-style transform without extra keywords or the companion Zombie token (The Scarab God). */
@@ -73,7 +103,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             Integer powerOverride,
             Integer toughnessOverride) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
-                colorOverride, powerOverride, toughnessOverride, Set.of(), false, false, null, false);
+                colorOverride, powerOverride, toughnessOverride, Set.of(), false, false, null, false, false, false);
     }
 
     /** Full form retaining the original copy-creation options. */
@@ -90,7 +120,7 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
             boolean createZombieTokenWithExiledCardStats) {
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, additionalKeywords,
-                createZombieTokenWithExiledCardStats, false, null, false);
+                createZombieTokenWithExiledCardStats, false, null, false, false, false);
     }
 
     /** Full form retaining the original copy-creation options and replacing creature types. */
@@ -110,7 +140,28 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
         this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
                 colorOverride, powerOverride, toughnessOverride, additionalKeywords,
                 createZombieTokenWithExiledCardStats, targetPutIntoGraveyardFromAnywhereThisTurn,
-                exileOtherControlledTokensOfSubtype, false);
+                exileOtherControlledTokensOfSubtype, false, false, false);
+    }
+
+    /** Full form retaining the original canonical constructor signature. */
+    public ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+            CardPredicate filter,
+            boolean ownGraveyardOnly,
+            List<CardSubtype> additionalSubtypes,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            CardColor colorOverride,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Set<Keyword> additionalKeywords,
+            boolean createZombieTokenWithExiledCardStats,
+            boolean targetPutIntoGraveyardFromAnywhereThisTurn,
+            CardSubtype exileOtherControlledTokensOfSubtype,
+            boolean replaceSubtypes) {
+        this(filter, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep,
+                colorOverride, powerOverride, toughnessOverride, additionalKeywords,
+                createZombieTokenWithExiledCardStats, targetPutIntoGraveyardFromAnywhereThisTurn,
+                exileOtherControlledTokensOfSubtype, replaceSubtypes, false, false);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,14 +17,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(Millstone.class)
 class MillstoneTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new Millstone()));
+        Millstone card = new Millstone();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
@@ -32,13 +32,14 @@ class MillstoneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Millstone");
+        assertThat(entry.getCard()).isSameAs(card);
     }
 
     @Test
     @DisplayName("Resolving puts it on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new Millstone()));
+        Millstone card = new Millstone();
+        harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castArtifact(player1, 0);
@@ -46,15 +47,13 @@ class MillstoneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertOnBattlefield(player1, "Millstone");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
     }
-
-    // ===== Activating ability =====
-
     @Test
     @DisplayName("Activating ability targeting player puts it on the stack")
     void activatingTargetingPlayerPutsOnStack() {
-        addReadyMillstone(player1);
+        Permanent millstone = addReadyMillstone(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -63,7 +62,7 @@ class MillstoneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Millstone");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(millstone.getId());
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -89,9 +88,6 @@ class MillstoneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
-
-    // ===== Milling =====
-
     @Test
     @DisplayName("Mills two cards from target player's library")
     void millsTwoCards() {
@@ -188,9 +184,6 @@ class MillstoneTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
-
-    // ===== Validation =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
@@ -214,8 +207,20 @@ class MillstoneTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== No summoning sickness for artifacts =====
+    @Test
+    @DisplayName("Cannot target a permanent")
+    void cannotTargetPermanent() {
+        Permanent millstone = addReadyMillstone(player1);
+        Permanent invalidTarget = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, invalidTarget.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a player");
+
+        assertThat(millstone.isTapped()).isFalse();
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
     @Test
     @DisplayName("Can activate ability the turn it enters the battlefield (no summoning sickness for artifacts)")
     void noSummoningSicknessForArtifact() {
@@ -229,15 +234,9 @@ class MillstoneTest extends BaseCardTest {
 
         assertThat(millstone.isTapped()).isTrue();
     }
-
-    // ===== Helpers =====
-
     private Permanent addReadyMillstone(Player player) {
-        Millstone card = new Millstone();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Millstone());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
-

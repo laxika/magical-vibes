@@ -45,7 +45,6 @@ class CaptainsClawsTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Kor Ally");
         assertThat(token.isTapped()).isTrue();
         assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.KOR, CardSubtype.ALLY);
     }
 

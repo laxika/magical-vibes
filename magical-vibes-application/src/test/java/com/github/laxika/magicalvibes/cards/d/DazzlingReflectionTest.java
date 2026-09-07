@@ -41,7 +41,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(21);
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 

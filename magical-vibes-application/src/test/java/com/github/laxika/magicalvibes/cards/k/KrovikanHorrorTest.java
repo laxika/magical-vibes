@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.ArcaneDenial;
+import com.github.laxika.magicalvibes.cards.w.WildAesthir;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +17,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KrovikanHorror.class, WildAesthir.class, ArcaneDenial.class})
 class KrovikanHorrorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Triggers at end step with a creature card directly above it")
     void triggersWithCreatureDirectlyAbove() {
         KrovikanHorror horror = new KrovikanHorror();
-        harness.setGraveyard(player1, List.of(horror, new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
 
         advanceToEndStep(player1);
 
@@ -36,7 +37,7 @@ class KrovikanHorrorTest extends BaseCardTest {
     @DisplayName("Accepting returns it from the graveyard to its owner's hand")
     void acceptReturnsToHand() {
         KrovikanHorror horror = new KrovikanHorror();
-        harness.setGraveyard(player1, List.of(horror, new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
@@ -54,7 +55,7 @@ class KrovikanHorrorTest extends BaseCardTest {
     @DisplayName("Declining keeps it in the graveyard")
     void declineKeepsInGraveyard() {
         KrovikanHorror horror = new KrovikanHorror();
-        harness.setGraveyard(player1, List.of(horror, new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
@@ -69,7 +70,7 @@ class KrovikanHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when the card directly above is not a creature")
     void doesNotTriggerWithNoncreatureDirectlyAbove() {
-        harness.setGraveyard(player1, List.of(new KrovikanHorror(), new Shock(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new KrovikanHorror(), new ArcaneDenial(), new WildAesthir()));
 
         advanceToEndStep(player1);
 
@@ -79,7 +80,7 @@ class KrovikanHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when it is the top card of the graveyard")
     void doesNotTriggerWhenOnTop() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new KrovikanHorror()));
+        harness.setGraveyard(player1, List.of(new WildAesthir(), new KrovikanHorror()));
 
         advanceToEndStep(player1);
 
@@ -90,7 +91,7 @@ class KrovikanHorrorTest extends BaseCardTest {
     @DisplayName("Triggers on an opponent's end step too")
     void triggersOnOpponentEndStep() {
         KrovikanHorror horror = new KrovikanHorror();
-        harness.setGraveyard(player1, List.of(horror, new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
 
         advanceToEndStep(player2);
 
@@ -100,38 +101,71 @@ class KrovikanHorrorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not return it if the condition is false when the ability resolves")
+    void doesNotReturnWhenConditionFailsBeforeResolution() {
+        KrovikanHorror horror = new KrovikanHorror();
+        harness.setGraveyard(player1, List.of(horror, new WildAesthir()));
+
+        advanceToEndStep(player1);
+        harness.setGraveyard(player1, List.of(horror));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Krovikan Horror");
+    }
+
+    @Test
     @DisplayName("Activated ability sacrifices a creature and deals 1 damage to a player")
     void abilityDealsOneDamageToPlayer() {
         addCreatureReady(player1, new KrovikanHorror());
-        addCreatureReady(player1, new GrizzlyBears());
-        UUID bears = harness.getPermanentId(player1, "Grizzly Bears");
+        addCreatureReady(player1, new WildAesthir());
+        UUID aesthir = harness.getPermanentId(player1, "Wild Aesthir");
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, bears);
+        harness.handlePermanentChosen(player1, aesthir);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Wild Aesthir");
         harness.assertOnBattlefield(player1, "Krovikan Horror");
+    }
+
+    @Test
+    @DisplayName("Activated ability can sacrifice Krovikan Horror itself")
+    void abilityCanSacrificeSource() {
+        addCreatureReady(player1, new KrovikanHorror());
+        addCreatureReady(player1, new WildAesthir());
+        UUID horror = harness.getPermanentId(player1, "Krovikan Horror");
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, horror);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertInGraveyard(player1, "Krovikan Horror");
+        harness.assertOnBattlefield(player1, "Wild Aesthir");
     }
 
     @Test
     @DisplayName("Activated ability can kill a 1-toughness creature")
     void abilityDamagesCreature() {
         addCreatureReady(player1, new KrovikanHorror());
-        addCreatureReady(player1, new GrizzlyBears());
-        UUID fodder = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.addToBattlefield(player2, new FugitiveWizard());
-        UUID victim = harness.getPermanentId(player2, "Fugitive Wizard");
+        addCreatureReady(player1, new WildAesthir());
+        UUID fodder = harness.getPermanentId(player1, "Wild Aesthir");
+        harness.addToBattlefield(player2, new WildAesthir());
+        UUID victim = harness.getPermanentId(player2, "Wild Aesthir");
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, victim);
         harness.handlePermanentChosen(player1, fodder);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Wild Aesthir");
     }
 
     private void advanceToEndStep(Player activePlayer) {

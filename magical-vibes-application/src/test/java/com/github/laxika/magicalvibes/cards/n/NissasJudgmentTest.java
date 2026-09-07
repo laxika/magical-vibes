@@ -31,7 +31,7 @@ class NissasJudgmentTest extends BaseCardTest {
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(elemental.getMarkedDamage()).isEqualTo(3);
+        assertThat(elemental.getMarkedDamage()).isEqualTo(5);
     }
 
     @Test

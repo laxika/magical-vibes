@@ -52,6 +52,7 @@ class WitnessTheEndTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
+        harness.handleCardChosen(player2, 0);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(onlyCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);

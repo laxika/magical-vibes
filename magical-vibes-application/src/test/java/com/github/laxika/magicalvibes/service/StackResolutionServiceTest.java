@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -109,7 +110,7 @@ class StackResolutionServiceTest {
                 legendRuleService, stateBasedActionService, gameQueryService, targetLegalityService,
                 gameLogService, effectResolutionService, playerInputService, triggerCollectionService,
                 creatureControlService, stateTriggerService, exileService, null, permanentCounterSupport,
-                mutationCoordinator, null, auraCopyService, null);
+                mutationCoordinator, null, auraCopyService, null, null);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -424,7 +425,7 @@ class StackResolutionServiceTest {
             Card card = createCreature("Clone");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
             when(cloneService.prepareCloneReplacementEffect(
-                    any(), any(), any(), any(), anyInt(), any(), anyBoolean())).thenReturn(true);
+                    any(), any(), any(), any(), anyInt(), anyInt(), any(), anyBoolean())).thenReturn(true);
 
             svc.resolveTopOfStack(gd);
 
@@ -450,6 +451,24 @@ class StackResolutionServiceTest {
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Enchantment");
+        }
+
+        @Test
+        @DisplayName("Warped enchantment schedules exile at the next end step")
+        void warpedEnchantmentSchedulesExile() {
+            Card card = createEnchantment("Warped Enchantment");
+            StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card,
+                    PLAYER1_ID, card.getName(), List.of());
+            entry.setCastWithWarp(true);
+            gd.stack.addLast(entry);
+            when(gameQueryService.findPermanentById(eq(gd), any())).thenReturn(new Permanent(card));
+
+            svc.resolveTopOfStack(gd);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), eq(0), eq(false));
+            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                    .anyMatch(action -> action.permanentId().equals(permanentCaptor.getValue().getId()));
         }
 
         @Test

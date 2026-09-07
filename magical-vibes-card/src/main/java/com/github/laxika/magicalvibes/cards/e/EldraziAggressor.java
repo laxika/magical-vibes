@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import java.util.EnumSet;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -21,7 +24,7 @@ public class EldraziAggressor extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsColorlessPredicate()))),
+                        new PermanentNotPredicate(new PermanentColorInPredicate(EnumSet.allOf(CardColor.class)))))),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
     }
 }

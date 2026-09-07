@@ -1,19 +1,21 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
+import com.github.laxika.magicalvibes.cards.j.JovensTools;
+import com.github.laxika.magicalvibes.cards.r.Roterothopter;
+import com.github.laxika.magicalvibes.cards.r.RysorianBadger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ClockworkGnomes.class, Roterothopter.class, RysorianBadger.class, JovensTools.class, AnabaShaman.class})
 class ClockworkGnomesTest extends BaseCardTest {
 
     @Test
@@ -63,14 +65,50 @@ class ClockworkGnomesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Requires three generic mana to activate")
+    void requiresThreeGenericMana() {
+        Permanent gnomes = addCreatureReady(player1, new ClockworkGnomes());
+        Permanent thopter = addArtifactCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, thopter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gnomes.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The regeneration shield saves the target from lethal damage")
+    void shieldSavesTargetFromLethalDamage() {
+        setupGnomes();
+        Permanent thopter = addArtifactCreature(player1);
+
+        harness.activateAbility(player1, 0, null, thopter.getId());
+        harness.passBothPriorities();
+
+        addCreatureReady(player1, new AnabaShaman());
+        addCreatureReady(player1, new AnabaShaman());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 2, null, thopter.getId());
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 3, null, thopter.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Roterothopter");
+        assertThat(thopter.isTapped()).isTrue();
+        assertThat(thopter.getRegenerationShield()).isZero();
+        assertThat(thopter.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a nonartifact creature")
     void cannotTargetNonartifactCreature() {
         setupGnomes();
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent badger = addCreatureReady(player1, new RysorianBadger());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, badger.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -78,11 +116,7 @@ class ClockworkGnomesTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature artifact")
     void cannotTargetNoncreatureArtifact() {
         setupGnomes();
-        Card artifactCard = new Card();
-        artifactCard.setName("Test Artifact");
-        artifactCard.setType(CardType.ARTIFACT);
-        Permanent artifact = new Permanent(artifactCard);
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new JovensTools());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -104,16 +138,13 @@ class ClockworkGnomesTest extends BaseCardTest {
     }
 
     private Permanent setupGnomes() {
-        harness.addToBattlefield(player1, new ClockworkGnomes());
-        Permanent gnomes = findPermanent(player1, "Clockwork Gnomes");
-        gnomes.setSummoningSick(false);
+        Permanent gnomes = addCreatureReady(player1, new ClockworkGnomes());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player1);
         return gnomes;
     }
 
     private Permanent addArtifactCreature(Player player) {
-        harness.addToBattlefield(player, new Ornithopter());
-        return findPermanent(player, "Ornithopter");
+        return addCreatureReady(player, new Roterothopter());
     }
 }

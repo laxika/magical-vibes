@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
+import com.github.laxika.magicalvibes.cards.s.StormShaman;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HailStorm.class, AesthirGlider.class, StormShaman.class})
 class HailStormTest extends BaseCardTest {
 
     @Test
@@ -23,7 +26,18 @@ class HailStormTest extends BaseCardTest {
         addAttacker(player1, player2);
         castHailStorm();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Aesthir Glider");
+    }
+
+    @Test
+    @DisplayName("Deals exactly 2 damage to an attacking creature the caster does not control")
+    void damagesOpponentAttackerOnlyOnce() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttacker(player1, player2, new StormShaman());
+        castHailStorm();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Storm Shaman");
     }
 
     @Test
@@ -31,11 +45,11 @@ class HailStormTest extends BaseCardTest {
     void doesNotDamageOpponentsNonAttackers() {
         harness.forceActivePlayer(player1);
         addAttacker(player1, player2);
-        harness.addToBattlefield(player1, new GiantSpider());
+        harness.addToBattlefield(player1, new StormShaman());
         castHailStorm();
 
-        harness.assertOnBattlefield(player1, "Giant Spider");
-        assertThat(findPermanent(player1, "Giant Spider").getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Storm Shaman");
+        assertThat(findPermanent(player1, "Storm Shaman").getMarkedDamage()).isZero();
     }
 
     @Test
@@ -43,7 +57,7 @@ class HailStormTest extends BaseCardTest {
     void damagesCasterAndTheirCreatures() {
         harness.forceActivePlayer(player1);
         addAttacker(player1, player2);
-        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addToBattlefield(player2, new StormShaman());
         int lifeBefore = gd.getLife(player2.getId());
         int attackerLifeBefore = gd.getLife(player1.getId());
 
@@ -51,18 +65,14 @@ class HailStormTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(attackerLifeBefore);
-        assertThat(findPermanent(player2, "Giant Spider").getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player2, "Storm Shaman").getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
     @DisplayName("An attacking creature the caster controls takes both 2 and 1 damage")
     void casterAttackerTakesThreeDamage() {
         harness.forceActivePlayer(player2);
-        Permanent attacker = new Permanent(new GiantSpider());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player1.getId());
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        Permanent attacker = addAttacker(player2, player1, new StormShaman());
 
         castHailStorm();
 
@@ -82,11 +92,13 @@ class HailStormTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player attackerController, Player defender) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        return addAttacker(attackerController, defender, new AesthirGlider());
+    }
+
+    private Permanent addAttacker(Player attackerController, Player defender, Card card) {
+        Permanent perm = addCreatureReady(attackerController, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(attackerController.getId()).add(perm);
         return perm;
     }
 }

@@ -78,6 +78,7 @@ class CycloneSireTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        gqs.findPermanentById(gd, sireId).setMarkedDamage(2);
         harness.castInstant(player2, 0, sireId);
         harness.passBothPriorities();
     }
