@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "5")
+@CardRegistration(set = "FDN", collectorNumber = "295")
+@CardRegistration(set = "FDN", collectorNumber = "364")
+@CardRegistration(set = "FDN", collectorNumber = "443")
 public class CelestialArmor extends Card {
 
     public CelestialArmor() {

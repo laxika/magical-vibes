@@ -411,6 +411,25 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Nested
+    @DisplayName("handleDeathMayPayLife")
+    class DeathMayPayLife {
+
+        @Test
+        @DisplayName("Adds the optional life payment to the stack")
+        void addsLifePaymentToStack() {
+            Card card = createCreature("Life Watcher", 2, 2);
+            var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
+            Permanent perm = new Permanent(card);
+            var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
+
+            assertThat(svc.handleDeathMayPayLife(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
+        }
+    }
+
+    @Nested
     @DisplayName("handleLosesLifeEqualToPower")
     class LosesLifeEqualToPower {
 
@@ -606,6 +625,25 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("handleAllyCreatureMayPayLife")
+    class AllyCreatureMayPayLife {
+
+        @Test
+        @DisplayName("Adds the optional life payment to the stack")
+        void addsLifePaymentToStack() {
+            Card watcher = createCreature("Life Pay Watcher", 1, 1);
+            var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
+
+            assertThat(svc.handleAllyCreatureMayPayLife(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
         }
     }
 

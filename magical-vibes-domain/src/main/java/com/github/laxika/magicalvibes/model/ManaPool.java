@@ -57,6 +57,9 @@ public class ManaPool {
      * when the pool holds both tagged and untagged mana of that color.
      */
     private final EnumMap<ManaColor, Integer> hasteGrantingMana = new EnumMap<>(ManaColor.class);
+    /** Mana carrying a haste rider limited to creature spells of a specific subtype. */
+    private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeHasteGrantingMana =
+            new EnumMap<>(CardSubtype.class);
     /**
      * Mana carrying the rider "if that mana is spent on an instant or sorcery spell, that spell can't
      * be countered" (Boseiju, Who Shelters All). Like {@link #hasteGrantingMana} this is a tag on a
@@ -282,6 +285,10 @@ public class ManaPool {
         persistentMana.putAll(source.persistentMana);
         combatMana.putAll(source.combatMana);
         hasteGrantingMana.putAll(source.hasteGrantingMana);
+        for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry
+                : source.subtypeHasteGrantingMana.entrySet()) {
+            subtypeHasteGrantingMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
+        }
         uncounterableGrantingMana.putAll(source.uncounterableGrantingMana);
         additionalCounterGrantingMana.putAll(source.additionalCounterGrantingMana);
         riotGrantingMana.putAll(source.riotGrantingMana);
@@ -733,6 +740,7 @@ public class ManaPool {
             faceDownSpellsOrTurnFaceUpMana.put(color, 0);
         }
         subtypeCreatureMana.clear();
+        subtypeHasteGrantingMana.clear();
         uncounterableSubtypeCreatureMana.clear();
         spentUncounterableGrantingMana = false;
         subtypeSpellOrAbilityMana.clear();
@@ -1061,6 +1069,7 @@ public class ManaPool {
         if (hasteGranting > 0) {
             hasteGrantingMana.put(color, hasteGranting - 1);
         }
+        removeTaggedMana(subtypeHasteGrantingMana, color);
         // Uncounterable-granting mana (Boseiju, Who Shelters All) likewise goes first.
         int uncounterableGranting = uncounterableGrantingMana.getOrDefault(color, 0);
         if (uncounterableGranting > 0) {
@@ -1113,6 +1122,12 @@ public class ManaPool {
         hasteGrantingMana.merge(color, amount, Integer::sum);
     }
 
+    /** Adds mana whose haste rider applies only to creature spells of {@code subtype}. */
+    public void addSubtypeHasteGrantingMana(CardSubtype subtype, ManaColor color, int amount) {
+        subtypeHasteGrantingMana.computeIfAbsent(subtype, ignored -> new EnumMap<>(ManaColor.class))
+                .merge(color, amount, Integer::sum);
+    }
+
     /** Total tagged haste-granting mana still in the pool, across all colors. */
     public int getHasteGrantingManaTotal() {
         int total = 0;
@@ -1124,6 +1139,12 @@ public class ManaPool {
 
     public int getHasteGrantingMana(ManaColor color) {
         return hasteGrantingMana.getOrDefault(color, 0);
+    }
+
+    /** Returns subtype-specific haste-granting mana available for the given subtype. */
+    public int getSubtypeHasteGrantingManaTotal(CardSubtype subtype) {
+        EnumMap<ManaColor, Integer> mana = subtypeHasteGrantingMana.get(subtype);
+        return mana == null ? 0 : mana.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     /**
@@ -3089,6 +3110,7 @@ public class ManaPool {
             moveTaggedManaToColorless(promotedGraveyardOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedNonHandSpellOnlyMana, color, amount);
             moveTaggedManaToColorless(hasteGrantingMana, color, amount);
+            moveTaggedManaToColorlessBuckets(subtypeHasteGrantingMana, color, amount);
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
             moveTaggedManaToColorless(additionalCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(riotGrantingMana, color, amount);
@@ -3166,6 +3188,7 @@ public class ManaPool {
             moveTaggedMana(promotedGraveyardOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedNonHandSpellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(hasteGrantingMana, color, replacementColor, amount);
+            moveTaggedManaBuckets(subtypeHasteGrantingMana, color, replacementColor, amount);
             moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
             moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
@@ -3291,11 +3314,42 @@ public class ManaPool {
         }
     }
 
-    private static void removeTaggedMana(Map<UUID, EnumMap<ManaColor, Integer>> tags,
+    private static void moveTaggedManaToColorlessBuckets(
+            Map<?, EnumMap<ManaColor, Integer>> buckets, ManaColor color, int amount) {
+        int remaining = amount;
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            int tagged = Math.min(remaining, bucket.getOrDefault(color, 0));
+            if (tagged > 0) {
+                moveTaggedManaToColorless(bucket, color, tagged);
+                remaining -= tagged;
+                if (remaining == 0) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private static void moveTaggedManaBuckets(
+            Map<?, EnumMap<ManaColor, Integer>> buckets,
+            ManaColor from, ManaColor to, int amount) {
+        int remaining = amount;
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            int tagged = Math.min(remaining, bucket.getOrDefault(from, 0));
+            if (tagged > 0) {
+                moveTaggedMana(bucket, from, to, tagged);
+                remaining -= tagged;
+                if (remaining == 0) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private static <K> void removeTaggedMana(Map<K, EnumMap<ManaColor, Integer>> tags,
                                          ManaColor color) {
         var iterator = tags.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<UUID, EnumMap<ManaColor, Integer>> entry = iterator.next();
+            Map.Entry<K, EnumMap<ManaColor, Integer>> entry = iterator.next();
             int tagged = entry.getValue().getOrDefault(color, 0);
             if (tagged <= 0) {
                 continue;
@@ -3372,6 +3426,7 @@ public class ManaPool {
         clampColorTag(basicLandMana, protectedColors);
         clampColorTag(spellOnlyMana, protectedColors);
         clampColorTag(hasteGrantingMana, protectedColors);
+        clampColorTagBuckets(subtypeHasteGrantingMana, protectedColors);
         clampColorTag(uncounterableGrantingMana, protectedColors);
         clampColorTag(additionalCounterGrantingMana, protectedColors);
         clampColorTag(riotGrantingMana, protectedColors);
@@ -3464,6 +3519,13 @@ public class ManaPool {
             if (!protectedColors.contains(color)) {
                 bucket.put(color, Math.min(bucket.getOrDefault(color, 0), pool.getOrDefault(color, 0)));
             }
+        }
+    }
+
+    private void clampColorTagBuckets(Map<?, EnumMap<ManaColor, Integer>> buckets,
+                                      Set<ManaColor> protectedColors) {
+        for (EnumMap<ManaColor, Integer> bucket : buckets.values()) {
+            clampColorTag(bucket, protectedColors);
         }
     }
 

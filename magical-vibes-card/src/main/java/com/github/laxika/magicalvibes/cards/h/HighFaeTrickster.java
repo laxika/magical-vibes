@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "40")
+@CardRegistration(set = "FDN", collectorNumber = "307")
+@CardRegistration(set = "FDN", collectorNumber = "375")
+@CardRegistration(set = "FDN", collectorNumber = "453")
 public class HighFaeTrickster extends Card {
 
     public HighFaeTrickster() {

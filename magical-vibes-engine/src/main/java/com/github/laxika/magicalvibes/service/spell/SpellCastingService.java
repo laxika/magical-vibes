@@ -8925,7 +8925,7 @@ public class SpellCastingService {
         var caveManaBefore = pool.getCaveManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
-        int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
+        int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
         int riotGrantingBefore = riotGrantingManaAvailable(gameData, playerId);
@@ -8979,7 +8979,7 @@ public class SpellCastingService {
         var caveManaBefore = pool.getCaveManaTotals();
         var spellCastManaSourcesBefore = pool.getSpellCastTriggerManaTotals();
         int creatureManaBefore = creatureSourceManaAvailable(pool);
-        int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId);
+        int hasteGrantingBefore = hasteGrantingManaAvailable(gameData, playerId, card);
         int uncounterableGrantingBefore = uncounterableGrantingManaAvailable(gameData, playerId);
         int additionalCounterGrantingBefore = additionalCounterGrantingManaAvailable(gameData, playerId);
         SpellManaPayment payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
@@ -9040,9 +9040,18 @@ public class SpellCastingService {
         return pool.getCreatureManaTotal() + pool.getCreatureSourceCreatureSpellOnlyManaTotal();
     }
 
-    private int hasteGrantingManaAvailable(GameData gameData, UUID playerId) {
+    private int hasteGrantingManaAvailable(GameData gameData, UUID playerId, Card card) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        return pool != null ? pool.getHasteGrantingManaTotal() : 0;
+        if (pool == null) {
+            return 0;
+        }
+        int available = pool.getHasteGrantingManaTotal();
+        if (card != null) {
+            for (var subtype : card.getSubtypes()) {
+                available += pool.getSubtypeHasteGrantingManaTotal(subtype);
+            }
+        }
+        return available;
     }
 
     private int uncounterableGrantingManaAvailable(GameData gameData, UUID playerId) {
@@ -9094,7 +9103,7 @@ public class SpellCastingService {
         if (!card.hasType(CardType.CREATURE)) {
             return;
         }
-        if (hasteGrantingManaAvailable(gameData, playerId) < hasteGrantingBefore) {
+        if (hasteGrantingManaAvailable(gameData, playerId, card) < hasteGrantingBefore) {
             gameData.spellsGrantedHasteOnEntry.add(card.getId());
         }
     }

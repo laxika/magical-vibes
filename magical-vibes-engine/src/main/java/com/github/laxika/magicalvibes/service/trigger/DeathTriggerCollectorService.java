@@ -533,6 +533,19 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayPayLifeEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleDeathMayPayLife(TriggerMatchContext match,
+            MayPayLifeEffect mayPay, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(mayPay))));
+        return true;
+    }
+
     @CollectsTrigger(value = TargetPlayerLosesLifeEqualToPowerEffect.class, slot = EffectSlot.ON_DEATH)
     boolean handleLosesLifeEqualToPower(TriggerMatchContext match,
             TargetPlayerLosesLifeEqualToPowerEffect effect, TriggerContext ctx) {
@@ -783,6 +796,19 @@ public class DeathTriggerCollectorService {
             MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), mayPay, null);
+        return true;
+    }
+
+    @CollectsTrigger(value = MayPayLifeEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_DIES)
+    boolean handleAllyCreatureMayPayLife(TriggerMatchContext match,
+            MayPayLifeEffect mayPay, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                cd.dyingCreatureControllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(mayPay))));
         return true;
     }
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "M19", collectorNumber = "55")
+@CardRegistration(set = "FDN", collectorNumber = "508")
 public class ExclusionMage extends Card {
 
     public ExclusionMage() {

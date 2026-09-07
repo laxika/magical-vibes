@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "27")
+@CardRegistration(set = "FDN", collectorNumber = "302")
+@CardRegistration(set = "FDN", collectorNumber = "371")
+@CardRegistration(set = "FDN", collectorNumber = "449")
 public class ValkyriesCall extends Card {
 
     public ValkyriesCall() {

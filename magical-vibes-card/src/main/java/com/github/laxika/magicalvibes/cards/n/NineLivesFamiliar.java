@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSelfReturnFromGraveyardWithOneFewerCounterEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "66")
+@CardRegistration(set = "FDN", collectorNumber = "321")
+@CardRegistration(set = "FDN", collectorNumber = "385")
+@CardRegistration(set = "FDN", collectorNumber = "462")
 public class NineLivesFamiliar extends Card {
 
     public NineLivesFamiliar() {

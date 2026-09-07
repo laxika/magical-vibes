@@ -174,6 +174,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
@@ -6988,7 +6989,9 @@ public class TriggerCollectionService {
                     if (oncePerTurn) {
                         oncePerTurnFired = true;
                     }
-                } else if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
+                } else if (resolvedEffect instanceof MayPayManaEffect
+                        || resolvedEffect instanceof MayPayLifeEffect
+                        || resolvedEffect instanceof MayEffect) {
                     var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                     dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
@@ -7207,7 +7210,9 @@ public class TriggerCollectionService {
                         effect, dyingCard, dyingPermanent, gameData, dyingControllerId);
                 if (resolvedEffect == null) continue;
 
-                if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
+                if (resolvedEffect instanceof MayPayManaEffect
+                        || resolvedEffect instanceof MayPayLifeEffect
+                        || resolvedEffect instanceof MayEffect) {
                     var match = new TriggerMatchContext(gameData, perm, dyingControllerId, resolvedEffect);
                     dispatch(match, EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
@@ -11069,7 +11074,9 @@ public class TriggerCollectionService {
                     || resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                         watcher.getCard(), watcherControllerId, new ArrayList<>(List.of(resolved)), dyingPower));
-            } else if (resolved instanceof MayPayManaEffect || resolved instanceof MayEffect) {
+            } else if (resolved instanceof MayPayManaEffect
+                    || resolved instanceof MayPayLifeEffect
+                    || resolved instanceof MayEffect) {
                 dispatch(new TriggerMatchContext(gameData, watcher, watcherControllerId, resolved),
                         EffectSlot.ON_ALLY_CREATURE_DIES, resolved, context);
             } else {
